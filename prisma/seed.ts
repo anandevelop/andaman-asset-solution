@@ -4,8 +4,27 @@
  * Phase 2 seed. Moves the Phase-1 hardcoded Trinity Village mock data into
  * the database so app/[locale]/projects/[slug] can render from Prisma.
  *
- * Run with:  npm run prisma:seed
- * Idempotent — safe to re-run (uses upsert on unique keys).
+ * Run with:  npm run prisma:seed  (also runs automatically as the last step
+ * of `npm run setup`, which is documented as "safe to re-run" — see
+ * scripts/setup-db.sh).
+ *
+ * ── Safe to re-run means "won't crash", not "won't touch real content" ──
+ * Every upsert below is keyed so re-running never *duplicates* a row, but
+ * that alone isn't enough once the admin panel is the real source of truth
+ * for a field: an upsert whose `update` branch re-asserts a seed value will
+ * silently erase whatever an admin typed or uploaded there since, the next
+ * time anyone runs `db seed` — including via `npm run setup`, which a
+ * developer might re-run months after launch just to pick up a schema
+ * change. This bit the project directly: Project's hero/gallery/concept
+ * images and copy, ProjectProgress images, and ProjectUnitType/FloorPlan
+ * were all being reset to their original placeholder values on every
+ * re-seed, because every one of those fields is now editable from
+ * /admin — a fact that postdates when this file was first written. The
+ * fix throughout: an `update` branch either touches nothing (`{}`, for
+ * fields the admin now fully owns) or is guarded by an existence check
+ * (for the unit-type/floor-plan block, which used to unconditionally wipe
+ * and recreate). Only a genuinely new row — one that doesn't exist yet —
+ * gets the full seed data, via the `create` branch.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -595,14 +614,25 @@ function richContentCreateFields(
 async function main() {
   console.log("🌱 Seeding Andaman Asset Solution…");
 
+  // `update: {}` — every field in TRINITY_VILLAGE (name, tagline,
+  // description, hero/gallery images, price, meta tags, isPublished…) is
+  // editable via /admin/projects/[id] now. Re-asserting the whole object on
+  // every re-seed used to silently revert any of that back to this
+  // placeholder Sale Kit copy. Only a first-time `create` still needs the
+  // full object — the seed's entire purpose for an already-existing row is
+  // "make sure it exists," not "make sure it still looks like this."
   const project = await prisma.project.upsert({
     where: { slug: TRINITY_VILLAGE.slug },
-    update: TRINITY_VILLAGE,
+    update: {},
     create: TRINITY_VILLAGE,
   });
 
   console.log(`  ✓ Project  ${project.slug} (${project.id})`);
 
+  // Same reasoning as the project upsert above: a progress update's images/
+  // title/summary/isPublished are all editable from the monthly progress
+  // manager in /admin, so `update` must not re-assert the seed's version of
+  // them — only `create` (a genuinely new month) gets the full object.
   for (const update of PROGRESS_UPDATES) {
     await prisma.projectProgress.upsert({
       where: {
@@ -612,7 +642,7 @@ async function main() {
           month: update.month,
         },
       },
-      update: { ...update, projectId: project.id },
+      update: {},
       create: { ...update, projectId: project.id },
     });
     console.log(`  ✓ Progress ${update.year}-${String(update.month).padStart(2, "0")}`);
@@ -673,57 +703,94 @@ async function main() {
   for (const { content, units } of RICH_PROJECTS) {
     const isNewProject = content.slug !== TRINITY_VILLAGE.slug;
 
+    // `update: {}` — every field richContentUpdateFields() sets (hero/
+    // gallery/site-plan images, concept design image + copy, "about this
+    // project" image + copy, special features, facilities, location, land
+    // area, unit count) is editable via /admin/projects/[id] now. A
+    // re-seed must not re-assert any of it, for the same reason as the
+    // TRINITY_VILLAGE upsert above — only a first-time `create` for a
+    // genuinely new project still needs the full object.
     const richProject = await db.project.upsert({
       where: { slug: content.slug },
-      update: richContentUpdateFields(content, units),
+      update: {},
       create: richContentCreateFields(content, units, richSortOrder),
     });
     if (isNewProject) richSortOrder += 1;
 
     console.log(`  ✓ Project  ${richProject.slug} (${richProject.id}) [rich content]`);
 
-    // Unit types + floor plans: wiped and recreated each run (no admin UI
-    // edits these independently of a re-seed yet, so there is nothing to
-    // preserve) — cascades to FloorPlan via onDelete: Cascade.
-    await db.projectUnitType.deleteMany({ where: { projectId: richProject.id } });
-
+    // Unit types + floor plans: used to be wiped and recreated every run.
+    // That was true "no admin UI edits these independently of a re-seed
+    // yet" only when this comment was first written — /admin/projects/[id]/
+    // unit-types (UnitTypeForm) now lets an admin create brand-new types,
+    // edit specs, and swap in real floor-plan photos, all of which a
+    // deleteMany + recreate would throw away on the next `db seed`. Guarded
+    // to first-seed-only: if the project already has any unit types, this
+    // whole block is skipped and whatever's in the database stands.
     const typeIdByCode = new Map<string, string>();
-    for (const [index, type] of units.unitTypes.entries()) {
-      const floorImages = content.imageAssets.floorPlansByType[type.code] ?? [];
-      const floorKeys = Object.keys(type.floorBreakdown ?? {});
-      const floorPlanCount = Math.min(
-        floorImages.length,
-        floorKeys.length || floorImages.length
-      );
+    const existingTypeCount = await db.projectUnitType.count({
+      where: { projectId: richProject.id },
+    });
 
-      const createdType = await db.projectUnitType.create({
-        data: {
-          projectId: richProject.id,
-          name: type.nameEn,
-          descriptionEn: type.bedroomNote ?? null,
-          livingAreaSqm: type.sizeSqm.toFixed(2),
-          bedrooms: type.bedrooms,
-          bathrooms: type.bathrooms ?? null,
-          restrooms: type.restrooms ?? null,
-          totalUnits: type.totalUnitsOfType,
-          coverImageUrl: floorImages[0]
-            ? floorPlanUrl(content.slug, floorImages[0])
-            : null,
-          sortOrder: index,
-          floorPlans: {
-            create: Array.from({ length: floorPlanCount }, (_, i) => ({
-              floorName: FLOOR_LABELS[floorKeys[i]] ?? `Floor ${i + 1}`,
-              imageUrl: floorPlanUrl(content.slug, floorImages[i]),
-              sortOrder: i,
-            })),
+    if (existingTypeCount === 0) {
+      for (const [index, type] of units.unitTypes.entries()) {
+        const floorImages = content.imageAssets.floorPlansByType[type.code] ?? [];
+        const floorKeys = Object.keys(type.floorBreakdown ?? {});
+        const floorPlanCount = Math.min(
+          floorImages.length,
+          floorKeys.length || floorImages.length
+        );
+
+        const createdType = await db.projectUnitType.create({
+          data: {
+            projectId: richProject.id,
+            name: type.nameEn,
+            descriptionEn: type.bedroomNote ?? null,
+            livingAreaSqm: type.sizeSqm.toFixed(2),
+            bedrooms: type.bedrooms,
+            bathrooms: type.bathrooms ?? null,
+            restrooms: type.restrooms ?? null,
+            totalUnits: type.totalUnitsOfType,
+            coverImageUrl: floorImages[0]
+              ? floorPlanUrl(content.slug, floorImages[0])
+              : null,
+            sortOrder: index,
+            floorPlans: {
+              create: Array.from({ length: floorPlanCount }, (_, i) => ({
+                floorName: FLOOR_LABELS[floorKeys[i]] ?? `Floor ${i + 1}`,
+                imageUrl: floorPlanUrl(content.slug, floorImages[i]),
+                sortOrder: i,
+              })),
+            },
           },
-        },
+        });
+        typeIdByCode.set(type.code, createdType.id);
+        console.log(
+          `    ✓ UnitType ${richProject.slug}/${type.code} (${floorPlanCount} floor plan${
+            floorPlanCount === 1 ? "" : "s"
+          })`
+        );
+      }
+    } else {
+      // Already seeded (or admin-managed) — map the seed JSON's type codes
+      // to whatever unit types actually exist now, purely so the
+      // individual-unit upsert loop below can still relink units to a real
+      // unitTypeId. Matched by name since that's the only field both sides
+      // share; a type an admin has since renamed just won't match here,
+      // and that unit's link is left alone rather than guessed at.
+      const existingTypes = await db.projectUnitType.findMany({
+        where: { projectId: richProject.id },
+        select: { id: true, name: true },
       });
-      typeIdByCode.set(type.code, createdType.id);
+      const idByName = new Map<string, string>(
+        existingTypes.map((t: { id: string; name: string }): [string, string] => [t.name, t.id]),
+      );
+      for (const type of units.unitTypes) {
+        const id = idByName.get(type.nameEn);
+        if (id) typeIdByCode.set(type.code, id);
+      }
       console.log(
-        `    ✓ UnitType ${richProject.slug}/${type.code} (${floorPlanCount} floor plan${
-          floorPlanCount === 1 ? "" : "s"
-        })`
+        `  ↳ Unit types already exist for ${richProject.slug} — skipped (admin-owned via /admin/projects/[id]/unit-types)`
       );
     }
 
@@ -734,6 +801,27 @@ async function main() {
     // or `adminNotes`.
     for (const unit of units.units) {
       const unitTypeId = typeIdByCode.get(unit.typeCode);
+
+      // Only possible when unit types already existed under renamed types
+      // (see the `else` branch above) and this particular unit doesn't
+      // exist in the database yet — `unitTypeId` is a required column, so
+      // rather than crash the whole seed run on one unresolvable link,
+      // skip just this unit and say so.
+      if (!unitTypeId) {
+        const exists = await db.projectUnit.findUnique({
+          where: {
+            projectId_unitNumber: { projectId: richProject.id, unitNumber: unit.unitNumber },
+          },
+          select: { id: true },
+        });
+        if (!exists) {
+          console.warn(
+            `    ! Skipped unit ${unit.unitNumber} for ${richProject.slug} — no matching unit type "${unit.typeCode}" found (renamed since seeding?)`
+          );
+          continue;
+        }
+      }
+
       await db.projectUnit.upsert({
         where: {
           projectId_unitNumber: {
