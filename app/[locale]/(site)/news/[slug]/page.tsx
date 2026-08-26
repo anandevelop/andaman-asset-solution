@@ -69,7 +69,15 @@ export async function generateMetadata({
       modifiedTime: article.updatedAt.toISOString(),
       authors: article.authorName ? [article.authorName] : undefined,
       tags: [...article.tags],
-      images: article.coverImageUrl ? [{ url: article.coverImageUrl }] : undefined,
+      // Falls back to the site default (config/site.ts: seo.ogImage) when
+      // this article has no cover photo — this page sets its own
+      // `openGraph` object, which per Next.js's metadata merging rules
+      // *replaces* the root layout's openGraph entirely rather than
+      // merging field-by-field, so `images: undefined` here would ship
+      // with no og:image at all rather than quietly inheriting the site's
+      // default the way the rest of `openGraph` (title/description) does
+      // when a page skips setting them.
+      images: [{ url: article.coverImageUrl ?? siteConfig.seo.ogImage }],
     },
   };
 }

@@ -95,7 +95,11 @@ export async function generateMetadata({
       description,
       type: "article",
       url: `${siteConfig.url}/${locale}/projects/${project.slug}`,
-      images: project.heroImageUrl ? [{ url: project.heroImageUrl }] : undefined,
+      // Falls back to the site default (config/site.ts: seo.ogImage) when
+      // this project has no hero photo yet — see the matching comment on
+      // the news article page for why `undefined` here would ship with no
+      // og:image at all rather than inheriting the root layout's default.
+      images: [{ url: project.heroImageUrl ?? siteConfig.seo.ogImage }],
     },
   };
 }
