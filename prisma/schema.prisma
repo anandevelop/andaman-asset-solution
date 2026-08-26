@@ -282,11 +282,6 @@ model Project {
   /// EN/TH/ZH/RU content rows — see ProjectTranslation below.
   translations ProjectTranslation[]
 
-  /// Nearby-attraction categories scoped to this project. Empty for most
-  /// projects on purpose — see NearbyAttractionCategory for the shared
-  /// default set every project falls back to when it has none of its own.
-  attractionCategories NearbyAttractionCategory[]
-
   /// Back-reference required by Prisma for ProjectAttraction's FK — see
   /// that model's comment for why nothing writes to it.
   attractions ProjectAttraction[]
@@ -569,104 +564,16 @@ model ProjectAttraction {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// NEARBY ATTRACTIONS — shared-by-default, project-overridable
-//
-// Three of the launch Sale Kits (Residence Prime, Trinity Village, The
-// Victory) print the identical school/beach/golf/lifestyle list despite
-// being in different parts of the island — see the `_note` on
-// `nearbyAttractions` in prisma/seed-data/content-seed-data.json. Modelling
-// this as one shared default (projectId null) that every project falls
-// back to, with the option for a project to define its own categories that
-// take over completely, means the common case (three projects, one list)
-// costs one seeded set of rows instead of three identical copies that
-// would drift the day someone corrects a drive time on only one of them.
+// NEARBY ATTRACTIONS — removed (client request, 2026-08-26). Used to model
+// a shared default set (projectId null) with per-project override
+// capability, but no project ever used the override and the shared
+// default was silently pointless to edit through the admin (prisma/seed.ts
+// wiped and recreated it every seed run). The 4 models that lived here
+// (NearbyAttractionCategory/CategoryTranslation/Item/ItemTranslation) and
+// their admin CRUD are gone; the same data is now code-owned — see
+// content/nearby-attractions.ts. Dropped via
+// prisma/migrations/20260826020000_remove_nearby_attractions.
 // ─────────────────────────────────────────────────────────────────────────
-
-model NearbyAttractionCategory {
-  id String @id @default(cuid())
-
-  /// Null = the shared default, shown for any project with no categories
-  /// of its own. Set = specific to that one project, and its presence
-  /// means "ignore the shared default entirely" — see
-  /// lib/projects.ts#getNearbyAttractions for the fallback rule.
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  /// @deprecated — superseded by `NearbyAttractionCategoryTranslation` below.
-  categoryNameEn String
-  categoryNameTh String?
-
-  items NearbyAttractionItem[]
-
-  /// EN/TH/ZH/RU `categoryName` rows — see NearbyAttractionCategoryTranslation below.
-  translations NearbyAttractionCategoryTranslation[]
-
-  sortOrder Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([projectId, sortOrder])
-  @@map("nearby_attraction_categories")
-}
-
-/// One row per (category, locale) — see ProjectTranslation's comment for
-/// the general pattern.
-model NearbyAttractionCategoryTranslation {
-  id         String                   @id @default(cuid())
-  categoryId String
-  category   NearbyAttractionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  locale     String
-
-  categoryName String @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([categoryId, locale])
-  @@map("nearby_attraction_category_translations")
-}
-
-model NearbyAttractionItem {
-  id         String                   @id @default(cuid())
-  categoryId String
-  category   NearbyAttractionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  /// @deprecated — superseded by `NearbyAttractionItemTranslation` below.
-  nameEn String
-  nameTh String?
-
-  distanceKm  Decimal @db.Decimal(6, 2)
-  durationMin Int
-
-  /// EN/TH/ZH/RU `name` rows — see NearbyAttractionItemTranslation below.
-  translations NearbyAttractionItemTranslation[]
-
-  sortOrder Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([categoryId, sortOrder])
-  @@map("nearby_attraction_items")
-}
-
-/// One row per (item, locale) — see ProjectTranslation's comment for the
-/// general pattern.
-model NearbyAttractionItemTranslation {
-  id     String               @id @default(cuid())
-  itemId String
-  item   NearbyAttractionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  locale String
-
-  name String @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([itemId, locale])
-  @@map("nearby_attraction_item_translations")
-}
 
 // ─────────────────────────────────────────────────────────────────────────
 // COMPANY PROFILE — singleton

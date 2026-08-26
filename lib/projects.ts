@@ -21,6 +21,7 @@ import {
   type ProjectFilters,
   type SortOption,
 } from "@/lib/project-filters";
+import { getNearbyAttractionCategories } from "@/content/nearby-attractions";
 
 /**
  * Derived from UNIT_STATUSES rather than imported as Prisma's generated
@@ -621,66 +622,22 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
 }
 
 /**
- * Nearby-attraction categories for a project, falling back to the shared
- * default set (projectId = null) when the project has none of its own.
+ * Nearby-attraction categories shown on every project page.
  *
- * The fallback is all-or-nothing by design — a project's own categories
- * replace the shared list entirely rather than merging with it, matching
- * the model comment in schema.prisma. Partial merging would make "why is
- * Beach missing here but not there" an admin-support question instead of
- * a one-glance answer.
+ * Code-owned content (content/nearby-attractions.ts), not a database query
+ * — this used to be an admin-editable "shared default, project-overridable"
+ * feature (NearbyAttractionCategory/Item), removed by client request once
+ * it became clear the per-project override was never used in practice and
+ * the shared-default admin screen was silently pointless (prisma/seed.ts
+ * wiped and recreated that table every seed run, so an admin edit never
+ * survived a re-seed). See content/nearby-attractions.ts's header for the
+ * full reasoning. Kept `async` for call-site compatibility even though
+ * there is no longer any I/O.
  */
 export async function getNearbyAttractions(
-  projectId: string,
   locale: string,
 ): Promise<NearbyAttractionCategorySummary[]> {
-  const db = prisma as any;
-
-  const itemsInclude = { orderBy: { sortOrder: "asc" as const }, include: { translations: true } };
-
-  const ownCategories = await safeQuery(
-    `nearbyAttractionCategory.findMany(${projectId})`,
-    () =>
-      db.nearbyAttractionCategory.findMany({
-        where: { projectId },
-        orderBy: { sortOrder: "asc" },
-        include: { items: itemsInclude, translations: true },
-      }),
-    [] as any[],
-  );
-
-  const categories =
-    ownCategories.length > 0
-      ? ownCategories
-      : await safeQuery(
-          "nearbyAttractionCategory.findMany(shared-default)",
-          () =>
-            db.nearbyAttractionCategory.findMany({
-              where: { projectId: null },
-              orderBy: { sortOrder: "asc" },
-              include: { items: itemsInclude, translations: true },
-            }),
-          [] as any[],
-        );
-
-  return categories.map((cat: any) => {
-    const catT = getTranslation<any>(cat.translations, locale);
-
-    return {
-      id: cat.id,
-      categoryName: catT?.categoryName ?? pickLocale(locale, cat.categoryNameTh, cat.categoryNameEn),
-      sortOrder: cat.sortOrder,
-      items: cat.items.map((item: any) => {
-        const itemT = getTranslation<any>(item.translations, locale);
-        return {
-          id: item.id,
-          name: itemT?.name ?? pickLocale(locale, item.nameTh, item.nameEn),
-          distanceKm: toNumber(item.distanceKm) ?? 0,
-          durationMin: item.durationMin,
-        };
-      }),
-    };
-  });
+  return getNearbyAttractionCategories(locale);
 }
 
 /**

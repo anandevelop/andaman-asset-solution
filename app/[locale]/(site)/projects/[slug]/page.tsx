@@ -120,7 +120,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
       getSiteSettings(),
       getUnitTypesForProject(project.id, locale),
       getProjectUnits(project.id),
-      getNearbyAttractions(project.id, locale),
+      getNearbyAttractions(locale),
       // Company-wide trust signal for the lead-form mini stat row below —
       // same source as the home page Awards section, not project-specific
       // (Award has no project relation).
@@ -763,9 +763,9 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
       )}
 
       {/* ── Nearby Attractions ───────────────────────────────────────── */}
-      {/* 5-column layout desktop, per-category accordion on mobile — pulls
-          the project's own categories, falling back to the shared default
-          set when it has none of its own (see lib/projects.ts). */}
+      {/* 5-column layout desktop, per-category accordion on mobile — same
+          list on every project page, code-owned content rather than a
+          database query (see content/nearby-attractions.ts). */}
       {attractionCategories.length > 0 && (
         <section className="bg-primary-900/[0.03] py-20 sm:py-28">
           <div className="container-luxe">

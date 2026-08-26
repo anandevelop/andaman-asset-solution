@@ -24,7 +24,6 @@ import {
   projectSchema,
   projectUnitSchema,
   unitStatusPatchSchema,
-  projectAttractionSchema,
   fieldErrors,
 } from "@/lib/validations";
 

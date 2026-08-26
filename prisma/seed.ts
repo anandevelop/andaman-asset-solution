@@ -832,32 +832,12 @@ async function main() {
     );
   }
 
-  // ── Nearby attractions: shared default, projectId = null ───────────────
-  // Wiped and recreated each run — see richContentUpdateFields' comment on
-  // why this is safe: nothing writes to the shared default from the admin
-  // (only project-specific overrides would, and those are a separate,
-  // non-null-projectId row set this loop never touches).
-  await db.nearbyAttractionCategory.deleteMany({ where: { projectId: null } });
-  for (const [catIndex, cat] of contentSeed.nearbyAttractions.categories.entries()) {
-    await db.nearbyAttractionCategory.create({
-      data: {
-        projectId: null,
-        categoryNameEn: cat.category,
-        sortOrder: catIndex,
-        items: {
-          create: cat.items.map((item, itemIndex) => ({
-            nameEn: item.name,
-            distanceKm: item.distanceKm.toFixed(2),
-            durationMin: item.durationMin,
-            sortOrder: itemIndex,
-          })),
-        },
-      },
-    });
-  }
-  console.log(
-    `  ✓ Nearby attractions: ${contentSeed.nearbyAttractions.categories.length} shared categories`
-  );
+  // ── Nearby attractions ───────────────────────────────────────────────
+  // No longer a database table — removed by client request (see
+  // prisma/migrations/20260826020000_remove_nearby_attractions and
+  // content/nearby-attractions.ts for why). contentSeed.nearbyAttractions
+  // below is unused now; kept in content-seed-data.json as the original
+  // Sale Kit extraction content/nearby-attractions.ts was transcribed from.
 
   // ── Company profile (singleton) ─────────────────────────────────────────
   // Never touches aboutUsTh beyond its implicit null default on first

@@ -601,70 +601,15 @@ export const unitShapeSchema = z.object({
 export type UnitShapeInput = z.infer<typeof unitShapeSchema>;
 
 // ─────────────────────────────────────────────────────────────────────────
-// PROJECT ATTRACTIONS (Nearby places of interest)
-// ─────────────────────────────────────────────────────────────────────────
-
-export const ATTRACTION_CATEGORIES = [
-  "INTERNATIONAL SCHOOL",
-  "BEACH",
-  "HOSPITAL",
-  "LIFESTYLE",
-  "AIRPORT",
-  "SHOPPING",
-  "RESTAURANT",
-  "OTHER",
-] as const;
-
-export const projectAttractionSchema = z.object({
-  projectId: z.string().min(1, "Project is required"),
-  category: z.string().trim().min(1, "Category is required").max(80),
-  nameEn: z.string().trim().min(1, "Name is required").max(200),
-  nameTh: optionalText(200),
-  distanceKm: optionalNumber(0, 9_999),
-  travelTimeMin: optionalNumber(0, 9_999),
-  sortOrder: z.coerce.number().int().min(-9999).max(9999),
-});
-
-export type ProjectAttractionInput = z.infer<typeof projectAttractionSchema>;
-
-// ─────────────────────────────────────────────────────────────────────────
-// NEARBY ATTRACTIONS — shared-by-default, project-overridable (supersedes
-// ProjectAttraction above — see the model comment in schema.prisma).
-// ─────────────────────────────────────────────────────────────────────────
-
-export const nearbyAttractionCategorySchema = z.object({
-  locale: editingLocaleSchema,
-  // Empty string (from a "shared default" form, which has no project
-  // selector) means projectId: null — not validated as a required id here,
-  // since the shared-default admin screen never sends one.
-  projectId: optionalText(40),
-  categoryName: z.string().trim().min(1, "Category name is required").max(120),
-  sortOrder: z.coerce.number().int().min(-9999).max(9999),
-});
-
-export type NearbyAttractionCategoryInput = z.infer<typeof nearbyAttractionCategorySchema>;
-
-export const nearbyAttractionItemSchema = z.object({
-  // Set (an existing item's db id) on update-in-place; empty on a brand
-  // new row — see the diff-by-id logic in ../actions.ts that replaced the
-  // old wipe-and-recreate-every-save approach once items carried their own
-  // per-locale translations that a recreate would have destroyed.
-  id: optionalText(40),
-  categoryId: z.string().min(1, "Category is required"),
-  name: z.string().trim().min(1, "Name is required").max(200),
-  distanceKm: z
-    .string()
-    .trim()
-    .transform((value) => Number(value))
-    .refine((value) => Number.isFinite(value) && value >= 0 && value <= 9999, {
-      message: "Enter a valid distance",
-    }),
-  durationMin: z.coerce.number().int().min(0).max(9999),
-  sortOrder: z.coerce.number().int().min(-9999).max(9999),
-});
-
-export type NearbyAttractionItemInput = z.infer<typeof nearbyAttractionItemSchema>;
-
+// NEARBY ATTRACTIONS — removed. Used to be an admin-editable "shared
+// default, project-overridable" feature (NearbyAttractionCategory/Item);
+// the per-project override was never used in practice and the shared
+// default was silently pointless to edit (prisma/seed.ts recreated it
+// every seed run), so the whole admin surface was removed by client
+// request. The data is now code-owned — see content/nearby-attractions.ts.
+// The dead ProjectAttraction model these once superseded (and its
+// projectAttractionSchema) was already unused before this removal — left
+// in schema.prisma per its own comment as "a separate decision."
 // ─────────────────────────────────────────────────────────────────────────
 // COMPANY PROFILE — singleton "About Us" text shared by every project
 // ─────────────────────────────────────────────────────────────────────────

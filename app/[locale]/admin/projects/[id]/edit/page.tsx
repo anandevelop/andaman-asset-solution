@@ -9,7 +9,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, CheckCircle2, ExternalLink, Grid3x3, HardHat, Image as ImageIcon, Layers, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, Grid3x3, HardHat, Image as ImageIcon, Layers } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
@@ -111,14 +111,6 @@ export default async function EditProjectPage({ params, searchParams }: Props) {
           >
             <HardHat size={14} aria-hidden />
             {t("projects.manageProgress")}
-          </Link>
-
-          <Link
-            href={`/${locale}/admin/attractions/${project.id}`}
-            className="inline-flex items-center gap-1.5 text-accent-700 hover:text-accent-800"
-          >
-            <MapPin size={14} aria-hidden />
-            {t("projects.manageAttractions")}
           </Link>
 
           <Link
