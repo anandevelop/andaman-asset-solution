@@ -1,0 +1,182 @@
+{
+  "_source": "Extracted from official Sale Kit PDFs (11 AUG 26 / Update 1 AUG 26). Use this as the authoritative reference for prisma/seed.ts — do not re-derive numbers from earlier chat summaries.",
+  "_note_positions": "positionXPercent/positionYPercent are NOT included — master plan pixel coordinates were not digitized. Seed with placeholder scattered values, then let admin pin exact marker positions via the admin unit-position tool.",
+
+  "projects": [
+    {
+      "slug": "residence-prime",
+      "nameEn": "The Residence Prime",
+      "location": "Laguna Area (Ban Don-Cherngtalay, Phuket)",
+      "landAreaSqm": 30193.80,
+      "conceptDesign": "Urban Life Villa",
+      "totalUnits": 62,
+      "facilities": ["Security", "Clubhouse", "Common Pool", "Common Garden", "Co-working Space", "Fitness"],
+      "unitTypes": [
+        {
+          "code": "R",
+          "nameEn": "Type R",
+          "sizeSqm": 398.28,
+          "bedrooms": 3,
+          "bathrooms": 3,
+          "restrooms": 2,
+          "bedroomNote": "3 Bedrooms, 3 Ensuite Bathrooms, 2 Restrooms",
+          "floorBreakdown": { "groundFloor": 178.09, "firstFloor": 134.16, "secondFloor": 86.03 },
+          "totalUnitsOfType": 62
+        }
+      ],
+      "units": [
+        {"unitNumber":"R01","typeCode":"R","landAreaSqm":228},{"unitNumber":"R02","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R03","typeCode":"R","landAreaSqm":228},{"unitNumber":"R04","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R05","typeCode":"R","landAreaSqm":228},{"unitNumber":"R06","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R07","typeCode":"R","landAreaSqm":228},{"unitNumber":"R08","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R09","typeCode":"R","landAreaSqm":228},{"unitNumber":"R10","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R11","typeCode":"R","landAreaSqm":240},{"unitNumber":"R12","typeCode":"R","landAreaSqm":240},
+        {"unitNumber":"R13","typeCode":"R","landAreaSqm":240},{"unitNumber":"R14","typeCode":"R","landAreaSqm":240},
+        {"unitNumber":"R15","typeCode":"R","landAreaSqm":240},{"unitNumber":"R16","typeCode":"R","landAreaSqm":240},
+        {"unitNumber":"R17","typeCode":"R","landAreaSqm":250},{"unitNumber":"R18","typeCode":"R","landAreaSqm":250},
+        {"unitNumber":"R19","typeCode":"R","landAreaSqm":268},{"unitNumber":"R20","typeCode":"R","landAreaSqm":258},
+        {"unitNumber":"R21","typeCode":"R","landAreaSqm":277},{"unitNumber":"R22","typeCode":"R","landAreaSqm":267},
+        {"unitNumber":"R23","typeCode":"R","landAreaSqm":228},{"unitNumber":"R24","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R25","typeCode":"R","landAreaSqm":228},{"unitNumber":"R26","typeCode":"R","landAreaSqm":256},
+        {"unitNumber":"R27","typeCode":"R","landAreaSqm":263},{"unitNumber":"R28","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R29","typeCode":"R","landAreaSqm":228},{"unitNumber":"R30","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R31","typeCode":"R","landAreaSqm":228},{"unitNumber":"R32","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R33","typeCode":"R","landAreaSqm":228},{"unitNumber":"R34","typeCode":"R","landAreaSqm":259},
+        {"unitNumber":"R35","typeCode":"R","landAreaSqm":246},{"unitNumber":"R36","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R37","typeCode":"R","landAreaSqm":228},{"unitNumber":"R38","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R39","typeCode":"R","landAreaSqm":228},{"unitNumber":"R40","typeCode":"R","landAreaSqm":258},
+        {"unitNumber":"R41","typeCode":"R","landAreaSqm":242},{"unitNumber":"R42","typeCode":"R","landAreaSqm":232},
+        {"unitNumber":"R43","typeCode":"R","landAreaSqm":228},{"unitNumber":"R44","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R45","typeCode":"R","landAreaSqm":228},{"unitNumber":"R46","typeCode":"R","landAreaSqm":240},
+        {"unitNumber":"R47","typeCode":"R","landAreaSqm":267},{"unitNumber":"R48","typeCode":"R","landAreaSqm":259},
+        {"unitNumber":"R49","typeCode":"R","landAreaSqm":256},{"unitNumber":"R50","typeCode":"R","landAreaSqm":263},
+        {"unitNumber":"R51","typeCode":"R","landAreaSqm":228},{"unitNumber":"R52","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R53","typeCode":"R","landAreaSqm":228},{"unitNumber":"R54","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R55","typeCode":"R","landAreaSqm":228},{"unitNumber":"R56","typeCode":"R","landAreaSqm":258},
+        {"unitNumber":"R57","typeCode":"R","landAreaSqm":302},{"unitNumber":"R58","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R59","typeCode":"R","landAreaSqm":228},{"unitNumber":"R60","typeCode":"R","landAreaSqm":228},
+        {"unitNumber":"R61","typeCode":"R","landAreaSqm":257},{"unitNumber":"R62","typeCode":"R","landAreaSqm":286}
+      ]
+    },
+
+    {
+      "slug": "trinity-village",
+      "nameEn": "The Trinity Village",
+      "location": "Pasak 8 - Cherngtalay, Phuket",
+      "landAreaSqm": 26229.77,
+      "conceptDesign": "Modern Contemporary Pool Villa",
+      "totalUnits": 30,
+      "facilities": ["Clubhouse", "Co-working Space", "Fitness", "Security", "Reception"],
+      "unitTypes": [
+        {
+          "code": "A",
+          "nameEn": "Type A",
+          "sizeSqm": 412.50,
+          "bedrooms": 3, "bathrooms": 3,
+          "floorBreakdown": { "firstFloor": 223.50, "secondFloor": 189.00 },
+          "totalUnitsOfType": 8,
+          "note": "Unit codes on site plan use prefix 'A' (A1-A8). Sale Kit narrative calls this 'Type A'."
+        },
+        {
+          "code": "V",
+          "nameEn": "Type B",
+          "sizeSqm": 560.00,
+          "bedrooms": 4, "bathrooms": 4,
+          "floorBreakdown": { "firstFloor": 375.50, "secondFloor": 184.50 },
+          "totalUnitsOfType": 21,
+          "note": "IMPORTANT MISMATCH: unit codes on site plan use prefix 'V' (V1-V21), but the Sale Kit's typology name for this size/spec is 'Type B'. Store code='V' as the unitNumber prefix, but nameEn/nameTh should say 'Type B' to match the Sale Kit and what sales staff call it."
+        },
+        {
+          "code": "D",
+          "nameEn": "Type D",
+          "sizeSqm": 705.00,
+          "bedrooms": 5, "bathrooms": 5,
+          "totalUnitsOfType": 1,
+          "note": "Only unit D2 exists — no D1 in the master plan or unit list. This is correct, not a gap."
+        }
+      ],
+      "units": [
+        {"unitNumber":"A1","typeCode":"A","landAreaSqm":383},{"unitNumber":"A2","typeCode":"A","landAreaSqm":380},
+        {"unitNumber":"A3","typeCode":"A","landAreaSqm":378},{"unitNumber":"A4","typeCode":"A","landAreaSqm":372},
+        {"unitNumber":"A5","typeCode":"A","landAreaSqm":368},{"unitNumber":"A6","typeCode":"A","landAreaSqm":372},
+        {"unitNumber":"A7","typeCode":"A","landAreaSqm":460},{"unitNumber":"A8","typeCode":"A","landAreaSqm":459},
+        {"unitNumber":"V1","typeCode":"V","landAreaSqm":654},{"unitNumber":"V2","typeCode":"V","landAreaSqm":666},
+        {"unitNumber":"V3","typeCode":"V","landAreaSqm":669},{"unitNumber":"V4","typeCode":"V","landAreaSqm":648},
+        {"unitNumber":"V5","typeCode":"V","landAreaSqm":634},{"unitNumber":"V6","typeCode":"V","landAreaSqm":668},
+        {"unitNumber":"V7","typeCode":"V","landAreaSqm":725},{"unitNumber":"V8","typeCode":"V","landAreaSqm":624},
+        {"unitNumber":"V9","typeCode":"V","landAreaSqm":700},{"unitNumber":"V10","typeCode":"V","landAreaSqm":700},
+        {"unitNumber":"V11","typeCode":"V","landAreaSqm":700},{"unitNumber":"V12","typeCode":"V","landAreaSqm":780},
+        {"unitNumber":"V13","typeCode":"V","landAreaSqm":768},{"unitNumber":"V14","typeCode":"V","landAreaSqm":768},
+        {"unitNumber":"V15","typeCode":"V","landAreaSqm":764},{"unitNumber":"V16","typeCode":"V","landAreaSqm":744},
+        {"unitNumber":"V17","typeCode":"V","landAreaSqm":760},{"unitNumber":"V18","typeCode":"V","landAreaSqm":811},
+        {"unitNumber":"V19","typeCode":"V","landAreaSqm":680},{"unitNumber":"V20","typeCode":"V","landAreaSqm":577},
+        {"unitNumber":"V21","typeCode":"V","landAreaSqm":557},
+        {"unitNumber":"D2","typeCode":"D","landAreaSqm":788}
+      ]
+    },
+
+    {
+      "slug": "victory",
+      "nameEn": "The Victory",
+      "location": "Thepkasattri (Thalang Victory Monument), Phuket",
+      "landAreaSqm": 35929.60,
+      "conceptDesign": "Definition of Unique Luxury Villas",
+      "totalUnits": 45,
+      "facilities": ["Restaurant", "SPA", "Lounge", "Common Pool", "Jogging Track", "Security"],
+      "unitTypes": [
+        {
+          "code": "A",
+          "nameEn": "Type A",
+          "sizeSqm": 388.90,
+          "bedrooms": 3, "bathrooms": 3, "restrooms": 1,
+          "floorBreakdown": { "firstFloor": 196.10, "secondFloor": 192.80 },
+          "totalUnitsOfType": 19
+        },
+        {
+          "code": "A+",
+          "nameEn": "Type A+",
+          "sizeSqm": 428.28,
+          "bedrooms": 3, "bathrooms": 3, "restrooms": 1,
+          "floorBreakdown": { "firstFloor": 235.48, "secondFloor": 192.80 },
+          "totalUnitsOfType": 21,
+          "note": "Summary card rounds this to 'approx 418 sq.m' — floor plan total (428.28) is the precise figure, use that."
+        },
+        {
+          "code": "B",
+          "nameEn": "Type B",
+          "sizeSqm": 908.00,
+          "bedrooms": 5, "bathrooms": 4, "restrooms": 1,
+          "floorBreakdown": { "firstFloor": 454.00, "secondFloor": 454.00 },
+          "totalUnitsOfType": 5,
+          "note": "Summary card rounds this to 'approx 982 sq.m' (982 = land area per unit, not living area — see units list). Floor plan total living area is 908 sq.m., use that for sizeSqm."
+        }
+      ],
+      "units": [
+        {"unitNumber":"A1","typeCode":"A","landAreaSqm":388},{"unitNumber":"A2","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A3","typeCode":"A","landAreaSqm":388},{"unitNumber":"A4","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A5","typeCode":"A","landAreaSqm":388},{"unitNumber":"A6","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A7","typeCode":"A","landAreaSqm":388},{"unitNumber":"A8","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A9","typeCode":"A","landAreaSqm":388},{"unitNumber":"A10","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A11","typeCode":"A","landAreaSqm":388},{"unitNumber":"A12","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A34","typeCode":"A","landAreaSqm":388},{"unitNumber":"A35","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A36","typeCode":"A","landAreaSqm":388},{"unitNumber":"A37","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A38","typeCode":"A","landAreaSqm":388},{"unitNumber":"A39","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A40","typeCode":"A","landAreaSqm":388},
+        {"unitNumber":"A+13","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+14","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+15","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+16","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+17","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+18","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+19","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+20","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+21","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+22","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+23","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+24","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+25","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+26","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+27","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+28","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+29","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+30","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+31","typeCode":"A+","landAreaSqm":420},{"unitNumber":"A+32","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"A+33","typeCode":"A+","landAreaSqm":420},
+        {"unitNumber":"B1","typeCode":"B","landAreaSqm":982},{"unitNumber":"B2","typeCode":"B","landAreaSqm":982},
+        {"unitNumber":"B3","typeCode":"B","landAreaSqm":982},{"unitNumber":"B4","typeCode":"B","landAreaSqm":982},
+        {"unitNumber":"B5","typeCode":"B","landAreaSqm":982}
+      ]
+    }
+  ]
+}

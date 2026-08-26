@@ -1,0 +1,27 @@
+-- ─────────────────────────────────────────────────────────────────────────
+-- Remove the Testimonials feature entirely — model, table, and its FK back
+-- to projects.
+--
+-- Written by hand, like the migration that created this table
+-- (20260811103000_add_testimonials_faqs_brochure), because this sandbox has
+-- no live Postgres to run `prisma migrate dev` against. Verify against the
+-- schema with:
+--
+--     npx prisma migrate diff \
+--       --from-migrations prisma/migrations \
+--       --to-schema-datamodel prisma/schema.prisma \
+--       --shadow-database-url "$SHADOW_DATABASE_URL" \
+--       --exit-code
+--
+-- Destructive: every row in "testimonials" is gone once this runs. There is
+-- no soft-delete for this table (unlike Project's deletedAt), so back up
+-- the table first if any of that copy is worth keeping for reuse elsewhere
+-- on the site.
+--
+-- DROP TABLE removes its own indexes and the projectId foreign key
+-- automatically — no separate DROP INDEX / DROP CONSTRAINT statements
+-- needed for a full table drop.
+-- ─────────────────────────────────────────────────────────────────────────
+
+-- DropTable
+DROP TABLE "testimonials";

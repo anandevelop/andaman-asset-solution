@@ -1,0 +1,226 @@
+/**
+ * app/[locale]/admin/events/[id]/edit/page.tsx
+ * ─────────────────────────────────────────────────────────────────────────
+ * Event editor plus the registration roster.
+ *
+ * The roster lives on the same page rather than behind another click: on
+ * event day the two things an organiser needs — the door list and the
+ * ability to mark people ATTENDED — should be one screen.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { ArrowLeft, CheckCircle2, ExternalLink, Users } from "lucide-react";
+import { EventStatus } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/guard";
+import { SEAT_TAKING_STATUSES } from "@/lib/events";
+import { intlLocale, toDateTimeLocal } from "@/lib/format";
+import { deleteEvent, updateEvent } from "../../actions";
+import EventForm, { type EventFormValues } from "@/components/admin/EventForm";
+import RegistrationStatusSelect from "@/components/admin/RegistrationStatusSelect";
+import SaveToast from "@/components/admin/SaveToast";
+
+type Props = {
+  params: { locale: string; id: string };
+  searchParams: { created?: string };
+};
+
+export default async function EditEventPage({ params, searchParams }: Props) {
+  const { locale, id } = params;
+  await requireAdmin(locale);
+
+  const t = await getTranslations({ locale, namespace: "admin" });
+
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: {
+      registrations: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          partySize: true,
+          notes: true,
+          status: true,
+          consentGiven: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  if (!event) notFound();
+
+  const booked = event.registrations
+    .filter((r) => (SEAT_TAKING_STATUSES as readonly EventStatus[]).includes(r.status))
+    .reduce((sum, r) => sum + r.partySize, 0);
+
+  const values: EventFormValues = {
+    slug: event.slug,
+    titleEn: event.titleEn,
+    titleTh: event.titleTh,
+    descriptionEn: event.descriptionEn ?? "",
+    descriptionTh: event.descriptionTh ?? "",
+    location: event.location ?? "",
+    startsAt: toDateTimeLocal(event.startsAt),
+    endsAt: toDateTimeLocal(event.endsAt),
+    coverImageUrl: event.coverImageUrl ?? "",
+    capacity: event.capacity === null ? "" : String(event.capacity),
+    isPublished: event.isPublished,
+  };
+
+  const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const statusLabels = Object.fromEntries(
+    Object.values(EventStatus).map((status) => [
+      status,
+      t(`eventStatus.${status}` as never),
+    ]),
+  ) as Record<EventStatus, string>;
+
+  return (
+    <div className="space-y-8">
+      <header>
+        <Link
+          href={`/${locale}/admin/events`}
+          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+        >
+          <ArrowLeft size={14} aria-hidden />
+          {t("events.title")}
+        </Link>
+
+        <h1 className="mt-3 text-2xl font-semibold text-primary sm:text-3xl">
+          {t("events.editTitle")}
+        </h1>
+
+        {event.isPublished && (
+          <Link
+            href={`/${locale}/events/${event.slug}`}
+            target="_blank"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+          >
+            <ExternalLink size={14} aria-hidden />
+            /events/{event.slug}
+          </Link>
+        )}
+      </header>
+
+      {searchParams.created && (
+        <SaveToast tone="success" token="created">
+          <CheckCircle2 size={16} aria-hidden />
+          {t("common.saved")}
+        </SaveToast>
+      )}
+
+      {/* ── Roster ──────────────────────────────────────────────────── */}
+      <section className="admin-card">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-primary">
+            <Users size={16} className="text-accent-700" aria-hidden />
+            {t("events.registrations")}
+          </h2>
+
+          <p className="text-sm text-ink-muted">
+            {event.capacity === null
+              ? t("events.seatsBooked", { booked })
+              : t("events.seatsBookedOf", { booked, capacity: event.capacity })}
+          </p>
+        </div>
+
+        {event.registrations.length === 0 ? (
+          <p className="py-6 text-center text-sm text-ink-muted">
+            {t("events.noRegistrations")}
+          </p>
+        ) : (
+          <div className="-mx-6 overflow-x-auto px-6">
+            <table className="w-full min-w-[720px] border-collapse">
+              <thead className="border-b border-primary/10">
+                <tr>
+                  <th className="admin-th">{t("leads.name")}</th>
+                  <th className="admin-th">{t("leads.contact")}</th>
+                  <th className="admin-th">{t("events.party")}</th>
+                  <th className="admin-th">{t("leads.received")}</th>
+                  <th className="admin-th">{t("leads.status")}</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-primary/5">
+                {event.registrations.map((registration) => (
+                  <tr key={registration.id}>
+                    <td className="admin-td">
+                      <p className="font-medium text-primary">{registration.name}</p>
+                      {registration.notes && (
+                        <p className="mt-1 max-w-xs text-xs leading-relaxed text-ink-muted">
+                          {registration.notes}
+                        </p>
+                      )}
+                      {!registration.consentGiven && (
+                        <p className="mt-1 text-xs font-medium text-red-700">
+                          {t("leads.consent")}: {t("common.no")}
+                        </p>
+                      )}
+                    </td>
+
+                    <td className="admin-td whitespace-nowrap">
+                      <a
+                        href={`mailto:${registration.email}`}
+                        className="block text-accent-700 hover:underline"
+                      >
+                        {registration.email}
+                      </a>
+                      <a
+                        href={`tel:${registration.phone}`}
+                        className="mt-0.5 block text-xs text-ink-muted hover:underline"
+                      >
+                        {registration.phone}
+                      </a>
+                    </td>
+
+                    <td className="admin-td whitespace-nowrap tabular-nums text-ink-muted">
+                      {registration.partySize}
+                    </td>
+
+                    <td className="admin-td whitespace-nowrap text-xs text-ink-muted">
+                      <time dateTime={registration.createdAt.toISOString()}>
+                        {dateFormat.format(registration.createdAt)}
+                      </time>
+                    </td>
+
+                    <td className="admin-td">
+                      <RegistrationStatusSelect
+                        locale={locale}
+                        eventId={event.id}
+                        registrationId={registration.id}
+                        value={registration.status}
+                        labels={statusLabels}
+                        errorLabel={t("common.error")}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <EventForm
+        locale={locale}
+        action={updateEvent.bind(null, locale, event.id)}
+        values={values}
+        onDelete={deleteEvent.bind(null, locale, event.id)}
+        submitLabel={t("common.save")}
+      />
+    </div>
+  );
+}

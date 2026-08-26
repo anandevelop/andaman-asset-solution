@@ -1,0 +1,1229 @@
+// ─────────────────────────────────────────────────────────────────────────
+// ANDAMAN ASSET SOLUTION — Prisma Schema
+// Postgres. Designed to support Phase 1 (public site) through later phases
+// (admin CMS, blog, project progress galleries, leads, events).
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+enum PropertyType {
+  POOL_VILLA
+  TOWNHOME
+  CONDOMINIUM
+  LAND
+  COMMERCIAL
+}
+
+enum ProjectStatus {
+  UPCOMING
+  UNDER_CONSTRUCTION
+  READY_TO_MOVE_IN
+  SOLD_OUT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  VIEWING_SCHEDULED
+  NEGOTIATING
+  WON
+  LOST
+}
+
+enum LeadSource {
+  PROJECT_PAGE
+  CONTACT_PAGE
+  EVENT_PAGE
+  BLOG_ARTICLE
+  LINE_OA
+  REFERRAL
+  OTHER
+}
+
+/// Sale status of one physical plot. Drives the Site Plan legend.
+///
+/// NOTE ON HOW THIS FILE CAME TO NEED RECONSTRUCTING: migration
+/// 20260812044232_add_unit_types_floor_plans_units_attractions was already
+/// generated and applied against the database, but the model block below
+/// (and ProjectUnitType / FloorPlan / ProjectUnit / ProjectAttraction) had
+/// gone missing from this file — `npx prisma generate` would have produced
+/// a client with no ProjectUnitType and no UnitStatus, silently breaking
+/// every import in lib/projects.ts that expects them. Re-added here to
+/// match the already-applied migration exactly; nothing below this comment
+/// down to the ProjectAttraction model is new schema, only restored.
+enum UnitStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AUTH — Admin users (NextAuth compatible, credentials or OAuth)
+// ─────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String? // null when using OAuth-only sign-in
+  role          Role      @default(EDITOR)
+  isActive      Boolean   @default(true)
+
+  accounts Account[]
+  sessions Session[]
+
+  articles          NewsArticle[]
+  projectProgresses ProjectProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// NextAuth adapter tables
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PROJECTS — luxury developments (e.g. Trinity Village). Drives
+// app/[locale]/projects/[slug] dynamic routing from Phase 2 onward.
+// ─────────────────────────────────────────────────────────────────────────
+
+model Project {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  /// @deprecated — superseded by `ProjectTranslation` below (4-locale
+  /// EN/TH/ZH/RU content instead of a fixed column pair). Kept, unmigrated
+  /// rows fall back to these via `getTranslation()`'s "th" fallback; see
+  /// prisma/migrations/20260820010000_add_i18n_translation_tables for the
+  /// one-time backfill into ProjectTranslation. Not read by any query
+  /// layer written after that migration — write to ProjectTranslation only.
+  nameEn String
+  nameTh String
+
+  /// @deprecated — see nameEn/nameTh above.
+  taglineEn String?
+  taglineTh String?
+
+  /// @deprecated — see nameEn/nameTh above.
+  descriptionEn String? @db.Text
+  descriptionTh String? @db.Text
+
+  /// Sale Kit "Concept Design" narrative — the few paragraphs explaining
+  /// the design intent. Distinct from `descriptionEn/Th` (the shorter
+  /// overview blurb written for this site) and from `tagline` (one line).
+  /// Nullable: a project added before this field existed, or one whose
+  /// Sale Kit hasn't been transcribed yet, simply omits the section.
+  ///
+  /// @deprecated — see nameEn/nameTh above.
+  conceptDesignEn String? @db.Text
+  conceptDesignTh String? @db.Text
+
+  /// Sale Kit "About This Project" — background/heritage narrative. Only
+  /// present in some Sale Kits (e.g. The Victory's Thalang history), which
+  /// is why this is nullable rather than required: the page section is
+  /// conditional on it, not blank-but-present.
+  ///
+  /// @deprecated — see nameEn/nameTh above.
+  aboutThisProjectEn String? @db.Text
+  aboutThisProjectTh String? @db.Text
+
+  /// Illustrative images for the Concept Design / About This Project
+  /// sections — one image each, shown beside the narrative text in a
+  /// split layout on the project page (see the section comment there).
+  /// Nullable: seeded from an existing gallery image where one is
+  /// available, but the split layout must still render text-only when
+  /// there isn't one, same as conceptDesignEn/aboutThisProjectEn already
+  /// being optional.
+  conceptDesignImageUrl     String?
+  aboutThisProjectImageUrl  String?
+
+  /// Notable specs worth their own callout — a lift model and its load
+  /// rating, a water system, anything a buyer would otherwise have to dig
+  /// out of the brochure. Array of {titleEn, titleTh, detailEn, detailTh}.
+  /// Json rather than a child table: this is presentational copy with no
+  /// query or relation of its own, edited as a unit from the admin form
+  /// (add/remove/reorder rows), and a child table would need its own
+  /// CRUD server actions for a feature that is, in every Sale Kit so far,
+  /// zero or one row.
+  specialFeatures Json?
+
+  location     String // e.g. "Pasak 8, Cherngtalay, Phuket"
+  propertyType PropertyType
+  status       ProjectStatus @default(UPCOMING)
+
+  // Area figures — project-level
+  landAreaSqm    Decimal? @db.Decimal(10, 2)
+  projectArea    String?  // human-readable e.g. "16 Rai 1 Ngan 57.40 sq.wa."
+  totalUnits     Int?
+  priceFromTHB   Decimal? @db.Decimal(14, 2)
+  priceToTHB     Decimal? @db.Decimal(14, 2) // upper end of price range
+
+  /// @deprecated — superseded by the `ProjectFacility` child table below
+  /// (full-bleed photo cards, replacing the plain icon+label rendering
+  /// this array used to drive). Kept rather than dropped so nothing that
+  /// still reads it — e.g. an old migration's data, or a future report —
+  /// breaks; the public project page itself no longer reads this field.
+  /// Existing values were migrated into one ProjectFacility row each (see
+  /// prisma/migrations/20260819010000_add_project_facilities) the moment
+  /// this column stopped being written to.
+  facilities String[] // e.g. ["Clubhouse", "Fitness", "Security"]
+
+  heroImageUrl String?
+
+  /// Chooses what the project page's Hero section renders as its
+  /// full-bleed background. IMAGE (default) uses heroImageUrl alone, same
+  /// as before this field existed. VIDEO uses heroVideoUrl instead, with
+  /// heroImageUrl doubling as the poster/fallback shown until the video
+  /// can play (or if heroVideoUrl is ever empty) — no separate poster
+  /// column, unlike HeroStorySlide, since a project only ever has the one
+  /// hero rather than several slides sharing this enum.
+  heroMediaType HeroStoryMediaType @default(IMAGE)
+
+  /// The hero background video — S3/CloudFront URL, mp4/webm (see
+  /// lib/s3.ts). Only read when heroMediaType is VIDEO.
+  heroVideoUrl String?
+
+  gallery      String[] // additional image URLs
+
+  // Sales brochure (PDF) served from CloudFront, uploaded via the admin.
+  brochureUrl String?
+
+  // Master Plan — single overview image; individual units overlay on top.
+  masterPlanImageUrl String?
+
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+
+  /// Pasted from Google Maps' own "Share" button — used verbatim as the
+  /// public page's "Get Directions" link target (falls back to a
+  /// directions URL built from latitude/longitude when this is empty).
+  /// Not translated — a map link doesn't have a language.
+  googleMapsUrl String?
+
+  /// @deprecated — see nameEn/nameTh above.
+  metaTitleEn       String?
+  metaTitleTh       String?
+  metaDescriptionEn String?
+  metaDescriptionTh String?
+
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  progressUpdates ProjectProgress[]
+  leads           LeadInquiry[]
+
+  unitTypes ProjectUnitType[]
+  units     ProjectUnit[]
+
+  /// Full-bleed photo cards under the "Facilities" section — see the
+  /// model below. Supersedes the plain `facilities` array above.
+  facilityItems ProjectFacility[]
+
+  /// EN/TH/ZH/RU content rows — see ProjectTranslation below.
+  translations ProjectTranslation[]
+
+  /// Nearby-attraction categories scoped to this project. Empty for most
+  /// projects on purpose — see NearbyAttractionCategory for the shared
+  /// default set every project falls back to when it has none of its own.
+  attractionCategories NearbyAttractionCategory[]
+
+  /// Back-reference required by Prisma for ProjectAttraction's FK — see
+  /// that model's comment for why nothing writes to it.
+  attractions ProjectAttraction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // soft delete
+
+  @@index([status, isPublished])
+  @@map("projects")
+}
+
+/// One row per (project, locale) — replaces the nameEn/nameTh-style column
+/// pairs above with support for all four site locales (en/th/zh/ru; see
+/// i18n.ts). `name` is the only required field: an admin can create the
+/// English row and leave Thai/Chinese/Russian unfilled, and
+/// lib/get-translation.ts falls back to "en" then "th" for whatever a
+/// visitor's locale is missing. Every other field mirrors one of the
+/// deprecated columns on Project 1:1 — see the comment on each for what it
+/// replaces. All Text, matching the parent's mix of Text and plain String
+/// columns, since an admin filling in Russian copy for `tagline` or
+/// `metaTitle` should not hit a length limit the English column never had.
+model ProjectTranslation {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// e.g. "en", "th", "zh", "ru" — a plain String rather than a Prisma enum
+  /// so adding a fifth locale later is a data change, not a migration.
+  locale String
+
+  name             String  @db.Text
+  tagline          String? @db.Text
+  description      String? @db.Text
+  conceptDesign    String? @db.Text
+  aboutThisProject String? @db.Text
+  metaTitle        String? @db.Text
+  metaDescription  String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, locale])
+  @@map("project_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// UNIT TYPES, FLOOR PLANS, INDIVIDUAL UNITS
+//
+// Restored to match migration 20260812044232 — see the note on UnitStatus
+// above. Query layer and public rendering are new in this phase; the
+// tables themselves and their zod schemas (lib/validations.ts) predate it.
+// ─────────────────────────────────────────────────────────────────────────
+
+model ProjectUnitType {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// Not split into En/Th. The Sale Kits name types "Type A", "Type R" —
+  /// identical in both languages — so a bilingual pair would be two copies
+  /// of the same string. See the "V"/"Type B" note on Trinity Village in
+  /// prisma/seed-data/units-and-types-seed-data.json for the one case
+  /// where the internal code and the Sale Kit's display name diverge.
+  name String
+
+  /// @deprecated — superseded by `UnitTypeTranslation` below. `name` above
+  /// is unaffected (never was a bilingual pair — see its own comment) and
+  /// is not part of the Translation table.
+  descriptionEn String?
+  descriptionTh String?
+
+  livingAreaSqm Decimal? @db.Decimal(8, 2)
+  landAreaSqm   Decimal? @db.Decimal(8, 2)
+  bedrooms      Int?
+  bathrooms     Int?
+  restrooms     Int?
+  totalUnits    Int?
+  priceFromTHB  Decimal? @db.Decimal(14, 2)
+  priceToTHB    Decimal? @db.Decimal(14, 2)
+
+  coverImageUrl String?
+  gallery       String[]
+
+  floorPlans FloorPlan[]
+  units      ProjectUnit[]
+
+  /// EN/TH/ZH/RU `description` rows — see UnitTypeTranslation below.
+  translations UnitTypeTranslation[]
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@map("project_unit_types")
+}
+
+/// One row per (unit type, locale). Only `description` — `name` ("Type A",
+/// "Type R") is shared across every locale, see the comment on
+/// ProjectUnitType.name, so it has no Translation counterpart and stays a
+/// plain column. Nullable throughout, including on locales that exist:
+/// unlike ProjectTranslation.name, there is no single required field here
+/// to anchor a "row exists" convention on — a UnitTypeTranslation row with
+/// a null description is legitimate (an admin created the row via the
+/// language dropdown but hasn't written the copy yet).
+model UnitTypeTranslation {
+  id         String          @id @default(cuid())
+  unitTypeId String
+  unitType   ProjectUnitType @relation(fields: [unitTypeId], references: [id], onDelete: Cascade)
+  locale     String
+
+  description String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unitTypeId, locale])
+  @@map("unit_type_translations")
+}
+
+/// One image per floor of a unit type — a type with a ground, first and
+/// second floor has three rows, each independently orderable. This is why
+/// it is a child table rather than a `floorPlanImages String[]` on the
+/// type itself: a flat array cannot carry the floor label ("Ground Floor"
+/// vs "2nd Floor") that the Sale Kit shows under each plan.
+model FloorPlan {
+  id         String          @id @default(cuid())
+  unitTypeId String
+  unitType   ProjectUnitType @relation(fields: [unitTypeId], references: [id], onDelete: Cascade)
+
+  floorName String // e.g. "Ground Floor", "1st Floor"
+  imageUrl  String
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([unitTypeId, sortOrder])
+  @@map("floor_plans")
+}
+
+/// One physical plot. Drives the Site Plan + Unit Status display — each
+/// unit's `status` renders as a coloured marker or table row.
+model ProjectUnit {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  unitTypeId String?
+  unitType   ProjectUnitType? @relation(fields: [unitTypeId], references: [id], onDelete: SetNull)
+
+  unitNumber String // e.g. "R01", "V12", "D2"
+  status     UnitStatus @default(AVAILABLE)
+
+  /// Polygon vertices for the interactive master plan overlay — an array
+  /// of {x, y} objects, each a percentage (0-100) of the master plan
+  /// image's width/height so the shape stays aligned regardless of the
+  /// image's rendered size (see components/SitePlanMap.tsx's viewBox
+  /// 0 0 100 100). Null until an admin traces it in
+  /// /admin/projects/[id]/site-plan — the source Sale Kit PDFs were not
+  /// digitized to pixel coordinates (see units-and-types-seed-data.json's
+  /// `_note_positions`), so every seeded unit starts unmapped and the site
+  /// plan falls back to a plain pin marker at positionXPercent/Y (or to
+  /// the per-type status table if that is also unset).
+  ///
+  /// Supersedes the earlier `mapPolygon` SVG-string column (an unused,
+  /// never-wired-up placeholder from the same phase that added
+  /// ProjectUnit) — the drawing tool this phase adds needed structured
+  /// {x,y} points to compute a centroid from, not a pre-flattened string.
+  shapePoints Json?
+
+  /// Anchor point for the unit-number label and the pin-marker fallback —
+  /// the centroid of shapePoints, computed server-side the moment a shape
+  /// is saved (see saveUnitShape in
+  /// app/[locale]/admin/projects/[id]/site-plan/actions.ts). Kept as its
+  /// own column rather than derived on every read so the label position
+  /// is stable even if shapePoints' rendering logic changes later. Same
+  /// 0-100 percentage system as shapePoints.
+  positionXPercent Float?
+  positionYPercent Float?
+
+  landAreaSqm Decimal? @db.Decimal(8, 2)
+  priceTHB    Decimal? @db.Decimal(14, 2)
+
+  /// Internal only — never rendered publicly. A place for "buyer backed
+  /// out, re-list after Feb" without it living in someone's inbox.
+  adminNotes String?
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, unitNumber])
+  @@index([projectId, status])
+  @@map("project_units")
+}
+
+/// Full-bleed photo card under the "Facilities" section on the project
+/// page — supersedes reading Project.facilities (String[]) directly, which
+/// only carried an i18n key ("clubhouse", "pool", ...) with no image of
+/// its own. One row per facility, per project (unlike SalesPerson/Award,
+/// which are global), so "Clubhouse" on one project can carry a different
+/// photo — or none — from "Clubhouse" on another.
+model ProjectFacility {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// @deprecated — superseded by `ProjectFacilityTranslation` below.
+  nameEn String
+  nameTh String
+
+  /// Null until an admin uploads a photo via the S3 ImageUploader — the
+  /// public card falls back to a tinted placeholder + the old facility
+  /// glyph until then, same convention as Award.trophyImageUrl and
+  /// SalesPerson.photoUrl.
+  imageUrl String?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// EN/TH/ZH/RU `name` rows — see ProjectFacilityTranslation below.
+  translations ProjectFacilityTranslation[]
+
+  /// Natural-ish key the migration's backfill and any future re-seed
+  /// upsert on, same role as Award's @@unique triple.
+  @@unique([projectId, nameEn])
+  @@index([projectId, isActive, sortOrder])
+  @@map("project_facilities")
+}
+
+/// One row per (facility, locale) — see ProjectTranslation's comment for
+/// the general pattern. `name` required, same "an en row always exists
+/// after the migration backfill" convention as ProjectTranslation.name.
+model ProjectFacilityTranslation {
+  id         String          @id @default(cuid())
+  facilityId String
+  facility   ProjectFacility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  locale     String
+
+  name String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([facilityId, locale])
+  @@map("project_facility_translations")
+}
+
+/// Superseded by NearbyAttractionCategory/NearbyAttractionItem below —
+/// this flat, per-project-only design cannot express "the same list of
+/// beaches and schools applies to three projects, edit it once." Left in
+/// place because the migration already created it and nothing has written
+/// to it; dropping it is a separate decision, not part of this phase.
+model ProjectAttraction {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  category      String
+  nameEn        String
+  nameTh        String?
+  distanceKm    Decimal? @db.Decimal(6, 2)
+  travelTimeMin Int?
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, category, sortOrder])
+  @@map("project_attractions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// NEARBY ATTRACTIONS — shared-by-default, project-overridable
+//
+// Three of the launch Sale Kits (Residence Prime, Trinity Village, The
+// Victory) print the identical school/beach/golf/lifestyle list despite
+// being in different parts of the island — see the `_note` on
+// `nearbyAttractions` in prisma/seed-data/content-seed-data.json. Modelling
+// this as one shared default (projectId null) that every project falls
+// back to, with the option for a project to define its own categories that
+// take over completely, means the common case (three projects, one list)
+// costs one seeded set of rows instead of three identical copies that
+// would drift the day someone corrects a drive time on only one of them.
+// ─────────────────────────────────────────────────────────────────────────
+
+model NearbyAttractionCategory {
+  id String @id @default(cuid())
+
+  /// Null = the shared default, shown for any project with no categories
+  /// of its own. Set = specific to that one project, and its presence
+  /// means "ignore the shared default entirely" — see
+  /// lib/projects.ts#getNearbyAttractions for the fallback rule.
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// @deprecated — superseded by `NearbyAttractionCategoryTranslation` below.
+  categoryNameEn String
+  categoryNameTh String?
+
+  items NearbyAttractionItem[]
+
+  /// EN/TH/ZH/RU `categoryName` rows — see NearbyAttractionCategoryTranslation below.
+  translations NearbyAttractionCategoryTranslation[]
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@map("nearby_attraction_categories")
+}
+
+/// One row per (category, locale) — see ProjectTranslation's comment for
+/// the general pattern.
+model NearbyAttractionCategoryTranslation {
+  id         String                   @id @default(cuid())
+  categoryId String
+  category   NearbyAttractionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     String
+
+  categoryName String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([categoryId, locale])
+  @@map("nearby_attraction_category_translations")
+}
+
+model NearbyAttractionItem {
+  id         String                   @id @default(cuid())
+  categoryId String
+  category   NearbyAttractionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  /// @deprecated — superseded by `NearbyAttractionItemTranslation` below.
+  nameEn String
+  nameTh String?
+
+  distanceKm  Decimal @db.Decimal(6, 2)
+  durationMin Int
+
+  /// EN/TH/ZH/RU `name` rows — see NearbyAttractionItemTranslation below.
+  translations NearbyAttractionItemTranslation[]
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId, sortOrder])
+  @@map("nearby_attraction_items")
+}
+
+/// One row per (item, locale) — see ProjectTranslation's comment for the
+/// general pattern.
+model NearbyAttractionItemTranslation {
+  id     String               @id @default(cuid())
+  itemId String
+  item   NearbyAttractionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locale String
+
+  name String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([itemId, locale])
+  @@map("nearby_attraction_item_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// COMPANY PROFILE — singleton
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One row. "About Andaman Asset Solution" is identical across every Sale
+/// Kit (see `sharedCompanyAboutUs` in content-seed-data.json) — storing it
+/// once here and reading it from both /about and anywhere a project page
+/// wants a company blurb means an edit updates every surface at once,
+/// rather than needing to be pasted into each project's own copy.
+model CompanyProfile {
+  /// Fixed id so `upsert({ where: { id: "default" } })` never needs a
+  /// lookup to find the one row — there is exactly one, always at this id.
+  id String @id @default("default")
+
+  /// @deprecated — superseded by `CompanyProfileTranslation` below.
+  aboutUsEn String @db.Text
+  aboutUsTh String? @db.Text
+
+  /// EN/TH/ZH/RU `aboutUs` rows — see CompanyProfileTranslation below.
+  translations CompanyProfileTranslation[]
+
+  updatedAt DateTime @updatedAt
+
+  @@map("company_profile")
+}
+
+/// One row per (CompanyProfile, locale). Since CompanyProfile is a
+/// singleton (`id` is always the literal string "default"), so is the
+/// composite key here in practice — but modelled as a normal child
+/// relation rather than one column per locale on CompanyProfile itself,
+/// for the same reason every other Translation table exists: adding a
+/// fifth locale later needs a new row, not a new migration.
+model CompanyProfileTranslation {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  locale           String
+
+  aboutUs String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, locale])
+  @@map("company_profile_translations")
+}
+
+// Monthly construction-progress photo galleries per project.
+model ProjectProgress {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  month Int // 1-12
+  year  Int
+
+  titleEn   String?
+  titleTh   String?
+  summaryEn String? @db.Text
+  summaryTh String? @db.Text
+
+  images String[] // image URLs for this month's gallery
+
+  publishedBy String?
+  author      User?   @relation(fields: [publishedBy], references: [id], onDelete: SetNull)
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, year, month])
+  @@index([projectId, year, month])
+  @@map("project_progress")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────────────────────────────────────
+
+model Faq {
+  id String @id @default(cuid())
+
+  /// @deprecated — superseded by `FaqTranslation` below (4-locale EN/TH/
+  /// ZH/RU content instead of a fixed column pair). Kept, unmigrated rows
+  /// fall back to these via `getTranslation()`'s "th" fallback; see
+  /// prisma/migrations/20260821010000_add_faq_translations for the
+  /// one-time backfill. Not read by any query layer written after that
+  /// migration — write to FaqTranslation only.
+  questionEn String
+  questionTh String
+
+  /// @deprecated — see questionEn/questionTh above.
+  answerEn String @db.Text
+  answerTh String @db.Text
+
+  // Groups entries and drives which set a project page shows, e.g.
+  // "ownership" | "payment" | "construction" | "aftercare".
+  category String?
+
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// EN/TH/ZH/RU question/answer rows — see FaqTranslation below.
+  translations FaqTranslation[]
+
+  @@index([isPublished, category, sortOrder])
+  @@map("faqs")
+}
+
+/// One row per (Faq, locale). `question` is the required identity field,
+/// same convention as every other Translation model (e.g. AwardTranslation.
+/// title); `answer` is nullable so a brand-new zh/ru row that only has a
+/// question filled in doesn't fail validation before the admin gets to it.
+model FaqTranslation {
+  id     String @id @default(cuid())
+  faqId  String
+  faq    Faq    @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  locale String
+
+  question String  @db.Text
+  answer   String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([faqId, locale])
+  @@map("faq_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// HERO STORY BANNER — homepage IG-Stories-style hero (image + video slides)
+// ─────────────────────────────────────────────────────────────────────────
+
+enum HeroStoryMediaType {
+  IMAGE
+  VIDEO
+}
+
+/// One slide in the homepage's story-style hero banner. Slides render in
+/// `sortOrder` ascending and loop back to the first after the last one
+/// finishes. Brand new model — created after the 4-locale Translation-table
+/// pattern was already in place (see prisma/migrations/20260820010000_add_i18n_translation_tables
+/// and AwardTranslation's comment for the general shape), so there is no
+/// deprecated EN/TH column pair here the way older models carry one: every
+/// translated field starts life in HeroStorySlideTranslation below.
+model HeroStorySlide {
+  id String @id @default(cuid())
+
+  mediaType HeroStoryMediaType
+
+  /// The photo or video itself — S3/CloudFront URL. See lib/s3.ts for the
+  /// video/mp4 + video/webm content types this accepts.
+  mediaUrl String
+
+  /// Thumbnail shown while a VIDEO slide's file is still loading (the
+  /// <video poster> attribute). Unused for IMAGE slides, which render
+  /// mediaUrl directly with no loading gap to cover.
+  posterImageUrl String?
+
+  /// How long an IMAGE slide holds before StoryBanner auto-advances to the
+  /// next one, in seconds. VIDEO slides ignore this entirely — they
+  /// advance on the <video>'s own `onEnded` event, using the file's real
+  /// length instead of a guessed number.
+  durationSeconds Int @default(5)
+
+  /// Not translated — a URL doesn't have a language, same convention as
+  /// Award.trophyImageUrl.
+  ctaUrl String?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  /// EN/TH/ZH/RU caption + CTA label rows — see HeroStorySlideTranslation
+  /// below.
+  translations HeroStorySlideTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("hero_story_slides")
+}
+
+/// One row per (slide, locale) — see AwardTranslation's comment for the
+/// general pattern. Both fields are nullable: a slide can be a pure
+/// image/video mood shot with no caption or CTA at all, so an empty
+/// translation row is a deliberate choice, not an admin's unfinished task —
+/// the admin UI's completeness badge on this model should be read as "has
+/// copy for this locale", not "is required".
+model HeroStorySlideTranslation {
+  id      String         @id @default(cuid())
+  slideId String
+  slide   HeroStorySlide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  locale  String
+
+  caption  String? @db.Text
+  ctaLabel String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slideId, locale])
+  @@map("hero_story_slide_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SALES TEAM — "Our Sales" section, shown only on /about and /contact
+// (app/[locale]/(site)/about/page.tsx, .../contact/page.tsx). Not
+// bilingual: names, job titles and phone numbers don't get translated —
+// there is no `nameEn`/`nameTh` pair, unlike Faq above.
+// ─────────────────────────────────────────────────────────────────────────
+
+model SalesPerson {
+  id String @id @default(cuid())
+
+  /// @deprecated — superseded by `SalesPersonTranslation` below.
+  nameEn String
+  nameTh String
+
+  /// @deprecated — see nameEn/nameTh above.
+  positionEn String
+  positionTh String
+
+  /// Digits, spaces, +, (), - accepted at the validation layer and
+  /// stripped down to digits when building the wa.me link — see
+  /// lib/sales-team.ts. Unique because it is also this seed/admin CRUD's
+  /// natural business key: prisma/seed.ts upserts on it so a re-seed
+  /// refreshes name/position but never clobbers a photo the admin already
+  /// uploaded or a sortOrder they've since changed.
+  whatsappNumber String @unique
+
+  /// tel: link — deliberately separate from whatsappNumber. The two are
+  /// the same digits for all three people seeded so far, but a sales
+  /// person can (and eventually will) carry a landline or a second mobile
+  /// that isn't on WhatsApp, so collapsing them into one field would have
+  /// been a false economy.
+  phoneNumber String
+
+  /// Optional — the Sale Kit / team roster only supplied WhatsApp numbers
+  /// for the first three people, no email addresses.
+  email String?
+
+  /// Null until an admin uploads a real photo via the S3 ImageUploader —
+  /// the public section falls back to an initial-letter avatar until then.
+  photoUrl String?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  /// EN/TH/ZH/RU `name`/`position` rows — see SalesPersonTranslation below.
+  translations SalesPersonTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("sales_people")
+}
+
+/// One row per (sales person, locale) — see ProjectTranslation's comment
+/// for the general pattern. `name` required (same "an en row always
+/// exists after the backfill" convention); `position` nullable since an
+/// admin may fill the name first and the job title later.
+model SalesPersonTranslation {
+  id            String      @id @default(cuid())
+  salesPersonId String
+  salesPerson   SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+  locale        String
+
+  name     String  @db.Text
+  position String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([salesPersonId, locale])
+  @@map("sales_person_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AWARDS — "Awards" section on the home page, corporate credibility strip.
+// ─────────────────────────────────────────────────────────────────────────
+
+model Award {
+  id String @id @default(cuid())
+
+  /// @deprecated — superseded by `AwardTranslation` below.
+  titleEn String
+  titleTh String
+
+  /// Awarding body — "PropertyGuru", "DotProperty". Not bilingual: an
+  /// organization's name doesn't get translated.
+  organization String
+
+  /// The development the award was for, e.g. "The Residence". Null for
+  /// company-level awards (e.g. "Best Breakthrough Developer") that aren't
+  /// about any one project.
+  projectName String?
+
+  year Int
+
+  /// Null until an admin uploads the real trophy photo via the S3
+  /// ImageUploader — the public section falls back to a generic trophy
+  /// icon until then, same convention as SalesPerson.photoUrl.
+  trophyImageUrl String?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  /// EN/TH/ZH/RU `title` rows — see AwardTranslation below.
+  translations AwardTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// No single natural key (unlike SalesPerson.whatsappNumber), but this
+  /// triple is unique in practice and is what prisma/seed.ts upserts on,
+  /// so a re-seed refreshes copy without clobbering a trophyImageUrl an
+  /// admin has already uploaded or a sortOrder they've since changed.
+  @@unique([organization, titleEn, year])
+  @@index([isActive, sortOrder])
+  @@map("awards")
+}
+
+/// One row per (award, locale) — see ProjectTranslation's comment for the
+/// general pattern.
+model AwardTranslation {
+  id      String @id @default(cuid())
+  awardId String
+  award   Award  @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  locale  String
+
+  title String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([awardId, locale])
+  @@map("award_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// NEWS / SEO BLOG
+// ─────────────────────────────────────────────────────────────────────────
+
+model NewsArticle {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  /// @deprecated — superseded by `NewsArticleTranslation` below.
+  titleEn String
+  titleTh String
+
+  /// @deprecated — see titleEn/titleTh above.
+  excerptEn String? @db.Text
+  excerptTh String? @db.Text
+
+  /// @deprecated — see titleEn/titleTh above.
+  contentEn String @db.Text
+  contentTh String @db.Text
+
+  coverImageUrl String?
+  category      String? // e.g. "Market Insight", "Company News", "Guides"
+  tags          String[]
+
+  /// @deprecated — see titleEn/titleTh above.
+  metaTitleEn       String?
+  metaTitleTh       String?
+  metaDescriptionEn String?
+  metaDescriptionTh String?
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+
+  /// EN/TH/ZH/RU content rows — see NewsArticleTranslation below.
+  translations NewsArticleTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([isPublished, publishedAt])
+  @@map("news_articles")
+}
+
+/// One row per (article, locale) — see ProjectTranslation's comment for
+/// the general pattern. `title` required; `content` nullable despite being
+/// required on the deprecated column pair, since an admin filling in a new
+/// locale via the language dropdown may save a title before writing body
+/// copy — the completeness badge (see admin form spec) is what surfaces
+/// that gap, not a database constraint.
+model NewsArticleTranslation {
+  id        String      @id @default(cuid())
+  articleId String
+  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  locale    String
+
+  title           String  @db.Text
+  excerpt         String? @db.Text
+  content         String? @db.Text
+  metaTitle       String? @db.Text
+  metaDescription String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([articleId, locale])
+  @@map("news_article_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// LEADS — contact / inquiry form submissions
+// ─────────────────────────────────────────────────────────────────────────
+
+model LeadInquiry {
+  id String @id @default(cuid())
+
+  name        String
+  email       String
+  phone       String
+  nationality String?
+  message     String? @db.Text
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  source LeadSource @default(OTHER)
+  status LeadStatus @default(NEW)
+
+  // PDPA (Thailand Personal Data Protection Act) consent trail
+  consentGiven    Boolean  @default(false)
+  consentedAt     DateTime?
+  consentVersion  String? // e.g. "privacy-policy-v1"
+
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Column order is the whole point of having both.
+  //
+  // (status, createdAt) serves the admin table: filter to NEW, sort by date.
+  // (createdAt, status) serves the reports: a date range first, then an
+  // optional status. Postgres can only seek on a leading column, so the
+  // first index cannot answer "last 12 months" without scanning every
+  // status bucket.
+  @@index([status, createdAt])
+  @@index([createdAt, status])
+  @@index([projectId])
+  @@map("lead_inquiries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SITE SETTINGS — operator-editable overrides for config/site.ts
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Key-value overrides for the handful of site details that change without
+/// a deploy: phone number, LINE OA, sales office address.
+///
+/// Deliberately not a wide table with one column per setting. Adding a
+/// setting would then need a migration, which is exactly the friction this
+/// exists to remove. The key set is validated in lib/settings.ts, so the
+/// looseness stops at the database boundary.
+///
+/// Everything else stays in config/site.ts: brand copy, SEO defaults and
+/// legal paths belong in version control where a change is reviewable.
+///
+/// NOTE: Prisma's schema language accepts only line comments — `//` and
+/// `///`. A JSDoc-style block comment is a syntax error (P1012), not a
+/// style choice. Use `///` for anything that should reach the client.
+model SiteSetting {
+  key   String @id
+  value String @db.Text
+
+  // Who last touched it and when — the only audit trail these have.
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// EVENTS — open house / showroom events with RSVP
+// ─────────────────────────────────────────────────────────────────────────
+
+model Event {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  titleEn String
+  titleTh String
+
+  descriptionEn String? @db.Text
+  descriptionTh String? @db.Text
+
+  location  String?
+  startsAt  DateTime
+  endsAt    DateTime?
+  coverImageUrl String?
+
+  capacity Int? // max attendees, null = unlimited
+
+  isPublished Boolean @default(false)
+
+  registrations EventRegistration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startsAt, isPublished])
+  @@map("events")
+}
+
+model EventRegistration {
+  id String @id @default(cuid())
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name  String
+  email String
+  phone String
+  partySize Int @default(1)
+  notes     String? @db.Text
+
+  status EventStatus @default(PENDING) @map("status")
+
+  consentGiven   Boolean   @default(false)
+  consentedAt    DateTime?
+  consentVersion String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, email])
+  @@index([eventId, status])
+  @@map("event_registrations")
+}
+
+// Alias enum name to avoid clashing with RegistrationStatus naming above
+// while keeping a self-explanatory field name on EventRegistration.
+enum EventStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}

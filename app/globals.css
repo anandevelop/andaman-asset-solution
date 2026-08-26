@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Drives the HeroCarousel progress-dash fill for an IMAGE slide —
+   animation-duration is set inline per slide's durationSeconds, and
+   animation-play-state toggles paused/running on hover. See
+   components/HeroCarousel.tsx. */
+@keyframes story-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@layer base {
+  :root {
+    --font-roboto: "Roboto", system-ui, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Safety net: several sections use an edge-to-edge horizontal scroller
+       (negative margin bled out to the viewport edge, e.g. AwardsSection)
+       for a mobile carousel look. If any of those ever end up a pixel or
+       two wider than its container, this stops the whole page from
+       picking up a horizontal scrollbar instead of just that one strip.
+       Set on html only, NOT body — setting overflow-x on both used to
+       break every `position: sticky` element on the site (e.g. the admin
+       sidebar), because per the CSS overflow spec, setting overflow-x to
+       anything but visible forces the paired overflow-y to compute as
+       auto. Doing that on both html AND body created two nested scroll
+       containers, and a sticky element's containing block becomes
+       whichever scroll container the browser picks — inconsistently,
+       once there are two. One overflow-hidden ancestor is enough to stop
+       horizontal bleed without creating that second scroll context. */
+    overflow-x: hidden;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    /* No font-family override here — headings inherit whatever body has
+       (font-sans/Roboto or font-thai/FC Vision), so Thai-locale headings
+       switch fonts along with the rest of the page instead of staying
+       stuck on Roboto. */
+    @apply text-primary;
+    letter-spacing: -0.01em;
+  }
+
+  /* Visible keyboard focus everywhere — accessibility floor */
+  :focus-visible {
+    outline: 2px solid theme("colors.accent.DEFAULT");
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .container-luxe {
+    @apply mx-auto w-full max-w-container px-5 sm:px-8 lg:px-12;
+  }
+
+  .eyebrow {
+    @apply text-xs sm:text-sm font-medium uppercase tracking-widest2 text-accent-700;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-7 py-3.5
+      text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300
+      hover:bg-primary-700 focus-visible:outline-accent;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-primary/25
+      bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
+      transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-white;
+  }
+
+  /* Signature element: the "horizon divider" — a thin line evoking the sea
+     horizon at dusk, used to separate major sections instead of a generic
+     hairline rule. */
+  .horizon-divider {
+    @apply relative mx-auto h-px w-24 bg-horizon-line;
+  }
+
+  /* Article body. Written by hand rather than pulled in via
+     @tailwindcss/typography: the allowlist in lib/markdown.ts is short
+     enough that styling it directly is less code than a plugin plus the
+     overrides needed to match the CI palette. */
+  .prose-article {
+    @apply text-[15px] leading-[1.85] text-ink/75 sm:text-base;
+  }
+
+  .prose-article > * + * {
+    @apply mt-6;
+  }
+
+  .prose-article h2 {
+    @apply mt-12 text-2xl font-light text-primary sm:text-3xl;
+  }
+
+  .prose-article h3 {
+    @apply mt-10 text-xl font-light text-primary sm:text-2xl;
+  }
+
+  .prose-article h4 {
+    @apply mt-8 text-lg font-medium text-primary;
+  }
+
+  .prose-article a {
+    @apply text-accent-700 underline decoration-accent/40 underline-offset-4
+      transition-colors hover:decoration-accent;
+  }
+
+  .prose-article strong {
+    @apply font-medium text-primary;
+  }
+
+  .prose-article ul {
+    @apply list-disc space-y-2 pl-5 marker:text-accent;
+  }
+
+  .prose-article ol {
+    @apply list-decimal space-y-2 pl-5 marker:text-ink/65;
+  }
+
+  .prose-article blockquote {
+    @apply border-l-2 border-accent pl-6 text-lg font-light italic text-ink/65;
+  }
+
+  .prose-article img {
+    @apply w-full rounded-sm shadow-card;
+  }
+
+  .prose-article figcaption {
+    @apply mt-3 text-center text-xs text-ink/65;
+  }
+
+  .prose-article code {
+    @apply rounded-sm bg-primary/5 px-1.5 py-0.5 font-mono text-[0.85em] text-primary;
+  }
+
+  .prose-article pre {
+    @apply overflow-x-auto rounded-sm bg-primary-900/[0.06] p-5 text-xs leading-relaxed;
+  }
+
+  .prose-article pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .prose-article hr {
+    @apply my-12 border-0 h-px bg-horizon-line;
+  }
+
+  .prose-article table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .prose-article th {
+    @apply border-b border-primary/15 px-3 py-2 text-left font-medium text-primary;
+  }
+
+  .prose-article td {
+    @apply border-b border-primary/5 px-3 py-2 align-top;
+  }
+
+  /* ── Back-office primitives ───────────────────────────────────────────
+     The admin uses the same palette as the public site but a denser,
+     lower-contrast rhythm: forms are worked in for hours, not admired. */
+
+  .admin-label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted;
+  }
+
+  .admin-input {
+    @apply w-full rounded-sm border border-primary/15 bg-surface-raised px-3.5 py-2.5
+      text-sm text-ink placeholder:text-ink-muted
+      focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20;
+  }
+
+  .admin-textarea {
+    @apply admin-input min-h-[120px] resize-y leading-relaxed;
+  }
+
+  .admin-hint {
+    @apply mt-1.5 text-xs leading-relaxed text-ink-muted;
+  }
+
+  .admin-card {
+    @apply rounded-sm border border-primary/10 bg-surface-raised p-6 shadow-card;
+  }
+
+  .admin-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-5 py-2.5
+      text-sm font-medium text-white transition-colors hover:bg-primary-700
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .admin-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-primary/20
+      px-5 py-2.5 text-sm font-medium text-primary transition-colors
+      hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60;
+  }
+
+  .admin-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-red-200
+      px-4 py-2.5 text-sm font-medium text-red-700 transition-colors
+      hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
+  }
+
+  .admin-th {
+    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase
+      tracking-wide text-ink-muted;
+  }
+
+  .admin-td {
+    @apply px-4 py-3 align-top text-sm text-ink;
+  }
+
+  .admin-section-title {
+    @apply text-xs font-semibold uppercase tracking-widest2 text-accent-700;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

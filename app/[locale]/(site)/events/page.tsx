@@ -1,0 +1,234 @@
+/**
+ * app/[locale]/(site)/events/page.tsx
+ * ─────────────────────────────────────────────────────────────────────────
+ * Event index — upcoming first, past below.
+ *
+ * Past events stay listed rather than disappearing: their URLs remain valid,
+ * and a visitor arriving at an empty page has no way to tell whether the
+ * company runs events at all.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
+import Reveal from "@/components/Reveal";
+import DbOfflineNotice from "@/components/DbOfflineNotice";
+import { siteConfig } from "@/config/site";
+import { locales } from "@/i18n";
+import { getPublishedEvents, type EventCard } from "@/lib/events";
+import { isDatabaseOffline } from "@/lib/db";
+import { intlLocale } from "@/lib/format";
+
+// Shorter than the other listings: "seats left" ages badly.
+export const revalidate = 120;
+
+type Props = { params: { locale: string } };
+
+export async function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params: { locale },
+}: Props): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: "events" });
+
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    alternates: {
+      canonical: `${siteConfig.url}/${locale}/events`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, `${siteConfig.url}/${l}/events`]),
+      ),
+    },
+  };
+}
+
+export default async function EventsPage({ params: { locale } }: Props) {
+  unstable_setRequestLocale(locale);
+
+  const [t, { upcoming, past }] = await Promise.all([
+    getTranslations("events"),
+    getPublishedEvents(locale),
+  ]);
+
+  const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const timeFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const card = (event: EventCard, index: number, muted = false) => (
+    <Reveal key={event.id} delay={index * 0.08}>
+      <Link
+        href={`/${locale}/events/${event.slug}`}
+        className={`group flex h-full flex-col overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg ${
+          muted ? "opacity-70 hover:opacity-100" : ""
+        }`}
+      >
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
+          {event.coverImageUrl && (
+            <Image
+              src={event.coverImageUrl}
+              alt={event.title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={`object-cover transition-transform duration-700 group-hover:scale-105 ${
+                muted ? "grayscale" : ""
+              }`}
+            />
+          )}
+
+          {!muted && event.seatsLeft !== null && (
+            <span
+              className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wide ${
+                event.seatsLeft === 0
+                  ? "bg-ink/70 text-white"
+                  : event.seatsLeft <= 5
+                    ? "bg-amber-500/90 text-white"
+                    : "bg-white/90 text-primary"
+              }`}
+            >
+              {event.seatsLeft === 0
+                ? t("full")
+                : t("seatsLeft", { count: event.seatsLeft })}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col p-6">
+          <p className="flex items-center gap-1.5 text-xs text-accent-700">
+            <CalendarDays size={12} aria-hidden />
+            <time dateTime={event.startsAt.toISOString()}>
+              {dateFormat.format(event.startsAt)}
+            </time>
+          </p>
+
+          <h2 className="mt-2 text-xl font-light text-primary">{event.title}</h2>
+
+          {event.location && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-ink/65">
+              <MapPin size={12} aria-hidden />
+              {event.location}
+            </p>
+          )}
+
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-ink/70">
+            {event.description}
+          </p>
+
+          <span className="mt-auto pt-6 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent-700">
+            {muted ? t("viewEvent") : t("reserve")}
+            <ArrowRight
+              size={14}
+              className="transition-transform group-hover:translate-x-1"
+              aria-hidden
+            />
+          </span>
+        </div>
+      </Link>
+    </Reveal>
+  );
+
+  const next = upcoming[0];
+
+  return (
+    <>
+      {/* ── Header ───────────────────────────────────────────────────── */}
+      <section className="container-luxe pb-4 pt-28 sm:pt-36">
+        <Reveal>
+          <p className="eyebrow">{t("eyebrow")}</p>
+          <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
+            {t("title")}
+          </h1>
+          <div className="horizon-divider my-6 ml-0" />
+          <p className="max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
+            {t("subtitle")}
+          </p>
+        </Reveal>
+      </section>
+
+      {/* ── Next event banner ────────────────────────────────────────── */}
+      {next && (
+        <section className="container-luxe pt-8">
+          <Reveal>
+            <Link
+              href={`/${locale}/events/${next.slug}`}
+              className="group flex flex-wrap items-center justify-between gap-4 rounded-sm border border-accent/30 bg-accent/[0.07] px-6 py-5"
+            >
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-widest2 text-accent-700">
+                  {t("nextEvent")}
+                </p>
+                <p className="mt-1.5 text-lg font-light text-primary">{next.title}</p>
+                <p className="mt-1 text-xs text-ink/70">
+                  {dateFormat.format(next.startsAt)} · {timeFormat.format(next.startsAt)}
+                  {next.location ? ` · ${next.location}` : ""}
+                </p>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent-700">
+                {t("reserve")}
+                <ArrowRight
+                  size={14}
+                  className="transition-transform group-hover:translate-x-1"
+                  aria-hidden
+                />
+              </span>
+            </Link>
+          </Reveal>
+        </section>
+      )}
+
+      {/* ── Upcoming ─────────────────────────────────────────────────── */}
+      <section className="container-luxe py-14 sm:py-20">
+        {isDatabaseOffline() && <DbOfflineNotice />}
+
+        {upcoming.length === 0 ? (
+          <div className="border border-dashed border-primary/15 bg-white/50 p-12 text-center">
+            <Users size={26} strokeWidth={1.5} className="mx-auto text-ink/30" aria-hidden />
+            <p className="mt-3 text-sm text-ink/65">{t("empty")}</p>
+            <a
+              href={`mailto:${siteConfig.contact.salesEmail}`}
+              className="mt-5 inline-block text-xs font-medium uppercase tracking-wide text-accent-700 hover:text-accent-800"
+            >
+              {t("emptyCta")}
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {upcoming.map((event, index) => card(event, index))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Past ─────────────────────────────────────────────────────── */}
+      {past.length > 0 && (
+        <section className="bg-primary-900/[0.03] py-16 sm:py-24">
+          <div className="container-luxe">
+            <Reveal>
+              <h2 className="text-2xl font-light text-primary sm:text-3xl">
+                {t("pastTitle")}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm text-ink/70">{t("pastSubtitle")}</p>
+            </Reveal>
+
+            <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {past.slice(0, 6).map((event, index) => card(event, index, true))}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

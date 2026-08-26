@@ -1,0 +1,113 @@
+{
+  "_source": "Content extracted from official Sale Kit PDFs, page-by-page. Supplements projects-seed-data.json (which has unit/type/land-area numbers). This file has the marketing copy, image asset mapping, and shared reference data (Nearby Attractions) needed for a full project page matching the Sale Kit.",
+
+  "sharedCompanyAboutUs": {
+    "en": "Andaman Asset Solution Company Limited is a real estate development company based in Phuket specializing in unique modern design pool villas. Our distinctively designed properties are built for people who are looking for pure perfection, workmanship, quality and the latest technology. We have an experienced team of the best design professionals ready to provide you with the highest value, quality and service in Phuket. We construct with sustainable quality, authentic materials and furnished with only the best handpicked furniture. Our communities are well maintained to ensure maximum value for the properties.",
+    "_note": "Appears near-verbatim across Residence Prime and Trinity Village kits. Recommend storing once in a shared 'company about' block (e.g. SiteSetting or a singleton CompanyProfile), not duplicated per project, so one edit updates everywhere."
+  },
+
+  "nearbyAttractions": {
+    "_note": "Identical list appears in Residence Prime, Trinity Village, and Victory Sale Kits despite Victory being in Thalang (further from Cherngtalay). Model as a shared, admin-editable dataset attached to all 3 projects by default — admin can later customize per project (e.g. add Thalang-specific spots for Victory) without re-typing the whole list.",
+    "categories": [
+      {
+        "category": "International School",
+        "items": [
+          {"name": "Kajonkiet Cherngtalay School", "distanceKm": 3, "durationMin": 6},
+          {"name": "HeadStart International School", "distanceKm": 6, "durationMin": 10},
+          {"name": "HEI Schools Phuket", "distanceKm": 8, "durationMin": 12},
+          {"name": "UWC School", "distanceKm": 10, "durationMin": 21},
+          {"name": "British International School", "distanceKm": 12, "durationMin": 24}
+        ]
+      },
+      {
+        "category": "Beach",
+        "items": [
+          {"name": "Layan Beach", "distanceKm": 7, "durationMin": 14},
+          {"name": "Bangtao Beach", "distanceKm": 7, "durationMin": 14},
+          {"name": "Surin Beach", "distanceKm": 7, "durationMin": 14},
+          {"name": "Maikao Beach", "distanceKm": 22, "durationMin": 30}
+        ]
+      },
+      {
+        "category": "Activity",
+        "items": [
+          {"name": "Blue Tree", "distanceKm": 6, "durationMin": 10},
+          {"name": "Laguna Golf Club", "distanceKm": 7, "durationMin": 16},
+          {"name": "Thanyapura Sport Complex", "distanceKm": 11, "durationMin": 23},
+          {"name": "Blue Canyon Golf Club", "distanceKm": 15, "durationMin": 25},
+          {"name": "Red Mountain Golf Club", "distanceKm": 22, "durationMin": 33}
+        ]
+      },
+      {
+        "category": "Lifestyle",
+        "items": [
+          {"name": "Porto de Phuket", "distanceKm": 4, "durationMin": 9},
+          {"name": "Boat Avenue", "distanceKm": 4, "durationMin": 9},
+          {"name": "Robinson Lifestyle Phuket", "distanceKm": 7, "durationMin": 10},
+          {"name": "Cafe del Mar", "distanceKm": 10, "durationMin": 17}
+        ]
+      },
+      {
+        "category": "Lifestyle",
+        "items": [
+          {"name": "Phuket International Airport", "distanceKm": 15, "durationMin": 24},
+          {"name": "Bangkok Hospital Phuket", "distanceKm": 18, "durationMin": 25},
+          {"name": "Central Festival", "distanceKm": 19, "durationMin": 28},
+          {"name": "Phuket Old Town", "distanceKm": 20, "durationMin": 34}
+        ]
+      }
+    ]
+  },
+
+  "projects": [
+    {
+      "slug": "residence-prime",
+      "tagline": { "en": "Modern Smart Design Capturing Timelessness and Unrivaled Comfort" },
+      "conceptDesignEn": "The Residence Prime is only a few steps from the Laguna Area, though minutes from the Central Business District. Our project offers a perfect blend of prime location, stunning beauty, and unique architectural charm near Phuket's finest beach, esteemed international school, and the airport.\n\nThese breathtaking villas are crafted with innovation and cutting-edge technology, providing unparalleled convenience right at your fingertips. Even before your arrival, you can effortlessly customize the environmental conditions of your home and so much more.\n\nCreating a picture of oneness that transcends the limitations of familiarity. Common area is in the center of existence. This area acts as a nexus, drawing together people and weaving them into a unique community. Here, the harmony of shared, communicate, and laughing that reflects the connection.",
+      "specialFeatures": [
+        {
+          "titleEn": "Elevator",
+          "detailEn": "KONE E Monospace — rated load 630 kg (8 persons), rated speed 1.0–1.75 m/s, car size 1100×1400 mm."
+        }
+      ],
+      "imageAssets": {
+        "hero": "hero/hero-cropped.jpg",
+        "gallery": ["gallery/p3-03.jpg", "gallery/p4-04.jpg", "gallery/p5-05.jpg", "gallery/p8-08.jpg", "gallery/p10-10.jpg", "gallery/p12-12.jpg", "gallery/p14-14.jpg", "gallery/p15-15.jpg"],
+        "sitePlan": "site-plan/masterplan-06.jpg",
+        "floorPlansByType": { "R": ["floor-plans/R_p7-07.jpg", "floor-plans/R_p9-09.jpg", "floor-plans/R_p11-11.jpg"] }
+      }
+    },
+    {
+      "slug": "trinity-village",
+      "tagline": { "en": "Modern Contemporary Pool Villa" },
+      "conceptDesignEn": "Stylish modern contemporary pool villa which combines the qualities of modernism, minimalism, and Art Deco. The harmonious elements blend luxury, tranquility, nature, and warmth to enrich family living.\n\nUnique of tradition roof curve design. Spacious living areas perfect place for family gathering and entertaining with guests. Wide open space design with high ceiling, making you feel Charming and Cool. Bring your family closer with the power of exterior and interior design.\n\nThe modern, minimalist architecture seamlessly blends with gracefully curved Asia designs. Immaculately designed and finished to the highest standards of quality, each two-storey villa offers the lifestyle you have been dreaming of with open living spaces that flow freely between the interior and exterior to deliver endless opportunities for relaxing, entertaining or enjoying family life.",
+      "specialFeatures": [],
+      "imageAssets": {
+        "hero": "hero/hero-cropped.jpg",
+        "gallery": ["gallery/p3-03.jpg", "gallery/p5-05.jpg", "gallery/p11-11.jpg", "gallery/p12-12.jpg"],
+        "sitePlan": "site-plan/masterplan-06.jpg",
+        "floorPlansByType": {
+          "A": ["floor-plans/A_p7-07.jpg", "floor-plans/A_p8-08.jpg"],
+          "V": ["floor-plans/B_p9-09.jpg", "floor-plans/B_p10-10.jpg"]
+        }
+      }
+    },
+    {
+      "slug": "victory",
+      "tagline": { "en": "Definition of Unique Luxury Villas" },
+      "conceptDesignEn": "New wave of ultra-luxury property, history link the supreme landscape and community of identity suitable for a new normal family, combination of comfort and naturalness that harmonizes with the lifestyle you have always dreamed of.\n\nPerfectly integrated in the supreme area of The Victory, this villa is conceived as a minimalist architecture project where contrasts predominate. In one side, black and depurated volumes grant this villa, natural stone base that provides with a carefully modern luxurious.\n\nMaterial selection is key to the completion of the project. Materials that exude luxury and glamor. And matching the color tone with the gold/black/brushed steel glass makes the piece edgy and classic at the same time.\n\nConceived as a series of units arranged around an open courtyard, the project strikes a delicate balance between privacy and connectivity.",
+      "aboutThisProjectEn": "The Victory redefines the concept of luxury living in Phuket — a place rooted in history and elevated by elegance. Inspired by the heroic legacy of Thaothep-Kasattri and Thaosri-Sunthon, who united local people to defend Thalang during the early Rattanakosin era, the area has since evolved into a peaceful and culturally rich destination.\n\nCelebrate the best selection of luxury villas at The Victory, where timeless heritage meets contemporary design. This exclusive project is distinguished by its striking modern architecture, refined detailing, and exceptional craftsmanship.",
+      "specialFeatures": [],
+      "imageAssets": {
+        "hero": "hero/hero-cropped.jpg",
+        "gallery": ["gallery/p4-04.jpg", "gallery/p5-05.jpg", "gallery/p6-06.jpg", "gallery/p7-07.jpg", "gallery/p17-17.jpg", "gallery/p18-18.jpg"],
+        "sitePlan": "site-plan/masterplan-08.jpg",
+        "floorPlansByType": {
+          "A": ["floor-plans/A_p9-09.jpg", "floor-plans/A_p10-10.jpg"],
+          "A+": ["floor-plans/Aplus_p11-11.jpg", "floor-plans/Aplus_p12-12.jpg"],
+          "B": ["floor-plans/B_p15-15.jpg", "floor-plans/B_p16-16.jpg"]
+        }
+      }
+    }
+  ]
+}

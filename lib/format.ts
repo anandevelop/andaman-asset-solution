@@ -1,0 +1,42 @@
+/**
+ * lib/format.ts
+ * ─────────────────────────────────────────────────────────────────────────
+ * Locale-aware display formatting shared by server and client components.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+const INTL_LOCALE: Record<string, string> = { th: "th-TH", en: "en-US" };
+
+export function intlLocale(locale: string): string {
+  return INTL_LOCALE[locale] ?? "en-US";
+}
+
+/** 26230 → "26,230" */
+export function formatNumber(locale: string, value: number | null): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat(intlLocale(locale)).format(value);
+}
+
+/**
+ * Date → "YYYY-MM-DDTHH:mm", the only format <input type="datetime-local">
+ * accepts. toISOString() would be wrong here: it converts to UTC, so an
+ * 18:00 Phuket event would come back into the form as 11:00.
+ */
+export function toDateTimeLocal(value: Date | null | undefined): string {
+  if (!value) return "";
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}` +
+    `T${pad(value.getHours())}:${pad(value.getMinutes())}`
+  );
+}
+
+/** (2026, 8) → "Aug 2026" / "ส.ค. 2569" */
+export function formatMonthYear(locale: string, year: number, month: number): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}

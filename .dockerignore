@@ -1,0 +1,51 @@
+# Everything here is excluded from the build context. Two reasons: a
+# smaller context uploads faster, and a leaked .env baked into an image
+# layer is permanent — layers survive even if a later stage deletes them.
+
+# ── Secrets ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Dependencies & build output ─────────────────────────────────────────
+node_modules
+.next
+out
+build
+dist
+*.tsbuildinfo
+
+# ── Version control & CI ────────────────────────────────────────────────
+.git
+.gitignore
+.github
+
+# ── Local tooling ───────────────────────────────────────────────────────
+.vscode
+.idea
+*.swp
+.DS_Store
+
+# ── Docker & compose (not needed inside the image) ──────────────────────
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# ── Logs & temporary files ──────────────────────────────────────────────
+*.log
+npm-debug.log*
+coverage
+.nyc_output
+tmp
+
+# ── Docs and local scripts ──────────────────────────────────────────────
+README.md
+scripts/setup-*.sh
+
+# ── Tests (never needed at runtime) ─────────────────────────────────────
+tests
+e2e
+playwright.config.ts
+vitest.config.ts
+playwright-report
+test-results
