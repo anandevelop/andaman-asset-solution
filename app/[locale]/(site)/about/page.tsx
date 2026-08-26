@@ -193,54 +193,68 @@ export default async function AboutPage({ params: { locale } }: Props) {
         </Reveal>
 
         {/* Real project history (content/company-timeline.ts), transcribed
-            from the company's own portfolio graphic — one rail entry per
-            year, one or more project names each. Text-only by request: no
+            from the company's own portfolio graphic — one entry per year,
+            one or more project names each. Text-only by request: no
             photos, no per-project admin CRUD, since project names are
             proper nouns that don't need translation. The origin marker
-            (COMPANY_FOUNDED_YEAR) leads the rail and is the same figure
+            (COMPANY_FOUNDED_YEAR) leads the flow and is the same figure
             that drives the "years of experience" stat above, so the two
-            numbers on this page can never contradict each other. */}
-        <ol className="mt-12 border-l border-primary/15">
-          <Reveal>
-            <li className="relative pb-11 pl-8">
-              <span
-                aria-hidden
-                className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-surface"
-              />
-              <p className="text-sm font-medium tracking-wide text-accent-700">
-                {formatYear(COMPANY_FOUNDED_YEAR)}
-              </p>
-              <h3 className="mt-1.5 text-lg font-light text-primary">
-                {t("timeline.origin")}
-              </h3>
-            </li>
-          </Reveal>
+            numbers on this page can never contradict each other.
 
-          {COMPANY_TIMELINE.map((entry, index) => (
-            <Reveal key={entry.year} delay={(index + 1) * 0.06}>
-              <li className="relative pb-11 pl-8 last:pb-0">
+            13 entries as one long single-column rail read as a lot of
+            empty space beside a thin strip of text on desktop. CSS multi-
+            column flow (not a grid — entry heights vary a lot, from a
+            single project to five) reads top-to-bottom then wraps into the
+            next column, so the container's full width gets used on large
+            screens while narrow screens keep the original single strip.
+            Each entry carries its own short marker + rule rather than one
+            continuous rail, since a rule can no longer span the whole list
+            once it's split across columns. */}
+        <ol className="mt-12 columns-1 gap-x-14 sm:columns-2 lg:columns-3 lg:gap-x-16">
+          <li className="mb-10 break-inside-avoid">
+            <Reveal>
+              <div className="relative border-l border-primary/15 py-0.5 pl-8">
                 <span
                   aria-hidden
                   className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-surface"
                 />
-
                 <p className="text-sm font-medium tracking-wide text-accent-700">
-                  {formatYear(entry.year)}
+                  {formatYear(COMPANY_FOUNDED_YEAR)}
                 </p>
-                <ul className="mt-1.5 space-y-1.5">
-                  {entry.projects.map((project) => (
-                    <li key={project.name} className="text-base font-light text-primary">
-                      {project.name}
-                      {project.brand && (
-                        <span className="ml-2 text-xs font-normal text-ink/50">
-                          {t("timeline.byBrand", { brand: project.brand })}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </li>
+                <h3 className="mt-1.5 text-lg font-light text-primary">
+                  {t("timeline.origin")}
+                </h3>
+              </div>
             </Reveal>
+          </li>
+
+          {COMPANY_TIMELINE.map((entry, index) => (
+            <li key={entry.year} className="mb-10 break-inside-avoid">
+              <Reveal delay={Math.min(index + 1, 6) * 0.05}>
+                <div className="relative border-l border-primary/15 py-0.5 pl-8">
+                  <span
+                    aria-hidden
+                    className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-surface"
+                  />
+
+                  <p className="text-sm font-medium tracking-wide text-accent-700">
+                    {formatYear(entry.year)}
+                  </p>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {entry.projects.map((project) => (
+                      <li key={project.name} className="text-base font-light text-primary">
+                        {project.name}
+                        {project.brand && (
+                          <span className="ml-2 text-xs font-normal text-ink/50">
+                            {t("timeline.byBrand", { brand: project.brand })}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            </li>
           ))}
         </ol>
       </section>
