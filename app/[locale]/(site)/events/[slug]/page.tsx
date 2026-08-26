@@ -199,7 +199,7 @@ export default async function EventPage({ params: { locale, slug } }: Props) {
             <p className="eyebrow mt-6 text-accent-200">
               {event.isPast ? t("pastLabel") : dateFormat.format(event.startsAt)}
             </p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-light leading-[1.1] sm:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-light leading-[1.1] text-white sm:text-5xl">
               {event.title}
             </h1>
           </Reveal>

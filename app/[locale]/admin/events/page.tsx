@@ -15,6 +15,8 @@ import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale } from "@/lib/format";
+import { translationCompleteness } from "@/lib/admin/translated-form";
+import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
 type Props = { params: { locale: string } };
 
@@ -26,13 +28,18 @@ export default async function AdminEventsPage({ params: { locale } }: Props) {
   const events = await safeQuery(
     "admin:events",
     () =>
-      prisma.event.findMany({
+      // sandbox: `prisma as any` — `translations` is a relation added to
+      // Event in this follow-up i18n pass (see schema.prisma's Event
+      // model) that the locally generated Prisma client doesn't type yet;
+      // same tradeoff as getProjectBySlug in lib/projects.ts.
+      (prisma as any).event.findMany({
         orderBy: { startsAt: "desc" },
         select: {
           id: true,
           slug: true,
           titleEn: true,
           titleTh: true,
+          translations: true,
           location: true,
           startsAt: true,
           endsAt: true,
@@ -44,7 +51,7 @@ export default async function AdminEventsPage({ params: { locale } }: Props) {
           },
         },
       }),
-    [],
+    [] as any[],
   );
 
   const offline = isDatabaseOffline();
@@ -106,11 +113,12 @@ export default async function AdminEventsPage({ params: { locale } }: Props) {
             <tbody className="divide-y divide-primary/5">
               {ordered.map((event) => {
                 const booked = event.registrations.reduce(
-                  (sum, r) => sum + r.partySize,
+                  (sum: number, r: { partySize: number }) => sum + r.partySize,
                   0,
                 );
                 const isPast = (event.endsAt ?? event.startsAt) < now;
                 const full = event.capacity !== null && booked >= event.capacity;
+                const completeness = translationCompleteness<any>(event.translations, "title");
 
                 return (
                   <tr
@@ -120,9 +128,12 @@ export default async function AdminEventsPage({ params: { locale } }: Props) {
                     }`}
                   >
                     <td className="admin-td">
-                      <p className="font-medium text-primary">
-                        {locale === "th" ? event.titleTh : event.titleEn}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-primary">
+                          {locale === "th" ? event.titleTh : event.titleEn}
+                        </p>
+                        <TranslationStatusBadges completeness={completeness} />
+                      </div>
                       <p className="mt-0.5 font-mono text-xs text-ink-muted">
                         /{event.slug}
                       </p>

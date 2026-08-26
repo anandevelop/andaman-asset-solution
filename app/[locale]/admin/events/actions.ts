@@ -35,24 +35,16 @@ function readForm(formData: FormData) {
   const text = (key: string) => (formData.get(key) as string | null) ?? "";
 
   return {
+    locale: text("locale") || "en",
     slug: text("slug"),
-    titleEn: text("titleEn"),
-    titleTh: text("titleTh"),
-    descriptionEn: text("descriptionEn"),
-    descriptionTh: text("descriptionTh"),
+    title: text("title"),
+    description: text("description"),
     location: text("location"),
     startsAt: text("startsAt"),
     endsAt: text("endsAt"),
     coverImageUrl: text("coverImageUrl"),
     capacity: text("capacity"),
     isPublished: formData.get("isPublished") === "on",
-  };
-}
-
-function toPrismaData(input: ReturnType<typeof eventSchema.parse>) {
-  return {
-    ...input,
-    capacity: input.capacity === null ? null : Math.round(input.capacity),
   };
 }
 
@@ -77,9 +69,27 @@ export async function createEvent(
   const parsed = eventSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
+  const { locale: editingLocale, title, description, capacity, ...rest } = parsed.data;
+
   let created;
   try {
-    created = await prisma.event.create({ data: toPrismaData(parsed.data) });
+    created = await (prisma as any).event.create({
+      data: {
+        ...rest,
+        capacity: capacity === null ? null : Math.round(capacity),
+        // titleEn/titleTh/descriptionEn/descriptionTh are @deprecated but
+        // still NOT NULL (title columns) / nullable (description columns)
+        // — mirrored here only for the locale actually being created, same
+        // reasoning as NewsArticle's actions.ts.
+        titleEn: editingLocale === "en" ? title : "",
+        titleTh: editingLocale === "th" ? title : "",
+        descriptionEn: editingLocale === "en" ? description : null,
+        descriptionTh: editingLocale === "th" ? description : null,
+        translations: {
+          create: { locale: editingLocale, title, description },
+        },
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return { ok: false, fields: { slug: "SLUG_TAKEN" } };
@@ -104,7 +114,8 @@ export async function updateEvent(
   const parsed = eventSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
-  const data = toPrismaData(parsed.data);
+  const { locale: editingLocale, title, description, capacity, ...rest } = parsed.data;
+  const data = { ...rest, capacity: capacity === null ? null : Math.round(capacity) };
 
   // Guard against shrinking capacity under the existing bookings.
   if (data.capacity !== null) {
@@ -120,7 +131,23 @@ export async function updateEvent(
       select: { slug: true },
     });
 
-    const updated = await prisma.event.update({ where: { id }, data });
+    const updated = await (prisma as any).event.update({
+      where: { id },
+      data: {
+        ...data,
+        // Only touch the deprecated column matching the locale being
+        // saved — editing zh/ru must never blank out or overwrite en/th.
+        ...(editingLocale === "en" ? { titleEn: title, descriptionEn: description } : {}),
+        ...(editingLocale === "th" ? { titleTh: title, descriptionTh: description } : {}),
+        translations: {
+          upsert: {
+            where: { eventId_locale: { eventId: id, locale: editingLocale } },
+            update: { title, description },
+            create: { locale: editingLocale, title, description },
+          },
+        },
+      },
+    });
 
     if (before && before.slug !== updated.slug) revalidateEvent(locale, before.slug);
     revalidateEvent(locale, updated.slug);

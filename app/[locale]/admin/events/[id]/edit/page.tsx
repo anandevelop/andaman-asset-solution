@@ -18,14 +18,20 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale, toDateTimeLocal } from "@/lib/format";
+import {
+  parseEditingLocale,
+  pickEditingTranslation,
+  translationCompleteness,
+} from "@/lib/admin/translated-form";
 import { deleteEvent, updateEvent } from "../../actions";
 import EventForm, { type EventFormValues } from "@/components/admin/EventForm";
+import LanguageTabs from "@/components/admin/LanguageTabs";
 import RegistrationStatusSelect from "@/components/admin/RegistrationStatusSelect";
 import SaveToast from "@/components/admin/SaveToast";
 
 type Props = {
   params: { locale: string; id: string };
-  searchParams: { created?: string };
+  searchParams: { created?: string; lang?: string };
 };
 
 export default async function EditEventPage({ params, searchParams }: Props) {
@@ -33,17 +39,19 @@ export default async function EditEventPage({ params, searchParams }: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
+  const lang = parseEditingLocale(searchParams.lang);
 
-  // sandbox: `prisma as any` — agencyName/whatsapp were added to
-  // EventRegistration in the agent-partner RSVP redesign; the locally
-  // generated Prisma client predates them (this sandbox has no network
-  // access to Prisma's binary CDN to re-run `prisma generate`), same
-  // tradeoff already documented above getProjectBySlug in lib/projects.ts.
+  // sandbox: `prisma as any` — agencyName/whatsapp (EventRegistration) and
+  // translations (Event, from this same follow-up) were added after the
+  // locally generated Prisma client (this sandbox has no network access to
+  // Prisma's binary CDN to re-run `prisma generate`), same tradeoff already
+  // documented above getProjectBySlug in lib/projects.ts.
   const db = prisma as any;
 
   const event = await db.event.findUnique({
     where: { id },
     include: {
+      translations: true,
       registrations: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -64,6 +72,9 @@ export default async function EditEventPage({ params, searchParams }: Props) {
   });
 
   if (!event) notFound();
+
+  const completeness = translationCompleteness<any>(event.translations, "title");
+  const editing = pickEditingTranslation<any>(event.translations, lang);
 
   // Re-typed by hand since `event` came back through the `prisma as any`
   // cast above — the shape matches the `select` block exactly.
@@ -88,10 +99,8 @@ export default async function EditEventPage({ params, searchParams }: Props) {
 
   const values: EventFormValues = {
     slug: event.slug,
-    titleEn: event.titleEn,
-    titleTh: event.titleTh,
-    descriptionEn: event.descriptionEn ?? "",
-    descriptionTh: event.descriptionTh ?? "",
+    title: editing?.title ?? "",
+    description: editing?.description ?? "",
     location: event.location ?? "",
     startsAt: toDateTimeLocal(event.startsAt),
     endsAt: toDateTimeLocal(event.endsAt),
@@ -245,8 +254,17 @@ export default async function EditEventPage({ params, searchParams }: Props) {
         )}
       </section>
 
+      <LanguageTabs
+        active={lang}
+        completeness={completeness}
+        completeLabel={t("common.translationComplete")}
+        missingLabel={t("common.translationMissing")}
+      />
+
       <EventForm
+        key={lang}
         locale={locale}
+        lang={lang}
         action={updateEvent.bind(null, locale, event.id)}
         values={values}
         onDelete={deleteEvent.bind(null, locale, event.id)}

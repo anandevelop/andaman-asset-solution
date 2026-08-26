@@ -6,6 +6,11 @@
  * Event editor. Times use datetime-local and are read as server-local, so
  * what an editor types is what attendees see — see the note on
  * `localDateTime` in lib/validations.ts.
+ *
+ * title/description are translated — see EventTranslation in
+ * schema.prisma. `lang` selects which locale this instance shows/saves;
+ * the edit page owns the language selector — see AwardForm's file comment
+ * for the fuller version of this note.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -15,14 +20,13 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
+import type { Locale } from "@/i18n";
 import type { EventFormState } from "@/app/[locale]/admin/events/actions";
 
 export type EventFormValues = {
   slug: string;
-  titleEn: string;
-  titleTh: string;
-  descriptionEn: string;
-  descriptionTh: string;
+  title: string;
+  description: string;
   location: string;
   startsAt: string;
   endsAt: string;
@@ -33,10 +37,8 @@ export type EventFormValues = {
 
 export const EMPTY_EVENT: EventFormValues = {
   slug: "",
-  titleEn: "",
-  titleTh: "",
-  descriptionEn: "",
-  descriptionTh: "",
+  title: "",
+  description: "",
   location: "",
   startsAt: "",
   endsAt: "",
@@ -47,6 +49,7 @@ export const EMPTY_EVENT: EventFormValues = {
 
 type Props = {
   locale: string;
+  lang: Locale;
   action: (state: EventFormState, formData: FormData) => Promise<EventFormState>;
   values?: EventFormValues;
   onDelete?: () => Promise<void>;
@@ -123,6 +126,7 @@ function DeleteButton({ label, confirmLabel }: { label: string; confirmLabel: st
 
 export default function EventForm({
   locale,
+  lang,
   action,
   values = EMPTY_EVENT,
   onDelete,
@@ -145,6 +149,8 @@ export default function EventForm({
   return (
     <>
       <form action={formAction} className="space-y-8">
+        <input type="hidden" name="locale" value={lang} />
+
         {state.ok && state.message === "SAVED" && (
           <SaveToast tone="success" token={state}>
             <CheckCircle2 size={16} aria-hidden />
@@ -161,35 +167,19 @@ export default function EventForm({
 
         {/* ── Identity ──────────────────────────────────────────────── */}
         <section className="admin-card space-y-5">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              name="titleEn"
-              error={err("titleEn")}
-              label={`${t("events.eventTitle")} · ${t("projects.english")}`}
-            >
-              <input
-                id="titleEn"
-                name="titleEn"
-                defaultValue={values.titleEn}
-                required
-                className="admin-input"
-              />
-            </Field>
-
-            <Field
-              name="titleTh"
-              error={err("titleTh")}
-              label={`${t("events.eventTitle")} · ${t("projects.thai")}`}
-            >
-              <input
-                id="titleTh"
-                name="titleTh"
-                defaultValue={values.titleTh}
-                required
-                className="admin-input"
-              />
-            </Field>
-          </div>
+          <Field
+            name="title"
+            error={err("title")}
+            label={`${t("events.eventTitle")} · ${lang.toUpperCase()}`}
+          >
+            <input
+              id="title"
+              name="title"
+              defaultValue={values.title}
+              required
+              className="admin-input"
+            />
+          </Field>
 
           <Field
             name="slug"
@@ -270,35 +260,19 @@ export default function EventForm({
         <section className="admin-card space-y-5">
           <h2 className="admin-section-title">{t("projects.description")}</h2>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              name="descriptionEn"
-              error={err("descriptionEn")}
-              label={t("projects.english")}
-            >
-              <textarea
-                id="descriptionEn"
-                name="descriptionEn"
-                defaultValue={values.descriptionEn}
-                rows={6}
-                className="admin-textarea"
-              />
-            </Field>
-
-            <Field
-              name="descriptionTh"
-              error={err("descriptionTh")}
-              label={t("projects.thai")}
-            >
-              <textarea
-                id="descriptionTh"
-                name="descriptionTh"
-                defaultValue={values.descriptionTh}
-                rows={6}
-                className="admin-textarea"
-              />
-            </Field>
-          </div>
+          <Field
+            name="description"
+            error={err("description")}
+            label={lang.toUpperCase()}
+          >
+            <textarea
+              id="description"
+              name="description"
+              defaultValue={values.description}
+              rows={6}
+              className="admin-textarea"
+            />
+          </Field>
 
           <ImageUploader
             name="coverImageUrl"

@@ -445,6 +445,8 @@ export type NewsArticleInput = z.infer<typeof newsArticleSchema>;
 
 export const eventSchema = z
   .object({
+    locale: editingLocaleSchema,
+
     slug: z
       .string()
       .trim()
@@ -455,11 +457,8 @@ export const eventSchema = z
         "Use lowercase letters, numbers and single hyphens",
       ),
 
-    titleEn: z.string().trim().min(2, "Title is required").max(200),
-    titleTh: z.string().trim().min(2, "Title is required").max(200),
-
-    descriptionEn: optionalText(8000),
-    descriptionTh: optionalText(8000),
+    title: z.string().trim().min(2, "Title is required").max(200),
+    description: optionalText(8000),
 
     location: optionalText(240),
     startsAt: requiredDateTime,

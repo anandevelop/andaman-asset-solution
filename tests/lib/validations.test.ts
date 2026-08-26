@@ -214,11 +214,10 @@ describe("fieldErrors", () => {
     // A .refine() on the object has an empty path; without the fallback it
     // would key on "" and never render.
     const result = eventSchema.safeParse({
+      locale: "en",
       slug: "open-house",
-      titleEn: "Open house",
-      titleTh: "เปิดบ้าน",
-      descriptionEn: "",
-      descriptionTh: "",
+      title: "Open house",
+      description: "",
       location: "",
       startsAt: "2026-09-01T18:00",
       endsAt: "2026-09-01T17:00", // before the start
@@ -503,11 +502,10 @@ describe("newsArticleSchema", () => {
 
 describe("eventSchema", () => {
   const VALID_EVENT = {
+    locale: "en",
     slug: "open-house-september",
-    titleEn: "Open house",
-    titleTh: "เปิดบ้าน",
-    descriptionEn: "",
-    descriptionTh: "",
+    title: "Open house",
+    description: "",
     location: "",
     startsAt: "2026-09-01T14:00",
     endsAt: "",

@@ -1075,9 +1075,17 @@ model Event {
   id   String @id @default(cuid())
   slug String @unique
 
+  /// @deprecated — superseded by `EventTranslation` below. Events predate
+  /// the 4-locale i18n pass (see NewsArticleTranslation's comment and
+  /// prisma/migrations/20260820010000_add_i18n_translation_tables) and were
+  /// missed the same way Faq was — see
+  /// prisma/migrations/20260821010000_add_faq_translations's header. This
+  /// follow-up migration gives Event the same EventTranslation table
+  /// instead of retroactively editing an already-applied migration.
   titleEn String
   titleTh String
 
+  /// @deprecated — see titleEn/titleTh above.
   descriptionEn String? @db.Text
   descriptionTh String? @db.Text
 
@@ -1091,12 +1099,29 @@ model Event {
   isPublished Boolean @default(false)
 
   registrations EventRegistration[]
+  translations  EventTranslation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([startsAt, isPublished])
   @@map("events")
+}
+
+model EventTranslation {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  locale  String
+
+  title       String  @db.Text
+  description String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, locale])
+  @@map("event_translations")
 }
 
 model EventRegistration {

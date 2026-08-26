@@ -34,6 +34,7 @@ import { notifyNewRegistration } from "@/lib/line";
 import { notifyNewRegistrationByEmail, sendRsvpConfirmationEmail } from "@/lib/email";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { pickLocale } from "@/lib/locale";
+import { getTranslation } from "@/lib/get-translation";
 import { siteConfig } from "@/config/site";
 
 export const runtime = "nodejs";
@@ -104,7 +105,11 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   try {
-    const event = await prisma.event.findUnique({
+    // sandbox: `prisma as any` — `translations` is a relation added to
+    // Event in the follow-up i18n pass (see schema.prisma's Event model)
+    // that the locally generated Prisma client doesn't type yet; same
+    // tradeoff as getProjectBySlug in lib/projects.ts.
+    const event = await (prisma as any).event.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -114,6 +119,7 @@ export async function POST(request: Request, { params }: Params) {
         endsAt: true,
         titleEn: true,
         titleTh: true,
+        translations: true,
         location: true,
       },
     });
@@ -121,6 +127,10 @@ export async function POST(request: Request, { params }: Params) {
     if (!event || !event.isPublished) {
       return NextResponse.json({ ok: false, error: "EVENT_NOT_FOUND" }, { status: 404 });
     }
+
+    const eventTitleFor = (locale: string) =>
+      getTranslation<any>(event.translations, locale)?.title ??
+      pickLocale(locale, event.titleTh, event.titleEn);
 
     // Registering for something that already finished is never intentional.
     if ((event.endsAt ?? event.startsAt) < new Date()) {
@@ -210,14 +220,14 @@ export async function POST(request: Request, { params }: Params) {
       agencyName: data.agencyName,
       whatsapp: nullify(data.whatsapp),
       // Staff read Thai first, same as the LINE notification's copy.
-      eventTitle: pickLocale("th", event.titleTh, event.titleEn),
+      eventTitle: eventTitleFor("th"),
     });
 
     void sendRsvpConfirmationEmail({
       to: data.email,
       name: data.name,
       locale: data.locale ?? "en",
-      eventTitle: pickLocale(data.locale ?? "en", event.titleTh, event.titleEn),
+      eventTitle: eventTitleFor(data.locale ?? "en"),
       location: event.location,
       startsAt: event.startsAt,
     });

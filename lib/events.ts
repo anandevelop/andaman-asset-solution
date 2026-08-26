@@ -19,6 +19,7 @@ import { EventStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { pickLocale } from "@/lib/locale";
+import { getTranslation } from "@/lib/get-translation";
 
 export type EventCard = {
   id: string;
@@ -46,6 +47,10 @@ function publishedWhere(): Prisma.EventWhereInput {
   return { isPublished: true };
 }
 
+// Not `satisfies Prisma.EventSelect` — `translations` is a relation added
+// to Event in this follow-up i18n pass (see schema.prisma's Event model)
+// that the locally generated Prisma client doesn't type yet; same
+// `prisma as any` sandbox situation as getProjectBySlug in lib/projects.ts.
 const CARD_SELECT = {
   id: true,
   slug: true,
@@ -53,6 +58,7 @@ const CARD_SELECT = {
   titleTh: true,
   descriptionEn: true,
   descriptionTh: true,
+  translations: true,
   location: true,
   startsAt: true,
   endsAt: true,
@@ -62,19 +68,20 @@ const CARD_SELECT = {
     where: { status: { in: [...SEAT_TAKING_STATUSES] } },
     select: { partySize: true },
   },
-} satisfies Prisma.EventSelect;
+};
 
-type CardRow = Prisma.EventGetPayload<{ select: typeof CARD_SELECT }>;
+type CardRow = any;
 
 function toCard(row: CardRow, locale: string, now: Date): EventCard {
   // partySize matters: one registration for four people takes four seats.
-  const taken = row.registrations.reduce((sum, r) => sum + r.partySize, 0);
+  const taken = row.registrations.reduce((sum: number, r: { partySize: number }) => sum + r.partySize, 0);
+  const t = getTranslation<any>(row.translations, locale);
 
   return {
     id: row.id,
     slug: row.slug,
-    title: pickLocale(locale, row.titleTh, row.titleEn),
-    description: pickLocale(locale, row.descriptionTh, row.descriptionEn),
+    title: t?.title ?? pickLocale(locale, row.titleTh, row.titleEn),
+    description: t?.description ?? pickLocale(locale, row.descriptionTh, row.descriptionEn),
     location: row.location,
     startsAt: row.startsAt,
     endsAt: row.endsAt,
@@ -95,7 +102,7 @@ export async function getPublishedEvents(
   const rows = await safeQuery(
     "event.findMany(published)",
     () =>
-      prisma.event.findMany({
+      (prisma as any).event.findMany({
         where: publishedWhere(),
         orderBy: { startsAt: "asc" },
         select: CARD_SELECT,
@@ -115,10 +122,10 @@ export async function getPublishedEvents(
 /** One published event by slug, or null. */
 export const getEventBySlug = cache(
   async (slug: string, locale: string): Promise<EventCard | null> => {
-    const row = await safeQuery(
+    const row = await safeQuery<CardRow | null>(
       `event.findUnique(${slug})`,
       () =>
-        prisma.event.findUnique({
+        (prisma as any).event.findUnique({
           where: { slug },
           select: { ...CARD_SELECT, isPublished: true },
         }),

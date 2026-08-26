@@ -3,17 +3,20 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { parseEditingLocale } from "@/lib/admin/translated-form";
 import { createEvent } from "../actions";
 import EventForm from "@/components/admin/EventForm";
+import LanguageTabs from "@/components/admin/LanguageTabs";
 
-type Props = { params: { locale: string } };
+type Props = { params: { locale: string }; searchParams: { lang?: string } };
 
-export default async function NewEventPage({ params: { locale } }: Props) {
+export default async function NewEventPage({ params: { locale }, searchParams }: Props) {
   // Creating an event commits the company to a date; editors may edit but
   // not schedule one.
   await requireAdmin(locale, Role.ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });
+  const lang = parseEditingLocale(searchParams.lang);
 
   return (
     <div className="space-y-8">
@@ -31,8 +34,17 @@ export default async function NewEventPage({ params: { locale } }: Props) {
         </h1>
       </header>
 
+      <LanguageTabs
+        active={lang}
+        completeness={{ en: false, th: false, zh: false, ru: false }}
+        completeLabel={t("common.translationComplete")}
+        missingLabel={t("common.translationMissing")}
+      />
+
       <EventForm
+        key={lang}
         locale={locale}
+        lang={lang}
         action={createEvent.bind(null, locale)}
         submitLabel={t("common.create")}
       />
