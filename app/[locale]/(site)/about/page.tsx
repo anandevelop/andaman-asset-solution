@@ -21,7 +21,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
-import { Eye, HeartHandshake, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, HeartHandshake, ShieldCheck } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
 import { siteConfig } from "@/config/site";
@@ -256,6 +256,21 @@ export default async function AboutPage({ params: { locale } }: Props) {
             </li>
           ))}
         </ol>
+
+        {/* Real award data lives on its own page (getAwards(locale), same
+            source the homepage Awards section reads) rather than being
+            duplicated here — see app/[locale]/(site)/achievements/page.tsx.
+            Linked from here per the client's choice, rather than adding a
+            new top-level Navbar item for a single page. */}
+        <Reveal>
+          <Link
+            href={`/${locale}/achievements`}
+            className="btn-outline mt-4 inline-flex items-center gap-2"
+          >
+            {t("timeline.viewAll")}
+            <ArrowRight size={16} aria-hidden />
+          </Link>
+        </Reveal>
       </section>
 
       {/* ── Team ─────────────────────────────────────────────────────── */}

@@ -123,7 +123,8 @@
       "eyebrow": "里程碑",
       "title": "我们的发展历程",
       "origin": "在普吉岛成立",
-      "byBrand": "由{brand}打造"
+      "byBrand": "由{brand}打造",
+      "viewAll": "查看我们的所有荣誉"
     },
     "team": {
       "eyebrow": "团队",
@@ -147,6 +148,14 @@
     "yearLabel": "年份",
     "previous": "上一个奖项",
     "next": "下一个奖项"
+  },
+  "achievements": {
+    "eyebrow": "荣誉成就",
+    "title": "我们的荣誉与成就",
+    "metaDescription": "Andaman Asset Solution 在普吉岛各个项目中获得的奖项与行业认可。",
+    "corporateAwards": "企业荣誉",
+    "propertyAwards": "项目荣誉",
+    "empty": "获奖信息将在公布后发布于此。"
   },
   "contact": {
     "eyebrow": "联系我们",

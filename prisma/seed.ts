@@ -478,6 +478,18 @@ const AWARDS = [
     trophyImageUrl: "/awards/dotproperty-trophy.png",
     sortOrder: 5,
   },
+  // Present on the old site's /our-achievements/ page (Property Guru Thailand
+  // Property Awards 2021 list) but missing from this array until now —
+  // found while building the new Achievements page from that page's content.
+  {
+    titleEn: "Highly Commended of Best Club Facilities Design",
+    titleTh: "รางวัลชมเชย การออกแบบสิ่งอำนวยความสะดวกส่วนกลางยอดเยี่ยม",
+    organization: "PropertyGuru",
+    projectName: "The Victory",
+    year: 2021,
+    trophyImageUrl: "/awards/propertyguru-trophy.png",
+    sortOrder: 6,
+  },
 ];
 
 // ── Rich content merge (Sale-Kit parity): residence-prime, trinity-village,

@@ -123,7 +123,8 @@
       "eyebrow": "Milestones",
       "title": "How we got here",
       "origin": "Founded in Phuket",
-      "byBrand": "by {brand}"
+      "byBrand": "by {brand}",
+      "viewAll": "See all our achievements"
     },
     "team": {
       "eyebrow": "The Team",
@@ -147,6 +148,14 @@
     "yearLabel": "Year",
     "previous": "Previous award",
     "next": "Next award"
+  },
+  "achievements": {
+    "eyebrow": "Recognition",
+    "title": "Our Achievements",
+    "metaDescription": "Awards and industry recognition earned by Andaman Asset Solution across our Phuket developments.",
+    "corporateAwards": "Corporate Awards",
+    "propertyAwards": "Property Awards",
+    "empty": "Awards will be published here as they are announced."
   },
   "contact": {
     "eyebrow": "Contact",
