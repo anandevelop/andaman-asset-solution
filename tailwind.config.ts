@@ -75,23 +75,10 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
-        // Nudges right then settles — a wordless "there's more, swipe me"
-        // hint for horizontally-scrolling rows on mobile (see
-        // components/AwardsSection.tsx). translateY(-50%) is baked into
-        // every step (not just a static class alongside the animation)
-        // so the element stays vertically centered throughout, since the
-        // animation's own `transform` overrides whatever is set outside it.
-        "scroll-hint": {
-          "0%, 100%": { transform: "translateY(-50%) translateX(0)" },
-          "50%": { transform: "translateY(-50%) translateX(6px)" },
-        },
       },
       animation: {
         "fade-up": "fade-up 0.7s cubic-bezier(0.16,1,0.3,1) forwards",
         shimmer: "shimmer 2.5s linear infinite",
-        // 3 nudges, not infinite — a hint that never stops moving reads as
-        // an animation glitch rather than a hint once you've seen it twice.
-        "scroll-hint": "scroll-hint 1.3s ease-in-out 3 both",
       },
       backgroundImage: {
         "horizon-line":

@@ -144,7 +144,9 @@
     "title": "Awards",
     "intro": "Andaman Asset Solution delivers end-to-end real estate excellence in Phuket—from direct property development and architectural design to construction and luxury villa management.",
     "awardsCountLabel": "Awards",
-    "yearLabel": "Year"
+    "yearLabel": "Year",
+    "previous": "Previous award",
+    "next": "Next award"
   },
   "contact": {
     "eyebrow": "Contact",
