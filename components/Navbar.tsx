@@ -190,7 +190,22 @@ export default function Navbar({ phone, phoneDisplay }: Props) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-ink/5 bg-surface/95 backdrop-blur-md transition-all">
+      {/*
+        `fixed` instead of `sticky` while the mobile menu is open. The menu
+        panel below scrolls internally (overflow-y-auto, for menus taller
+        than the viewport), and on mobile browsers that internal touch-
+        scroll can drag a `sticky` ancestor's positioning context along
+        with it — the header (and the close button inside it) scrolls up
+        and off-screen with the rest of the page, which is the bug being
+        fixed here. `fixed` is pinned to the viewport itself and can't be
+        dragged by a child's scroll, regardless of browser quirks. No
+        visual difference the rest of the time: body scroll is locked
+        while the menu is open, so both positioning modes render
+        identically at scroll position 0.
+      */}
+      <header
+        className={`${open ? "fixed" : "sticky"} inset-x-0 top-0 z-50 border-b border-ink/5 bg-surface/95 backdrop-blur-md transition-all`}
+      >
         <div className="container-luxe flex h-16 items-center justify-between sm:h-18">
           
           {/* Logo Section */}
