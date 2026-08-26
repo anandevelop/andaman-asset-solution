@@ -11,7 +11,6 @@
 import { getTranslations } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import FloatingChatButton from "@/components/FloatingChatButton";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import SalesTeamSection from "@/components/SalesTeamSection";
 import { getSiteSettings } from "@/lib/settings";
@@ -24,21 +23,13 @@ type Props = {
 
 export default async function SiteLayout({ children, params: { locale } }: Props) {
   // Navbar is a client component (mobile disclosure, active state), so the
-  // live phone number — and now the project list for the "Projects"
-  // dropdown — is fetched here and handed down rather than imported.
+  // live phone number — and the project list for the "Projects" dropdown —
+  // is fetched here and handed down rather than imported.
   const [settings, t, projects] = await Promise.all([
     getSiteSettings(),
     getTranslations("nav"),
     getPublishedProjects(locale),
   ]);
-
-  const tChat = await getTranslations("chatButtons");
-
-  // Build the WhatsApp URL with a pre-filled greeting. Encoding the message
-  // removes ambiguity on every client.
-  const waNumber = settings.contact.whatsapp.replace(/\D/g, "");
-  const waGreeting = encodeURIComponent(tChat("whatsappGreeting"));
-  const whatsappUrl = `https://wa.me/${waNumber}?text=${waGreeting}`;
 
   return (
     <>
@@ -84,16 +75,6 @@ export default async function SiteLayout({ children, params: { locale } }: Props
       </main>
 
       <Footer />
-
-      {/*
-        FloatingChatButton is a client component — it listens to scroll and
-        pathname. Props are resolved here (server) so the component gets
-        the live values without its own data-fetch.
-      */}
-      <FloatingChatButton
-        whatsappUrl={whatsappUrl}
-        whatsappLabel={tChat("whatsappLabel")}
-      />
 
       {/*
         Mounted only inside the public site group, not the root layout —

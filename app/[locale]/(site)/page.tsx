@@ -114,9 +114,8 @@ export default async function HomePage({ params: { locale } }: Props) {
   const heroImage = featured.find((p) => p.heroImageUrl)?.heroImageUrl ?? FALLBACK_HERO;
   const nextEvent = events.upcoming[0];
 
-  // Same wa.me construction as the site-wide floating chat button
-  // (app/[locale]/(site)/layout.tsx) — this CTA used to link to LINE, which
-  // the site no longer uses anywhere; WhatsApp is now the only chat channel.
+  // This CTA used to link to LINE, which the site no longer uses anywhere;
+  // WhatsApp is the only chat channel now.
   const waNumber = settings.contact.whatsapp.replace(/\D/g, "");
   const waGreeting = encodeURIComponent(tChat("whatsappGreeting"));
   const whatsappUrl = `https://wa.me/${waNumber}?text=${waGreeting}`;
