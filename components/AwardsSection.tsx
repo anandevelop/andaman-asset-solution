@@ -109,8 +109,17 @@ export default async function AwardsSection() {
             one axis non-"visible" drags the other along), so without this
             padding the mobile scroll box would crop them at its own top
             edge even though the card itself has nothing clipping it. */}
+        {/* Right-edge fade below lg: (where this row scrolls) — a hard
+            crop at the viewport edge reads as "that's all of it" rather
+            than "keep scrolling." mask-image fades the last 56px of the
+            row to transparent regardless of container width (a fixed px
+            fade rather than a %, so it looks the same on a narrow phone
+            and a tablet); the left edge stays fully opaque since nothing
+            is hidden there at rest (scrollLeft starts at 0). Removed
+            entirely at lg: — the row becomes a fully visible grid there,
+            nothing to hint at. */}
         <div
-          className="mt-12 -mx-5 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 sm:mx-0 sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0"
+          className="mt-12 -mx-5 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] [mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] sm:mx-0 sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0 lg:[-webkit-mask-image:none] lg:[mask-image:none]"
           style={{
             // First column wider than the rest so award #1 — the one
             // worth leading with — reads as the headline, not a tie.
