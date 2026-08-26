@@ -44,17 +44,18 @@
  * missing," not "hover to reveal it." So the touch behaviour — always
  * show, floored at MIN_FONT_PX — is now what every pointer type gets.
  *
- * Each label is still sized off its own on-screen bounding box, not a
- * flat font-size, so a tiny plot doesn't get a number bigger than the
- * shape itself, and the box has to account for the current zoom level —
+ * Every label now renders at the same flat size (FLAT_FONT_PX) rather
+ * than one scaled to its own polygon's bounding box — the earlier
+ * per-plot scaling made a big villa's number noticeably larger than the
+ * townhome row's right next to it, which read as unpolished rather than
+ * intentional once every label was made permanently visible (see above).
+ * The box still has to account for the current zoom level —
  * `transform.scale` (kept in sync by <TransformSync>, a required child of
  * TransformWrapper since the sync hook isn't callable from outside it)
  * and the container's actual rendered pixel size (via ResizeObserver,
  * since this is a responsive component) both feed into the label
- * geometry calculation below. MIN_FONT_PX/MAX_FONT_PX were both brought
- * down a notch from their original values for the same narrower-column
- * reason above — the map simply renders smaller on screen now, so the
- * whole label size range needed to shrink with it.
+ * geometry calculation below, purely so the on-screen size stays literal
+ * pixels at any zoom/viewport rather than for per-plot sizing.
  *
  * The label lives inside the same zoomed content as the polygon (so its
  * *position* just follows along for free via percentage placement), but
@@ -105,50 +106,62 @@ type Transform = { scale: number; positionX: number; positionY: number };
 // Tailwind classes are looked up whole, never string-concatenated, so the
 // JIT compiler can see every one of them statically (same convention as
 // UNIT_STATUS_STYLE/DOT on the project page).
+//
+// Palette matches the muted emerald/accent-gold/ink treatment the project
+// page's own legend and unit chip list already use (UNIT_STATUS_STYLE in
+// projects/[slug]/page.tsx) — this used to be stock Tailwind green-500/
+// red-500, which read as a generic web-template map dropped into an
+// otherwise navy-and-gold site. SOLD in particular was a saturated alarm
+// red; it's now the same "faded out of the running" ink tone the chip
+// list already uses for a sold unit, which still reads clearly against
+// the lighter available/reserved plots without breaking the brand.
 const POLYGON_FILL: Record<UnitStatus, string> = {
-  AVAILABLE: "fill-green-500/40",
+  AVAILABLE: "fill-emerald-500/30",
   RESERVED: "fill-accent/40",
-  // Bright red, deliberately an alarm colour here — a sold-out plot is
-  // the one status a buyer scanning the plan needs to rule out at a
-  // glance, so this is the one status allowed to compete for attention.
-  SOLD: "fill-red-500/90",
+  SOLD: "fill-ink/40",
 };
 const POLYGON_STROKE: Record<UnitStatus, string> = {
-  AVAILABLE: "stroke-green-500",
+  AVAILABLE: "stroke-emerald-600",
   RESERVED: "stroke-accent",
-  SOLD: "stroke-red-600",
+  SOLD: "stroke-ink/60",
 };
-// SOLD's border reads heavier than the other two at the same width given
-// how saturated the fill is, so it is a touch thinner (1.5px vs 2px) —
-// still a literal on-screen pixel width at any zoom via vector-effect.
 const POLYGON_STROKE_WIDTH: Record<UnitStatus, number> = {
   AVAILABLE: 2,
   RESERVED: 2,
   SOLD: 1.5,
 };
 const PIN_FILL: Record<UnitStatus, string> = {
-  AVAILABLE: "fill-green-500",
+  AVAILABLE: "fill-emerald-500",
   RESERVED: "fill-accent",
-  SOLD: "fill-red-500",
-};
-const PILL_STYLE: Record<FilterValue, string> = {
-  ALL: "border-primary/60",
-  AVAILABLE: "border-green-500",
-  RESERVED: "border-accent",
-  SOLD: "border-red-600",
+  SOLD: "fill-ink/60",
 };
 
-// Brought down from 8/16 — the map now typically renders in a narrower
-// column (see the "Site Plan + Unit Status" section on the project page),
-// so the whole label size range needed to shrink with it to keep numbers
-// from crowding tightly packed rows of small units.
-const MIN_FONT_PX = 6;
-const MAX_FONT_PX = 13;
+// Small dot rendered inside each filter pill, so status is still readable
+// at a glance once the pill itself switched to the site's standard
+// solid-navy-when-active chip (see ProjectFilterBar's `chip()`) rather
+// than a colour-coded border.
+const STATUS_DOT: Record<FilterValue, string> = {
+  ALL: "bg-primary",
+  AVAILABLE: "bg-emerald-500",
+  RESERVED: "bg-accent",
+  SOLD: "bg-ink/50",
+};
+
+// Every label renders at the same flat size now, rather than scaled to
+// its own polygon's on-screen box — the previous per-plot scaling made
+// adjacent unit numbers look randomly mismatched in size (a big villa
+// plot's "R01" noticeably larger than the townhome row's "R11" right next
+// to it), which read as unpolished rather than intentional. The only
+// thing that still shrinks a label now is the crowd-collision fallback
+// below, for the genuinely tight rows where two flat-size badges would
+// overlap.
+const FLAT_FONT_PX = 10;
+const MIN_FONT_PX = 7;
 // Flat pixel distance below which two labels are considered likely to
 // collide. Not exact (it doesn't know either label's actual rendered
 // width), just the "simple fallback" the task asked for.
 const CROWD_DISTANCE_PX = 22;
-const CROWD_SHRINK_STEP_PX = 2;
+const CROWD_SHRINK_STEP_PX = 1.5;
 
 function pointsToAttr(points: ShapePoint[]): string {
   return points.map((p) => `${p.x},${p.y}`).join(" ");
@@ -156,17 +169,6 @@ function pointsToAttr(points: ShapePoint[]): string {
 
 function average(values: number[]): number {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
-}
-
-function polygonBounds(points: ShapePoint[]) {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  return {
-    minX: Math.min(...xs),
-    maxX: Math.max(...xs),
-    minY: Math.min(...ys),
-    maxY: Math.max(...ys),
-  };
 }
 
 /** Keeps `transform` in sync with react-zoom-pan-pinch's own state —
@@ -280,8 +282,8 @@ export default function SitePlanMap({
     }
   };
 
-  // Per-unit label geometry — on-screen box size, resulting font size,
-  // and whether it clears the readability floor. Recomputed whenever the
+  // Per-unit label geometry — on-screen anchor position, plus the flat
+  // font size adjusted only for local crowding. Recomputed whenever the
   // shapes, the container size, or the zoom scale change.
   const labelGeometry = useMemo(() => {
     const geo = new Map<string, { fontPx: number; anchorXPx: number; anchorYPx: number }>();
@@ -298,16 +300,15 @@ export default function SitePlanMap({
       const shapePoints = unit.shapePoints;
       if (!shapePoints || shapePoints.length < 3) continue;
 
-      const bounds = polygonBounds(shapePoints);
-      const boxWidthPx = (bounds.maxX - bounds.minX) * pxPerUnitX;
-      const boxHeightPx = (bounds.maxY - bounds.minY) * pxPerUnitY;
-      const minBoxPx = Math.min(boxWidthPx, boxHeightPx);
-
       const anchorX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
       const anchorY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
 
+      // Every label starts at the same flat size (FLAT_FONT_PX) — see the
+      // constant's comment for why this replaced the old per-plot,
+      // box-size-proportional formula. Only the crowd-collision pass
+      // below shrinks a label from here.
       geo.set(unit.id, {
-        fontPx: Math.min(MAX_FONT_PX, Math.max(MIN_FONT_PX, minBoxPx * 0.35)),
+        fontPx: FLAT_FONT_PX,
         anchorXPx: anchorX * pxPerUnitX,
         anchorYPx: anchorY * pxPerUnitY,
       });
@@ -337,6 +338,11 @@ export default function SitePlanMap({
   return (
     <div>
       {/* ── Filter pills ────────────────────────────────────────────── */}
+      {/* Same solid-navy-when-active chip language as ProjectFilterBar's
+          chip() on /projects, rather than the old colour-coded-border
+          treatment — a status dot inside each pill still carries the
+          colour meaning, so nothing is lost switching to the shared
+          convention. */}
       <div className="mb-5 flex flex-wrap gap-2.5">
         {pills.map((pill) => {
           const active = filter === pill.value;
@@ -345,12 +351,17 @@ export default function SitePlanMap({
               key={pill.value}
               type="button"
               onClick={() => setFilter(pill.value)}
-              className={`rounded-full border-2 px-4 py-1.5 text-xs font-medium transition-colors ${
+              aria-pressed={active}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
                 active
-                  ? `${PILL_STYLE[pill.value]} bg-primary/[0.04] text-primary`
-                  : "border-transparent bg-primary-900/[0.03] text-ink/60 hover:text-primary"
+                  ? "border-primary bg-primary text-white"
+                  : "border-primary/15 text-ink/70 hover:border-primary/40 hover:text-primary"
               }`}
             >
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-white" : STATUS_DOT[pill.value]}`}
+                aria-hidden
+              />
               {pill.label} ({pill.count})
             </button>
           );
@@ -358,9 +369,14 @@ export default function SitePlanMap({
       </div>
 
       {/* ── Map ─────────────────────────────────────────────────────── */}
+      {/* rounded-sm + shadow-card matches every other framed white panel
+          on the site (news/event cards, the fallback master-plan block
+          above) — this was previously flat square corners with no
+          elevation, which read as a generic template widget rather than
+          part of the site. */}
       <div
         ref={containerRef}
-        className="relative aspect-[1754/1241] w-full overflow-hidden border border-primary/10 bg-white"
+        className="relative aspect-[1754/1241] w-full overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card"
       >
         <TransformWrapper minScale={1} maxScale={6} centerOnInit>
           <TransformSync onChange={setTransform} />
@@ -468,7 +484,14 @@ export default function SitePlanMap({
                   current zoom scale, see labelGeometry above) needs an
                   inverse `scale(1/zoom)` on each label so the ancestor's
                   own zoom transform doesn't apply on top of it a second
-                  time. */}
+                  time.
+
+                  Rendered as a small white badge rather than bare
+                  coloured-outline text — the badge reads the same crisp
+                  size against every fill colour (emerald, gold, or ink)
+                  instead of relying on a text-shadow outline that looked
+                  fine on the old saturated red but washed out against the
+                  new, more muted palette. */}
               <div className="pointer-events-none absolute inset-0">
                 {units.map((unit) => {
                   const shapePoints = unit.shapePoints;
@@ -477,13 +500,13 @@ export default function SitePlanMap({
                   const geo = labelGeometry.get(unit.id);
                   const labelX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
                   const labelY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
-                  const fontPx = geo?.fontPx ?? MAX_FONT_PX;
+                  const fontPx = geo?.fontPx ?? FLAT_FONT_PX;
                   const dimmed = filter !== "ALL" && unit.status !== filter;
 
                   return (
                     <span
                       key={unit.id}
-                      className="absolute font-sans font-bold leading-none text-white"
+                      className="absolute whitespace-nowrap rounded-sm border border-primary/10 bg-white/95 font-sans font-semibold leading-none text-primary shadow-sm"
                       style={{
                         left: `${labelX}%`,
                         top: `${labelY}%`,
@@ -493,12 +516,8 @@ export default function SitePlanMap({
                         // they apply as a single, predictable operation.
                         transform: `translate(-50%, -50%) scale(${1 / transform.scale})`,
                         fontSize: `${fontPx}px`,
+                        padding: `${fontPx * 0.15}px ${fontPx * 0.35}px`,
                         opacity: dimmed ? 0.15 : 1,
-                        // Thin dark outline for contrast against a light
-                        // fill — the layered-shadow trick, since HTML text
-                        // has no paint-order/stroke like SVG does.
-                        textShadow:
-                          "-0.5px -0.5px 0 rgba(15,23,42,0.85), 0.5px -0.5px 0 rgba(15,23,42,0.85), -0.5px 0.5px 0 rgba(15,23,42,0.85), 0.5px 0.5px 0 rgba(15,23,42,0.85)",
                       }}
                     >
                       {unit.unitNumber}
