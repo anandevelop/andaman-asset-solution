@@ -27,12 +27,21 @@ import { ArrowRight, MapPin } from "lucide-react";
 import type { ProjectCard } from "@/lib/projects";
 import { formatNumber } from "@/lib/format";
 
-/** Status colour carries the stage before the label is read. */
+/**
+ * Status colour carries the stage before the label is read.
+ *
+ * Solid, opaque fills rather than the previous tinted/translucent ones
+ * (bg-accent/15 etc.) — the badge sits on top of whatever photo the project
+ * happens to have, and a 10-15% tint over a bright sky or dark render is
+ * nearly unreadable either way, with mid-tone text on top of it faring
+ * even worse. An opaque background reads the same regardless of what's
+ * behind it; white text on each of these clears 5:1 contrast at minimum.
+ */
 const STATUS_TONE: Record<string, string> = {
-  UPCOMING: "bg-accent/15 text-accent-700",
-  UNDER_CONSTRUCTION: "bg-amber-500/15 text-amber-700",
-  READY_TO_MOVE_IN: "bg-emerald-500/15 text-emerald-700",
-  SOLD_OUT: "bg-ink/10 text-ink/70",
+  UPCOMING: "bg-accent-700 text-white",
+  UNDER_CONSTRUCTION: "bg-amber-700 text-white",
+  READY_TO_MOVE_IN: "bg-emerald-700 text-white",
+  SOLD_OUT: "bg-ink text-white",
 };
 
 export type FeaturedProjectCardProps = {
@@ -82,8 +91,8 @@ export default function FeaturedProjectCard({
         )}
 
         <span
-          className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wide ${
-            STATUS_TONE[project.status] ?? "bg-white/90 text-ink/70"
+          className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wide shadow-sm ${
+            STATUS_TONE[project.status] ?? "bg-white text-ink"
           }`}
         >
           {labels.status}
