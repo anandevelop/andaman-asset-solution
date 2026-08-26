@@ -12,7 +12,8 @@
     "openMenu": "เปิดเมนู",
     "closeMenu": "ปิดเมนู",
     "skipToContent": "ข้ามไปยังเนื้อหา",
-    "language": "ภาษา"
+    "language": "ภาษา",
+    "viewAllProjects": "ดูโครงการทั้งหมด"
   },
   "common": {
     "readMore": "อ่านเพิ่มเติม",

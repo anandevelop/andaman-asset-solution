@@ -12,7 +12,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "skipToContent": "Skip to content",
-    "language": "Language"
+    "language": "Language",
+    "viewAllProjects": "View all projects"
   },
   "common": {
     "readMore": "Read more",

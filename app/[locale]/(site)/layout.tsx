@@ -15,13 +15,21 @@ import FloatingChatButton from "@/components/FloatingChatButton";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import SalesTeamSection from "@/components/SalesTeamSection";
 import { getSiteSettings } from "@/lib/settings";
+import { getPublishedProjects } from "@/lib/projects";
 
-export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode;
+  params: { locale: string };
+};
+
+export default async function SiteLayout({ children, params: { locale } }: Props) {
   // Navbar is a client component (mobile disclosure, active state), so the
-  // live phone number is fetched here and handed down rather than imported.
-  const [settings, t] = await Promise.all([
+  // live phone number — and now the project list for the "Projects"
+  // dropdown — is fetched here and handed down rather than imported.
+  const [settings, t, projects] = await Promise.all([
     getSiteSettings(),
     getTranslations("nav"),
+    getPublishedProjects(locale),
   ]);
 
   const tChat = await getTranslations("chatButtons");
@@ -57,6 +65,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Navbar
         phone={settings.contact.phone}
         phoneDisplay={settings.contact.phoneDisplay}
+        projects={projects.map((project) => ({ slug: project.slug, name: project.name }))}
       />
 
       {/* tabIndex={-1} so the skip link can actually move focus here.

@@ -12,7 +12,8 @@
     "openMenu": "Открыть меню",
     "closeMenu": "Закрыть меню",
     "skipToContent": "Перейти к содержимому",
-    "language": "Язык"
+    "language": "Язык",
+    "viewAllProjects": "Смотреть все проекты"
   },
   "common": {
     "readMore": "Подробнее",

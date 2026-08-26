@@ -12,7 +12,8 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "skipToContent": "跳至内容",
-    "language": "语言"
+    "language": "语言",
+    "viewAllProjects": "查看所有项目"
   },
   "common": {
     "readMore": "阅读更多",
