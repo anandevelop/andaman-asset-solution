@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import LeadForm from "@/components/LeadForm";
-import SalesTeamSection from "@/components/SalesTeamSection";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
 import { locales, type Locale } from "@/i18n";
@@ -255,9 +254,6 @@ export default async function ContactPage({ params: { locale } }: Props) {
           </Reveal>
         </div>
       </section>
-
-      {/* ── Our Sales ────────────────────────────────────────────────── */}
-      <SalesTeamSection />
     </>
   );
 }

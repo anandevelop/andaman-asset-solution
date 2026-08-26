@@ -1,9 +1,11 @@
 /**
  * components/SalesTeamSection.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * "Our Sales" — shown only on /about and /contact, nowhere else (not the
- * home page, not project pages). See those two page files for the only
- * two places this is rendered.
+ * "Our Sales" — shown on every public page, mounted once in
+ * app/[locale]/(site)/layout.tsx (inside <main>, after {children}) rather
+ * than imported per-page. It used to be wired into /about and /contact
+ * individually; moved up to the shared layout so it appears site-wide
+ * without duplicating the import in every page file.
  *
  * Server component: fetches its own data (lib/sales-team.ts) rather than
  * taking it as a prop, since every caller wants the same active list and

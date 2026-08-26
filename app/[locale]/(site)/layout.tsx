@@ -13,6 +13,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingChatButton from "@/components/FloatingChatButton";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import SalesTeamSection from "@/components/SalesTeamSection";
 import { getSiteSettings } from "@/lib/settings";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,14 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           the next Tab drops the user back at the top of the nav. */}
       <main id="main" tabIndex={-1} className="focus:outline-none">
         {children}
+
+        {/* "Our Sales" — mounted once here rather than per-page so it
+            appears at the bottom of every public page, not just /about and
+            /contact (its original two homes; see the removed imports in
+            those page files). It fetches and renders nothing itself when
+            there's no active sales team, so it's safe to mount
+            unconditionally site-wide. */}
+        <SalesTeamSection />
       </main>
 
       <Footer />

@@ -24,7 +24,6 @@ import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { Eye, HeartHandshake, ShieldCheck } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
-import SalesTeamSection from "@/components/SalesTeamSection";
 import { siteConfig } from "@/config/site";
 import { team } from "@/config/team";
 import { locales } from "@/i18n";
@@ -321,9 +320,6 @@ export default async function AboutPage({ params: { locale } }: Props) {
           </div>
         </Reveal>
       </section>
-
-      {/* ── Our Sales ────────────────────────────────────────────────── */}
-      <SalesTeamSection />
     </>
   );
 }
