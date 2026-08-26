@@ -60,19 +60,18 @@ export default async function Footer() {
             {siteConfig.description[locale]}
           </p>
           <div className="mt-8">
-            {/* text-white on this light sand accent (#e8b384) is ~1.9:1
-                contrast — fails WCAG AA outright and reads as washed-out
-                against the pill, which is what made it hard to read here.
-                text-primary (deep navy) on the same background is ~6.8:1,
-                comfortably clears AA, and the arrow circle switches to
-                match rather than staying on the same low-contrast accent
-                tone. */}
+            {/* White pill per brand CI (primary navy + accent tan are the
+                other two brand colors, both already used elsewhere on this
+                page — white reads as the third, neutral option against the
+                dark footer). Arrow circle inverts to solid navy so it
+                stays visible against the same white pill, rather than
+                white-on-white. */}
             <Link
               href={`/${locale}/contact`}
-              className="group inline-flex items-center gap-3 rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-primary transition-all duration-300 hover:bg-accent/90"
+              className="group inline-flex items-center gap-3 rounded-full bg-white px-6 py-2.5 text-sm font-medium text-primary transition-all duration-300 hover:bg-white/90"
             >
               {t("contactUs")}
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-primary">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
                 <ArrowRight size={14} strokeWidth={2.5} />
               </div>
             </Link>
