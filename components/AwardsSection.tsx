@@ -35,12 +35,17 @@
  * used to provide. The first award gets a wider grid column, a bigger
  * trophy, and larger type — the one worth leading with should read as the
  * headline, not tie visually with the rest.
+ *
+ * Below lg: the row is a horizontal scroller (see the wrapping <div> just
+ * above it) with a right-edge fade and a small nudging chevron hint so a
+ * mobile visitor knows there's more to swipe to — both purely visual, no
+ * JS, gone entirely at lg: where the row is a fully visible grid.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Trophy } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { getAwards } from "@/lib/awards";
 
@@ -118,84 +123,109 @@ export default async function AwardsSection() {
             is hidden there at rest (scrollLeft starts at 0). Removed
             entirely at lg: — the row becomes a fully visible grid there,
             nothing to hint at. */}
-        <div
-          className="mt-12 -mx-5 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] [mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] sm:mx-0 sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0 lg:[-webkit-mask-image:none] lg:[mask-image:none]"
-          style={{
-            // First column wider than the rest so award #1 — the one
-            // worth leading with — reads as the headline, not a tie.
-            gridTemplateColumns: awards.map((_, i) => (i === 0 ? "1.6fr" : "1fr")).join(" "),
-          }}
-        >
-          {awards.map((award, index) => {
-            const featured = index === 0;
+        {/* Wrapper carries the -mx-5 bleed instead of the scroll row itself
+            now — the scroll-hint arrow below is positioned relative to
+            *this* box, so it needs to span the same true viewport-edge-to-
+            edge width the row visually bleeds to, not the narrower
+            container width. (Splitting -mx-5 off from the row's own
+            px-5 is safe: it's a horizontal margin, which never collapses,
+            so the two still cancel out to the exact same rendered width
+            as before.) */}
+        <div className="relative -mx-5 sm:mx-0">
+          <div
+            className="mt-12 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] [mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0 lg:[-webkit-mask-image:none] lg:[mask-image:none]"
+            style={{
+              // First column wider than the rest so award #1 — the one
+              // worth leading with — reads as the headline, not a tie.
+              gridTemplateColumns: awards.map((_, i) => (i === 0 ? "1.6fr" : "1fr")).join(" "),
+            }}
+          >
+            {awards.map((award, index) => {
+              const featured = index === 0;
 
-            return (
-              <Reveal
-                key={award.id}
-                delay={index * 0.06}
-                className={`shrink-0 lg:w-full ${featured ? "w-72" : "w-64"}`}
-              >
-                <div
-                  className={`relative flex h-full flex-col rounded-sm border bg-white p-6 shadow-card lg:w-full ${
-                    featured
-                      ? "border-accent-700/20 pt-20 shadow-lg"
-                      : "border-primary/10 pt-16"
-                  }`}
+              return (
+                <Reveal
+                  key={award.id}
+                  delay={index * 0.06}
+                  className={`shrink-0 lg:w-full ${featured ? "w-72" : "w-64"}`}
                 >
-                  {/* Floating trophy — no bounding box, no background tile.
-                      Positioned to overlap the card's own top edge (rather
-                      than sit inside it) with a soft drop shadow doing the
-                      job the old gray tile used to: separating it from the
-                      white card behind it. */}
                   <div
-                    className={`absolute left-1/2 -translate-x-1/2 ${
+                    className={`relative flex h-full flex-col rounded-sm border bg-white p-6 shadow-card lg:w-full ${
                       featured
-                        ? "-top-14 h-28 w-28 sm:h-32 sm:w-32"
-                        : "-top-10 h-20 w-20 sm:h-24 sm:w-24"
+                        ? "border-accent-700/20 pt-20 shadow-lg"
+                        : "border-primary/10 pt-16"
                     }`}
                   >
-                    {award.trophyImageUrl ? (
-                      <Image
-                        src={award.trophyImageUrl}
-                        alt=""
-                        fill
-                        sizes="128px"
-                        className="object-contain drop-shadow-[0_14px_20px_rgba(8,53,81,0.2)]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-accent-50">
-                        <Trophy
-                          size={featured ? 40 : 32}
-                          strokeWidth={1.5}
-                          className="text-accent-700"
-                          aria-hidden
+                    {/* Floating trophy — no bounding box, no background tile.
+                        Positioned to overlap the card's own top edge (rather
+                        than sit inside it) with a soft drop shadow doing the
+                        job the old gray tile used to: separating it from the
+                        white card behind it. */}
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 ${
+                        featured
+                          ? "-top-14 h-28 w-28 sm:h-32 sm:w-32"
+                          : "-top-10 h-20 w-20 sm:h-24 sm:w-24"
+                      }`}
+                    >
+                      {award.trophyImageUrl ? (
+                        <Image
+                          src={award.trophyImageUrl}
+                          alt=""
+                          fill
+                          sizes="128px"
+                          className="object-contain drop-shadow-[0_14px_20px_rgba(8,53,81,0.2)]"
                         />
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-accent-50">
+                          <Trophy
+                            size={featured ? 40 : 32}
+                            strokeWidth={1.5}
+                            className="text-accent-700"
+                            aria-hidden
+                          />
+                        </div>
+                      )}
+                    </div>
 
-                  <p
-                    className={`text-center font-medium uppercase tracking-wide text-accent-700 ${
-                      featured ? "text-xs" : "text-[10px]"
-                    }`}
-                  >
-                    {award.organization}
-                  </p>
-                  <p
-                    className={`mt-1.5 text-center font-medium leading-snug text-primary ${
-                      featured ? "text-base" : "text-sm"
-                    }`}
-                  >
-                    {award.title}
-                  </p>
-                  {award.projectName && (
-                    <p className="mt-1 text-center text-xs text-ink/60">{award.projectName}</p>
-                  )}
-                  <p className="mt-auto pt-3 text-center text-xs text-ink/50">{award.year}</p>
-                </div>
-              </Reveal>
-            );
-          })}
+                    <p
+                      className={`text-center font-medium uppercase tracking-wide text-accent-700 ${
+                        featured ? "text-xs" : "text-[10px]"
+                      }`}
+                    >
+                      {award.organization}
+                    </p>
+                    <p
+                      className={`mt-1.5 text-center font-medium leading-snug text-primary ${
+                        featured ? "text-base" : "text-sm"
+                      }`}
+                    >
+                      {award.title}
+                    </p>
+                    {award.projectName && (
+                      <p className="mt-1 text-center text-xs text-ink/60">{award.projectName}</p>
+                    )}
+                    <p className="mt-auto pt-3 text-center text-xs text-ink/50">{award.year}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+
+          {/* Scroll hint — purely decorative (aria-hidden, pointer-events-
+              none, doesn't scroll the row itself). Nudges right 3 times
+              via animate-scroll-hint (tailwind.config.ts) then settles, so
+              a mobile visitor knows to swipe without a permanent moving
+              distraction. Sits just before the fade zone starts (right-16,
+              fade starts 56px from the edge) so it reads clearly instead
+              of fading into semi-invisibility itself. lg:hidden — desktop
+              shows the full grid, nothing to hint at. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-16 top-1/2 z-10 flex h-9 w-9 animate-scroll-hint items-center justify-center rounded-full bg-white text-accent-700 shadow-card lg:hidden"
+          >
+            <ChevronRight size={18} strokeWidth={2} aria-hidden />
+          </div>
         </div>
       </div>
     </section>
