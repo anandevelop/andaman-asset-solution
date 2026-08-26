@@ -242,9 +242,9 @@ describe("fieldErrors", () => {
 describe("eventRegistrationSchema", () => {
   const VALID_RSVP = {
     name: "Anna Lindqvist",
+    agencyName: "Lindqvist Realty",
     email: "Anna@Example.COM",
     phone: "0812345678",
-    partySize: "2",
     consentGiven: true as const,
   };
 
@@ -255,26 +255,30 @@ describe("eventRegistrationSchema", () => {
     expect(eventRegistrationSchema.parse(VALID_RSVP).email).toBe("anna@example.com");
   });
 
-  it("coerces the party size from a form string", () => {
-    const result = eventRegistrationSchema.parse(VALID_RSVP);
-    expect(result.partySize).toBe(2);
-    expect(typeof result.partySize).toBe("number");
+  it("requires an agency / company name", () => {
+    // Added in the agent-partner RSVP redesign — every registrant is
+    // expected to be a partner agent, not a walk-in.
+    const { agencyName, ...withoutAgency } = VALID_RSVP;
+    expect(eventRegistrationSchema.safeParse(withoutAgency).success).toBe(false);
   });
 
-  it.each([["0"], ["-1"], ["11"], ["2.5"], ["many"]])(
-    "rejects the party size %s",
-    (partySize) => {
-      expect(
-        eventRegistrationSchema.safeParse({ ...VALID_RSVP, partySize }).success,
-      ).toBe(false);
-    },
-  );
-
-  it("allows the maximum party of ten", () => {
-    // The boundary belongs to the accepted side; 11 is tested above.
+  it("accepts an optional WhatsApp number", () => {
     expect(
-      eventRegistrationSchema.safeParse({ ...VALID_RSVP, partySize: "10" }).success,
+      eventRegistrationSchema.safeParse({ ...VALID_RSVP, whatsapp: "0898887777" })
+        .success,
     ).toBe(true);
+  });
+
+  it("allows WhatsApp to be omitted entirely", () => {
+    // Not every agent has a separate WhatsApp number from their phone.
+    expect(eventRegistrationSchema.safeParse(VALID_RSVP).success).toBe(true);
+  });
+
+  it("rejects a malformed WhatsApp number", () => {
+    expect(
+      eventRegistrationSchema.safeParse({ ...VALID_RSVP, whatsapp: "not-a-number!" })
+        .success,
+    ).toBe(false);
   });
 
   it("rejects a filled honeypot on the server schema", () => {

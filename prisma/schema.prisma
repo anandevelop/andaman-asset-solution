@@ -1106,9 +1106,24 @@ model EventRegistration {
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   name  String
-  email String
-  phone String
+  /// Real-estate agency or company the registrant works for — added when
+  /// the public RSVP form was redesigned for agent-partner events. Nullable
+  /// at the column level even though the form requires it, since existing
+  /// rows written before this column existed have nothing to backfill it
+  /// with — see the migration's comment.
+  agencyName String?
+  email      String
+  phone      String
+  /// Optional — not every agent gives a separate WhatsApp number.
+  whatsapp  String?
+  /// Always 1 for registrations since the agent-partner form redesign (one
+  /// registrant = one seat) — kept rather than dropped so the existing
+  /// SUM(partySize) capacity math (lib/events.ts, the register route) needs
+  /// no changes and pre-redesign rows with a real party size still count
+  /// correctly.
   partySize Int @default(1)
+  /// No longer collected by the public form (see partySize's comment) —
+  /// always null on new rows, kept for any pre-redesign rows that have it.
   notes     String? @db.Text
 
   status EventStatus @default(PENDING) @map("status")

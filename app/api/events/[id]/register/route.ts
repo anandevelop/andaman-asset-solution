@@ -148,7 +148,10 @@ export async function POST(request: Request, { params }: Params) {
 
           const seatsLeft = event.capacity - (taken._sum.partySize ?? 0);
 
-          if (data.partySize > seatsLeft) {
+          // Every registration is exactly one seat since the agent-partner
+          // redesign (no more client-supplied party size) — a new booking
+          // only ever needs 1 seat left, not `data.partySize > seatsLeft`.
+          if (seatsLeft < 1) {
             // Thrown so the transaction rolls back; caught and mapped to a
             // 409 below.
             throw new CapacityError(Math.max(0, seatsLeft));
@@ -157,10 +160,13 @@ export async function POST(request: Request, { params }: Params) {
 
         const values = {
           name: data.name,
+          agencyName: data.agencyName,
           email: data.email,
           phone: data.phone,
-          partySize: data.partySize,
-          notes: nullify(data.notes),
+          whatsapp: nullify(data.whatsapp),
+          // Always 1 — see partySize's comment in schema.prisma.
+          partySize: 1,
+          notes: null,
           consentGiven: data.consentGiven,
           consentedAt: new Date(),
           consentVersion: data.consentVersion ?? siteConfig.legal.consentVersion,
@@ -188,7 +194,8 @@ export async function POST(request: Request, { params }: Params) {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      partySize: data.partySize,
+      agencyName: data.agencyName,
+      whatsapp: nullify(data.whatsapp),
       eventId: event.id,
     });
 
@@ -200,7 +207,8 @@ export async function POST(request: Request, { params }: Params) {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      partySize: data.partySize,
+      agencyName: data.agencyName,
+      whatsapp: nullify(data.whatsapp),
       // Staff read Thai first, same as the LINE notification's copy.
       eventTitle: pickLocale("th", event.titleTh, event.titleEn),
     });
@@ -212,7 +220,6 @@ export async function POST(request: Request, { params }: Params) {
       eventTitle: pickLocale(data.locale ?? "en", event.titleTh, event.titleEn),
       location: event.location,
       startsAt: event.startsAt,
-      partySize: data.partySize,
     });
 
     return NextResponse.json(

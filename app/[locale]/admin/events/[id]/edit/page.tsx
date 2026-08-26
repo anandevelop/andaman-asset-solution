@@ -34,7 +34,14 @@ export default async function EditEventPage({ params, searchParams }: Props) {
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
-  const event = await prisma.event.findUnique({
+  // sandbox: `prisma as any` — agencyName/whatsapp were added to
+  // EventRegistration in the agent-partner RSVP redesign; the locally
+  // generated Prisma client predates them (this sandbox has no network
+  // access to Prisma's binary CDN to re-run `prisma generate`), same
+  // tradeoff already documented above getProjectBySlug in lib/projects.ts.
+  const db = prisma as any;
+
+  const event = await db.event.findUnique({
     where: { id },
     include: {
       registrations: {
@@ -42,8 +49,10 @@ export default async function EditEventPage({ params, searchParams }: Props) {
         select: {
           id: true,
           name: true,
+          agencyName: true,
           email: true,
           phone: true,
+          whatsapp: true,
           partySize: true,
           notes: true,
           status: true,
@@ -56,7 +65,24 @@ export default async function EditEventPage({ params, searchParams }: Props) {
 
   if (!event) notFound();
 
-  const booked = event.registrations
+  // Re-typed by hand since `event` came back through the `prisma as any`
+  // cast above — the shape matches the `select` block exactly.
+  type Registration = {
+    id: string;
+    name: string;
+    agencyName: string | null;
+    email: string;
+    phone: string;
+    whatsapp: string | null;
+    partySize: number;
+    notes: string | null;
+    status: EventStatus;
+    consentGiven: boolean;
+    createdAt: Date;
+  };
+  const registrations = event.registrations as Registration[];
+
+  const booked = registrations
     .filter((r) => (SEAT_TAKING_STATUSES as readonly EventStatus[]).includes(r.status))
     .reduce((sum, r) => sum + r.partySize, 0);
 
@@ -137,7 +163,7 @@ export default async function EditEventPage({ params, searchParams }: Props) {
           </p>
         </div>
 
-        {event.registrations.length === 0 ? (
+        {registrations.length === 0 ? (
           <p className="py-6 text-center text-sm text-ink-muted">
             {t("events.noRegistrations")}
           </p>
@@ -147,15 +173,15 @@ export default async function EditEventPage({ params, searchParams }: Props) {
               <thead className="border-b border-primary/10">
                 <tr>
                   <th className="admin-th">{t("leads.name")}</th>
+                  <th className="admin-th">{t("events.agency")}</th>
                   <th className="admin-th">{t("leads.contact")}</th>
-                  <th className="admin-th">{t("events.party")}</th>
                   <th className="admin-th">{t("leads.received")}</th>
                   <th className="admin-th">{t("leads.status")}</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-primary/5">
-                {event.registrations.map((registration) => (
+                {registrations.map((registration) => (
                   <tr key={registration.id}>
                     <td className="admin-td">
                       <p className="font-medium text-primary">{registration.name}</p>
@@ -171,6 +197,10 @@ export default async function EditEventPage({ params, searchParams }: Props) {
                       )}
                     </td>
 
+                    <td className="admin-td whitespace-nowrap text-ink-muted">
+                      {registration.agencyName ?? "—"}
+                    </td>
+
                     <td className="admin-td whitespace-nowrap">
                       <a
                         href={`mailto:${registration.email}`}
@@ -184,10 +214,11 @@ export default async function EditEventPage({ params, searchParams }: Props) {
                       >
                         {registration.phone}
                       </a>
-                    </td>
-
-                    <td className="admin-td whitespace-nowrap tabular-nums text-ink-muted">
-                      {registration.partySize}
+                      {registration.whatsapp && (
+                        <p className="mt-0.5 text-xs text-ink-muted">
+                          WhatsApp: {registration.whatsapp}
+                        </p>
+                      )}
                     </td>
 
                     <td className="admin-td whitespace-nowrap text-xs text-ink-muted">

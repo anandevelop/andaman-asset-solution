@@ -260,7 +260,8 @@ export async function notifyNewRegistration(registration: {
   name: string;
   email: string;
   phone: string;
-  partySize: number;
+  agencyName: string;
+  whatsapp: string | null;
   eventId: string;
 }): Promise<void> {
   try {
@@ -270,8 +271,9 @@ export async function notifyNewRegistration(registration: {
         name: registration.name,
         email: registration.email,
         phone: registration.phone,
-        extraLabel: "จำนวน",
-        extra: `${registration.partySize} คน`,
+        extraLabel: "บริษัท/ตัวแทน",
+        extra: registration.agencyName,
+        message: registration.whatsapp ? `WhatsApp: ${registration.whatsapp}` : null,
       }),
     ]);
   } catch (error) {

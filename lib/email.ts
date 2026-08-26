@@ -174,7 +174,8 @@ export async function notifyNewRegistrationByEmail(registration: {
   name: string;
   email: string;
   phone: string;
-  partySize: number;
+  agencyName: string;
+  whatsapp: string | null;
   eventTitle: string;
 }): Promise<void> {
   const to = staffRecipient();
@@ -184,21 +185,25 @@ export async function notifyNewRegistrationByEmail(registration: {
     <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:${PRIMARY};">ลงทะเบียนกิจกรรมใหม่</h1>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
       ${row("ชื่อ", registration.name)}
+      ${row("บริษัท/ตัวแทน", registration.agencyName)}
       ${row("โทร", `<a href="tel:${registration.phone}" style="color:${PRIMARY};">${registration.phone}</a>`)}
       ${row("อีเมล", `<a href="mailto:${registration.email}" style="color:${PRIMARY};">${registration.email}</a>`)}
+      ${registration.whatsapp ? row("WhatsApp", registration.whatsapp) : ""}
       ${row("กิจกรรม", registration.eventTitle)}
-      ${row("จำนวน", `${registration.partySize} คน`)}
     </table>
   `);
 
   const text = [
     "ลงทะเบียนกิจกรรมใหม่",
     `ชื่อ: ${registration.name}`,
+    `บริษัท/ตัวแทน: ${registration.agencyName}`,
     `โทร: ${registration.phone}`,
     `อีเมล: ${registration.email}`,
+    registration.whatsapp ? `WhatsApp: ${registration.whatsapp}` : "",
     `กิจกรรม: ${registration.eventTitle}`,
-    `จำนวน: ${registration.partySize} คน`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   await sendMail({
     to,
@@ -225,7 +230,6 @@ export async function sendRsvpConfirmationEmail(args: {
   eventTitle: string;
   location: string | null;
   startsAt: Date;
-  partySize: number;
 }): Promise<void> {
   if (!isEmailConfigured()) {
     console.info("[email] not configured — skipping RSVP confirmation");
@@ -255,7 +259,6 @@ export async function sendRsvpConfirmationEmail(args: {
       ${row(t("dateLabel"), dateFormat.format(args.startsAt))}
       ${row(t("timeLabel"), timeFormat.format(args.startsAt))}
       ${args.location ? row(t("locationLabel"), args.location) : ""}
-      ${row(t("partyLabel"), String(args.partySize))}
     </table>
     <p style="margin:20px 0 0;color:#4B5563;">${t("outro")}</p>
     <p style="margin:16px 0 0;color:#9CA3AF;font-size:12px;">${t("signature")}</p>
@@ -268,7 +271,6 @@ export async function sendRsvpConfirmationEmail(args: {
     `${t("dateLabel")}: ${dateFormat.format(args.startsAt)}`,
     `${t("timeLabel")}: ${timeFormat.format(args.startsAt)}`,
     args.location ? `${t("locationLabel")}: ${args.location}` : "",
-    `${t("partyLabel")}: ${args.partySize}`,
     "",
     t("outro"),
     t("signature"),

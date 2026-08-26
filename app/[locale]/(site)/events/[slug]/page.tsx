@@ -231,36 +231,31 @@ export default async function EventPage({ params: { locale, slug } }: Props) {
             </Reveal>
           </div>
 
-          {/* ── RSVP ───────────────────────────────────────────────── */}
+          {/* ── RSVP ───────────────────────────────────────────────────
+              Dark navy card (client-supplied reference design, applied to
+              every event's RSVP — see EventRsvpForm.tsx's header comment).
+              EventRsvpForm renders its own eyebrow/title/subtitle so this
+              wrapper only owns the card chrome, not the copy. */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <Reveal delay={0.15}>
-              <div className="rounded-sm border border-primary/10 bg-white p-6 shadow-card sm:p-8">
+              <div className="rounded-sm bg-primary p-6 shadow-cardHover sm:p-8">
                 {event.isPast ? (
                   <>
-                    <h2 className="text-lg font-light text-primary">
+                    <h2 className="text-lg font-light text-white">
                       {t("pastTitle")}
                     </h2>
-                    <p className="mt-3 text-sm leading-relaxed text-ink/70">
+                    <p className="mt-3 text-sm leading-relaxed text-white/70">
                       {t("pastBody")}
                     </p>
                     <Link
                       href={`/${locale}/events`}
-                      className="btn-outline mt-6 w-full"
+                      className="mt-6 flex w-full items-center justify-center rounded-sm border border-white/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-primary"
                     >
                       {t("seeUpcoming")}
                     </Link>
                   </>
                 ) : (
-                  <>
-                    <h2 className="text-lg font-light text-primary">
-                      {t("rsvp.title")}
-                    </h2>
-                    <p className="mb-6 mt-2 text-sm leading-relaxed text-ink/70">
-                      {t("rsvp.subtitle")}
-                    </p>
-
-                    <EventRsvpForm eventId={event.id} seatsLeft={event.seatsLeft} />
-                  </>
+                  <EventRsvpForm eventId={event.id} seatsLeft={event.seatsLeft} />
                 )}
               </div>
             </Reveal>

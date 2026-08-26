@@ -84,7 +84,10 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
 // ─────────────────────────────────────────────────────────────────────────
 
 export const eventRegistrationSchema = z.object({
+  // "Agent Name" in the UI — field key kept as `name` since it is still
+  // exactly one person's name, same as every other form on this site.
   name: z.string().trim().min(2, "Name is too short").max(120),
+  agencyName: z.string().trim().min(2, "Agency / company is too short").max(160),
   email: z.string().trim().toLowerCase().email("Enter a valid email address").max(180),
   phone: z
     .string()
@@ -92,11 +95,13 @@ export const eventRegistrationSchema = z.object({
     .min(8, "Enter a valid phone number")
     .max(20)
     .regex(/^[0-9+()\-\s]+$/, "Enter a valid phone number"),
-  // Capped at 10: a larger booking is a private-viewing conversation, not
-  // a self-service RSVP, and an unbounded value would let one submission
-  // consume an entire event's capacity.
-  partySize: z.coerce.number().int().min(1, "At least one guest").max(10),
-  notes: z.string().trim().max(1000).optional().or(z.literal("")),
+  whatsapp: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^[0-9+()\-\s]*$/, "Enter a valid WhatsApp number")
+    .optional()
+    .or(z.literal("")),
   consentGiven: z.literal(true, {
     errorMap: () => ({ message: "Consent is required to register" }),
   }),

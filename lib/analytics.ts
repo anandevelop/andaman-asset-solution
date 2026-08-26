@@ -141,11 +141,12 @@ export function trackLead(params: { source?: string; projectSlug?: string }): vo
   });
 }
 
-export function trackRsvp(params: { eventId: string; partySize: number }): void {
+export function trackRsvp(params: { eventId: string }): void {
+  // Every registration is exactly one seat since the agent-partner RSVP
+  // redesign (no more client-supplied party size) — see EventRsvpForm.
   track("event_rsvp", {
     event_id: params.eventId,
-    party_size: params.partySize,
-    value: params.partySize,
+    value: 1,
     currency: "THB",
   });
 }
