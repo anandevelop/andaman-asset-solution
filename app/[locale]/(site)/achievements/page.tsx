@@ -163,7 +163,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
                   {t("corporateAwards")}
                 </h2>
               </Reveal>
-              <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="mt-16 grid grid-cols-2 gap-x-6 gap-y-14 sm:grid-cols-3 lg:grid-cols-4">
                 {corporateAwards.map((award, index) => (
                   <AwardCard key={award.id} award={award} index={index} />
                 ))}
@@ -188,7 +188,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
                         {group.projectName}
                       </h3>
                     </Reveal>
-                    <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                    <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-14 sm:grid-cols-3 lg:grid-cols-4">
                       {group.awards.map((award, index) => (
                         <AwardCard key={award.id} award={award} index={index} />
                       ))}
