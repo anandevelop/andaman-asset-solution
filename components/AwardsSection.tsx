@@ -167,22 +167,22 @@ export default async function AwardsSection() {
 
                   <p
                     className={`text-center font-medium uppercase tracking-wide text-accent-700 ${
-                      featured ? "text-sm" : "text-xs"
+                      featured ? "text-xs" : "text-[10px]"
                     }`}
                   >
                     {award.organization}
                   </p>
                   <p
-                    className={`mt-2 text-center font-medium leading-snug text-primary ${
-                      featured ? "text-lg" : "text-base"
+                    className={`mt-1.5 text-center font-medium leading-snug text-primary ${
+                      featured ? "text-base" : "text-sm"
                     }`}
                   >
                     {award.title}
                   </p>
                   {award.projectName && (
-                    <p className="mt-1 text-center text-sm text-ink/60">{award.projectName}</p>
+                    <p className="mt-1 text-center text-xs text-ink/60">{award.projectName}</p>
                   )}
-                  <p className="mt-auto pt-4 text-center text-sm text-ink/50">{award.year}</p>
+                  <p className="mt-auto pt-3 text-center text-xs text-ink/50">{award.year}</p>
                 </div>
               </Reveal>
             );
