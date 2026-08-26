@@ -28,10 +28,16 @@
  * getTranslation() against AwardTranslation, falling back to the
  * deprecated titleEn/titleTh pair) — this component no longer picks the
  * language itself, since a fixed th/en pickLocale() can't express zh/ru.
+ *
+ * Trophies float above each card rather than sitting in a boxed tile: no
+ * background tile behind the image, positioned to overlap the card's own
+ * top edge, with a drop-shadow standing in for the depth the old gray tile
+ * used to provide. The first award gets a wider grid column, a bigger
+ * trophy, and larger type — the one worth leading with should read as the
+ * headline, not tie visually with the rest.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import type { CSSProperties } from "react";
 import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Trophy } from "lucide-react";
@@ -97,40 +103,90 @@ export default async function AwardsSection() {
             `awards.length` equal-width columns — every award fits on one
             row within the container's own width by construction, so
             desktop never scrolls no matter how many awards are seeded. */}
+        {/* pt-16 gives the floating trophies (see below) room to bleed
+            above each card without being clipped — overflow-x-auto below
+            forces the browser to compute overflow-y as auto too (CSS spec:
+            one axis non-"visible" drags the other along), so without this
+            padding the mobile scroll box would crop them at its own top
+            edge even though the card itself has nothing clipping it. */}
         <div
-          className="mt-12 -mx-5 flex gap-6 overflow-x-auto px-5 pb-4 sm:mx-0 sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:grid-cols-[repeat(var(--award-columns),minmax(0,1fr))] lg:overflow-visible lg:pb-0"
-          style={{ "--award-columns": awards.length } as CSSProperties}
+          className="mt-12 -mx-5 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 sm:mx-0 sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0"
+          style={{
+            // First column wider than the rest so award #1 — the one
+            // worth leading with — reads as the headline, not a tie.
+            gridTemplateColumns: awards.map((_, i) => (i === 0 ? "1.6fr" : "1fr")).join(" "),
+          }}
         >
-          {awards.map((award, index) => (
-            <Reveal key={award.id} delay={index * 0.06} className="shrink-0 lg:w-full">
-              <div className="flex h-full w-64 flex-col rounded-sm border border-primary/10 bg-white p-6 shadow-card lg:w-full">
-                <div className="relative flex h-28 w-full items-center justify-center overflow-hidden rounded-sm bg-primary-900/[0.03]">
-                  {award.trophyImageUrl ? (
-                    <Image
-                      src={award.trophyImageUrl}
-                      alt=""
-                      fill
-                      sizes="256px"
-                      className="object-contain p-4"
-                    />
-                  ) : (
-                    <Trophy size={32} strokeWidth={1.5} className="text-accent-700" aria-hidden />
-                  )}
-                </div>
+          {awards.map((award, index) => {
+            const featured = index === 0;
 
-                <p className="mt-5 text-xs font-medium uppercase tracking-wide text-accent-700">
-                  {award.organization}
-                </p>
-                <p className="mt-2 text-base font-medium leading-snug text-primary">
-                  {award.title}
-                </p>
-                {award.projectName && (
-                  <p className="mt-1 text-sm text-ink/60">{award.projectName}</p>
-                )}
-                <p className="mt-auto pt-4 text-sm text-ink/50">{award.year}</p>
-              </div>
-            </Reveal>
-          ))}
+            return (
+              <Reveal
+                key={award.id}
+                delay={index * 0.06}
+                className={`shrink-0 lg:w-full ${featured ? "w-72" : "w-64"}`}
+              >
+                <div
+                  className={`relative flex h-full flex-col rounded-sm border bg-white p-6 shadow-card lg:w-full ${
+                    featured
+                      ? "border-accent-700/20 pt-20 shadow-lg"
+                      : "border-primary/10 pt-16"
+                  }`}
+                >
+                  {/* Floating trophy — no bounding box, no background tile.
+                      Positioned to overlap the card's own top edge (rather
+                      than sit inside it) with a soft drop shadow doing the
+                      job the old gray tile used to: separating it from the
+                      white card behind it. */}
+                  <div
+                    className={`absolute left-1/2 -translate-x-1/2 ${
+                      featured
+                        ? "-top-14 h-28 w-28 sm:h-32 sm:w-32"
+                        : "-top-10 h-20 w-20 sm:h-24 sm:w-24"
+                    }`}
+                  >
+                    {award.trophyImageUrl ? (
+                      <Image
+                        src={award.trophyImageUrl}
+                        alt=""
+                        fill
+                        sizes="128px"
+                        className="object-contain drop-shadow-[0_14px_20px_rgba(8,53,81,0.2)]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-accent-50">
+                        <Trophy
+                          size={featured ? 40 : 32}
+                          strokeWidth={1.5}
+                          className="text-accent-700"
+                          aria-hidden
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <p
+                    className={`text-center font-medium uppercase tracking-wide text-accent-700 ${
+                      featured ? "text-sm" : "text-xs"
+                    }`}
+                  >
+                    {award.organization}
+                  </p>
+                  <p
+                    className={`mt-2 text-center font-medium leading-snug text-primary ${
+                      featured ? "text-lg" : "text-base"
+                    }`}
+                  >
+                    {award.title}
+                  </p>
+                  {award.projectName && (
+                    <p className="mt-1 text-center text-sm text-ink/60">{award.projectName}</p>
+                  )}
+                  <p className="mt-auto pt-4 text-center text-sm text-ink/50">{award.year}</p>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
     </section>
