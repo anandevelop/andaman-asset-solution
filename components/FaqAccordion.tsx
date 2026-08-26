@@ -77,41 +77,50 @@ export default function FaqAccordion({
       )}
 
       <div className="container-luxe">
-        <Reveal>
+        {/* Centered rather than left-aligned like most sections on this
+            page — a wide "Questions" heading followed by a single narrow
+            column of rows read as accidentally off-balance on desktop,
+            with most of the container sitting empty beside it. Centering
+            both the header and the accordion column below it turns that
+            same content into a deliberate, minimal single-column layout
+            instead. Rows themselves stay left-aligned — a centered
+            question/answer reads awkwardly once you're actually reading
+            it, the outer column is what needed centering, not the text. */}
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="eyebrow">{labels.eyebrow}</p>
-          <h2 className="mt-3 max-w-lg text-3xl font-light text-primary sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
             {labels.title}
           </h2>
-          <div className="horizon-divider my-6 ml-0" />
+          <div className="horizon-divider my-6" />
           {labels.subtitle && (
-            <p className="max-w-lg text-sm leading-relaxed text-ink/70">
+            <p className="mx-auto max-w-md text-sm leading-relaxed text-ink/70">
               {labels.subtitle}
             </p>
           )}
         </Reveal>
 
-        <div className="mt-10 max-w-3xl space-y-10">
+        <div className="mx-auto mt-14 max-w-2xl space-y-10">
           {groups.map(([category, entries]) => (
             <div key={category ?? "other"}>
               {grouped && category && (
-                <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest2 text-accent-700">
+                <h3 className="mb-4 text-center text-xs font-semibold uppercase tracking-widest2 text-accent-700">
                   {labels.categories?.[category] ?? category}
                 </h3>
               )}
 
-              <div className="divide-y divide-primary/10 border-y border-primary/10">
+              <div className="divide-y divide-primary/8 border-y border-primary/10">
                 {entries.map((faq, index) => (
                   <Reveal key={faq.id} delay={Math.min(index, 5) * 0.05}>
                     <details className="group">
                       <summary
-                        className="flex cursor-pointer list-none items-start justify-between gap-4 py-5 text-left transition-colors hover:text-accent-800 [&::-webkit-details-marker]:hidden"
+                        className="flex cursor-pointer list-none items-start justify-between gap-6 py-6 text-left transition-colors hover:text-accent-800 [&::-webkit-details-marker]:hidden"
                       >
                         <span className="text-base font-light leading-snug text-primary group-hover:text-accent-800">
                           {faq.question}
                         </span>
 
                         <ChevronDown
-                          size={18}
+                          size={16}
                           strokeWidth={1.5}
                           aria-hidden
                           className="mt-0.5 shrink-0 text-accent-700 transition-transform duration-300 group-open:rotate-180"
