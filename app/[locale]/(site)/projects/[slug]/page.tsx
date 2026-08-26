@@ -55,12 +55,14 @@ export const revalidate = 3600;
 const UNIT_STATUS_STYLE: Record<string, string> = {
   AVAILABLE: "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200",
   RESERVED: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200",
-  SOLD: "bg-ink/5 text-ink/40 ring-1 ring-inset ring-ink/10",
+  // Red, not the previous muted grey — a sold-out plot should read as
+  // "ruled out" at a glance, and matches SitePlanMap's own SOLD colour.
+  SOLD: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
 };
 const UNIT_STATUS_DOT: Record<string, string> = {
   AVAILABLE: "bg-emerald-500",
   RESERVED: "bg-amber-500",
-  SOLD: "bg-ink/30",
+  SOLD: "bg-red-500",
 };
 
 type Props = { params: { locale: string; slug: string } };

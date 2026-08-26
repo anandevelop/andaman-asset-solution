@@ -64,11 +64,15 @@
  * render, the result is the literal on-screen pixel size the geometry
  * calculation decided on, not that size multiplied by zoom a second time.
  *
- * A simple collision fallback (CROWD_DISTANCE_PX/CROWD_SHRINK_STEP_PX,
+ * A size-aware collision fallback (CROWD_SHRINK_STEP_PX/CROWD_SHRINK_ROUNDS,
  * see labelGeometry below) still shrinks two labels a step further when
- * they land close together on screen — with every label always visible
- * now, tightly packed rows of small units are exactly where that matters
- * most.
+ * their *estimated badge widths* — not just a flat distance — would
+ * overlap. With every label always visible now, tightly packed rows of
+ * small units (and narrow, mobile-width containers, where the whole plan
+ * has much less on-screen room to begin with) are exactly where that
+ * matters most; the initial zoom is also higher on narrow viewports (see
+ * MOBILE_INITIAL_SCALE below) so there's more physical room per badge
+ * before the shrink pass even has to act.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -107,23 +111,23 @@ type Transform = { scale: number; positionX: number; positionY: number };
 // JIT compiler can see every one of them statically (same convention as
 // UNIT_STATUS_STYLE/DOT on the project page).
 //
-// Palette matches the muted emerald/accent-gold/ink treatment the project
+// Palette matches the muted emerald/accent-gold treatment the project
 // page's own legend and unit chip list already use (UNIT_STATUS_STYLE in
-// projects/[slug]/page.tsx) — this used to be stock Tailwind green-500/
-// red-500, which read as a generic web-template map dropped into an
-// otherwise navy-and-gold site. SOLD in particular was a saturated alarm
-// red; it's now the same "faded out of the running" ink tone the chip
-// list already uses for a sold unit, which still reads clearly against
-// the lighter available/reserved plots without breaking the brand.
+// projects/[slug]/page.tsx) — this used to be stock Tailwind green-500,
+// which read as a generic web-template map dropped into an otherwise
+// navy-and-gold site. SOLD is a deliberate exception to the muted
+// treatment (per explicit request): a sold-out plot is the one status a
+// buyer scanning the plan needs to rule out at a glance, so it keeps a
+// red — just Tailwind's red-500/600 rather than a near-opaque alarm red.
 const POLYGON_FILL: Record<UnitStatus, string> = {
   AVAILABLE: "fill-emerald-500/30",
   RESERVED: "fill-accent/40",
-  SOLD: "fill-ink/40",
+  SOLD: "fill-red-500/45",
 };
 const POLYGON_STROKE: Record<UnitStatus, string> = {
   AVAILABLE: "stroke-emerald-600",
   RESERVED: "stroke-accent",
-  SOLD: "stroke-ink/60",
+  SOLD: "stroke-red-600",
 };
 const POLYGON_STROKE_WIDTH: Record<UnitStatus, number> = {
   AVAILABLE: 2,
@@ -133,7 +137,7 @@ const POLYGON_STROKE_WIDTH: Record<UnitStatus, number> = {
 const PIN_FILL: Record<UnitStatus, string> = {
   AVAILABLE: "fill-emerald-500",
   RESERVED: "fill-accent",
-  SOLD: "fill-ink/60",
+  SOLD: "fill-red-500",
 };
 
 // Small dot rendered inside each filter pill, so status is still readable
@@ -144,7 +148,7 @@ const STATUS_DOT: Record<FilterValue, string> = {
   ALL: "bg-primary",
   AVAILABLE: "bg-emerald-500",
   RESERVED: "bg-accent",
-  SOLD: "bg-ink/50",
+  SOLD: "bg-red-500",
 };
 
 // Every label renders at the same flat size now, rather than scaled to
@@ -156,12 +160,30 @@ const STATUS_DOT: Record<FilterValue, string> = {
 // below, for the genuinely tight rows where two flat-size badges would
 // overlap.
 const FLAT_FONT_PX = 10;
-const MIN_FONT_PX = 7;
-// Flat pixel distance below which two labels are considered likely to
-// collide. Not exact (it doesn't know either label's actual rendered
-// width), just the "simple fallback" the task asked for.
-const CROWD_DISTANCE_PX = 22;
-const CROWD_SHRINK_STEP_PX = 1.5;
+const MIN_FONT_PX = 6;
+// Per-character/padding multipliers mirroring the actual badge CSS below
+// (fontSize * 0.35 horizontal padding, roughly 0.6em per character) — used
+// to estimate each badge's on-screen half-width for collision checking.
+// Approximate on purpose: real text metrics aren't worth measuring here,
+// this just has to be close enough that two badges stop fully overlapping.
+const CHAR_WIDTH_EM = 0.6;
+const PAD_X_EM = 0.35;
+const CROWD_SHRINK_STEP_PX = 1;
+// How many shrink rounds to run — since a badge's own estimated size
+// feeds back into the next round's collision test, one pass isn't enough
+// for a tight cluster of 3+ units (a mobile-width map with a dense row of
+// townhomes easily has that). Five rounds converges well before it'd
+// matter that this isn't a real physics solver.
+const CROWD_SHRINK_ROUNDS = 5;
+
+// `centerOnInit` fits the *entire* site plan into whatever width the
+// container has at scale 1 — on a ~360-430px phone viewport that squeezes
+// every unit down to a fraction of its desktop on-screen size before the
+// collision pass even runs, which is what actually made numbers vanish
+// under one another. Starting mobile viewports pre-zoomed in gives every
+// badge real room; a visitor can still pinch/tap "-" out to the full plan.
+const MOBILE_BREAKPOINT_PX = 640; // matches Tailwind's `sm`
+const MOBILE_INITIAL_SCALE = 1.6;
 
 function pointsToAttr(points: ShapePoint[]): string {
   return points.map((p) => `${p.x},${p.y}`).join(" ");
@@ -244,6 +266,17 @@ export default function SitePlanMap({
   const [transform, setTransform] = useState<Transform>({ scale: 1, positionX: 0, positionY: 0 });
   const [size, setSize] = useState({ width: 0, height: 0 });
 
+  // Lazy initializer so this only ever reads window.innerWidth once, at
+  // mount — it feeds TransformWrapper's `initialScale`, which is itself a
+  // one-time starting value, so there's nothing to keep in sync on resize
+  // (a phone rotated mid-session keeps its original zoom, same as any
+  // other "initial" prop would).
+  const [initialScale] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT_PX
+      ? MOBILE_INITIAL_SCALE
+      : 1,
+  );
+
   // The container's own rendered box never moves/scales (react-zoom-pan-
   // pinch only ever transforms its *content*), so this is a stable base
   // for converting viewBox percentages into real on-screen pixels.
@@ -286,7 +319,10 @@ export default function SitePlanMap({
   // font size adjusted only for local crowding. Recomputed whenever the
   // shapes, the container size, or the zoom scale change.
   const labelGeometry = useMemo(() => {
-    const geo = new Map<string, { fontPx: number; anchorXPx: number; anchorYPx: number }>();
+    const geo = new Map<
+      string,
+      { fontPx: number; anchorXPx: number; anchorYPx: number; chars: number }
+    >();
 
     // Not measured yet (first paint, before the ResizeObserver fires) —
     // default to "show everything at max size" rather than flashing
@@ -311,25 +347,49 @@ export default function SitePlanMap({
         fontPx: FLAT_FONT_PX,
         anchorXPx: anchorX * pxPerUnitX,
         anchorYPx: anchorY * pxPerUnitY,
+        chars: unit.unitNumber.length,
       });
     }
 
-    // Simple collision fallback: two labels whose anchors land within a
-    // flat pixel distance of each other both drop a step. Not a real
-    // layout solver — just enough to stop the obvious overlaps.
+    // Collision fallback: each badge's on-screen half-width is estimated
+    // from its *current* fontPx (see CHAR_WIDTH_EM/PAD_X_EM above, mirroring
+    // the real badge CSS), and two labels whose anchors are closer together
+    // than their combined half-widths both drop a step. Run in several
+    // rounds rather than one pass — as a badge shrinks its estimated half-
+    // width shrinks too, which can resolve a pair the first round's larger
+    // estimate still flagged, and a unit sitting between two crowded
+    // neighbours needs more than one round to settle. This is what a mobile-
+    // width map needs that a single flat-distance pass didn't give: dense
+    // rows of small units (adjacent townhomes) sit close enough on a narrow
+    // screen that solid-background badges — unlike the old plain outlined
+    // text — will otherwise fully paint over one another rather than just
+    // visually blend, which is what made numbers look like they'd vanished.
     const ids = [...geo.keys()];
-    for (let i = 0; i < ids.length; i += 1) {
-      for (let j = i + 1; j < ids.length; j += 1) {
-        const a = geo.get(ids[i])!;
-        const b = geo.get(ids[j])!;
+    for (let round = 0; round < CROWD_SHRINK_ROUNDS; round += 1) {
+      let shrankAny = false;
 
-        const dx = a.anchorXPx - b.anchorXPx;
-        const dy = a.anchorYPx - b.anchorYPx;
-        if (Math.sqrt(dx * dx + dy * dy) < CROWD_DISTANCE_PX) {
-          a.fontPx = Math.max(MIN_FONT_PX, a.fontPx - CROWD_SHRINK_STEP_PX);
-          b.fontPx = Math.max(MIN_FONT_PX, b.fontPx - CROWD_SHRINK_STEP_PX);
+      for (let i = 0; i < ids.length; i += 1) {
+        for (let j = i + 1; j < ids.length; j += 1) {
+          const a = geo.get(ids[i])!;
+          const b = geo.get(ids[j])!;
+
+          const dx = a.anchorXPx - b.anchorXPx;
+          const dy = a.anchorYPx - b.anchorYPx;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const halfWidth = (g: typeof a) =>
+            (g.fontPx * CHAR_WIDTH_EM * g.chars) / 2 + g.fontPx * PAD_X_EM;
+          const safeDistance = halfWidth(a) + halfWidth(b);
+
+          if (distance < safeDistance && (a.fontPx > MIN_FONT_PX || b.fontPx > MIN_FONT_PX)) {
+            a.fontPx = Math.max(MIN_FONT_PX, a.fontPx - CROWD_SHRINK_STEP_PX);
+            b.fontPx = Math.max(MIN_FONT_PX, b.fontPx - CROWD_SHRINK_STEP_PX);
+            shrankAny = true;
+          }
         }
       }
+
+      if (!shrankAny) break;
     }
 
     return geo;
@@ -378,7 +438,12 @@ export default function SitePlanMap({
         ref={containerRef}
         className="relative aspect-[1754/1241] w-full overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card"
       >
-        <TransformWrapper minScale={1} maxScale={6} centerOnInit>
+        <TransformWrapper
+          minScale={1}
+          maxScale={6}
+          initialScale={initialScale}
+          centerOnInit
+        >
           <TransformSync onChange={setTransform} />
           <ZoomControls labels={labels} onFullscreen={handleFullscreen} />
 
