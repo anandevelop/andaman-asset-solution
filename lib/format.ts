@@ -33,6 +33,16 @@ export function toDateTimeLocal(value: Date | null | undefined): string {
   );
 }
 
+/** 2005 → "2005" — a bare Gregorian year, deliberately not run through
+ * formatNumber() (which would group it as "2,005") or a locale calendar
+ * (which would silently convert th-TH to Buddhist era, "พ.ศ. 2548" — wrong
+ * here since the source data and every other locale display the same
+ * Gregorian year side by side, e.g. next to a project name shared across
+ * locales). */
+export function formatYear(year: number): string {
+  return String(year);
+}
+
 /** (2026, 8) → "Aug 2026" / "ส.ค. 2569" */
 export function formatMonthYear(locale: string, year: number, month: number): string {
   return new Intl.DateTimeFormat(intlLocale(locale), {

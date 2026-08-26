@@ -31,6 +31,7 @@ import {
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
 import { resolveMapEmbedSrc } from "@/lib/google-maps";
+import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 
 // Prerender published slugs; unknown slugs are resolved on demand and
 // notFound()-ed if they aren't published.
@@ -49,12 +50,6 @@ export const dynamicParams = true;
   published monthly.
 */
 export const revalidate = 3600;
-
-/** The year the company started in Phuket — same figure the "years" stat
- *  on /about is built from (FOUNDED_YEAR there); duplicated here rather
- *  than shared from a lib module since it's one constant and this page's
- *  brief was scoped to this file only. */
-const FOUNDED_YEAR = 2019;
 
 /** Site Plan + Unit Status legend/chip styling, keyed by the UnitStatus enum. */
 const UNIT_STATUS_STYLE: Record<string, string> = {
@@ -158,11 +153,13 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
 
   // Small trust-signal row next to the lead form — real figures, not
   // hardcoded copy: unit count from this project, company founding year
-  // (FOUNDED_YEAR, same source as /about), active award count company-wide.
+  // (COMPANY_FOUNDED_YEAR, same shared constant /about's "years" stat and
+  // timeline are built from — content/company-timeline.ts), active award
+  // count company-wide.
   const totalUnits = project.totalUnits ?? 0;
   const miniStats = [
     totalUnits > 0 ? t("miniStats.units", { count: totalUnits }) : null,
-    t("miniStats.since", { year: FOUNDED_YEAR }),
+    t("miniStats.since", { year: COMPANY_FOUNDED_YEAR }),
     awards.length > 0 ? t("miniStats.awards", { count: awards.length }) : null,
   ].filter((value): value is string => value !== null);
 

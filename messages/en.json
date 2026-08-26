@@ -122,26 +122,8 @@
     "timeline": {
       "eyebrow": "Milestones",
       "title": "How we got here",
-      "y2019": {
-        "year": "2019",
-        "title": "First plot acquired",
-        "body": "Eight rai in Cherngtalay, bought after a full wet season of site visits."
-      },
-      "y2021": {
-        "year": "2021",
-        "title": "First handover",
-        "body": "Twelve villas delivered. Every owner introduced to the maintenance team in person."
-      },
-      "y2024": {
-        "year": "2024",
-        "title": "Aftercare brought in-house",
-        "body": "Maintenance and rental management moved off contractors and onto our own staff."
-      },
-      "y2026": {
-        "year": "2026",
-        "title": "Trinity Village breaks ground",
-        "body": "Thirty pool villas on 26,230 sq.m. at Pasak 8 — our largest site to date."
-      }
+      "origin": "Founded in Phuket",
+      "byBrand": "by {brand}"
     },
     "team": {
       "eyebrow": "The Team",

@@ -8,6 +8,11 @@
  * lists five is the kind of inconsistency a serious buyer notices, and it
  * costs nothing to derive the figure from the same source the listing uses.
  *
+ * The Milestones timeline is real project history (content/company-timeline.ts),
+ * not editorial copy — see that file's header for why it's plain data
+ * rather than an i18n message, and why COMPANY_FOUNDED_YEAR (2005) is also
+ * what the "years of experience" stat above is computed from.
+ *
  * Everything else is editorial copy and lives in messages/*.json.
  * ─────────────────────────────────────────────────────────────────────────
  */
@@ -25,22 +30,18 @@ import { team } from "@/config/team";
 import { locales } from "@/i18n";
 import { getPublishedProjects } from "@/lib/projects";
 import { getCompanyProfile } from "@/lib/company";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatYear } from "@/lib/format";
+import { COMPANY_FOUNDED_YEAR, COMPANY_TIMELINE } from "@/content/company-timeline";
 
 export const revalidate = 3600;
 
 type Props = { params: { locale: string } };
-
-/** The year the company started in Phuket — drives the "years" stat. */
-const FOUNDED_YEAR = 2019;
 
 const PRINCIPLES = [
   { key: "quality", icon: ShieldCheck },
   { key: "transparency", icon: Eye },
   { key: "longTerm", icon: HeartHandshake },
 ] as const;
-
-const MILESTONES = ["y2019", "y2021", "y2024", "y2026"] as const;
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -82,7 +83,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
   // Derived from live data, so the page cannot contradict /projects.
   const totalUnits = projects.reduce((sum, p) => sum + (p.totalUnits ?? 0), 0);
   const totalLand = projects.reduce((sum, p) => sum + (p.landAreaSqm ?? 0), 0);
-  const years = Math.max(1, new Date().getFullYear() - FOUNDED_YEAR);
+  const years = Math.max(1, new Date().getFullYear() - COMPANY_FOUNDED_YEAR);
 
   const stats = [
     { label: t("stats.projects"), value: formatNumber(locale, projects.length) },
@@ -191,25 +192,53 @@ export default async function AboutPage({ params: { locale } }: Props) {
           </h2>
         </Reveal>
 
+        {/* Real project history (content/company-timeline.ts), transcribed
+            from the company's own portfolio graphic — one rail entry per
+            year, one or more project names each. Text-only by request: no
+            photos, no per-project admin CRUD, since project names are
+            proper nouns that don't need translation. The origin marker
+            (COMPANY_FOUNDED_YEAR) leads the rail and is the same figure
+            that drives the "years of experience" stat above, so the two
+            numbers on this page can never contradict each other. */}
         <ol className="mt-12 border-l border-primary/15">
-          {MILESTONES.map((key, index) => (
-            <Reveal key={key} delay={index * 0.08}>
+          <Reveal>
+            <li className="relative pb-11 pl-8">
+              <span
+                aria-hidden
+                className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-surface"
+              />
+              <p className="text-sm font-medium tracking-wide text-accent-700">
+                {formatYear(COMPANY_FOUNDED_YEAR)}
+              </p>
+              <h3 className="mt-1.5 text-lg font-light text-primary">
+                {t("timeline.origin")}
+              </h3>
+            </li>
+          </Reveal>
+
+          {COMPANY_TIMELINE.map((entry, index) => (
+            <Reveal key={entry.year} delay={(index + 1) * 0.06}>
               <li className="relative pb-11 pl-8 last:pb-0">
-                {/* Marker sits on the rule, centred on it. */}
                 <span
                   aria-hidden
                   className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-surface"
                 />
 
                 <p className="text-sm font-medium tracking-wide text-accent-700">
-                  {t(`timeline.${key}.year` as never)}
+                  {formatYear(entry.year)}
                 </p>
-                <h3 className="mt-1.5 text-lg font-light text-primary">
-                  {t(`timeline.${key}.title` as never)}
-                </h3>
-                <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink/70">
-                  {t(`timeline.${key}.body` as never)}
-                </p>
+                <ul className="mt-1.5 space-y-1.5">
+                  {entry.projects.map((project) => (
+                    <li key={project.name} className="text-base font-light text-primary">
+                      {project.name}
+                      {project.brand && (
+                        <span className="ml-2 text-xs font-normal text-ink/50">
+                          {t("timeline.byBrand", { brand: project.brand })}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </li>
             </Reveal>
           ))}
