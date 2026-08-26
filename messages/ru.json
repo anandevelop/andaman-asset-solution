@@ -155,6 +155,7 @@
     "metaDescription": "Награды и признание в отрасли, полученные Andaman Asset Solution за проекты на Пхукете.",
     "corporateAwards": "Корпоративные награды",
     "propertyAwards": "Награды проектов",
+    "awardsCount": "{count, plural, one {# награда} few {# награды} many {# наград} other {# награды}}",
     "empty": "Награды будут опубликованы здесь по мере объявления."
   },
   "contact": {

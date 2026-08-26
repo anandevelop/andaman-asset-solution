@@ -155,6 +155,7 @@
     "metaDescription": "Andaman Asset Solution 在普吉岛各个项目中获得的奖项与行业认可。",
     "corporateAwards": "企业荣誉",
     "propertyAwards": "项目荣誉",
+    "awardsCount": "{count, plural, other {# 项荣誉}}",
     "empty": "获奖信息将在公布后发布于此。"
   },
   "contact": {

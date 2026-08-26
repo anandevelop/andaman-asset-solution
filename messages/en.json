@@ -155,6 +155,7 @@
     "metaDescription": "Awards and industry recognition earned by Andaman Asset Solution across our Phuket developments.",
     "corporateAwards": "Corporate Awards",
     "propertyAwards": "Property Awards",
+    "awardsCount": "{count, plural, one {# award} other {# awards}}",
     "empty": "Awards will be published here as they are announced."
   },
   "contact": {
