@@ -68,15 +68,20 @@ export default async function EventsPage({ params: { locale } }: Props) {
     minute: "2-digit",
   });
 
+  // Invitation-card treatment — dark navy body + gold accents, the same
+  // palette as the RSVP form on the detail page (EventRsvpForm.tsx: eyebrow
+  // in accent-300, headings in white, body copy in white/50-60, gold rule
+  // as the only decoration) so a visitor lands on a matching look the
+  // moment they click through to actually RSVP.
   const card = (event: EventCard, index: number, muted = false) => (
     <Reveal key={event.id} delay={index * 0.08}>
       <Link
         href={`/${locale}/events/${event.slug}`}
-        className={`group flex h-full flex-col overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg ${
+        className={`group flex h-full flex-col overflow-hidden rounded-sm border border-white/10 bg-primary shadow-card transition-all hover:shadow-cardHover ${
           muted ? "opacity-70 hover:opacity-100" : ""
         }`}
       >
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary-900">
           {event.coverImageUrl && (
             <Image
               src={event.coverImageUrl}
@@ -88,6 +93,11 @@ export default async function EventsPage({ params: { locale } }: Props) {
               }`}
             />
           )}
+
+          {/* Fades the photo into the card's navy panel below it, rather
+              than cutting off on a hard edge — an invitation's photo and
+              its text block read as one piece, not two stacked ones. */}
+          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-primary to-transparent" />
 
           {!muted && event.seatsLeft !== null && (
             <span
@@ -107,27 +117,29 @@ export default async function EventsPage({ params: { locale } }: Props) {
         </div>
 
         <div className="flex flex-1 flex-col p-6">
-          <p className="flex items-center gap-1.5 text-xs text-accent-700">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest2 text-accent-300">
             <CalendarDays size={12} aria-hidden />
             <time dateTime={event.startsAt.toISOString()}>
               {dateFormat.format(event.startsAt)}
             </time>
           </p>
 
-          <h2 className="mt-2 text-xl font-light text-primary">{event.title}</h2>
+          <h2 className="mt-3 text-xl font-light text-white">{event.title}</h2>
 
           {event.location && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-ink/65">
-              <MapPin size={12} aria-hidden />
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-white/50">
+              <MapPin size={12} className="text-accent-300/70" aria-hidden />
               {event.location}
             </p>
           )}
 
-          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-ink/70">
+          <div className="my-4 h-px w-10 bg-accent/40" aria-hidden />
+
+          <p className="line-clamp-2 text-sm leading-relaxed text-white/60">
             {event.description}
           </p>
 
-          <span className="mt-auto pt-6 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent-700">
+          <span className="mt-auto flex items-center gap-1.5 pt-6 text-xs font-medium uppercase tracking-widest2 text-accent-300 transition-colors group-hover:text-accent-200">
             {muted ? t("viewEvent") : t("reserve")}
             <ArrowRight
               size={14}
