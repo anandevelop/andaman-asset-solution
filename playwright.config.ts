@@ -30,10 +30,30 @@ const BASE_URL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
   test suite that only works with every third-party key present is a test
   suite nobody can run.
 */
+/*
+  One secret, shared by both halves of the run.
+
+  global-setup.ts encrypts the fixture's TOTP secret with
+  process.env.NEXTAUTH_SECRET — lib/totp derives its AES key from it — while
+  the server under test decrypts with whatever this config hands it. When
+  the two differ, the database holds ciphertext the application cannot read:
+  sign-in logs "[2fa] cannot decrypt TOTP secret" and every admin spec times
+  out at the code prompt, for a reason that looks nothing like a key
+  mismatch. Writing the resolved value back onto process.env is what keeps
+  the setup side in step — and it lets a local run work without exporting
+  anything.
+*/
+const NEXTAUTH_SECRET =
+  process.env.E2E_NEXTAUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  "e2e-only-secret-not-for-production";
+
+process.env.NEXTAUTH_SECRET = NEXTAUTH_SECRET;
+
 const SERVER_ENV = {
   DATABASE_URL: process.env.E2E_DATABASE_URL ?? "",
   NEXTAUTH_URL: BASE_URL,
-  NEXTAUTH_SECRET: process.env.E2E_NEXTAUTH_SECRET ?? "e2e-only-secret-not-for-production",
+  NEXTAUTH_SECRET,
   NEXT_PUBLIC_SITE_URL: BASE_URL,
   NEXT_PUBLIC_DEFAULT_LOCALE: "th",
   NEXT_TELEMETRY_DISABLED: "1",

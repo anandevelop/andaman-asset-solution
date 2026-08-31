@@ -142,6 +142,10 @@ jobs:
       NEXTAUTH_SECRET: e2e-ci-placeholder-secret
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_DEFAULT_LOCALE: th
+      # Tells global-setup.ts that the step below already did the work, so
+      # it does not truncate the fixtures the production build was just
+      # prerendered from. See the note on its default export.
+      E2E_DB_ALREADY_PREPARED: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -162,6 +166,15 @@ jobs:
       # bug actually shows up.
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+
+      # Before Playwright, not inside it. Playwright starts `webServer`
+      # ahead of globalSetup, and in CI that server command is
+      # `npm run build && next start` — a build that reads the database.
+      # Seeding afterwards would leave the home page and the project list
+      # prerendered from an empty database, held that way by their
+      # one-hour revalidate for the whole run.
+      - name: Seed the e2e database
+        run: npm run test:e2e:db
 
       - name: Run end-to-end tests
         run: npm run test:e2e

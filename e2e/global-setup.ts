@@ -120,7 +120,13 @@ async function seed(prisma: PrismaClient) {
   });
 }
 
-export default async function globalSetup() {
+/**
+ * Push the schema, wipe it, write the fixtures.
+ *
+ * Exported so CI can run this *before* Playwright starts — see the default
+ * export below for why that ordering matters.
+ */
+export async function prepareDatabase() {
   const url = resolveDatabaseUrl();
 
   console.log("[e2e] preparing the test database…");
@@ -149,4 +155,43 @@ export default async function globalSetup() {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+/**
+ * PLAYWRIGHT STARTS `webServer` BEFORE IT RUNS THIS.
+ *
+ * That ordering is fine against `next dev`, which renders every request
+ * fresh — and wrong against CI, where the web server command is
+ * `npm run build && next start`. The build reads the database: it resolves
+ * generateStaticParams and prerenders the home page and the project list.
+ * Run before the seed, it sees an empty database (or, on a fresh CI
+ * service container, no tables at all — "The table public.projects does not
+ * exist") and bakes those pages empty, with `revalidate = 3600` holding
+ * them that way for the rest of the run. Seeding afterwards cannot undo it.
+ *
+ * So in CI the workflow calls prepareDatabase() itself, as a step before
+ * `npm run test:e2e`, and sets E2E_DB_ALREADY_PREPARED — leaving this hook
+ * to do nothing rather than truncate the fixtures the build was just
+ * prerendered from. Locally, where the server is `next dev` and nothing is
+ * prerendered, it still does the work as it always has.
+ */
+export default async function globalSetup() {
+  if (process.env.E2E_DB_ALREADY_PREPARED) {
+    console.log("[e2e] database prepared before the web server started — skipping.");
+    return;
+  }
+
+  await prepareDatabase();
+}
+
+/*
+  `tsx e2e/global-setup.ts` (npm run test:e2e:db) runs the preparation on
+  its own. One file, so the wipe guard above cannot be bypassed by calling
+  the other entry point.
+*/
+if (require.main === module) {
+  prepareDatabase().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
 }

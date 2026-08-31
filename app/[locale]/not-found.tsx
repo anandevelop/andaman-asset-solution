@@ -13,10 +13,12 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+"use client";
+
 import Link from "next/link";
-import { headers } from "next/headers";
+import { usePathname } from "next/navigation";
 import { Building2, Compass, Home, Newspaper } from "lucide-react";
-import { defaultLocale, locales } from "@/i18n";
+import { defaultLocale } from "@/i18n";
 
 const COPY = {
   th: {
@@ -41,22 +43,38 @@ const COPY = {
 
 /**
  * The locale segment is not passed to a not-found boundary, so it is read
- * off the request path. headers() makes this route dynamic, which is
- * correct — a 404 should not be statically cached under one locale.
+ * off the path.
+ *
+ * A client component reading usePathname(), rather than a server one
+ * reading headers(). headers() is a dynamic API, and notFound() is thrown
+ * mostly from routes that are statically rendered — every project, article
+ * and event page carries `revalidate = 3600`. Rendering this boundary
+ * inside one of those threw "Page changed from static to dynamic at
+ * runtime, reason: headers" and served a 500: a stale link to a removed
+ * project answered with a crash instead of this page. usePathname needs no
+ * request, so the boundary renders in a static route as happily as a
+ * dynamic one.
  */
-function resolveLocale(): keyof typeof COPY {
-  const path =
-    headers().get("x-invoke-path") ??
-    headers().get("x-matched-path") ??
-    headers().get("referer") ??
-    "";
+function useLocale(): keyof typeof COPY {
+  const pathname = usePathname() ?? "";
 
-  const match = locales.find((locale) => path.includes(`/${locale}`));
-  return (match ?? defaultLocale) as keyof typeof COPY;
+  /*
+    Matched against the locales COPY actually has, not against `locales`.
+    That list grew to en/th/zh/ru while this page kept two translations, so
+    matching the URL first and indexing COPY second turned a 404 under /zh
+    into `undefined.code` — a crash inside the crash handler.
+    A Chinese or Russian visitor gets the Thai copy here; wrong, but
+    readable, and the links out still work.
+  */
+  const match = (Object.keys(COPY) as (keyof typeof COPY)[]).find(
+    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
+  );
+
+  return match ?? (defaultLocale as keyof typeof COPY);
 }
 
 export default function LocaleNotFound() {
-  const locale = resolveLocale();
+  const locale = useLocale();
   const t = COPY[locale];
 
   const links = [
