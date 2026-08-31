@@ -21,7 +21,13 @@
     "enquireNow": "立即咨询",
     "callUs": "致电我们",
     "chatOnWhatsApp": "通过WhatsApp联系",
-    "emailUs": "发送邮件"
+    "emailUs": "发送邮件",
+    "projectNames": {
+      "residencePrime": "The Residence Prime",
+      "trinityVillage": "Trinity Village",
+      "victory": "The Victory"
+    },
+    "projectPhotoAlt": "{project} 项目中的别墅，由 Andaman Asset Solution 开发"
   },
   "chatButtons": {
     "whatsappLabel": "通过WhatsApp联系",
@@ -42,11 +48,45 @@
         "unmute": "取消静音"
       }
     },
+    "whoWeAre": {
+      "eyebrow": "关于我们",
+      "title": "普吉岛豪华别墅",
+      "body": "Andaman Asset Solution 深耕房地产开发领域，致力于成为普吉岛豪华别墅开发的领军者。我们将最前沿的建筑技术与独具匠心的设计理念相结合，为投资者与自住业主打造理想之选。"
+    },
+    "visionMission": {
+      "title": "愿景与使命",
+      "visionLabel": "愿景",
+      "vision": "以设计、品质与管理成为普吉岛最成功的房地产开发商，并于 2028 年前完成首次公开募股（IPO）。",
+      "missionLabel": "使命",
+      "mission": "Andaman Asset Solution 将提供最优质的房地产开发项目，让客户、代理商、供应商与生产团队皆得到满意的成果，使公司成为普吉岛豪华别墅开发行业中最具声誉且最可持续发展的企业。",
+      "stats": {
+        "team": "团队成员",
+        "feedback": "客户评价",
+        "awards": "获得奖项",
+        "projects": "已完成项目"
+      }
+    },
     "featured": {
       "eyebrow": "精选开发项目",
       "title": "我们正在建造的项目",
       "subtitle": "三个项目，均位于邦涛（Bang Tao）二十分钟车程范围内。",
       "viewAll": "查看全部项目"
+    },
+    "corporate": {
+      "title": "企业业务",
+      "body": "Andaman Asset Solution 既是房地产的直接开发商，也是房地产咨询服务提供商，业务涵盖普吉岛豪华别墅开发的全流程。",
+      "services": {
+        "acquisition": "土地收购",
+        "construction": "工程建设",
+        "design": "建筑设计",
+        "management": "物业管理"
+      },
+      "imageAlts": {
+        "acquisition": "Andaman Asset Solution 地块的航拍图",
+        "construction": "开发中的 Andaman Asset Solution 别墅外观",
+        "design": "Andaman Asset Solution 别墅的挑高客厅",
+        "management": "已竣工 Andaman Asset Solution 别墅的泳池"
+      }
     },
     "why": {
       "eyebrow": "为什么选择安达曼",
@@ -127,11 +167,6 @@
       "byBrand": "由{brand}打造",
       "viewAll": "查看我们的所有荣誉"
     },
-    "team": {
-      "eyebrow": "团队",
-      "title": "您将真正接触到的人",
-      "subtitle": "公司规模虽小，却意味着带您看地的人，就是最终为工程验收签字的人。"
-    },
     "cta": {
       "title": "还有其他未在此解答的问题？",
       "body": "请直接向我们提问。我们宁愿现在多聊一会儿，也不愿日后陷入被动。",
@@ -197,6 +232,7 @@
     "galleryTitle": "施工进度",
     "gallerySubtitle": "每月更新，直接来自施工现场。",
     "progressEmpty": "施工进度更新将随工程推进在此发布。",
+    "progressVideoLabel": "无人机航拍视频",
     "formTitle": "预约私人看房",
     "formSubtitle": "留下您的联系方式，我们的团队将在24小时内与您联系。",
     "conceptDesignEyebrow": "概念设计",
@@ -432,7 +468,13 @@
     "invalidCredentials": "该邮箱与密码组合无法识别。",
     "unexpectedError": "登录失败，请稍后重试。",
     "backToSite": "返回网站",
-    "signOut": "退出登录"
+    "signOut": "退出登录",
+    "verify": "验证代码",
+    "codePrompt": "请输入身份验证器应用中的 6 位数字代码。",
+    "codeLabel": "验证代码",
+    "codeHint": "手机不在身边？也可以使用恢复代码（例如 A3F9K-2QMXP）。",
+    "invalidCode": "代码错误或已过期，请重试。",
+    "codeLocked": "错误次数过多，请等待 15 分钟后重试。"
   },
   "admin": {
     "brand": "后台管理",
@@ -621,8 +663,8 @@
       "addTitle": "添加月度更新",
       "month": "月份",
       "year": "年份",
-      "updateTitle": "标题",
-      "summary": "摘要",
+      "videoUrl": "YouTube 视频链接",
+      "videoUrlHint": "粘贴 YouTube 链接(例如无人机航拍视频),将嵌入在本月照片下方显示,此项为选填。",
       "images": "图片URL",
       "imagesHint": "每行一个URL。这些图片将按顺序显示在公开的进度图集中。",
       "imageCount": "{count, plural, =0 {暂无图片} other {# 张图片}}",
@@ -794,7 +836,9 @@
       "dragToReorder": "拖动以重新排序",
       "reorderHint": "拖动以重新排序",
       "constraintsDocument": "PDF格式 · 最大30MB",
-      "constraintsMedia": "JPEG、PNG、WebP、AVIF、MP4 或 WebM · 最大15MB（视频最大100MB）"
+      "constraintsMedia": "JPEG、PNG、WebP、AVIF、MP4 或 WebM · 最大15MB（视频最大100MB）",
+      "storageBlocked": "存储服务拒绝了浏览器请求 —— 多半是 CORS 设置，详见控制台。",
+      "storageDenied": "存储服务拒绝上传（403）—— 请检查访问密钥。"
     },
     "placeholder": {
       "title": "后续阶段推出",
@@ -835,6 +879,8 @@
       "durationSecondsHint": "该幻灯片停留多久后切换到下一张。视频幻灯片会忽略此设置，改用视频文件本身的时长。",
       "caption": "文案",
       "captionHint": "可选的叠加文字。纯图片或视频无需文字时留空即可。",
+      "tagline": "标语",
+      "taglineHint": "标题下方的简短文字。可选。",
       "ctaLabel": "按钮文字",
       "ctaUrl": "按钮链接",
       "ctaUrlHint": "例如 /projects 或 /contact。两者都留空则不显示按钮。",
@@ -989,6 +1035,51 @@
         "aboutUsEn": "公司简介（英文）",
         "aboutUsTh": "公司简介（泰文）",
         "aboutUsThHint": "选填。留空时，关于我们页面将回退显示英文文本。"
+      }
+    },
+    "security": {
+      "title": "双重验证",
+      "subtitle": "在密码之外，再加一道来自手机的验证码。",
+      "cardHint": "为您的账户设置身份验证器代码。",
+      "manage": "管理双重验证",
+      "required": "{role} 账户必须先启用双重验证，才能使用后台的其他功能。",
+      "statusOn": "双重验证已开启",
+      "statusOff": "双重验证尚未开启",
+      "statusOffHint": "按以下三个步骤操作，不到一分钟即可完成。",
+      "remaining": "还剩 {count} 个恢复代码。",
+      "step1": "1. 安装身份验证器应用",
+      "step1Hint": "Google Authenticator、Microsoft Authenticator、1Password —— 任何支持 TOTP 的应用均可。",
+      "step2": "2. 扫描此二维码",
+      "step3": "3. 输入应用显示的 6 位数字代码",
+      "qrAlt": "双重验证设置二维码",
+      "manualHint": "无法扫描？请在应用中手动输入此密钥。",
+      "codeLabel": "验证代码",
+      "enable": "启用双重验证",
+      "recoveryTitle": "请保存这些恢复代码",
+      "recoveryHint": "每个代码仅可使用一次。手机丢失时，它们是唯一的登录途径 —— 此页面不会再次显示。",
+      "copy": "全部复制",
+      "copied": "已复制",
+      "regenTitle": "生成新的恢复代码",
+      "regenHint": "现有代码将立即失效。代码所剩不多或怀疑泄露时使用。",
+      "regenerate": "生成新代码",
+      "disableTitle": "关闭双重验证",
+      "disableHint": "账户将恢复为仅使用密码。需要输入密码和当前验证码确认。",
+      "disableHintMandatory": "您的角色要求启用双重验证 —— 关闭后，下次登录时仍需重新设置。",
+      "disable": "关闭",
+      "passwordLabel": "当前密码",
+      "disabledOk": "双重验证已关闭。",
+      "disabledMandatory": "已关闭 —— 下次进入后台时将要求重新设置。",
+      "resetTitle": "重置该用户的双重验证",
+      "resetHint": "适用于手机丢失且没有剩余恢复代码的同事。他们将在下次登录时重新设置。",
+      "reset": "重置双重验证",
+      "confirmReset": "确定要重置 {name} 的双重验证吗？该用户需要重新完成设置。",
+      "errors": {
+        "INVALID_CODE": "代码错误或已过期，请重试。",
+        "LOCKED": "尝试次数过多，请等待 15 分钟。",
+        "SETUP_EXPIRED": "设置已过期，请刷新页面并扫描新的二维码。",
+        "ALREADY_ENABLED": "该账户已启用双重验证。",
+        "WRONG_PASSWORD": "密码不正确。",
+        "FAILED": "操作未成功，请重试。"
       }
     }
   }

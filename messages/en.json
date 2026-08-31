@@ -21,7 +21,13 @@
     "enquireNow": "Enquire now",
     "callUs": "Call us",
     "chatOnWhatsApp": "Chat on WhatsApp",
-    "emailUs": "Email us"
+    "emailUs": "Email us",
+    "projectNames": {
+      "residencePrime": "The Residence Prime",
+      "trinityVillage": "Trinity Village",
+      "victory": "The Victory"
+    },
+    "projectPhotoAlt": "A villa at {project}, developed by Andaman Asset Solution"
   },
   "chatButtons": {
     "whatsappLabel": "Chat on WhatsApp",
@@ -42,11 +48,45 @@
         "unmute": "Unmute"
       }
     },
+    "whoWeAre": {
+      "eyebrow": "Who we are",
+      "title": "Luxury Villa in Phuket",
+      "body": "Andaman Asset Solution works in real estate development with the aim of leading the luxury villa field in Phuket — combining the latest cutting-edge building technologies with distinctive design, for investors and for the people who will live in the homes we build."
+    },
+    "visionMission": {
+      "title": "Vision & Mission",
+      "visionLabel": "Vision",
+      "vision": "To be Phuket's most successful property developer through its design, quality and management, and to launch an Initial Public Offering (IPO) by 2028.",
+      "missionLabel": "Mission",
+      "mission": "Andaman Asset Solution will provide the best property developments to satisfy our valued customers, agents, suppliers and production team, making our company the most reputable and sustainable in the luxury villa development industry in Phuket.",
+      "stats": {
+        "team": "Team members",
+        "feedback": "Client feedback",
+        "awards": "Winning awards",
+        "projects": "Projects complete"
+      }
+    },
     "featured": {
       "eyebrow": "Selected Developments",
       "title": "What we are building now",
       "subtitle": "Three projects, all within twenty minutes of Bang Tao.",
       "viewAll": "All projects"
+    },
+    "corporate": {
+      "title": "Corporate",
+      "body": "At Andaman Asset Solution we work both as a direct property developer and as a provider of real estate consulting services, covering the whole spectrum of development for luxury villas in Phuket.",
+      "services": {
+        "acquisition": "Land acquisition",
+        "construction": "Construction",
+        "design": "Design",
+        "management": "Property management"
+      },
+      "imageAlts": {
+        "acquisition": "Aerial view of an Andaman Asset Solution villa plot",
+        "construction": "An Andaman Asset Solution villa exterior under development",
+        "design": "A double-height living room in an Andaman Asset Solution villa",
+        "management": "The pool of a completed Andaman Asset Solution villa"
+      }
     },
     "why": {
       "eyebrow": "Why Andaman",
@@ -127,11 +167,6 @@
       "byBrand": "by {brand}",
       "viewAll": "See all our achievements"
     },
-    "team": {
-      "eyebrow": "The Team",
-      "title": "Who you will actually deal with",
-      "subtitle": "A small company means the person who shows you the plot is the person who signs off the build."
-    },
     "cta": {
       "title": "Questions we have not answered here?",
       "body": "Ask them directly. We would rather have a long conversation now than a difficult one later.",
@@ -197,6 +232,7 @@
     "galleryTitle": "Construction Progress",
     "gallerySubtitle": "Updated monthly, straight from the site.",
     "progressEmpty": "Construction updates will be published here as work progresses.",
+    "progressVideoLabel": "Drone footage",
     "formTitle": "Request private viewing",
     "formSubtitle": "Leave your details and our team will contact you within 24 hours.",
     "conceptDesignEyebrow": "Concept Design",
@@ -432,7 +468,13 @@
     "invalidCredentials": "That email and password combination is not recognised.",
     "unexpectedError": "Sign-in failed. Please try again in a moment.",
     "backToSite": "Back to the website",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "verify": "Verify code",
+    "codePrompt": "Enter the 6-digit code from your authenticator app.",
+    "codeLabel": "Authentication code",
+    "codeHint": "No phone to hand? A recovery code (like A3F9K-2QMXP) works here too.",
+    "invalidCode": "That code is wrong or has expired. Try the next one.",
+    "codeLocked": "Too many incorrect codes. Wait 15 minutes and try again."
   },
   "admin": {
     "brand": "Back office",
@@ -621,8 +663,8 @@
       "addTitle": "Add a month",
       "month": "Month",
       "year": "Year",
-      "updateTitle": "Title",
-      "summary": "Summary",
+      "videoUrl": "YouTube video link",
+      "videoUrlHint": "Paste a YouTube link (e.g. drone footage) to embed it below the photos for this month. Optional.",
       "images": "Image URLs",
       "imagesHint": "One URL per line. These render in the public progress gallery in order.",
       "imageCount": "{count, plural, =0 {No images} one {# image} other {# images}}",
@@ -794,7 +836,9 @@
       "dragToReorder": "Drag to reorder",
       "reorderHint": "drag to reorder",
       "constraintsDocument": "PDF · up to 30MB",
-      "constraintsMedia": "JPEG, PNG, WebP, AVIF, MP4 or WebM · up to 15MB (100MB for video)"
+      "constraintsMedia": "JPEG, PNG, WebP, AVIF, MP4 or WebM · up to 15MB (100MB for video)",
+      "storageBlocked": "Storage refused the browser — likely a CORS rule. See the console.",
+      "storageDenied": "Storage denied the upload (403) — check the access key."
     },
     "placeholder": {
       "title": "Coming in a later phase",
@@ -835,6 +879,8 @@
       "durationSecondsHint": "How long this slide holds before the next one starts. Video slides ignore this and use the file's own length instead.",
       "caption": "Caption",
       "captionHint": "Optional overlay text. Leave blank for a pure photo or video with no text.",
+      "tagline": "Tagline",
+      "taglineHint": "A short line shown under the headline. Optional.",
       "ctaLabel": "Button label",
       "ctaUrl": "Button link",
       "ctaUrlHint": "e.g. /projects or /contact. Leave both blank for no button.",
@@ -989,6 +1035,51 @@
         "aboutUsEn": "About Us (English)",
         "aboutUsTh": "About Us (Thai)",
         "aboutUsThHint": "Optional. Left blank, the About page falls back to the English text."
+      }
+    },
+    "security": {
+      "title": "Two-factor authentication",
+      "subtitle": "A code from your phone, on top of your password.",
+      "cardHint": "Set up an authenticator code for your account.",
+      "manage": "Manage 2FA",
+      "required": "{role} accounts must turn on 2FA before the rest of the back-office opens.",
+      "statusOn": "Two-factor authentication is on",
+      "statusOff": "Two-factor authentication is off",
+      "statusOffHint": "Three steps below, under a minute.",
+      "remaining": "{count} recovery codes left.",
+      "step1": "1. Install an authenticator app",
+      "step1Hint": "Google Authenticator, Microsoft Authenticator, 1Password — anything that does TOTP.",
+      "step2": "2. Scan this QR code",
+      "step3": "3. Enter the 6-digit code it shows",
+      "qrAlt": "QR code for two-factor setup",
+      "manualHint": "Cannot scan? Type this key into the app instead.",
+      "codeLabel": "Authentication code",
+      "enable": "Turn on 2FA",
+      "recoveryTitle": "Save these recovery codes",
+      "recoveryHint": "Each works once. They are the way back in if your phone is gone — this page will not show them again.",
+      "copy": "Copy all",
+      "copied": "Copied",
+      "regenTitle": "New recovery codes",
+      "regenHint": "Every existing code stops working immediately. Use this when you are running low, or think the old set was seen.",
+      "regenerate": "Generate new set",
+      "disableTitle": "Turn off 2FA",
+      "disableHint": "The account goes back to password only. Confirm with your password and a current code.",
+      "disableHintMandatory": "Your role requires 2FA — turning it off only sends you back through setup at the next sign-in.",
+      "disable": "Turn off",
+      "passwordLabel": "Current password",
+      "disabledOk": "Two-factor authentication is off.",
+      "disabledMandatory": "Turned off — you will be asked to set it up again the next time you open the admin.",
+      "resetTitle": "Reset this user's 2FA",
+      "resetHint": "For a colleague who lost their phone with no recovery codes left. They set it up again at their next sign-in.",
+      "reset": "Reset 2FA",
+      "confirmReset": "Reset two-factor authentication for {name}? They will have to set it up from scratch.",
+      "errors": {
+        "INVALID_CODE": "That code is wrong or has expired. Try the next one.",
+        "LOCKED": "Too many attempts. Wait 15 minutes.",
+        "SETUP_EXPIRED": "Setup expired. Refresh this page and scan the new QR code.",
+        "ALREADY_ENABLED": "Two-factor authentication is already on for this account.",
+        "WRONG_PASSWORD": "That password is not correct.",
+        "FAILED": "That did not work. Try again."
       }
     }
   }
