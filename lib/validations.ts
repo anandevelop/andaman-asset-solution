@@ -78,7 +78,20 @@ export const leadInquiryServerSchema = leadInquirySchema.extend({
   utmMedium: z.string().trim().max(120).optional().or(z.literal("")),
   utmCampaign: z.string().trim().max(160).optional().or(z.literal("")),
   // Honeypot — must stay empty. Bots fill every field they can see.
-  company: z.string().max(0).optional().or(z.literal("")),
+  /*
+    Honeypot — hidden from real visitors, so only a script fills it in.
+
+    Deliberately NOT constrained to an empty string here. It used to be
+    `z.string().max(0)`, which rejects any filled-in value with a 422
+    before the request body even reaches the route handler — so the one
+    line below that was written to catch this ("Honeypot tripped — accept
+    silently so bots don't learn the shape") was unreachable dead code,
+    and every bot that took the bait got a validation error back instead
+    of the silent 201 that was supposed to teach it nothing. Accepting any
+    string here is what lets the route handler's own `if (data.company)`
+    check be the one place that decides.
+  */
+  company: z.string().optional().or(z.literal("")),
 });
 
 export type LeadInquiryServerInput = z.infer<typeof leadInquiryServerSchema>;
@@ -129,7 +142,20 @@ export const eventRegistrationServerSchema = eventRegistrationSchema.extend({
   // feature degrades fine without it (falls back to the default locale).
   locale: editingLocaleSchema.optional(),
   // Honeypot — must stay empty.
-  company: z.string().max(0).optional().or(z.literal("")),
+  /*
+    Honeypot — hidden from real visitors, so only a script fills it in.
+
+    Deliberately NOT constrained to an empty string here. It used to be
+    `z.string().max(0)`, which rejects any filled-in value with a 422
+    before the request body even reaches the route handler — so the one
+    line below that was written to catch this ("Honeypot tripped — accept
+    silently so bots don't learn the shape") was unreachable dead code,
+    and every bot that took the bait got a validation error back instead
+    of the silent 201 that was supposed to teach it nothing. Accepting any
+    string here is what lets the route handler's own `if (data.company)`
+    check be the one place that decides.
+  */
+  company: z.string().optional().or(z.literal("")),
 });
 
 // ─────────────────────────────────────────────────────────────────────────

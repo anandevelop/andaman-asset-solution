@@ -73,7 +73,22 @@ export default function Navbar({ phone, phoneDisplay }: Props) {
       const nodes = Array.from(
         menuRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
       );
-      if (toggleRef.current) nodes.push(toggleRef.current);
+      /*
+        Unshift, not push. The toggle button lives in <header>, before the
+        panel in DOM order — it is the one focusable element outside
+        menuRef that this trap still needs to hold onto, and it is where
+        Shift+Tab from the first link should land.
+
+        Appending it here instead made it the array's *last* element
+        without making it the page's last-in-tab-order element, so the
+        boundary check below — "forward-Tab from the last node wraps to
+        the first" — was comparing against a node nobody forward-tabs
+        into from inside the panel. The panel's real last element (the
+        phone button) had no wrap at all, and Tab from there walked
+        straight into the page underneath: the exact bug this trap exists
+        to prevent.
+      */
+      if (toggleRef.current) nodes.unshift(toggleRef.current);
       if (nodes.length === 0) return;
 
       const firstNode = nodes[0];

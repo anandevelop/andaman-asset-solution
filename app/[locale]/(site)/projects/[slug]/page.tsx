@@ -789,7 +789,11 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                     {cat.items.map((item) => (
                       <li key={item.id} className="flex items-baseline justify-between gap-3">
                         <span>{item.name}</span>
-                        <span className="shrink-0 text-xs text-ink/40">
+                        {/* ink/65, not ink/40: 40% lands on #96a0a8 over this
+                            section's background, 2.38:1 — axe flagged it on
+                            every project page. Same fix, same target ratio,
+                            as the Navbar.tsx and Footer.tsx contrast bugs. */}
+                        <span className="shrink-0 text-xs text-ink/65">
                           {formatNumber(locale, item.distanceKm)} {t("units.km")}
                         </span>
                       </li>
@@ -824,7 +828,11 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                     {cat.items.map((item) => (
                       <li key={item.id} className="flex items-baseline justify-between gap-3">
                         <span>{item.name}</span>
-                        <span className="shrink-0 text-xs text-ink/40">
+                        {/* ink/65, not ink/40: 40% lands on #96a0a8 over this
+                            section's background, 2.38:1 — axe flagged it on
+                            every project page. Same fix, same target ratio,
+                            as the Navbar.tsx and Footer.tsx contrast bugs. */}
+                        <span className="shrink-0 text-xs text-ink/65">
                           {formatNumber(locale, item.distanceKm)} {t("units.km")}
                         </span>
                       </li>

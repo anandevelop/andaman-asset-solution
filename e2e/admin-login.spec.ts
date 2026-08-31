@@ -75,6 +75,26 @@ async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password
   await submitCredentials(page, email, password);
 
   const code = page.getByLabel("Authentication code");
+  const error = alertBanner(page);
+
+  /*
+    submitCredentials() only waits for the click to dispatch, not for the
+    signIn() call it triggers to resolve — that request is a real round
+    trip (a bcrypt compare alone costs real time at cost 12), and the DOM
+    does not reflect its outcome until React re-renders afterwards.
+
+    A bare `code.isVisible()` here samples the DOM the instant the click
+    handler returns, which is almost always before that re-render — so it
+    read "not visible" regardless of whether the credentials were right,
+    the 2FA prompt never appeared, nobody typed a code, and every sign-in
+    timed out waiting on a page that was simply still waiting for its
+    first response. Waiting for whichever of the two possible outcomes
+    appears first is what the synchronous check was missing.
+  */
+  await Promise.race([
+    code.waitFor({ state: "visible" }).catch(() => {}),
+    error.waitFor({ state: "visible" }).catch(() => {}),
+  ]);
 
   // Wrong credentials never reach step two; let the caller assert on that.
   if (!(await code.isVisible().catch(() => false))) return;
@@ -82,9 +102,14 @@ async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password
   await code.fill(await currentCode());
   await page.getByRole("button", { name: "Verify code" }).click();
 
-  const rejected = alertBanner(page);
+  // Same race, for the outcome of the code submission: either the app
+  // navigates away from /login, or the rejection banner appears.
+  await Promise.race([
+    page.waitForURL((url) => !url.pathname.endsWith("/login"), { timeout: 5_000 }).catch(() => {}),
+    error.waitFor({ state: "visible", timeout: 5_000 }).catch(() => {}),
+  ]);
 
-  if (await rejected.isVisible().catch(() => false)) {
+  if (await error.isVisible().catch(() => false)) {
     await waitForNextStep(page);
     await code.fill(await currentCode());
     await page.getByRole("button", { name: "Verify code" }).click();

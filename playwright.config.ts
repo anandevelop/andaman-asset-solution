@@ -99,6 +99,23 @@ export default defineConfig({
     video: "retain-on-failure",
     locale: "en-GB",
     timezoneId: "Asia/Bangkok",
+    /*
+      Every framer-motion element on this site (Reveal, ProjectsHero, the
+      mobile nav's staggered links) reads prefers-reduced-motion itself —
+      see the note in components/Reveal.tsx — and jumps straight to its
+      final state when it is set, no MotionConfig wiring needed on our
+      side.
+
+      Without this, axe-core can scan an eyebrow or a heading mid fade-in
+      and flag it for a contrast ratio that only exists for the ~700ms
+      the animation is still running — ProjectsHero's eyebrow is exactly
+      that: accent-700 at its resting 4.84:1 read as 3.83:1 because the
+      scan landed at ~88% opacity. That is a real thing a reduced-motion
+      visitor's browser produces too, so exercising this path is not a
+      workaround bought at the suite's expense — it is the same state
+      real users in that setting see instead of the animation.
+    */
+    contextOptions: { reducedMotion: "reduce" },
   },
 
   projects: [

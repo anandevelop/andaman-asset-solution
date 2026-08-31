@@ -21,6 +21,13 @@ import type { Locale } from "@/i18n";
  * label goes through the `footer`/`nav` namespaces (see messages/*.json) so
  * zh/ru visitors see real translations rather than the English/Thai text
  * this component used to hardcode.
+ *
+ * `text-white/55`, not the `text-white/40` every muted label here used to
+ * be: white at 40% over this footer's #083551 lands on #6b8697, 3.34:1 —
+ * a fail for the 11-12px labels and legal links it was used on, and what
+ * axe flagged on every page (the footer renders everywhere). 55% is
+ * #90a4b1, 4.96:1, the same "smallest passing step plus a margin" call as
+ * the ink/65 fix in Navbar.tsx.
  */
 export default async function Footer() {
   const locale = (await getLocale()) as Locale;
@@ -124,7 +131,7 @@ export default async function Footer() {
             <li className="flex items-start gap-4 group">
               <Phone size={15} strokeWidth={1.5} className="shrink-0 mt-1 text-accent transition-colors group-hover:text-white" />
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold tracking-widest text-white/40 uppercase">{t("phone")}</span>
+                <span className="text-[11px] font-semibold tracking-widest text-white/55 uppercase">{t("phone")}</span>
                 <a href={`tel:${settings.contact.phone}`} className="text-white/80 transition-colors group-hover:text-white leading-relaxed">
                   {settings.contact.phoneDisplay}
                 </a>
@@ -135,7 +142,7 @@ export default async function Footer() {
             <li className="flex items-start gap-4 group">
               <Mail size={15} strokeWidth={1.5} className="shrink-0 mt-1 text-accent transition-colors group-hover:text-white" />
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold tracking-widest text-white/40 uppercase">{t("email")}</span>
+                <span className="text-[11px] font-semibold tracking-widest text-white/55 uppercase">{t("email")}</span>
                 <a href={`mailto:${settings.contact.email}`} className="text-white/80 transition-colors group-hover:text-white break-words leading-relaxed">
                   {settings.contact.email}
                 </a>
@@ -147,7 +154,7 @@ export default async function Footer() {
               <li className="flex items-start gap-4 group cursor-default">
                 <MapPin size={15} strokeWidth={1.5} className="shrink-0 mt-1 text-accent transition-colors group-hover:text-white" />
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-semibold tracking-widest text-white/40 uppercase">{t("address")}</span>
+                  <span className="text-[11px] font-semibold tracking-widest text-white/55 uppercase">{t("address")}</span>
                   <span className="text-white/80 transition-colors group-hover:text-white leading-relaxed">
                     {address}
                   </span>
@@ -160,7 +167,7 @@ export default async function Footer() {
               <li className="flex items-start gap-4 group cursor-default">
                 <Clock size={15} strokeWidth={1.5} className="shrink-0 mt-1 text-accent transition-colors group-hover:text-white" />
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-semibold tracking-widest text-white/40 uppercase">{t("openingHours")}</span>
+                  <span className="text-[11px] font-semibold tracking-widest text-white/55 uppercase">{t("openingHours")}</span>
                   <span className="text-white/80 transition-colors group-hover:text-white leading-relaxed">
                     {officeHours}
                   </span>
@@ -215,10 +222,10 @@ export default async function Footer() {
       {/* 3. Bottom Section: Copyright & Legal */}
       <div className="border-t border-white/5">
         <div className="container-luxe flex flex-col items-center justify-between gap-4 py-6 pb-24 md:flex-row md:pb-6">
-          <p className="text-center text-xs text-white/40 font-light md:text-left">
+          <p className="text-center text-xs text-white/55 font-light md:text-left">
             © {new Date().getFullYear()} {siteConfig.legalName} — {t("rightsReserved")}
           </p>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/40 font-light md:gap-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/55 font-light md:gap-6">
             <Link href={`/${locale}/terms`} className="transition-colors hover:text-white">{t("terms")}</Link>
             <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-white">{t("privacyPolicy")}</Link>
             <CookiePreferencesLink label={t("cookiesPreferences")} />

@@ -158,11 +158,24 @@ describe("leadInquiryServerSchema", () => {
     expect(leadInquiryServerSchema.safeParse(VALID_LEAD).success).toBe(true);
   });
 
-  it("rejects a filled honeypot", () => {
-    // This is the whole mechanism: bots fill every field they can see.
+  it("accepts a filled honeypot rather than rejecting it", () => {
+    /*
+      Not the schema's job. This used to be `company: z.string().max(0)`,
+      which made a filled honeypot a 422 before the request ever reached
+      app/api/leads/route.ts's own `if (data.company)` — the line written
+      to accept it silently ("bots fill every field they can see", and
+      telling one it was caught only teaches it which field to leave
+      blank) was dead code, and a real submission with something typed
+      into a field a browser autofilled or a screen reader user's virtual
+      cursor landed on got a validation error instead of the silent
+      success it was supposed to get.
+
+      The schema's part is just not to stand in the route handler's way —
+      it must parse successfully so `data.company` reaches the `if`.
+    */
     expect(
       leadInquiryServerSchema.safeParse({ ...VALID_LEAD, company: "Acme Ltd" }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("rejects a source outside the enum", () => {
@@ -280,10 +293,13 @@ describe("eventRegistrationSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects a filled honeypot on the server schema", () => {
+  it("accepts a filled honeypot on the server schema rather than rejecting it", () => {
+    // Same fix as leadInquiryServerSchema, same reason: the honeypot check
+    // belongs to app/api/events/[id]/register/route.ts's `if (data.company)`,
+    // not to a schema constraint that would 422 before that line ever runs.
     expect(
       eventRegistrationServerSchema.safeParse({ ...VALID_RSVP, company: "x" }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
