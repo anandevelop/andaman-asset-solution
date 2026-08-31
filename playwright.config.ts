@@ -105,6 +105,15 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      /*
+        The mobile spec belongs to the project below, and only there.
+        Without this it also ran at 1280px, where the hamburger carries
+        `lg:hidden`, so every one of its tests sat waiting sixty seconds for
+        an "Open menu" button that is not rendered at that width — five
+        failures describing the viewport they were handed rather than
+        anything about the code.
+      */
+      testIgnore: /mobile-navigation\.spec\.ts/,
     },
     {
       // The mobile viewport is not decoration: the nav collapses to a
