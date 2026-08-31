@@ -155,6 +155,15 @@ export const RATE_LIMITS = {
    */
   login: { limit: 10, windowMs: 15 * 60_000 },
 
+  /**
+   * Failed second-factor attempts, keyed per user. Tighter than the
+   * password limiter: at this point the password is already correct, so
+   * every failure is either a typo, a drifting phone clock, or someone
+   * guessing six digits — and six digits fall to brute force fast enough
+   * that the limit, not the entropy, is what protects the account.
+   */
+  twoFactor: { limit: 6, windowMs: 15 * 60_000 },
+
   /** Unsigned LINE webhook posts — anything reaching this is not LINE. */
   webhook: { limit: 30, windowMs: 60_000 },
 

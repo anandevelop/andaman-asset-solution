@@ -21,7 +21,17 @@ export type AdminSession = {
   name: string;
   email: string;
   role: Role;
+  /** Role requires 2FA and none is enrolled yet. */
+  twoFactorPending: boolean;
 };
+
+/**
+ * Escape hatch for the 2FA setup page and its actions — the one place an
+ * account that still owes enrolment is allowed to do work. Everything else
+ * stays closed to it, so a stolen password alone cannot reach the leads
+ * table during the window between a reset and re-enrolment.
+ */
+type GuardOptions = { allowTwoFactorSetup?: boolean };
 
 /**
  * Require an authenticated admin user. Redirects to the localised login
@@ -31,6 +41,7 @@ export type AdminSession = {
 export async function requireAdmin(
   locale: string,
   minimum: Role = Role.EDITOR,
+  { allowTwoFactorSetup = false }: GuardOptions = {},
 ): Promise<AdminSession> {
   const session = await getServerSession(authOptions);
 
@@ -42,11 +53,16 @@ export async function requireAdmin(
     redirect(`/${locale}/admin?denied=1`);
   }
 
+  if (session.user.twoFactorPending && !allowTwoFactorSetup) {
+    redirect(`/${locale}/admin/account/security?setup=1`);
+  }
+
   return {
     id: session.user.id,
     name: session.user.name ?? session.user.email ?? "",
     email: session.user.email ?? "",
     role: session.user.role,
+    twoFactorPending: session.user.twoFactorPending,
   };
 }
 
@@ -56,6 +72,7 @@ export async function requireAdmin(
  */
 export async function requireAdminAction(
   minimum: Role = Role.EDITOR,
+  { allowTwoFactorSetup = false }: GuardOptions = {},
 ): Promise<AdminSession> {
   const session = await getServerSession(authOptions);
 
@@ -63,10 +80,18 @@ export async function requireAdminAction(
     throw new Error("UNAUTHORISED");
   }
 
+  // Middleware cannot see a server action, so the enrolment gate has to be
+  // repeated here or a pending account could still mutate data by posting
+  // straight at an action.
+  if (session.user.twoFactorPending && !allowTwoFactorSetup) {
+    throw new Error("TWO_FACTOR_SETUP_REQUIRED");
+  }
+
   return {
     id: session.user.id,
     name: session.user.name ?? session.user.email ?? "",
     email: session.user.email ?? "",
     role: session.user.role,
+    twoFactorPending: session.user.twoFactorPending,
   };
 }

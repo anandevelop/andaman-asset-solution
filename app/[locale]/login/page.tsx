@@ -10,7 +10,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import AuthProvider from "@/components/admin/AuthProvider";
@@ -26,6 +26,7 @@ export async function generateMetadata({
 }: {
   params: { locale: string };
 }): Promise<Metadata> {
+  unstable_setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
 
   return {
@@ -36,6 +37,7 @@ export async function generateMetadata({
 }
 
 export default async function LoginPage({ params: { locale }, searchParams }: Props) {
+  unstable_setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
 
   // Only accept same-origin relative paths — an attacker-supplied absolute
@@ -58,7 +60,6 @@ export default async function LoginPage({ params: { locale }, searchParams }: Pr
               className="h-10 w-auto brightness-0 invert"
             />
           </Link>
-          <div className="horizon-divider mt-6" />
         </div>
 
         <div className="rounded-sm bg-surface-raised p-8 shadow-card sm:p-10">

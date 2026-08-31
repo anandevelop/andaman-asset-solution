@@ -14,11 +14,16 @@ declare module "next-auth" {
     user: {
       id: string;
       role: Role;
+      /** Has a confirmed authenticator enrolled. */
+      twoFactorEnabled: boolean;
+      /** Role requires 2FA but none is enrolled — access is gated on setup. */
+      twoFactorPending: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     role: Role;
+    twoFactorEnabled?: boolean;
   }
 }
 
@@ -26,6 +31,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: Role;
+    twoFactorEnabled?: boolean;
     /** Epoch ms of the last database re-validation of role/isActive. */
     checkedAt?: number;
   }

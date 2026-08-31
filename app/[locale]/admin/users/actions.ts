@@ -27,6 +27,7 @@ import { Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
+import { clearTwoFactor } from "@/lib/two-factor";
 import {
   changePasswordSchema,
   setPasswordSchema,
@@ -229,6 +230,26 @@ export async function changeOwnPassword(
 
   revalidatePath(`/${locale}/admin/account`);
   return { ok: true, message: "PASSWORD_SET" };
+}
+
+// ── Two-factor reset ────────────────────────────────────────────────────
+
+/**
+ * Clear another user's 2FA enrolment — the lost-phone path.
+ *
+ * SUPER_ADMIN only, and deliberately not self-service: an account that can
+ * reset its own second factor from inside the session does not have one.
+ * The reset is logged rather than silent, because "who unlocked this
+ * account and when" is the first question after an incident.
+ */
+export async function resetUserTwoFactor(locale: string, id: string): Promise<void> {
+  const actor = await requireAdminAction(Role.SUPER_ADMIN);
+
+  await clearTwoFactor(id);
+
+  console.warn(`[2fa] ${actor.email} reset two-factor for user ${id}`);
+
+  revalidatePath(`/${locale}/admin/users/${id}/edit`);
 }
 
 // ── Delete ──────────────────────────────────────────────────────────────

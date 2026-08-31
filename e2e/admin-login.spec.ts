@@ -14,21 +14,62 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { generate } from "otplib";
 import { expectNoA11yViolations } from "./a11y";
 import { ADMIN } from "./fixtures";
 
 const LOGIN = "/en/login";
 const DASHBOARD = "/en/admin";
 
-async function signIn(
-  page: import("@playwright/test").Page,
+/** Length of one TOTP step, and therefore of one code. */
+const STEP_MS = 30_000;
+
+/** Fresh code from the fixture secret — the same one the seed enrolled. */
+function currentCode(): Promise<string> {
+  return generate({ secret: ADMIN.totpSecret });
+}
+
+/**
+ * A code is refused once it has been spent (lib/totp.ts burns the time
+ * step), so two sign-ins inside the same 30 seconds cannot reuse one.
+ * Waiting for the next window is the honest fix; the alternative — turning
+ * replay protection off for tests — would mean never testing it.
+ */
+async function waitForNextStep(page: Page) {
+  await page.waitForTimeout(STEP_MS - (Date.now() % STEP_MS) + 1_000);
+}
+
+/** Email + password. Stops before the second factor. */
+async function submitCredentials(
+  page: Page,
   email = ADMIN.email,
   password = ADMIN.password,
 ) {
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
+}
+
+/** The full two-step sign-in, retrying once across a step boundary. */
+async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password) {
+  await submitCredentials(page, email, password);
+
+  const code = page.getByLabel("Authentication code");
+
+  // Wrong credentials never reach step two; let the caller assert on that.
+  if (!(await code.isVisible().catch(() => false))) return;
+
+  await code.fill(await currentCode());
+  await page.getByRole("button", { name: "Verify code" }).click();
+
+  const rejected = page.getByRole("alert");
+
+  if (await rejected.isVisible().catch(() => false)) {
+    await waitForNextStep(page);
+    await code.fill(await currentCode());
+    await page.getByRole("button", { name: "Verify code" }).click();
+  }
 }
 
 test.describe("Guarding the back office", () => {
@@ -203,7 +244,60 @@ test.describe("Accessibility", () => {
     await page.keyboard.press("Enter");
 
     // Enter submits from within a field — a form that only responds to a
-    // click on the button is broken for anyone not using a mouse.
+    // click on the button is broken for anyone not using a mouse. The
+    // second factor has to be reachable the same way, and focus must land
+    // on the code field without a Tab of its own.
+    const code = page.getByLabel("Authentication code");
+    await expect(code).toBeFocused();
+
+    await page.keyboard.type(await currentCode());
+    await page.keyboard.press("Enter");
+
     await expect(page).toHaveURL(/\/en\/admin/);
+  });
+});
+
+test.describe("The second factor", () => {
+  test("asks for a code once the password is accepted", async ({ page }) => {
+    await page.goto(LOGIN);
+    await submitCredentials(page);
+
+    // Still on the login page, now with a code field — and no session yet.
+    await expect(page.getByLabel("Authentication code")).toBeVisible();
+    await expect(page).toHaveURL(/\/en\/login/);
+
+    const cookies = await page.context().cookies();
+    expect(
+      cookies.some((cookie) => cookie.name.includes("next-auth.session-token")),
+    ).toBe(false);
+  });
+
+  test("never asks for a code when the password is wrong", async ({ page }) => {
+    // Otherwise the code step itself becomes a password oracle: type any
+    // address, see whether a code is requested, learn which are real.
+    await page.goto(LOGIN);
+    await submitCredentials(page, ADMIN.email, "not-the-password");
+
+    await expect(page.getByRole("alert")).toContainText("not recognised");
+    await expect(page.getByLabel("Authentication code")).toBeHidden();
+  });
+
+  test("refuses a wrong code", async ({ page }) => {
+    await page.goto(LOGIN);
+    await submitCredentials(page);
+
+    await page.getByLabel("Authentication code").fill("000000");
+    await page.getByRole("button", { name: "Verify code" }).click();
+
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page).toHaveURL(/\/en\/login/);
+  });
+
+  test("signs in with a correct code", async ({ page }) => {
+    await page.goto(LOGIN);
+    await signIn(page);
+
+    await expect(page).toHaveURL(/\/en\/admin/);
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   });
 });

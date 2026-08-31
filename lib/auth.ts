@@ -20,6 +20,8 @@ import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, resetRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { requiresTwoFactor } from "@/lib/totp";
+import { consumeSecondFactor } from "@/lib/two-factor";
 
 /** Role hierarchy — higher number grants everything below it. */
 const ROLE_RANK: Record<Role, number> = {
@@ -44,6 +46,24 @@ const ROLE_REFRESH_MS = 5 * 60_000;
  */
 const DUMMY_HASH = "$2a$10$ayLYlA1n0y.FW/sO68XQxO7GIHambZGs0dS9RBmQCFg7oQzmi3V6e";
 
+/**
+ * Sign-in outcomes the login form has to tell apart.
+ *
+ * NextAuth turns a thrown error into `?error=<message>` and hands it back
+ * as `result.error` from `signIn(..., { redirect: false })`, which is the
+ * only channel a credentials provider has for saying anything other than
+ * "no". Returning null stays reserved for "these credentials are wrong",
+ * so the form keeps showing one identical message for a bad email and a
+ * bad password.
+ *
+ * TOTP_REQUIRED does admit that the password was right — unavoidable in any
+ * two-step flow, and not a leak worth designing around: whoever sees it has
+ * the password already.
+ */
+export const TOTP_REQUIRED = "TOTP_REQUIRED";
+export const TOTP_INVALID = "TOTP_INVALID";
+export const TOTP_LOCKED = "TOTP_LOCKED";
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
@@ -66,6 +86,8 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        /** Empty on the first submit; filled on the second. */
+        totp: { label: "Authentication code", type: "text" },
       },
 
       async authorize(credentials) {
@@ -105,6 +127,7 @@ export const authOptions: NextAuthOptions = {
             role: true,
             isActive: true,
             passwordHash: true,
+            totpEnabledAt: true,
           },
         });
 
@@ -129,8 +152,46 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Correct credentials — release the bucket so a run of typos before
-        // getting it right does not linger for the rest of the window.
+        // getting it right does not linger for the rest of the window. Done
+        // before the second factor so an admin fumbling the code from their
+        // phone is not also burning password attempts.
         resetRateLimit(limitKey);
+
+        /*
+          Second factor.
+
+          Enrolment is enforced elsewhere (middleware.ts and
+          lib/admin/guard.ts push un-enrolled ADMINs into setup), not here:
+          an account that has no secret yet still has to be able to sign in
+          once to create one.
+        */
+        if (user.totpEnabledAt) {
+          const code = credentials?.totp?.trim();
+
+          if (!code) throw new Error(TOTP_REQUIRED);
+
+          const codeKey = `2fa:${user.id}`;
+
+          if (!rateLimit(codeKey, { ...RATE_LIMITS.twoFactor, check: true }).ok) {
+            console.warn(`[auth] second factor temporarily locked for ${email}`);
+            throw new Error(TOTP_LOCKED);
+          }
+
+          const second = await consumeSecondFactor(user.id, code);
+
+          if (!second.ok) {
+            rateLimit(codeKey, RATE_LIMITS.twoFactor);
+            throw new Error(TOTP_INVALID);
+          }
+
+          if (second.method === "recovery") {
+            console.warn(
+              `[auth] ${email} signed in with a recovery code; ${second.remaining} left`,
+            );
+          }
+
+          resetRateLimit(codeKey);
+        }
 
         return {
           id: user.id,
@@ -138,6 +199,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role: user.role,
+          twoFactorEnabled: Boolean(user.totpEnabledAt),
         };
       },
     }),
@@ -147,16 +209,29 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       // Sign-in: seed the token from the authorize() result.
       if (user) {
+        const seeded = user as { role: Role; twoFactorEnabled?: boolean };
         token.id = user.id;
-        token.role = (user as { role: Role }).role;
+        token.role = seeded.role;
+        token.twoFactorEnabled = Boolean(seeded.twoFactorEnabled);
         token.checkedAt = Date.now();
         return token;
       }
 
       // Subsequent requests: refresh role/active state periodically so
       // permission changes propagate without a forced sign-out.
+      /*
+        An account still owing 2FA setup is re-read on every request, not
+        every five minutes. Otherwise finishing enrolment leaves the claim
+        stale for up to ROLE_REFRESH_MS, and the gate keeps bouncing the
+        user back to a setup page they have already completed. The extra
+        query only affects accounts in that short-lived state.
+      */
+      const awaitingEnrolment =
+        requiresTwoFactor(token.role as Role) && !token.twoFactorEnabled;
+
       const stale =
         trigger === "update" ||
+        awaitingEnrolment ||
         typeof token.checkedAt !== "number" ||
         Date.now() - token.checkedAt > ROLE_REFRESH_MS;
 
@@ -164,7 +239,12 @@ export const authOptions: NextAuthOptions = {
         const fresh = await prisma.user
           .findUnique({
             where: { id: token.id as string },
-            select: { name: true, role: true, isActive: true },
+            select: {
+              name: true,
+              role: true,
+              isActive: true,
+              totpEnabledAt: true,
+            },
           })
           .catch(() => null);
 
@@ -174,6 +254,10 @@ export const authOptions: NextAuthOptions = {
           if (!fresh.isActive) return {};
           token.name = fresh.name;
           token.role = fresh.role;
+          // Re-read rather than trusted from sign-in, so finishing setup in
+          // one tab unlocks the admin in every other one within the refresh
+          // window instead of requiring a sign-out.
+          token.twoFactorEnabled = Boolean(fresh.totpEnabledAt);
         }
         token.checkedAt = Date.now();
       }
@@ -185,6 +269,12 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
+        session.user.twoFactorEnabled = Boolean(token.twoFactorEnabled);
+        // "Signed in, but not allowed to do anything until 2FA is set up."
+        // Computed in one place so middleware, guards and the account page
+        // cannot drift apart on what counts as pending.
+        session.user.twoFactorPending =
+          requiresTwoFactor(token.role as Role) && !token.twoFactorEnabled;
       }
       return session;
     },

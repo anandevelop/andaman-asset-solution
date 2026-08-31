@@ -22,6 +22,7 @@ import { execFileSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { ADMIN, PROJECTS } from "./fixtures";
+import { encryptSecret } from "../lib/totp";
 
 const BCRYPT_ROUNDS = 10; // Lower than production's 12: this runs per suite.
 
@@ -106,6 +107,15 @@ async function seed(prisma: PrismaClient) {
       passwordHash: await bcrypt.hash(ADMIN.password, BCRYPT_ROUNDS),
       role: "SUPER_ADMIN",
       isActive: true,
+      /*
+        Enrolled up front, exactly as the application would store it — the
+        secret is encrypted with the same helper the app uses, so a change
+        to that encryption breaks the suite here rather than in production.
+        NEXTAUTH_SECRET must therefore be set for the e2e run; it already is,
+        or NextAuth itself would refuse to issue a session.
+      */
+      totpSecret: encryptSecret(ADMIN.totpSecret),
+      totpEnabledAt: new Date(),
     },
   });
 }

@@ -7,7 +7,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { ShieldCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/guard";
 import { changeOwnPassword } from "../users/actions";
 import PasswordForm from "@/components/admin/PasswordForm";
@@ -44,6 +46,22 @@ export default async function AdminAccountPage({ params: { locale } }: Props) {
           </div>
         </dl>
         <p className="admin-hint mt-4">{t("account.contactHint")}</p>
+      </section>
+
+      <section className="admin-card">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-primary">
+              {t("security.title")}
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">{t("security.cardHint")}</p>
+          </div>
+
+          <Link href={`/${locale}/admin/account/security`} className="admin-btn">
+            <ShieldCheck size={15} aria-hidden />
+            {t("security.manage")}
+          </Link>
+        </div>
       </section>
 
       <section className="admin-card">

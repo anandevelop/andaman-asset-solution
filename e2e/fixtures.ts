@@ -16,6 +16,17 @@ export const ADMIN = {
   email: process.env.E2E_ADMIN_EMAIL ?? "e2e-admin@andaman.test",
   password: process.env.E2E_ADMIN_PASSWORD ?? "e2e-only-passphrase-1234",
   name: "E2E Administrator",
+  /*
+    The fixture is a SUPER_ADMIN, and SUPER_ADMIN accounts must have 2FA
+    (lib/two-factor-policy.ts) — so the suite seeds an enrolled
+    authenticator and generates real codes from this secret, rather than
+    lowering the fixture's role to dodge the gate. A test account that skips
+    the second factor would leave the enrolment gate itself untested, which
+    is the part most likely to break silently.
+
+    Base32, fixed, and worthless outside a throwaway database.
+  */
+  totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
 } as const;
 
 /*

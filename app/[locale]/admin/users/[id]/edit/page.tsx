@@ -17,10 +17,11 @@ import { ArrowLeft } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
-import { deleteUser, setUserPassword, updateUser } from "../../actions";
+import { deleteUser, resetUserTwoFactor, setUserPassword, updateUser } from "../../actions";
 import UserForm from "@/components/admin/UserForm";
 import PasswordForm from "@/components/admin/PasswordForm";
 import DeleteUserForm from "@/components/admin/DeleteUserForm";
+import ResetTwoFactorForm from "@/components/admin/ResetTwoFactorForm";
 
 type Props = { params: { locale: string; id: string } };
 
@@ -38,6 +39,7 @@ export default async function EditUserPage({ params }: Props) {
       email: true,
       role: true,
       isActive: true,
+      totpEnabledAt: true,
       _count: { select: { articles: true, projectProgresses: true } },
     },
   });
@@ -103,6 +105,24 @@ export default async function EditUserPage({ params }: Props) {
 
         <PasswordForm action={setUserPassword.bind(null, locale, user.id)} />
       </section>
+
+      {/* ── Two-factor reset ────────────────────────────────────────── */}
+      {user.totpEnabledAt && (
+        <section className="admin-card">
+          <h2 className="text-base font-semibold text-primary">
+            {t("security.resetTitle")}
+          </h2>
+          <p className="mb-5 mt-1 text-sm text-ink-muted">
+            {t("security.resetHint")}
+          </p>
+
+          <ResetTwoFactorForm
+            action={resetUserTwoFactor.bind(null, locale, user.id)}
+            label={t("security.reset")}
+            confirmLabel={t("security.confirmReset", { name: user.name })}
+          />
+        </section>
+      )}
 
       {/* ── Delete ──────────────────────────────────────────────────── */}
       {!isSelf && !isLastSuperAdmin && (

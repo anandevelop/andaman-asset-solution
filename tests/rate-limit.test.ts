@@ -134,7 +134,15 @@ describe("rateLimit — check mode", () => {
 describe("RATE_LIMITS policies", () => {
   it("defines every policy the routes reference", () => {
     expect(Object.keys(RATE_LIMITS).sort()).toEqual(
-      ["cookieConsent", "leads", "login", "presign", "rsvp", "webhook"].sort(),
+      [
+        "cookieConsent",
+        "leads",
+        "login",
+        "presign",
+        "rsvp",
+        "twoFactor",
+        "webhook",
+      ].sort(),
     );
   });
 
@@ -170,5 +178,18 @@ describe("clientIp", () => {
 
   it("returns 'unknown' when no proxy header is present", () => {
     expect(clientIp(new Headers())).toBe("unknown");
+  });
+});
+
+describe("the second-factor policy", () => {
+  it("is tighter than the password policy", () => {
+    // Six digits is a small keyspace: the limiter, not the entropy, is what
+    // makes guessing a code impractical. It has to bite sooner than the
+    // password limiter, where 12 characters do the heavy lifting.
+    expect(RATE_LIMITS.twoFactor.limit).toBeLessThan(RATE_LIMITS.login.limit);
+  });
+
+  it("shares the sign-in window, so a lockout is one wait not two", () => {
+    expect(RATE_LIMITS.twoFactor.windowMs).toBe(RATE_LIMITS.login.windowMs);
   });
 });
