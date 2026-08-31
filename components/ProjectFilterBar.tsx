@@ -98,9 +98,9 @@ export default function ProjectFilterBar({
   return (
     <section
       aria-label={labels.heading}
-      className="border-y border-primary/10 bg-white/60"
+      className="rounded-lg border border-ink/10 bg-white shadow-card"
     >
-      <div className="space-y-5 py-6">
+      <div className="space-y-5 p-6 sm:p-7">
         {/* ── Property type ──────────────────────────────────────────── */}
         {available.propertyTypes.length > 1 && (
           <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +200,7 @@ export default function ProjectFilterBar({
                 onChange={(event) =>
                   navigate({ ...filters, sort: event.target.value as SortOption })
                 }
-                className="appearance-none rounded-sm border border-primary/15 bg-white py-1.5 pl-3 pr-8 text-xs text-ink transition-colors hover:border-primary/40 focus:border-primary/40 focus:outline-none"
+                className="appearance-none rounded-md border border-ink/15 bg-white py-2 pl-3.5 pr-9 text-xs text-ink transition-colors hover:border-primary/40 focus:border-primary/40 focus:outline-none"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option} value={option}>

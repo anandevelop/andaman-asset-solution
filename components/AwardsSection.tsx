@@ -45,7 +45,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Trophy } from "lucide-react";
 import Reveal from "@/components/Reveal";
@@ -74,8 +74,7 @@ export default async function AwardsSection() {
               <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
                 {t("title")}
               </h2>
-              <div className="horizon-divider my-6 ml-0" />
-              <p className="text-sm leading-relaxed text-ink/70 sm:text-base">
+              <p className="mt-6 text-sm leading-relaxed text-ink/70 sm:text-base">
                 {t("intro")}
               </p>
             </div>
@@ -146,7 +145,7 @@ export default async function AwardsSection() {
                     }`}
                   >
                     {award.trophyImageUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={award.trophyImageUrl}
                         alt=""
                         fill

@@ -16,7 +16,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import type { ProjectFacilitySummary } from "@/lib/projects";
 
 // Same URLs as FACILITY_IMAGE in prisma/seed.ts (keyed there by the
@@ -54,7 +54,7 @@ export default function FacilityCard({ facility }: { facility: ProjectFacilitySu
     // full-bleed grid (see the section comment in page.tsx), so any
     // per-card framing would just show as a seam between neighbours.
     <div className="relative aspect-[3/4] w-full overflow-hidden">
-      <Image
+      <ImageWithSkeleton
         src={src}
         alt={facility.name}
         fill

@@ -7,6 +7,19 @@
  * redirects anonymous traffic, but a layout guard means a new page added
  * under /admin is protected the moment it is created, even if the author
  * forgets to call the guard themselves.
+ *
+ * The one thing this guard does NOT enforce is the 2FA enrolment gate. It
+ * cannot: the setup page lives under /admin and therefore renders inside
+ * this layout, so a layout that redirects a pending account would redirect
+ * the very page it is sending them to — a loop with no exit. Enrolment is
+ * gated in three places that can tell the difference:
+ *
+ *   • middleware.ts   — every admin URL except the setup page
+ *   • each page's own requireAdmin() — the setup page opts out explicitly
+ *   • requireAdminAction() — server actions, which middleware never sees
+ *
+ * A page added under /admin without its own guard is still unreachable for
+ * a pending account, because middleware turns the navigation away first.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -30,7 +43,7 @@ type Props = {
 };
 
 export default async function AdminLayout({ children, params: { locale } }: Props) {
-  const user = await requireAdmin(locale);
+  const user = await requireAdmin(locale, undefined, { allowTwoFactorSetup: true });
 
   return (
     <AuthProvider>

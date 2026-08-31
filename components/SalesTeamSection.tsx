@@ -29,7 +29,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Mail, Phone } from "lucide-react";
 import Reveal from "@/components/Reveal";
@@ -51,7 +51,6 @@ export default async function SalesTeamSection() {
       <div className="container-luxe">
         <Reveal>
           <h2 className="text-3xl font-light text-primary sm:text-4xl">{t("title")}</h2>
-          <div className="horizon-divider my-6 ml-0" />
         </Reveal>
 
         {/*
@@ -63,7 +62,7 @@ export default async function SalesTeamSection() {
           smaller, lighter type throughout (name text-sm font-medium,
           position as an uppercase accent-700 label, contact rows text-xs).
         */}
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {team.map((person, index) => {
             const { name, position } = person;
 
@@ -79,7 +78,7 @@ export default async function SalesTeamSection() {
                     <span className="relative shrink-0">
                       {person.photoUrl ? (
                         <span className="relative block h-14 w-14 overflow-hidden rounded-full bg-primary/5">
-                          <Image
+                          <ImageWithSkeleton
                             src={person.photoUrl}
                             alt=""
                             fill
@@ -134,7 +133,13 @@ export default async function SalesTeamSection() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 flex items-center justify-center gap-2 rounded-sm border border-accent-700/25 px-4 py-2 font-medium uppercase tracking-wide text-accent-700 transition-colors hover:bg-accent-700/5"
+                      // Solid WhatsApp brand green (#25D366) rather than the
+                      // site's accent tan outline — this is the one button
+                      // on the page meant to read as "hand off to WhatsApp,"
+                      // so it borrows that app's own colour treatment (the
+                      // familiar filled-green button) instead of the CI
+                      // palette's usual understated outline style.
+                      className="mt-2 flex items-center justify-center gap-2 rounded-sm bg-[#25D366] px-4 py-2 font-medium uppercase tracking-wide text-white transition-colors hover:bg-[#1DA851]"
                     >
                       <svg
                         viewBox="0 0 24 24"

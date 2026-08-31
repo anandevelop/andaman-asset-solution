@@ -26,8 +26,7 @@ export default function LocaleLoading() {
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <div className={`h-3 w-24 rounded-sm ${shimmer}`} />
         <div className={`mt-5 h-10 w-full max-w-md rounded-sm ${shimmer}`} />
-        <div className="horizon-divider my-6 ml-0 opacity-40" />
-        <div className={`h-3 w-full max-w-sm rounded-sm ${shimmer}`} />
+        <div className={`mt-6 h-3 w-full max-w-sm rounded-sm ${shimmer}`} />
         <div className={`mt-2 h-3 w-full max-w-xs rounded-sm ${shimmer}`} />
       </section>
 

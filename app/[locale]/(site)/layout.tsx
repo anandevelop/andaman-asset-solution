@@ -14,21 +14,26 @@ import Footer from "@/components/Footer";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import SalesTeamSection from "@/components/SalesTeamSection";
 import { getSiteSettings } from "@/lib/settings";
-import { getPublishedProjects } from "@/lib/projects";
 
 type Props = {
   children: React.ReactNode;
   params: { locale: string };
 };
 
-export default async function SiteLayout({ children, params: { locale } }: Props) {
+// `locale` isn't read directly here any more — it was only ever used to
+// scope the now-removed getPublishedProjects() call above — but the
+// `params` prop is still typed on Props since Next.js's layout contract
+// requires that shape regardless of whether this function consumes it.
+export default async function SiteLayout({ children }: Props) {
   // Navbar is a client component (mobile disclosure, active state), so the
-  // live phone number — and the project list for the "Projects" dropdown —
-  // is fetched here and handed down rather than imported.
-  const [settings, t, projects] = await Promise.all([
+  // live phone number is fetched here and handed down rather than
+  // imported. It used to also fetch the published-project list for a
+  // "Projects" dropdown; that dropdown was removed from Navbar, so the
+  // per-request getPublishedProjects() call went with it — nothing else
+  // in this layout needed the list.
+  const [settings, t] = await Promise.all([
     getSiteSettings(),
     getTranslations("nav"),
-    getPublishedProjects(locale),
   ]);
 
   return (
@@ -56,7 +61,6 @@ export default async function SiteLayout({ children, params: { locale } }: Props
       <Navbar
         phone={settings.contact.phone}
         phoneDisplay={settings.contact.phoneDisplay}
-        projects={projects.map((project) => ({ slug: project.slug, name: project.name }))}
       />
 
       {/* tabIndex={-1} so the skip link can actually move focus here.

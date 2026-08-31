@@ -10,7 +10,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
@@ -199,7 +199,7 @@ export default async function ArticlePage({ params: { locale, slug } }: Props) {
           <div className="container-luxe mt-10">
             <Reveal>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm shadow-card">
-                <Image
+                <ImageWithSkeleton
                   src={article.coverImageUrl}
                   alt={article.title}
                   fill
@@ -259,7 +259,7 @@ export default async function ArticlePage({ params: { locale, slug } }: Props) {
                   >
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
                       {item.coverImageUrl && (
-                        <Image
+                        <ImageWithSkeleton
                           src={item.coverImageUrl}
                           alt={item.title}
                           fill

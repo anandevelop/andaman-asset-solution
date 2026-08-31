@@ -11,7 +11,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
@@ -177,7 +177,7 @@ export default async function EventPage({ params: { locale, slug } }: Props) {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative flex min-h-[420px] w-full items-end overflow-hidden sm:min-h-[540px]">
         {event.coverImageUrl && (
-          <Image
+          <ImageWithSkeleton
             src={event.coverImageUrl}
             alt={event.title}
             fill

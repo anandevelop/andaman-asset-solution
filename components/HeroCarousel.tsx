@@ -36,7 +36,7 @@
  */
 
 import { useCallback, useState } from "react";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -72,15 +72,6 @@ type FallbackHero = {
   ctaSecondaryHref: string;
 };
 
-/**
- * The second button ("Learn more") is a fixed, site-wide action, not
- * per-slide data — HeroStorySlide only carries one optional CTA (see
- * schema.prisma), which becomes the solid "Buy now"-style primary button
- * when a slide sets it. This keeps every slide showing at least one
- * action without touching the data model.
- */
-type SecondaryCta = { label: string; href: string };
-
 type Labels = {
   previousSlide: string;
   nextSlide: string;
@@ -89,46 +80,44 @@ type Labels = {
 type Props = {
   slides: HeroStorySlide[];
   fallback: FallbackHero;
-  secondaryCta: SecondaryCta;
   labels: Labels;
+  /**
+   * Site-wide kicker above every slide's headline (home.hero.eyebrow).
+   * Not per-slide data: HeroStorySlide carries one free-text caption and
+   * nothing else, and asking an admin to retype a positioning line on
+   * every slide is how that line ends up inconsistent.
+   */
+  eyebrow: string;
 };
 
-export default function HeroCarousel({ slides, fallback, secondaryCta, labels }: Props) {
+export default function HeroCarousel({ slides, fallback, labels, eyebrow }: Props) {
   if (slides.length === 0) {
     return <StaticFallbackHero {...fallback} />;
   }
 
-  return <Carousel slides={slides} secondaryCta={secondaryCta} labels={labels} />;
-}
-
-/**
- * A slide's caption is a single optional text field — there is no separate
- * title/subheadline pair in the data model. Client-side only: the first
- * line (if any) reads as the big headline, everything after an explicit
- * line break reads as the smaller subheadline. A caption with no line
- * break is just a headline with no subheadline, which is the common case.
- */
-function splitCaption(caption: string | null): { headline: string; subheadline: string } | null {
-  if (!caption) return null;
-  const [headline, ...rest] = caption.split("\n");
-  return { headline: headline.trim(), subheadline: rest.join(" ").trim() };
+  return (
+    <Carousel
+      slides={slides}
+      labels={labels}
+      eyebrow={eyebrow}
+    />
+  );
 }
 
 function Carousel({
   slides,
-  secondaryCta,
   labels,
+  eyebrow,
 }: {
   slides: HeroStorySlide[];
-  secondaryCta: SecondaryCta;
   labels: Labels;
+  eyebrow: string;
 }) {
   const count = slides.length;
   const [index, setIndex] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
 
   const slide = slides[index];
-  const text = splitCaption(slide.caption);
 
   const goTo = useCallback(
     (next: number) => {
@@ -171,30 +160,60 @@ function Carousel({
             }}
           />
         ) : (
-          <Image
+          <ImageWithSkeleton
             src={slide.mediaUrl}
             alt=""
             fill
             priority={index === 0}
             sizes="100vw"
             className="object-cover"
+            /* Runs for exactly this slide's hold time, so the move lands
+               as the slide changes rather than stopping early and sitting
+               still. The wrapping div is keyed on slide.id, so React
+               remounts the element and the animation restarts each time. */
+            style={{
+              animationName: "hero-zoom",
+              animationDuration: `${Math.max(slide.durationSeconds, 1)}s`,
+              animationTimingFunction: "cubic-bezier(0.33, 0, 0.2, 1)",
+              animationFillMode: "forwards",
+              transformOrigin: "50% 55%",
+            }}
           />
         )}
-        {/* Bottom-up on every breakpoint — the content block sits centered
-            just above the dash row now, not pinned to one side, so the
-            darkened band needs to sit under it rather than off to the
-            left. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/90 via-primary-900/25 to-primary-900/10" />
+        {/*
+          Shaped to the copy, not a wash — see the .hero-scrim comment in
+          app/globals.css for the measurements and for why the earlier
+          versions had to go. The second layer is `sm` and up only: it is
+          the corner ellipse that sits under the left-aligned copy, and a
+          phone has no such corner, since its copy is centred.
+        */}
+        <div className="hero-scrim absolute inset-0" />
+        <div className="hero-scrim-side absolute inset-0 hidden sm:block" />
       </div>
 
       {/* ── Prev / next arrows ────────────────────────────────────────
-          Small and low (near the dash row) on mobile; larger and
-          vertically centered on the edges from `sm:` up. */}
+          Phones keep them low on the left and right of the centered copy.
+
+          From `sm:` up they pair off in the bottom-right corner instead of
+          sitting vertically centered on the edges. Once the copy moved to
+          the bottom-left, a centered left arrow landed on top of the CTA
+          — caught by a collision check, not by eye, because the two only
+          overlap at some viewport heights. Pairing them bottom-right
+          removes the class of bug rather than nudging a magic number, and
+          gives the frame three clean anchors: copy left, progress centre,
+          controls right.
+
+          Bare arrows now — no circle, no border, no blur backdrop. That
+          chip read as its own UI element sitting on top of the photo;
+          dropping it back to just the glyph is what "minimal" meant here.
+          A drop-shadow on the icon stands in for the old backdrop's
+          contrast job (keeping the arrow readable over a bright patch of
+          sky or a light wall) without drawing a shape of its own. */}
       <button
         type="button"
         onClick={goPrev}
         aria-label={labels.previousSlide}
-        className="absolute bottom-16 left-3 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition-colors hover:bg-black/40 sm:bottom-auto sm:left-5 sm:top-1/2 sm:h-11 sm:w-11 sm:-translate-y-1/2"
+        className="absolute bottom-16 left-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:bottom-6 sm:left-auto sm:right-[4.75rem] sm:top-auto sm:h-12 sm:w-12 sm:translate-y-0"
       >
         <ChevronLeft size={18} strokeWidth={1.75} aria-hidden className="sm:hidden" />
         <ChevronLeft size={22} strokeWidth={1.75} aria-hidden className="hidden sm:block" />
@@ -204,7 +223,7 @@ function Carousel({
         type="button"
         onClick={goNext}
         aria-label={labels.nextSlide}
-        className="absolute bottom-16 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition-colors hover:bg-black/40 sm:bottom-auto sm:right-5 sm:top-1/2 sm:h-11 sm:w-11 sm:-translate-y-1/2"
+        className="absolute bottom-16 right-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:bottom-6 sm:right-5 sm:top-auto sm:h-12 sm:w-12 sm:translate-y-0"
       >
         <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="sm:hidden" />
         <ChevronRight size={22} strokeWidth={1.75} aria-hidden className="hidden sm:block" />
@@ -212,12 +231,12 @@ function Carousel({
 
       {/* ── Progress dashes — fixed-length, each one fills as its slide
           plays ───────────────────────────────────────────────────────── */}
-      <div className="absolute inset-x-0 bottom-5 z-20 flex justify-center gap-3 sm:bottom-7 sm:gap-4">
+      <div className="absolute inset-x-0 bottom-5 z-20 flex justify-center gap-3 sm:bottom-[2.1rem] sm:gap-4">
         {slides.map((s, i) => (
           <div
             key={s.id}
             aria-hidden
-            className="h-[2px] w-16 overflow-hidden rounded-full bg-white/30 sm:w-24"
+            className="h-[2px] w-14 overflow-hidden bg-white/25 sm:w-20"
           >
             <div
               className="h-full bg-white"
@@ -259,32 +278,52 @@ function Carousel({
             exit="hidden"
             className="flex flex-col items-center gap-4"
           >
-            {text && (
+            <motion.p
+              variants={textItemVariants}
+              className="text-[0.6875rem] font-medium uppercase tracking-widest2 text-accent"
+            >
+              {eyebrow}
+            </motion.p>
+
+            {slide.caption && (
               <motion.div variants={textItemVariants}>
-                <p className="max-w-sm whitespace-pre-line text-2xl font-light leading-[1.15] text-white">
-                  {text.headline}
+                <p className="max-w-sm whitespace-pre-line text-3xl font-light leading-[1.1] tracking-[0.05em] text-white">
+                  {slide.caption}
                 </p>
-                {text.subheadline && (
-                  <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/85">
-                    {text.subheadline}
-                  </p>
-                )}
               </motion.div>
             )}
 
-            <motion.div
-              variants={textItemVariants}
-              className="flex flex-wrap items-center justify-center gap-3"
-            >
-              <HeroCarouselButtons slide={slide} secondaryCta={secondaryCta} />
-            </motion.div>
+            {slide.tagline && (
+              <motion.p
+                variants={textItemVariants}
+                className="max-w-xs text-sm leading-relaxed text-white/85"
+              >
+                {slide.tagline}
+              </motion.p>
+            )}
+
+            {slide.ctaLabel && slide.ctaUrl && (
+              <motion.div
+                variants={textItemVariants}
+                className="flex flex-wrap items-center justify-center gap-3"
+              >
+                <HeroCarouselCta slide={slide} />
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* ── Desktop content: centered horizontally between the two arrows,
-          sitting just above the dash row ───────────────────────────────── */}
-      <div className="absolute inset-x-0 bottom-24 z-20 hidden flex-col items-center gap-6 px-20 text-center sm:flex lg:bottom-28 lg:px-24">
+      {/* ── Desktop content ───────────────────────────────────────────
+          Left-aligned on the site's own container, not centered between
+          the arrows. Two reasons. It puts the copy over the shaded left
+          of a typical frame and leaves the building — the thing being
+          sold — unobscured on the right. And it is what the rest of the
+          site does: every section heading, the horizon dividers
+          (`ml-0`), and this component's own StaticFallbackHero are all
+          left-aligned on container-luxe. The centered carousel was the
+          one exception. */}
+      <div className="absolute inset-x-0 bottom-24 z-20 hidden sm:block lg:bottom-28">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -292,27 +331,49 @@ function Carousel({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="flex flex-col items-center gap-6"
+            className="container-luxe flex flex-col items-start gap-6 text-left"
           >
-            {text && (
+            <motion.p
+              variants={textItemVariants}
+              className="text-xs font-medium uppercase tracking-widest2 text-accent sm:text-sm"
+            >
+              {eyebrow}
+            </motion.p>
+
+            {slide.caption && (
               <motion.div variants={textItemVariants} className="max-w-2xl">
-                <p className="whitespace-pre-line text-4xl font-light leading-[1.1] text-white lg:text-5xl">
-                  {text.headline}
+                {/*
+                  Tracking held at 0.06em. This is the largest type on the
+                  site and wants the air, but slide captions are free text
+                  an admin writes in any of the four locales — and Thai
+                  stacks tone marks over its base characters, which start
+                  to read as detached from the glyph they belong to once
+                  the tracking gets wide. Same call as the <h1> in
+                  components/CompanyIntro.tsx.
+                */}
+                <p className="whitespace-pre-line text-5xl font-light leading-[1.04] tracking-[0.05em] text-white lg:text-6xl">
+                  {slide.caption}
                 </p>
-                {text.subheadline && (
-                  <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-white/85 lg:text-base">
-                    {text.subheadline}
-                  </p>
-                )}
               </motion.div>
             )}
 
-            <motion.div
-              variants={textItemVariants}
-              className="flex flex-wrap items-center justify-center gap-3"
-            >
-              <HeroCarouselButtons slide={slide} secondaryCta={secondaryCta} />
-            </motion.div>
+            {slide.tagline && (
+              <motion.p
+                variants={textItemVariants}
+                className="max-w-md text-sm leading-relaxed text-white/85 lg:text-base"
+              >
+                {slide.tagline}
+              </motion.p>
+            )}
+
+            {slide.ctaLabel && slide.ctaUrl && (
+              <motion.div
+                variants={textItemVariants}
+                className="flex flex-wrap items-center gap-4"
+              >
+                <HeroCarouselCta slide={slide} />
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -321,43 +382,36 @@ function Carousel({
 }
 
 /**
- * The button pair, shared between the mobile and desktop content blocks.
+ * The slide's own call to action, shared between the mobile and desktop
+ * content blocks.
  *
- * Both are the same slim outline pill (border, transparent fill, fills
- * solid white on hover) — the minimal treatment used on the project detail
- * page's own hero ("Request private viewing"). The old pair used the
- * shared .btn-primary/.btn-outline classes with most of their properties
- * overridden (solid white box vs. a translucent dark chip), which reads
- * as a heavier, boxier style than the rest of the hero. Hierarchy between
- * the two now comes from border weight (80% vs 40% opacity) rather than
- * one being a filled block and the other a dark chip.
+ * Exactly one button, and it is entirely the admin's: label and link both
+ * come from the row an editor fills in at /admin/hero-banner, and a slide
+ * that leaves them blank renders no button at all — which is what the
+ * field's own hint there ("Leave both blank for no button") has always
+ * promised. This used to render a second, always-on button whose label
+ * came from home.hero.ctaSecondary in messages/*.json, so the homepage
+ * showed a button that appeared nowhere in the admin, and a slide with no
+ * CTA configured still showed one. That mismatch is what this shape
+ * fixes; a slide that wants to point at /contact says so in its own
+ * Button link field.
+ *
+ * Built on the site's own .btn-hero (rounded-sm, px-7 py-3.5) — a glass
+ * outline rather than a flat accent fill, since a solid saturated block
+ * sitting on top of a hero photo read as too loud/competing with the
+ * villa itself. Same class StaticFallbackHero's primary button uses.
  */
-function HeroCarouselButtons({
-  slide,
-  secondaryCta,
-}: {
-  slide: HeroStorySlide;
-  secondaryCta: SecondaryCta;
-}) {
-  return (
-    <>
-      {slide.ctaLabel && slide.ctaUrl && (
-        <Link
-          href={slide.ctaUrl}
-          className="group inline-flex items-center gap-2 rounded-full border border-white/80 px-7 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300 hover:bg-white hover:text-primary"
-        >
-          {slide.ctaLabel}
-          <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
-        </Link>
-      )}
+function HeroCarouselCta({ slide }: { slide: HeroStorySlide }) {
+  if (!slide.ctaLabel || !slide.ctaUrl) return null;
 
-      <Link
-        href={secondaryCta.href}
-        className="rounded-full border border-white/40 px-7 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300 hover:border-white hover:bg-white/10"
-      >
-        {secondaryCta.label}
-      </Link>
-    </>
+  return (
+    <Link
+      href={slide.ctaUrl}
+      className="btn-hero group"
+    >
+      {slide.ctaLabel}
+      <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
+    </Link>
   );
 }
 
@@ -379,7 +433,7 @@ function StaticFallbackHero({
 }: FallbackHero) {
   return (
     <section className="relative flex h-[88vh] min-h-[560px] w-full items-end overflow-hidden">
-      <Image src={imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
+      <ImageWithSkeleton src={imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-primary-900/95 via-primary-900/50 to-primary-900/30" />
 
       <div className="container-luxe relative z-10 pb-20 sm:pb-28">
@@ -388,9 +442,13 @@ function StaticFallbackHero({
         </Reveal>
 
         <Reveal delay={0.1}>
-          <h1 className="mt-4 max-w-3xl whitespace-pre-line text-4xl font-light leading-[1.08] text-white sm:text-6xl lg:text-7xl">
+          {/* Deliberately not an <h1>: this is a marketing caption, and
+              the Carousel path above renders the same slot as a <p>. The
+              page's heading lives in components/CompanyIntro.tsx so it is
+              present whether or not any hero slides are configured. */}
+          <p className="mt-4 max-w-3xl whitespace-pre-line text-4xl font-light leading-[1.08] text-white sm:text-6xl">
             {title}
-          </h1>
+          </p>
         </Reveal>
 
         <Reveal delay={0.2}>
@@ -403,7 +461,7 @@ function StaticFallbackHero({
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
               href={ctaHref}
-              className="btn-primary !bg-accent !text-primary hover:!bg-accent-600 border-none"
+              className="btn-hero"
             >
               {ctaLabel}
               <ArrowRight size={16} aria-hidden />

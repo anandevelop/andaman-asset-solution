@@ -8,7 +8,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { ArrowRight, CalendarDays } from "lucide-react";
@@ -78,8 +78,7 @@ export default async function NewsPage({ params: { locale }, searchParams }: Pro
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
-          <div className="horizon-divider my-6 ml-0" />
-          <p className="max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
+          <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
             {t("subtitle")}
           </p>
         </Reveal>
@@ -134,9 +133,9 @@ export default async function NewsPage({ params: { locale }, searchParams }: Pro
                 href={`/${locale}/news/${lead.slug}`}
                 className="group grid gap-8 overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-2"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:h-full">
+                <div className="relative aspect-video w-full overflow-hidden bg-primary/5 lg:self-start">
                   {lead.coverImageUrl && (
-                    <Image
+                    <ImageWithSkeleton
                       src={lead.coverImageUrl}
                       alt={lead.title}
                       fill
@@ -192,7 +191,7 @@ export default async function NewsPage({ params: { locale }, searchParams }: Pro
                     >
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
                         {article.coverImageUrl && (
-                          <Image
+                          <ImageWithSkeleton
                             src={article.coverImageUrl}
                             alt={article.title}
                             fill

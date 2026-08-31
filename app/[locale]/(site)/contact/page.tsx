@@ -127,8 +127,7 @@ export default async function ContactPage({ params: { locale } }: Props) {
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
-          <div className="horizon-divider my-6 ml-0" />
-          <p className="max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
+          <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
             {t("subtitle")}
           </p>
         </Reveal>
@@ -155,9 +154,7 @@ export default async function ContactPage({ params: { locale } }: Props) {
           <Reveal delay={0.15}>
             <div className="lg:sticky lg:top-28 lg:self-start">
               <h2 className="text-xl font-light text-primary">{t("detailsTitle")}</h2>
-              <div className="horizon-divider my-5 ml-0" />
-
-              <dl className="space-y-5">
+              <dl className="mt-6 space-y-5">
                 {details.map(({ key, icon: Icon, label, value, href }) => (
                   <div key={key} className="flex gap-3.5">
                     <Icon

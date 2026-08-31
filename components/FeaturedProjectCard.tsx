@@ -21,7 +21,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import type { ProjectCard } from "@/lib/projects";
@@ -38,8 +38,8 @@ import { formatNumber } from "@/lib/format";
  * behind it; white text on each of these clears 5:1 contrast at minimum.
  */
 const STATUS_TONE: Record<string, string> = {
-  UPCOMING: "bg-accent-700 text-white",
-  UNDER_CONSTRUCTION: "bg-amber-700 text-white",
+  UPCOMING: "bg-primary-600 text-white",
+  UNDER_CONSTRUCTION: "bg-primary-800 text-white",
   READY_TO_MOVE_IN: "bg-emerald-700 text-white",
   SOLD_OUT: "bg-ink text-white",
 };
@@ -80,7 +80,7 @@ export default function FeaturedProjectCard({
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary/5">
         {project.heroImageUrl && (
-          <Image
+          <ImageWithSkeleton
             src={project.heroImageUrl}
             alt={project.name}
             fill

@@ -80,10 +80,6 @@ const config: Config = {
         "fade-up": "fade-up 0.7s cubic-bezier(0.16,1,0.3,1) forwards",
         shimmer: "shimmer 2.5s linear infinite",
       },
-      backgroundImage: {
-        "horizon-line":
-          "linear-gradient(90deg, transparent 0%, #e8b384 50%, transparent 100%)",
-      },
     },
   },
   plugins: [],

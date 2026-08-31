@@ -91,9 +91,8 @@ export default function FaqAccordion({
           <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
             {labels.title}
           </h2>
-          <div className="horizon-divider my-6" />
           {labels.subtitle && (
-            <p className="mx-auto max-w-md text-sm leading-relaxed text-ink/70">
+            <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink/70">
               {labels.subtitle}
             </p>
           )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -101,7 +101,7 @@ export default function FloorPlanViewer({ floorPlans, typeName, labels }: Props)
         style={{ aspectRatio: ratio }}
         aria-label={`${typeName} — ${active.floorName}`}
       >
-        <Image
+        <ImageWithSkeleton
           key={active.id}
           src={active.imageUrl}
           alt={`${typeName} — ${active.floorName}`}
@@ -177,7 +177,7 @@ export default function FloorPlanViewer({ floorPlans, typeName, labels }: Props)
               className="relative h-[62vh] w-full max-w-5xl sm:h-[72vh]"
               onClick={(event) => event.stopPropagation()}
             >
-              <Image
+              <ImageWithSkeleton
                 src={active.imageUrl}
                 alt={`${typeName} — ${active.floorName}`}
                 fill

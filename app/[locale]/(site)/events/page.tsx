@@ -10,7 +10,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
@@ -83,7 +83,7 @@ export default async function EventsPage({ params: { locale } }: Props) {
       >
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary-900">
           {event.coverImageUrl && (
-            <Image
+            <ImageWithSkeleton
               src={event.coverImageUrl}
               alt={event.title}
               fill
@@ -163,8 +163,7 @@ export default async function EventsPage({ params: { locale } }: Props) {
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
-          <div className="horizon-divider my-6 ml-0" />
-          <p className="max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
+          <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
             {t("subtitle")}
           </p>
         </Reveal>

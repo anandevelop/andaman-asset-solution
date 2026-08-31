@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { notFound } from "next/navigation";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { ChevronDown, FileDown, MapPin, Navigation } from "lucide-react";
@@ -296,7 +296,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
           />
         ) : (
           project.heroImageUrl && (
-            <Image
+            <ImageWithSkeleton
               src={project.heroImageUrl}
               alt={`${project.name} — ${project.location}`}
               fill
@@ -383,7 +383,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
       {/* ── Concept Design (Sale Kit narrative) ──────────────────────────
           Image left / text right when a conceptDesignImageUrl is set —
           same split-layout pattern as the Overview section below (Reveal +
-          aspect-[4/5] image + horizon-divider). Falls back to the original
+          aspect-[4/5] image). Falls back to the original
           full-width text block when there's no image, so a project seeded
           before this field existed still renders without a layout gap. ── */}
       {project.conceptDesign && (
@@ -392,7 +392,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
               <Reveal>
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[5/6]">
-                  <Image
+                  <ImageWithSkeleton
                     src={project.conceptDesignImageUrl}
                     alt={`${project.name} — ${t("conceptDesignTitle")}`}
                     fill
@@ -408,8 +408,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                   <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
                     {t("conceptDesignTitle")}
                   </h2>
-                  <div className="horizon-divider my-6 ml-0" />
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+                  <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
                     {project.conceptDesign}
                   </p>
                 </div>
@@ -421,8 +420,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
               <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
                 {t("conceptDesignTitle")}
               </h2>
-              <div className="horizon-divider my-6 ml-0" />
-              <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+              <p className="mt-6 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
                 {project.conceptDesign}
               </p>
             </Reveal>
@@ -446,8 +444,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                     <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
                       {t("aboutProjectTitle")}
                     </h2>
-                    <div className="horizon-divider my-6 ml-0" />
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+                    <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
                       {project.aboutThisProject}
                     </p>
                   </div>
@@ -455,7 +452,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
 
                 <Reveal delay={0.15}>
                   <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[5/6]">
-                    <Image
+                    <ImageWithSkeleton
                       src={project.aboutThisProjectImageUrl}
                       alt={`${project.name} — ${t("aboutProjectTitle")}`}
                       fill
@@ -471,8 +468,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                 <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
                   {t("aboutProjectTitle")}
                 </h2>
-                <div className="horizon-divider my-6 ml-0" />
-                <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+                <p className="mt-6 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
                   {project.aboutThisProject}
                 </p>
               </Reveal>
@@ -510,20 +506,21 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
             <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
               {t("overviewTitle")}
             </h2>
-            <div className="horizon-divider my-6 ml-0" />
           </Reveal>
 
-          {facilities.length <= 4 ? (
-            <ul className="grid grid-cols-2 gap-0 sm:grid-cols-4">
-              {facilities.map((facility) => (
-                <li key={facility.id}>
-                  <FacilityCard facility={facility} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <FacilityScroller facilities={facilities} />
-          )}
+          <div className="mt-12">
+            {facilities.length <= 4 ? (
+              <ul className="grid grid-cols-2 gap-0 sm:grid-cols-4">
+                {facilities.map((facility) => (
+                  <li key={facility.id}>
+                    <FacilityCard facility={facility} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <FacilityScroller facilities={facilities} />
+            )}
+          </div>
         </section>
       )}
 
@@ -710,7 +707,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                   // interactive overlay (which would have nothing to plot).
                   <Reveal delay={0.1}>
                     <div className="relative aspect-[16/10] w-full overflow-hidden border border-primary/10 bg-white">
-                      <Image
+                      <ImageWithSkeleton
                         src={project.masterPlanImageUrl}
                         alt={`${project.name} — ${t("sitePlanTitle")}`}
                         fill
@@ -921,6 +918,7 @@ export default async function ProjectPage({ params: { locale, slug } }: Props) {
                 close: t("galleryClose"),
                 previous: t("galleryPrevious"),
                 next: t("galleryNext"),
+                video: t("progressVideoLabel"),
               }}
             />
           </Reveal>

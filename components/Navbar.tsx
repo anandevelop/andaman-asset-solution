@@ -9,16 +9,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { siteConfig } from "@/config/site";
 import { locales, type Locale } from "@/i18n";
 
-type NavProject = { slug: string; name: string };
-
 type Props = {
   /** Live values from lib/settings.ts, passed down by (site)/layout.tsx. */
   phone: string;
   phoneDisplay: string;
-  /** Published projects, curated order — for the "Projects" dropdown.
-   *  Fetched server-side by (site)/layout.tsx (getPublishedProjects) since
-   *  this component is a client component. */
-  projects: NavProject[];
 };
 
 const MOBILE_MENU_ID = "mobile-nav";
@@ -39,14 +33,15 @@ const LOCALE_LABELS: Record<Locale, string> = {
   ru: "Русский",
 };
 
-export default function Navbar({ phone, phoneDisplay, projects }: Props) {
+export default function Navbar({ phone, phoneDisplay }: Props) {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [projectsOpen, setProjectsOpen] = useState(false);
-  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
+  /** Scroll-direction header visibility — see the effect below. */
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollY = useRef(0);
 
   const menuRef = useRef<HTMLElement | null>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
@@ -54,8 +49,6 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
   const langButtonRef = useRef<HTMLButtonElement | null>(null);
   /** One entry per locale option, in `locales` order — used for arrow-key roving focus. */
   const langOptionRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const projectsMenuRef = useRef<HTMLDivElement | null>(null);
-  const projectsButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -103,40 +96,7 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
   useEffect(() => {
     setOpen(false);
     setLangOpen(false);
-    setProjectsOpen(false);
-    setMobileProjectsOpen(false);
   }, [pathname]);
-
-  // Click-outside + Escape for the "Projects" dropdown — same shape as the
-  // language dropdown's effect below, minus arrow-key roving: this one is
-  // a plain link list, not a listbox with a "current selection" concept.
-  useEffect(() => {
-    if (!projectsOpen) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        projectsMenuRef.current?.contains(target) ||
-        projectsButtonRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setProjectsOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      setProjectsOpen(false);
-      projectsButtonRef.current?.focus();
-    };
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [projectsOpen]);
 
   // Click-outside + Escape + arrow-key roving focus for the language
   // dropdown — a lighter-weight version of the mobile menu's focus trap
@@ -206,6 +166,63 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
     };
   }, [open]);
 
+  // Hide the header on scroll-down, reveal it on scroll-up — a "come back
+  // when you want it" header instead of one that permanently eats screen
+  // space on mobile. rAF-throttled so the scroll listener never runs more
+  // than once per frame, and a small delta tolerance absorbs trackpad/
+  // inertia jitter that would otherwise flip direction every frame.
+  //
+  // Skipped entirely while the mobile menu is open. Body scroll is
+  // "locked" via overflow:hidden then, but that lock doesn't stop iOS
+  // Safari's rubber-band overscroll from still firing `scroll` events on
+  // window — so without this guard, a swipe against the top/bottom of the
+  // full-screen menu could hide the header (and its only close button)
+  // right along with it, with no way back short of scrolling around
+  // blind. The menu forces the header to `fixed` (see the comment above
+  // <header>) precisely so it can act as this panel's anchor, so it needs
+  // to just stay put, full stop, for as long as `open` is true.
+  useEffect(() => {
+    if (open) {
+      setHeaderHidden(false);
+      return;
+    }
+
+    lastScrollY.current = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY.current;
+
+      // Always visible near the top — hiding it there just to show it
+      // again a moment later reads as flicker, not a feature.
+      if (currentY < 80) {
+        setHeaderHidden(false);
+      } else if (Math.abs(delta) > 4) {
+        const scrollingDown = delta > 0;
+        setHeaderHidden(scrollingDown);
+        // Close any open popover before it scrolls off with a header
+        // that's no longer there to anchor it.
+        if (scrollingDown) {
+          setLangOpen(false);
+        }
+      }
+
+      lastScrollY.current = currentY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open]);
+
   const pathnameWithoutLocale = pathname.replace(
     new RegExp(`^/${locale}(/|$)`),
     (_, slash) => slash ?? "/",
@@ -247,7 +264,9 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
         identically at scroll position 0.
       */}
       <header
-        className={`${open ? "fixed" : "sticky"} inset-x-0 top-0 z-50 border-b border-ink/5 bg-surface/95 backdrop-blur-md transition-all`}
+        className={`${open ? "fixed" : "sticky"} inset-x-0 top-0 z-50 border-b border-ink/5 bg-surface/95 backdrop-blur-md transition-all duration-300 ease-in-out ${
+          headerHidden && !open ? "-translate-y-full" : "translate-y-0"
+        }`}
       >
         <div className="container-luxe flex h-16 items-center justify-between sm:h-18">
           
@@ -271,71 +290,6 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
           <nav aria-label={t("mainMenu")} className="hidden items-center gap-8 lg:flex xl:gap-10">
             {siteConfig.nav.main.map((item) => {
               const active = isActive(item.href);
-
-              // "Projects" gets a dropdown listing each published project —
-              // everything else stays a plain link. Falls back to the plain
-              // link when there are zero published projects, same
-              // graceful-empty philosophy as SalesTeamSection.
-              if (item.key === "projects" && projects.length > 0) {
-                return (
-                  <div key={item.key} className="relative">
-                    <button
-                      ref={projectsButtonRef}
-                      type="button"
-                      aria-haspopup="menu"
-                      aria-expanded={projectsOpen}
-                      onClick={() => setProjectsOpen((v) => !v)}
-                      className={`flex items-center gap-1 ${linkClass(active)}`}
-                    >
-                      {t(item.key as any)}
-                      <ChevronDown
-                        size={13}
-                        strokeWidth={2}
-                        aria-hidden
-                        className={`shrink-0 transition-transform duration-200 ${projectsOpen ? "rotate-180" : ""}`}
-                      />
-                    </button>
-
-                    <AnimatePresence>
-                      {projectsOpen && (
-                        <motion.div
-                          ref={projectsMenuRef}
-                          role="menu"
-                          aria-label={t(item.key as any)}
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute left-0 top-full z-50 mt-2 min-w-[16rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-ink/10 bg-surface py-1 shadow-card"
-                        >
-                          {projects.map((project) => (
-                            <Link
-                              key={project.slug}
-                              href={`/${locale}/projects/${project.slug}`}
-                              role="menuitem"
-                              onClick={() => setProjectsOpen(false)}
-                              className="block whitespace-nowrap px-4 py-2.5 text-sm text-ink/70 transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:outline-none"
-                            >
-                              {project.name}
-                            </Link>
-                          ))}
-
-                          <div className="my-1 border-t border-ink/10" />
-
-                          <Link
-                            href={`/${locale}${item.href}`}
-                            role="menuitem"
-                            onClick={() => setProjectsOpen(false)}
-                            className="block whitespace-nowrap px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-none"
-                          >
-                            {t("viewAllProjects")}
-                          </Link>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              }
 
               return (
                 <Link
@@ -372,9 +326,9 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
                     setLangOpen(true);
                   }
                 }}
-                className="flex items-center gap-1.5 text-[15px] font-medium text-ink/70 transition-colors hover:text-primary sm:text-sm"
+                className="flex items-center gap-1.5 text-xs font-medium text-ink/70 transition-colors hover:text-primary sm:text-sm"
               >
-                <Globe size={18} strokeWidth={1.5} className="sm:h-4 sm:w-4" aria-hidden />
+                <Globe size={16} strokeWidth={1.5} aria-hidden />
                 <span>{LOCALE_LABELS[locale as Locale]}</span>
                 <ChevronDown
                   size={14}
@@ -481,61 +435,6 @@ export default function Navbar({ phone, phoneDisplay, projects }: Props) {
                       ease: [0.25, 0.1, 0.25, 1] as const,
                     },
                   };
-
-                  // "Projects" expands in place instead of navigating
-                  // straight away — same reasoning as the desktop dropdown,
-                  // just an accordion instead of a popover since this menu
-                  // is already full-screen.
-                  if (item.key === "projects" && projects.length > 0) {
-                    return (
-                      <motion.div key={item.key} {...motionProps}>
-                        <button
-                          type="button"
-                          aria-expanded={mobileProjectsOpen}
-                          onClick={() => setMobileProjectsOpen((v) => !v)}
-                          className={`flex w-full items-center justify-between gap-3 ${linkClass(active, true)}`}
-                        >
-                          {t(item.key as any)}
-                          <ChevronDown
-                            size={20}
-                            strokeWidth={1.5}
-                            aria-hidden
-                            className={`shrink-0 transition-transform duration-200 ${mobileProjectsOpen ? "rotate-180" : ""}`}
-                          />
-                        </button>
-
-                        <AnimatePresence>
-                          {mobileProjectsOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.25 }}
-                              className="overflow-hidden pl-4"
-                            >
-                              {projects.map((project) => (
-                                <Link
-                                  key={project.slug}
-                                  href={`/${locale}/projects/${project.slug}`}
-                                  onClick={() => setOpen(false)}
-                                  className="block py-2 text-base font-light text-ink/60 transition-colors hover:text-primary sm:text-lg"
-                                >
-                                  {project.name}
-                                </Link>
-                              ))}
-                              <Link
-                                href={`/${locale}${item.href}`}
-                                onClick={() => setOpen(false)}
-                                className="block py-2 text-base font-medium text-primary sm:text-lg"
-                              >
-                                {t("viewAllProjects")}
-                              </Link>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    );
-                  }
 
                   return (
                     <motion.div key={item.key} {...motionProps}>

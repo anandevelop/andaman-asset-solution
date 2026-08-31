@@ -219,9 +219,7 @@ export default async function Footer() {
             © {new Date().getFullYear()} {siteConfig.legalName} — {t("rightsReserved")}
           </p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/40 font-light md:gap-6">
-            {/* No dedicated Terms page exists yet — "#" is a placeholder,
-                not a regression; Privacy Policy links to the real page. */}
-            <Link href="#" className="transition-colors hover:text-white">{t("terms")}</Link>
+            <Link href={`/${locale}/terms`} className="transition-colors hover:text-white">{t("terms")}</Link>
             <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-white">{t("privacyPolicy")}</Link>
             <CookiePreferencesLink label={t("cookiesPreferences")} />
           </div>

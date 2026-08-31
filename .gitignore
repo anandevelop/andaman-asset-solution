@@ -17,3 +17,6 @@ tsconfig.tsbuildinfo
 /test-results
 /blob-report
 /playwright/.cache
+_to_delete/
+_claude_preview*.jpg
+_claude_preview*.webp

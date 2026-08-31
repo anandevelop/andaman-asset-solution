@@ -77,9 +77,7 @@ export default function LocaleNotFound() {
 
       <h1 className="mt-2 text-3xl font-light text-primary sm:text-4xl">{t.title}</h1>
 
-      <div className="horizon-divider my-7" />
-
-      <p className="max-w-md text-sm leading-relaxed text-ink/70">{t.body}</p>
+      <p className="mt-6 max-w-md text-sm leading-relaxed text-ink/70">{t.body}</p>
 
       <nav className="mt-10 flex flex-wrap items-center justify-center gap-3">
         {links.map(({ href, label, icon: Icon }) => (

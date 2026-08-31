@@ -24,7 +24,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { Trophy } from "lucide-react";
 import Reveal from "@/components/Reveal";
@@ -37,14 +37,14 @@ import { getAchievementsContent } from "@/content/achievements";
 // Real development photography (public/gallery/**), not stock imagery —
 // same photo sets the project pages themselves use. Only 3 of the 5
 // projects (residence-prime, trinity-village, victory) have a photographed
-// gallery; victory/hero-cropped.jpg doubles as this page's banner because
+// gallery; victory/cover.webp doubles as this page's banner because
 // The Victory is one of the two named winners in the narrative copy below.
 // Project names are proper nouns, same convention as content/company-timeline.ts
 // — not run through i18n.
-const HERO_IMAGE = "/gallery/victory/hero-cropped.jpg";
+const HERO_IMAGE = "/gallery/victory/cover.webp";
 const HERO_CAPTION = "The Victory — Cherngtalay, Phuket";
-const NARRATIVE_IMAGE_1 = "/gallery/residence-prime/hero-cropped.jpg";
-const NARRATIVE_IMAGE_2 = "/gallery/victory/p4-04.jpg";
+const NARRATIVE_IMAGE_1 = "/gallery/residence-prime/living-double-height.webp";
+const NARRATIVE_IMAGE_2 = "/gallery/victory/the-victory3.webp";
 
 export const revalidate = 3600;
 
@@ -77,7 +77,7 @@ function AwardCard({ award, index }: { award: Award; index: number }) {
       <div className="group relative flex h-full flex-col rounded-sm border border-primary/10 bg-white p-6 pt-16 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-cardHover">
         <div className="absolute left-1/2 -top-10 h-20 w-20 -translate-x-1/2 sm:h-24 sm:w-24">
           {award.trophyImageUrl ? (
-            <Image
+            <ImageWithSkeleton
               src={award.trophyImageUrl}
               alt=""
               fill
@@ -139,7 +139,6 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
-          <div className="horizon-divider my-6 ml-0" />
         </Reveal>
       </section>
 
@@ -157,7 +156,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
           <section className="container-luxe pb-4">
             <Reveal>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[21/8]">
-                <Image
+                <ImageWithSkeleton
                   src={HERO_IMAGE}
                   alt={HERO_CAPTION}
                   fill
@@ -195,7 +194,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
       <section className="container-luxe grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card">
-            <Image
+            <ImageWithSkeleton
               src={NARRATIVE_IMAGE_1}
               alt=""
               fill
@@ -209,8 +208,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
             <h2 className="text-2xl font-light text-primary sm:text-3xl">
               {content.intro.heading}
             </h2>
-            <div className="horizon-divider my-6 ml-0" />
-            <p className="max-w-lg whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+            <p className="mt-6 max-w-lg whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
               {content.intro.body}
             </p>
           </div>
@@ -220,7 +218,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
       <section className="container-luxe grid gap-10 pb-16 sm:pb-24 lg:grid-cols-2 lg:gap-16">
         <Reveal className="lg:order-2">
           <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card">
-            <Image
+            <ImageWithSkeleton
               src={NARRATIVE_IMAGE_2}
               alt=""
               fill
@@ -234,8 +232,7 @@ export default async function AchievementsPage({ params: { locale } }: Props) {
             <h2 className="text-2xl font-light text-primary sm:text-3xl">
               {content.evolution.heading}
             </h2>
-            <div className="horizon-divider my-6 ml-0" />
-            <p className="max-w-lg whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
+            <p className="mt-6 max-w-lg whitespace-pre-line text-sm leading-relaxed text-ink/70 sm:text-base">
               {content.evolution.body}
             </p>
           </div>
