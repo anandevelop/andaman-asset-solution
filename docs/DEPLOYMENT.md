@@ -41,7 +41,7 @@ DATABASE_URL
 NEXTAUTH_URL          # exact public origin, no trailing slash
 NEXTAUTH_SECRET       # openssl rand -base64 32
 NEXT_PUBLIC_SITE_URL  # canonical origin
-NEXT_PUBLIC_CLOUDFRONT_DOMAIN
+NEXT_PUBLIC_MEDIA_DOMAIN
 ```
 
 ### The build-time trap
@@ -54,7 +54,7 @@ empty. They must be passed as build arguments:
 ```bash
 docker build \
   --build-arg NEXT_PUBLIC_SITE_URL="https://andamanassetsolution.com" \
-  --build-arg NEXT_PUBLIC_CLOUDFRONT_DOMAIN="d111111abcdef8.cloudfront.net" \
+  --build-arg NEXT_PUBLIC_MEDIA_DOMAIN="d111111abcdef8.cloudfront.net" \
   --build-arg NEXT_PUBLIC_GA_ID="G-XXXXXXXXXX" \
   --build-arg NEXT_PUBLIC_META_PIXEL_ID="000000000000000" \
   --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Lc..." \

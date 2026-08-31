@@ -9,10 +9,19 @@
  * through it costs 12MB of server RAM per concurrent upload and runs into
  * the platform body-size limit at around 4.5MB anyway.
  *
- * What comes back is a pair: the signed PUT URL (short-lived, S3 host) and
- * the permanent CloudFront URL that goes into the database. The bucket
- * itself stays private behind an Origin Access Control — nothing is ever
- * read directly from S3.
+ * What comes back is a pair: the signed PUT URL (short-lived, storage host)
+ * and the permanent public URL that goes into the database.
+ *
+ * The provider is DigitalOcean Spaces, reached through the AWS SDK because
+ * Spaces speaks S3. Two consequences worth knowing:
+ *
+ *   • Objects in a Space are private unless the upload says otherwise, so
+ *     the PUT is signed with an ACL (see OBJECT_ACL below). An object
+ *     uploaded without it stores fine and then 403s for every visitor —
+ *     a failure that only shows up on the public site, never in the admin.
+ *   • The browser must send every header that was signed. getPresignedUploadUrl
+ *     therefore returns the exact header set alongside the URL rather than
+ *     leaving the uploader to guess.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -87,11 +96,22 @@ export function maxBytesFor(contentType: string): number {
 export type S3Config = {
   region: string;
   bucket: string;
-  cloudfrontDomain: string;
+  /** Public host that serves the objects — Spaces origin or its CDN alias. */
+  mediaDomain: string;
   accessKeyId: string;
   secretAccessKey: string;
   endpoint?: string;
 };
+
+/**
+ * ACL applied to every uploaded object.
+ *
+ * public-read because the site serves these images straight from the
+ * Space's public host; there is no signed-read path in front of them. Set
+ * SPACES_OBJECT_ACL=private only if a CDN with its own origin credentials
+ * is put in front, in which case the public URL has to change with it.
+ */
+const OBJECT_ACL = process.env.SPACES_OBJECT_ACL ?? "public-read";
 
 /**
  * Read and validate configuration at call time rather than module load.
@@ -99,23 +119,23 @@ export type S3Config = {
  * whole server on boot — the public site does not depend on uploads.
  */
 export function readS3Config(): S3Config | null {
-  const region = process.env.AWS_REGION;
-  const bucket = process.env.AWS_S3_BUCKET_NAME;
-  const cloudfrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  const endpoint = process.env.AWS_ENDPOINT;
+  const region = process.env.DO_SPACES_REGION;
+  const bucket = process.env.DO_SPACES_BUCKET;
+  const mediaDomain = process.env.NEXT_PUBLIC_MEDIA_DOMAIN;
+  const accessKeyId = process.env.DO_SPACES_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.DO_SPACES_SECRET_ACCESS_KEY;
+  const endpoint = process.env.DO_SPACES_ENDPOINT;
 
-  if (!region || !bucket || !cloudfrontDomain || !accessKeyId || !secretAccessKey) {
+  if (!region || !bucket || !mediaDomain || !accessKeyId || !secretAccessKey) {
     return null;
   }
 
   return {
     region,
     bucket,
-    // Tolerate a pasted "https://d123.cloudfront.net/" — the env var wants
-    // a bare host, but that is an easy thing to get wrong once.
-    cloudfrontDomain: cloudfrontDomain.replace(/^https?:\/\//, "").replace(/\/+$/, ""),
+    // Tolerate a pasted "https://bucket.sgp1.digitaloceanspaces.com/" — the
+    // env var wants a bare host, but that is an easy thing to get wrong once.
+    mediaDomain: mediaDomain.replace(/^https?:\/\//, "").replace(/\/+$/, ""),
     accessKeyId,
     secretAccessKey,
     ...(endpoint && { endpoint }),
@@ -142,8 +162,12 @@ function getClient(config: S3Config): S3Client {
       },
       ...(config.endpoint && {
         endpoint: config.endpoint,
-        forcePathStyle: true, // Required for most S3-compatible providers (Supabase, MinIO, R2, etc.)
-        requestChecksumCalculation: "WHEN_REQUIRED", // Fixes 403 errors with Supabase by disabling auto-CRC32
+        // Path style (endpoint/bucket/key) works on Spaces, MinIO and R2
+        // alike; virtual-host style would need a per-bucket endpoint.
+        forcePathStyle: true,
+        // Spaces rejects the SDK's automatic CRC32 trailer with a 403, the
+        // same way Supabase's S3 API does.
+        requestChecksumCalculation: "WHEN_REQUIRED",
       }),
     });
   }
@@ -191,24 +215,30 @@ export function buildObjectKey(
 }
 
 /** Object key → the public URL stored in the database. */
-export function toCloudFrontUrl(key: string, config?: S3Config): string {
+export function toPublicUrl(key: string, config?: S3Config): string {
   const resolved = config ?? readS3Config();
   if (!resolved) throw new Error("S3_NOT_CONFIGURED");
 
-  return `https://${resolved.cloudfrontDomain}/${key.replace(/^\/+/, "")}`;
+  return `https://${resolved.mediaDomain}/${key.replace(/^\/+/, "")}`;
 }
 
 // ── Presigning ──────────────────────────────────────────────────────────
 
 export type PresignedUpload = {
-  /** Short-lived S3 URL the browser PUTs the file to. */
+  /** Short-lived storage URL the browser PUTs the file to. */
   uploadUrl: string;
-  /** Permanent CloudFront URL — this is what gets saved. */
+  /** Permanent public URL — this is what gets saved. */
   publicUrl: string;
   key: string;
   expiresIn: number;
   /** The browser must send exactly this, or the signature will not match. */
   contentType: AllowedContentType;
+  /**
+   * Every header the signature covers, ready to be replayed verbatim by the
+   * uploader. Returned rather than hardcoded on the client so that adding a
+   * signed header here can never again mean a silent 403 there.
+   */
+  headers: Record<string, string>;
 };
 
 /**
@@ -263,7 +293,7 @@ export async function checkS3Reachable(
         : undefined;
 
     if (status === 403) {
-      return { ok: false, reason: "forbidden", detail: "check the IAM policy" };
+      return { ok: false, reason: "forbidden", detail: "check the Spaces key" };
     }
 
     return {
@@ -296,6 +326,7 @@ export async function getPresignedUploadUrl(options: {
     Bucket: config.bucket,
     Key: key,
     ContentType: options.contentType,
+    ACL: OBJECT_ACL as "public-read" | "private",
     // A year: these objects are immutable by construction, since every
     // upload gets a fresh UUID key.
     CacheControl: "public, max-age=31536000, immutable",
@@ -314,14 +345,19 @@ export async function getPresignedUploadUrl(options: {
 
   const uploadUrl = await getSignedUrl(getClient(config), command, {
     expiresIn: EXPIRES_IN_SECONDS,
-    signableHeaders: new Set(["content-type"]), // Required for Supabase S3 API
+    // Both are part of the signature, so both have to travel with the PUT.
+    signableHeaders: new Set(["content-type", "x-amz-acl"]),
   });
 
   return {
     uploadUrl,
-    publicUrl: toCloudFrontUrl(key, config),
+    publicUrl: toPublicUrl(key, config),
     key,
     expiresIn: EXPIRES_IN_SECONDS,
     contentType: options.contentType,
+    headers: {
+      "Content-Type": options.contentType,
+      "x-amz-acl": OBJECT_ACL,
+    },
   };
 }

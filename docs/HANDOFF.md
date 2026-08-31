@@ -121,11 +121,11 @@ Full annotated reference: `.env.example`. Summary:
 | `NEXTAUTH_SECRET` | ● | JWT signing | Rotating logs everyone out |
 | `NEXT_PUBLIC_SITE_URL` | ● | Canonical origin | Corrupts canonicals, sitemap, hreflang, JSON-LD |
 | `NEXT_PUBLIC_DEFAULT_LOCALE` | ● | `th` | Wrong default language |
-| `AWS_REGION` | ● | S3 region | Uploads fail |
-| `AWS_ACCESS_KEY_ID` | ● | IAM key (PutObject only) | Uploads fail |
-| `AWS_SECRET_ACCESS_KEY` | ● | IAM secret | Uploads fail |
-| `AWS_S3_BUCKET_NAME` | ● | Media bucket | Uploads fail |
-| `NEXT_PUBLIC_CLOUDFRONT_DOMAIN` | ● | CDN host, **build-time** | Every uploaded image 404s |
+| `DO_SPACES_REGION` | ● | Spaces region (sgp1) | Uploads fail |
+| `DO_SPACES_ACCESS_KEY_ID` | ● | Spaces access key | Uploads fail |
+| `DO_SPACES_SECRET_ACCESS_KEY` | ● | Spaces secret | Uploads fail |
+| `DO_SPACES_BUCKET` | ● | Media bucket | Uploads fail |
+| `NEXT_PUBLIC_MEDIA_DOMAIN` | ● | Public media host, **build-time** | Every uploaded image 404s |
 | `TZ` | ● | `Asia/Bangkok` | Event times shift by 7 hours |
 | `LINE_CHANNEL_SECRET` | ○ | Webhook signature | Webhook rejects everything |
 | `LINE_CHANNEL_ACCESS_TOKEN` | ○ | Push API | No lead notifications |

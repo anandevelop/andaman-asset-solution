@@ -12,15 +12,15 @@ Mechanics of deploying are in [DEPLOYMENT.md](./DEPLOYMENT.md).
 Tracked openly rather than buried. Each is a deliberate decision, not an
 oversight, but none of them should reach production untouched.
 
-- [ ] **Favicon and app icons do not exist.** `app/[locale]/layout.tsx`
-      declares `/favicon.ico`, `/icon-192.png`, `/icon-512.png`,
-      `/icon-maskable-512.png` and `/apple-touch-icon.png`. None are in
-      `public/`, so each 404s and browsers fall back to a blank page icon.
-      Drop the files in — no code change needed.
-- [ ] **Team page is fictional.** `config/team.ts` contains invented names,
-      roles and stock photographs. Publishing it as-is is a
-      misrepresentation. Replace with the real team or delete the section
-      from `/about`.
+- [x] ~~Favicon and app icons do not exist.~~ Generated from the brand
+      mark and dropped into `public/`: `favicon.ico`, `icon-192.png`,
+      `icon-512.png`, `icon-maskable-512.png` (mark rescaled to fit
+      Android's 80%-safe-zone circle so it isn't clipped) and
+      `apple-touch-icon.png`.
+- [x] ~~Team page is fictional.~~ The "Our Team" section (invented names,
+      roles and stock photographs) has been removed from `/about` entirely
+      rather than populated with fake people. `config/team.ts` is left on
+      disk, unused, in case a real team roster is added later.
 - [ ] **`public/og-image.jpg` is a generated placeholder.** Typographic
       only, correct brand colours. Fine to launch with; replace when
       photography is available.
@@ -89,6 +89,17 @@ Cross-check against `.env.example`, which annotates each one.
       remove the last one, so a single account that loses its password is a
       shell-access recovery job.
 - [ ] Sign-in tested on production
+- [ ] **Two-factor enrolled for every `ADMIN` and `SUPER_ADMIN`.** They are
+      redirected to `/admin/account/security` and cannot reach anything else
+      until they finish, so this happens whether or not it is planned for —
+      better on a quiet afternoon than during a launch.
+- [ ] Recovery codes stored somewhere that is *not* the phone holding the
+      authenticator. Both lost together means a `SUPER_ADMIN` reset from
+      `/admin/users/<id>/edit`, and if the account locked out is the only
+      `SUPER_ADMIN`, a database edit.
+- [ ] `NEXTAUTH_SECRET` settled **before** anyone enrols. TOTP secrets are
+      encrypted with a key derived from it, so rotating it later invalidates
+      every enrolled authenticator at once.
 - [ ] `/admin` confirmed to redirect to `/login` when signed out
 - [ ] Brute-force lockout observed: eleven wrong passwords in fifteen
       minutes should be refused

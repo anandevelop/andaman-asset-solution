@@ -12,7 +12,7 @@
  *  • A caller cannot escape its prefix. Slug values reach this function
  *    from admin form input.
  *
- * Nothing here touches AWS: buildObjectKey and toCloudFrontUrl are pure.
+ * Nothing here touches the network: buildObjectKey and toPublicUrl are pure.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -24,7 +24,7 @@ import {
   isAllowedContentType,
   isDocumentContentType,
   maxBytesFor,
-  toCloudFrontUrl,
+  toPublicUrl,
 } from "@/lib/s3";
 
 const UUID_KEY =
@@ -153,54 +153,57 @@ describe("buildObjectKey", () => {
   });
 });
 
-describe("toCloudFrontUrl", () => {
+describe("toPublicUrl", () => {
   const original = { ...process.env };
 
   beforeEach(() => {
-    process.env.AWS_REGION = "ap-southeast-1";
-    process.env.AWS_S3_BUCKET_NAME = "andaman-media";
-    process.env.AWS_ACCESS_KEY_ID = "test";
-    process.env.AWS_SECRET_ACCESS_KEY = "test";
-    process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = "d111111abcdef8.cloudfront.net";
+    process.env.DO_SPACES_REGION = "sgp1";
+    process.env.DO_SPACES_BUCKET = "andamanasset-media";
+    process.env.DO_SPACES_ACCESS_KEY_ID = "test";
+    process.env.DO_SPACES_SECRET_ACCESS_KEY = "test";
+    process.env.NEXT_PUBLIC_MEDIA_DOMAIN =
+      "andamanasset-media.sgp1.digitaloceanspaces.com";
   });
 
   afterEach(() => {
     process.env = { ...original };
   });
 
-  it("builds an https CloudFront URL", () => {
-    expect(toCloudFrontUrl("projects/a/b.jpg")).toBe(
-      "https://d111111abcdef8.cloudfront.net/projects/a/b.jpg",
+  it("builds an https URL on the media host", () => {
+    expect(toPublicUrl("projects/a/b.jpg")).toBe(
+      "https://andamanasset-media.sgp1.digitaloceanspaces.com/projects/a/b.jpg",
     );
   });
 
   it("tolerates a scheme pasted into the env var", () => {
-    process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = "https://d1.cloudfront.net";
+    process.env.NEXT_PUBLIC_MEDIA_DOMAIN = "https://cdn.example.com";
 
-    expect(toCloudFrontUrl("a.jpg")).toBe("https://d1.cloudfront.net/a.jpg");
+    expect(toPublicUrl("a.jpg")).toBe("https://cdn.example.com/a.jpg");
   });
 
   it("tolerates a trailing slash", () => {
-    process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = "d1.cloudfront.net/";
+    process.env.NEXT_PUBLIC_MEDIA_DOMAIN = "cdn.example.com/";
 
-    expect(toCloudFrontUrl("a.jpg")).toBe("https://d1.cloudfront.net/a.jpg");
+    expect(toPublicUrl("a.jpg")).toBe("https://cdn.example.com/a.jpg");
   });
 
   it("never produces a double slash", () => {
-    process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = "d1.cloudfront.net/";
+    process.env.NEXT_PUBLIC_MEDIA_DOMAIN = "cdn.example.com/";
 
-    expect(toCloudFrontUrl("/a.jpg").slice("https://".length)).not.toContain("//");
+    expect(toPublicUrl("/a.jpg").slice("https://".length)).not.toContain("//");
   });
 
-  it("never emits a raw S3 host", () => {
-    // The bucket stays private behind an Origin Access Control; a direct
-    // S3 URL in the database would 403 for every visitor.
-    expect(toCloudFrontUrl("a.jpg")).not.toContain("amazonaws.com");
+  it("uses the public host, never the signing endpoint", () => {
+    // A URL on the API endpoint (sgp1.digitaloceanspaces.com/bucket/key)
+    // works for signed requests and not for a visitor's browser.
+    expect(toPublicUrl("a.jpg")).toBe(
+      "https://andamanasset-media.sgp1.digitaloceanspaces.com/a.jpg",
+    );
   });
 
-  it("throws when the CDN is not configured", () => {
-    delete process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
+  it("throws when the media host is not configured", () => {
+    delete process.env.NEXT_PUBLIC_MEDIA_DOMAIN;
 
-    expect(() => toCloudFrontUrl("a.jpg")).toThrow("S3_NOT_CONFIGURED");
+    expect(() => toPublicUrl("a.jpg")).toThrow("S3_NOT_CONFIGURED");
   });
 });

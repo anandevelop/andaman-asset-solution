@@ -111,14 +111,24 @@ type Upload = { id: string; name: string; progress: number; error?: string };
 function putToS3(
   url: string,
   file: File,
-  contentType: string,
+  headers: Record<string, string>,
   onProgress: (percent: number) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url, true);
-    // Must match the signed ContentType exactly or S3 rejects the signature.
-    xhr.setRequestHeader("Content-Type", contentType);
+
+    /*
+      Replay the signed headers verbatim.
+
+      The signature covers Content-Type and the object ACL; a missing or
+      altered header is a 403 from the storage provider, not a validation
+      error we can explain. Sending back exactly what the server signed
+      means the two can never drift apart.
+    */
+    for (const [name, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(name, value);
+    }
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
@@ -129,8 +139,17 @@ function putToS3(
     xhr.onload = () =>
       xhr.status >= 200 && xhr.status < 300
         ? resolve()
-        : reject(new Error(`S3 responded ${xhr.status}`));
-    xhr.onerror = () => reject(new Error("NETWORK"));
+        : reject(new Error(xhr.status === 403 ? "DENIED" : `HTTP_${xhr.status}`));
+
+    /*
+      onerror fires with status 0 for a blocked CORS preflight exactly as it
+      does for a dead network — the browser refuses to tell a page why a
+      cross-origin request failed. Reported as BLOCKED rather than "network
+      error" because on a working laptop the overwhelmingly likelier cause
+      is a missing CORS rule on the bucket, and "check your connection" sends
+      the reader looking in the wrong place entirely.
+    */
+    xhr.onerror = () => reject(new Error("BLOCKED"));
     xhr.onabort = () => reject(new Error("ABORTED"));
 
     xhr.send(file);
@@ -385,18 +404,34 @@ export default function ImageUploader({
             continue;
           }
 
-          await putToS3(result.uploadUrl, file, result.contentType, (percent) =>
-            setUploads((u) =>
-              u.map((item) => (item.id === id ? { ...item, progress: percent } : item)),
-            ),
+          await putToS3(
+            result.uploadUrl,
+            file,
+            result.headers ?? { "Content-Type": result.contentType },
+            (percent) =>
+              setUploads((u) =>
+                u.map((item) => (item.id === id ? { ...item, progress: percent } : item)),
+              ),
           );
 
           addUrls([result.publicUrl]);
           setUploads((u) => u.filter((item) => item.id !== id));
-        } catch {
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : "";
+          const message =
+            reason === "BLOCKED"
+              ? t("storageBlocked")
+              : reason === "DENIED"
+                ? t("storageDenied")
+                : t("failed");
+
           setUploads((u) =>
-            u.map((item) => (item.id === id ? { ...item, error: t("failed") } : item)),
+            u.map((item) => (item.id === id ? { ...item, error: message } : item)),
           );
+
+          // The UI has room for one short line; the console gets the detail
+          // whoever is debugging actually needs.
+          console.error(`[upload] ${file.name} failed: ${reason || error}`);
         }
       }
 

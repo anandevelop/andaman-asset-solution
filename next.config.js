@@ -1,18 +1,21 @@
 const withNextIntl = require("next-intl/plugin")("./i18n.ts");
 
 /**
- * CloudFront is where every uploaded asset is served from. next/image
- * refuses any host not listed here, so a missing env var would silently
- * break every admin-uploaded image — hence the explicit build-time warning
- * rather than a quiet fallback.
+ * The media host is where every uploaded asset is served from — currently a
+ * DigitalOcean Space. next/image refuses any host not listed here, so a
+ * missing env var would silently break every admin-uploaded image — hence
+ * the explicit build-time warning rather than a quiet fallback.
+ *
+ * NEXT_PUBLIC_*, so it is baked in at build time: a container built without
+ * it cannot be fixed by setting it at runtime.
  */
-const cloudfrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN
-  ? process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN.replace(/^https?:\/\//, "").split("/")[0]
+const mediaDomain = process.env.NEXT_PUBLIC_MEDIA_DOMAIN
+  ? process.env.NEXT_PUBLIC_MEDIA_DOMAIN.replace(/^https?:\/\//, "").split("/")[0]
   : null;
 
-if (!cloudfrontDomain && process.env.NODE_ENV === "production") {
+if (!mediaDomain && process.env.NODE_ENV === "production") {
   console.warn(
-    "\n⚠  NEXT_PUBLIC_CLOUDFRONT_DOMAIN is not set.\n" +
+    "\n⚠  NEXT_PUBLIC_MEDIA_DOMAIN is not set.\n" +
       "   Uploaded images will fail to render through next/image.\n",
   );
 }
@@ -66,7 +69,7 @@ const CSP_DIRECTIVES = {
     // Analytics tracking pixels.
     "https://www.google-analytics.com",
     "https://www.facebook.com",
-    ...(cloudfrontDomain ? [`https://${cloudfrontDomain}`] : []),
+    ...(mediaDomain ? [`https://${mediaDomain}`] : []),
   ],
 
   "connect-src": [
@@ -75,7 +78,8 @@ const CSP_DIRECTIVES = {
     "https://analytics.google.com",
     "https://stats.g.doubleclick.net",
     "https://connect.facebook.net",
-    // Browser PUTs straight to S3 via the presigned URL.
+    // Browser PUTs straight to the Space via the presigned URL.
+    "https://*.digitaloceanspaces.com",
     "https://*.amazonaws.com",
   ],
 
@@ -151,13 +155,15 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "source.unsplash.com" },
-      // Supabase Storage — public object URL hostname
+      /*
+        Supabase was the previous media host. Every image uploaded before
+        the move to Spaces is still stored in the database as a supabase.co
+        URL, so these stay until those rows are rewritten — dropping them
+        turns years of existing project galleries into broken images.
+      */
       { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.supabase.co" },
-      // Supabase Storage — S3-compatible API hostname
       { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.storage.supabase.co" },
-      ...(cloudfrontDomain
-        ? [{ protocol: "https", hostname: cloudfrontDomain }]
-        : []),
+      ...(mediaDomain ? [{ protocol: "https", hostname: mediaDomain }] : []),
     ],
     formats: ["image/avif", "image/webp"],
     // Uploaded assets are immutable — the object key carries a UUID — so
