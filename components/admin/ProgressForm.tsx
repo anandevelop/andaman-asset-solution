@@ -14,7 +14,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
-import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Trash2, Youtube } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { ProgressFormState } from "@/app/[locale]/admin/progress/actions";
@@ -22,10 +22,7 @@ import type { ProgressFormState } from "@/app/[locale]/admin/progress/actions";
 export type ProgressValues = {
   month: number;
   year: number;
-  titleEn: string;
-  titleTh: string;
-  summaryEn: string;
-  summaryTh: string;
+  videoUrl: string;
   images: string;
   isPublished: boolean;
 };
@@ -149,36 +146,19 @@ export default function ProgressForm({
           </div>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label className="admin-label">{`${t("progress.updateTitle")} · EN`}</label>
-            <input name="titleEn" defaultValue={values.titleEn} className="admin-input" />
-          </div>
-
-          <div>
-            <label className="admin-label">{`${t("progress.updateTitle")} · TH`}</label>
-            <input name="titleTh" defaultValue={values.titleTh} className="admin-input" />
-          </div>
-
-          <div>
-            <label className="admin-label">{`${t("progress.summary")} · EN`}</label>
-            <textarea
-              name="summaryEn"
-              defaultValue={values.summaryEn}
-              rows={3}
-              className="admin-textarea"
-            />
-          </div>
-
-          <div>
-            <label className="admin-label">{`${t("progress.summary")} · TH`}</label>
-            <textarea
-              name="summaryTh"
-              defaultValue={values.summaryTh}
-              rows={3}
-              className="admin-textarea"
-            />
-          </div>
+        <div>
+          <label className="admin-label flex items-center gap-1.5">
+            <Youtube size={15} className="text-ink-muted" aria-hidden />
+            {t("progress.videoUrl")}
+          </label>
+          <input
+            name="videoUrl"
+            type="url"
+            placeholder="https://youtu.be/..."
+            defaultValue={values.videoUrl}
+            className="admin-input"
+          />
+          <p className="mt-1.5 text-xs text-ink-muted">{t("progress.videoUrlHint")}</p>
         </div>
 
         <ImageUploader

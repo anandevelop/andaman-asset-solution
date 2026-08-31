@@ -30,10 +30,7 @@ function readForm(formData: FormData, projectId: string) {
     projectId,
     month: text("month"),
     year: text("year"),
-    titleEn: text("titleEn"),
-    titleTh: text("titleTh"),
-    summaryEn: text("summaryEn"),
-    summaryTh: text("summaryTh"),
+    videoUrl: text("videoUrl"),
     images: text("images"),
     isPublished: formData.get("isPublished") === "on",
   };

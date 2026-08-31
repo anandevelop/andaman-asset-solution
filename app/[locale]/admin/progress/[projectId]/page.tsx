@@ -50,10 +50,7 @@ export default async function AdminProgressPage({ params }: Props) {
       id: true,
       month: true,
       year: true,
-      titleEn: true,
-      titleTh: true,
-      summaryEn: true,
-      summaryTh: true,
+      videoUrl: true,
       images: true,
       isPublished: true,
     },
@@ -73,10 +70,7 @@ export default async function AdminProgressPage({ params }: Props) {
 
   const blank: ProgressValues = {
     ...nextMonth,
-    titleEn: "",
-    titleTh: "",
-    summaryEn: "",
-    summaryTh: "",
+    videoUrl: "",
     images: "",
     isPublished: false,
   };
@@ -148,10 +142,7 @@ export default async function AdminProgressPage({ params }: Props) {
                 values={{
                   month: update.month,
                   year: update.year,
-                  titleEn: update.titleEn ?? "",
-                  titleTh: update.titleTh ?? "",
-                  summaryEn: update.summaryEn ?? "",
-                  summaryTh: update.summaryTh ?? "",
+                  videoUrl: update.videoUrl ?? "",
                   images: update.images.join("\n"),
                   isPublished: update.isPublished,
                 }}

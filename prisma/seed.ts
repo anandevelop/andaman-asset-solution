@@ -357,12 +357,6 @@ const PROGRESS_UPDATES = [
   {
     year: 2026,
     month: 6,
-    titleEn: "Foundations complete",
-    titleTh: "งานฐานรากแล้วเสร็จ",
-    summaryEn:
-      "Foundation work complete across all 30 units; road base laid and site drainage connected.",
-    summaryTh:
-      "งานฐานรากแล้วเสร็จครบทั้ง 30 ยูนิต พร้อมงานพื้นทางถนนและระบบระบายน้ำภายในโครงการ",
     images: [
       "https://images.unsplash.com/photo-1541976590-713941681591?w=800&q=80",
       "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80",
@@ -373,10 +367,6 @@ const PROGRESS_UPDATES = [
   {
     year: 2026,
     month: 7,
-    titleEn: "Phase A framing",
-    titleTh: "งานโครงสร้างเฟส A",
-    summaryEn: "Structural framing underway on Phase A (units 1–15).",
-    summaryTh: "เริ่มงานโครงสร้างเฟส A (ยูนิต 1–15)",
     images: [
       "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80",
       "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
@@ -387,10 +377,6 @@ const PROGRESS_UPDATES = [
   {
     year: 2026,
     month: 8,
-    titleEn: "Roofing & pool shells",
-    titleTh: "งานหลังคาและโครงสร้างสระ",
-    summaryEn: "Roofing installed on Phase A; pool shells poured.",
-    summaryTh: "ติดตั้งหลังคาเฟส A แล้วเสร็จ และเทโครงสร้างสระว่ายน้ำ",
     images: [
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
       "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80",

@@ -479,10 +479,13 @@ export const projectProgressSchema = z.object({
   projectId: z.string().min(1),
   month: z.coerce.number().int().min(1).max(12),
   year: z.coerce.number().int().min(2000).max(2100),
-  titleEn: optionalText(200),
-  titleTh: optionalText(200),
-  summaryEn: optionalText(4000),
-  summaryTh: optionalText(4000),
+  // A YouTube link, loosely validated like every other admin-pasted URL
+  // field in this file (heroVideoUrl, brochureUrl, googleMapsUrl) rather
+  // than enforcing a youtube.com/youtu.be host here — lib/youtube.ts
+  // already treats anything it can't parse as "no video" on the render
+  // side, so a stricter check here would only reject early with a worse
+  // error message for the same outcome.
+  videoUrl: optionalText(600),
   images: linesToArray,
   isPublished: z.coerce.boolean(),
 });
@@ -729,6 +732,8 @@ export const heroStorySlideSchema = z.object({
   ctaUrl: optionalText(600),
   // Both optional: a slide can be a pure mood shot with no overlay copy.
   caption: optionalText(300),
+  // Short line under the headline — same field/limit as Project.tagline.
+  tagline: optionalText(300),
   ctaLabel: optionalText(60),
   isActive: z.coerce.boolean(),
   sortOrder: z.coerce.number().int().min(-9999).max(9999),

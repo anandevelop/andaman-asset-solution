@@ -17,7 +17,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import { ArrowRight, Camera, HardHat, MapPin } from "lucide-react";
@@ -74,8 +74,7 @@ export default async function ProgressIndexPage({ params: { locale } }: Props) {
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
-          <div className="horizon-divider my-6 ml-0" />
-          <p className="max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
+          <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink/70 sm:text-base">
             {t("subtitle")}
           </p>
         </Reveal>
@@ -102,15 +101,23 @@ export default async function ProgressIndexPage({ params: { locale } }: Props) {
               <Reveal key={project.id} delay={index * 0.08}>
                 <Link
                   href={`/${locale}/projects/${project.slug}#progress`}
-                  className="group grid overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg sm:grid-cols-[280px_1fr]"
+                  className="group grid overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg sm:grid-cols-[42%_1fr] sm:items-center"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary/5 sm:aspect-auto sm:h-full">
+                  {/* A fixed 16:9 at every breakpoint, not just a box that
+                      happened to be 4:3 on a phone and then stretched to
+                      whatever height the text column dictated on desktop
+                      (sm:aspect-auto sm:h-full, the previous rule) — that
+                      let a short "no update yet" card squash this into a
+                      narrow, cropped-looking strip. A true aspect ratio
+                      plus sm:items-center on the row keeps the image its
+                      own natural height instead of stretching to match. */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-primary/5">
                     {(project.latest?.image ?? project.heroImageUrl) && (
-                      <Image
+                      <ImageWithSkeleton
                         src={(project.latest?.image ?? project.heroImageUrl)!}
                         alt={project.name}
                         fill
-                        sizes="(max-width: 640px) 100vw, 280px"
+                        sizes="(max-width: 640px) 100vw, 42vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     )}
@@ -136,7 +143,6 @@ export default async function ProgressIndexPage({ params: { locale } }: Props) {
                         </p>
                         <p className="mt-1 text-sm font-medium text-primary">
                           {formatMonthYear(locale, project.latest.year, project.latest.month)}
-                          {project.latest.title ? ` — ${project.latest.title}` : ""}
                         </p>
                         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-ink/65">
                           <Camera size={12} aria-hidden />

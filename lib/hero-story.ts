@@ -31,6 +31,8 @@ export type HeroStorySlide = {
   ctaUrl: string | null;
   /** Optional per-locale overlay text — a pure mood shot may have none. */
   caption: string | null;
+  /** Short line under the headline — same role as Project.tagline. */
+  tagline: string | null;
   ctaLabel: string | null;
 };
 
@@ -60,6 +62,7 @@ function toSlide(row: Row, locale: string): HeroStorySlide {
     durationSeconds: row.durationSeconds,
     ctaUrl: row.ctaUrl,
     caption: t?.caption ?? null,
+    tagline: t?.tagline ?? null,
     ctaLabel: t?.ctaLabel ?? null,
   };
 }

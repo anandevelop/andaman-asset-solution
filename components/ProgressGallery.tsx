@@ -15,6 +15,11 @@
  * it), so a month's whole photo set lives in one horizontal reel no
  * matter how many photos it has.
  *
+ * A month's YouTube link (drone footage) is the deliberately larger,
+ * feature element above that reel — full width, a labelled badge so the
+ * jump in scale from the photo cards reads as "this is the highlight",
+ * not a layout mismatch — rather than being sized to match a photo tile.
+ *
  * The ‹ › buttons show on every breakpoint, not just sm+ like
  * FacilityScroller's — a facility row's cards are recognisably "a row of
  * cards" on their own, but a single full-bleed photo on mobile doesn't
@@ -41,7 +46,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, HardHat, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Youtube, X } from "lucide-react";
 import type { ProgressMonth } from "@/lib/projects";
 import { formatMonthYear } from "@/lib/format";
 
@@ -49,6 +54,8 @@ type Labels = {
   close: string;
   previous: string;
   next: string;
+  /** Small badge overlaid on the featured video, e.g. "Drone footage". */
+  video: string;
 };
 
 type Props = {
@@ -161,13 +168,13 @@ function PhotoRow({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: i * 0.06 }}
             // Whole cards only, no partial peek of the next one — 1 across
-            // on mobile, 2 on tablet, exactly 3 on desktop. Widths solved
+            // on mobile, 2 on tablet, exactly 4 on desktop. Widths solved
             // from the track's own gap-4 (16px), same approach as
             // FacilityScroller's 4-across math, so there's no fractional
-            // sliver of a 4th photo poking in at the edge on desktop.
+            // sliver of a 5th photo poking in at the edge on desktop.
             className="relative aspect-[4/3] w-full shrink-0 snap-start overflow-hidden
               rounded-sm bg-primary/5 shadow-card sm:w-[calc((100%_-_16px)/2)]
-              lg:w-[calc((100%_-_2*16px)/3)]"
+              lg:w-[calc((100%_-_3*16px)/4)]"
           >
             <button
               type="button"
@@ -179,7 +186,7 @@ function PhotoRow({
                 src={src}
                 alt={`${label} construction progress photo ${i + 1}`}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority={i === 0}
               />
@@ -338,19 +345,24 @@ export default function ProgressGallery({ months, locale, emptyLabel, labels }: 
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="pt-8"
         >
-          {(month.title || month.summary) && (
-            <div className="mb-6 flex items-start gap-3">
-              <HardHat size={18} className="mt-0.5 shrink-0 text-accent-700" />
-              <div>
-                {month.title && (
-                  <p className="text-sm font-medium text-primary">{month.title}</p>
-                )}
-                {month.summary && (
-                  <p className="mt-1 text-sm leading-relaxed text-ink/70">
-                    {month.summary}
-                  </p>
-                )}
-              </div>
+          {month.videoEmbedUrl && (
+            <div className="relative mb-8 aspect-video w-full overflow-hidden rounded-lg bg-primary-900 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.35)]">
+              <iframe
+                src={month.videoEmbedUrl}
+                title={`${label} drone footage`}
+                className="h-full w-full"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+              <span
+                className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5
+                  rounded-full bg-primary-900/70 px-3 py-1.5 text-[11px] font-medium uppercase
+                  tracking-wide text-white backdrop-blur-sm sm:left-6 sm:top-6"
+              >
+                <Youtube size={13} aria-hidden />
+                {labels.video}
+              </span>
             </div>
           )}
 

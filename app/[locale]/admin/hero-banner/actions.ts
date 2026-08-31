@@ -43,6 +43,7 @@ function readForm(formData: FormData) {
     durationSeconds: text("durationSeconds") || "5",
     ctaUrl: text("ctaUrl"),
     caption: text("caption"),
+    tagline: text("tagline"),
     ctaLabel: text("ctaLabel"),
     isActive: formData.get("isActive") === "on",
     sortOrder: text("sortOrder") || "0",
@@ -67,13 +68,13 @@ export async function createHeroStorySlide(
   const parsed = heroStorySlideSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
-  const { locale: editingLocale, caption, ctaLabel, ...rest } = parsed.data;
+  const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
     await (prisma as any).heroStorySlide.create({
       data: {
         ...rest,
-        translations: { create: { locale: editingLocale, caption, ctaLabel } },
+        translations: { create: { locale: editingLocale, caption, tagline, ctaLabel } },
       },
     });
   } catch (error) {
@@ -102,7 +103,7 @@ export async function updateHeroStorySlide(
   const parsed = heroStorySlideSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
-  const { locale: editingLocale, caption, ctaLabel, ...rest } = parsed.data;
+  const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
     await (prisma as any).heroStorySlide.update({
@@ -112,8 +113,8 @@ export async function updateHeroStorySlide(
         translations: {
           upsert: {
             where: { slideId_locale: { slideId: id, locale: editingLocale } },
-            update: { caption, ctaLabel },
-            create: { locale: editingLocale, caption, ctaLabel },
+            update: { caption, tagline, ctaLabel },
+            create: { locale: editingLocale, caption, tagline, ctaLabel },
           },
         },
       },

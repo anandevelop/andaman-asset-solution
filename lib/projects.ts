@@ -40,6 +40,7 @@ export type UnitStatus = (typeof UNIT_STATUSES)[number];
 // `export … from` alone would re-export without binding it in this scope.
 // The definitions live in lib/locale.ts, which imports nothing.
 import { pickLocale } from "@/lib/locale";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 
 export { pickLocale, type Locale } from "@/lib/locale";
 
@@ -234,8 +235,8 @@ export type ProgressMonth = {
   id: string;
   year: number;
   month: number;
-  title: string;
-  summary: string;
+  videoUrl: string | null;
+  videoEmbedUrl: string | null;
   images: string[];
 };
 
@@ -425,7 +426,7 @@ export type ProjectProgressSummary = {
   heroImageUrl: string | null;
   updateCount: number;
   /** Most recent published month, or null if none. */
-  latest: { year: number; month: number; title: string; image: string | null } | null;
+  latest: { year: number; month: number; image: string | null } | null;
 };
 
 /**
@@ -465,8 +466,6 @@ export async function getProjectsWithProgress(
             select: {
               year: true,
               month: true,
-              titleEn: true,
-              titleTh: true,
               images: true,
             },
           },
@@ -492,7 +491,6 @@ export async function getProjectsWithProgress(
           ? {
               year: latest.year,
               month: latest.month,
-              title: pickLocale(locale, latest.titleTh, latest.titleEn),
               // The month's first photograph is the most current image of
               // the site — better than a marketing render for this page.
               image: latest.images[0] ?? null,
@@ -527,8 +525,8 @@ export async function getProjectProgress(
     id: u.id,
     year: u.year,
     month: u.month,
-    title: pickLocale(locale, u.titleTh, u.titleEn),
-    summary: pickLocale(locale, u.summaryTh, u.summaryEn),
+    videoUrl: u.videoUrl,
+    videoEmbedUrl: getYouTubeEmbedUrl(u.videoUrl),
     images: u.images,
   }));
 }

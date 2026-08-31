@@ -38,6 +38,7 @@ export type HeroStorySlideValues = {
   durationSeconds: string;
   ctaUrl: string;
   caption: string;
+  tagline: string;
   ctaLabel: string;
   isActive: boolean;
   sortOrder: string;
@@ -50,6 +51,7 @@ export const EMPTY_HERO_STORY_SLIDE: HeroStorySlideValues = {
   durationSeconds: "5",
   ctaUrl: "",
   caption: "",
+  tagline: "",
   ctaLabel: "",
   isActive: true,
   sortOrder: "0",
@@ -233,6 +235,17 @@ export default function HeroStorySlideForm({
           />
           <p className="admin-hint">{t("heroBanner.captionHint")}</p>
           {err("caption") && <p className="mt-1.5 text-xs text-red-700">{err("caption")}</p>}
+        </div>
+
+        <div>
+          <label className="admin-label">{`${t("heroBanner.tagline")} · ${lang.toUpperCase()}`}</label>
+          <input
+            name="tagline"
+            defaultValue={values.tagline}
+            className="admin-input"
+          />
+          <p className="admin-hint">{t("heroBanner.taglineHint")}</p>
+          {err("tagline") && <p className="mt-1.5 text-xs text-red-700">{err("tagline")}</p>}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">

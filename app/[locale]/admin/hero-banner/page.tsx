@@ -130,6 +130,7 @@ export default async function AdminHeroBannerPage({ params: { locale }, searchPa
                     durationSeconds: String(slide.durationSeconds),
                     ctaUrl: slide.ctaUrl ?? "",
                     caption: editing?.caption ?? "",
+                    tagline: editing?.tagline ?? "",
                     ctaLabel: editing?.ctaLabel ?? "",
                     isActive: slide.isActive,
                     sortOrder: String(slide.sortOrder),
