@@ -59,9 +59,20 @@ export type LeadInquiryInput = z.infer<typeof leadInquirySchema>;
  */
 export const leadInquiryServerSchema = leadInquirySchema.extend({
   consentVersion: z.string().trim().max(64).optional(),
-  // reCAPTCHA v3 token. Optional at the schema level because the feature is
-  // optional — lib/recaptcha decides what a missing token means.
-  recaptchaToken: z.string().max(4000).optional(),
+  /*
+    reCAPTCHA v3 token. Optional at the schema level because the feature is
+    optional — lib/recaptcha decides what a missing token means, and it
+    already accepts `string | undefined | null`.
+
+    `.nullish()`, not `.optional()`. useRecaptchaToken() returns null when
+    the site key is unset, when the script has not loaded, and when
+    execute() throws — and JSON.stringify keeps a null rather than dropping
+    the key, so those requests arrived carrying `recaptchaToken: null` and
+    were rejected 422 before reaching the code written to handle exactly
+    that case. The visitor saw the generic failure message and the enquiry
+    was never saved: an ad blocker or a slow CDN was enough to lose a lead.
+  */
+  recaptchaToken: z.string().max(4000).nullish(),
   source: z.enum(LEAD_SOURCES).optional(),
   utmSource: z.string().trim().max(120).optional().or(z.literal("")),
   utmMedium: z.string().trim().max(120).optional().or(z.literal("")),
@@ -111,7 +122,8 @@ export type EventRegistrationInput = z.infer<typeof eventRegistrationSchema>;
 
 export const eventRegistrationServerSchema = eventRegistrationSchema.extend({
   consentVersion: z.string().trim().max(64).optional(),
-  recaptchaToken: z.string().max(4000).optional(),
+  // Nullable for the same reason as the lead schema above.
+  recaptchaToken: z.string().max(4000).nullish(),
   // Which locale's copy to send the RSVP confirmation email in — the page
   // the visitor filled the form on, not a guess. Optional because the
   // feature degrades fine without it (falls back to the default locale).

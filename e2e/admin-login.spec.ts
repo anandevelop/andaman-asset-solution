@@ -51,6 +51,25 @@ async function submitCredentials(
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
 
+/*
+  The form's own error banner.
+
+  Not a bare getByRole("alert"): Next renders a permanently empty
+  <div role="alert" id="__next-route-announcer__"> on every page, so the
+  bare locator matched two elements and every assertion against it died of
+  a strict-mode violation instead of reading the message. Inside signIn()
+  below that violation was then swallowed by .catch(() => false) and read
+  as "the code was accepted" — which is why a rejected first code never
+  triggered the retry across the step boundary, and why eight sign-in tests
+  ended up asserting against a page still sitting on /en/login.
+
+  Non-empty text is the distinction that matters: the announcer is always
+  empty, a real alert never is.
+*/
+function alertBanner(page: Page) {
+  return page.getByRole("alert").filter({ hasText: /\S/ });
+}
+
 /** The full two-step sign-in, retrying once across a step boundary. */
 async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password) {
   await submitCredentials(page, email, password);
@@ -63,7 +82,7 @@ async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password
   await code.fill(await currentCode());
   await page.getByRole("button", { name: "Verify code" }).click();
 
-  const rejected = page.getByRole("alert");
+  const rejected = alertBanner(page);
 
   if (await rejected.isVisible().catch(() => false)) {
     await waitForNextStep(page);
@@ -119,7 +138,7 @@ test.describe("Signing in", () => {
 
     await signIn(page, ADMIN.email, "definitely-not-the-password");
 
-    const error = page.getByRole("alert");
+    const error = alertBanner(page);
     await expect(error).toBeVisible();
     await expect(error).toContainText("not recognised");
 
@@ -135,7 +154,7 @@ test.describe("Signing in", () => {
     // Byte-for-byte identical to the wrong-password case. Distinguishing
     // them would turn the login form into an oracle for which addresses
     // belong to staff — the first step of a targeted attempt.
-    await expect(page.getByRole("alert")).toContainText("not recognised");
+    await expect(alertBanner(page)).toContainText("not recognised");
   });
 
   test("signs in and lands on the dashboard", async ({ page }) => {
@@ -220,7 +239,7 @@ test.describe("Accessibility", () => {
     await page.goto(LOGIN);
     await signIn(page, ADMIN.email, "wrong");
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(alertBanner(page)).toBeVisible();
     await expectNoA11yViolations(page);
   });
 
@@ -278,7 +297,7 @@ test.describe("The second factor", () => {
     await page.goto(LOGIN);
     await submitCredentials(page, ADMIN.email, "not-the-password");
 
-    await expect(page.getByRole("alert")).toContainText("not recognised");
+    await expect(alertBanner(page)).toContainText("not recognised");
     await expect(page.getByLabel("Authentication code")).toBeHidden();
   });
 
@@ -289,7 +308,7 @@ test.describe("The second factor", () => {
     await page.getByLabel("Authentication code").fill("000000");
     await page.getByRole("button", { name: "Verify code" }).click();
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(alertBanner(page)).toBeVisible();
     await expect(page).toHaveURL(/\/en\/login/);
   });
 

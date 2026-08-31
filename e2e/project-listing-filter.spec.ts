@@ -16,18 +16,30 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { expectNoA11yViolations } from "./a11y";
 import { DRAFT_PROJECT, PROJECTS, PUBLISHED_PROJECTS } from "./fixtures";
 
 const LISTING = "/en/projects";
+
+/*
+  The listing, not the whole document.
+
+  The footer carries its own list of projects, so a page-level
+  getByRole("link", { name }) matches the card and the footer entry both and
+  fails strict mode before it can say anything about the listing. The
+  <main> landmark holds the cards; the footer sits outside it.
+*/
+function listing(page: Page) {
+  return page.getByRole("main");
+}
 
 test.describe("Project listing", () => {
   test("lists every published project and no drafts", async ({ page }) => {
     await page.goto(LISTING);
 
     for (const project of PUBLISHED_PROJECTS) {
-      await expect(page.getByRole("link", { name: project.nameEn })).toBeVisible();
+      await expect(listing(page).getByRole("link", { name: project.nameEn })).toBeVisible();
     }
 
     // The draft has a name nothing else uses, so a single negative
@@ -64,14 +76,14 @@ test.describe("Filtering", () => {
     );
 
     for (const project of expected) {
-      await expect(page.getByRole("link", { name: project.nameEn })).toBeVisible();
+      await expect(listing(page).getByRole("link", { name: project.nameEn })).toBeVisible();
     }
 
     // Everything else must be gone, not merely reordered.
     for (const project of PUBLISHED_PROJECTS.filter(
       (candidate) => candidate.propertyType !== "POOL_VILLA",
     )) {
-      await expect(page.getByRole("link", { name: project.nameEn })).toHaveCount(0);
+      await expect(listing(page).getByRole("link", { name: project.nameEn })).toHaveCount(0);
     }
   });
 
@@ -98,7 +110,7 @@ test.describe("Filtering", () => {
     await chip.click();
 
     await expect(page).not.toHaveURL(/type=/);
-    await expect(page.getByRole("link", { name: PUBLISHED_PROJECTS[1].nameEn })).toBeVisible();
+    await expect(listing(page).getByRole("link", { name: PUBLISHED_PROJECTS[1].nameEn })).toBeVisible();
   });
 
   test("combines a property type with a status", async ({ page }) => {
@@ -113,8 +125,8 @@ test.describe("Filtering", () => {
     // Layan Reserve is the only fixture in both sets. Trinity Village is
     // also a pool villa but is under construction, so its absence is what
     // proves the two filters intersect rather than union.
-    await expect(page.getByRole("link", { name: "Layan Reserve" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Trinity Village" })).toHaveCount(0);
+    await expect(listing(page).getByRole("link", { name: "Layan Reserve" })).toBeVisible();
+    await expect(listing(page).getByRole("link", { name: "Trinity Village" })).toHaveCount(0);
   });
 
   test("offers a way out of an empty result", async ({ page }) => {
@@ -128,7 +140,7 @@ test.describe("Filtering", () => {
     await page.getByRole("link", { name: "Clear all filters" }).click();
 
     await expect(page).toHaveURL(/\/en\/projects$/);
-    await expect(page.getByRole("link", { name: "Trinity Village" })).toBeVisible();
+    await expect(listing(page).getByRole("link", { name: "Trinity Village" })).toBeVisible();
   });
 
   test("reproduces a filtered view from the URL alone", async ({ page }) => {

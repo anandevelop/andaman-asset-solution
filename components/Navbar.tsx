@@ -245,7 +245,11 @@ export default function Navbar({ phone, phoneDisplay }: Props) {
         : "relative text-sm transition-colors",
       active
         ? "text-primary font-medium"
-        : "text-ink/60 hover:text-primary",
+        // ink/65, not the ink/60 that was here: 60% of #0d2635 over the
+        // #f9f9fa page lands on #6b7a84, which is 4.21:1 — a fail for 14px
+        // text, and what axe flagged on every page these links appear on.
+        // 65% is #60707a at 4.87:1, the smallest step that clears 4.5.
+        : "text-ink/65 hover:text-primary",
     ].join(" ");
 
   return (
