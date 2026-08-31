@@ -137,3 +137,49 @@ describe("site configuration", () => {
     expect(existsSync(join(process.cwd(), "public", siteConfig.seo.ogImage))).toBe(true);
   });
 });
+
+/**
+ * Exactly one <h1> on the home page.
+ *
+ * The home page composes its heading from several files, so no single
+ * component can assert this about itself. It regressed twice already:
+ * first the only <h1> lived in HeroCarousel's static fallback, which
+ * renders on a fresh database but not once an admin configures hero
+ * slides (the Carousel path sets its headline as a <p>) — so production
+ * shipped with no <h1> at all. Then CompanyIntro added one, which would
+ * have made two the moment anyone restored the old markup.
+ *
+ * Counted from source rather than a render because the pieces are async
+ * Server Components reading the database.
+ */
+describe("home page headings", () => {
+  const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), "utf8");
+
+  /*
+    Block comments are stripped first — /** … *\/ headers and {/* … *\/}
+    JSX notes in these very files discuss <h1> in prose, and counting those
+    made this test read 4 in a file with one real heading.
+  */
+  const countH1 = (source: string) =>
+    (source.replace(/\/\*[\s\S]*?\*\//g, "").match(/<h1[\s>]/g) ?? []).length;
+
+  it("puts the sole <h1> in CompanyIntro", () => {
+    expect(countH1(read("components", "CompanyIntro.tsx"))).toBe(1);
+  });
+
+  it("keeps every other home-page component free of <h1>", () => {
+    const others = [
+      ["app", "[locale]", "(site)", "page.tsx"],
+      ["components", "HeroCarousel.tsx"],
+      ["components", "VisionMission.tsx"],
+      ["components", "Corporate.tsx"],
+      ["components", "AwardsSection.tsx"],
+      ["components", "FeaturedProjectCard.tsx"],
+      ["components", "FaqAccordion.tsx"],
+    ];
+
+    for (const parts of others) {
+      expect(countH1(read(...parts)), parts.join("/")).toBe(0);
+    }
+  });
+});

@@ -16,7 +16,7 @@
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
+import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import {
@@ -34,6 +34,9 @@ import DbOfflineNotice from "@/components/DbOfflineNotice";
 import FeaturedProjectCard from "@/components/FeaturedProjectCard";
 import HeroCarousel from "@/components/HeroCarousel";
 import AwardsSection from "@/components/AwardsSection";
+import CompanyIntro from "@/components/CompanyIntro";
+import Corporate from "@/components/Corporate";
+import VisionMission from "@/components/VisionMission";
 import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
 import { locales, type Locale } from "@/i18n";
@@ -149,14 +152,11 @@ export default async function HomePage({ params: { locale } }: Props) {
           ctaSecondaryLabel: t("hero.ctaSecondary"),
           ctaSecondaryHref: `/${locale}/contact`,
         }}
-        secondaryCta={{
-          label: t("hero.ctaSecondary"),
-          href: `/${locale}/contact`,
-        }}
         labels={{
           previousSlide: t("hero.storyBanner.previousSlide"),
           nextSlide: t("hero.storyBanner.nextSlide"),
         }}
+        eyebrow={t("hero.eyebrow")}
       />
 
       {isDatabaseOffline() && (
@@ -164,6 +164,12 @@ export default async function HomePage({ params: { locale } }: Props) {
           <DbOfflineNotice />
         </div>
       )}
+
+      {/* ── Who we are (owns the page's only <h1>) ───────────────────── */}
+      <CompanyIntro />
+
+      {/* ── Vision & Mission ─────────────────────────────────────────── */}
+      <VisionMission />
 
       {/* ── Featured projects ────────────────────────────────────────── */}
       {featured.length > 0 && (
@@ -186,10 +192,9 @@ export default async function HomePage({ params: { locale } }: Props) {
               </Link>
             </div>
 
-            <div className="horizon-divider my-8 ml-0" />
           </Reveal>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((project, index) => (
               <Reveal key={project.id} delay={index * 0.1}>
                 <FeaturedProjectCard
@@ -210,6 +215,9 @@ export default async function HomePage({ params: { locale } }: Props) {
         </section>
       )}
 
+      {/* ── Corporate ────────────────────────────────────────────────── */}
+      <Corporate />
+
       {/* ── Awards ───────────────────────────────────────────────────── */}
       <AwardsSection />
 
@@ -221,8 +229,7 @@ export default async function HomePage({ params: { locale } }: Props) {
             <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
               {t("why.title")}
             </h2>
-            <div className="horizon-divider my-6 ml-0" />
-            <p className="max-w-xl text-sm leading-relaxed text-ink/70 sm:text-base">
+            <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink/70 sm:text-base">
               {t("why.subtitle")}
             </p>
           </Reveal>
@@ -260,7 +267,7 @@ export default async function HomePage({ params: { locale } }: Props) {
             >
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:h-full">
                 {nextEvent.coverImageUrl && (
-                  <Image
+                  <ImageWithSkeleton
                     src={nextEvent.coverImageUrl}
                     alt={nextEvent.title}
                     fill
@@ -337,10 +344,9 @@ export default async function HomePage({ params: { locale } }: Props) {
               </Link>
             </div>
 
-            <div className="horizon-divider my-8 ml-0" />
           </Reveal>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {articles.map((article, index) => (
               <Reveal key={article.id} delay={index * 0.1}>
                 <Link
@@ -349,7 +355,7 @@ export default async function HomePage({ params: { locale } }: Props) {
                 >
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
                     {article.coverImageUrl && (
-                      <Image
+                      <ImageWithSkeleton
                         src={article.coverImageUrl}
                         alt={article.title}
                         fill
