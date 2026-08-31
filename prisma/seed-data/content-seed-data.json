@@ -71,10 +71,27 @@
         }
       ],
       "imageAssets": {
-        "hero": "hero/hero-cropped.jpg",
-        "gallery": ["gallery/p3-03.jpg", "gallery/p4-04.jpg", "gallery/p5-05.jpg", "gallery/p8-08.jpg", "gallery/p10-10.jpg", "gallery/p12-12.jpg", "gallery/p14-14.jpg", "gallery/p15-15.jpg"],
-        "sitePlan": "site-plan/masterplan-06.jpg",
-        "floorPlansByType": { "R": ["floor-plans/R_p7-07.jpg", "floor-plans/R_p9-09.jpg", "floor-plans/R_p11-11.jpg"] }
+        "_galleryOrder": "seed.ts assigns roles by position: hero → heroImageUrl (page banner + OG card); gallery[0] → schema.org image[] only, dropped from the on-page strip; gallery[1] → conceptDesignImageUrl (Concept Design section); gallery[last] → aboutThisProjectImageUrl, but only when aboutThisProjectEn exists (it does not here). Reordering this list moves those sections' images.",
+        "hero": "hero/exterior-facade.webp",
+        "gallery": [
+          "gallery/exterior-street.webp",
+          "gallery/living-double-height.webp",
+          "gallery/living-pool-view.webp",
+          "gallery/living-aerial.webp",
+          "gallery/pool-lap.webp",
+          "gallery/pool-terrace.webp",
+          "gallery/dining-table.webp",
+          "gallery/kitchen-island.webp",
+          "gallery/kitchen-galley.webp",
+          "gallery/bedroom-master.webp",
+          "gallery/bedroom-guest.webp",
+          "gallery/bathroom-tub.webp",
+          "gallery/wine-cellar.webp",
+          "gallery/staircase.webp"
+        ],
+        "sitePlan": "site-plan/masterplan.jpg",
+        "_floorPlanOrder": "Must match Type R floorBreakdown key order (groundFloor, firstFloor, secondFloor) — seed.ts zips the two lists positionally to label each plan.",
+        "floorPlansByType": { "R": ["floor-plans/G-Floor.webp", "floor-plans/1st-Floor.webp", "floor-plans/2ND-Floor.webp"] }
       }
     },
     {
@@ -85,7 +102,7 @@
       "imageAssets": {
         "hero": "hero/hero-cropped.jpg",
         "gallery": ["gallery/p3-03.jpg", "gallery/p5-05.jpg", "gallery/p11-11.jpg", "gallery/p12-12.jpg"],
-        "sitePlan": "site-plan/masterplan-06.jpg",
+        "sitePlan": "site-plan/masterplan.jpg",
         "floorPlansByType": {
           "A": ["floor-plans/A_p7-07.jpg", "floor-plans/A_p8-08.jpg"],
           "V": ["floor-plans/B_p9-09.jpg", "floor-plans/B_p10-10.jpg"]
@@ -101,7 +118,7 @@
       "imageAssets": {
         "hero": "hero/hero-cropped.jpg",
         "gallery": ["gallery/p4-04.jpg", "gallery/p5-05.jpg", "gallery/p6-06.jpg", "gallery/p7-07.jpg", "gallery/p17-17.jpg", "gallery/p18-18.jpg"],
-        "sitePlan": "site-plan/masterplan-08.jpg",
+        "sitePlan": "site-plan/masterplan.jpg",
         "floorPlansByType": {
           "A": ["floor-plans/A_p9-09.jpg", "floor-plans/A_p10-10.jpg"],
           "A+": ["floor-plans/Aplus_p11-11.jpg", "floor-plans/Aplus_p12-12.jpg"],
