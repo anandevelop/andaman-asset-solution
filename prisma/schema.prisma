@@ -89,8 +89,21 @@ model User {
   role          Role      @default(EDITOR)
   isActive      Boolean   @default(true)
 
-  accounts Account[]
-  sessions Session[]
+  /// TOTP shared secret, AES-256-GCM encrypted at rest (see lib/totp.ts).
+  /// Present but with totpEnabledAt null = enrolment started, never
+  /// confirmed; such a secret is inert and gets overwritten on retry.
+  totpSecret    String?
+  /// Set the moment the first correct code is entered. This — not
+  /// totpSecret — is what "2FA is on" means everywhere in the codebase.
+  totpEnabledAt DateTime?
+  /// Last accepted TOTP time step. A code is good for 30 seconds, which is
+  /// long enough for a shoulder-surfer or a proxy to replay it; refusing a
+  /// step that has already been spent closes that window.
+  totpLastStep  Int?
+
+  accounts      Account[]
+  sessions      Session[]
+  recoveryCodes RecoveryCode[]
 
   articles          NewsArticle[]
   projectProgresses ProjectProgress[]
@@ -99,6 +112,24 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+/// Single-use codes handed out when 2FA is switched on — the way back in
+/// when the authenticator app is gone. Stored as bcrypt hashes: a leaked
+/// database dump should not be a set of working keys.
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  /// Non-null once spent. Rows are kept rather than deleted so the account
+  /// page can show "3 of 10 remaining" and an audit can see them burn.
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("recovery_codes")
 }
 
 // NextAuth adapter tables
@@ -631,12 +662,15 @@ model ProjectProgress {
   month Int // 1-12
   year  Int
 
-  titleEn   String?
-  titleTh   String?
-  summaryEn String? @db.Text
-  summaryTh String? @db.Text
-
   images String[] // image URLs for this month's gallery
+
+  /// A YouTube link for this month's drone footage or site walkthrough —
+  /// admin-pasted, resolved to an embeddable src by lib/youtube.ts on the
+  /// way to components/ProgressGallery.tsx. Nullable: most months are
+  /// photos only. Replaces titleEn/titleTh/summaryEn/summaryTh (removed
+  /// in the same migration) — the per-locale caption text never carried
+  /// its own weight next to the photo/video gallery it sat above.
+  videoUrl String?
 
   publishedBy String?
   author      User?   @relation(fields: [publishedBy], references: [id], onDelete: SetNull)
@@ -774,7 +808,17 @@ model HeroStorySlideTranslation {
   slide   HeroStorySlide @relation(fields: [slideId], references: [id], onDelete: Cascade)
   locale  String
 
-  caption  String? @db.Text
+  caption String? @db.Text
+
+  /// Short line shown just under the slide's headline — same role as
+  /// Project.tagline on an individual project's own hero (see that model
+  /// and the hero section in app/[locale]/(site)/projects/[slug]/page.tsx).
+  /// Replaces the old convention of a literal line break inside `caption`
+  /// to get a second line: that was invisible in the admin form (a plain
+  /// textarea gives no hint that Enter does anything special) and is now
+  /// two admins-facing fields instead of one field with a hidden rule.
+  tagline String? @db.Text
+
   ctaLabel String?
 
   createdAt DateTime @default(now())
