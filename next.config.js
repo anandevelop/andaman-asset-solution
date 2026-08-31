@@ -13,6 +13,23 @@ const mediaDomain = process.env.NEXT_PUBLIC_MEDIA_DOMAIN
   ? process.env.NEXT_PUBLIC_MEDIA_DOMAIN.replace(/^https?:\/\//, "").split("/")[0]
   : null;
 
+/**
+ * The Spaces origin host behind the CDN alias.
+ *
+ * lib/s3.ts saves an absolute publicUrl per upload rather than a bare key,
+ * so every row written before NEXT_PUBLIC_MEDIA_DOMAIN was switched to the
+ * CDN alias still points at ...sgp1.digitaloceanspaces.com. Both names
+ * serve the same objects; dropping the origin here would break those
+ * images exactly the way dropping the Supabase hosts below would.
+ */
+const mediaOriginDomain =
+  mediaDomain && mediaDomain.includes(".cdn.digitaloceanspaces.com")
+    ? mediaDomain.replace(".cdn.digitaloceanspaces.com", ".digitaloceanspaces.com")
+    : null;
+
+/** Every host that may serve an uploaded image, newest alias first. */
+const mediaHosts = [mediaDomain, mediaOriginDomain].filter(Boolean);
+
 if (!mediaDomain && process.env.NODE_ENV === "production") {
   console.warn(
     "\n⚠  NEXT_PUBLIC_MEDIA_DOMAIN is not set.\n" +
@@ -69,7 +86,7 @@ const CSP_DIRECTIVES = {
     // Analytics tracking pixels.
     "https://www.google-analytics.com",
     "https://www.facebook.com",
-    ...(mediaDomain ? [`https://${mediaDomain}`] : []),
+    ...mediaHosts.map((host) => `https://${host}`),
   ],
 
   "connect-src": [
@@ -163,7 +180,7 @@ const nextConfig = {
       */
       { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.supabase.co" },
       { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.storage.supabase.co" },
-      ...(mediaDomain ? [{ protocol: "https", hostname: mediaDomain }] : []),
+      ...mediaHosts.map((hostname) => ({ protocol: "https", hostname })),
     ],
     formats: ["image/avif", "image/webp"],
     // Uploaded assets are immutable — the object key carries a UUID — so
