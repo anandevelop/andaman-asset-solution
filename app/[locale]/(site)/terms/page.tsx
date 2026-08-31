@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { unstable_setRequestLocale } from "next-intl/server";
-import { Mail, Phone, MapPin, ShieldCheck } from "lucide-react";
+import { Mail, Phone, MapPin, FileText } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { siteConfig } from "@/config/site";
 import { locales, type Locale } from "@/i18n";
-import { getPrivacyPolicy } from "@/content/privacy-policy";
+import { getTermsOfService } from "@/content/terms";
 import { intlLocale } from "@/lib/format";
 
 type Props = { params: { locale: string } };
@@ -16,17 +16,17 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params: { locale },
 }: Props): Promise<Metadata> {
-  const policy = getPrivacyPolicy(locale);
+  const terms = getTermsOfService(locale);
 
   return {
-    title: policy.title,
-    description: policy.intro[0].slice(0, 160),
+    title: terms.title,
+    description: terms.intro[0].slice(0, 160),
     alternates: {
-      canonical: `${siteConfig.url}/${locale}${siteConfig.legal.privacyPolicyPath}`,
+      canonical: `${siteConfig.url}/${locale}${siteConfig.legal.termsPath}`,
       languages: Object.fromEntries(
         locales.map((l) => [
           l,
-          `${siteConfig.url}/${l}${siteConfig.legal.privacyPolicyPath}`,
+          `${siteConfig.url}/${l}${siteConfig.legal.termsPath}`,
         ]),
       ),
     },
@@ -34,39 +34,39 @@ export async function generateMetadata({
   };
 }
 
-export default function PrivacyPolicyPage({ params: { locale } }: Props) {
+export default function TermsOfServicePage({ params: { locale } }: Props) {
   unstable_setRequestLocale(locale);
 
-  const policy = getPrivacyPolicy(locale);
+  const terms = getTermsOfService(locale);
 
   const effectiveDate = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(policy.effectiveDate));
+  }).format(new Date(terms.effectiveDate));
 
   return (
     <article className="container-luxe max-w-3xl pb-24 pt-28 sm:pt-36">
       <Reveal>
         <p className="eyebrow flex items-center gap-2">
-          <ShieldCheck size={14} /> PDPA
+          <FileText size={14} /> Legal
         </p>
         <h1 className="mt-3 text-4xl font-light text-primary sm:text-5xl">
-          {policy.title}
+          {terms.title}
         </h1>
 
         <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/65">
           <span>
-            {policy.lastUpdatedLabel}: {effectiveDate}
+            {terms.lastUpdatedLabel}: {effectiveDate}
           </span>
           <span className="hidden sm:inline">·</span>
           <span>
-            {policy.versionLabel}: <code className="text-ink/70">{policy.version}</code>
+            {terms.versionLabel}: <code className="text-ink/70">{terms.version}</code>
           </span>
         </p>
 
         <div className="mt-10">
-          {policy.intro.map((paragraph, i) => (
+          {terms.intro.map((paragraph, i) => (
             <p key={i} className="mt-4 text-sm leading-relaxed text-ink/70 sm:text-base">
               {paragraph}
             </p>
@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage({ params: { locale } }: Props) {
 
       {/* ── Sections ─────────────────────────────────────────────────── */}
       <div className="mt-14 space-y-12">
-        {policy.sections.map((section, i) => (
+        {terms.sections.map((section, i) => (
           <Reveal key={section.heading} delay={Math.min(i, 4) * 0.05}>
             <section>
               <h2 className="text-xl font-medium text-primary sm:text-2xl">
@@ -110,10 +110,10 @@ export default function PrivacyPolicyPage({ params: { locale } }: Props) {
       <Reveal>
         <section className="mt-16 border border-primary/10 bg-white p-7 shadow-card sm:p-9">
           <h2 className="text-xl font-medium text-primary sm:text-2xl">
-            {policy.contactHeading}
+            {terms.contactHeading}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-ink/70">
-            {policy.contactIntro}
+            {terms.contactIntro}
           </p>
 
           <dl className="mt-6 space-y-3 text-sm">

@@ -8,9 +8,9 @@
  * competing for the same query. That pairing is the main reason to generate
  * this from the database rather than hand-maintaining a static list.
  *
- * Deliberately absent: /admin, /login, /privacy-policy. The first two are
- * disallowed in robots.ts, and a policy page has no business consuming
- * crawl budget.
+ * Deliberately absent: /admin, /login, /privacy-policy, /terms. The first
+ * two are disallowed in robots.ts, and policy/legal pages have no business
+ * consuming crawl budget.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
