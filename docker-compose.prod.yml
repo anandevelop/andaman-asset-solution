@@ -13,6 +13,12 @@
 # Its own project name so the two stacks never collide over container or
 # volume names if both are ever up on the same host.
 #
+# The image is published by the `docker` job in .github/workflows/ci.yml on
+# every push to main. GHCR packages are private by default, so the host
+# needs `docker login ghcr.io` with a PAT carrying read:packages — or the
+# package set to public — before the first pull. A missing package and a
+# missing login both come back as `denied`, never as `not found`.
+#
 # Reads .env, not the .env.production that the raw `docker run` flow in
 # docs/DEPLOYMENT.md uses. One file, because Compose also reads .env to
 # resolve the ${...} references below, and splitting those across two files
@@ -54,6 +60,10 @@ services:
   migrate:
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_migrate
+    # :latest is a moving tag, and compose reuses whatever it already has
+    # locally unless told otherwise — without this, a redeploy silently
+    # reruns the image it deployed last time.
+    pull_policy: always
     restart: "no"
     env_file:
       - .env
@@ -71,6 +81,7 @@ services:
   app:
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_app
+    pull_policy: always
     restart: always
     ports:
       # Straight to the container — there is no TLS terminator in this
