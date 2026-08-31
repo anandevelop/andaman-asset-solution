@@ -22,6 +22,12 @@ jobs:
   prisma:
     name: Prisma schema
     runs-on: ubuntu-latest
+    env:
+      # `prisma validate` parses the datasource block before it validates
+      # anything, so env("DATABASE_URL") has to resolve or the whole schema
+      # is rejected with P1012 — which is what this job did on every run.
+      # Nothing connects here; the value only has to be a well-formed URL.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - uses: actions/checkout@v4
 
