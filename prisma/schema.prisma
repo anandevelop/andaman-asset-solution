@@ -225,8 +225,8 @@ model Project {
   /// available, but the split layout must still render text-only when
   /// there isn't one, same as conceptDesignEn/aboutThisProjectEn already
   /// being optional.
-  conceptDesignImageUrl     String?
-  aboutThisProjectImageUrl  String?
+  conceptDesignImageUrl    String?
+  aboutThisProjectImageUrl String?
 
   /// Notable specs worth their own callout — a lift model and its load
   /// rating, a water system, anything a buyer would otherwise have to dig
@@ -243,11 +243,11 @@ model Project {
   status       ProjectStatus @default(UPCOMING)
 
   // Area figures — project-level
-  landAreaSqm    Decimal? @db.Decimal(10, 2)
-  projectArea    String?  // human-readable e.g. "16 Rai 1 Ngan 57.40 sq.wa."
-  totalUnits     Int?
-  priceFromTHB   Decimal? @db.Decimal(14, 2)
-  priceToTHB     Decimal? @db.Decimal(14, 2) // upper end of price range
+  landAreaSqm  Decimal? @db.Decimal(10, 2)
+  projectArea  String? // human-readable e.g. "16 Rai 1 Ngan 57.40 sq.wa."
+  totalUnits   Int?
+  priceFromTHB Decimal? @db.Decimal(14, 2)
+  priceToTHB   Decimal? @db.Decimal(14, 2) // upper end of price range
 
   /// @deprecated — superseded by the `ProjectFacility` child table below
   /// (full-bleed photo cards, replacing the plain icon+label rendering
@@ -274,7 +274,7 @@ model Project {
   /// lib/s3.ts). Only read when heroMediaType is VIDEO.
   heroVideoUrl String?
 
-  gallery      String[] // additional image URLs
+  gallery String[] // additional image URLs
 
   // Sales brochure (PDF) served from CloudFront, uploaded via the admin.
   brochureUrl String?
@@ -317,8 +317,8 @@ model Project {
   /// that model's comment for why nothing writes to it.
   attractions ProjectAttraction[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime? // soft delete
 
   @@index([status, isPublished])
@@ -621,7 +621,7 @@ model CompanyProfile {
   id String @id @default("default")
 
   /// @deprecated — superseded by `CompanyProfileTranslation` below.
-  aboutUsEn String @db.Text
+  aboutUsEn String  @db.Text
   aboutUsTh String? @db.Text
 
   /// EN/TH/ZH/RU `aboutUs` rows — see CompanyProfileTranslation below.
@@ -655,9 +655,9 @@ model CompanyProfileTranslation {
 
 // Monthly construction-progress photo galleries per project.
 model ProjectProgress {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   month Int // 1-12
   year  Int
@@ -1003,8 +1003,8 @@ model NewsArticle {
   /// EN/TH/ZH/RU content rows — see NewsArticleTranslation below.
   translations NewsArticleTranslation[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([isPublished, publishedAt])
@@ -1056,9 +1056,9 @@ model LeadInquiry {
   status LeadStatus @default(NEW)
 
   // PDPA (Thailand Personal Data Protection Act) consent trail
-  consentGiven    Boolean  @default(false)
-  consentedAt     DateTime?
-  consentVersion  String? // e.g. "privacy-policy-v1"
+  consentGiven   Boolean   @default(false)
+  consentedAt    DateTime?
+  consentVersion String? // e.g. "privacy-policy-v1"
 
   utmSource   String?
   utmMedium   String?
@@ -1133,9 +1133,9 @@ model Event {
   descriptionEn String? @db.Text
   descriptionTh String? @db.Text
 
-  location  String?
-  startsAt  DateTime
-  endsAt    DateTime?
+  location      String?
+  startsAt      DateTime
+  endsAt        DateTime?
   coverImageUrl String?
 
   capacity Int? // max attendees, null = unlimited
@@ -1174,7 +1174,7 @@ model EventRegistration {
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  name  String
+  name       String
   /// Real-estate agency or company the registrant works for — added when
   /// the public RSVP form was redesigned for agent-partner events. Nullable
   /// at the column level even though the form requires it, since existing
@@ -1184,16 +1184,16 @@ model EventRegistration {
   email      String
   phone      String
   /// Optional — not every agent gives a separate WhatsApp number.
-  whatsapp  String?
+  whatsapp   String?
   /// Always 1 for registrations since the agent-partner form redesign (one
   /// registrant = one seat) — kept rather than dropped so the existing
   /// SUM(partySize) capacity math (lib/events.ts, the register route) needs
   /// no changes and pre-redesign rows with a real party size still count
   /// correctly.
-  partySize Int @default(1)
+  partySize  Int     @default(1)
   /// No longer collected by the public form (see partySize's comment) —
   /// always null on new rows, kept for any pre-redesign rows that have it.
-  notes     String? @db.Text
+  notes      String? @db.Text
 
   status EventStatus @default(PENDING) @map("status")
 
