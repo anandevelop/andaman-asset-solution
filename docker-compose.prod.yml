@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Andaman Asset Solution — production stack
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml logs -f app
+#
+# Kept separate from docker-compose.yml on purpose. That file is the local
+# development database, and `npm run db:up` / `db:reset` drive it — the
+# latter is `down -v`. An app service living there would pull a production
+# image onto every developer's laptop and bind port 80, then get wiped by a
+# routine database reset.
+#
+# Its own project name so the two stacks never collide over container or
+# volume names if both are ever up on the same host.
+#
+# Reads .env, not the .env.production that the raw `docker run` flow in
+# docs/DEPLOYMENT.md uses. One file, because Compose also reads .env to
+# resolve the ${...} references below, and splitting those across two files
+# is how they drift apart.
+#
+# NEXT_PUBLIC_* values are deliberately absent here: they are inlined into
+# the client bundle when the image is built (see the ARG block in
+# Dockerfile), so changing one means rebuilding and repushing the image.
+# Editing .env on the server will not move them.
+# ─────────────────────────────────────────────────────────────────────────
+
+name: andaman-prod
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: andaman_prod_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    # No `ports:`, unlike the dev compose file. The app reaches Postgres
+    # over the compose network; publishing 5432 here would put the database
+    # straight onto the public internet.
+    volumes:
+      - andaman_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Runs to completion before app starts, then exits.
+  #
+  # A separate service rather than something folded into the app's start
+  # command: a failed migration then stops the deploy outright, instead of
+  # leaving a container that restart-loops while still answering requests.
+  migrate:
+    image: ghcr.io/anandevelop/andaman-asset-solution:latest
+    container_name: andaman_prod_migrate
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Bangkok
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    # The image's ENTRYPOINT is already `node`, and the runtime stage ships
+    # no npm — this is the Prisma CLI the Dockerfile copies in for exactly
+    # this purpose.
+    command: ["node_modules/prisma/build/index.js", "migrate", "deploy"]
+
+  app:
+    image: ghcr.io/anandevelop/andaman-asset-solution:latest
+    container_name: andaman_prod_app
+    restart: always
+    ports:
+      # Straight to the container — there is no TLS terminator in this
+      # stack. Put a reverse proxy in front before this is public, and drop
+      # this publish to an internal expose when you do.
+      - "80:3000"
+    env_file:
+      - .env
+    environment:
+      # Not cosmetic: event times are entered through
+      # <input type="datetime-local"> and parsed as server-local, so a
+      # container left on UTC shifts every event by seven hours.
+      TZ: Asia/Bangkok
+      # Set here rather than read from .env, and environment: wins over
+      # env_file:. `db` is the only hostname that resolves on the compose
+      # network, so a .env copied off a laptop would otherwise point the
+      # app at localhost and fail to connect.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  andaman_pg_data:
+    driver: local
