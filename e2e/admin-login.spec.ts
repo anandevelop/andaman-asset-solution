@@ -54,20 +54,31 @@ async function submitCredentials(
 /*
   The form's own error banner.
 
-  Not a bare getByRole("alert"): Next renders a permanently empty
-  <div role="alert" id="__next-route-announcer__"> on every page, so the
-  bare locator matched two elements and every assertion against it died of
-  a strict-mode violation instead of reading the message. Inside signIn()
-  below that violation was then swallowed by .catch(() => false) and read
-  as "the code was accepted" — which is why a rejected first code never
-  triggered the retry across the step boundary, and why eight sign-in tests
-  ended up asserting against a page still sitting on /en/login.
+  Not a bare getByRole("alert"): Next renders <div role="alert"
+  id="__next-route-announcer__"> on every page, so the bare locator matched
+  two elements and every assertion against it died of a strict-mode
+  violation instead of reading the message. Inside signIn() below that
+  violation was then swallowed by .catch(() => false) and read as "the code
+  was accepted" — which is why a rejected first code never triggered the
+  retry across the step boundary, and why eight sign-in tests ended up
+  asserting against a page still sitting on /en/login.
 
-  Non-empty text is the distinction that matters: the announcer is always
-  empty, a real alert never is.
+  Excluded by id, not by "the announcer is always empty" — it isn't. It is
+  empty on the page's first paint, but Next writes the new route's title
+  into it on every client-side navigation as the screen-reader announcement
+  of where the app just went — which includes a *successful* sign-in's own
+  router.replace(callbackUrl). A hasText(/\S/) filter alone treated that
+  arrival announcement as a rejection: the code had actually been accepted,
+  the app had already moved to /en/admin, and signIn() nonetheless walked
+  into its retry branch, filled a second code into a form that no longer
+  existed, and hung until the whole test's 60s budget ran out waiting for
+  it. Only a real validation banner lives inside the login form itself, and
+  only it has non-empty text on the *first* render this locator ever needs
+  to catch a genuine rejection with — the id exclusion is what keeps a
+  correct arrival from being mistaken for one.
 */
 function alertBanner(page: Page) {
-  return page.getByRole("alert").filter({ hasText: /\S/ });
+  return page.locator('[role="alert"]:not(#__next-route-announcer__)').filter({ hasText: /\S/ });
 }
 
 /** The full two-step sign-in, retrying once across a step boundary. */

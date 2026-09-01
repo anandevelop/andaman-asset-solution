@@ -36,7 +36,31 @@ type Options = {
   disableRules?: Record<string, string>;
 };
 
+/**
+ * Every fade-in on this site (Reveal.tsx, ProjectsHero, the mobile nav's
+ * staggered links) has landed on its resting color well inside this many
+ * milliseconds — the slowest is the mobile nav's last link, delay 0.1s +
+ * 0.06s per item + a 0.4s fade, under half a second for the seven items
+ * siteConfig.nav.main carries today.
+ *
+ * playwright.config.ts sets `reducedMotion: "reduce"`, which is real but
+ * partial: Framer Motion only cancels the *positional* half of a
+ * transition under it (see the `positionalKeys` check in
+ * animation/interfaces/visual-element-target.mjs) — a slide-in's `y`
+ * skips straight to its end value, but its `opacity` still animates at
+ * full duration. A scan that lands mid-fade reads a real color at less
+ * than its resting opacity and reports a contrast failure that will be
+ * gone a few hundred milliseconds later — which is exactly what caught
+ * ProjectsHero's eyebrow (accent-700, 4.84:1 at rest) at 3.83:1 once, and
+ * the mobile menu's later links (ink/65, 4.87:1 at rest) every time,
+ * since the scan there runs the instant the panel reports visible, well
+ * before a delay-0.4s+ item has started animating at all.
+ */
+const ANIMATION_SETTLE_MS = 700;
+
 export async function expectNoA11yViolations(page: Page, options: Options = {}) {
+  await page.waitForTimeout(ANIMATION_SETTLE_MS);
+
   let builder = new AxeBuilder({ page }).withTags(TAGS);
 
   if (options.include) builder = builder.include(options.include);
