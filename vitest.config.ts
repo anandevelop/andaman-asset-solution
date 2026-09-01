@@ -7,9 +7,11 @@
  *                       Node environment, no DOM, fast.
  *   tests/components/** React components. jsdom, React plugin, RTL setup.
  *
- * They are split by `environmentMatchGlobs` rather than two config files,
- * because a single `npm test` that runs everything is worth more than a
- * tidy separation nobody remembers to invoke both halves of.
+ * One config rather than two, because a single `npm test` that runs
+ * everything is worth more than a tidy separation nobody remembers to
+ * invoke both halves of. The DOM half opts in with a
+ * `@vitest-environment jsdom` docblock at the top of each file —
+ * `environmentMatchGlobs` did this from here until Vitest 4 removed it.
  *
  * End-to-end tests live in e2e/ and belong to Playwright — deliberately
  * excluded here, or Vitest would try to run them and fail on its own
@@ -24,6 +26,22 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
 
+  /*
+    JSX, spelled for oxc rather than esbuild.
+
+    Vitest 4 bundles Vite 8, which transforms with oxc and ignores the
+    `esbuild` block entirely — it says so on every run: "Both esbuild and
+    oxc options were set. oxc options will be used". @vitejs/plugin-react
+    still configures JSX the old way (`esbuild: { jsx: "automatic" }`), so
+    with nothing here every .tsx test reached rolldown's parser with its
+    JSX untouched and died on "Unexpected JSX expression" before a single
+    assertion ran. It is the whole file that fails, not a test, which is
+    why the suite reported 357 passing next to one unparseable file.
+  */
+  oxc: {
+    jsx: { runtime: "automatic" },
+  },
+
   resolve: {
     // Mirrors the "@/*" alias in tsconfig.json. Declared by hand rather
     // than via vite-tsconfig-paths: that package is ESM-only and this
@@ -37,9 +55,9 @@ export default defineConfig({
   },
 
   test: {
-    // Node by default; component tests opt into a DOM.
+    // Node by default; a component test opts into a DOM with a
+    // `@vitest-environment jsdom` docblock on its first line.
     environment: "node",
-    environmentMatchGlobs: [["tests/components/**", "jsdom"]],
 
     setupFiles: ["tests/setup.ts"],
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
@@ -112,8 +130,16 @@ export default defineConfig({
           the one thing standing between the webhook and the open
           internet, from losing its test unnoticed. Raise it when the
           push path gets tests, not before.
+
+          The branch figure was 90 until now, and functions 10, in a
+          commit whose subject was "Make the CI gates ones that can
+          actually pass": the other three numbers came down, that one
+          went up from 60, and the file has never been near either. The
+          real coverage is 20% of branches and 7.69% of functions —
+          one tested function out of thirteen — so these sit just under
+          that, where a lost test trips them and normal drift does not.
         */
-        "lib/line.ts": { lines: 7, functions: 10, branches: 90, statements: 7 },
+        "lib/line.ts": { lines: 7, functions: 5, branches: 15, statements: 7 },
         "lib/project-filters.ts": {
           lines: 95,
           functions: 100,

@@ -10,8 +10,43 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { describe, expect, it } from "vitest";
-import { groupByCategory, type Faq } from "@/lib/faqs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@prisma/client";
+import {
+  getFaqs,
+  getFaqCategories,
+  groupByCategory,
+  type Faq,
+} from "@/lib/faqs";
+
+/*
+  The only boundary stubbed here. Everything below it — pickLocale, the
+  translation chain, the Markdown sanitizer — runs for real, because those
+  are exactly the parts an FAQ can regress in: an answer that renders as
+  escaped source, or a Thai page quietly serving English.
+
+  vi.hoisted lifts the spy with the hoisted vi.mock; a plain const would be
+  in its temporal dead zone when the factory runs.
+*/
+const { faqFindMany } = vi.hoisted(() => ({ faqFindMany: vi.fn() }));
+
+vi.mock("@/lib/prisma", () => ({ prisma: { faq: { findMany: faqFindMany } } }));
+
+beforeEach(() => {
+  faqFindMany.mockReset();
+});
+
+/** A row shaped like the `select` in lib/faqs.ts. */
+const row = (over: Record<string, unknown> = {}) => ({
+  id: "faq-1",
+  questionEn: "Can a foreigner own a villa?",
+  questionTh: "ชาวต่างชาติซื้อวิลล่าได้ไหม",
+  answerEn: "Yes, through a **leasehold**.",
+  answerTh: "ได้ ผ่าน**สัญญาเช่าระยะยาว**",
+  category: "ownership",
+  translations: [],
+  ...over,
+});
 
 const faq = (id: string, category: string | null): Faq => ({
   id,
@@ -131,5 +166,130 @@ describe("revalidate path allowlist", () => {
     for (const path of ["", "/projects", "/progress", "/news", "/events", "/about", "/contact"]) {
       expect(isAllowed(path), path).toBe(true);
     }
+  });
+});
+
+/*
+  getFaqs and the row mapper had no test at all: the file's coverage stopped
+  at groupByCategory, which is the one function in it that never touches a
+  database, a locale or the sanitizer.
+*/
+describe("getFaqs", () => {
+  it("serves Thai fields on the Thai locale and English on English", async () => {
+    faqFindMany.mockResolvedValue([row()]);
+
+    const [th] = await getFaqs("th");
+    expect(th.question).toBe("ชาวต่างชาติซื้อวิลล่าได้ไหม");
+
+    const [en] = await getFaqs("en");
+    expect(en.question).toBe("Can a foreigner own a villa?");
+  });
+
+  it("falls back to the other language rather than rendering nothing", async () => {
+    // A half-translated row is normal while an editor is still working. An
+    // empty answer on the live site is not.
+    faqFindMany.mockResolvedValue([row({ answerTh: null, questionTh: null })]);
+
+    const [faq] = await getFaqs("th");
+
+    expect(faq.question).toBe("Can a foreigner own a villa?");
+    expect(faq.answerText).toContain("leasehold");
+  });
+
+  it("prefers a translations row over the base columns", async () => {
+    faqFindMany.mockResolvedValue([
+      row({
+        translations: [
+          { locale: "th", question: "คำถามที่แปลแล้ว", answer: "คำตอบที่แปลแล้ว" },
+        ],
+      }),
+    ]);
+
+    const [faq] = await getFaqs("th");
+
+    expect(faq.question).toBe("คำถามที่แปลแล้ว");
+    expect(faq.answerText).toBe("คำตอบที่แปลแล้ว");
+  });
+
+  it("renders the answer as sanitized HTML and as plain text", async () => {
+    // Both shapes are used: the HTML for the page, the text for the
+    // FAQPage JSON-LD, where markup would be shown to Google verbatim.
+    faqFindMany.mockResolvedValue([row()]);
+
+    const [faq] = await getFaqs("en");
+
+    expect(faq.answerHtml).toContain("<strong>leasehold</strong>");
+    expect(faq.answerText).toBe("Yes, through a leasehold.");
+    expect(faq.answerText).not.toContain("**");
+  });
+
+  it("narrows to the categories a project page asks for", async () => {
+    faqFindMany.mockResolvedValue([]);
+
+    await getFaqs("en", { categories: ["ownership", "payment"] });
+
+    expect(faqFindMany.mock.calls[0][0].where).toMatchObject({
+      isPublished: true,
+      category: { in: ["ownership", "payment"] },
+    });
+  });
+
+  it.each([
+    ["no options at all", undefined],
+    ["an empty category list", [] as string[]],
+  ])("asks for everything published given %s", async (_label, categories) => {
+    // An empty array must not become `category: { in: [] }`, which matches
+    // nothing and would empty the home page's FAQ section.
+    faqFindMany.mockResolvedValue([]);
+
+    await getFaqs("en", categories ? { categories } : {});
+
+    expect(faqFindMany.mock.calls[0][0].where).toEqual({ isPublished: true });
+  });
+
+  it("passes a limit through untouched", async () => {
+    faqFindMany.mockResolvedValue([]);
+
+    await getFaqs("en", { take: 4 });
+
+    expect(faqFindMany.mock.calls[0][0].take).toBe(4);
+  });
+
+  it("degrades to an empty list when the database is unreachable", async () => {
+    // safeQuery's contract, exercised through a real caller: the FAQ
+    // section disappears, the page still renders.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    faqFindMany.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("simulated P1001", {
+        code: "P1001",
+        clientVersion: "5.20.0",
+      }),
+    );
+
+    await expect(getFaqs("en")).resolves.toEqual([]);
+  });
+});
+
+describe("getFaqCategories", () => {
+  it("drops the null category the admin suggestion list cannot use", async () => {
+    faqFindMany.mockResolvedValue([
+      { category: "ownership" },
+      { category: null },
+      { category: "payment" },
+    ]);
+
+    await expect(getFaqCategories()).resolves.toEqual(["ownership", "payment"]);
+  });
+
+  it("degrades to an empty list when the database is unreachable", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    faqFindMany.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("simulated P1001", {
+        code: "P1001",
+        clientVersion: "5.20.0",
+      }),
+    );
+
+    await expect(getFaqCategories()).resolves.toEqual([]);
   });
 });

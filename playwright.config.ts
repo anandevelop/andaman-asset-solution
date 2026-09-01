@@ -17,6 +17,24 @@
  */
 
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnvConfig } from "@next/env";
+
+/*
+  Nothing else in this pipeline loads `.env`.
+
+  Playwright's config file and `tsx e2e/global-setup.ts` are plain Node
+  processes — only `next dev` / `next build` / `next start` get Next's
+  automatic env loading. Without this call, E2E_DATABASE_URL (and anything
+  else set only in .env) never reaches `process.env` here, so SERVER_ENV
+  below silently falls back to `""`. The server this file spawns then
+  crashes at Prisma-client construction — `lib/prisma.ts` builds a
+  PrismaClient at module scope, and `env("DATABASE_URL")` resolving to ""
+  throws before any request, before any query, and before safeQuery ever
+  gets a chance to degrade it. What Playwright reports is just "Process
+  from config.webServer was not able to start. Exit code: 1" — the actual
+  cause never makes it to a log line.
+*/
+loadEnvConfig(process.cwd());
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const BASE_URL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
@@ -24,11 +42,32 @@ const BASE_URL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 /*
   Env handed to the server under test.
 
-  Deliberately minimal. reCAPTCHA, GA4, Meta Pixel, Sentry and S3 are all
-  left unset so their "feature not configured" paths run — which are also
-  the paths a first deploy takes, and are therefore worth exercising. A
-  test suite that only works with every third-party key present is a test
-  suite nobody can run.
+  Deliberately minimal. Third-party integrations are meant to be absent so
+  their "feature not configured" paths run — which are also the paths a
+  first deploy takes, and are therefore worth exercising. A test suite that
+  only works with every third-party key present is a test suite nobody can
+  run.
+
+  Absent has to be spelled out, not assumed. Playwright merges this object
+  over the parent environment rather than replacing it, and `next dev` then
+  runs loadEnvConfig itself, so every key in a developer's .env reaches the
+  server under test unless something here overrides it.
+
+  reCAPTCHA is the case that bit. With NEXT_PUBLIC_RECAPTCHA_SITE_KEY set
+  locally the widget mounted for real, and axe — which scans into iframes —
+  failed both lead-form accessibility specs on the contrast of Google's own
+  red text inside iframe[title="reCAPTCHA"]: #ff0000 on #f9f9f9, 3.79:1
+  against a required 4.5. Not markup we own, not markup we can change, and
+  green on CI, where no .env file exists — a local-only failure with no
+  bug behind it.
+
+  An empty string is what fixes it, because an empty string is *defined*:
+  @next/env fills in a key only when it was undefined as the process
+  started, so .env cannot put the value back afterwards.
+
+  Sentry, Meta Pixel and DO Spaces are left inherited rather than forced.
+  No spec depends on their absence today, and clearing them would change
+  behaviour this suite does not currently assert on.
 */
 /*
   One secret, shared by both halves of the run.
@@ -57,6 +96,16 @@ const SERVER_ENV = {
   NEXT_PUBLIC_SITE_URL: BASE_URL,
   NEXT_PUBLIC_DEFAULT_LOCALE: "th",
   NEXT_TELEMETRY_DISABLED: "1",
+  /*
+    Off for the run, not merely unconfigured.
+
+    Both halves are cleared together so isRecaptchaConfigured() is
+    consistently false: lib/recaptcha skips verification when either key is
+    missing, RecaptchaProvider renders nothing without the site key, and
+    the form posts a null token, which app/api/leads already accepts.
+  */
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: "",
+  RECAPTCHA_SECRET_KEY: "",
   // The rate limiter keys on IP. Every request in the suite comes from
   // 127.0.0.1, so the lead and login limits would trip partway through a
   // run and fail tests for a reason that has nothing to do with the code.
