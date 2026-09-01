@@ -183,6 +183,14 @@ export async function setUserPassword(
       where: { id },
       data: {
         passwordHash: await bcrypt.hash(parsed.data.password, BCRYPT_ROUNDS),
+        /*
+          This is the incident path — a SUPER_ADMIN rotating the password of
+          an account believed to be compromised. Without the stamp it did
+          nothing to whoever is already inside: their token stayed valid for
+          the rest of its eight hours. lib/auth.ts refuses sessions issued
+          before this moment on their next revalidation.
+        */
+        credentialsChangedAt: new Date(),
       },
     });
   } catch {
@@ -225,6 +233,21 @@ export async function changeOwnPassword(
     where: { id: actor.id },
     data: {
       passwordHash: await bcrypt.hash(parsed.data.password, BCRYPT_ROUNDS),
+      /*
+        Changing your own password ends every session it was valid for,
+        including this one.
+
+        That is the point: someone who changes their password because they
+        think it has leaked expects the other party to be thrown out, and a
+        JWT carries no session id to be selective with. The cost is that
+        the person who just changed it is signed out too, within
+        ROLE_REFRESH_MS rather than immediately — so it reads as being
+        logged out a few minutes later for no visible reason.
+
+        Left this way deliberately: the alternative is to leave a known-bad
+        password's sessions alive on the one path a worried user takes.
+      */
+      credentialsChangedAt: new Date(),
     },
   });
 
@@ -246,6 +269,20 @@ export async function resetUserTwoFactor(locale: string, id: string): Promise<vo
   const actor = await requireAdminAction(Role.SUPER_ADMIN);
 
   await clearTwoFactor(id);
+
+  /*
+    Stamped here rather than inside clearTwoFactor(), which is also the
+    self-service disable path in account/security/actions.ts — that one
+    already proves possession with a password and a live code, and signing
+    the user out of the session they are standing in would be noise.
+
+    This call is the lost-phone reset performed by someone else, so it
+    belongs with the other incident paths: whatever sessions the account
+    had are no longer trusted.
+  */
+  await prisma.user
+    .update({ where: { id }, data: { credentialsChangedAt: new Date() } })
+    .catch(() => null);
 
   console.warn(`[2fa] ${actor.email} reset two-factor for user ${id}`);
 

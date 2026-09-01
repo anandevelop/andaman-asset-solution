@@ -214,6 +214,9 @@ export const authOptions: NextAuthOptions = {
         token.role = seeded.role;
         token.twoFactorEnabled = Boolean(seeded.twoFactorEnabled);
         token.checkedAt = Date.now();
+        // Stamped once, never refreshed: this is when *this* session began,
+        // and it is what a later credential change is measured against.
+        token.issuedAt = Date.now();
         return token;
       }
 
@@ -244,6 +247,7 @@ export const authOptions: NextAuthOptions = {
               role: true,
               isActive: true,
               totpEnabledAt: true,
+              credentialsChangedAt: true,
             },
           })
           .catch(() => null);
@@ -252,6 +256,33 @@ export const authOptions: NextAuthOptions = {
         // locking every editor out of the CMS.
         if (fresh) {
           if (!fresh.isActive) return {};
+
+          /*
+            A password reset has to end the sessions that predate it.
+
+            Without this, rotating the password of a compromised account
+            did nothing to the intruder: their token stayed valid for the
+            rest of its eight hours (`maxAge` above), and the only thing
+            that actually revoked anything was setting isActive = false.
+            That is the wrong instrument — it locks the real owner out too.
+
+            An empty token signs the session out. Tokens issued before this
+            claim existed have no `issuedAt`, and are treated as older than
+            any reset: the safe direction, at the cost of signing out
+            everyone who was mid-session when a password was changed.
+
+            This lands on the same schedule as every other revocation here —
+            within ROLE_REFRESH_MS rather than instantly — because it rides
+            the existing refresh rather than adding a query per request.
+            An eight-hour window becomes a five-minute one.
+          */
+          if (
+            fresh.credentialsChangedAt &&
+            (token.issuedAt ?? 0) < fresh.credentialsChangedAt.getTime()
+          ) {
+            return {};
+          }
+
           token.name = fresh.name;
           token.role = fresh.role;
           // Re-read rather than trusted from sign-in, so finishing setup in

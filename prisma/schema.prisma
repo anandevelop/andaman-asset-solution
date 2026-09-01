@@ -101,6 +101,13 @@ model User {
   /// step that has already been spent closes that window.
   totpLastStep  Int?
 
+  /// When this account's credentials last changed — a password reset, or a
+  /// SUPER_ADMIN clearing someone's second factor. Sessions issued before
+  /// this moment are refused on their next revalidation, so rotating a
+  /// password actually ends the intruder's session instead of leaving it
+  /// live for the rest of its eight hours. Null means never changed.
+  credentialsChangedAt DateTime?
+
   accounts      Account[]
   sessions      Session[]
   recoveryCodes RecoveryCode[]

@@ -34,5 +34,12 @@ declare module "next-auth/jwt" {
     twoFactorEnabled?: boolean;
     /** Epoch ms of the last database re-validation of role/isActive. */
     checkedAt?: number;
+    /**
+     * Epoch ms this session was issued. Compared against the account's
+     * `credentialsChangedAt` so a password reset ends sessions that predate
+     * it. Absent on tokens issued before this claim existed, which are
+     * treated as older than any reset.
+     */
+    issuedAt?: number;
   }
 }
