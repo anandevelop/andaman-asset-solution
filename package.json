@@ -29,6 +29,7 @@
     "db:check": "tsx scripts/db-check.ts",
     "spaces:check": "tsx scripts/spaces-check.ts",
     "spaces:cors": "tsx scripts/spaces-cors.ts",
+    "media:legacy": "tsx scripts/media-legacy-check.ts",
     "db:reset": "docker compose down -v && docker compose up -d",
     "db:stop": "brew services stop postgresql@16 2>/dev/null || docker compose down",
     "setup": "bash scripts/setup-db.sh",
@@ -40,6 +41,11 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+  "overrides": {
+    "next-auth": {
+      "nodemailer": "$nodemailer"
+    }
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.658.1",
     "@aws-sdk/s3-request-presigner": "^3.658.1",
@@ -47,26 +53,27 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.0",
+    "@next/env": "^15.5.25",
     "@prisma/client": "^5.20.0",
-    "@sentry/nextjs": "^8.33.1",
+    "@sentry/nextjs": "^10.73.0",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^11.5.4",
     "isomorphic-dompurify": "^2.16.0",
     "lucide-react": "^0.446.0",
     "marked": "^14.1.2",
-    "next": "14.2.35",
+    "next": "^15.5.25",
     "next-auth": "^4.24.7",
-    "next-intl": "^3.19.1",
-    "nodemailer": "^7.0.7",
+    "next-intl": "^4.14.1",
+    "nodemailer": "^9.1.0",
     "otplib": "^13.5.0",
     "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-hook-form": "^7.53.0",
     "react-zoom-pan-pinch": "^4.0.4",
     "recharts": "^2.12.7",
     "server-only": "^0.0.1",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -78,21 +85,21 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.5",
-    "@types/nodemailer": "^6.4.16",
+    "@types/nodemailer": "^8.0.1",
     "@types/qrcode": "^1.5.6",
-    "@types/react": "^18.3.8",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.2",
-    "@vitest/coverage-v8": "^2.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "^15.5.25",
     "jsdom": "^25.0.1",
     "postcss": "^8.4.47",
     "prisma": "^5.20.0",
     "tailwindcss": "^3.4.12",
     "tsx": "^4.23.12",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.2"
+    "vitest": "^4.1.11"
   }
 }
