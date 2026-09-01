@@ -12,10 +12,30 @@
  */
 
 /**
- * ADMIN and SUPER_ADMIN can read every lead's contact details and create
- * users; EDITOR can publish content, which is reversible. The line is drawn
- * at "can this account leak the customer database or mint another admin".
+ * Roles allowed to work without a second factor.
+ *
+ * Empty, deliberately. The line used to sit between ADMIN and EDITOR, on
+ * the reasoning that only ADMIN and SUPER_ADMIN "can read every lead's
+ * contact details" — but that was never true of the code. /admin/leads
+ * requires nothing above EDITOR and lists name, email and phone a hundred
+ * rows at a time with filters, and the RSVP roster on an event's edit page
+ * does the same for attendees. So the role the policy exempted had exactly
+ * the access the policy existed to protect. The export at
+ * /api/admin/leads/export is correctly ADMIN-only, which made the gap
+ * easier to miss: the bulk door was locked and the one beside it was not.
+ *
+ * Keeping this as a list rather than `return true` leaves the decision
+ * visible and reversible — an exemption has to be written down here, where
+ * the reasoning for it is, instead of being buried in a boolean.
+ */
+const EXEMPT_ROLES: readonly string[] = [];
+
+/**
+ * Note the fail-closed shape: a signed-in account whose role claim has gone
+ * missing is not in the list either, so it is held at enrolment rather than
+ * waved through. Every caller already guards on there being a session at
+ * all, so this cannot strand an anonymous visitor.
  */
 export function roleRequiresTwoFactor(role: string | null | undefined): boolean {
-  return role === "ADMIN" || role === "SUPER_ADMIN";
+  return !EXEMPT_ROLES.includes(role ?? "");
 }

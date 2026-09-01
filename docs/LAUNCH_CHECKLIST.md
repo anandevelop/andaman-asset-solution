@@ -111,10 +111,17 @@ Cross-check against `.env.example`, which annotates each one.
       remove the last one, so a single account that loses its password is a
       shell-access recovery job.
 - [ ] Sign-in tested on production
-- [ ] **Two-factor enrolled for every `ADMIN` and `SUPER_ADMIN`.** They are
-      redirected to `/admin/account/security` and cannot reach anything else
-      until they finish, so this happens whether or not it is planned for —
-      better on a quiet afternoon than during a launch.
+- [ ] **Two-factor enrolled for every account, `EDITOR` included.** Everyone
+      is redirected to `/admin/account/security` and cannot reach anything
+      else until they finish, so this happens whether or not it is planned
+      for — better on a quiet afternoon than during a launch. Budget a few
+      minutes per person on day one and have the authenticator app chosen
+      before you start.
+
+      `EDITOR` was exempt until it turned out that `/admin/leads` requires
+      nothing above `EDITOR` and lists every enquiry's name, email and
+      phone — the access the exemption was written to protect. See
+      `lib/two-factor-policy.ts`.
 - [ ] Recovery codes stored somewhere that is *not* the phone holding the
       authenticator. Both lost together means a `SUPER_ADMIN` reset from
       `/admin/users/<id>/edit`, and if the account locked out is the only

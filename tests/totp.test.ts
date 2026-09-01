@@ -34,11 +34,20 @@ beforeEach(() => {
 });
 
 describe("requiresTwoFactor", () => {
-  it("covers ADMIN and SUPER_ADMIN but not EDITOR", () => {
+  it("covers every role, EDITOR included", () => {
+    // EDITOR was exempt until it turned out /admin/leads needs nothing
+    // above EDITOR to read the whole customer list — the exact access the
+    // policy was written to protect.
     expect(requiresTwoFactor("SUPER_ADMIN" as never)).toBe(true);
     expect(requiresTwoFactor("ADMIN" as never)).toBe(true);
-    expect(requiresTwoFactor("EDITOR" as never)).toBe(false);
-    expect(requiresTwoFactor(null)).toBe(false);
+    expect(requiresTwoFactor("EDITOR" as never)).toBe(true);
+  });
+
+  it("fails closed on a missing role claim", () => {
+    // A signed-in session whose role has gone missing is held at enrolment
+    // rather than waved past it.
+    expect(requiresTwoFactor(null)).toBe(true);
+    expect(requiresTwoFactor(undefined)).toBe(true);
   });
 });
 
