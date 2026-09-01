@@ -3,9 +3,18 @@
  * ─────────────────────────────────────────────────────────────────────────
  * POST /api/uploads/presign — issue a short-lived S3 PUT URL.
  *
- * Signing a URL is granting write access to the bucket, so this is behind
- * the same session check as the admin itself. Without that, an anonymous
- * caller could mint unlimited upload URLs and use the CDN as free storage.
+ * Signing a URL is granting write access to the bucket, so this goes
+ * through requireAdminAction() like every other mutation. Without that, an
+ * anonymous caller could mint unlimited upload URLs and use the CDN as free
+ * storage.
+ *
+ * The guard rather than a bare getServerSession() check, because the two
+ * are not equivalent: a session alone is also held by an ADMIN who has
+ * signed in but not yet enrolled a second factor — the exact state
+ * middleware.ts and lib/admin/guard.ts exist to contain, so that a stolen
+ * password on its own cannot reach anything. This route was the one
+ * authenticated endpoint that let that account through, which made a
+ * stolen password enough to write to the bucket.
  *
  * Rate limited per user rather than per IP: an office behind one NAT should
  * not throttle itself while uploading a gallery.
@@ -13,9 +22,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { Role } from "@prisma/client";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
+import { requireAdminAction } from "@/lib/admin/guard";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import {
   getPresignedUploadUrl,
@@ -41,13 +50,28 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  let actor;
+  try {
+    actor = await requireAdminAction(Role.EDITOR);
+  } catch (error) {
+    /*
+      Two different refusals, kept apart on purpose. "Still owes 2FA" is a
+      state the operator can fix in a minute, and reporting it as a plain
+      authorisation failure would send them looking at roles instead. The
+      uploader keys off `error`, not the status, so both land on its
+      generic message today — the distinction is for the server log and for
+      whoever reads this next.
+    */
+    const pending =
+      error instanceof Error && error.message === "TWO_FACTOR_SETUP_REQUIRED";
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ ok: false, error: "UNAUTHORISED" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: pending ? "TWO_FACTOR_SETUP_REQUIRED" : "UNAUTHORISED" },
+      { status: 403 },
+    );
   }
 
-  const limit = rateLimit(`presign:${session.user.id}`, RATE_LIMIT);
+  const limit = rateLimit(`presign:${actor.id}`, RATE_LIMIT);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, error: "RATE_LIMITED", retryAfter: limit.retryAfter },

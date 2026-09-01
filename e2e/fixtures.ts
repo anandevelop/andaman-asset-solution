@@ -29,6 +29,24 @@ export const ADMIN = {
   totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
 } as const;
 
+/**
+ * An ADMIN who has signed in but never enrolled a second factor.
+ *
+ * lib/two-factor-policy.ts requires 2FA of this role, so the account is
+ * held in `twoFactorPending` — able to authenticate, able to reach nothing
+ * but the enrolment page. It exists to prove that the gate holds on the
+ * paths middleware cannot see: a stolen password on its own has to be
+ * worth nothing, and /api/uploads/presign was where it was worth a bucket.
+ *
+ * Deliberately no totpSecret. Seeding one would put it the wrong side of
+ * the gate this fixture is for.
+ */
+export const PENDING_ADMIN = {
+  email: "e2e-pending@andaman.test",
+  password: "e2e-only-passphrase-5678",
+  name: "E2E Pending Administrator",
+} as const;
+
 /*
   Four projects, chosen so the filter bar has something to do.
 

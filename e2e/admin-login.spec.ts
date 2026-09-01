@@ -18,7 +18,7 @@ import { type Page } from "@playwright/test";
 import { expect, test } from "./harness";
 import { generate } from "otplib";
 import { expectNoA11yViolations } from "./a11y";
-import { ADMIN } from "./fixtures";
+import { ADMIN, PENDING_ADMIN } from "./fixtures";
 
 const LOGIN = "/en/login";
 const DASHBOARD = "/en/admin";
@@ -389,5 +389,54 @@ test.describe("The second factor", () => {
 
     await expect(page).toHaveURL(/\/en\/admin/);
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  });
+});
+
+/*
+  The enrolment gate on a path middleware cannot see.
+
+  Signing a URL is granting write access to the bucket, so /api/uploads/presign
+  is a mutation and belongs behind the same guard as every server action. It
+  used to check only that a session existed, which is a weaker question: an
+  ADMIN who has authenticated but not yet enrolled a second factor also has
+  one. That account is redirected away from every admin page, so the hole
+  was invisible through the UI and reachable with one POST.
+
+  The assertion is on the endpoint rather than the uploader component
+  because the component is the part that was never the problem.
+*/
+test.describe("Signed upload URLs", () => {
+  const PRESIGN = "/api/uploads/presign";
+  const BODY = {
+    filename: "floor-plan.jpg",
+    contentType: "image/jpeg",
+    size: 1024,
+    prefix: "projects",
+  };
+
+  test("refuses an anonymous caller", async ({ request }) => {
+    // Otherwise the CDN is free storage for anyone who finds the route.
+    const response = await request.post(PRESIGN, { data: BODY });
+
+    expect(response.status()).toBe(403);
+    expect((await response.json()).error).toBe("UNAUTHORISED");
+  });
+
+  test("refuses an admin who still owes a second factor", async ({ page }) => {
+    await page.goto(LOGIN);
+    await page.getByLabel("Email address").fill(PENDING_ADMIN.email);
+    await page.getByLabel("Password").fill(PENDING_ADMIN.password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+
+    // The account authenticates and is held at enrolment — no code prompt,
+    // because it has no authenticator to prompt for yet.
+    await expect(page).toHaveURL(/\/admin\/account\/security/);
+
+    // page.request carries the session cookie, so this is the same caller
+    // the browser is, not an anonymous one.
+    const response = await page.request.post(PRESIGN, { data: BODY });
+
+    expect(response.status()).toBe(403);
+    expect((await response.json()).error).toBe("TWO_FACTOR_SETUP_REQUIRED");
   });
 });

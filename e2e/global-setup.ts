@@ -22,7 +22,7 @@ import { execFileSync } from "node:child_process";
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { ADMIN, PROJECTS } from "./fixtures";
+import { ADMIN, PENDING_ADMIN, PROJECTS } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
 /*
@@ -124,6 +124,22 @@ async function seed(prisma: PrismaClient) {
       */
       totpSecret: encryptSecret(ADMIN.totpSecret),
       totpEnabledAt: new Date(),
+    },
+  });
+
+  /*
+    No totpSecret and no totpEnabledAt, so lib/two-factor-policy.ts reports
+    this ADMIN as still owing enrolment. That is the state the guard exists
+    to contain, and the only way to test it is to seed an account sitting
+    in it.
+  */
+  await prisma.user.create({
+    data: {
+      name: PENDING_ADMIN.name,
+      email: PENDING_ADMIN.email,
+      passwordHash: await bcrypt.hash(PENDING_ADMIN.password, BCRYPT_ROUNDS),
+      role: "ADMIN",
+      isActive: true,
     },
   });
 }
