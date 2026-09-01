@@ -17,7 +17,7 @@ import { getSiteSettings } from "@/lib/settings";
 
 type Props = {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
 // `locale` isn't read directly here any more — it was only ever used to

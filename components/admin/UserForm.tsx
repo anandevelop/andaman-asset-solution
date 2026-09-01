@@ -9,7 +9,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { ROLES } from "@/lib/validations";
@@ -63,7 +64,7 @@ export default function UserForm({
   submitLabel,
 }: Props) {
   const t = useTranslations("admin");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   // Freezing role/active for these two cases keeps the UI honest about a
   // rule the server enforces anyway.

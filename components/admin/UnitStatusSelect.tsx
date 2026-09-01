@@ -10,8 +10,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useRef } from "react";
-import { useFormState } from "react-dom";
+import { useActionState, useRef } from "react";
 import type { UnitStatusFormState } from "@/app/[locale]/admin/projects/[id]/units/actions";
 
 type Props = {
@@ -23,7 +22,7 @@ type Props = {
 const INITIAL: UnitStatusFormState = { ok: false };
 
 export default function UnitStatusSelect({ action, status, labels }: Props) {
-  const [, formAction] = useFormState(action, INITIAL);
+  const [, formAction] = useActionState(action, INITIAL);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (

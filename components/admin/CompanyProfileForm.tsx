@@ -14,7 +14,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
@@ -55,7 +56,7 @@ export default function CompanyProfileForm({
   submitLabel: string;
 }) {
   const t = useTranslations("admin");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   return (
     <form action={formAction} className="admin-card space-y-5">

@@ -48,9 +48,10 @@ function nullify(value: string | undefined | null, max = 1000): string | null {
   return trimmed.length === 0 ? null : trimmed.slice(0, max);
 }
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, props: Params) {
+  const params = await props.params;
   const ip = clientIp(request.headers);
   const limit = rateLimit(`rsvp:${ip}`, RATE_LIMIT);
 

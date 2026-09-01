@@ -18,9 +18,16 @@ import { updateCompanyProfile } from "./actions";
 import CompanyProfileForm from "@/components/admin/CompanyProfileForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 
-type Props = { params: { locale: string }; searchParams: { lang?: string } };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
-export default async function AdminCompanyProfilePage({ params: { locale }, searchParams }: Props) {
+export default async function AdminCompanyProfilePage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale, Role.ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });

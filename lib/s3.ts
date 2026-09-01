@@ -165,8 +165,8 @@ function getClient(config: S3Config): S3Client {
         // Path style (endpoint/bucket/key) works on Spaces, MinIO and R2
         // alike; virtual-host style would need a per-bucket endpoint.
         forcePathStyle: true,
-        // Spaces rejects the SDK's automatic CRC32 trailer with a 403, the
-        // same way Supabase's S3 API does.
+        // Spaces rejects the SDK's automatic CRC32 trailer with a 403.
+        // Most S3-compatible services that are not S3 itself do.
         requestChecksumCalculation: "WHEN_REQUIRED",
       }),
     });

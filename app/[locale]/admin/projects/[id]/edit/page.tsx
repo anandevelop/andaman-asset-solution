@@ -23,8 +23,8 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import SaveToast from "@/components/admin/SaveToast";
 
 type Props = {
-  params: { locale: string; id: string };
-  searchParams: { created?: string; lang?: string };
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ created?: string; lang?: string }>;
 };
 
 /** null / Decimal / number → the string an <input> expects. */
@@ -33,7 +33,9 @@ function str(value: unknown): string {
   return String(value);
 }
 
-export default async function EditProjectPage({ params, searchParams }: Props) {
+export default async function EditProjectPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { locale, id } = params;
   await requireAdmin(locale);
 

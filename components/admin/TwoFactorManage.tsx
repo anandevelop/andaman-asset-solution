@@ -13,9 +13,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2, RefreshCw, ShieldOff } from "lucide-react";
 import RecoveryCodeList from "@/components/admin/RecoveryCodeList";
@@ -92,8 +92,8 @@ export default function TwoFactorManage({
 }: Props) {
   const t = useTranslations("admin.security");
   const { update } = useSession();
-  const [regenState, regenerate] = useFormState(regenerateAction, INITIAL);
-  const [disableState, disable] = useFormState(disableAction, INITIAL);
+  const [regenState, regenerate] = useActionState(regenerateAction, INITIAL);
+  const [disableState, disable] = useActionState(disableAction, INITIAL);
 
   const disabled = disableState.ok && disableState.message === "DISABLED";
 

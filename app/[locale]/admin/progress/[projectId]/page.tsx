@@ -20,7 +20,7 @@ import { formatMonthYear, intlLocale } from "@/lib/format";
 import { createProgress, deleteProgress, updateProgress } from "../actions";
 import ProgressForm, { type ProgressValues } from "@/components/admin/ProgressForm";
 
-type Props = { params: { locale: string; projectId: string } };
+type Props = { params: Promise<{ locale: string; projectId: string }> };
 
 /** Localised month names for the <select>, in calendar order. */
 function monthNames(locale: string): string[] {
@@ -30,7 +30,8 @@ function monthNames(locale: string): string[] {
   );
 }
 
-export default async function AdminProgressPage({ params }: Props) {
+export default async function AdminProgressPage(props: Props) {
+  const params = await props.params;
   const { locale, projectId } = params;
   await requireAdmin(locale);
 

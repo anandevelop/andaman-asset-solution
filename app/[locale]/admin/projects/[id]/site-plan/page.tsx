@@ -23,11 +23,13 @@ import SitePlanDrawer from "@/components/admin/SitePlanDrawer";
 import { saveUnitShape } from "./actions";
 
 type Props = {
-  params: { locale: string; id: string };
-  searchParams: { unit?: string };
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ unit?: string }>;
 };
 
-export default async function AdminSitePlanPage({ params, searchParams }: Props) {
+export default async function AdminSitePlanPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { locale, id: projectId } = params;
   await requireAdmin(locale);
 

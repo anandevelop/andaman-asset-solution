@@ -22,8 +22,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -111,7 +111,7 @@ export default function HeroStorySlideForm({
   submitLabel,
 }: Props) {
   const t = useTranslations("admin");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
   // Purely for conditional field visibility — see the file comment.
   const [mediaType, setMediaType] = useState<"IMAGE" | "VIDEO">(values.mediaType);
 

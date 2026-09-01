@@ -39,10 +39,20 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
-export default async function AdminLayout({ children, params: { locale } }: Props) {
+export default async function AdminLayout(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  const {
+    children
+  } = props;
+
   const user = await requireAdmin(locale, undefined, { allowTwoFactorSetup: true });
 
   return (

@@ -19,7 +19,7 @@
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, Camera, HardHat, MapPin } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
@@ -33,15 +33,19 @@ import { formatMonthYear } from "@/lib/format";
 // appear without waiting out a long cache.
 export const revalidate = 300;
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "progress" });
 
   return {
@@ -56,8 +60,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProgressIndexPage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function ProgressIndexPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const [t, tProjects, projects] = await Promise.all([
     getTranslations("progress"),

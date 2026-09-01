@@ -20,3 +20,10 @@ tsconfig.tsbuildinfo
 _to_delete/
 _claude_preview*.jpg
 _claude_preview*.webp
+
+# Agent scratch directories. .gemini/ once held throwaway S3 probe scripts
+# that were committed with a real access key in them; nothing an agent
+# leaves lying around belongs in the repository.
+.gemini/
+.claude/
+.aider*

@@ -18,7 +18,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SearchX } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import ProjectsHero from "@/components/ProjectsHero";
@@ -44,18 +44,22 @@ import { PROPERTY_TYPES, PROJECT_STATUSES } from "@/lib/validations";
 export const revalidate = 3600;
 
 type Props = {
-  params: { locale: string };
-  searchParams: Record<string, string | string[] | undefined>;
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-  searchParams,
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "projects" });
   const filters = parseProjectFilters(searchParams);
   const filtered = hasActiveFilters(filters);
@@ -75,8 +79,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectsPage({ params: { locale }, searchParams }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function ProjectsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const filters = parseProjectFilters(searchParams);
 

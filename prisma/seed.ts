@@ -597,7 +597,38 @@ function richContentCreateFields(
   };
 }
 
+/**
+ * Production guard.
+ *
+ * The seed writes a demo project, article and event. Those are fine in a
+ * fresh clone and are exactly what must never appear on the live site —
+ * and `npm run setup` runs the seed as its last step, so this is one
+ * mistyped command away on a server, months after launch.
+ *
+ * Deliberately an opt-out rather than an opt-in: the check has to hold on
+ * a machine where nobody remembered to set anything. ALLOW_PRODUCTION_SEED
+ * exists for the one legitimate case — seeding a brand-new production
+ * database before it has any real content.
+ */
+function assertNotProduction() {
+  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.ALLOW_PRODUCTION_SEED === "true") {
+    console.warn("⚠  Seeding a PRODUCTION database (ALLOW_PRODUCTION_SEED=true).");
+    return;
+  }
+
+  console.error(
+    "❌ Refusing to seed: NODE_ENV=production.\n" +
+      "   This inserts demo content (a project, an article and an event).\n" +
+      "   If the database is genuinely empty and you want it anyway, re-run\n" +
+      "   with ALLOW_PRODUCTION_SEED=true.",
+  );
+  process.exit(1);
+}
+
 async function main() {
+  assertNotProduction();
+
   console.log("🌱 Seeding Andaman Asset Solution…");
 
   // `update: {}` — every field in TRINITY_VILLAGE (name, tagline,

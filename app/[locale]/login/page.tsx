@@ -10,23 +10,29 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
 
 type Props = {
-  params: { locale: string };
-  searchParams: { callbackUrl?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ callbackUrl?: string }>;
 };
 
-export async function generateMetadata({
-  params: { locale },
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
-  unstable_setRequestLocale(locale);
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
 
   return {
@@ -36,8 +42,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function LoginPage({ params: { locale }, searchParams }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function LoginPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
 
   // Only accept same-origin relative paths — an attacker-supplied absolute

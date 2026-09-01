@@ -83,6 +83,9 @@ services:
     container_name: andaman_prod_app
     pull_policy: always
     restart: always
+    # Node is PID 1 in this image and does not reap orphaned children.
+    # Docker's init shim does, and forwards signals unchanged.
+    init: true
     ports:
       # Straight to the container — there is no TLS terminator in this
       # stack. Put a reverse proxy in front before this is public, and drop

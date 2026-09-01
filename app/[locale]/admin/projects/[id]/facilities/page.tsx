@@ -26,11 +26,13 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
 type Props = {
-  params: { locale: string; id: string };
-  searchParams: { lang?: string };
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ lang?: string }>;
 };
 
-export default async function AdminProjectFacilitiesPage({ params, searchParams }: Props) {
+export default async function AdminProjectFacilitiesPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { locale, id: projectId } = params;
   await requireAdmin(locale);
 

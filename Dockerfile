@@ -14,7 +14,11 @@
 
 # Alpine keeps the image small; libc6-compat covers the glibc-linked
 # binaries Prisma and SWC ship.
-FROM node:20-alpine AS base
+#
+# Node 22, not 20: Node 20 left even maintenance LTS in April 2026, so it
+# no longer receives security patches — shipping on it means running an
+# unpatched runtime by choice. 22 is what CI builds and tests against.
+FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -101,8 +105,11 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# Node as PID 1 with --init so signals reach it and zombies get reaped;
-# without it, SIGTERM is ignored and every deploy waits out the 10s kill
-# timeout.
+# Node runs as PID 1. Next's standalone server registers its own SIGTERM
+# and SIGINT handlers, so a deploy shuts down gracefully rather than
+# waiting out the 10s kill timeout — but PID 1 still does not reap
+# orphaned children, so run the container with an init process:
+# `docker run --init`, or `init: true` in compose (already set in
+# docker-compose.prod.yml).
 ENTRYPOINT ["node", "--enable-source-maps"]
 CMD ["server.js"]

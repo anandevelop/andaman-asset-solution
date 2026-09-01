@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, CalendarDays, Clock, User } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
@@ -36,16 +36,21 @@ export const dynamicParams = true;
 */
 export const revalidate = 3600;
 
-type Props = { params: { locale: string; slug: string } };
+type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateStaticParams() {
   const slugs = await getPublishedArticleSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params: { locale, slug },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale,
+    slug
+  } = params;
+
   const article = await getArticleBySlug(slug, locale);
   if (!article) return { title: "Not found", robots: { index: false } };
 
@@ -82,8 +87,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function ArticlePage({ params: { locale, slug } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function ArticlePage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale,
+    slug
+  } = params;
+
+  setRequestLocale(locale);
 
   const article = await getArticleBySlug(slug, locale);
 

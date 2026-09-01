@@ -15,7 +15,7 @@
  */
 
 import type { Metadata } from "next";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   Clock,
   ExternalLink,
@@ -31,15 +31,19 @@ import { locales, type Locale } from "@/i18n";
 
 export const revalidate = 3600;
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "contact" });
 
   return {
@@ -54,8 +58,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function ContactPage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function ContactPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const [t, tChat, settings] = await Promise.all([
     getTranslations("contact"),

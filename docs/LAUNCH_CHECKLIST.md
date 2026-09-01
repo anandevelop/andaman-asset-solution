@@ -24,6 +24,13 @@ oversight, but none of them should reach production untouched.
 - [ ] **`public/og-image.jpg` is a generated placeholder.** Typographic
       only, correct brand colours. Fine to launch with; replace when
       photography is available.
+- [ ] **At least one row still points at the retired Supabase host.**
+      Confirmed 2026-09-01 in local dev (a banner/general image 500'd
+      `next/image` after the Supabase hosts were dropped from
+      `next.config.js`'s `remotePatterns`). They are back in as
+      `legacyMediaHosts` — a stopgap, not a fix. Run `npm run media:legacy`
+      to find every affected row, re-upload each through `/admin`, confirm
+      the scan comes back clean, then delete `legacyMediaHosts`.
 - [ ] **Email notifications are implemented but unconfigured by default.**
       `lib/email.ts` sends a staff copy on every lead/RSVP and the RSVP
       confirmation the copy promises the attendee ("we will confirm by
@@ -31,8 +38,13 @@ oversight, but none of them should reach production untouched.
       Set the SMTP block in section 2 below before launch, and confirm a
       real RSVP produces both the staff email and the attendee
       confirmation (see section 10).
-- [ ] **Seed data must not reach production.** `npm run prisma:seed`
-      inserts a demo project, article and event.
+- [x] ~~**Seed data must not reach production.**~~ `prisma/seed.ts` now
+      refuses to run when `NODE_ENV=production` and exits non-zero, which
+      also covers `npm run setup` calling it as its last step. Override
+      with `ALLOW_PRODUCTION_SEED=true` only for a brand-new, still-empty
+      production database. The demo project, article and event it inserts
+      still have to be removed from any database that was seeded before
+      this guard existed — see section 5.
 
 ---
 
@@ -63,6 +75,16 @@ Cross-check against `.env.example`, which annotates each one.
       env — see the build-time trap in DEPLOYMENT.md
 - [ ] `TZ=Asia/Bangkok` set on the container
 - [ ] No `.env` file committed to the repository
+
+> The container now checks this itself. `instrumentation.ts` runs
+> `lib/env.ts` at server start and **exits non-zero** if `DATABASE_URL`,
+> `NEXTAUTH_SECRET`, `NEXTAUTH_URL` or `NEXT_PUBLIC_SITE_URL` is missing,
+> if the secret is under 32 characters, or if either URL is plain `http`
+> or ends in a slash. Optional integrations (media domain, Spaces, SMTP,
+> reCAPTCHA) are warned about in the startup log rather than fatal, so
+> `docker compose logs app` on first boot is the fastest way to see what
+> is still unset. The check is skipped during `next build`, where the
+> environment is deliberately incomplete.
 
 ---
 
@@ -195,7 +217,20 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] `/admin` and `/login` return `X-Robots-Tag: noindex`
 - [ ] Rate limits observed on `/api/leads` (6th submission in 10 minutes
       returns `429`)
-- [ ] Dependency audit run: `npm audit --production`
+- [ ] Dependency audit run: `npm audit --omit=dev`
+      (`--production` is the deprecated spelling)
+- [ ] **Known outstanding advisories** reviewed and accepted. As of the
+      Next 15 upgrade, `npm audit --omit=dev` reports two, neither with a
+      fix short of Next 16:
+      - `postcss` (high) — vendored inside `next` and used only to process
+        this repository's own CSS at build time. The advisories are about
+        attacker-controlled stylesheets; there are none here.
+      - `next` (moderate) — the residue after 15.5.25, fixed in the 16.x
+        line.
+
+      Everything else was cleared: `next` 14→15.5.25, `@sentry/nextjs`
+      8→10, `next-intl` 3→4 (open redirect), `sharp` 0.33→0.35 (libvips
+      CVEs), `nodemailer` 7→9, `vitest` 2→4.
 
 > **Note on rate limiting:** `lib/rate-limit.ts` is in-memory and
 > per-process. Behind more than one replica each gets its own counters, so

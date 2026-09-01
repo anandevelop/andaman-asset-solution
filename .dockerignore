@@ -30,6 +30,7 @@ dist
 Dockerfile
 .dockerignore
 docker-compose.yml
+docker-compose.prod.yml
 
 # ── Logs & temporary files ──────────────────────────────────────────────
 *.log
@@ -40,7 +41,17 @@ tmp
 
 # ── Docs and local scripts ──────────────────────────────────────────────
 README.md
+AGENTS.md
+docs
 scripts/setup-*.sh
+
+# ── Working files that are not part of any build ────────────────────────
+# _to_delete/ holds files staged for removal, and the _claude_preview*
+# images are ~1MB of scratch. Both would otherwise be uploaded as build
+# context on every `docker build` and baked into the builder layer.
+_to_delete
+_claude_preview*
+.gemini
 
 # ── Tests (never needed at runtime) ─────────────────────────────────────
 tests

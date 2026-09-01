@@ -17,9 +17,15 @@ import { intlLocale } from "@/lib/format";
 import { createUser } from "./actions";
 import UserForm from "@/components/admin/UserForm";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminUsersPage({ params: { locale } }: Props) {
+export default async function AdminUsersPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const actor = await requireAdmin(locale, Role.SUPER_ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });

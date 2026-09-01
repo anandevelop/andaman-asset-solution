@@ -1,5 +1,5 @@
 /**
- * sentry.client.config.ts
+ * instrumentation-client.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Browser-side Sentry. Loaded by @sentry/nextjs before the app mounts.
  *

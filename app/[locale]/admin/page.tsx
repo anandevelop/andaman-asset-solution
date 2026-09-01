@@ -50,8 +50,8 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
 
 type Props = {
-  params: { locale: string };
-  searchParams: { denied?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ denied?: string }>;
 };
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -66,10 +66,14 @@ function monthLabel(key: string, locale: string): string {
   }).format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
-export default async function AdminDashboardPage({
-  params: { locale },
-  searchParams,
-}: Props) {
+export default async function AdminDashboardPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });

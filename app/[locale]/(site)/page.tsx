@@ -18,7 +18,7 @@
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   ArrowRight,
   CalendarDays,
@@ -58,7 +58,7 @@ import { intlLocale } from "@/lib/format";
 */
 export const revalidate = 3600;
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 /** Used only when no published project has a hero image yet. */
 const FALLBACK_HERO =
@@ -75,9 +75,13 @@ export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const resolvedLocale = locale as Locale;
 
   return {
@@ -97,8 +101,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function HomePage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function HomePage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const [t, tProjects, tChat, projects, articles, events, faqs, heroSlides, settings] =
     await Promise.all([

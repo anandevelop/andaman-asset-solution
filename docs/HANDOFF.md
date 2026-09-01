@@ -14,12 +14,12 @@ Companion documents:
 ## 1. What this is
 
 A bilingual (Thai/English) marketing site and back-office for a Phuket
-property developer. One Next.js 14 application serves both: the public site
+property developer. One Next.js 15 application serves both: the public site
 under `/[locale]/(site)/`, the admin under `/[locale]/admin/`.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | Next.js 14, App Router | Server components keep the data layer off the client |
+| Framework | Next.js 15, App Router | Server components keep the data layer off the client |
 | Database | PostgreSQL 16 via Prisma | Relational data, and Prisma's types are the schema |
 | i18n | next-intl, `/th` and `/en` prefixes | Both locales indexable, no cookie-based switching |
 | Auth | NextAuth v4, credentials + JWT | Edge-checkable session without a database round trip |

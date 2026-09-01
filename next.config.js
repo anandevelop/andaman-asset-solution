@@ -19,16 +19,35 @@ const mediaDomain = process.env.NEXT_PUBLIC_MEDIA_DOMAIN
  * lib/s3.ts saves an absolute publicUrl per upload rather than a bare key,
  * so every row written before NEXT_PUBLIC_MEDIA_DOMAIN was switched to the
  * CDN alias still points at ...sgp1.digitaloceanspaces.com. Both names
- * serve the same objects; dropping the origin here would break those
- * images exactly the way dropping the Supabase hosts below would.
+ * serve the same objects, and dropping the origin would break every one of
+ * those rows — the same trap that kept the retired Supabase hosts in this
+ * list for as long as it did. `npm run media:legacy` is what tells you
+ * whether a host is actually safe to remove.
  */
 const mediaOriginDomain =
   mediaDomain && mediaDomain.includes(".cdn.digitaloceanspaces.com")
     ? mediaDomain.replace(".cdn.digitaloceanspaces.com", ".digitaloceanspaces.com")
     : null;
 
+/**
+ * STOPGAP — put back 2026-09-01 after `npm run dev` 500'd on a real row:
+ * some banner/general image still stores a `nwgjexifvlryisfxhhxa.supabase.co`
+ * URL from before the move to Spaces (lib/s3.ts stores an absolute
+ * publicUrl per upload, so nothing rewrote it when the host changed).
+ *
+ * Run `npm run media:legacy` to find every row still pointing at this host,
+ * re-upload those images through /admin, confirm the scan comes back clean,
+ * and only then delete this block. Do not remove it "because it looks
+ * unused" without running that check first — that is exactly how this
+ * broke the first time.
+ */
+const legacyMediaHosts = [
+  "nwgjexifvlryisfxhhxa.supabase.co",
+  "nwgjexifvlryisfxhhxa.storage.supabase.co",
+];
+
 /** Every host that may serve an uploaded image, newest alias first. */
-const mediaHosts = [mediaDomain, mediaOriginDomain].filter(Boolean);
+const mediaHosts = [mediaDomain, mediaOriginDomain, ...legacyMediaHosts].filter(Boolean);
 
 if (!mediaDomain && process.env.NODE_ENV === "production") {
   console.warn(
@@ -147,10 +166,15 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
 
-  // ✅ เปลี่ยนมาใช้ experimental.serverComponentsExternalPackages แทน
-  experimental: {
-    serverComponentsExternalPackages: ["isomorphic-dompurify", "jsdom"],
-  },
+  /*
+    jsdom (via isomorphic-dompurify) is a CommonJS package that reads from
+    the filesystem at require time — bundling it into the server output
+    breaks it, so it is loaded from node_modules instead.
+
+    Top-level since Next 15; `experimental.serverComponentsExternalPackages`
+    is the Next 14 spelling and is now ignored with a warning.
+  */
+  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
 
   // Emits .next/standalone with only the files the server actually needs,
   // which is what keeps the Docker runtime stage small.
@@ -172,14 +196,6 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "source.unsplash.com" },
-      /*
-        Supabase was the previous media host. Every image uploaded before
-        the move to Spaces is still stored in the database as a supabase.co
-        URL, so these stay until those rows are rewritten — dropping them
-        turns years of existing project galleries into broken images.
-      */
-      { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.supabase.co" },
-      { protocol: "https", hostname: "nwgjexifvlryisfxhhxa.storage.supabase.co" },
       ...mediaHosts.map((hostname) => ({ protocol: "https", hostname })),
     ],
     formats: ["image/avif", "image/webp"],
@@ -240,7 +256,9 @@ const nextConfig = {
 // are close to useless — set the token in CI.
 // ─────────────────────────────────────────────────────────────────────────
 
-const { withSentryConfig } = require("@sentry/nextjs");
+// v10 moved the build-time export out of the runtime entry point; the
+// old path still works but is removed in v11.
+const { withSentryConfig } = require("@sentry/nextjs/config");
 
 const config = withNextIntl(nextConfig);
 
@@ -253,11 +271,16 @@ module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
       // The plugin is chatty; only speak up when something is wrong.
       silent: true,
 
+      widenClientFileUpload: true,
+
+      // Drops the SDK's own debug logging from the production bundle.
+      // (`disableLogger: true` was the v8 spelling.)
+      webpack: { treeshake: { removeDebugLogging: true } },
+
       // Strip the source maps from the deployed bundle after uploading
       // them. They are for Sentry, not for anyone reading the network tab.
-      widenClientFileUpload: true,
-      hideSourceMaps: true,
-      disableLogger: true,
+      // (`hideSourceMaps` was the v8 spelling; removed in v9.)
+      sourcemaps: { deleteSourcemapsAfterUpload: true },
 
       // Routes browser events through /monitoring on our own domain, so an
       // ad blocker cannot silently drop every client-side error report.

@@ -25,13 +25,20 @@ import TwoFactorSetup from "@/components/admin/TwoFactorSetup";
 import TwoFactorManage from "@/components/admin/TwoFactorManage";
 
 type Props = {
-  params: { locale: string };
-  searchParams: { setup?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ setup?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function SecurityPage({ params: { locale }, searchParams }: Props) {
+export default async function SecurityPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   // The one page a pending account may open — that is the whole point of it.
   const actor = await requireAdmin(locale, undefined, { allowTwoFactorSetup: true });
 

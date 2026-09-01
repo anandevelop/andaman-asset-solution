@@ -18,9 +18,16 @@ import FaqForm from "@/components/admin/FaqForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
-type Props = { params: { locale: string }; searchParams: { lang?: string } };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
-export default async function AdminFaqsPage({ params: { locale }, searchParams }: Props) {
+export default async function AdminFaqsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const lang = parseEditingLocale(searchParams.lang);

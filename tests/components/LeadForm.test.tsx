@@ -1,4 +1,11 @@
 /**
+ * @vitest-environment jsdom
+ *
+ * This file renders React, so it needs a DOM. Vitest 4 removed
+ * `environmentMatchGlobs` from vitest.config.ts; the docblock is the
+ * replacement, and it has to be the first thing in the file.
+ */
+/**
  * tests/components/LeadForm.test.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The lead form is the site's only conversion. Everything else — the

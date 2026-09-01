@@ -25,9 +25,15 @@ import ProjectBulkActions, {
   type ProjectRow,
 } from "@/components/admin/ProjectBulkActions";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminProjectsPage({ params: { locale } }: Props) {
+export default async function AdminProjectsPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const [t, tEnum] = await Promise.all([

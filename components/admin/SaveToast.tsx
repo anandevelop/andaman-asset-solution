@@ -20,18 +20,18 @@
  *     </SaveToast>
  *   )}
  *
- * `token` — pass the useFormState `state` object itself. React does not
+ * `token` — pass the useActionState `state` object itself. React does not
  * remount a component just because its enclosing condition was already
  * true on the previous render (e.g. saving twice in a row both times
  * yield state.ok===true / state.message==="SAVED"), so a mount-once timer
- * would only ever fire for the FIRST save. useFormState returns a new
+ * would only ever fire for the FIRST save. useActionState returns a new
  * object reference on every submit regardless of whether the field values
  * changed, so keying the re-arm effect off that reference makes the toast
  * reappear on every save, not just the first one.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 type Props = {

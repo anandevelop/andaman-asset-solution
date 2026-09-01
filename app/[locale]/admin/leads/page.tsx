@@ -18,8 +18,8 @@ import LeadFilters from "@/components/admin/LeadFilters";
 import LeadExportButton from "@/components/admin/LeadExportButton";
 
 type Props = {
-  params: { locale: string };
-  searchParams: { status?: string; sort?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ status?: string; sort?: string }>;
 };
 
 const PAGE_SIZE = 100;
@@ -31,7 +31,14 @@ function parseStatus(value: string | undefined): LeadStatus | null {
     : null;
 }
 
-export default async function AdminLeadsPage({ params: { locale }, searchParams }: Props) {
+export default async function AdminLeadsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });

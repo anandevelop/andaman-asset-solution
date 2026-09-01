@@ -12,7 +12,7 @@
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
@@ -25,15 +25,19 @@ import { intlLocale } from "@/lib/format";
 // Shorter than the other listings: "seats left" ages badly.
 export const revalidate = 120;
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "events" });
 
   return {
@@ -48,8 +52,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventsPage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function EventsPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const [t, { upcoming, past }] = await Promise.all([
     getTranslations("events"),

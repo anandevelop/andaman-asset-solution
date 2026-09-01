@@ -21,9 +21,10 @@ import { requireAdmin } from "@/lib/admin/guard";
 import UnitStatusSelect from "@/components/admin/UnitStatusSelect";
 import { updateUnitStatus } from "./actions";
 
-type Props = { params: { locale: string; id: string } };
+type Props = { params: Promise<{ locale: string; id: string }> };
 
-export default async function AdminUnitsPage({ params }: Props) {
+export default async function AdminUnitsPage(props: Props) {
+  const params = await props.params;
   const { locale, id: projectId } = params;
   await requireAdmin(locale);
 

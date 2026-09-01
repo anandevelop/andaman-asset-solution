@@ -23,9 +23,15 @@ import {
 import { updateSettings } from "./actions";
 import SettingsForm, { type SettingGroup } from "@/components/admin/SettingsForm";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminSettingsPage({ params: { locale } }: Props) {
+export default async function AdminSettingsPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale, Role.ADMIN);
 
   const [t, current, overridden] = await Promise.all([

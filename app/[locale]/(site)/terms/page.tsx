@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { unstable_setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { Mail, Phone, MapPin, FileText } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { siteConfig } from "@/config/site";
@@ -7,15 +7,19 @@ import { locales, type Locale } from "@/i18n";
 import { getTermsOfService } from "@/content/terms";
 import { intlLocale } from "@/lib/format";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const terms = getTermsOfService(locale);
 
   return {
@@ -34,8 +38,14 @@ export async function generateMetadata({
   };
 }
 
-export default function TermsOfServicePage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function TermsOfServicePage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const terms = getTermsOfService(locale);
 

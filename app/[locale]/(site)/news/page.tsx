@@ -10,7 +10,7 @@
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
@@ -23,19 +23,25 @@ import { intlLocale } from "@/lib/format";
 export const revalidate = 300;
 
 type Props = {
-  params: { locale: string };
-  searchParams: { category?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ category?: string }>;
 };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "news" });
 
   return {
@@ -50,8 +56,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function NewsPage({ params: { locale }, searchParams }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function NewsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const category = searchParams.category;
 

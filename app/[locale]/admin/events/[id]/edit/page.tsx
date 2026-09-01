@@ -30,11 +30,13 @@ import RegistrationStatusSelect from "@/components/admin/RegistrationStatusSelec
 import SaveToast from "@/components/admin/SaveToast";
 
 type Props = {
-  params: { locale: string; id: string };
-  searchParams: { created?: string; lang?: string };
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ created?: string; lang?: string }>;
 };
 
-export default async function EditEventPage({ params, searchParams }: Props) {
+export default async function EditEventPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { locale, id } = params;
   await requireAdmin(locale);
 

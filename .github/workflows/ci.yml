@@ -33,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -56,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -85,7 +85,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -139,7 +139,9 @@ jobs:
       # it will not wipe a database that might be someone's development
       # copy. Nothing reads this one.
       DATABASE_URL: postgresql://unused:unused@localhost:5432/unused?schema=public
-      NEXTAUTH_SECRET: e2e-ci-placeholder-secret
+      # 32 characters minimum — lib/env.ts refuses to start the server on a
+      # shorter one, and the e2e job runs `next start`, i.e. NODE_ENV=production.
+      NEXTAUTH_SECRET: e2e-ci-placeholder-secret-000000000000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_DEFAULT_LOCALE: th
       # Tells global-setup.ts that the step below already did the work, so
@@ -152,7 +154,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -208,7 +210,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -292,9 +294,15 @@ jobs:
         # without a database, which is correct — 000 (no response) is the
         # failure we are actually testing for.
         run: |
-          docker run -d --name smoke -p 3000:3000 \
+          # The container validates its environment at startup and exits
+          # non-zero on anything missing (lib/env.ts), so the smoke test has
+          # to hand it a complete one — a 32-character secret included.
+          # NEXT_PUBLIC_SITE_URL is not passed here: it is baked in by
+          # IMAGE_BUILD_ARGS above, which is exactly what this proves.
+          docker run -d --name smoke -p 3000:3000 --init \
             -e DATABASE_URL="postgresql://ci:ci@localhost:5432/ci?schema=public" \
-            -e NEXTAUTH_SECRET="ci-smoke-placeholder-secret" \
+            -e NEXTAUTH_SECRET="ci-smoke-placeholder-secret-0000000000" \
+            -e NEXTAUTH_URL="https://andamanassetsolution.com" \
             andaman-asset-solution:${{ github.sha }}
 
           for i in $(seq 1 30); do

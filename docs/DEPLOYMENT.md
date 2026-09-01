@@ -7,15 +7,16 @@ sign-off, see [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md).
 
 ## What you are deploying
 
-A Next.js 14 App Router application built in `standalone` mode, plus a
-PostgreSQL database. The container serves both the public site and the
+A Next.js 15 App Router application (React 19) built in `standalone` mode,
+plus a PostgreSQL database. The image runs on Node 22 — Node 20 left
+maintenance LTS in April 2026 and no longer receives security patches. The container serves both the public site and the
 admin back-office; there is no separate API service.
 
 | Piece | Where it runs |
 |---|---|
 | Web application | This Docker image, port 3000 |
-| PostgreSQL 16 | Managed service (RDS, Neon, Supabase, Railway) |
-| Image storage | S3 bucket, private, behind CloudFront |
+| PostgreSQL 16 | Managed service (DigitalOcean Managed Databases, RDS, Neon) |
+| Image storage | DigitalOcean Spaces, behind the Spaces CDN |
 | Email | Not implemented — notifications go to LINE |
 
 ---
@@ -26,6 +27,24 @@ admin back-office; there is no separate API service.
 - A PostgreSQL 16 database, reachable from the container
 - An S3 bucket and CloudFront distribution — see §6
 - A domain with DNS pointed at the host
+- **Outbound network from the build machine to `fonts.googleapis.com` and
+  `fonts.gstatic.com`.** `app/[locale]/layout.tsx` loads Roboto through
+  `next/font/google`, which downloads and self-hosts the font files *at
+  build time*: the running container never contacts Google, but a build
+  behind a restrictive egress policy fails outright with
+  `Failed to fetch font 'Roboto'` and no fallback. The registry
+  (`registry.npmjs.org`) and `binaries.prisma.sh` have to be reachable for
+  the same reason.
+
+### The container refuses to start on a bad environment
+
+`instrumentation.ts` validates the environment before the first request
+and exits non-zero when something required is missing or malformed — see
+`lib/env.ts` for the list and LAUNCH_CHECKLIST §2. This is deliberate: the
+alternative is a container that starts, answers every request with a 500,
+and never triggers `restart:`. If the app exits immediately after a deploy,
+read the last ten lines of `docker compose logs app` — the reason is
+printed in full.
 
 ---
 

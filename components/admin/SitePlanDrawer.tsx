@@ -42,9 +42,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import {
   TransformWrapper,
   TransformComponent,
@@ -201,7 +201,7 @@ export default function SitePlanDrawer({
   labels,
 }: Props) {
   const router = useRouter();
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
   const prevStateRef = useRef(state);
 
   const outerRef = useRef<HTMLDivElement>(null);

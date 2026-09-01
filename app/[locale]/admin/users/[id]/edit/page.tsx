@@ -23,9 +23,10 @@ import PasswordForm from "@/components/admin/PasswordForm";
 import DeleteUserForm from "@/components/admin/DeleteUserForm";
 import ResetTwoFactorForm from "@/components/admin/ResetTwoFactorForm";
 
-type Props = { params: { locale: string; id: string } };
+type Props = { params: Promise<{ locale: string; id: string }> };
 
-export default async function EditUserPage({ params }: Props) {
+export default async function EditUserPage(props: Props) {
+  const params = await props.params;
   const { locale, id } = params;
   const actor = await requireAdmin(locale, Role.SUPER_ADMIN);
 

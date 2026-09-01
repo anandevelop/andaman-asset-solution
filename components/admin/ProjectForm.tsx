@@ -6,7 +6,7 @@
  * One form shared by create and edit. The parent binds the right server
  * action, so this component never needs to know which mode it is in.
  *
- * Uses useFormState/useFormStatus rather than react-hook-form: the payload
+ * Uses useActionState/useFormStatus rather than react-hook-form: the payload
  * is plain FormData, validation is authoritative on the server, and this
  * way the form still submits with JavaScript disabled.
  *
@@ -24,8 +24,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
@@ -198,7 +198,7 @@ export default function ProjectForm({
   // The public `projects` namespace already translates every enum label —
   // reuse it rather than maintaining a second copy under `admin`.
   const tEnum = useTranslations("projects");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
   // Purely for conditional field visibility, same pattern as
   // HeroStorySlideForm's mediaType radio — every field stays uncontrolled,
   // this only toggles which uploader renders.

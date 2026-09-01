@@ -39,7 +39,7 @@ const fcVision = localFont({
 
 type Props = {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
 /** og:locale wants underscore-joined IETF tags, not our bare locale codes. */
@@ -73,11 +73,17 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export async function generateMetadata({
-  params: { locale },
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   // Every locale in i18n.ts has a real key on both objects (see
   // config/site.ts) — the `?? .en` is just defensive against a future
   // locale being added to i18n.ts before its copy is written.
@@ -167,7 +173,17 @@ export async function generateMetadata({
   };
 }
 
-export default async function LocaleLayout({ children, params: { locale } }: Props) {
+export default async function LocaleLayout(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  const {
+    children
+  } = props;
+
   if (!locales.includes(locale as (typeof locales)[number])) notFound();
 
   const [messages, t, settings] = await Promise.all([

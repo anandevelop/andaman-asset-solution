@@ -8,9 +8,16 @@ import { createEvent } from "../actions";
 import EventForm from "@/components/admin/EventForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 
-type Props = { params: { locale: string }; searchParams: { lang?: string } };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
-export default async function NewEventPage({ params: { locale }, searchParams }: Props) {
+export default async function NewEventPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   // Creating an event commits the company to a date; editors may edit but
   // not schedule one.
   await requireAdmin(locale, Role.ADMIN);

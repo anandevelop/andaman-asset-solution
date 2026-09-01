@@ -12,10 +12,10 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import RecoveryCodeList from "@/components/admin/RecoveryCodeList";
@@ -53,7 +53,7 @@ function SubmitButton() {
 export default function TwoFactorSetup({ action, qrDataUri, secret }: Props) {
   const t = useTranslations("admin.security");
   const { update } = useSession();
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   const enrolled = state.ok && Boolean(state.codes);
 

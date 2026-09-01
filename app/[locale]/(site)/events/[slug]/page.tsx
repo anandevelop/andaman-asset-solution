@@ -14,7 +14,7 @@ import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
@@ -29,16 +29,21 @@ import { intlLocale } from "@/lib/format";
 export const dynamicParams = true;
 export const revalidate = 120;
 
-type Props = { params: { locale: string; slug: string } };
+type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateStaticParams() {
   const slugs = await getPublishedEventSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params: { locale, slug },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale,
+    slug
+  } = params;
+
   const event = await getEventBySlug(slug, locale);
   if (!event) return { title: "Not found", robots: { index: false } };
 
@@ -67,8 +72,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventPage({ params: { locale, slug } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function EventPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale,
+    slug
+  } = params;
+
+  setRequestLocale(locale);
 
   const event = await getEventBySlug(slug, locale);
 

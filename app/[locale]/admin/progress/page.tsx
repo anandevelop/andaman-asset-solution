@@ -14,9 +14,15 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { formatMonthYear } from "@/lib/format";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminProgressIndexPage({ params: { locale } }: Props) {
+export default async function AdminProgressIndexPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });

@@ -19,10 +19,18 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { ADMIN, PROJECTS } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
+
+/*
+  `npm run test:e2e:db` runs this file directly with `tsx`, outside
+  Playwright entirely — nothing loads `.env` for it otherwise. See the
+  matching comment in playwright.config.ts for what breaks without this.
+*/
+loadEnvConfig(process.cwd());
 
 const BCRYPT_ROUNDS = 10; // Lower than production's 12: this runs per suite.
 

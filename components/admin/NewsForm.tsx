@@ -15,8 +15,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
@@ -192,7 +192,7 @@ export default function NewsForm({
   submitLabel,
 }: Props) {
   const t = useTranslations("admin");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   const err = (name: string) => {
     const code = state.fields?.[name];

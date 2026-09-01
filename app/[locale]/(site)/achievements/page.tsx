@@ -25,7 +25,7 @@
 
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
-import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Trophy } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
@@ -48,15 +48,19 @@ const NARRATIVE_IMAGE_2 = "/gallery/victory/the-victory3.webp";
 
 export const revalidate = 3600;
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const t = await getTranslations({ locale, namespace: "achievements" });
 
   return {
@@ -103,8 +107,14 @@ function AwardCard({ award, index }: { award: Award; index: number }) {
   );
 }
 
-export default async function AchievementsPage({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
+export default async function AchievementsPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
+  setRequestLocale(locale);
 
   const [t, tAwards, awards] = await Promise.all([
     getTranslations("achievements"),

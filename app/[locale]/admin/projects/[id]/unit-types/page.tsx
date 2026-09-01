@@ -25,8 +25,8 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
 type Props = {
-  params: { locale: string; id: string };
-  searchParams: { lang?: string };
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ lang?: string }>;
 };
 
 /** null / Decimal / number → the string an <input> expects — same helper
@@ -36,7 +36,9 @@ function str(value: unknown): string {
   return String(value);
 }
 
-export default async function AdminProjectUnitTypesPage({ params, searchParams }: Props) {
+export default async function AdminProjectUnitTypesPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { locale, id: projectId } = params;
   await requireAdmin(locale);
 

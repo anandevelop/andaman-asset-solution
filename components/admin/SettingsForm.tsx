@@ -16,7 +16,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
@@ -67,7 +68,7 @@ function SubmitButton({ label }: { label: string }) {
 
 export default function SettingsForm({ action, groups, labels }: Props) {
   const t = useTranslations("admin");
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   return (
     <form action={formAction} className="space-y-6">

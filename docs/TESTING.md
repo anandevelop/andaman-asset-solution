@@ -207,6 +207,52 @@ can still fail to prerender. Locally the build would add six minutes to
 every run, which means nobody would run these before pushing — worse than
 the coverage gap.
 
+Force the CI path locally when the change is one dev mode cannot vouch for
+— a framework upgrade, anything touching route segment config, caching or
+the standalone output:
+
+```bash
+npm run test:e2e:db
+CI=1 E2E_DB_ALREADY_PREPARED=1 npm run test:e2e
+```
+
+Worth the six minutes after a major version bump, and not otherwise.
+
+**Both commands, in that order — `CI=1 npm run test:e2e` alone is not
+enough.** Playwright starts `webServer` *before* it runs `globalSetup` (see
+the comment above `export default async function globalSetup` in
+e2e/global-setup.ts), and in CI mode `webServer` is `npm run build && next
+start`. Run that against a database with no schema yet and two different
+things go wrong depending on what "no schema" means:
+
+- **No tables at all** (a database you just `createdb`'d and never pushed a
+  schema to): `next build` prerenders the home page and project list with
+  `lib/db.ts`'s `safeQuery` degrading every query to an empty result, and
+  that emptiness is baked in behind `revalidate = 3600` — seeding
+  afterwards cannot undo it, so every spec that expects a fixture project
+  to be on the page times out instead of failing with a clear "no such
+  table" error.
+- **`E2E_DATABASE_URL` never reaching the server at all**: `playwright.config.ts`
+  and `tsx e2e/global-setup.ts` are plain Node processes — only `next dev` /
+  `next build` / `next start` load `.env` on their own — so without the
+  `loadEnvConfig(process.cwd())` call at the top of both files,
+  `E2E_DATABASE_URL` set only in `.env` never reaches `process.env` here.
+  `SERVER_ENV.DATABASE_URL` then falls back to `""`, and `lib/prisma.ts`'s
+  module-scope `new PrismaClient(...)` throws on that empty URL before any
+  request — before `safeQuery` gets a chance to catch anything. The build
+  never finishes, `next start` never runs, and all Playwright reports is
+  "Process from config.webServer was not able to start. Exit code: 1",
+  with no indication of why.
+
+Running `npm run test:e2e:db` first — which pushes the schema, wipes, and
+seeds fixtures against the real `E2E_DATABASE_URL` — and setting
+`E2E_DB_ALREADY_PREPARED=1` so `globalSetup` does not immediately re-wipe
+what was just seeded, is what CI itself does (see the `test:e2e:db` step in
+`.github/workflows/ci.yml`, run before `test:e2e` with that variable set in
+the job's `env:`). Do the same locally rather than relying on `globalSetup`
+to prepare the database for you in CI mode — by the time it runs, the build
+already rendered whatever the database looked like before.
+
 ### Serial, single worker
 
 The suite writes leads and reads them back, and the login spec depends on a

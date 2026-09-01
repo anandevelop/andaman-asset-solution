@@ -92,6 +92,14 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Skip API routes, Next internals, and static/image assets
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  /*
+    Skip API routes, Next internals, and static/image assets.
+
+    `monitoring` is Sentry's tunnelRoute (see next.config.js). It is a
+    POST-only proxy with no locale of its own, and next-intl's
+    `localePrefix: "always"` would answer every error report with a 307 to
+    /th/monitoring — turning client-side error reporting into a silent
+    no-op exactly when something is already broken.
+  */
+  matcher: ["/((?!api|monitoring|_next|_vercel|.*\\..*).*)"],
 };

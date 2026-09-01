@@ -14,9 +14,15 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { changeOwnPassword } from "../users/actions";
 import PasswordForm from "@/components/admin/PasswordForm";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminAccountPage({ params: { locale } }: Props) {
+export default async function AdminAccountPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const actor = await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });

@@ -18,9 +18,15 @@ import { intlLocale } from "@/lib/format";
 import { translationCompleteness } from "@/lib/admin/translated-form";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
-type Props = { params: { locale: string } };
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function AdminEventsPage({ params: { locale } }: Props) {
+export default async function AdminEventsPage(props: Props) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });

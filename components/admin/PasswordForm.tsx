@@ -10,8 +10,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useRef } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
@@ -48,7 +48,7 @@ function SubmitButton({ label }: { label: string }) {
 export default function PasswordForm({ action, requireCurrent = false }: Props) {
   const t = useTranslations("admin");
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useFormState(action, INITIAL);
+  const [state, formAction] = useActionState(action, INITIAL);
 
   const err = (name: string) => {
     const code = state.fields?.[name];

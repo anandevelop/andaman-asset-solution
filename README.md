@@ -1,6 +1,6 @@
 # Andaman Asset Solution — Phase 2 (Data Layer & API)
 
-Luxury real-estate site for `andamanassetsolution.com`. Next.js 14 (App Router,
+Luxury real-estate site for `andamanassetsolution.com`. Next.js 15 (App Router, React 19,
 TypeScript), Tailwind CSS, PostgreSQL + Prisma, `next-intl` (TH/EN), `framer-motion`,
 `lucide-react`.
 

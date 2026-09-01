@@ -8,9 +8,16 @@ import { createArticle } from "../actions";
 import NewsForm from "@/components/admin/NewsForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 
-type Props = { params: { locale: string }; searchParams: { lang?: string } };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
-export default async function NewArticlePage({ params: { locale }, searchParams }: Props) {
+export default async function NewArticlePage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   await requireAdmin(locale);
 
   const [t, categories] = await Promise.all([

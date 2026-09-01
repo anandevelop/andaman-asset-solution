@@ -16,9 +16,16 @@ import { createProject } from "../actions";
 import ProjectForm from "@/components/admin/ProjectForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 
-type Props = { params: { locale: string }; searchParams: { lang?: string } };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
-export default async function NewProjectPage({ params: { locale }, searchParams }: Props) {
+export default async function NewProjectPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   // Creating a project is an ADMIN-level act; editors may only edit.
   await requireAdmin(locale, Role.ADMIN);
 
