@@ -44,7 +44,7 @@ export default async function AdminProjectsPage(props: Props) {
   const projects = await safeQuery(
     "admin:projects",
     () =>
-      (prisma as any).project.findMany({
+      prisma.project.findMany({
         where: { deletedAt: null },
         orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
         select: {

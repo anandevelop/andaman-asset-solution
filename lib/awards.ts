@@ -12,12 +12,6 @@
  * that only ever worked for th/en; resolving it here once, with the same
  * fallback chain every other model uses, is what makes zh/ru work without
  * teaching every consumer about AwardTranslation.
- *
- * sandbox: `prisma as any` — Award and AwardTranslation were added to
- * schema.prisma in earlier phases; see the cast note above getProjectBySlug
- * in lib/projects.ts for why the locally generated client doesn't type
- * them yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import "server-only";
@@ -59,7 +53,7 @@ type Row = {
 
 /** Active awards, curated order — drives the home page Awards section. */
 export async function getAwards(locale: string): Promise<Award[]> {
-  const db = prisma as any;
+  const db = prisma;
 
   const rows: Row[] = await safeQuery(
     "award.findMany(active)",

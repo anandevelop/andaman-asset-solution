@@ -11,11 +11,6 @@
  * Delete is hard rather than soft, same reasoning as Award/SalesPerson: no
  * public URL, nothing references the row, and removal is a genuine
  * request to erase, not to hide.
- *
- * sandbox: `prisma as any` — ProjectFacility was added to schema.prisma in
- * this phase; see the cast note above getProjectBySlug in lib/projects.ts
- * for why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -65,7 +60,7 @@ export async function createProjectFacility(
   const { locale: editingLocale, name, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).projectFacility.create({
+    await prisma.projectFacility.create({
       data: {
         ...rest,
         projectId,
@@ -113,13 +108,13 @@ export async function updateProjectFacility(
     // bound form action, say) must never cross-write. Nested `translations`
     // upsert needs plain `update`, which only takes a unique-field where —
     // updateMany can't do nested relation writes, so the check moves here.
-    const owned = await (prisma as any).projectFacility.findFirst({
+    const owned = await prisma.projectFacility.findFirst({
       where: { id, projectId },
       select: { id: true },
     });
     if (!owned) return { ok: false, message: "SAVE_FAILED" };
 
-    await (prisma as any).projectFacility.update({
+    await prisma.projectFacility.update({
       where: { id },
       data: {
         ...rest,
@@ -159,7 +154,7 @@ export async function deleteProjectFacility(
 ): Promise<void> {
   await requireAdminAction(Role.ADMIN);
 
-  await (prisma as any).projectFacility.deleteMany({ where: { id, projectId } });
+  await prisma.projectFacility.deleteMany({ where: { id, projectId } });
 
   revalidateFacilities(locale, projectId, projectSlug);
 }

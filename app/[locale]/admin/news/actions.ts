@@ -83,7 +83,7 @@ export async function createArticle(
 
   let created;
   try {
-    created = await (prisma as any).newsArticle.create({
+    created = await prisma.newsArticle.create({
       data: {
         ...rest,
         publishedAt: resolvePublishedAt(parsed.data),
@@ -136,12 +136,12 @@ export async function updateArticle(
   try {
     // The original slug still needs revalidating when it changes, or the
     // old URL keeps serving a stale page until its window expires.
-    const before = await (prisma as any).newsArticle.findUnique({
+    const before = await prisma.newsArticle.findUnique({
       where: { id },
       select: { slug: true },
     });
 
-    const updated = await (prisma as any).newsArticle.update({
+    const updated = await prisma.newsArticle.update({
       where: { id },
       data: {
         ...rest,

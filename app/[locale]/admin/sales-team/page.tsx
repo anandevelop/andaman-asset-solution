@@ -5,10 +5,6 @@
  * same arrangement as /admin/faqs. Reordering is the sortOrder field on
  * each form, not drag-and-drop, matching every other list in this admin
  * (progress months, FAQs).
- *
- * sandbox: `prisma as any` — SalesPerson was added to schema.prisma in
- * this phase; see the cast note in ./actions.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { getTranslations } from "next-intl/server";
@@ -35,7 +31,7 @@ export default async function AdminSalesTeamPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
   const lang = parseEditingLocale(searchParams.lang);
 
   const team = await safeQuery(

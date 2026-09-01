@@ -11,12 +11,6 @@
  * zh/ru, so the resolution moved down into this fetcher (the one place
  * that knows about SalesPersonTranslation) instead of teaching the
  * component about it too.
- *
- * sandbox: `prisma as any` — SalesPerson and SalesPersonTranslation were
- * added to schema.prisma in earlier phases; see the cast note above
- * getProjectBySlug in lib/projects.ts for why the locally generated client
- * doesn't type them yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import "server-only";
@@ -63,7 +57,7 @@ type Row = {
 
 /** Active sales team members, curated order. */
 export async function getSalesTeam(locale: string): Promise<SalesPerson[]> {
-  const db = prisma as any;
+  const db = prisma;
 
   const rows: Row[] = await safeQuery(
     "salesPerson.findMany(active)",

@@ -34,7 +34,7 @@ export default async function AdminNewsPage(props: Props) {
   const articles = await safeQuery(
     "admin:news",
     () =>
-      (prisma as any).newsArticle.findMany({
+      prisma.newsArticle.findMany({
         where: { deletedAt: null },
         orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
         select: {

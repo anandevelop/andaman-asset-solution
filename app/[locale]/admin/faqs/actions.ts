@@ -69,7 +69,7 @@ export async function createFaq(
   const { locale: editingLocale, question, answer, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).faq.create({
+    await prisma.faq.create({
       data: {
         ...rest,
         // questionEn/questionTh/answerEn/answerTh are @deprecated but
@@ -104,7 +104,7 @@ export async function updateFaq(
   const { locale: editingLocale, question, answer, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).faq.update({
+    await prisma.faq.update({
       where: { id },
       data: {
         ...rest,

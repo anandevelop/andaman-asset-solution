@@ -47,10 +47,9 @@ function publishedWhere(): Prisma.EventWhereInput {
   return { isPublished: true };
 }
 
-// Not `satisfies Prisma.EventSelect` — `translations` is a relation added
-// to Event in this follow-up i18n pass (see schema.prisma's Event model)
-// that the locally generated Prisma client doesn't type yet; same
-// `prisma as any` sandbox situation as getProjectBySlug in lib/projects.ts.
+// `satisfies Prisma.EventSelect` is back — see the same note in
+// lib/news.ts. The generated client types the `translations` relation now,
+// so the clause that was dropped for it can do its job again.
 const CARD_SELECT = {
   id: true,
   slug: true,
@@ -68,7 +67,7 @@ const CARD_SELECT = {
     where: { status: { in: [...SEAT_TAKING_STATUSES] } },
     select: { partySize: true },
   },
-};
+} satisfies Prisma.EventSelect;
 
 type CardRow = any;
 
@@ -102,7 +101,7 @@ export async function getPublishedEvents(
   const rows = await safeQuery(
     "event.findMany(published)",
     () =>
-      (prisma as any).event.findMany({
+      prisma.event.findMany({
         where: publishedWhere(),
         orderBy: { startsAt: "asc" },
         select: CARD_SELECT,
@@ -125,7 +124,7 @@ export const getEventBySlug = cache(
     const row = await safeQuery<CardRow | null>(
       `event.findUnique(${slug})`,
       () =>
-        (prisma as any).event.findUnique({
+        prisma.event.findUnique({
           where: { slug },
           select: { ...CARD_SELECT, isPublished: true },
         }),

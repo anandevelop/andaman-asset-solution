@@ -34,11 +34,7 @@ export default async function AdminEventsPage(props: Props) {
   const events = await safeQuery(
     "admin:events",
     () =>
-      // sandbox: `prisma as any` — `translations` is a relation added to
-      // Event in this follow-up i18n pass (see schema.prisma's Event
-      // model) that the locally generated Prisma client doesn't type yet;
-      // same tradeoff as getProjectBySlug in lib/projects.ts.
-      (prisma as any).event.findMany({
+      prisma.event.findMany({
         orderBy: { startsAt: "desc" },
         select: {
           id: true,

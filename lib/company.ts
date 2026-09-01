@@ -28,15 +28,10 @@ export type CompanyProfileSummary = {
  * The singleton row (`id: "default"`), or null if it hasn't been seeded
  * yet. Callers should fall back to existing static copy rather than
  * rendering nothing — see app/[locale]/about/page.tsx.
- *
- * sandbox: `prisma as any` — CompanyProfile and CompanyProfileTranslation
- * were added to schema.prisma in earlier phases; see the cast note above
- * getProjectBySlug in lib/projects.ts for why the locally generated client
- * doesn't type them yet.
  */
 export const getCompanyProfile = cache(
   async (locale: string): Promise<CompanyProfileSummary | null> => {
-    const db = prisma as any;
+    const db = prisma;
 
     const profile = await safeQuery<any>(
       "companyProfile.findUnique(default)",

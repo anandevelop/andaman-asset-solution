@@ -30,7 +30,7 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { PrismaClient, PropertyType, ProjectStatus } from "@prisma/client";
+import { Prisma, PrismaClient, PropertyType, ProjectStatus } from "@prisma/client";
 
 // ─────────────────────────────────────────────────────────────────────────
 // RICH PROJECT CONTENT (Sale-Kit parity) — Phase 11.5
@@ -550,6 +550,10 @@ function richContentUpdateFields(
     aboutThisProjectImageUrl: content.aboutThisProjectEn
       ? galleryUrl(content.slug, aboutThisProjectImageAsset)
       : null,
+    // Prisma.DbNull, not a bare null: a Json? column has two possible nulls
+    // — SQL NULL and the JSON literal `null` — so Prisma asks which is
+    // meant rather than guessing. This is the SQL one, which is what a bare
+    // null resolved to anyway.
     specialFeatures:
       content.specialFeatures.length > 0
         ? content.specialFeatures.map((f) => ({
@@ -558,7 +562,7 @@ function richContentUpdateFields(
             detailEn: f.detailEn,
             detailTh: null,
           }))
-        : null,
+        : Prisma.DbNull,
     location: units.location,
     landAreaSqm: units.landAreaSqm.toFixed(2),
     totalUnits: units.totalUnits,
@@ -667,15 +671,14 @@ async function main() {
 
   // ── Rich project content (Sale-Kit parity) ──────────────────────────────
   //
-  // Cast to `any` for this block only: the six models/columns below were
-  // added to schema.prisma in this phase, but the sandbox this seed was
-  // authored in cannot reach the network to run `prisma generate` (see the
-  // long comment in lib/projects.ts), so the locally generated client's
-  // types predate them. The SQL these calls emit is still exactly what a
-  // properly generated client would produce — this only works around a
-  // stale *type* declaration, not a schema mismatch. Safe to drop the cast
-  // the moment `prisma generate` has been run against this schema.
-  const db = prisma as any;
+  // This block used to run through `const db = prisma as any`, on the
+  // grounds that the sandbox the seed was written in could not reach the
+  // network to run `prisma generate`, so the client's types predated the
+  // models below. That was true when it was written and is not any more —
+  // the generated client matches schema.prisma byte for byte, and CI runs
+  // `prisma generate` before typecheck regardless. The cast is gone and the
+  // calls type-check as they are.
+  const db = prisma;
 
   // ── "Our Sales" team ─────────────────────────────────────────────────
   //

@@ -6,11 +6,6 @@
  * one project instead of global (a "Clubhouse" card on this project can
  * carry a different photo, or none, from "Clubhouse" on another — see the
  * model comment on ProjectFacility in schema.prisma).
- *
- * sandbox: `prisma as any` — ProjectFacility was added to schema.prisma in
- * this phase; see the cast note above getProjectBySlug in lib/projects.ts
- * for why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Link from "next/link";
@@ -37,7 +32,7 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
   const lang = parseEditingLocale(searchParams.lang);
 
   const project = await db.project.findFirst({

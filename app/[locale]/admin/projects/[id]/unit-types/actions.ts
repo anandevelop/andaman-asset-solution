@@ -21,11 +21,6 @@
  * longer in the submitted list is deleted. All of it runs inside one
  * `$transaction` so a failure partway through never leaves floor plans and
  * their unit type out of sync.
- *
- * sandbox: `prisma as any` throughout — ProjectUnitType/FloorPlan predate
- * a runnable `prisma generate` here; see the cast note above
- * getProjectBySlug in lib/projects.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -137,7 +132,7 @@ export async function saveUnitType(
   const { rows: floorPlanRows, fields: floorPlanErrors } = readFloorPlanRows(formData);
   if (floorPlanErrors) return { ok: false, fields: floorPlanErrors };
 
-  const db = prisma as any;
+  const db = prisma;
 
   try {
     await db.$transaction(async (tx: any) => {
@@ -240,7 +235,7 @@ export async function deleteUnitType(
 
   // Ownership-scoped delete — floor plans cascade via the FK's
   // onDelete: Cascade, same as ProjectFacility's hard delete.
-  await (prisma as any).projectUnitType.deleteMany({ where: { id: unitTypeId, projectId } });
+  await prisma.projectUnitType.deleteMany({ where: { id: unitTypeId, projectId } });
 
   revalidateUnitTypes(locale, projectId, projectSlug);
 }

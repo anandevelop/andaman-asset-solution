@@ -85,9 +85,19 @@ function toPrismaData(input: ReturnType<typeof projectSchema.parse>) {
     slug: input.slug,
     conceptDesignImageUrl: input.conceptDesignImageUrl,
     aboutThisProjectImageUrl: input.aboutThisProjectImageUrl,
-    // [] → null: matches the nullable Json? column and how prisma/seed.ts
-    // stores "no special features" — see the field comment in schema.prisma.
-    specialFeatures: input.specialFeatures.length > 0 ? input.specialFeatures : null,
+    /*
+      [] → SQL NULL: matches the nullable Json? column and how prisma/seed.ts
+      stores "no special features" — see the field comment in schema.prisma.
+
+      Prisma.DbNull rather than a bare null. For a Json? column the two
+      possible nulls are different values — SQL NULL and the JSON literal
+      `null` — so Prisma refuses to guess and asks which one is meant. It
+      accepts a bare null at runtime and stores SQL NULL, which is why this
+      never misbehaved; the `prisma as any` on this call was simply hiding
+      the question. DbNull is the same result, stated rather than inferred.
+    */
+    specialFeatures:
+      input.specialFeatures.length > 0 ? input.specialFeatures : Prisma.DbNull,
     location: input.location,
     propertyType: input.propertyType,
     status: input.status,
@@ -158,10 +168,7 @@ export async function createProject(
 
   let created;
   try {
-    // sandbox: as-any — conceptDesignEn/Th, aboutThisProjectEn/Th and
-    // specialFeatures predate a runnable `prisma generate` here; see the
-    // cast note above getProjectBySlug in lib/projects.ts.
-    created = await (prisma as any).project.create({
+    created = await prisma.project.create({
       data: {
         ...toPrismaData(parsed.data),
         // nameEn/nameTh etc. are @deprecated but nameEn/nameTh are still
@@ -229,8 +236,7 @@ export async function updateProject(
     translatedFields(parsed.data);
 
   try {
-    // sandbox: as-any — see the create() branch above.
-    const updated = await (prisma as any).project.update({
+    const updated = await prisma.project.update({
       where: { id },
       data: {
         ...toPrismaData(parsed.data),

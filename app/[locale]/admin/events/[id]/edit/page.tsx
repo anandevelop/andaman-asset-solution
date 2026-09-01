@@ -43,12 +43,7 @@ export default async function EditEventPage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
 
-  // sandbox: `prisma as any` — agencyName/whatsapp (EventRegistration) and
-  // translations (Event, from this same follow-up) were added after the
-  // locally generated Prisma client (this sandbox has no network access to
-  // Prisma's binary CDN to re-run `prisma generate`), same tradeoff already
-  // documented above getProjectBySlug in lib/projects.ts.
-  const db = prisma as any;
+  const db = prisma;
 
   const event = await db.event.findUnique({
     where: { id },
@@ -78,8 +73,10 @@ export default async function EditEventPage(props: Props) {
   const completeness = translationCompleteness<any>(event.translations, "title");
   const editing = pickEditingTranslation<any>(event.translations, lang);
 
-  // Re-typed by hand since `event` came back through the `prisma as any`
-  // cast above — the shape matches the `select` block exactly.
+  // Re-typed by hand because `event` is still annotated `any` at the query
+  // above — the `prisma as any` cast is gone, that annotation is not. The
+  // shape matches the `select` block exactly; deleting it in favour of
+  // inference is the follow-up, not a rename.
   type Registration = {
     id: string;
     name: string;

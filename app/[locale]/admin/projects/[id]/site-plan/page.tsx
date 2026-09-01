@@ -5,12 +5,6 @@
  * image so components/SitePlanMap.tsx has something to render on the
  * public project page. Linked from ../units (per-row "Draw Shape") and
  * from the project edit page header.
- *
- * sandbox: `prisma as any` — shapePoints/positionXPercent/Y were added to
- * ProjectUnit in this phase; see the cast note above getProjectBySlug in
- * lib/projects.ts for why the locally generated client doesn't type them
- * yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Link from "next/link";
@@ -34,7 +28,7 @@ export default async function AdminSitePlanPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
 
   const project = await db.project.findFirst({
     where: { id: projectId, deletedAt: null },

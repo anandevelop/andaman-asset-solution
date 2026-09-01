@@ -8,11 +8,6 @@
  * Delete is hard rather than soft, same reasoning as SalesPerson: no
  * public URL, nothing references the row, and removal is a genuine
  * request to erase, not to hide.
- *
- * sandbox: `prisma as any` — Award was added to schema.prisma in this
- * phase; see the cast note above getProjectBySlug in lib/projects.ts for
- * why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -77,7 +72,7 @@ export async function createAward(
   const { locale: editingLocale, title, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).award.create({
+    await prisma.award.create({
       data: {
         ...rest,
         // titleEn/titleTh are @deprecated but still NOT NULL (see
@@ -122,7 +117,7 @@ export async function updateAward(
   const { locale: editingLocale, title, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).award.update({
+    await prisma.award.update({
       where: { id },
       data: {
         ...rest,
@@ -158,7 +153,7 @@ export async function updateAward(
 export async function deleteAward(locale: string, id: string): Promise<void> {
   await requireAdminAction(Role.ADMIN);
 
-  await (prisma as any).award.delete({ where: { id } });
+  await prisma.award.delete({ where: { id } });
 
   revalidateAwards(locale);
 }

@@ -5,11 +5,6 @@
  * (specs + its own floor-plan photos) — same arrangement as
  * ../facilities/page.tsx, just one field deeper (each type carries its
  * own nested FloorPlansEditor rather than a single image field).
- *
- * sandbox: `prisma as any` — ProjectUnitType/FloorPlan predate a runnable
- * `prisma generate` here; see the cast note above getProjectBySlug in
- * lib/projects.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Link from "next/link";
@@ -43,7 +38,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
   const lang = parseEditingLocale(searchParams.lang);
 
   const project = await db.project.findFirst({

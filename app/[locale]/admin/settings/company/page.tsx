@@ -33,9 +33,7 @@ export default async function AdminCompanyProfilePage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
 
-  // sandbox: as-any — CompanyProfile predates a runnable `prisma generate`
-  // here; see the cast note in ./actions.ts.
-  const db = prisma as any;
+  const db = prisma;
   const profile = await db.companyProfile.findUnique({
     where: { id: "default" },
     include: { translations: true },

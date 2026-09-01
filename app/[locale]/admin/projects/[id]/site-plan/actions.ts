@@ -10,12 +10,6 @@
  * string is that the centroid can be derived here, every time, so
  * positionXPercent/Y can never drift out of sync with the shape that
  * produced them.
- *
- * sandbox: `prisma as any` — shapePoints/positionXPercent/Y were added to
- * ProjectUnit in this phase; see the cast note above getProjectBySlug in
- * lib/projects.ts for why the locally generated client doesn't type them
- * yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -63,7 +57,7 @@ export async function saveUnitShape(
     // never be writable through this action), and Prisma's `update`
     // only accepts its generated unique-where shape — id alone, or the
     // projectId_unitNumber compound — not an arbitrary combination.
-    const result = await (prisma as any).projectUnit.updateMany({
+    const result = await prisma.projectUnit.updateMany({
       where: { id: unitId, projectId },
       data: { shapePoints, positionXPercent, positionYPercent },
     });

@@ -31,7 +31,7 @@ export default async function EditArticlePage(props: Props) {
 
   const [t, article, categories] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
-    (prisma as any).newsArticle.findFirst({
+    prisma.newsArticle.findFirst({
       where: { id, deletedAt: null },
       include: { translations: true },
     }),

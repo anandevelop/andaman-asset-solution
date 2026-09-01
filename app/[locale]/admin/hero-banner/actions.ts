@@ -12,11 +12,6 @@
  * Delete is hard rather than soft: no public URL points at a slide id, and
  * removal from the admin is a genuine request to take it off the homepage
  * for good, not to hide it.
- *
- * sandbox: `prisma as any` — HeroStorySlide was added to schema.prisma in
- * this phase; see the cast note above getProjectBySlug in lib/projects.ts
- * for why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -71,7 +66,7 @@ export async function createHeroStorySlide(
   const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).heroStorySlide.create({
+    await prisma.heroStorySlide.create({
       data: {
         ...rest,
         translations: { create: { locale: editingLocale, caption, tagline, ctaLabel } },
@@ -106,7 +101,7 @@ export async function updateHeroStorySlide(
   const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).heroStorySlide.update({
+    await prisma.heroStorySlide.update({
       where: { id },
       data: {
         ...rest,
@@ -137,7 +132,7 @@ export async function updateHeroStorySlide(
 export async function deleteHeroStorySlide(locale: string, id: string): Promise<void> {
   await requireAdminAction(Role.ADMIN);
 
-  await (prisma as any).heroStorySlide.delete({ where: { id } });
+  await prisma.heroStorySlide.delete({ where: { id } });
 
   revalidateHeroBanner(locale);
 }

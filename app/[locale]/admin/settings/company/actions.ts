@@ -7,11 +7,6 @@
  * by /about and reused anywhere a project page wants a company blurb. One
  * row (id: "default"), so this is an upsert against a fixed id rather than
  * a create/update pair keyed off a route param.
- *
- * sandbox: `prisma as any` — CompanyProfile was added to schema.prisma in
- * this phase; see the cast note above getProjectBySlug in lib/projects.ts
- * for why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -46,7 +41,7 @@ export async function updateCompanyProfile(
   }
 
   const { aboutUs } = parsed.data;
-  const db = prisma as any;
+  const db = prisma;
 
   try {
     await db.companyProfile.upsert({

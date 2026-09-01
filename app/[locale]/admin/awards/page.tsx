@@ -4,10 +4,6 @@
  * Awards: add at the top, every existing award editable in place — same
  * arrangement as /admin/sales-team. Reordering is the sortOrder field on
  * each form, not drag-and-drop, matching every other list in this admin.
- *
- * sandbox: `prisma as any` — Award was added to schema.prisma in this
- * phase; see the cast note in ./actions.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { getTranslations } from "next-intl/server";
@@ -34,7 +30,7 @@ export default async function AdminAwardsPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
   const lang = parseEditingLocale(searchParams.lang);
 
   const awards = await safeQuery(

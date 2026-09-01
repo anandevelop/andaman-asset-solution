@@ -5,10 +5,6 @@
  * place — same arrangement as /admin/awards. Reordering is the sortOrder
  * field on each form, not drag-and-drop, matching every other list in this
  * admin; "toggling" a slide off is the isActive checkbox on its form.
- *
- * sandbox: `prisma as any` — HeroStorySlide was added to schema.prisma in
- * this phase; see the cast note on ./actions.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { getTranslations } from "next-intl/server";
@@ -35,7 +31,7 @@ export default async function AdminHeroBannerPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
   const lang = parseEditingLocale(searchParams.lang);
 
   const slides = await safeQuery(

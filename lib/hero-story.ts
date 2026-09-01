@@ -77,7 +77,7 @@ export async function getHeroStorySlides(locale: string): Promise<HeroStorySlide
   const rows = await safeQuery(
     "heroStorySlide.findMany(active)",
     () =>
-      (prisma as any).heroStorySlide.findMany({
+      prisma.heroStorySlide.findMany({
         where: { isActive: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         select: SELECT,

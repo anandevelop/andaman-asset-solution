@@ -6,10 +6,6 @@
  * ../site-plan?unit=id, pre-selecting that unit there). Grouped by unit
  * type, same grouping the public project page's status table uses, so
  * the two stay easy to compare side by side.
- *
- * sandbox: `prisma as any` — see the cast note above getProjectBySlug in
- * lib/projects.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Link from "next/link";
@@ -29,7 +25,7 @@ export default async function AdminUnitsPage(props: Props) {
   await requireAdmin(locale);
 
   const t = await getTranslations({ locale, namespace: "admin" });
-  const db = prisma as any;
+  const db = prisma;
 
   const project = await db.project.findFirst({
     where: { id: projectId, deletedAt: null },

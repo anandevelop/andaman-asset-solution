@@ -8,11 +8,6 @@
  * Delete is hard rather than soft: no public URL, nothing references the
  * row, and removal (someone leaving the sales team) is a genuine request
  * to erase, not to hide.
- *
- * sandbox: `prisma as any` — SalesPerson was added to schema.prisma in
- * this phase; see the cast note above getProjectBySlug in lib/projects.ts
- * for why the locally generated client doesn't type it yet.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -81,7 +76,7 @@ export async function createSalesPerson(
   const { locale: editingLocale, name, position, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).salesPerson.create({
+    await prisma.salesPerson.create({
       data: {
         ...rest,
         // nameEn/nameTh/positionEn/positionTh are @deprecated but still
@@ -123,7 +118,7 @@ export async function updateSalesPerson(
   const { locale: editingLocale, name, position, ...rest } = parsed.data;
 
   try {
-    await (prisma as any).salesPerson.update({
+    await prisma.salesPerson.update({
       where: { id },
       data: {
         ...rest,
@@ -156,7 +151,7 @@ export async function updateSalesPerson(
 export async function deleteSalesPerson(locale: string, id: string): Promise<void> {
   await requireAdminAction(Role.ADMIN);
 
-  await (prisma as any).salesPerson.delete({ where: { id } });
+  await prisma.salesPerson.delete({ where: { id } });
 
   revalidateSalesTeam(locale);
 }

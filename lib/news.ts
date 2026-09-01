@@ -48,10 +48,10 @@ function publishedWhere(): Prisma.NewsArticleWhereInput {
   };
 }
 
-// Not `satisfies Prisma.NewsArticleSelect` — `translations` is a relation
-// added to NewsArticle in this phase (see schema.prisma's NewsArticle
-// model) that the locally generated Prisma client doesn't type yet; same
-// `prisma as any` sandbox situation as getProjectBySlug in lib/projects.ts.
+// `satisfies Prisma.NewsArticleSelect` is back. It was dropped when the
+// generated client did not yet type the `translations` relation; it does
+// now, and this is the line that catches a field renamed in schema.prisma
+// but not here — the failure this file would otherwise hit at runtime.
 const CARD_SELECT = {
   id: true,
   slug: true,
@@ -67,7 +67,7 @@ const CARD_SELECT = {
   publishedAt: true,
   author: { select: { name: true } },
   translations: true,
-};
+} satisfies Prisma.NewsArticleSelect;
 
 type CardRow = any;
 
@@ -99,7 +99,7 @@ export async function getPublishedArticles(
   const rows = await safeQuery(
     "newsArticle.findMany(published)",
     () =>
-      (prisma as any).newsArticle.findMany({
+      prisma.newsArticle.findMany({
         where: {
           ...publishedWhere(),
           ...(options.category ? { category: options.category } : {}),
@@ -125,7 +125,7 @@ export const getArticleBySlug = cache(
     const row = await safeQuery<any>(
       `newsArticle.findUnique(${slug})`,
       () =>
-        (prisma as any).newsArticle.findUnique({
+        prisma.newsArticle.findUnique({
           where: { slug },
           select: {
             ...CARD_SELECT,

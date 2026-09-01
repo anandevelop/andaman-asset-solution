@@ -42,10 +42,7 @@ export default async function EditProjectPage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
 
-  // sandbox: as-any — conceptDesignEn/Th, aboutThisProjectEn/Th and
-  // specialFeatures predate a runnable `prisma generate` here; see the
-  // cast note above getProjectBySlug in lib/projects.ts.
-  const project: any = await (prisma as any).project.findFirst({
+  const project: any = await prisma.project.findFirst({
     where: { id, deletedAt: null },
     include: { translations: true },
   });

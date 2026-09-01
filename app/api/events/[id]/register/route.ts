@@ -106,11 +106,7 @@ export async function POST(request: Request, props: Params) {
   }
 
   try {
-    // sandbox: `prisma as any` — `translations` is a relation added to
-    // Event in the follow-up i18n pass (see schema.prisma's Event model)
-    // that the locally generated Prisma client doesn't type yet; same
-    // tradeoff as getProjectBySlug in lib/projects.ts.
-    const event = await (prisma as any).event.findUnique({
+    const event = await prisma.event.findUnique({
       where: { id: params.id },
       select: {
         id: true,

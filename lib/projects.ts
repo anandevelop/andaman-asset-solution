@@ -268,15 +268,23 @@ function buildOrderBy(sort: SortOption): Prisma.ProjectOrderByWithRelationInput[
  */
 export const getProjectBySlug = cache(
   async (slug: string, locale: string): Promise<ProjectDetail | null> => {
-    // sandbox: as-any cast — conceptDesignEn/Th, aboutThisProjectEn/Th and
-    // specialFeatures were added to Project in this phase; see the cast
-    // note above the rich-content block in prisma/seed.ts for why the
-    // locally generated client doesn't type them yet. The plain query
-    // below is otherwise identical to every other call in this file.
+    /*
+      The `prisma as any` that used to wrap this call is gone, along with
+      the thirty-five others it was copied to. It was added when the
+      generated client genuinely predated conceptDesignEn/Th,
+      aboutThisProjectEn/Th and specialFeatures; that stopped being true
+      once `prisma generate` ran against the current schema, and CI has
+      been running it before typecheck all along.
+
+      The `: any` on the row below is the remaining half and is still real
+      work: it stands in for the shape this query returns, which is wider
+      than ProjectDetail and includes the translations relation. Typing it
+      properly means naming that shape, not deleting the annotation.
+    */
     const project: any = await safeQuery(
       `project.findUnique(${slug})`,
       () =>
-        (prisma as any).project.findUnique({
+        prisma.project.findUnique({
           where: { slug },
           include: { translations: true },
         }),
@@ -350,7 +358,7 @@ export async function getPublishedProjects(
 
   const projects: any[] = await safeQuery(
     "project.findMany(published)",
-    () => (prisma as any).project.findMany({ where, orderBy, include: { translations: true } }),
+    () => prisma.project.findMany({ where, orderBy, include: { translations: true } }),
     [],
   );
 
@@ -443,7 +451,7 @@ export async function getProjectsWithProgress(
   const projects: any[] = await safeQuery(
     "project.findMany(withProgress)",
     () =>
-      (prisma as any).project.findMany({
+      prisma.project.findMany({
         where: {
           isPublished: true,
           deletedAt: null,
@@ -533,10 +541,9 @@ export async function getProjectProgress(
 
 // ─────────────────────────────────────────────────────────────────────────
 // UNIT TYPES / UNITS / NEARBY ATTRACTIONS — Rich Project Content (Sale-Kit
-// parity). All three query the models restored/added in this phase; see
-// the as-any cast note on getProjectBySlug above for why `prisma as any`
-// appears throughout — it wears off the moment `prisma generate` runs for
-// real against the current schema.prisma.
+// parity). These used to be cast through `prisma as any` because the
+// generated client predated the models; it does not any more, and the
+// queries below type-check as written.
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Unit types for the "Unit Types" table on a project page, each with its
@@ -545,7 +552,7 @@ export async function getUnitTypesForProject(
   projectId: string,
   locale: string,
 ): Promise<UnitTypeSummary[]> {
-  const db = prisma as any;
+  const db = prisma;
 
   const types = await safeQuery(
     `projectUnitType.findMany(${projectId})`,
@@ -592,7 +599,7 @@ export async function getUnitTypesForProject(
 /** Individual plots for the Site Plan + Unit Status section — one row per
  *  physical unit, each carrying its own sale status. */
 export async function getProjectUnits(projectId: string): Promise<ProjectUnitSummary[]> {
-  const db = prisma as any;
+  const db = prisma;
 
   const units = await safeQuery(
     `projectUnit.findMany(${projectId})`,
@@ -643,14 +650,12 @@ export async function getNearbyAttractions(
  * the "Facilities" section on the project page. See the model comment on
  * ProjectFacility in schema.prisma for why this is a child table rather
  * than the plain `facilities` string array (now deprecated) on Project.
- *
- * sandbox: `prisma as any` — see the cast note above getProjectBySlug.
  */
 export async function getProjectFacilities(
   projectId: string,
   locale: string,
 ): Promise<ProjectFacilitySummary[]> {
-  const db = prisma as any;
+  const db = prisma;
 
   const rows = await safeQuery(
     `projectFacility.findMany(${projectId})`,

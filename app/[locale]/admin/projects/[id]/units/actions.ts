@@ -9,10 +9,6 @@
  * phase; units come from prisma/seed.ts's Sale Kit import, and the two
  * things an admin actually changes day to day are status (here) and
  * shapePoints (../site-plan/actions.ts).
- *
- * sandbox: `prisma as any` — see the cast note above getProjectBySlug in
- * lib/projects.ts.
- * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { revalidatePath } from "next/cache";
@@ -40,7 +36,7 @@ export async function updateUnitStatus(
   try {
     // updateMany, not update — see the identical reasoning in
     // ../site-plan/actions.ts's saveUnitShape.
-    const result = await (prisma as any).projectUnit.updateMany({
+    const result = await prisma.projectUnit.updateMany({
       where: { id: unitId, projectId },
       data: { status: parsed.data.status },
     });

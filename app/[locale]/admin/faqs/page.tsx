@@ -37,7 +37,7 @@ export default async function AdminFaqsPage(props: Props) {
     safeQuery(
       "admin:faqs",
       () =>
-        (prisma as any).faq.findMany({
+        prisma.faq.findMany({
           orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
           include: { translations: true },
         }),

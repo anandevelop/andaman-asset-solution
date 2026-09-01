@@ -11,6 +11,7 @@
  */
 
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { pickLocale } from "@/lib/locale";
@@ -27,9 +28,9 @@ export type Faq = {
   category: string | null;
 };
 
-// Not `satisfies Prisma.FaqSelect` — `translations` isn't in the locally
-// generated client's types; see the cast note above getProjectBySlug in
-// lib/projects.ts for why.
+// `satisfies Prisma.FaqSelect` is back — the clause was dropped because
+// the generated client did not type `translations`, which it does now. It
+// is the check that would have caught this select drifting from the model.
 const SELECT = {
   id: true,
   questionEn: true,
@@ -38,7 +39,7 @@ const SELECT = {
   answerTh: true,
   category: true,
   translations: true,
-} as const;
+} as const satisfies Prisma.FaqSelect;
 
 type Row = any;
 
@@ -69,7 +70,7 @@ export async function getFaqs(
   const rows = await safeQuery(
     "faq.findMany(published)",
     () =>
-      (prisma as any).faq.findMany({
+      prisma.faq.findMany({
         where: {
           isPublished: true,
           ...(options.categories?.length

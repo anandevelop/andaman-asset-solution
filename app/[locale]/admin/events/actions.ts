@@ -76,7 +76,7 @@ export async function createEvent(
 
   let created;
   try {
-    created = await (prisma as any).event.create({
+    created = await prisma.event.create({
       data: {
         ...rest,
         capacity: capacity === null ? null : Math.round(capacity),
@@ -134,7 +134,7 @@ export async function updateEvent(
       select: { slug: true },
     });
 
-    const updated = await (prisma as any).event.update({
+    const updated = await prisma.event.update({
       where: { id },
       data: {
         ...data,
