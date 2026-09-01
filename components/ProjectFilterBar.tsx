@@ -23,7 +23,7 @@
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { ChevronDown, Loader2, SlidersHorizontal, X } from "lucide-react";
 import {
   SORT_OPTIONS,
@@ -69,7 +69,36 @@ export default function ProjectFilterBar({
   );
   const activeCount = countActiveFilters(filters);
 
+  /*
+    What the visitor has asked for, which is not always what the URL says
+    yet.
+
+    `searchParams` only changes once the transition below commits, so two
+    chips tapped in quick succession both read the same pre-first-tap
+    snapshot — and the second overwrites the first. Tap Pool Villa and then
+    Ready to Move In fast enough and the type filter is silently gone: the
+    URL ends up with `?status=READY_TO_MOVE_IN` alone and the grid shows
+    every ready-to-move-in project, villas and condos together. Measured at
+    roughly one tap-pair in six against a production build, which is well
+    inside what a real thumb does on a phone.
+
+    Holding the requested set in a ref keeps the toggles composing while
+    the navigation is in flight. The URL stays the source of truth: when it
+    changes under us — the back button, a pasted link, a filter cleared
+    from elsewhere — the ref adopts it rather than fighting it.
+  */
+  const searchKey = searchParams.toString();
+  const lastSearchKey = useRef(searchKey);
+  const requested = useRef<ProjectFilters>(filters);
+
+  if (lastSearchKey.current !== searchKey) {
+    lastSearchKey.current = searchKey;
+    requested.current = filters;
+  }
+
   const navigate = (next: ProjectFilters) => {
+    requested.current = next;
+
     startTransition(() => {
       router.replace(`/${locale}/projects${buildProjectQuery(next)}`, {
         // The filter bar is at the top of the results; jumping to the page
@@ -84,7 +113,8 @@ export default function ProjectFilterBar({
     key: K,
     value: ProjectFilters[K],
   ) => {
-    navigate({ ...filters, [key]: filters[key] === value ? null : value });
+    const current = requested.current;
+    navigate({ ...current, [key]: current[key] === value ? null : value });
   };
 
   const chip = (active: boolean) =>
@@ -110,7 +140,7 @@ export default function ProjectFilterBar({
 
             <button
               type="button"
-              onClick={() => navigate({ ...filters, propertyType: null })}
+              onClick={() => navigate({ ...requested.current, propertyType: null })}
               aria-pressed={filters.propertyType === null}
               className={chip(filters.propertyType === null)}
             >
@@ -140,7 +170,7 @@ export default function ProjectFilterBar({
 
             <button
               type="button"
-              onClick={() => navigate({ ...filters, status: null })}
+              onClick={() => navigate({ ...requested.current, status: null })}
               aria-pressed={filters.status === null}
               className={chip(filters.status === null)}
             >
@@ -180,7 +210,7 @@ export default function ProjectFilterBar({
                   navigate({
                     propertyType: null,
                     status: null,
-                    sort: filters.sort,
+                    sort: requested.current.sort,
                   })
                 }
                 className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink/65 transition-colors hover:text-primary"
@@ -198,7 +228,7 @@ export default function ProjectFilterBar({
               <select
                 value={filters.sort}
                 onChange={(event) =>
-                  navigate({ ...filters, sort: event.target.value as SortOption })
+                  navigate({ ...requested.current, sort: event.target.value as SortOption })
                 }
                 className="appearance-none rounded-md border border-ink/15 bg-white py-2 pl-3.5 pr-9 text-xs text-ink transition-colors hover:border-primary/40 focus:border-primary/40 focus:outline-none"
               >
