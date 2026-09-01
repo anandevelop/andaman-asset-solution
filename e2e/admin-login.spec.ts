@@ -259,6 +259,18 @@ test.describe("Signing out", () => {
 
     await page.getByRole("button", { name: "Sign out" }).first().click();
 
+    /*
+      signOut({ callbackUrl }) in AdminSidebar.tsx does a real full-page
+      navigation to that URL, not a client-side one — NextAuth posts to
+      /api/auth/signout and then sends the browser there itself. The click
+      above only waits for the event to dispatch, not for that navigation
+      to land, so a goto(DASHBOARD) issued immediately after raced it: two
+      navigations in flight on the same page, and Chromium aborts
+      whichever one loses with net::ERR_ABORTED — not a real bug, just
+      this test not waiting for the thing it just triggered.
+    */
+    await page.waitForURL(/\/en\/login/);
+
     // Cookie cleared, so the guard applies again on the next request.
     await page.goto(DASHBOARD);
     await expect(page).toHaveURL(/\/en\/login/);
@@ -305,8 +317,30 @@ test.describe("Accessibility", () => {
     const code = page.getByLabel("Authentication code");
     await expect(code).toBeFocused();
 
+    const error = alertBanner(page);
+
     await page.keyboard.type(await currentCode());
     await page.keyboard.press("Enter");
+
+    /*
+      This test types its own code rather than going through signIn(), so
+      it also needs signIn()'s guard against the same hazard: this run's
+      code can land in the same 30-second step as a sign-in earlier in the
+      suite and be refused as a replay rather than a wrong code. LoginForm
+      doesn't refocus the field on TOTP_INVALID (only on the first
+      TOTP_REQUIRED reveal), so focus is still sitting on the code input
+      and a plain keyboard.type reaches it.
+    */
+    await Promise.race([
+      page.waitForURL((url) => !url.pathname.endsWith("/login"), { timeout: 5_000 }).catch(() => {}),
+      error.waitFor({ state: "visible", timeout: 5_000 }).catch(() => {}),
+    ]);
+
+    if (await error.isVisible().catch(() => false)) {
+      await waitForNextStep(page);
+      await page.keyboard.type(await currentCode());
+      await page.keyboard.press("Enter");
+    }
 
     await expect(page).toHaveURL(/\/en\/admin/);
   });
