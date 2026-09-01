@@ -128,6 +128,11 @@ function revalidateProject(locale: string, slug: string) {
   revalidatePath(`/${locale}/admin/projects`);
   revalidatePath(`/${locale}/admin`);
   for (const target of locales) {
+    // The home page's featured grid and its hero fallback image both come
+    // from getPublishedProjects, so unpublishing a project has to reach it
+    // — otherwise the one thing a visitor can no longer open is the one
+    // still being advertised on the front page.
+    revalidatePath(`/${target}`);
     revalidatePath(`/${target}/projects`);
     revalidatePath(`/${target}/projects/${slug}`);
   }

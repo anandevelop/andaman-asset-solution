@@ -52,6 +52,9 @@ function revalidateEvent(locale: string, slug: string) {
   revalidatePath(`/${locale}/admin/events`);
   revalidatePath(`/${locale}/admin`);
   for (const target of locales) {
+    // The home page shows the next upcoming event; without this it can
+    // still be advertising one that has been cancelled or moved.
+    revalidatePath(`/${target}`);
     revalidatePath(`/${target}/events`);
     revalidatePath(`/${target}/events/${slug}`);
   }

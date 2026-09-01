@@ -104,7 +104,14 @@ describe("groupByCategory", () => {
 });
 
 describe("revalidate path allowlist", () => {
-  // Mirrors isAllowedPath in app/api/revalidate/route.ts.
+  /*
+    Mirrors isAllowedPath in app/api/revalidate/route.ts.
+
+    A copy, not an import, because the route file exports only its HTTP
+    handlers — so the two have to be kept in step by hand. Adding a prefix
+    there means adding it here, or this suite quietly starts proving
+    something about a list nobody ships.
+  */
   const ALLOWED_PREFIXES = [
     "",
     "/projects",
@@ -112,6 +119,7 @@ describe("revalidate path allowlist", () => {
     "/news",
     "/events",
     "/about",
+    "/achievements",
     "/contact",
   ];
 
@@ -137,6 +145,7 @@ describe("revalidate path allowlist", () => {
     "/events/open-house",
     "/progress",
     "/about",
+    "/achievements",
     "/contact",
   ])("allows %s", (path) => {
     expect(isAllowed(path)).toBe(true);

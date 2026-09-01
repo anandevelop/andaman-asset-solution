@@ -44,12 +44,27 @@ function readForm(formData: FormData) {
   };
 }
 
-/** Shown only on /about and /contact — both need refreshing on any change. */
+/*
+  The team block lives in the site layout, so it is on every public page.
+
+  It used to be on /about and /contact only, and this function still purged
+  exactly those two long after app/[locale]/(site)/layout.tsx moved
+  <SalesTeamSection /> into the shared layout. Everything else — the home
+  page, /projects, /news, /events, /achievements, every project detail page
+  — kept the old roster until its own revalidate window expired, up to an
+  hour later. An editor removing someone who has left the company would
+  have watched them stay on the site.
+
+  Purging the locale subtree with type "layout" rather than listing pages
+  is deliberate: the list is what went stale last time. A component in a
+  layout has no page list to enumerate, and edits here happen a few times a
+  year, so the cost of the wider purge is nothing next to being wrong again
+  the next time a section moves.
+*/
 function revalidateSalesTeam(locale: string) {
   revalidatePath(`/${locale}/admin/sales-team`);
   for (const target of locales) {
-    revalidatePath(`/${target}/about`);
-    revalidatePath(`/${target}/contact`);
+    revalidatePath(`/${target}`, "layout");
   }
 }
 

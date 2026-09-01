@@ -63,6 +63,13 @@ async function revalidateProgress(locale: string, projectId: string) {
     .findUnique({ where: { id: projectId }, select: { slug: true } })
     .catch(() => null);
 
+  for (const target of locales) {
+    // /progress exists to answer "has anything new been photographed?", so
+    // it is the one page a new update must not be missing from. It was
+    // relying on its own 300s backstop instead.
+    revalidatePath(`/${target}/progress`);
+  }
+
   if (project) {
     for (const target of locales) {
       revalidatePath(`/${target}/projects/${project.slug}`);

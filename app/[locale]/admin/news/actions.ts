@@ -58,6 +58,9 @@ function resolvePublishedAt(input: {
 function revalidateArticle(locale: string, slug: string) {
   revalidatePath(`/${locale}/admin/news`);
   for (const target of locales) {
+    // The home page carries the latest three articles, so publishing one
+    // has to refresh it too — it was reaching visitors up to an hour late.
+    revalidatePath(`/${target}`);
     revalidatePath(`/${target}/news`);
     revalidatePath(`/${target}/news/${slug}`);
   }

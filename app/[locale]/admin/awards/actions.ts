@@ -43,11 +43,24 @@ function readForm(formData: FormData) {
   };
 }
 
-/** Shown only on the home page. */
+/*
+  Awards are on four public surfaces, not one.
+
+  This said "Shown only on the home page" and purged the home page alone.
+  In fact <AwardsSection /> fetches its own data and renders on both the
+  home page and /achievements, and getAwards() is called directly by
+  /achievements, /about and every project detail page (for the mini-stat
+  count). Three of those four kept stale awards for up to an hour.
+
+  Purged as a locale subtree for the same reason as the sales team: the
+  enumerated list is precisely what fell out of date, project detail pages
+  cannot be listed without walking every slug, and an award is added a few
+  times a year.
+*/
 function revalidateAwards(locale: string) {
   revalidatePath(`/${locale}/admin/awards`);
   for (const target of locales) {
-    revalidatePath(`/${target}`);
+    revalidatePath(`/${target}`, "layout");
   }
 }
 

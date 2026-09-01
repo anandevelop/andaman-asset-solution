@@ -53,6 +53,10 @@ const ALLOWED_PREFIXES = [
   "/news",
   "/events",
   "/about",
+  // Renders awards and has its own hour-long window, so it is exactly the
+  // kind of page this escape hatch is for. Its absence meant the one route
+  // that could not be purged by hand was one of the slowest to refresh.
+  "/achievements",
   "/contact",
 ] as const;
 
