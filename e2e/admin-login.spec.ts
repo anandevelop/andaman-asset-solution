@@ -14,7 +14,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./harness";
 import { generate } from "otplib";
 import { expectNoA11yViolations } from "./a11y";
 import { ADMIN } from "./fixtures";

@@ -13,7 +13,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./harness";
 import { expectNoA11yViolations } from "./a11y";
 
 test.describe("Mobile navigation", () => {
@@ -123,10 +123,24 @@ test.describe("Skip link", () => {
   test("is the first thing a keyboard user reaches, and works", async ({ page }) => {
     await page.goto("/en");
 
-    await page.keyboard.press("Tab");
-
     const skip = page.getByRole("link", { name: "Skip to content" });
-    await expect(skip).toBeFocused();
+
+    /*
+      The same hydration gate as the keyboard walk in
+      lead-submission.spec.ts: goto() returns once the prerendered HTML has
+      loaded, and a Tab pressed before React hydrates is discarded —
+      activeElement stays on <body>. Only the production build leaves that
+      window open, which is why this passed locally against `next dev` and
+      failed under the `next build && next start` that CI runs.
+
+      Retrying the Tab is safe rather than cumulative: focus only moves
+      when the press actually takes effect, and the assertion in that same
+      attempt is the one that passes.
+    */
+    await expect(async () => {
+      await page.keyboard.press("Tab");
+      await expect(skip).toBeFocused({ timeout: 500 });
+    }).toPass({ timeout: 15_000 });
     // Hidden until focused, visible once it is — a skip link nobody can
     // see when it has focus is no better than none at all.
     await expect(skip).toBeVisible();

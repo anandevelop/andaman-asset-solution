@@ -17,7 +17,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./harness";
 import { expectNoA11yViolations } from "./a11y";
 import { LEAD_PROJECT } from "./fixtures";
 
@@ -231,7 +231,27 @@ test.describe("Lead submission", () => {
     await page.goto(PROJECT_URL);
 
     const name = page.getByLabel("Full name");
-    await name.focus();
+
+    /*
+      Wait for the form to be interactive, not merely present.
+
+      page.goto() resolves on `load`, which on a production build is the
+      moment the prerendered HTML arrives — well before React has hydrated
+      it. Focus set inside that window does not survive: activeElement
+      snaps back to <body>, every keystroke lands nowhere, and the failure
+      reads as "phone is empty" rather than "the page was not ready yet".
+
+      Under `next dev` the window does not exist, because compiling the
+      route pushes `load` past hydration. CI builds for production, so this
+      could only ever fail there — which is exactly what it did.
+
+      Retrying the focus is the gate: it costs one attempt on a page that
+      is already hydrated, and needs no arbitrary sleep.
+    */
+    await expect(async () => {
+      await name.focus();
+      await expect(name).toBeFocused({ timeout: 500 });
+    }).toPass({ timeout: 15_000 });
 
     // Tab order must run name → phone → email → nationality → message,
     // matching the visual order. A grid layout that reorders columns for

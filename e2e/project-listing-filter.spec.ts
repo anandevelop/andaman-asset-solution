@@ -16,7 +16,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./harness";
 import { expectNoA11yViolations } from "./a11y";
 import { DRAFT_PROJECT, PROJECTS, PUBLISHED_PROJECTS } from "./fixtures";
 
