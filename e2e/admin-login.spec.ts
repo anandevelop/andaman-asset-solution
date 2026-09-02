@@ -18,7 +18,7 @@ import { type Page } from "@playwright/test";
 import { expect, test } from "./harness";
 import { generate } from "otplib";
 import { expectNoA11yViolations } from "./a11y";
-import { ADMIN, PENDING_ADMIN } from "./fixtures";
+import { ADMIN, ADMIN_POOL, PENDING_ADMIN } from "./fixtures";
 
 const LOGIN = "/en/login";
 const DASHBOARD = "/en/admin";
@@ -33,12 +33,38 @@ function currentCode(): Promise<string> {
 
 /**
  * A code is refused once it has been spent (lib/totp.ts burns the time
- * step), so two sign-ins inside the same 30 seconds cannot reuse one.
- * Waiting for the next window is the honest fix; the alternative — turning
- * replay protection off for tests — would mean never testing it.
+ * step), so two sign-ins by the *same account* inside the same 30 seconds
+ * cannot reuse one. Waiting for the next window is the honest fix where the
+ * account has to be the same; the alternative — turning replay protection
+ * off for tests — would mean never testing it.
+ *
+ * Only two places need it now. Everything else takes its own account from
+ * the pool instead, because the burned step is per account and waiting out
+ * a clock proves nothing: eleven sign-ins were paying 25 to 31 seconds each
+ * for the privilege, five of the suite's five and a half minutes.
  */
 async function waitForNextStep(page: Page) {
   await page.waitForTimeout(STEP_MS - (Date.now() % STEP_MS) + 1_000);
+}
+
+/*
+  Hands out a fresh account per full sign-in.
+
+  A plain counter rather than anything random, so a run that fails fails the
+  same way twice. It wraps rather than running out: CI retries a failed test
+  once, and a suite that threw "out of accounts" because three tests happened
+  to retry would be failing for a reason with nothing to do with what it is
+  testing.
+
+  Wrapping is safe rather than merely tolerable. Reuse only becomes a wait if
+  the same account signs in twice inside one 30-second step, and getting back
+  round to an account takes twelve sign-ins — by which time its step has long
+  since rolled over.
+*/
+let poolCursor = 0;
+
+function nextAccount() {
+  return ADMIN_POOL[poolCursor++ % ADMIN_POOL.length];
 }
 
 /** Email + password. Stops before the second factor. */
@@ -83,7 +109,11 @@ function alertBanner(page: Page) {
 }
 
 /** The full two-step sign-in, retrying once across a step boundary. */
-async function signIn(page: Page, email = ADMIN.email, password = ADMIN.password) {
+async function signIn(
+  page: Page,
+  email = nextAccount().email,
+  password = ADMIN.password,
+) {
   await submitCredentials(page, email, password);
 
   const code = page.getByLabel("Authentication code");

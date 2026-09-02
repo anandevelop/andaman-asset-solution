@@ -30,6 +30,40 @@ export const ADMIN = {
 } as const;
 
 /**
+ * Interchangeable copies of ADMIN, one per full sign-in the suite performs.
+ *
+ * They exist to make the suite fast, and the reason is worth stating
+ * because it looks like duplication.
+ *
+ * A TOTP code is valid for one 30-second step, and lib/two-factor.ts burns
+ * the step once a code is accepted — replay protection, and correct. Every
+ * test that signed in therefore had to wait out the rest of the current
+ * step before the next one could sign in, because they all shared one
+ * account: eleven sign-ins at 25 to 31 seconds each, five of the suite's
+ * five and a half minutes spent waiting for a clock.
+ *
+ * `totpLastStep` is per account. Handing each sign-in its own removes the
+ * wait without touching the protection — nothing is disabled, and the test
+ * that checks a code cannot be replayed still shares one account with
+ * itself on purpose.
+ *
+ * The shared secret is deliberate: it keeps code generation to one line,
+ * and the secret is not what these accounts are testing. Their separateness
+ * is in the row, which is where the burned step lives.
+ */
+export const ADMIN_POOL: ReadonlyArray<{
+  email: string;
+  password: string;
+  name: string;
+  totpSecret: string;
+}> = Array.from({ length: 12 }, (_, index) => ({
+  email: `e2e-admin-${index + 1}@andaman.test`,
+  password: ADMIN.password,
+  name: `E2E Administrator ${index + 1}`,
+  totpSecret: ADMIN.totpSecret,
+}));
+
+/**
  * An ADMIN who has signed in but never enrolled a second factor.
  *
  * lib/two-factor-policy.ts requires 2FA of this role, so the account is

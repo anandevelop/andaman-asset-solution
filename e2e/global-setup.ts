@@ -22,7 +22,7 @@ import { execFileSync } from "node:child_process";
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { ADMIN, PENDING_ADMIN, PROJECTS } from "./fixtures";
+import { ADMIN, ADMIN_POOL, PENDING_ADMIN, PROJECTS } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
 /*
@@ -125,6 +125,27 @@ async function seed(prisma: PrismaClient) {
       totpSecret: encryptSecret(ADMIN.totpSecret),
       totpEnabledAt: new Date(),
     },
+  });
+
+  /*
+    The sign-in pool. Same shape as ADMIN, one row each, so no two sign-ins
+    contend for the same burned TOTP step — see the note in fixtures.ts.
+    Created in one statement rather than a loop of awaits: twelve round
+    trips to save nothing would be a strange thing to add to a setup whose
+    whole point is speed.
+  */
+  await prisma.user.createMany({
+    data: await Promise.all(
+      ADMIN_POOL.map(async (account) => ({
+        name: account.name,
+        email: account.email,
+        passwordHash: await bcrypt.hash(account.password, BCRYPT_ROUNDS),
+        role: "SUPER_ADMIN" as const,
+        isActive: true,
+        totpSecret: encryptSecret(account.totpSecret),
+        totpEnabledAt: new Date(),
+      })),
+    ),
   });
 
   /*
