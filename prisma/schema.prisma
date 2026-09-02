@@ -1277,7 +1277,7 @@ model AuditLog {
   /// Null when the attempt named an address with no account behind it —
   /// there is no role to record, and inventing one would put a permission
   /// level on a person who does not exist.
-  actorRole  Role?
+  actorRole Role?
 
   /// "create" | "update" | "delete" — the Prisma operation, normalised.
   /// upsert resolves to whichever it turned out to be.
