@@ -48,6 +48,16 @@ in CI mode, so it is slow — but it is the only thing that catches routing,
 form and admin-flow regressions, and it is the check most worth running
 after any change to middleware, auth, or a form.
 
+**Stop `npm run dev` before running it.** The suite starts its own Next
+server on port 3100, and two Next processes in this directory share
+`.next/` and overwrite each other's build artefacts. What you get is 404s
+and `PageNotFoundError` on routes that are perfectly fine — in the suite
+*and* in the dev server you left running, which stays broken at 500 until
+you restart it. Four specs failed that way before the cause was obvious.
+Giving the suite its own `distDir` fixes the collision and was tried, but
+Next rewrites `next-env.d.ts` to point at whichever directory ran last, so
+every e2e run would leave a tracked file modified.
+
 ---
 
 ## Rules that are easy to break

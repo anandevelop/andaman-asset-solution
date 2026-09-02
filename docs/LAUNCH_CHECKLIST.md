@@ -24,13 +24,17 @@ oversight, but none of them should reach production untouched.
 - [ ] **`public/og-image.jpg` is a generated placeholder.** Typographic
       only, correct brand colours. Fine to launch with; replace when
       photography is available.
-- [ ] **At least one row still points at the retired Supabase host.**
-      Confirmed 2026-09-01 in local dev (a banner/general image 500'd
-      `next/image` after the Supabase hosts were dropped from
-      `next.config.js`'s `remotePatterns`). They are back in as
-      `legacyMediaHosts` — a stopgap, not a fix. Run `npm run media:legacy`
-      to find every affected row, re-upload each through `/admin`, confirm
-      the scan comes back clean, then delete `legacyMediaHosts`.
+- [ ] **30 rows still point at the retired Supabase host.** Re-scanned
+      2026-09-02 in local dev: 30 rows across 12 columns — every project's
+      hero, gallery, concept and master-plan image, all three sales-team
+      photos, both news covers, three hero-story slides, three floor plans,
+      three facility images, two progress galleries and one event cover.
+      They are reachable only because the Supabase hosts are back in
+      `next.config.js` as `legacyMediaHosts` — a stopgap, not a fix. Run
+      `npm run media:legacy` to list them, re-upload each through
+      `/admin`, confirm the scan comes back clean, then delete
+      `legacyMediaHosts`. Production has its own database and needs its own
+      scan.
 - [ ] **Email notifications are implemented but unconfigured by default.**
       `lib/email.ts` sends a staff copy on every lead/RSVP and the RSVP
       confirmation the copy promises the attendee ("we will confirm by
@@ -71,10 +75,16 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] `NEXTAUTH_URL` exactly matches the public origin, no trailing slash
 - [ ] `NEXT_PUBLIC_SITE_URL` likewise — it drives canonical URLs, hreflang,
       the sitemap and every JSON-LD block
-- [ ] All `NEXT_PUBLIC_*` values passed as **build args**, not just runtime
-      env — see the build-time trap in DEPLOYMENT.md
-- [ ] `TZ=Asia/Bangkok` set on the container
-- [ ] No `.env` file committed to the repository
+- [x] All `NEXT_PUBLIC_*` values passed as **build args**, not just runtime
+      env — see the build-time trap in DEPLOYMENT.md. Verified 2026-09-02:
+      `Dockerfile` declares an `ARG` for each, and `IMAGE_BUILD_ARGS` in
+      `.github/workflows/ci.yml` supplies them to both the smoke-test build
+      and the published one. `NEXT_PUBLIC_GA_ID` is deliberately absent —
+      see the analytics note in section 7 before you add it.
+- [x] `TZ=Asia/Bangkok` set on the container — verified 2026-09-02 on
+      both the `app` and `migrate` services in `docker-compose.prod.yml`
+- [x] No `.env` file committed to the repository — verified 2026-09-02,
+      `git ls-files .env` is empty and `.gitignore` covers it
 
 > The container now checks this itself. `instrumentation.ts` runs
 > `lib/env.ts` at server start and **exits non-zero** if `DATABASE_URL`,
@@ -150,8 +160,13 @@ Cross-check against `.env.example`, which annotates each one.
       address, office hours, social links. This file feeds the footer,
       the contact page, JSON-LD and the LINE CTA.
 - [ ] Privacy policy reviewed by someone who can speak to PDPA compliance
-- [ ] `siteConfig.legal.consentVersion` matches the published policy
-      version — it is written into every lead record as the consent trail
+- [x] `siteConfig.legal.consentVersion` matches the published policy
+      version — it is written into every lead record as the consent trail.
+      Cannot drift by construction: `content/privacy-policy.ts` sets
+      `PRIVACY_POLICY_VERSION = siteConfig.legal.consentVersion`, so the
+      page renders whatever the leads are stamped with. Currently
+      `privacy-policy-v1`. What still needs a human is whether the *text*
+      on that page is the version the business intends to publish.
 - [ ] Thai copy proofread by a native speaker
 - [ ] English copy proofread
 
@@ -189,7 +204,15 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] `RECAPTCHA_MIN_SCORE` agreed — 0.5 to start
 
 ### Analytics
-- [ ] `NEXT_PUBLIC_GA_ID` is the real GA4 property, not a test one
+- [ ] `NEXT_PUBLIC_GA_ID` is the real GA4 property, not a test one.
+      **This one is not a runtime setting.** `lib/analytics.ts` reads it
+      literally, so it is inlined at build time, and `components/
+      Analytics.tsx` says so: "GA stays env-only". Unlike the pixel and the
+      Search Console token below, there is no admin field to fall back on —
+      setting GA4 means adding the id to `IMAGE_BUILD_ARGS` in
+      `.github/workflows/ci.yml` and shipping a new image. CI leaves it out
+      today because no property exists yet, which means GA4 currently does
+      not load at all in production.
 - [ ] Meta Pixel ID is real — either `NEXT_PUBLIC_META_PIXEL_ID` at deploy
       time, or Admin → Settings → Analytics & SEO (the admin field wins if
       both are set)
@@ -225,13 +248,18 @@ Cross-check against `.env.example`, which annotates each one.
       third-party script: home, contact, any project page
 - [ ] Security headers verified on production — `securityheaders.com` or
       `curl -I`
-- [ ] `X-Powered-By` absent
-- [ ] `/admin` and `/login` return `X-Robots-Tag: noindex`
+- [x] `X-Powered-By` absent — `poweredByHeader: false` in
+      `next.config.js`, and confirmed absent from a live response
+      2026-09-02
+- [x] `/admin` and `/login` return `X-Robots-Tag: noindex` — confirmed
+      2026-09-02 against a running server, along with `/api/*`;
+      `/en/admin` also answered `307` to the login page while signed out
 - [ ] Rate limits observed on `/api/leads` (6th submission in 10 minutes
       returns `429`)
-- [ ] Dependency audit run: `npm audit --omit=dev`
-      (`--production` is the deprecated spelling)
-- [ ] **Known outstanding advisories** reviewed and accepted. As of the
+- [x] Dependency audit run: `npm audit --omit=dev`
+      (`--production` is the deprecated spelling). Re-run 2026-09-02: two
+      advisories, exactly the two accepted below and nothing new.
+- [x] **Known outstanding advisories** reviewed and accepted. As of the
       Next 15 upgrade, `npm audit --omit=dev` reports two, neither with a
       fix short of Next 16:
       - `postcss` (high) — vendored inside `next` and used only to process
@@ -252,10 +280,21 @@ Cross-check against `.env.example`, which annotates each one.
 
 ## 9. SEO
 
-- [ ] `/sitemap.xml` loads and lists all seven static pages in both
-      locales, plus every published project, article and event
-- [ ] `/robots.txt` **allows** crawling — it blocks everything when
-      `VERCEL_ENV` is not `production`, so confirm on the real deployment
+- [x] `/sitemap.xml` loads and lists all seven static pages in **all four**
+      locales, plus every published project, article and event. Verified
+      2026-09-02 against a running server: 52 URLs — `/`, `/about`,
+      `/contact`, `/projects`, `/progress`, `/news`, `/events` plus the
+      three published projects, two articles and one event, each in th/en/
+      zh/ru, all on `https://andamanassetsolution.com`. The count will
+      differ on production; the shape is what this checks.
+- [ ] `/robots.txt` **allows** crawling — confirm on the real deployment.
+      The earlier wording here said it blocks everything unless `VERCEL_ENV`
+      is `production`, which would have made a VPS deployment permanently
+      uncrawlable. `app/robots.ts` does not do that: it treats
+      `NODE_ENV=production` with no `VERCEL_ENV` at all as production, which
+      is exactly this deployment, and the Dockerfile sets `NODE_ENV`. Still
+      worth one `curl` against the live site, because the cost of being
+      wrong is invisible and expensive.
 - [ ] Google Search Console verified, sitemap submitted
 - [ ] Rich Results Test passes for a project page (`RealEstateListing`),
       an article (`Article`) and an event (`Event`)
@@ -302,7 +341,10 @@ the login form, the dashboard, the project listing and the open mobile
 menu, and the Phase 11 contrast and focus fixes are recorded in
 `docs/TESTING.md`. The rest of this section is the part a machine cannot do.
 
-- [ ] `npm run test:e2e` green — the axe scans are inside it
+- [x] `npm run test:e2e` green — the axe scans are inside it. 65 passed,
+      0 failed on 2026-09-02, including a dashboard contrast/label fix the
+      suite had never reached before (the pie chart only renders with data,
+      and no spec had put any there).
 - [ ] Walked once end to end with the keyboard alone, no mouse: the skip
       link works, focus is always visible, nothing is reachable that is
       not visible, and the mobile menu can be closed with Escape
