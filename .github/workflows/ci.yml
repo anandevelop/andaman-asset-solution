@@ -294,6 +294,11 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      # Read once and reuse, so the smoke-tested image and the published one
+      # cannot disagree about what version they are.
+      - name: Read the app version
+        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+
       - name: Build image
         uses: docker/build-push-action@v6
         with:
@@ -307,7 +312,10 @@ jobs:
           tags: andaman-asset-solution:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: ${{ env.IMAGE_BUILD_ARGS }}
+          build-args: |
+            ${{ env.IMAGE_BUILD_ARGS }}
+            GIT_COMMIT_SHA=${{ github.sha }}
+            APP_VERSION=${{ env.APP_VERSION }}
 
       - name: Smoke test the image
         # Proves the container starts, reaches Postgres and can query it.
@@ -399,4 +407,7 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
-          build-args: ${{ env.IMAGE_BUILD_ARGS }}
+          build-args: |
+            ${{ env.IMAGE_BUILD_ARGS }}
+            GIT_COMMIT_SHA=${{ github.sha }}
+            APP_VERSION=${{ env.APP_VERSION }}

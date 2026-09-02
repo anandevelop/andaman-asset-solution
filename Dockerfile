@@ -93,6 +93,23 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME="0.0.0.0"
 
+# Which build this is, answerable from the running container.
+#
+# /api/health has reported `version` and `commit` since it was written, and
+# both were null on every deployed container: npm_package_version is set by
+# npm and the image runs `node server.js` directly, while GIT_COMMIT_SHA had
+# no ARG here for anyone to pass. The endpoint promised something it could
+# not deliver, and the question it could not answer — "is the fix I pushed
+# the one actually running?" — is the first one asked when a deploy looks
+# wrong.
+#
+# Unset is still a valid state: a locally built image reports null, which is
+# honest. CI passes both.
+ARG GIT_COMMIT_SHA=""
+ARG APP_VERSION=""
+ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA \
+    APP_VERSION=$APP_VERSION
+
 # Never run the server as root. A container escape via the application
 # should not land on a root shell.
 RUN addgroup --system --gid 1001 nodejs \

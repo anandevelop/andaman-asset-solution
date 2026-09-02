@@ -78,7 +78,21 @@ export async function GET(request: Request) {
       status: healthy ? "ok" : "degraded",
       timestamp: new Date().toISOString(),
       uptimeSeconds: Math.round(process.uptime()),
-      version: process.env.npm_package_version ?? null,
+      /*
+        Which build is answering.
+
+        Both of these were null on every deployed container, which made the
+        endpoint's most useful question — "is the fix I pushed actually the
+        one running?" — unanswerable. `npm_package_version` is set by npm,
+        and the image runs `node server.js` directly, so npm never gets a
+        say; GIT_COMMIT_SHA had no ARG in the Dockerfile at all. Both are
+        passed in as build arguments now.
+
+        npm_package_version is kept as the fallback because it is correct
+        for `npm run dev` and `npm start`, where there is no build argument
+        to set.
+      */
+      version: process.env.APP_VERSION ?? process.env.npm_package_version ?? null,
       commit: process.env.GIT_COMMIT_SHA ?? null,
       checks: {
         database,
