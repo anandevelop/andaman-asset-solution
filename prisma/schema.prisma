@@ -130,6 +130,7 @@ model User {
 
   articles          NewsArticle[]
   projectProgresses ProjectProgress[]
+  auditEntries      AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1240,4 +1241,65 @@ enum EventStatus {
   CANCELLED
   ATTENDED
   NO_SHOW
+}
+
+/// What an administrator changed in the back office, and when.
+///
+/// The point is accountability: if a project is unpublished, a price
+/// edited or a lead deleted, this is what says who did it. That makes
+/// completeness the property that matters most — a trail with gaps is
+/// worse than none, because an absent entry reads as "nobody did this"
+/// when it may only mean "nobody remembered to log this". Rows are
+/// written by a Prisma client extension rather than by each server
+/// action, so a new action is covered the day it is written.
+///
+/// Deliberately not a copy of the data. Field *names* are recorded, never
+/// their values: enough to see that a lead's phone number was edited,
+/// without a second table quietly accumulating customer contact details
+/// outside the PDPA retention story that governs the first one.
+model AuditLog {
+  id String @id @default(cuid())
+
+  /// Nulled if the user is deleted, rather than cascading. The trail has
+  /// to outlive the account — "the person who deleted this no longer
+  /// exists" is precisely the case an audit log is for. actorEmail and
+  /// actorRole below are copies for the same reason: they are what the
+  /// entry meant at the time, and they survive the row they came from.
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorId String?
+
+  actorEmail String
+  actorRole  Role
+
+  /// "create" | "update" | "delete" — the Prisma operation, normalised.
+  /// upsert resolves to whichever it turned out to be.
+  action String
+
+  /// Prisma model name, e.g. "Project". Not a display label: models get
+  /// renamed and old entries must keep meaning what they meant.
+  model String
+
+  /// Primary key of the affected row. Null for the bulk operations
+  /// (updateMany/deleteMany), where `count` carries the size instead.
+  recordId String?
+
+  /// Human-readable identifier captured at write time — a slug, a title,
+  /// an email. Stored rather than resolved later because the row it names
+  /// may not exist any more, which is exactly when the entry matters.
+  recordLabel String?
+
+  /// Names of the fields the operation set, alphabetical. No values.
+  changedFields String[]
+
+  /// Rows affected by a bulk operation; null for single-row ones.
+  count Int?
+
+  createdAt DateTime @default(now())
+
+  /// The reading order of the activity page, and the filter behind the
+  /// "show me what this person did" view.
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([model, createdAt])
+  @@map("audit_logs")
 }

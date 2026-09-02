@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 import { authOptions, hasRole } from "@/lib/auth";
+import { setAuditActor } from "@/lib/audit/context";
 
 export type AdminSession = {
   id: string;
@@ -32,6 +33,26 @@ export type AdminSession = {
  * table during the window between a reset and re-enrolment.
  */
 type GuardOptions = { allowTwoFactorSetup?: boolean };
+
+/**
+ * Attribute this request's database writes to the signed-in user.
+ *
+ * Called after every check has passed, never before: a request that is
+ * about to be redirected or thrown out has not done anything worth
+ * recording, and marking it first would attribute writes to an actor whose
+ * authorisation had not been established.
+ */
+function markActor(user: {
+  id: string;
+  email?: string | null;
+  role: Role;
+}): void {
+  setAuditActor({
+    id: user.id,
+    email: user.email ?? "",
+    role: user.role,
+  });
+}
 
 /**
  * Require an authenticated admin user. Redirects to the localised login
@@ -56,6 +77,16 @@ export async function requireAdmin(
   if (session.user.twoFactorPending && !allowTwoFactorSetup) {
     redirect(`/${locale}/admin/account/security?setup=1`);
   }
+
+  /*
+    From here on, anything this request writes is this person's doing.
+
+    Set on the page guard as well as the action guard because a page can
+    write — the 2FA setup page mints a secret, and a future one may do more
+    — and an unattributed change is exactly what the trail exists to
+    prevent. See lib/audit/context.ts.
+  */
+  markActor(session.user);
 
   return {
     id: session.user.id,
@@ -86,6 +117,8 @@ export async function requireAdminAction(
   if (session.user.twoFactorPending && !allowTwoFactorSetup) {
     throw new Error("TWO_FACTOR_SETUP_REQUIRED");
   }
+
+  markActor(session.user);
 
   return {
     id: session.user.id,

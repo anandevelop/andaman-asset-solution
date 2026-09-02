@@ -495,7 +495,8 @@
       "salesTeam": "销售团队",
       "awards": "荣誉奖项",
       "faqs": "常见问题",
-      "settings": "设置"
+      "settings": "设置",
+      "activity": "操作记录"
     },
     "common": {
       "save": "保存",
@@ -1081,6 +1082,28 @@
         "WRONG_PASSWORD": "密码不正确。",
         "FAILED": "操作未成功，请重试。"
       }
+    },
+    "activity": {
+      "title": "操作记录",
+      "subtitle": "后台的所有更改，最新在前。仅超级管理员可见。",
+      "when": "时间",
+      "who": "操作人",
+      "what": "操作",
+      "record": "记录",
+      "fields": "字段",
+      "empty": "暂无更改记录。",
+      "allPeople": "所有人",
+      "allTypes": "所有类型",
+      "filterPerson": "操作人",
+      "filterType": "类型",
+      "deletedActor": "已删除的账户",
+      "noLabel": "未记录名称",
+      "bulk": "{count} 条记录",
+      "older": "更早",
+      "newer": "更新",
+      "actionCreate": "新增",
+      "actionUpdate": "修改",
+      "actionDelete": "删除"
     }
   }
 }

@@ -27,6 +27,7 @@ import {
   LogOut,
   Menu,
   MonitorPlay,
+  History,
   Newspaper,
   Settings,
   ShieldCheck,
@@ -59,6 +60,7 @@ const NAV = [
 const ADMIN_NAV = [
   { key: "settings", href: "/settings", icon: Settings },
   { key: "users", href: "/users", icon: ShieldCheck },
+  { key: "activity", href: "/activity", icon: History },
 ] as const;
 
 export default function AdminSidebar({ locale, user }: Props) {
@@ -192,7 +194,14 @@ export default function AdminSidebar({ locale, user }: Props) {
       )}
 
       {/* Desktop rail */}
-      <aside className="hidden w-64 shrink-0 flex-col justify-between bg-primary px-5 py-8 lg:sticky lg:top-0 lg:flex lg:h-screen">
+      {/* overflow-y-auto because the rail is exactly one screen tall and the
+          content is not. A SUPER_ADMIN sees thirteen links, which at a
+          720px viewport pushes the identity block and its sign-out button
+          past the bottom edge — off the dark panel entirely, unreachable
+          and, where it landed on the white page behind, unreadable at a
+          contrast of 1.03. Adding the activity link is what tipped it over;
+          the next section added would have done the same. */}
+      <aside className="hidden w-64 shrink-0 flex-col justify-between overflow-y-auto bg-primary px-5 py-8 lg:sticky lg:top-0 lg:flex lg:h-screen">
         <div>
           <Link href={base} className="block">
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -495,7 +495,8 @@
       "salesTeam": "Sales Team",
       "awards": "Awards",
       "faqs": "FAQ",
-      "settings": "Settings"
+      "settings": "Settings",
+      "activity": "Activity"
     },
     "common": {
       "save": "Save",
@@ -1081,6 +1082,28 @@
         "WRONG_PASSWORD": "That password is not correct.",
         "FAILED": "That did not work. Try again."
       }
+    },
+    "activity": {
+      "title": "Activity log",
+      "subtitle": "Every change made in the back office, newest first. Visible to super administrators only.",
+      "when": "When",
+      "who": "Who",
+      "what": "Did",
+      "record": "Record",
+      "fields": "Fields",
+      "empty": "Nothing has been changed yet.",
+      "allPeople": "Everyone",
+      "allTypes": "Everything",
+      "filterPerson": "Person",
+      "filterType": "Type",
+      "deletedActor": "deleted account",
+      "noLabel": "no name recorded",
+      "bulk": "{count} records",
+      "older": "Older",
+      "newer": "Newer",
+      "actionCreate": "created",
+      "actionUpdate": "edited",
+      "actionDelete": "deleted"
     }
   }
 }
