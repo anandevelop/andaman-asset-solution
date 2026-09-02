@@ -1085,7 +1085,7 @@
     },
     "activity": {
       "title": "Activity log",
-      "subtitle": "Every change made in the back office, newest first. Visible to super administrators only.",
+      "subtitle": "Every change made in the back office, and every sign-in, sign-out and failed attempt, newest first. Visible to super administrators only.",
       "when": "When",
       "who": "Who",
       "what": "Did",
@@ -1103,7 +1103,12 @@
       "newer": "Newer",
       "actionCreate": "created",
       "actionUpdate": "edited",
-      "actionDelete": "deleted"
+      "actionDelete": "deleted",
+      "actionLogin": "signed in",
+      "actionLogout": "signed out",
+      "actionLoginFailed": "failed sign-in",
+      "actionTotpFailed": "wrong 2FA code",
+      "unverified": "address not verified"
     }
   }
 }

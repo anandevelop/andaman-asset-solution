@@ -1085,7 +1085,7 @@
     },
     "activity": {
       "title": "操作记录",
-      "subtitle": "后台的所有更改，最新在前。仅超级管理员可见。",
+      "subtitle": "后台的所有更改，以及每次登录、退出与失败的尝试，最新在前。仅超级管理员可见。",
       "when": "时间",
       "who": "操作人",
       "what": "操作",
@@ -1103,7 +1103,12 @@
       "newer": "更新",
       "actionCreate": "新增",
       "actionUpdate": "修改",
-      "actionDelete": "删除"
+      "actionDelete": "删除",
+      "actionLogin": "登录",
+      "actionLogout": "退出登录",
+      "actionLoginFailed": "登录失败",
+      "actionTotpFailed": "两步验证码错误",
+      "unverified": "身份未验证"
     }
   }
 }

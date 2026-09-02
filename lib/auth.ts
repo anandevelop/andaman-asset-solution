@@ -22,6 +22,13 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, resetRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { requiresTwoFactor } from "@/lib/totp";
 import { consumeSecondFactor } from "@/lib/two-factor";
+import {
+  AUTH_LOGIN,
+  AUTH_LOGIN_FAILED,
+  AUTH_LOGOUT,
+  AUTH_TOTP_FAILED,
+  recordAuthEvent,
+} from "@/lib/audit/events";
 
 /** Role hierarchy — higher number grants everything below it. */
 const ROLE_RANK: Record<Role, number> = {
@@ -136,11 +143,27 @@ export const authOptions: NextAuthOptions = {
         if (!user?.passwordHash) {
           await bcrypt.compare(password, DUMMY_HASH);
           rateLimit(limitKey, RATE_LIMITS.login);
+          /*
+            No id and no role: nobody owns this address. The entry still
+            records the attempt, because a run of them against addresses
+            that do not exist is somebody working through a list.
+
+            Recorded in all three failure branches below as well as this
+            one, so the extra work does not become a timing signal for
+            which addresses belong to staff — the same reason the dummy
+            bcrypt compare above exists.
+          */
+          await recordAuthEvent(AUTH_LOGIN_FAILED, { email });
           return null;
         }
 
         if (!user.isActive) {
           rateLimit(limitKey, RATE_LIMITS.login);
+          await recordAuthEvent(AUTH_LOGIN_FAILED, {
+            id: user.id,
+            email,
+            role: user.role,
+          });
           return null;
         }
 
@@ -148,6 +171,11 @@ export const authOptions: NextAuthOptions = {
 
         if (!valid) {
           rateLimit(limitKey, RATE_LIMITS.login);
+          await recordAuthEvent(AUTH_LOGIN_FAILED, {
+            id: user.id,
+            email,
+            role: user.role,
+          });
           return null;
         }
 
@@ -181,6 +209,17 @@ export const authOptions: NextAuthOptions = {
 
           if (!second.ok) {
             rateLimit(codeKey, RATE_LIMITS.twoFactor);
+            /*
+              A different entry from the one above, and the more serious of
+              the two: reaching this line means the password was correct.
+              A run of these is somebody holding a working password and
+              missing only the phone.
+            */
+            await recordAuthEvent(AUTH_TOTP_FAILED, {
+              id: user.id,
+              email,
+              role: user.role,
+            });
             throw new Error(TOTP_INVALID);
           }
 
@@ -308,6 +347,48 @@ export const authOptions: NextAuthOptions = {
           requiresTwoFactor(token.role as Role) && !token.twoFactorEnabled;
       }
       return session;
+    },
+  },
+
+  /*
+    Arrivals and departures, into the same trail as every other change.
+
+    Here rather than in the login form or the sidebar button because this
+    is the only place that knows a sign-in actually succeeded: the form
+    submits twice (password, then code) and the first submit is not a
+    sign-in, while the button in the sidebar cannot know whether the
+    session it is ending was ever valid. See lib/audit/events.ts, including
+    what a login with no logout after it does and does not mean.
+  */
+  events: {
+    async signIn({ user }) {
+      const actor = user as { id?: string; email?: string | null; role?: Role };
+
+      // Defensive rather than expected: authorize() returns all three on
+      // every path that reaches here.
+      if (!actor.id || !actor.role) return;
+
+      await recordAuthEvent(AUTH_LOGIN, {
+        id: actor.id,
+        email: actor.email ?? "",
+        role: actor.role,
+      });
+    },
+
+    async signOut({ token }) {
+      /*
+        An emptied token is the revocation path in the jwt callback above —
+        a deactivated account, or a session older than a password reset. It
+        has no id to attribute the row to, and it is not the person
+        pressing a button, which is the event this records.
+      */
+      if (!token?.id || !token.role) return;
+
+      await recordAuthEvent(AUTH_LOGOUT, {
+        id: token.id as string,
+        email: (token.email as string | null) ?? "",
+        role: token.role as Role,
+      });
     },
   },
 };

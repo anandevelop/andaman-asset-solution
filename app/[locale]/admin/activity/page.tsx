@@ -10,9 +10,12 @@
  * EDITOR being able to watch their colleagues is a different product from
  * the one that was asked for.
  *
- * Read-only by construction. There is no action file here and no route
- * that writes to AuditLog outside lib/audit/extension.ts — an audit trail
- * an administrator can edit answers no question worth asking.
+ * Read-only by construction. There is no action file here, and the only
+ * two things that write to AuditLog anywhere are lib/audit/extension.ts,
+ * which records changes by watching Prisma, and lib/audit/events.ts, which
+ * records sign-ins and sign-outs because there is no write for the
+ * extension to watch. Nothing deletes or edits a row — an audit trail an
+ * administrator can rewrite answers no question worth asking.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -23,6 +26,14 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
+import {
+  AUTH_LOGIN,
+  AUTH_LOGIN_FAILED,
+  AUTH_LOGOUT,
+  AUTH_TOTP_FAILED,
+  isAuthEvent,
+  isFailedAuth,
+} from "@/lib/audit/events";
 import { intlLocale } from "@/lib/format";
 
 /** Entries are written constantly; a cached page would be a stale one. */
@@ -54,7 +65,21 @@ export default async function AdminActivityPage(props: Props) {
   const modelFilter = searchParams.model?.trim() || undefined;
 
   const where = {
-    ...(actorFilter ? { actorId: actorFilter } : {}),
+    /*
+      Filtered by address, not by actorId.
+
+      Two kinds of entry have no actorId: one whose account was deleted,
+      and a failed sign-in against an address that never had an account —
+      and the second kind is precisely what somebody comes to this filter
+      for. Keying on the id rendered both as an option with an empty value,
+      which silently selected "Everyone".
+
+      The cost is that an account which later changes address appears
+      twice. That is the honest reading anyway: each entry stores the
+      address as it was at the time, and "what was done under this address"
+      is the question this table can actually answer.
+    */
+    ...(actorFilter ? { actorEmail: actorFilter } : {}),
     ...(modelFilter ? { model: modelFilter } : {}),
   };
 
@@ -80,10 +105,10 @@ export default async function AdminActivityPage(props: Props) {
       "admin:activity:people",
       () =>
         prisma.auditLog.groupBy({
-          by: ["actorId", "actorEmail"],
+          by: ["actorEmail"],
           orderBy: { actorEmail: "asc" },
         }),
-      [] as { actorId: string | null; actorEmail: string }[],
+      [] as { actorEmail: string }[],
     ),
     safeQuery(
       "admin:activity:types",
@@ -99,12 +124,51 @@ export default async function AdminActivityPage(props: Props) {
     timeStyle: "short",
   });
 
-  const actionLabel = (action: string) =>
-    action === "create"
-      ? t("activity.actionCreate")
-      : action === "delete"
-        ? t("activity.actionDelete")
-        : t("activity.actionUpdate");
+  /*
+    A lookup rather than a chain of ternaries, and it falls back to the
+    stored string rather than to "edited". The old chain treated everything
+    it did not recognise as an edit, which was harmless while only three
+    actions existed and became a lie the moment sign-ins were added: a
+    "login" row read as "edited Session".
+  */
+  const actionLabels: Record<string, string> = {
+    create: t("activity.actionCreate"),
+    update: t("activity.actionUpdate"),
+    delete: t("activity.actionDelete"),
+    [AUTH_LOGIN]: t("activity.actionLogin"),
+    [AUTH_LOGOUT]: t("activity.actionLogout"),
+    [AUTH_LOGIN_FAILED]: t("activity.actionLoginFailed"),
+    [AUTH_TOTP_FAILED]: t("activity.actionTotpFailed"),
+  };
+
+  const actionLabel = (action: string) => actionLabels[action] ?? action;
+
+  /**
+   * The small line under the address.
+   *
+   * It carries the one thing a reader could otherwise get wrong. On a
+   * failed sign-in the address is a string someone typed, not an identity
+   * the application confirmed, and a row that looks like "super@… ·
+   * SUPER_ADMIN" beside "failed sign-in" invites exactly the wrong reading
+   * — that a known administrator did something — when it may have been a
+   * stranger typing a known address.
+   */
+  const actorNote = (entry: {
+    action: string;
+    actorRole: Role | null;
+    actorId: string | null;
+  }) =>
+    [
+      entry.actorRole,
+      isFailedAuth(entry.action)
+        ? t("activity.unverified")
+        : // The account can be gone; the entry is not.
+          entry.actorId === null
+          ? t("activity.deletedActor")
+          : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   /** Keeps the current filters when only the page changes. */
   const pageHref = (target: number) => {
@@ -139,7 +203,7 @@ export default async function AdminActivityPage(props: Props) {
           >
             <option value="">{t("activity.allPeople")}</option>
             {people.map((person) => (
-              <option key={person.actorId ?? person.actorEmail} value={person.actorId ?? ""}>
+              <option key={person.actorEmail} value={person.actorEmail}>
                 {person.actorEmail}
               </option>
             ))}
@@ -202,22 +266,37 @@ export default async function AdminActivityPage(props: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <span className="block text-ink">{entry.actorEmail}</span>
-                    <span className="text-xs text-ink/50">
-                      {entry.actorRole}
-                      {/* The account can be gone; the entry is not. */}
-                      {entry.actorId === null && ` · ${t("activity.deletedActor")}`}
-                    </span>
+                    <span className="block text-xs text-ink/50">{actorNote(entry)}</span>
+                    {/* Under the name rather than in a column of its own:
+                        it is only ever read together with the person, and a
+                        sixth column pushed the table into a horizontal
+                        scroll on every laptop. */}
+                    {entry.ipAddress && (
+                      <span className="block font-mono text-[11px] text-ink/40">
+                        {entry.ipAddress}
+                      </span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-ink">
                     {actionLabel(entry.action)}
-                    <span className="ml-1 text-ink/50">{entry.model}</span>
+                    {/* "signed in" says it all; "signed in Session" does not. */}
+                    {!isAuthEvent(entry.model) && (
+                      <span className="ml-1 text-ink/50">{entry.model}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-ink/70">
-                    {entry.count !== null
-                      ? t("activity.bulk", { count: entry.count })
-                      : (entry.recordLabel ?? (
-                          <span className="text-ink/40">{t("activity.noLabel")}</span>
-                        ))}
+                    {/* An auth event is about a person, not a row. "no name
+                        recorded" would read as a fault; there was never a
+                        record to name. */}
+                    {isAuthEvent(entry.model) ? (
+                      <span className="text-ink/40">{t("common.none")}</span>
+                    ) : entry.count !== null ? (
+                      t("activity.bulk", { count: entry.count })
+                    ) : (
+                      (entry.recordLabel ?? (
+                        <span className="text-ink/40">{t("activity.noLabel")}</span>
+                      ))
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs text-ink/50">
                     {entry.changedFields.join(", ")}

@@ -1268,8 +1268,16 @@ model AuditLog {
   actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
   actorId String?
 
+  /// The address the entry is about. For a successful action that is the
+  /// account's own; for a failed sign-in it is whatever was typed into the
+  /// form, which may belong to nobody. `action` is what tells the two
+  /// apart, and the activity page marks the second kind as unverified.
   actorEmail String
-  actorRole  Role
+
+  /// Null when the attempt named an address with no account behind it —
+  /// there is no role to record, and inventing one would put a permission
+  /// level on a person who does not exist.
+  actorRole  Role?
 
   /// "create" | "update" | "delete" — the Prisma operation, normalised.
   /// upsert resolves to whichever it turned out to be.
@@ -1293,6 +1301,15 @@ model AuditLog {
 
   /// Rows affected by a bulk operation; null for single-row ones.
   count Int?
+
+  /// Best-effort client address, from the proxy headers lib/rate-limit.ts
+  /// already trusts. Null for entries written outside a request, and for
+  /// every row that predates the column.
+  ///
+  /// This is personal data about staff, and audit_logs still has no
+  /// retention policy of its own — see docs/TESTING.md before this table
+  /// gets old enough to matter.
+  ipAddress String?
 
   createdAt DateTime @default(now())
 
