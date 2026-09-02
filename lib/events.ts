@@ -63,17 +63,46 @@ const CARD_SELECT = {
   endsAt: true,
   coverImageUrl: true,
   capacity: true,
-  registrations: {
-    where: { status: { in: [...SEAT_TAKING_STATUSES] } },
-    select: { partySize: true },
-  },
 } satisfies Prisma.EventSelect;
 
 type CardRow = any;
 
-function toCard(row: CardRow, locale: string, now: Date): EventCard {
-  // partySize matters: one registration for four people takes four seats.
-  const taken = row.registrations.reduce((sum: number, r: { partySize: number }) => sum + r.partySize, 0);
+/*
+  Seats are summed in the database, not in Node.
+
+  This select used to carry `registrations: { select: { partySize: true } }`,
+  so rendering the events list pulled every seat-taking registration for
+  every published event into memory and reduced them to one integer each.
+  On the home page and /events that is the whole event_registrations table
+  on every request, and it is the query that grows fastest as the company
+  runs more events — the cost climbs with total attendance ever, while the
+  thing being displayed stays one number per card.
+
+  countTakenSeats() below already had the aggregate form for a single
+  event; this is its batched sibling, following the same one-query-then-
+  join-in-a-Map shape as getProjectConversions in lib/reports.ts.
+*/
+async function takenSeatsByEvent(eventIds: string[]): Promise<Map<string, number>> {
+  if (eventIds.length === 0) return new Map();
+
+  const rows = await safeQuery(
+    "eventRegistration.groupBy(seats)",
+    () =>
+      prisma.eventRegistration.groupBy({
+        by: ["eventId"],
+        where: {
+          eventId: { in: eventIds },
+          status: { in: [...SEAT_TAKING_STATUSES] },
+        },
+        _sum: { partySize: true },
+      }),
+    [] as { eventId: string; _sum: { partySize: number | null } }[],
+  );
+
+  return new Map(rows.map((row) => [row.eventId, row._sum.partySize ?? 0]));
+}
+
+function toCard(row: CardRow, locale: string, now: Date, taken: number): EventCard {
   const t = getTranslation<any>(row.translations, locale);
 
   return {
@@ -109,8 +138,11 @@ export async function getPublishedEvents(
     [] as CardRow[],
   );
 
+  // partySize matters: one registration for four people takes four seats.
+  const taken = await takenSeatsByEvent(rows.map((row) => row.id));
+
   const now = new Date();
-  const cards = rows.map((row) => toCard(row, locale, now));
+  const cards = rows.map((row) => toCard(row, locale, now, taken.get(row.id) ?? 0));
 
   return {
     upcoming: cards.filter((event) => !event.isPast),
@@ -133,7 +165,7 @@ export const getEventBySlug = cache(
 
     if (!row || !row.isPublished) return null;
 
-    return toCard(row, locale, new Date());
+    return toCard(row, locale, new Date(), await countTakenSeats(row.id));
   },
 );
 

@@ -92,6 +92,7 @@ export default defineConfig({
         "lib/csv.ts",
         "lib/db.ts",
         "lib/email.ts",
+        "lib/events.ts",
         "lib/faqs.ts",
         "lib/line.ts",
         "lib/markdown.ts",
@@ -140,6 +141,19 @@ export default defineConfig({
           that, where a lost test trips them and normal drift does not.
         */
         "lib/line.ts": { lines: 7, functions: 5, branches: 15, statements: 7 },
+        /*
+          Seat counting, and nothing else in this file, is what these
+          protect. `seatsLeft` is the number the RSVP form shows and the
+          capacity check refuses on — get it wrong in one direction and an
+          event with room turns people away, in the other and it oversells.
+          It went untested until the sum moved out of Node and into a
+          groupBy, which is a bad moment to have no test.
+
+          The detail pages, the sitemap query and countTakenSeats are not
+          covered, so this sits just under the real figure rather than at
+          an aspirational one. Raise it when those get tests.
+        */
+        "lib/events.ts": { lines: 60, functions: 55, branches: 60, statements: 60 },
         "lib/project-filters.ts": {
           lines: 95,
           functions: 100,
