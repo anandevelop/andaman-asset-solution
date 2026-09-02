@@ -42,6 +42,35 @@ export async function generateMetadata(
   };
 }
 
+/**
+ * Which build is answering.
+ *
+ * Read here, at request time, and that is the whole trick. APP_VERSION and
+ * GIT_COMMIT_SHA are declared in the Dockerfile's *runner* stage only —
+ * they do not exist during `next build`, so anything that captured them
+ * while building would bake in an empty string and stay empty on every
+ * deployed container, which is exactly the bug /api/health had before
+ * those two became build arguments. This page awaits `searchParams`, a
+ * dynamic API, so it is rendered per request and the read is a real one.
+ *
+ * "dev" rather than nothing when unset: an image built locally has no
+ * stamp to show, and a blank space would look identical to a deploy whose
+ * build arguments went missing. The point of the stamp is to tell those
+ * apart.
+ */
+function buildStamp(): string {
+  const version = process.env.APP_VERSION;
+  const commit = process.env.GIT_COMMIT_SHA;
+
+  const parts = [
+    version ? `v${version}` : null,
+    // Enough to find the commit, short enough to read off a screen.
+    commit ? commit.slice(0, 7) : null,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(" · ") : "dev";
+}
+
 export default async function LoginPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -99,6 +128,14 @@ export default async function LoginPage(props: Props) {
             <ArrowLeft size={15} aria-hidden />
             {t("backToSite")}
           </Link>
+
+          {/*
+            Same white/60 as the link above, deliberately. Anything fainter
+            drops under 4.5:1 against this navy — white/50 measures 4.35 —
+            and the axe scan over this page would fail on it. Not
+            translated because there is nothing here to translate.
+          */}
+          <p className="mt-6 font-mono text-xs text-white/60">{buildStamp()}</p>
         </div>
       </div>
     </main>
