@@ -10,17 +10,51 @@
  * layer that knows who is signed in, so the actor has to reach it another
  * way.
  *
- * AsyncLocalStorage is that way. `enterWith` rather than `run(fn)` because
- * the guard cannot wrap its caller: requireAdminAction() is invoked at the
- * top of an action and returns, it does not enclose the body. enterWith
- * sets the store for the remainder of the current async context, which for
- * a server action or a route handler is the rest of that request.
+ * AsyncLocalStorage is that way, with two details that are load-bearing and
+ * were both wrong in the first version. Each cost the trail everything: the
+ * back office recorded four real changes as nothing at all.
  *
- * An empty store is the normal case and means "not an admin acting" — a
+ *
+ * ONE. The store is pinned to globalThis, like the client in lib/prisma.ts.
+ *
+ * Next bundles server code per entry, so a module-level `new
+ * AsyncLocalStorage()` is constructed once per bundle that reaches it, not
+ * once per process. This file was being instantiated fourteen times in a
+ * single dev server: the guards wrote the actor into one instance and the
+ * Prisma extension read from another — thirty-three reads, every one of
+ * them empty. Nothing threw. There is no error to raise when two objects
+ * that were meant to be one are merely different.
+ *
+ *
+ * TWO. `beginAuditScope()` must be called in the guard's *synchronous
+ * prefix* — above every await — and it stores a mutable holder rather than
+ * the actor itself.
+ *
+ * `enterWith` sets the store for the current async context. An async
+ * function's body runs synchronously in its *caller's* context until its
+ * first await, and only from there on in its own. So a call made above the
+ * first await lands in the caller's context, which is the server action,
+ * which is where the writes happen — while the same call made below it
+ * lands in a context the caller never sees again once it resumes.
+ *
+ * The original code called `enterWith(actor)` at the bottom of the guard,
+ * after `await getServerSession()`, because that is the first moment the
+ * actor is known. It set the store on a context that ended microseconds
+ * later. Hence the holder: the scope object enters the caller's context
+ * empty, and the actor is dropped into it once the checks have passed.
+ * `getAuditActor()` reads through the shared reference and sees it.
+ *
+ * That ordering is a real trap, so `beginAuditScope()` is the first
+ * statement in both guards with a comment saying why. An await placed above
+ * it would break the trail silently, exactly as before.
+ *
+ *
+ * An empty scope is the normal case and means "not an admin acting" — a
  * visitor submitting the lead form, an RSVP, the sign-in path stamping
  * totpLastStep. Those writes are not audited, which is the intent: this
  * table answers "which administrator changed this", not "what has ever
- * been written".
+ * been written". A request whose guard rejected it leaves an empty scope
+ * too, and so is equally invisible.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -35,20 +69,64 @@ export type AuditActor = {
   role: Role;
 };
 
-const storage = new AsyncLocalStorage<AuditActor | undefined>();
+/**
+ * The per-request holder.
+ *
+ * Mutable on purpose: it is entered into the store before anyone knows who
+ * is signing in, and filled once they do. See TWO in the header.
+ */
+export type AuditScope = { actor?: AuditActor };
+
+/*
+  Pinned to globalThis, not merely module-level. See ONE in the header —
+  this file is bundled more than once, and a per-bundle store is a store
+  the reader never finds.
+*/
+const globalForAudit = globalThis as unknown as {
+  auditScopeStorage?: AsyncLocalStorage<AuditScope | undefined>;
+};
+
+const storage = (globalForAudit.auditScopeStorage ??= new AsyncLocalStorage<
+  AuditScope | undefined
+>());
+
+/**
+ * Open an audit scope for the rest of this request, with nobody in it yet.
+ *
+ * MUST be called above every `await` in its caller — see TWO in the header.
+ * The returned holder is filled by setAuditActor() once authorisation has
+ * actually passed.
+ */
+export function beginAuditScope(): AuditScope {
+  const scope: AuditScope = {};
+  storage.enterWith(scope);
+  return scope;
+}
 
 /**
  * Mark the rest of this request as the work of a signed-in administrator.
  * Called by the admin guards, which every admin page and action already
  * goes through.
+ *
+ * Fills the scope opened by beginAuditScope(). Opens one itself if there is
+ * none, which is what a caller outside a guard gets — but a guard must not
+ * rely on that, because a scope opened here is opened below the guard's
+ * awaits, and its caller will never see it.
  */
 export function setAuditActor(actor: AuditActor): void {
-  storage.enterWith(actor);
+  const scope = storage.getStore();
+
+  if (scope) {
+    scope.actor = actor;
+    return;
+  }
+
+  storage.enterWith({ actor });
 }
 
 /** The administrator behind the current request, if there is one. */
 export function getAuditActor(): AuditActor | undefined {
-  return storage.getStore();
+  return storage.getStore()?.actor;
 }
 
 /**

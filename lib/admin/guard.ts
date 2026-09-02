@@ -15,7 +15,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 import { authOptions, hasRole } from "@/lib/auth";
-import { setAuditActor } from "@/lib/audit/context";
+import { beginAuditScope, setAuditActor } from "@/lib/audit/context";
 
 export type AdminSession = {
   id: string;
@@ -64,6 +64,18 @@ export async function requireAdmin(
   minimum: Role = Role.EDITOR,
   { allowTwoFactorSetup = false }: GuardOptions = {},
 ): Promise<AdminSession> {
+  /*
+    First statement, and above every await — that is not a style choice.
+
+    `enterWith` sets the store for the current async context, and this
+    body runs in its *caller's* context only until the first await. Called
+    here, the scope reaches the page or action that is about to do the
+    writing. Called below the await, it would open a scope nobody else can
+    ever see, which is precisely how this trail spent its first version
+    recording nothing at all. See lib/audit/context.ts.
+  */
+  beginAuditScope();
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -105,6 +117,10 @@ export async function requireAdminAction(
   minimum: Role = Role.EDITOR,
   { allowTwoFactorSetup = false }: GuardOptions = {},
 ): Promise<AdminSession> {
+  // First statement, above every await, for the reason spelled out in
+  // requireAdmin above: below it, the scope reaches nobody.
+  beginAuditScope();
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id || !hasRole(session.user.role, minimum)) {
