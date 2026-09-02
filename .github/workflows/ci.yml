@@ -269,6 +269,26 @@ jobs:
         NEXT_PUBLIC_MEDIA_DOMAIN=andamanasset-media.sgp1.cdn.digitaloceanspaces.com
         NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdkEaEtAAAAAOUwQsQOWAw-EwR-6KYjJ9WmMXEd
         NEXT_PUBLIC_LINE_ADD_FRIEND_URL=https://line.me/R/ti/p/@andamanasset
+
+    # A real database for the smoke test below. Without one the test could
+    # only ask "did it answer at all", and a container whose Prisma engine
+    # will not load answers exactly the same way as one with no database
+    # configured — see the note on that step.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: smoke
+          POSTGRES_PASSWORD: smoke
+          POSTGRES_DB: smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -290,32 +310,61 @@ jobs:
           build-args: ${{ env.IMAGE_BUILD_ARGS }}
 
       - name: Smoke test the image
-        # Proves the container starts and answers. /api/health returns 503
-        # without a database, which is correct — 000 (no response) is the
-        # failure we are actually testing for.
+        # Proves the container starts, reaches Postgres and can query it.
+        #
+        # It used to accept 200 *or* 503, on the reasoning that 503 is the
+        # correct answer with no database attached. True — and the reason
+        # this test passed an image whose Prisma query engine could not
+        # load at all. The Dockerfile did not install openssl, so
+        # `prisma generate` could not detect the system version, defaulted
+        # to openssl-1.1.x, and shipped an engine Alpine 3.24 has no
+        # libssl.so.1.1 for. Every query in that container failed. The site
+        # still started and still served pages, because lib/db.ts degrades
+        # to empty states rather than crashing, and /api/health answered
+        # 503 — indistinguishable from "no database configured".
+        #
+        # So the assertion is now 200 and `database.ok`, which requires a
+        # database that really answers. The service above provides it.
+        env:
+          SMOKE_DATABASE_URL: postgresql://smoke:smoke@localhost:5432/smoke?schema=public
         run: |
+          # Migrations first, from the image itself — this doubles as proof
+          # that the documented `prisma migrate deploy` release step works
+          # from the published artefact.
+          docker run --rm --network host \
+            -e DATABASE_URL="$SMOKE_DATABASE_URL" \
+            --entrypoint node andaman-asset-solution:${{ github.sha }} \
+            node_modules/prisma/build/index.js migrate deploy
+
           # The container validates its environment at startup and exits
           # non-zero on anything missing (lib/env.ts), so the smoke test has
           # to hand it a complete one — a 32-character secret included.
           # NEXT_PUBLIC_SITE_URL is not passed here: it is baked in by
           # IMAGE_BUILD_ARGS above, which is exactly what this proves.
-          docker run -d --name smoke -p 3000:3000 --init \
-            -e DATABASE_URL="postgresql://ci:ci@localhost:5432/ci?schema=public" \
+          #
+          # --network host so the container reaches the service on
+          # localhost:5432, the same address the runner sees it at.
+          docker run -d --name smoke --network host --init \
+            -e DATABASE_URL="$SMOKE_DATABASE_URL" \
             -e NEXTAUTH_SECRET="ci-smoke-placeholder-secret-0000000000" \
             -e NEXTAUTH_URL="https://andamanassetsolution.com" \
             andaman-asset-solution:${{ github.sha }}
 
           for i in $(seq 1 30); do
+            body=$(curl -s http://localhost:3000/api/health || true)
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || true)
-            if [ "$code" = "200" ] || [ "$code" = "503" ]; then
-              echo "✓ container responded with $code"
+
+            if [ "$code" = "200" ] && echo "$body" | grep -q '"ok":true'; then
+              echo "✓ container answered 200 and queried the database"
               docker rm -f smoke
               exit 0
             fi
             sleep 2
           done
 
-          echo "✗ container never responded"
+          echo "✗ container never reported a healthy database"
+          echo "  last status: ${code:-none}"
+          echo "  last body:   ${body:-none}"
           docker logs smoke
           docker rm -f smoke
           exit 1

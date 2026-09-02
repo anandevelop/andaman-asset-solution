@@ -6,6 +6,22 @@
 
 generator client {
   provider = "prisma-client-js"
+
+  /// Engines to build, named rather than detected.
+  ///
+  /// `native` covers whatever machine runs `prisma generate` — a developer's
+  /// laptop, and CI's Ubuntu runners for lint/typecheck/test. The two musl
+  /// entries are the deploy target: node:22-alpine on amd64 in CI, arm64 on
+  /// an Apple-silicon machine building locally.
+  ///
+  /// Named because detection failed silently. Without the openssl package
+  /// in the image, Prisma could not read the system's OpenSSL version,
+  /// defaulted to openssl-1.1.x, and shipped an engine that Alpine 3.24
+  /// cannot load — every query in the container failing while the site kept
+  /// serving empty pages. The Dockerfile installs openssl now, so detection
+  /// works; this makes the answer explicit rather than inferred, so a base
+  /// image change cannot quietly move it again.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 datasource db {

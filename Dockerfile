@@ -19,7 +19,23 @@
 # no longer receives security patches — shipping on it means running an
 # unpatched runtime by choice. 22 is what CI builds and tests against.
 FROM node:22-alpine AS base
-RUN apk add --no-cache libc6-compat
+#
+# openssl is not optional, despite Alpine shipping libssl.so.3 already.
+#
+# Prisma picks its query engine by sniffing the installed OpenSSL at
+# `prisma generate` time. With no openssl package present it cannot tell,
+# says so, and falls back:
+#
+#   prisma:warn Prisma failed to detect the libssl/openssl version to use,
+#               and may not work as expected. Defaulting to "openssl-1.1.x".
+#
+# Alpine 3.24 has no libssl.so.1.1, so the engine it then ships cannot load
+# and every query in the container fails at PrismaClient construction. The
+# site still starts and still serves pages — every one of them empty, since
+# lib/db.ts is built to degrade rather than crash — and /api/health answers
+# 503, which is the same answer it gives when no database is configured at
+# all. That is why this survived a green smoke test.
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 
@@ -95,6 +111,23 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+
+# Creating the first admin is a first-deployment step, so the tool for it
+# has to run where the deployment is:
+#
+#   docker compose exec app node scripts/create-admin.mjs --email you@…
+#
+# docs/DEPLOYMENT.md used to point at `node_modules/.bin/tsx
+# scripts/create-admin.ts` inside this image, which could not work — tsx is
+# a devDependency and no source tree is copied here. The script is plain
+# JavaScript for that reason.
+#
+# bcryptjs is copied explicitly because Next bundles it into the server
+# chunks rather than leaving it in standalone's node_modules: the running
+# app can hash a password, a separate script cannot import the package. It
+# is pure JavaScript with no native build, so this costs a few kilobytes.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/create-admin.mjs ./scripts/create-admin.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
 USER nextjs
 
