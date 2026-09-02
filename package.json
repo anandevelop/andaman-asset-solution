@@ -23,7 +23,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
     "prisma:reset": "prisma migrate reset",
-    "admin:create": "tsx scripts/create-admin.ts",
+    "admin:create": "node scripts/create-admin.mjs",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:check": "tsx scripts/db-check.ts",

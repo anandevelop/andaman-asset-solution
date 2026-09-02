@@ -102,7 +102,12 @@ Cross-check against `.env.example`, which annotates each one.
 
 ## 4. Admin access
 
-- [ ] First `SUPER_ADMIN` created via `npm run admin:create`
+- [ ] First `SUPER_ADMIN` created — from the deployed container, not your
+      laptop: `docker compose -f docker-compose.prod.yml exec app node
+      scripts/create-admin.mjs --email … --name "…"`. Add `--password '…'`
+      to choose it yourself; otherwise one is generated and printed once.
+      The full command is in [DEPLOYMENT.md](./DEPLOYMENT.md). Locally the
+      same tool is `npm run admin:create`.
 - [ ] Generated password changed at `/th/admin/account`
 - [ ] Real accounts created at `/admin/users` for each team member, at the
       **lowest** role that does their job — `EDITOR` for content, `ADMIN`

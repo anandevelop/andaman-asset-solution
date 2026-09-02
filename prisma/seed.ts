@@ -28,9 +28,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { Prisma, PrismaClient, PropertyType, ProjectStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { Prisma, PrismaClient, PropertyType, ProjectStatus, Role } from "@prisma/client";
 
 // ─────────────────────────────────────────────────────────────────────────
 // RICH PROJECT CONTENT (Sale-Kit parity) — Phase 11.5
@@ -630,10 +632,83 @@ function assertNotProduction() {
   process.exit(1);
 }
 
+/** Cost 12, matching scripts/create-admin.ts and the admin user actions. */
+const BCRYPT_ROUNDS = 12;
+
+const INITIAL_ADMIN = {
+  email: "anan.develop@gmail.com",
+  name: "Anan",
+} as const;
+
+/**
+ * The first SUPER_ADMIN, so a fresh database is reachable through the UI.
+ *
+ * Three rules, each of which exists because the obvious version of this
+ * function is dangerous:
+ *
+ *   1. An existing account is left completely alone — not upserted, not
+ *      touched. By the time a database has been used, this row carries a
+ *      password its owner chose and a TOTP secret their phone holds, and
+ *      the seed is re-run casually. `update: {}` would be enough to avoid
+ *      overwriting those, but skipping outright says so unmistakably.
+ *
+ *   2. No password in this file. scripts/create-admin.ts spells out why:
+ *      a documented default survives every deploy and every README, and is
+ *      the first thing anyone tries. One is generated and printed once,
+ *      or taken from SEED_ADMIN_PASSWORD when a script needs it fixed.
+ *
+ *   3. No second factor is seeded. lib/two-factor-policy.ts now requires
+ *      one of every role, so this account is held at /admin/account/security
+ *      until it enrols — which is the correct first-run experience. Seeding
+ *      a secret would mean committing or emailing one.
+ *
+ * `npm run admin:create` remains the tool for production; this only saves
+ * a step on a database that was just reset. assertNotProduction() above
+ * already refuses to run there at all.
+ */
+async function seedInitialAdmin() {
+  const existing = await prisma.user.findUnique({
+    where: { email: INITIAL_ADMIN.email },
+    select: { id: true, role: true },
+  });
+
+  if (existing) {
+    console.log(
+      `  ✓ Admin    ${INITIAL_ADMIN.email} already exists (${existing.role}) — left untouched`,
+    );
+    return;
+  }
+
+  const supplied = process.env.SEED_ADMIN_PASSWORD;
+  const password = supplied ?? randomBytes(12).toString("base64url");
+
+  await prisma.user.create({
+    data: {
+      name: INITIAL_ADMIN.name,
+      email: INITIAL_ADMIN.email,
+      passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
+      role: Role.SUPER_ADMIN,
+      isActive: true,
+    },
+  });
+
+  if (supplied) {
+    console.log(`  ✓ Admin    ${INITIAL_ADMIN.email} (password from SEED_ADMIN_PASSWORD)`);
+  } else {
+    console.log(`  ✓ Admin    ${INITIAL_ADMIN.email}`);
+    console.log(`             password: ${password}`);
+    console.log("             ↑ shown once, not stored anywhere. Change it after signing in.");
+  }
+}
+
 async function main() {
   assertNotProduction();
 
   console.log("🌱 Seeding Andaman Asset Solution…");
+
+  // Before the content: an empty database with demo projects and no way to
+  // sign in is not much use.
+  await seedInitialAdmin();
 
   // `update: {}` — every field in TRINITY_VILLAGE (name, tagline,
   // description, hero/gallery images, price, meta tags, isPublished…) is

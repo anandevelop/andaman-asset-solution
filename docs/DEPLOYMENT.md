@@ -106,20 +106,57 @@ new ones and never prompts — the right command for production.
 
 ### First deployment only
 
+Create the first admin account. The container already has the database
+credentials, so run it there rather than passing them again:
+
 ```bash
-# Create the first admin account. Prints a generated password once.
-docker run --rm -it \
-  -e DATABASE_URL="postgresql://…" \
-  andaman-asset-solution:TAG \
-  node_modules/.bin/tsx scripts/create-admin.ts \
+docker compose -f docker-compose.prod.yml exec app \
+  node scripts/create-admin.mjs \
     --email you@andamanassetsolution.com \
-    --name "Your Name" \
-    --role SUPER_ADMIN
+    --name "Your Name"
 ```
 
-Store that password immediately — it is a bcrypt hash in the database
-afterwards and cannot be recovered. Sign in at `/th/login` and change it
-at `/th/admin/account`.
+That prints a generated password once. To choose your own instead — which
+is what you want when handing the account to someone else — pass it:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app \
+  node scripts/create-admin.mjs \
+    --email you@andamanassetsolution.com \
+    --name "Your Name" \
+    --password 'the one you chose'
+```
+
+Nothing in this repository contains a default password, deliberately: one
+that lives in a file survives every deploy and every README, and is the
+first thing anyone tries against a site holding a customer database. The
+database keeps only a bcrypt hash, so a generated password that is not
+written down is genuinely gone — store it before closing the terminal.
+
+Then sign in at `/th/login`. The first thing you will see is the
+second-factor enrolment page, not the dashboard: `lib/two-factor-policy.ts`
+requires 2FA of every role, and until it is finished the account can reach
+nothing else. Have an authenticator app ready. Afterwards, change the
+password at `/th/admin/account` if it was generated, and create a second
+`SUPER_ADMIN` at `/admin/users` — the system refuses to delete the last
+one, so a single account that loses both its password and its phone is a
+database-edit recovery job.
+
+Re-running the command against an address that already exists is refused
+rather than silently rewriting that account. To recover a lost password:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app \
+  node scripts/create-admin.mjs \
+    --email you@andamanassetsolution.com \
+    --reset-password --password 'the new one'
+```
+
+That changes the password and nothing else — not the role, not the name,
+not whether the account is active — and invalidates every session issued
+before it, which is the point when the old password may be in someone
+else's hands. It does not clear the second factor; only another
+`SUPER_ADMIN` can do that, from `/admin/users/<id>/edit`.
 
 **Do not run `prisma db seed` in production.** The seed inserts the
 demo Trinity Village project, a sample article and a sample event. It is
