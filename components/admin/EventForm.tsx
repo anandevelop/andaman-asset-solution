@@ -21,8 +21,11 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
+import SeoPreviewFields from "@/components/admin/SeoPreviewFields";
+import SlugField from "@/components/admin/SlugField";
+import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
-import type { EventFormState } from "@/app/[locale]/admin/events/actions";
+import type { EventFormState } from "@/app/[locale]/admin/(content)/events/actions";
 
 export type EventFormValues = {
   slug: string;
@@ -32,7 +35,13 @@ export type EventFormValues = {
   startsAt: string;
   endsAt: string;
   coverImageUrl: string;
+  /** Manual social-share override — see Event.ogImageUrl's schema.prisma
+   *  comment. Falls back to coverImageUrl when empty. */
+  ogImageUrl: string;
   capacity: string;
+  metaTitle: string;
+  metaDescription: string;
+  noIndex: boolean;
   isPublished: boolean;
 };
 
@@ -44,7 +53,11 @@ export const EMPTY_EVENT: EventFormValues = {
   startsAt: "",
   endsAt: "",
   coverImageUrl: "",
+  ogImageUrl: "",
   capacity: "",
+  metaTitle: "",
+  metaDescription: "",
+  noIndex: false,
   isPublished: false,
 };
 
@@ -188,12 +201,10 @@ export default function EventForm({
             label={t("events.slug")}
             hint={t("events.slugHint")}
           >
-            <input
+            <SlugField
               id="slug"
-              name="slug"
               defaultValue={values.slug}
               required
-              pattern="[a-z0-9]+(-[a-z0-9]+)*"
               className="admin-input font-mono"
             />
           </Field>
@@ -284,6 +295,49 @@ export default function EventForm({
           />
         </section>
 
+        {/* ── SEO ─────────────────────────────────────────────────────── */}
+        <section className="admin-card space-y-5">
+          <h2 className="admin-section-title">{t("projects.seo")}</h2>
+
+          <ImageUploader
+            name="ogImageUrl"
+            prefix="events"
+            slug={values.slug}
+            defaultValue={values.ogImageUrl}
+            label={t("events.ogImage")}
+            hint={t("events.ogImageHint")}
+          />
+
+          <SeoPreviewFields
+            titleLabel={`${t("projects.metaTitle")} · ${lang.toUpperCase()}`}
+            descriptionLabel={`${t("projects.metaDescription")} · ${lang.toUpperCase()}`}
+            titleError={err("metaTitle")}
+            descriptionError={err("metaDescription")}
+            defaultTitle={values.metaTitle}
+            defaultDescription={values.metaDescription}
+            fallbackTitle={values.title || t("projects.seoPreviewNoTitle")}
+            fallbackDescription={values.description || t("projects.seoPreviewNoDescription")}
+            displayPath={`${siteConfig.url.replace(/^https?:\/\//, "")} › ${lang} › events${values.slug ? ` › ${values.slug}` : ""}`}
+            previewLabel={t("projects.seoPreviewLabel")}
+            previewHint={t("projects.seoPreviewHint")}
+          />
+
+          <label className="flex items-start gap-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              name="noIndex"
+              defaultChecked={values.noIndex}
+              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            />
+            <span>
+              {t("projects.noIndex")}
+              <span className="mt-0.5 block text-xs text-ink-muted">
+                {t("projects.noIndexHint")} · {lang.toUpperCase()}
+              </span>
+            </span>
+          </label>
+        </section>
+
         {/* ── Publication ───────────────────────────────────────────── */}
         <section className="admin-card">
           <label className="flex items-start gap-3 text-sm text-ink">
@@ -291,7 +345,7 @@ export default function EventForm({
               type="checkbox"
               name="isPublished"
               defaultChecked={values.isPublished}
-              className="mt-0.5 h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
             />
             <span>{t("events.publish")}</span>
           </label>

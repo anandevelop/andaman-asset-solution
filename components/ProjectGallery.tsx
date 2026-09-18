@@ -142,7 +142,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               type="button"
               onClick={() => setOpenIndex(i)}
               {...tileMotionProps(i)}
-              className={`group relative block aspect-square overflow-hidden rounded-sm shadow-card sm:aspect-auto ${HERO_LAYOUT[i]}`}
+              className={`group relative block aspect-square overflow-hidden rounded-xs shadow-card sm:aspect-auto ${HERO_LAYOUT[i]}`}
             >
               <Image
                 src={src}
@@ -169,7 +169,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               type="button"
               onClick={() => setOpenIndex(i)}
               {...tileMotionProps(i)}
-              className="group relative block aspect-square overflow-hidden rounded-sm shadow-card"
+              className="group relative block aspect-square overflow-hidden rounded-xs shadow-card"
             >
               <Image
                 src={src}
@@ -192,7 +192,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
         <div className="mt-6 flex justify-center">
           <button type="button" onClick={() => setOpenIndex(0)} className="btn-outline">
             <Images size={15} aria-hidden />
-            {labels.viewAll.replace("{count}", String(images.length))}
+            {labels.viewAll}
           </button>
         </div>
       )}
@@ -272,7 +272,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               </p>
               <div
                 className="flex max-w-[92vw] gap-2 overflow-x-auto px-4
-                  [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
               >
                 {images.map((src, i) => (
                   <button
@@ -281,7 +281,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                     onClick={() => setOpenIndex(i)}
                     aria-label={`${projectName} view ${i + 1}`}
                     aria-current={i === openIndex}
-                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-sm transition-opacity sm:h-14 sm:w-14 ${
+                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs transition-opacity sm:h-14 sm:w-14 ${
                       i === openIndex ? "opacity-100 ring-2 ring-white" : "opacity-45 hover:opacity-75"
                     }`}
                   >

@@ -17,6 +17,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { pgAdapter } from "../lib/prisma-adapter";
 import { expect, test } from "./harness";
 import { expectNoA11yViolations } from "./a11y";
 import { LEAD_PROJECT } from "./fixtures";
@@ -35,9 +36,7 @@ let client: PrismaClient | null = null;
 
 function db(): PrismaClient {
   if (!client) {
-    client = new PrismaClient({
-      datasources: { db: { url: process.env.E2E_DATABASE_URL } },
-    });
+    client = new PrismaClient({ adapter: pgAdapter(process.env.E2E_DATABASE_URL) });
   }
   return client;
 }
@@ -51,6 +50,21 @@ function uniqueEmail(label: string) {
   return `e2e-${label}-${Date.now()}@example.test`;
 }
 
+/**
+ * Opens the phone-country combobox, filters to `countryName`, and picks
+ * the (only) match. CountrySelect.tsx renders role="combobox" on the
+ * closed trigger button — not the textbook ARIA pattern, where the role
+ * sits on the search input, but the one that component's own header
+ * documents choosing deliberately — so this is a real open/search/pick
+ * sequence, not a single .selectOption() the way a native <select> would
+ * allow.
+ */
+async function pickPhoneCountry(page: import("@playwright/test").Page, countryName: string) {
+  await page.getByRole("combobox", { name: "Country code" }).click();
+  await page.getByPlaceholder(/search country or code/i).fill(countryName);
+  await page.getByRole("option", { name: new RegExp(countryName, "i") }).click();
+}
+
 async function fillEnquiry(
   page: import("@playwright/test").Page,
   overrides: Partial<{ name: string; email: string; phone: string; message: string }> = {},
@@ -58,18 +72,28 @@ async function fillEnquiry(
   const values = {
     name: "Somchai Prasert",
     email: uniqueEmail("lead"),
+    // The national number as a visitor types it; toE164() (via the
+    // TH-default CountrySelect below) turns this into "+66812345678" —
+    // see the "writes the enquiry" test for the assertion on that shape.
     phone: "0812345678",
     message: "Please send the floor plans for the four-bedroom type.",
     ...overrides,
   };
 
   await page.getByLabel("Full name").fill(values.name);
+  // Explicit rather than relying on the TH default silently being correct
+  // — this is the one piece of the form a stubbed unit test cannot cover
+  // at all: CountrySelect.tsx's real open/search/pick sequence in a real
+  // browser, with real SVG flags and real focus.
+  await pickPhoneCountry(page, "Thailand");
   await page.getByLabel("Phone number").fill(values.phone);
   await page.getByLabel("Email address").fill(values.email);
   await page.getByLabel("Message (optional)").fill(values.message);
   await page.getByRole("checkbox").check();
 
-  return values;
+  // The E.164 value this assembles to, not what was typed — every caller
+  // that asserts against the database needs the stored shape.
+  return { ...values, phone: "+66812345678" };
 }
 
 test.describe("Lead submission", () => {
@@ -79,7 +103,7 @@ test.describe("Lead submission", () => {
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
 
-    await expect(page.getByText(/we've received your request/i)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
 
     const lead = await db().leadInquiry.findFirst({
       where: { email: values.email },
@@ -89,6 +113,9 @@ test.describe("Lead submission", () => {
     expect(lead).not.toBeNull();
     expect(lead!.name).toBe(values.name);
     expect(lead!.phone).toBe(values.phone);
+    // Stored alongside `phone`, not re-derived from it later — see
+    // LeadInquiry.phoneCountry's comment in schema.prisma for why.
+    expect(lead!.phoneCountry).toBe("TH");
     expect(lead!.message).toBe(values.message);
 
     // Attribution: the enquiry has to arrive attached to the project whose
@@ -108,7 +135,7 @@ test.describe("Lead submission", () => {
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
-    await expect(page.getByText(/we've received your request/i)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
 
     const lead = await db().leadInquiry.findFirstOrThrow({
       where: { email: values.email },
@@ -119,16 +146,24 @@ test.describe("Lead submission", () => {
     expect(lead.consentVersion).toMatch(/^privacy-policy-v/);
   });
 
-  test("clears the form after sending", async ({ page }) => {
+  test("keeps the form's values behind the dialog, and clears them only once it closes", async ({ page }) => {
     await page.goto(PROJECT_URL);
 
-    await fillEnquiry(page);
+    const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
-    await expect(page.getByText(/we've received your request/i)).toBeVisible();
 
-    // A form still full of the visitor's details under a "thank you"
-    // message reads as though nothing was sent, and the obvious response —
-    // pressing submit again — files a duplicate the team then calls twice.
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Thank you")).toBeVisible();
+
+    // Values survive behind the open dialog. A visitor who glances past
+    // its edge and sees the form already blank cannot tell whether the
+    // submission actually went through — the obvious response, pressing
+    // submit again, files a duplicate the sales team then calls twice.
+    await expect(page.getByLabel("Full name")).toHaveValue(values.name);
+    await expect(page.getByLabel("Email address")).toHaveValue(values.email);
+
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+
     await expect(page.getByLabel("Full name")).toHaveValue("");
     await expect(page.getByLabel("Email address")).toHaveValue("");
   });
@@ -138,7 +173,7 @@ test.describe("Lead submission", () => {
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
-    await expect(page.getByText(/we've received your request/i)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
 
     const lead = await db().leadInquiry.findFirstOrThrow({
       where: { email: values.email },
@@ -172,6 +207,7 @@ test.describe("Lead submission", () => {
     const before = await db().leadInquiry.count();
 
     await page.getByLabel("Full name").fill("Anna Lindqvist");
+    await pickPhoneCountry(page, "Thailand");
     await page.getByLabel("Phone number").fill("0812345678");
     await page.getByLabel("Email address").fill(uniqueEmail("noconsent"));
     // Consent box deliberately left unticked.
@@ -190,12 +226,17 @@ test.describe("Lead submission", () => {
     const before = await db().leadInquiry.count();
     const email = uniqueEmail("bot");
 
-    // Posted directly: the field is hidden, so only a script fills it.
+    // Posted directly: the field is hidden, so only a script fills it. A
+    // real client always sends E.164 by the time it reaches this endpoint
+    // (CountrySelect.tsx's toE164() assembles it before submit) — a script
+    // hitting the API straight past the form is exactly the case
+    // leadInquirySchema's regex exists to hold to the same shape.
     const response = await page.request.post("/api/leads", {
       data: {
         name: "Acme Marketing",
         email,
-        phone: "0800000000",
+        phone: "+66800000000",
+        phoneCountry: "TH",
         consentGiven: true,
         company: "Acme Ltd", // ← the honeypot
         source: "PROJECT_PAGE",
@@ -227,6 +268,20 @@ test.describe("Lead submission", () => {
     await expectNoA11yViolations(page);
   });
 
+  test("the success dialog is accessible too", async ({ page }) => {
+    // Same reasoning as the error state above, for the other dynamic
+    // surface this page grows after an interaction — a focus trap, a
+    // backdrop and a portal-rendered node axe cannot see by scanning the
+    // page before anyone has submitted anything.
+    await page.goto(PROJECT_URL);
+
+    await fillEnquiry(page);
+    await page.getByRole("button", { name: "Request viewing" }).click();
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
+
+    await expectNoA11yViolations(page);
+  });
+
   test("is reachable and submittable by keyboard alone", async ({ page }) => {
     await page.goto(PROJECT_URL);
 
@@ -253,18 +308,37 @@ test.describe("Lead submission", () => {
       await expect(name).toBeFocused({ timeout: 500 });
     }).toPass({ timeout: 15_000 });
 
-    // Tab order must run name → phone → email → nationality → message,
-    // matching the visual order. A grid layout that reorders columns for
-    // wide screens is the usual way this silently breaks.
+    // Tab order must run name → phone country code → phone number → email
+    // → nationality → message, matching the visual left-to-right order. A
+    // grid layout that reorders columns for wide screens is the usual way
+    // this silently breaks.
     await page.keyboard.type("Keyboard Buyer");
     await page.keyboard.press("Tab");
-    await page.keyboard.type("0898765432");
+
+    // The country picker itself, entirely by keyboard: a plain <button>
+    // opens on Enter or Space with no extra ARIA wiring needed, typing
+    // filters the list, and Enter picks whatever is highlighted — see
+    // CountrySelect.tsx's onSearchKeyDown for the same sequence this
+    // exercises.
+    const phoneCountry = page.getByRole("combobox", { name: "Country code" });
+    await expect(phoneCountry).toBeFocused();
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("United Kingdom");
+    await page.keyboard.press("Enter");
+    // Focus returns to the trigger after a selection, and its own text now
+    // reflects the pick — both load-bearing for the next Tab to land
+    // correctly and for a sighted keyboard user to get feedback at all.
+    await expect(phoneCountry).toBeFocused();
+    await expect(phoneCountry).toHaveText(/\+44/);
+
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("7400123456");
     await page.keyboard.press("Tab");
 
     const email = uniqueEmail("keyboard");
     await page.keyboard.type(email);
 
-    await expect(page.getByLabel("Phone number")).toHaveValue("0898765432");
+    await expect(page.getByLabel("Phone number")).toHaveValue("7400123456");
     await expect(page.getByLabel("Email address")).toHaveValue(email);
   });
 });

@@ -12,6 +12,7 @@ import net from "node:net";
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { pgAdapter } from "../lib/prisma-adapter";
 
 /**
  * Minimal .env loader — this script runs outside the Prisma CLI, which is
@@ -109,7 +110,7 @@ async function main() {
   line(OK, `TCP connection to ${host}:${port} succeeded`);
 
   // ── 3. Can Prisma authenticate and query? ─────────────────────────────
-  const prisma = new PrismaClient({ log: ["error"] });
+  const prisma = new PrismaClient({ adapter: pgAdapter(), log: ["error"] });
 
   try {
     await prisma.$queryRaw`SELECT 1`;

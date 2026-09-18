@@ -15,10 +15,11 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
-import { AlertCircle, CheckCircle2, Loader2, Trash2, Youtube } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { Youtube } from "@/components/BrandGlyphs";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
-import type { ProgressFormState } from "@/app/[locale]/admin/progress/actions";
+import type { ProgressFormState } from "@/app/[locale]/admin/(catalog)/progress/actions";
 
 export type ProgressValues = {
   month: number;
@@ -177,7 +178,7 @@ export default function ProgressForm({
             type="checkbox"
             name="isPublished"
             defaultChecked={values.isPublished}
-            className="h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           {t("common.published")}
         </label>

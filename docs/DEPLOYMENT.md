@@ -247,29 +247,64 @@ an Origin Access Control.
     "Action": "s3:PutObject",
     "Resource": "arn:aws:s3:::YOUR-BUCKET/*",
     "Condition": {
-      "NumericLessThanEquals": { "s3:content-length-range": 15728640 }
+      "NumericLessThanEquals": { "s3:content-length-range": 31457280 }
     }
   }]
 }
 ```
 
-The size condition is the one that actually matters. The 15MB cap in
-`lib/s3.ts` and the uploader is advisory — a presigned URL can be replayed
+The size condition is the one that actually matters. The caps in
+`lib/s3.ts` and the uploader are advisory — a presigned URL can be replayed
 with any payload, and only the bucket policy stops it.
 
-**CORS** — the browser PUTs directly, so the bucket must allow it:
+**Pick the number to match `lib/s3.ts`, and check it when either changes.**
+The app allows three sizes: 15MB for an image (`MAX_UPLOAD_BYTES`), 30MB for
+a PDF (`MAX_DOCUMENT_BYTES`), 100MB for a video (`MAX_VIDEO_BYTES`). A
+single bucket condition can only express one, so it has to be the largest
+type you actually intend to accept — `31457280` above covers brochures. This
+document said `15728640` for a long time while the app allowed 30MB, which
+would have refused a legitimate brochure at the bucket while every layer of
+the app said it should work, and the browser would have reported it as a
+generic network failure (see the note on error responses and CORS below).
+If videos are ever uploaded through the admin, this has to rise again or be
+split into per-prefix statements.
+
+**CORS** — the browser PUTs directly, and the e-brochure viewer reads back:
 
 ```json
 [{
   "AllowedOrigins": ["https://andamanassetsolution.com"],
-  "AllowedMethods": ["PUT"],
-  "AllowedHeaders": ["content-type"],
-  "MaxAgeSeconds": 3000
+  "AllowedMethods": ["GET", "HEAD", "PUT"],
+  "AllowedHeaders": ["*"],
+  "ExposeHeaders": ["ETag", "Accept-Ranges", "Content-Range", "Content-Encoding", "Content-Length"],
+  "MaxAgeSeconds": 3600
 }]
 ```
 
+`scripts/spaces-cors.ts` is the source of truth for this rule — run
+`npm run spaces:cors` rather than typing it into the console, and
+`npm run spaces:check` to verify it.
+
+Each part earns its place:
+
+- **PUT** is the admin uploader.
+- **GET/HEAD** is `/e-brochure/<slug>`: pdf.js fetches the PDF with
+  `fetch`, which is a CORS request, unlike an `<img src>`.
+- **`ExposeHeaders`** is what makes range requests possible. pdf.js decides
+  whether it may request byte ranges by reading `Accept-Ranges` and
+  `Content-Encoding` off the response, and cross-origin JavaScript cannot
+  see either unless they are exposed here. The failure mode is not an error
+  — it is the whole PDF downloading before the first page paints.
+
 Restrict `AllowedOrigins` to the real domain. `"*"` lets any site mint
 uploads against your bucket using a stolen presigned URL.
+
+> One thing worth knowing when debugging any of this: an error response
+> from Spaces carries no CORS headers, so the browser refuses to show it to
+> the page. A 400 for a malformed request and a 403 for an expired URL both
+> reach `XMLHttpRequest` as a network failure with status 0. Reach for
+> `npm run spaces:check`, or reproduce the request from node, rather than
+> trusting what the browser says went wrong.
 
 ---
 

@@ -13,48 +13,35 @@
  *  2. A field cleared to empty deletes its row rather than storing "". The
  *     value then falls back to config/site.ts, which means "reset to
  *     default" needs no separate button — clearing the box is the reset.
+ *
+ * It is also partial-update safe by construction: the loop skips any key
+ * the submitted form did not carry (`raw === null`), so two different pages
+ * can each edit their own subset of SETTING_KEYS through this one action
+ * without wiping each other's values. /admin/settings and
+ * /admin/settings/seo both rely on that — do not "tidy" the null check into
+ * treating a missing field as a clear.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { revalidateTag, revalidatePath } from "next/cache";
+import { updateTag, revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
-import { SETTING_KEYS, isSettingKey, type SettingKey } from "@/lib/settings";
+import { sendDiagnosticEmail } from "@/lib/email";
+import { SETTING_VALIDATORS } from "@/lib/validations";
+import {
+  SETTING_KEYS,
+  IMAGE_SETTING_KEYS,
+  defaultSettings,
+  isSettingKey,
+  type SettingKey,
+} from "@/lib/settings";
 
 export type SettingsFormState = {
   ok: boolean;
   message?: string;
   fields?: Record<string, string>;
-};
-
-/**
- * Per-key validation. A phone number that is not a phone number renders
- * a broken `tel:` link on every page, so the shapes are checked here rather
- * than trusted.
- */
-const VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> = {
-  "contact.phone": z
-    .string()
-    .regex(/^[0-9+()\-\s]{6,20}$/, "Enter a valid phone number"),
-  "contact.whatsapp": z
-    .string()
-    .regex(/^[0-9+]{6,20}$/, "Digits and + only"),
-  "contact.email": z.string().email("Enter a valid email address"),
-  "contact.salesEmail": z.string().email("Enter a valid email address"),
-  "contact.mapUrl": z.string().url("Enter a full https:// URL"),
-  "social.facebook": z.string().url("Enter a full https:// URL"),
-  "social.instagram": z.string().url("Enter a full https:// URL"),
-  "social.youtube": z.string().url("Enter a full https:// URL"),
-  // Facebook Events Manager gives out a plain numeric ID — a pasted-in
-  // <script> tag or share URL is the most common mistake, so this catches
-  // it before the pixel silently fails to load.
-  "analytics.metaPixelId": z
-    .string()
-    .regex(/^\d{6,20}$/, "Enter just the numeric Pixel ID, not the full script"),
-  // Google's verification code is an opaque token, not a fixed shape — the
-  // length cap below is the only real guard.
 };
 
 export async function updateSettings(
@@ -70,6 +57,9 @@ export async function updateSettings(
   const toWrite: { key: SettingKey; value: string }[] = [];
   const toClear: SettingKey[] = [];
 
+  const defaults = defaultSettings();
+  const imageKeys = new Set<SettingKey>(IMAGE_SETTING_KEYS);
+
   for (const key of SETTING_KEYS) {
     const raw = formData.get(key);
     if (raw === null) continue;
@@ -81,22 +71,50 @@ export async function updateSettings(
       continue;
     }
 
-    const validator = VALIDATORS[key];
-    if (validator) {
-      const parsed = validator.safeParse(value);
-      if (!parsed.success) {
-        errors[key] = parsed.error.issues[0]?.message ?? "Invalid value";
-        continue;
-      }
+    /*
+      Submitting the committed default is a clear, not an override — but
+      only for the image fields.
+
+      They are the one kind of field with no placeholder: an uploader has
+      to preview something, so it previews the *effective* value, which is
+      the default until someone overrides it. Saving an untouched form
+      would therefore write a row identical to the default, which is inert
+      today and becomes a stale override the day config/site.ts changes.
+
+      Deliberately not generalised to every key. Two of the analytics
+      defaults come from env vars, and silently deleting a row because the
+      operator typed today's NEXT_PUBLIC_GA_ID would re-couple that value
+      to the environment behind their back.
+    */
+    if (imageKeys.has(key) && value === defaults[key]) {
+      toClear.push(key);
+      continue;
     }
 
-    // Bounded, so a settings row cannot become an accidental blob.
+    // Bounded, so a settings row cannot become an accidental blob. Checked
+    // before the validator so a pasted essay is reported as "too long"
+    // rather than as a failed shape.
     if (value.length > 500) {
       errors[key] = "Too long";
       continue;
     }
 
-    toWrite.push({ key, value });
+    const validator = SETTING_VALIDATORS[key];
+    if (!validator) {
+      toWrite.push({ key, value });
+      continue;
+    }
+
+    const parsed = validator.safeParse(value);
+    if (!parsed.success) {
+      errors[key] = parsed.error.issues[0]?.message ?? "Invalid value";
+      continue;
+    }
+
+    // parsed.data, not the raw value: several validators normalise (a GA4
+    // id is uppercased, a Twitter handle gains its @), and writing `value`
+    // here would silently discard every one of those transforms.
+    toWrite.push({ key, value: parsed.data });
   }
 
   if (Object.keys(errors).length > 0) return { ok: false, fields: errors };
@@ -119,13 +137,40 @@ export async function updateSettings(
     return { ok: false, message: "SAVE_FAILED" };
   }
 
-  // Clears the unstable_cache entry so the change is live on the next
-  // render rather than after the revalidate window.
-  revalidateTag("site-settings");
+  /* Clears the unstable_cache entry so the change is live on the next
+     render rather than after the revalidate window.
 
-  // Contact details appear in the footer, which is on every page.
+     updateTag, not revalidateTag: since Next 16 the two are different
+     calls, and only updateTag expires the entry immediately. revalidateTag
+     now takes a cacheLife profile and schedules the expiry — which in a
+     save action would mean the admin reloading the settings page and
+     reading back the values they just replaced. */
+  updateTag("site-settings");
+
+  /*
+    Contact details appear in the footer, which is on every page — and the
+    branding and SEO keys reach further still, into the <title>, <meta> and
+    <link rel="icon"> that generateMetadata bakes into every prerender.
+
+    revalidatePath("/", "layout") is already the widest purge there is:
+    every cached route derives the root layout first, so this invalidates
+    all of them. The narrower per-locale loop in settings/company/actions.ts
+    covers a strict subset of the same thing — copying it here would be a
+    downgrade wearing the costume of thoroughness.
+
+    What it does NOT reach is spelled out below.
+  */
   revalidatePath("/", "layout");
-  revalidatePath(`/${locale}/admin/settings`);
+
+  // "layout", so the purge covers /admin/settings/seo as well — a
+  // page-type purge would stop at this route's own segment.
+  revalidatePath(`/${locale}/admin/settings`, "layout");
+
+  // The manifest reads branding.faviconUrl (app/manifest.ts). It should be
+  // covered by the root purge above, but manifest generation is a
+  // special-cased metadata route whose caching has moved between Next
+  // minors, and one line is cheaper than the bug report.
+  revalidatePath("/manifest.webmanifest");
 
   return { ok: true, message: "SAVED" };
 }
@@ -143,6 +188,39 @@ export async function setSetting(key: string, value: string): Promise<boolean> {
     update: { value },
   });
 
-  revalidateTag("site-settings");
+  updateTag("site-settings");
   return true;
+}
+
+// ── Diagnostics ─────────────────────────────────────────────────────────
+
+export type TestEmailResult = { ok: boolean; message: string };
+
+/**
+ * Send a test message to the administrator who pressed the button.
+ *
+ * To themselves, deliberately: it needs no address field, it cannot be
+ * used to send mail to a stranger, and the person who has to decide
+ * whether SMTP works is the one who will see whether it arrived.
+ */
+export async function sendTestEmail(locale: string): Promise<TestEmailResult> {
+  const session = await requireAdminAction(Role.ADMIN);
+
+  const result = await sendDiagnosticEmail(session.email);
+
+  if (result.ok) {
+    return { ok: true, message: `${await testMessage(locale, "sent")} ${session.email}` };
+  }
+
+  if (result.error === "NOT_CONFIGURED") {
+    return { ok: false, message: await testMessage(locale, "notConfigured") };
+  }
+
+  // The SMTP server's own words, which is what makes this button useful.
+  return { ok: false, message: `${await testMessage(locale, "failed")} ${result.error}` };
+}
+
+async function testMessage(locale: string, key: "sent" | "failed" | "notConfigured") {
+  const t = await getTranslations({ locale, namespace: "admin" });
+  return t(`settings.health.testResult.${key}`);
 }

@@ -107,7 +107,7 @@ export default function LoginForm({ callbackUrl }: Props) {
       {error && (
         <div
           role="alert"
-          className="flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="flex items-start gap-2 rounded-xs border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
         >
           <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
           <span>{error}</span>
@@ -149,7 +149,7 @@ export default function LoginForm({ callbackUrl }: Props) {
       </div>
 
       {needsCode && (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-xs border border-slate-200 bg-slate-50 p-4">
           <div className="mb-3 flex items-start gap-2 text-sm text-ink-muted">
             <ShieldCheck size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />
             <span>{t("codePrompt")}</span>

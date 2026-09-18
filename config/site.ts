@@ -68,6 +68,32 @@ export const siteConfig = {
       { key: "about", href: "/about" },
       { key: "contact", href: "/contact" },
     ],
+
+    /*
+      Pages worth indexing that are deliberately not in the header.
+
+      /achievements is fully built in four locales and sets its own
+      canonical and hreflang, but the client declined a top-level Navbar
+      item for a single page (see the note above the Milestones link in
+      app/[locale]/(site)/about/page.tsx). It was therefore in neither
+      nav.main nor app/sitemap.ts, so search engines were never told it
+      exists — and tests/routes.test.ts could not see the gap, because it
+      only ever checked nav → page and sitemap → nav.
+
+      This list is what the sitemap and the footer read in addition to
+      nav.main. The Navbar deliberately does not read it.
+    */
+    secondary: [
+      { key: "achievements", href: "/achievements" },
+      /*
+        The e-brochure catalogue. Secondary rather than main for the same
+        reason as achievements: the header is already at seven items, and
+        this is a page people reach from a project or the footer rather
+        than one they navigate to first. It still has to be indexed, which
+        is exactly what this list is for.
+      */
+      { key: "eBrochure", href: "/e-brochure" },
+    ],
   },
 
   seo: {
@@ -87,6 +113,34 @@ export const siteConfig = {
     ],
     ogImage: "/og-image.jpg",
     twitterHandle: "@andamanasset",
+  },
+
+  /**
+   * Brand assets in public/, as the committed fallback behind the
+   * admin-editable branding settings (lib/settings.ts).
+   *
+   * These paths were string literals in six files — app/[locale]/layout.tsx,
+   * app/manifest.ts, Navbar, Footer, AdminSidebar and the login page. They
+   * are gathered here rather than written into defaultSettings() directly
+   * because lib/settings.ts's whole contract is "config/site.ts is always
+   * the fallback"; hardcoding "/favicon.ico" there would make it a second
+   * source of truth for brand assets, which is the thing that module says
+   * it must not become.
+   *
+   * `ogImage` deliberately stays under `seo` above rather than moving here:
+   * tests/routes.test.ts asserts on that exact path, and a social card is a
+   * metadata concern rather than an icon.
+   */
+  branding: {
+    favicon: "/favicon.ico",
+    logo: "/logo.png",
+    appleTouchIcon: "/apple-touch-icon.png",
+    icon192: "/icon-192.png",
+    icon512: "/icon-512.png",
+    /* Android masks icons to its own shape, so this variant has the mark
+       rescaled into the safe zone. An operator upload cannot replace it —
+       see buildManifestIcons() in lib/seo.ts. */
+    iconMaskable: "/icon-maskable-512.png",
   },
 
   legal: {

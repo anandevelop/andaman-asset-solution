@@ -22,6 +22,26 @@ export type CompanyProfileSummary = {
    *  getTranslation()), then falls back to the deprecated aboutUsEn/Th
    *  pair, same pattern as every other model in lib/projects.ts. */
   aboutUs: string;
+  /** About page Story section eyebrow/heading. Null — not "" — when the
+   *  current locale's translation row doesn't have one yet (the column
+   *  defaults to "" at the database level so an ADD COLUMN on the one
+   *  existing row could never fail; this is where that sentinel gets
+   *  turned into the "nothing here yet" every caller already expects),
+   *  so the page's own `?? t("story.eyebrow")` fallback keeps working
+   *  exactly as it does for aboutUs. */
+  storyEyebrow: string | null;
+  storyTitle: string | null;
+  /** Not locale-resolved — one photo for every language. */
+  storyImageUrl: string;
+  /** The About page header's full-bleed hero photo. Not locale-resolved,
+   *  same reasoning as storyImageUrl. */
+  aboutHeroImageUrl: string;
+  /** The four Vision & Mission figures on the home page. Not
+   *  locale-resolved — see CompanyProfile's schema.prisma comment for
+   *  why these stay the same glyphs in every language. */
+  /** Null until an administrator sets it — see CompanyProfile in
+   *  schema.prisma and lib/company-stats.ts. */
+  foundedYear: number | null;
 };
 
 /**
@@ -51,6 +71,11 @@ export const getCompanyProfile = cache(
       aboutUsEn: profile.aboutUsEn,
       aboutUsTh: profile.aboutUsTh,
       aboutUs: t?.aboutUs ?? pickLocale(locale, profile.aboutUsTh, profile.aboutUsEn),
+      storyEyebrow: t?.storyEyebrow || null,
+      storyTitle: t?.storyTitle || null,
+      storyImageUrl: profile.storyImageUrl,
+      aboutHeroImageUrl: profile.aboutHeroImageUrl,
+      foundedYear: profile.foundedYear,
     };
   },
 );

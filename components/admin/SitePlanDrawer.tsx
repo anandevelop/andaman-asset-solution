@@ -9,7 +9,7 @@
  * positionXPercent/Y (see ./actions.ts).
  *
  * Coordinate system matches components/SitePlanMap.tsx: the image sits
- * in an aspect-[1754/1241] box (the actual site-plan artwork's
+ * in an aspect-1754/1241 box (the actual site-plan artwork's
  * dimensions — see that component's header comment for why), and every
  * point is stored as a 0-100 percentage of that box.
  *
@@ -52,7 +52,7 @@ import {
   useTransformEffect,
 } from "react-zoom-pan-pinch";
 import { AlertCircle, CheckCircle2, Loader2, Minus, PenLine, Plus, RotateCcw, Undo2 } from "lucide-react";
-import type { UnitShapeFormState } from "@/app/[locale]/admin/projects/[id]/site-plan/actions";
+import type { UnitShapeFormState } from "@/app/[locale]/admin/(catalog)/projects/[id]/site-plan/actions";
 import SaveToast from "@/components/admin/SaveToast";
 
 type ShapePoint = { x: number; y: number };
@@ -145,7 +145,7 @@ function ZoomControls({ labels }: { labels: Labels }) {
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
   const buttonClass =
-    "flex h-9 w-9 items-center justify-center rounded-sm border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
+    "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
 
   return (
     <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
@@ -338,13 +338,13 @@ export default function SitePlanDrawer({
         <div
           ref={outerRef}
           onClick={handleCanvasClick}
-          className="relative aspect-[1754/1241] w-full cursor-crosshair overflow-hidden border border-primary/10 bg-white"
+          className="relative aspect-1754/1241 w-full cursor-crosshair overflow-hidden border border-primary/10 bg-white"
         >
           <TransformWrapper minScale={1} maxScale={8} centerOnInit doubleClick={{ mode: "zoomIn" }}>
             <TransformSync onChange={setTransform} />
             <ZoomControls labels={labels} />
 
-            <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full">
+            <TransformComponent wrapperClass="w-full! h-full!" contentClass="w-full! h-full!">
               <div className="relative h-full w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element -- raw
                     pixel/percentage click math below assumes a plain <img>,
@@ -518,7 +518,7 @@ export default function SitePlanDrawer({
                   key={u.id}
                   type="button"
                   onClick={() => loadUnit(u.id)}
-                  className={`flex w-full items-center justify-between rounded-sm px-2.5 py-2 text-left text-sm transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-xs px-2.5 py-2 text-left text-sm transition-colors ${
                     active ? "bg-accent/10 text-primary" : "text-ink/70 hover:bg-primary/5"
                   }`}
                 >

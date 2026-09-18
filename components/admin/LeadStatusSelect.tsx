@@ -12,7 +12,7 @@
 import { useState, useTransition } from "react";
 import { LeadStatus } from "@prisma/client";
 import { Check, Loader2, AlertCircle } from "lucide-react";
-import { updateLeadStatus } from "@/app/[locale]/admin/leads/actions";
+import { updateLeadStatus } from "@/app/[locale]/admin/(crm)/leads/actions";
 
 type Props = {
   locale: string;
@@ -72,7 +72,7 @@ export default function LeadStatusSelect({
         onChange={onChange}
         disabled={pending}
         aria-label={labels[current]}
-        className={`rounded-sm border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${TONE[current]}`}
+        className={`rounded-xs border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-hidden focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${TONE[current]}`}
       >
         {Object.values(LeadStatus).map((status) => (
           <option key={status} value={status}>

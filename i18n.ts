@@ -3,6 +3,19 @@ import { getRequestConfig } from "next-intl/server";
 
 export const locales = ["en", "th", "zh", "ru"] as const;
 export type Locale = (typeof locales)[number];
+
+/**
+ * The order the four languages are *shown* in across the admin — Thai
+ * first, because it is this site's primary content language and the one an
+ * editor fills in first.
+ *
+ * Deliberately not `locales` above, whose order is about resolution
+ * fallback (English is the base locale) and has nothing to do with
+ * presentation. Lives here rather than in lib/locale-completeness.ts so
+ * client components — the media library's alt-text editor, for one — can
+ * read it; that module is server-only.
+ */
+export const LOCALE_DISPLAY_ORDER = ["th", "en", "zh", "ru"] as const;
 export const defaultLocale: Locale = "th";
 
 /**
@@ -15,7 +28,7 @@ export const defaultLocale: Locale = "th";
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;
 
-  // middleware.ts only ever routes a known locale through here, so anything
+  // proxy.ts only ever routes a known locale through here, so anything
   // else is a hand-typed URL — 404 rather than silently serving Thai.
   if (!locales.includes(requested as Locale)) notFound();
 

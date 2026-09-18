@@ -1,0 +1,23 @@
+-- ─────────────────────────────────────────────────────────────────────────
+-- LeadInquiry.phoneCountry — the ISO2 dial-code country CountrySelect.tsx
+-- resolved `phone`'s calling code from, alongside the phone-country-code +
+-- nationality picker added to LeadForm.tsx.
+--
+-- Additive only: one new nullable column. No existing row is touched, and
+-- no other column changes type or meaning at the database level —
+-- `nationality` starts being *written* as an ISO2 from here on, but its
+-- column type (String?) and every value already stored are untouched; the
+-- comment change in schema.prisma documents that shift in what new rows
+-- mean, not a migration of old ones. See that comment for why old
+-- free-text values are deliberately left as-is.
+--
+-- Verify against the schema with:
+--
+--     npx prisma migrate diff \
+--       --from-migrations prisma/migrations \
+--       --to-schema-datamodel prisma/schema.prisma \
+--       --shadow-database-url "$SHADOW_DATABASE_URL" \
+--       --exit-code
+-- ─────────────────────────────────────────────────────────────────────────
+
+ALTER TABLE "lead_inquiries" ADD COLUMN "phoneCountry" TEXT;

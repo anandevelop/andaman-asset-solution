@@ -61,7 +61,7 @@ export default function SaveToast({ tone, token, children, duration = 4000 }: Pr
           exit={{ opacity: 0, y: -16, scale: 0.96 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className={[
-            "fixed right-6 top-6 z-[100] flex items-center gap-2 rounded-sm border px-4 py-3",
+            "fixed right-6 top-6 z-100 flex items-center gap-2 rounded-xs border px-4 py-3",
             "text-sm shadow-lg",
             tone === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"

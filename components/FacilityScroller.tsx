@@ -96,7 +96,7 @@ export default function FacilityScroller({ facilities }: Props) {
       <ul
         ref={trackRef}
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-1
-          [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-4
+          [-ms-overflow-style:none] scrollbar-none sm:gap-4
           [&::-webkit-scrollbar]:hidden"
       >
         {facilities.map((facility, index) => (
@@ -106,7 +106,7 @@ export default function FacilityScroller({ facilities }: Props) {
             // Widths solved from the gap above, not guessed: mobile fits
             // 2.2 cards across a gap-3 (12px) track, desktop fits exactly
             // 4 across a gap-4 (16px) track — 3 gaps between 4 cards.
-            className="w-[calc((100%_-_12px)/2.2)] shrink-0 snap-start sm:w-[calc((100%_-_3*16px)/4)]"
+            className="w-[calc((100%-12px)/2.2)] shrink-0 snap-start sm:w-[calc((100%-3*16px)/4)]"
           >
             <FacilityCard facility={facility} />
           </li>

@@ -6,6 +6,16 @@
  * The roster lives on the same page rather than behind another click: on
  * event day the two things an organiser needs — the door list and the
  * ability to mark people ATTENDED — should be one screen.
+ *
+ * That roster is gated separately from the rest of the page, on
+ * `viewCustomerContact` rather than on the page's own EDITOR floor — a
+ * registration is personal data in the same way a lead is, and the
+ * dedicated ../registrations page already draws that line. Opening this
+ * page to VIEWER in this phase is what made the gap visible: without this
+ * check, a role that fails viewCustomerContact everywhere else would have
+ * read it here anyway, embedded in a page nobody thought of as the leads
+ * screen — that was already true for EDITOR before this phase touched
+ * anything, not something this change introduces.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -13,9 +23,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, CheckCircle2, ExternalLink, Users } from "lucide-react";
-import { EventStatus } from "@prisma/client";
+import { EventStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
+import { can } from "@/lib/permissions";
+import { hasRole } from "@/lib/role-rank";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale, toDateTimeLocal } from "@/lib/format";
 import {
@@ -28,6 +40,7 @@ import EventForm, { type EventFormValues } from "@/components/admin/EventForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import RegistrationStatusSelect from "@/components/admin/RegistrationStatusSelect";
 import SaveToast from "@/components/admin/SaveToast";
+import PublishingRevisionPanel from "@/components/admin/PublishingRevisionPanel";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -38,7 +51,12 @@ export default async function EditEventPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { locale, id } = params;
-  await requireAdmin(locale);
+  // VIEWER may open this to read the event's own details; the roster below
+  // has its own, stricter gate — see the file header. Saving or deleting
+  // the event stays behind a disabled fieldset for anyone below EDITOR.
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
+  const canSeeRegistrations = can(session.role, "viewCustomerContact");
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
@@ -104,8 +122,12 @@ export default async function EditEventPage(props: Props) {
     startsAt: toDateTimeLocal(event.startsAt),
     endsAt: toDateTimeLocal(event.endsAt),
     coverImageUrl: event.coverImageUrl ?? "",
+    ogImageUrl: event.ogImageUrl ?? "",
     capacity: event.capacity === null ? "" : String(event.capacity),
     isPublished: event.isPublished,
+    metaTitle: editing?.metaTitle ?? "",
+    metaDescription: editing?.metaDescription ?? "",
+    noIndex: editing?.noIndex ?? false,
   };
 
   const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
@@ -157,6 +179,7 @@ export default async function EditEventPage(props: Props) {
       )}
 
       {/* ── Roster ──────────────────────────────────────────────────── */}
+      {canSeeRegistrations && (
       <section className="admin-card">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-base font-semibold text-primary">
@@ -252,6 +275,26 @@ export default async function EditEventPage(props: Props) {
           </div>
         )}
       </section>
+      )}
+
+      <PublishingRevisionPanel
+        locale={locale}
+        type="EVENT"
+        id={event.id}
+        labels={{
+          toggle: t("publishing.revision.toggle"),
+          compareTitle: t("publishing.revision.compareTitle"),
+          noRevisionYet: t("publishing.revision.noRevisionYet"),
+          currentLabel: t("publishing.revision.currentLabel"),
+          publishedLabel: t("publishing.revision.publishedLabel"),
+          historyTitle: t("publishing.revision.historyTitle"),
+          historyEmpty: t("publishing.revision.historyEmpty"),
+          revertAction: t("publishing.revision.revertAction"),
+          confirmRevert: t("publishing.revision.confirmRevert"),
+          error: t("common.error"),
+          autoEditBadge: t("publishing.revision.autoEditBadge"),
+        }}
+      />
 
       <LanguageTabs
         active={lang}
@@ -260,15 +303,17 @@ export default async function EditEventPage(props: Props) {
         missingLabel={t("common.translationMissing")}
       />
 
-      <EventForm
-        key={lang}
-        locale={locale}
-        lang={lang}
-        action={updateEvent.bind(null, locale, event.id)}
-        values={values}
-        onDelete={deleteEvent.bind(null, locale, event.id)}
-        submitLabel={t("common.save")}
-      />
+      <fieldset disabled={!canWrite} className="contents">
+        <EventForm
+          key={lang}
+          locale={locale}
+          lang={lang}
+          action={updateEvent.bind(null, locale, event.id)}
+          values={values}
+          onDelete={deleteEvent.bind(null, locale, event.id)}
+          submitLabel={t("common.save")}
+        />
+      </fieldset>
     </div>
   );
 }

@@ -51,7 +51,7 @@ export default function FaqAccordion({
       id={id}
       className={
         tone === "muted"
-          ? "scroll-mt-24 bg-primary-900/[0.03] py-20 sm:py-28"
+          ? "scroll-mt-24 bg-primary-900/3 py-20 sm:py-28"
           : "scroll-mt-24 py-20 sm:py-28"
       }
     >

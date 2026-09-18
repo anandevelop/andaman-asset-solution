@@ -164,7 +164,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
 
   if (soldOut && status !== "full") {
     return (
-      <p className="rounded-sm border border-white/15 bg-white/5 px-5 py-8 text-center text-sm text-white/70">
+      <p className="rounded-xs border border-white/15 bg-white/5 px-5 py-8 text-center text-sm text-white/70">
         {t("soldOut")}
       </p>
     );
@@ -197,7 +197,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               role="alert"
-              className="flex items-start gap-2 rounded-sm border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              className="flex items-start gap-2 rounded-xs border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
             >
               <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
               <span>
@@ -268,12 +268,19 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           <input
             type="checkbox"
             {...register("consentGiven")}
-            className="mt-0.5 h-4 w-4 rounded-sm border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/40"
+            className="mt-0.5 h-4 w-4 rounded-xs border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/40"
           />
           <span className="text-xs leading-relaxed">
             {t("consent")}{" "}
+            {/* Both details matter, and LeadForm.tsx already has them: the
+                locale prefix, because localePrefix "always" bounces a bare
+                /privacy-policy to Thai, and target="_blank", because
+                navigating away from a half-filled form in the same tab
+                loses every field — react-hook-form keeps no draft. */}
             <a
-              href={siteConfig.legal.privacyPolicyPath}
+              href={`/${locale}${siteConfig.legal.privacyPolicyPath}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-accent-300 underline underline-offset-2"
             >
               {t("privacyPolicy")}
@@ -287,7 +294,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-6 py-4 text-sm font-semibold uppercase tracking-widest2 text-primary transition-colors hover:bg-accent-500 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-6 py-4 text-sm font-semibold uppercase tracking-widest2 text-primary transition-colors hover:bg-accent-500 disabled:opacity-60"
         >
           {status === "submitting" ? (
             <>
@@ -344,7 +351,7 @@ function Field({
           autoComplete={autoComplete}
           placeholder={label}
           {...inputProps}
-          className="w-full rounded-sm border-b border-white/15 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 focus:border-accent-400 focus:outline-none focus:ring-0"
+          className="w-full rounded-xs border-b border-white/15 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 focus:border-accent-400 focus:outline-hidden focus:ring-0"
         />
       </div>
       {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}

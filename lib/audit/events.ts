@@ -17,8 +17,12 @@
  * through Prisma, which is what makes it impossible for a future action to
  * forget. A sign-in is not a write to any table, so there is nothing for
  * that extension to watch and this module has to insert the row itself.
- * Two writers is a deliberate exception; three would be a table anyone can
- * post to.
+ * Two writers was a deliberate exception; recordSeoOverride() below is one
+ * narrow addition beyond it, for the same reason as this one — an ADMIN
+ * overriding a failing publish gate is a real event the extension's
+ * generic field-diff cannot label as "this was an override," not a
+ * pattern anyone should reach for casually. Three is still where this
+ * stops: a fourth writer needs the same justification these two had.
  *
  * WHAT A MISSING "logout" MEANS.
  *
@@ -169,6 +173,65 @@ export async function recordAuthEvent(
     reportError(error, {
       tags: { area: "audit" },
       extra: { action, actorId: actor.id ?? null },
+    });
+  }
+}
+
+/** The action value recordSeoOverride() writes — see its own comment. */
+export const SEO_PUBLISH_OVERRIDE = "publish_override";
+
+type SeoOverrideActor = { id: string; email: string; role: Role };
+
+/**
+ * Record that an ADMIN published a news article over a failing SEO gate
+ * (app/[locale]/admin/(content)/news/actions.ts's publish gate).
+ *
+ * THIS IS THE THIRD WRITER — see the header above for why that's still
+ * only one exception past the first two, not a general-purpose event log.
+ * The Prisma extension already records the ordinary field diff for the
+ * same `newsArticle.update` call (isPublished flipping true, seoScore
+ * changing) — this is additional context on top of that row, the same
+ * relationship recordAuthEvent's rows have to nothing (an auth event isn't
+ * a table write at all), not a replacement for it.
+ *
+ * Never throws, for the same reason recordAuthEvent doesn't: a failure to
+ * log an override must not be allowed to turn a legitimate publish into a
+ * failed save. A lost entry goes to Sentry instead.
+ */
+export async function recordSeoOverride(params: {
+  actor: SeoOverrideActor;
+  articleId: string;
+  articleSlug: string;
+  seoScore: number;
+  failingChecks: { id: string; weight: number }[];
+}): Promise<void> {
+  try {
+    // Written through the ordinary client on purpose — same reasoning as
+    // recordAuthEvent above: the extension skips model "AuditLog", so this
+    // insert cannot recurse into itself.
+    await prisma.auditLog.create({
+      data: {
+        actorId: params.actor.id,
+        actorEmail: params.actor.email.slice(0, 200),
+        actorRole: params.actor.role,
+        action: SEO_PUBLISH_OVERRIDE,
+        model: "NewsArticle",
+        recordId: params.articleId,
+        recordLabel: params.articleSlug.slice(0, 200),
+        changedFields: ["isPublished"],
+        changes: {
+          override: {
+            seoScore: params.seoScore,
+            failingChecks: params.failingChecks,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("[audit] failed to record a publish_override", error);
+    reportError(error, {
+      tags: { area: "audit" },
+      extra: { action: SEO_PUBLISH_OVERRIDE, articleId: params.articleId, actorId: params.actor.id },
     });
   }
 }

@@ -3,14 +3,19 @@
 /**
  * components/admin/CompanyProfileForm.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The CompanyProfile singleton — one textarea for `aboutUs`, translated
- * (see CompanyProfileTranslation in schema.prisma). Small enough that it
- * doesn't need SettingsForm's per-key override/default machinery, which is
- * built for the SiteSetting key-value table, not a single fixed-id row.
+ * The CompanyProfile singleton. Two kinds of field share one form:
  *
- * `lang` selects which locale's aboutUs this instance shows/saves; the
- * page owns the language selector — see AwardForm's file comment for the
- * fuller version of this note.
+ *  - Translated, per `lang` tab: `aboutUs`, and the About page Story
+ *    section's `storyEyebrow`/`storyTitle` — same as AwardForm's `title`.
+ *  - Untranslated, shown and saved regardless of `lang`: the Story
+ *    section's photo (`storyImageUrl`) and the four Vision & Mission
+ *    figures on the home page (`stat*`) — plain strings/an image, same
+ *    reasoning AwardForm's `organization`/`trophyImageUrl` already
+ *    documents for why those don't move with the language tab either.
+ *
+ * `lang` selects which locale's translated fields this instance
+ * shows/saves; the page owns the language selector — see AwardForm's file
+ * comment for the fuller version of this note.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -18,9 +23,10 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { CompanyProfileFormState } from "@/app/[locale]/admin/settings/company/actions";
+import type { CompanyProfileFormState } from "@/app/[locale]/admin/(system)/settings/company/actions";
 
 const INITIAL: CompanyProfileFormState = { ok: false };
 
@@ -41,10 +47,19 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
+export type CompanyProfileValues = {
+  aboutUs: string;
+  storyEyebrow: string;
+  storyTitle: string;
+  storyImageUrl: string;
+  aboutHeroImageUrl: string;
+  foundedYear: string;
+};
+
 export default function CompanyProfileForm({
   lang,
   action,
-  aboutUs,
+  values,
   submitLabel,
 }: {
   lang: Locale;
@@ -52,7 +67,7 @@ export default function CompanyProfileForm({
     state: CompanyProfileFormState,
     formData: FormData,
   ) => Promise<CompanyProfileFormState>;
-  aboutUs: string;
+  values: CompanyProfileValues;
   submitLabel: string;
 }) {
   const t = useTranslations("admin");
@@ -82,7 +97,7 @@ export default function CompanyProfileForm({
         <textarea
           id="aboutUs"
           name="aboutUs"
-          defaultValue={aboutUs}
+          defaultValue={values.aboutUs}
           rows={8}
           required
           className="admin-textarea"
@@ -93,6 +108,101 @@ export default function CompanyProfileForm({
             {state.fields.aboutUs}
           </p>
         )}
+      </div>
+
+      {/* ── Header hero (About page) ──────────────────────────────── */}
+      <div className="border-t border-primary/10 pt-5">
+        <p className="admin-section-title">{t("settings.company.heroHeading")}</p>
+
+        <div className="mt-4">
+          <ImageUploader
+            name="aboutHeroImageUrl"
+            prefix="company"
+            defaultValue={values.aboutHeroImageUrl}
+            label={t("settings.company.heroImage")}
+            hint={t("settings.company.heroImageHint")}
+          />
+          {state.fields?.aboutHeroImageUrl && (
+            <p className="mt-1.5 text-xs text-red-700">{state.fields.aboutHeroImageUrl}</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Story section (About page) ─────────────────────────────── */}
+      <div className="border-t border-primary/10 pt-5">
+        <p className="admin-section-title">{t("settings.company.storyHeading")}</p>
+
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="storyEyebrow" className="admin-label">
+              {`${t("settings.company.storyEyebrow")} · ${lang.toUpperCase()}`}
+            </label>
+            <input
+              id="storyEyebrow"
+              name="storyEyebrow"
+              defaultValue={values.storyEyebrow}
+              required
+              className="admin-input"
+            />
+            {state.fields?.storyEyebrow && (
+              <p className="mt-1.5 text-xs text-red-700">{state.fields.storyEyebrow}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="storyTitle" className="admin-label">
+              {`${t("settings.company.storyTitle")} · ${lang.toUpperCase()}`}
+            </label>
+            <input
+              id="storyTitle"
+              name="storyTitle"
+              defaultValue={values.storyTitle}
+              required
+              className="admin-input"
+            />
+            {state.fields?.storyTitle && (
+              <p className="mt-1.5 text-xs text-red-700">{state.fields.storyTitle}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <ImageUploader
+            name="storyImageUrl"
+            prefix="company"
+            defaultValue={values.storyImageUrl}
+            label={t("settings.company.storyImage")}
+            hint={t("settings.company.storyImageHint")}
+          />
+          {state.fields?.storyImageUrl && (
+            <p className="mt-1.5 text-xs text-red-700">{state.fields.storyImageUrl}</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Vision & Mission figures (home page) ───────────────────── */}
+      <div className="border-t border-primary/10 pt-5">
+        <p className="admin-section-title">{t("settings.company.statsHeading")}</p>
+        <p className="admin-hint mt-1">{t("settings.company.statsHint")}</p>
+
+        <div className="mt-4 max-w-xs">
+          <label htmlFor="foundedYear" className="admin-label">
+            {t("settings.company.foundedYear")}
+          </label>
+          <input
+            id="foundedYear"
+            name="foundedYear"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="2005"
+            defaultValue={values.foundedYear}
+            className="admin-input"
+          />
+          <p className="admin-hint">{t("settings.company.foundedYearHint")}</p>
+          {state.fields?.foundedYear && (
+            <p className="mt-1.5 text-xs text-red-700">{state.fields.foundedYear}</p>
+          )}
+        </div>
       </div>
 
       <SubmitButton label={submitLabel} />

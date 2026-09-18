@@ -85,7 +85,7 @@ export default function AwardsScroller({ children, gridTemplateColumns, labels }
           edge even though the card itself has nothing clipping it. */}
       <div
         ref={scrollRef}
-        className="mt-12 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] [mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] sm:px-0 sm:[scrollbar-width:thin] lg:grid lg:overflow-visible lg:pb-0 lg:[-webkit-mask-image:none] lg:[mask-image:none]"
+        className="mt-12 flex gap-6 overflow-x-auto px-5 pb-4 pt-16 [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] mask-[linear-gradient(to_right,black_calc(100%-56px),transparent_100%)] sm:px-0 sm:scrollbar-thin lg:grid lg:overflow-visible lg:pb-0 lg:[-webkit-mask-image:none] lg:mask-none"
         style={{ gridTemplateColumns }}
       >
         {children}

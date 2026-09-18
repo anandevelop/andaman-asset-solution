@@ -17,6 +17,7 @@
 
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { rateLimit, resetRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -40,7 +41,12 @@ export async function confirmTwoFactor(
   _previous: TwoFactorState,
   formData: FormData,
 ): Promise<TwoFactorState> {
-  const actor = await requireAdminAction(undefined, { allowTwoFactorSetup: true });
+  // Role.VIEWER, not the requireAdminAction() default of EDITOR — see the
+  // matching note on the security page's own guard: a bare call here
+  // rejected any VIEWER or SALES account before allowTwoFactorSetup got a
+  // say, so the one action that finishes enrolment was unreachable by the
+  // one role band that most needed it reachable.
+  const actor = await requireAdminAction(Role.VIEWER, { allowTwoFactorSetup: true });
 
   const user = await prisma.user.findUnique({
     where: { id: actor.id },
@@ -90,7 +96,9 @@ export async function regenerateRecoveryCodes(
   _previous: TwoFactorState,
   formData: FormData,
 ): Promise<TwoFactorState> {
-  const actor = await requireAdminAction();
+  // Role.VIEWER — self-service on one's own already-enrolled factor, same
+  // floor as changeOwnPassword and every other account/ action.
+  const actor = await requireAdminAction(Role.VIEWER);
 
   const key = `2fa-setup:${actor.id}`;
 
@@ -119,7 +127,8 @@ export async function disableTwoFactor(
   _previous: TwoFactorState,
   formData: FormData,
 ): Promise<TwoFactorState> {
-  const actor = await requireAdminAction();
+  // Role.VIEWER — same self-service floor as regenerateRecoveryCodes above.
+  const actor = await requireAdminAction(Role.VIEWER);
 
   const user = await prisma.user.findUnique({
     where: { id: actor.id },

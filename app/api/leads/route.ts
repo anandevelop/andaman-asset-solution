@@ -14,15 +14,19 @@
  */
 
 import { NextResponse } from "next/server";
-import { LeadSource, Prisma } from "@prisma/client";
+import { LeadSource, PathHitKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { leadInquiryServerSchema, fieldErrors } from "@/lib/validations";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
+import { emailDomain, isDisposableDomain } from "@/lib/email-quality";
 import { isDatabaseOfflineError } from "@/lib/db";
 import { verifyRecaptcha, describeOutcome } from "@/lib/recaptcha";
 import { notifyNewLead } from "@/lib/line";
 import { notifyNewLeadByEmail } from "@/lib/email";
 import { siteConfig } from "@/config/site";
+import { assignCapturedLead } from "@/lib/lead-routing";
+import { isEnabled, notifyAdmins } from "@/lib/notifications";
+import { countPathHit } from "@/lib/redirects";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,8 +81,24 @@ export async function POST(request: Request) {
   const data = parsed.data;
 
   // Honeypot tripped — accept silently so bots don't learn the shape.
+  // Checked first: a bot's email domain is not worth rejecting on when it
+  // is about to get a silent fake-success regardless.
   if (data.company) {
     return NextResponse.json({ ok: true }, { status: 201 });
+  }
+
+  // The same rule the inline check (app/api/validate-email/route.ts)
+  // already showed the visitor on the page, enforced again here — a
+  // script posting straight at this endpoint never went through that one
+  // at all. DISPOSABLE_EMAIL is a sentinel, not a display string; see
+  // LeadForm.tsx's own emailError for where it becomes
+  // leadForm.emailCheck.disposable, the same translated sentence the
+  // inline check itself shows for this verdict.
+  if (isDisposableDomain(emailDomain(data.email) ?? "")) {
+    return NextResponse.json(
+      { ok: false, error: "VALIDATION_FAILED", fields: { email: "DISPOSABLE_EMAIL" } },
+      { status: 422 },
+    );
   }
 
   // ── reCAPTCHA v3 ──────────────────────────────────────────────────────
@@ -86,6 +106,9 @@ export async function POST(request: Request) {
 
   if (!captcha.allowed) {
     console.warn(`[POST /api/leads] ${describeOutcome(captcha)} ip=${ip}`);
+    // Counted so the settings screen can say what the spam filter is
+    // actually stopping, rather than only that a key is configured.
+    countPathHit(PathHitKind.FORM_REJECTED, "/api/leads");
     return NextResponse.json(
       { ok: false, error: "RECAPTCHA_FAILED" },
       { status: 403 },
@@ -120,7 +143,13 @@ export async function POST(request: Request) {
         name: data.name,
         email: data.email.toLowerCase(),
         phone: data.phone,
-        nationality: nullify(data.nationality, 80),
+        // Pairs with `phone`: the ISO2 CountrySelect.tsx resolved the dial
+        // code from, kept alongside it rather than re-derived from `phone`
+        // on every read. See LeadInquiry.phoneCountry in schema.prisma.
+        phoneCountry: data.phoneCountry?.toUpperCase() ?? null,
+        // ISO2 now, not free text — see LeadInquiry.nationality's comment
+        // in schema.prisma for why existing free-text rows are untouched.
+        nationality: nullify(data.nationality?.toUpperCase(), 2),
         message: nullify(data.message, 2000),
 
         projectId,
@@ -139,9 +168,26 @@ export async function POST(request: Request) {
         utmCampaign: nullify(data.utmCampaign, 160),
         ipAddress: ip === "unknown" ? null : ip,
         userAgent: nullify(request.headers.get("user-agent"), 500),
+
+        // Which language version of the site the form was on, and the
+        // page's own path — real signals from the request, not typed by
+        // the visitor. See LeadInquiry.commsLanguage/sourcePath.
+        commsLanguage: data.commsLanguage ?? null,
+        sourcePath: nullify(data.sourcePath, 300),
       },
       select: { id: true },
     });
+
+    /*
+      Hand the lead to a rep, if the team has automatic routing switched on.
+
+      After the create and outside its transaction on purpose: the capture
+      has already succeeded and the visitor is owed a response, so a
+      routing failure must leave an unassigned lead on the board rather
+      than a lost one. assignCapturedLead swallows its own errors for the
+      same reason.
+    */
+    void assignCapturedLead(lead.id, data.commsLanguage ?? null);
 
     // Fire-and-forget: the lead is already saved, and a LINE outage must
     // never turn a successful capture into an error for the visitor.
@@ -154,13 +200,30 @@ export async function POST(request: Request) {
       source: data.source ?? (projectId ? "PROJECT_PAGE" : "OTHER"),
     });
 
-    void notifyNewLeadByEmail({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      message: data.message || null,
-      projectName: data.projectSlug ?? null,
-      source: data.source ?? (projectId ? "PROJECT_PAGE" : "OTHER"),
+    /*
+      Both channels are switches on /admin/settings/notifications, and both
+      are read here rather than inside the senders so the preference lives
+      in one place. Fire-and-forget for the same reason as the two above:
+      the lead is saved, and nothing about telling somebody may turn a
+      successful capture into an error for the visitor.
+    */
+    void isEnabled("newLead", "email").then((on) => {
+      if (!on) return;
+      return notifyNewLeadByEmail({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        message: data.message || null,
+        projectName: data.projectSlug ?? null,
+        source: data.source ?? (projectId ? "PROJECT_PAGE" : "OTHER"),
+      });
+    });
+
+    void notifyAdmins({
+      event: "newLead",
+      title: data.name,
+      body: data.projectSlug ?? data.email,
+      href: `/admin/leads/${lead.id}`,
     });
 
     return NextResponse.json(

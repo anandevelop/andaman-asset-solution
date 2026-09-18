@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * app/[locale]/admin/awards/actions.ts
+ * app/[locale]/admin/pages/about/awards/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Award CRUD, same shape as ../sales-team/actions.ts.
  *
@@ -53,7 +53,7 @@ function readForm(formData: FormData) {
   times a year.
 */
 function revalidateAwards(locale: string) {
-  revalidatePath(`/${locale}/admin/awards`);
+  revalidatePath(`/${locale}/admin/pages/about/awards`);
   for (const target of locales) {
     revalidatePath(`/${target}`, "layout");
   }

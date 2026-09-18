@@ -13,17 +13,19 @@
 import type { Metadata } from "next";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { redirectIfMoved } from "@/lib/redirects";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
 import EventRsvpForm from "@/components/EventRsvpForm";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
-import { locales } from "@/i18n";
 import { getEventBySlug, getPublishedEventSlugs } from "@/lib/events";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
-import { truncate } from "@/lib/markdown";
+import { truncate } from "@/lib/markdown-text";
 import { intlLocale } from "@/lib/format";
 
 export const dynamicParams = true;
@@ -47,27 +49,24 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const event = await getEventBySlug(slug, locale);
   if (!event) return { title: "Not found", robots: { index: false } };
 
-  const description = truncate(event.description, 300);
+  const description = truncate(event.metaDescription, 300);
 
   return {
-    title: event.title,
+    title: event.metaTitle,
     description,
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}/events/${event.slug}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/events/${event.slug}`]),
-      ),
-    },
+    alternates: localizedAlternates(locale, `/events/${event.slug}`),
+    // Per-locale admin toggle (EventForm's SEO section) — see the
+    // schema.prisma comment on EventTranslation.noIndex.
+    robots: event.noIndex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
-      title: event.title,
+      title: event.metaTitle,
       description,
       type: "website",
       url: `${siteConfig.url}/${locale}/events/${event.slug}`,
-      // Falls back to the site default (config/site.ts: seo.ogImage) when
-      // this event has no cover photo yet — see the matching comment on
-      // the news article page for why `undefined` here would ship with no
-      // og:image at all rather than inheriting the root layout's default.
-      images: [{ url: event.coverImageUrl ?? siteConfig.seo.ogImage }],
+      // No `images` here: opengraph-image.tsx in this same folder
+      // generates the card (date, event name, cover photo) and, per
+      // Next's file-convention precedence, replaces whatever this field
+      // would have set anyway.
     },
   };
 }
@@ -86,10 +85,12 @@ export default async function EventPage(props: Props) {
 
   if (!event) {
     if (isDatabaseOffline()) throw new DatabaseUnavailableError(`events/${slug}`);
+    await redirectIfMoved(locale, `/events/${slug}`);
     notFound();
   }
 
   const t = await getTranslations("events");
+  const tNav = await getTranslations("nav");
   const url = `${siteConfig.url}/${locale}/events/${event.slug}`;
 
   const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
@@ -134,8 +135,19 @@ export default async function EventPage(props: Props) {
       : []),
   ];
 
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("events"), path: "/events" },
+    { name: event.title, path: `/events/${event.slug}` },
+  ]);
+
   return (
     <>
+      <JsonLd
+        id="breadcrumb-schema"
+        data={breadcrumbList(trail)}
+      />
       <JsonLd
         id="event-schema"
         data={{
@@ -198,17 +210,14 @@ export default async function EventPage(props: Props) {
             className="object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/90 via-primary-900/40 to-primary-900/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-primary-900/90 via-primary-900/40 to-primary-900/20" />
 
         <div className="container-luxe relative z-10 pb-12 pt-32 text-white sm:pb-16">
           <Reveal>
-            <Link
-              href={`/${locale}/events`}
-              className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/60 transition-colors hover:text-accent"
-            >
-              <ArrowLeft size={13} aria-hidden />
-              {t("backToEvents")}
-            </Link>
+            {/* On the photograph, so `onImage`. The trail's middle crumb
+                goes where the back arrow used to, and says where you are
+                as well as where you can go. */}
+            <Breadcrumb items={trail} tone="onImage" />
           </Reveal>
 
           <Reveal delay={0.1}>
@@ -254,7 +263,7 @@ export default async function EventPage(props: Props) {
               wrapper only owns the card chrome, not the copy. */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <Reveal delay={0.15}>
-              <div className="rounded-sm bg-primary p-6 shadow-cardHover sm:p-8">
+              <div className="rounded-xs bg-primary p-6 shadow-cardHover sm:p-8">
                 {event.isPast ? (
                   <>
                     <h2 className="text-lg font-light text-white">
@@ -265,7 +274,7 @@ export default async function EventPage(props: Props) {
                     </p>
                     <Link
                       href={`/${locale}/events`}
-                      className="mt-6 flex w-full items-center justify-center rounded-sm border border-white/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-primary"
+                      className="mt-6 flex w-full items-center justify-center rounded-xs border border-white/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-primary"
                     >
                       {t("seeUpcoming")}
                     </Link>

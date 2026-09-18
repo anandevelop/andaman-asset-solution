@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * app/[locale]/admin/faqs/actions.ts
+ * app/[locale]/admin/pages/faq/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * FAQ CRUD.
  *
@@ -49,7 +49,7 @@ async function revalidateFaqs() {
 
   for (const locale of locales) {
     revalidatePath(`/${locale}`);
-    revalidatePath(`/${locale}/admin/faqs`);
+    revalidatePath(`/${locale}/admin/pages/faq`);
 
     for (const { slug } of projects) {
       revalidatePath(`/${locale}/projects/${slug}`);

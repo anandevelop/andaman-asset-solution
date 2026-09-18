@@ -98,7 +98,7 @@ export default function SpecialFeaturesEditor({
         {rows.map((row, index) => (
           <div
             key={index}
-            className="grid gap-3 border border-primary/10 bg-primary-900/[0.02] p-4 sm:grid-cols-2"
+            className="grid gap-3 border border-primary/10 bg-primary-900/2 p-4 sm:grid-cols-2"
           >
             <input
               value={row.titleEn}

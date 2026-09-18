@@ -89,17 +89,22 @@ export default defineConfig({
         moment to decide what floor it should hold.
       */
       include: [
+        "lib/brochures.ts",
         "lib/csv.ts",
         "lib/db.ts",
         "lib/email.ts",
+        "lib/error-copy.ts",
         "lib/events.ts",
         "lib/faqs.ts",
         "lib/line.ts",
         "lib/markdown.ts",
+        "lib/pdf-render.ts",
         "lib/project-filters.ts",
         "lib/rate-limit.ts",
         "lib/recaptcha.ts",
         "lib/s3.ts",
+        "lib/seo.ts",
+        "lib/settings.ts",
         "lib/totp.ts",
         "lib/two-factor-policy.ts",
         "lib/validations.ts",
@@ -159,6 +164,31 @@ export default defineConfig({
           functions: 100,
           branches: 90,
           statements: 95,
+        },
+        /*
+          Pure arithmetic with no I/O, so there is no excuse for a gap:
+          every branch of computeRenderScale and spreadWindow is reachable
+          from a plain function call. Currently 100% on all four.
+        */
+        "lib/pdf-render.ts": {
+          lines: 95,
+          functions: 100,
+          branches: 90,
+          statements: 95,
+        },
+        /*
+          getBrochureProjectOptions is the uncovered part — an admin-only
+          project list with no logic in it beyond a map. The four public
+          read paths, their locale fallbacks and their safeQuery wiring are
+          covered, and those are what a visitor's page depends on. Set just
+          under the real figure so a lost test trips this and normal drift
+          does not.
+        */
+        "lib/brochures.ts": {
+          lines: 80,
+          functions: 75,
+          branches: 80,
+          statements: 80,
         },
       },
     },

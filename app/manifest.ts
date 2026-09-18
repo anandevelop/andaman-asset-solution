@@ -7,16 +7,29 @@
  * default locale stay tied to config/site.ts — three more strings that
  * cannot drift out of sync with the rest of the brand.
  *
- * ⚠ The icon files it points at do not exist yet. The manifest is valid
- * without them; Android will simply fall back to a screenshot of the page
- * for the home-screen icon. See docs/LAUNCH_CHECKLIST.md.
+ * Async because the icons are admin-editable (lib/settings.ts). Without
+ * that, an operator uploads a new mark, watches the browser tab change,
+ * adds the site to an Android home screen and gets the old one — a support
+ * ticket whose only honest answer is "there are two icon systems". The read
+ * is unstable_cache-backed and falls back to config/site.ts on any failure,
+ * so an unreachable database yields the committed icons rather than a
+ * broken manifest.
+ *
+ * `description` deliberately stays on siteConfig rather than following the
+ * new seo.metaDescription setting: an install-prompt blurb, a SERP snippet
+ * and the footer paragraph are three different artefacts, and one field
+ * driving all three means tuning the snippet silently rewrites the others.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
+import { getSiteSettings } from "@/lib/settings";
+import { buildManifestIcons } from "@/lib/seo";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const { branding } = await getSiteSettings();
+
   return {
     name: siteConfig.name,
     short_name: siteConfig.shortName,
@@ -33,27 +46,12 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: siteConfig.defaultLocale,
     dir: "ltr",
     categories: ["business", "lifestyle", "travel"],
-    icons: [
-      {
-        src: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        // Android masks icons to its own shape — a "maskable" variant needs
-        // its artwork inside the safe zone or the logo gets cropped.
-        src: "/icon-maskable-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
-    ],
+    /*
+      Android masks icons to its own shape, so the "maskable" variant needs
+      its artwork inside the safe zone or the logo gets cropped — which is
+      why buildManifestIcons keeps that entry on the committed asset even
+      when an operator has uploaded their own mark for the others.
+    */
+    icons: buildManifestIcons(branding.faviconUrl),
   };
 }

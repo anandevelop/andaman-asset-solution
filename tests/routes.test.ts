@@ -10,8 +10,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { siteConfig } from "@/config/site";
 import { locales, defaultLocale } from "@/i18n";
@@ -24,8 +24,18 @@ const sitemapPaths = [...sitemapSource.matchAll(/localized\("([^"]*)"/g)].map(
   (m) => m[1],
 );
 
+/**
+ * Every navigable page, header or footer.
+ *
+ * siteConfig is `as const`, so mapping over it narrows to a literal union
+ * that `.includes()` will not accept an arbitrary string against — hence
+ * the explicit string[].
+ */
+const navItems = [...siteConfig.nav.main, ...siteConfig.nav.secondary];
+const navPaths: string[] = navItems.map((item) => (item.href === "/" ? "" : item.href));
+
 describe("navigation", () => {
-  it.each(siteConfig.nav.main.map((item) => [item.key, item.href]))(
+  it.each(navItems.map((item) => [item.key, item.href]))(
     "nav item %s → %s has a page",
     (_key, href) => {
       const dir = href === "/" ? SITE_DIR : join(SITE_DIR, href);
@@ -35,29 +45,30 @@ describe("navigation", () => {
   );
 
   it("has no duplicate hrefs", () => {
-    const hrefs = siteConfig.nav.main.map((item) => item.href);
+    const hrefs = navItems.map((item) => item.href);
 
     expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
+  it("keeps main and secondary disjoint", () => {
+    // A page in both lists would render twice in the footer.
+    const main = siteConfig.nav.main.map((item) => item.href) as string[];
+    const secondary = siteConfig.nav.secondary.map((item) => item.href);
+
+    expect(secondary.filter((href) => main.includes(href))).toEqual([]);
   });
 });
 
 describe("sitemap", () => {
   it("includes every navigable page", () => {
-    const missing = siteConfig.nav.main
-      .map((item) => (item.href === "/" ? "" : item.href))
-      // Detail routes are added dynamically from the database, so only the
-      // static list is compared here.
-      .filter((path) => !sitemapPaths.includes(path));
+    // Detail routes are added dynamically from the database, so only the
+    // static list is compared here.
+    const missing = navPaths.filter((path) => !sitemapPaths.includes(path));
 
     expect(missing).toEqual([]);
   });
 
   it("lists no static path that is not in the navigation", () => {
-    // siteConfig is `as const`, so mapping over it narrows to a literal
-    // union that `.includes()` will not accept an arbitrary string against.
-    const navPaths: string[] = siteConfig.nav.main.map((item) =>
-      item.href === "/" ? "" : item.href,
-    );
     const orphans = sitemapPaths.filter(
       (path) => !navPaths.includes(path) && !path.includes("${"),
     );
@@ -69,6 +80,66 @@ describe("sitemap", () => {
     for (const path of ["/admin", "/login", "/privacy-policy"]) {
       expect(sitemapPaths).not.toContain(path);
     }
+  });
+});
+
+/**
+ * The other direction: a page that exists but is in no list at all.
+ *
+ * The checks above run nav → page and sitemap → nav. Neither can see a page
+ * that is in neither, and /achievements was exactly that — fully built in
+ * four locales, setting its own canonical and hreflang, reachable only from
+ * a single button inside /about, and invisible to search engines. This is
+ * the mirror image of the /progress bug the file was written for.
+ */
+describe("every static page reaches the sitemap", () => {
+  /**
+   * Walk app/[locale]/(site)/ and return the URL path of each static page.
+   *
+   * Two folder shapes are special:
+   *   [slug]  a dynamic segment — its URLs come from the database branch of
+   *           sitemap(), so there is nothing to enumerate here.
+   *   (group) a route group — it contributes no path segment, so recurse
+   *           without extending the prefix.
+   */
+  function staticSiteRoutes(dir: string = SITE_DIR, prefix = ""): string[] {
+    const found = existsSync(join(dir, "page.tsx")) ? [prefix] : [];
+
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith("[")) continue;
+
+      const nested = entry.name.startsWith("(")
+        ? staticSiteRoutes(join(dir, entry.name), prefix)
+        : staticSiteRoutes(join(dir, entry.name), `${prefix}/${entry.name}`);
+
+      found.push(...nested);
+    }
+
+    return found;
+  }
+
+  /*
+    Deliberately unindexed, per the header of app/sitemap.ts: policy and
+    legal pages have no business consuming crawl budget. Listed with the
+    reason so that the next person to hit a failure here has to decide
+    between "index it" and "it is policy", rather than silently appending a
+    name to make the suite green.
+  */
+  const UNINDEXED = ["/privacy-policy", "/terms"];
+
+  it("finds the pages it is supposed to be checking", () => {
+    // A walker that returns nothing would make the assertion below pass
+    // vacuously — the one failure mode this whole describe cannot afford.
+    expect(staticSiteRoutes().length).toBeGreaterThan(5);
+    expect(staticSiteRoutes()).toContain("/achievements");
+  });
+
+  it("leaves no page out of both the navigation and the sitemap", () => {
+    const missing = staticSiteRoutes().filter(
+      (path) => !UNINDEXED.includes(path) && !sitemapPaths.includes(path),
+    );
+
+    expect(missing).toEqual([]);
   });
 });
 
@@ -136,6 +207,78 @@ describe("site configuration", () => {
     expect(siteConfig.seo.ogImage.startsWith("/")).toBe(true);
     expect(existsSync(join(process.cwd(), "public", siteConfig.seo.ogImage))).toBe(true);
   });
+
+  /*
+    Same check for the brand assets, which are now the fallback behind
+    admin-editable settings rather than literals in the layout. A missing
+    file here is the failure mode that made this describe block worth
+    having: it 404s silently, and the only symptom is a browser tab with a
+    blank page icon that nobody thinks to report.
+  */
+  it.each(Object.entries(siteConfig.branding))(
+    "branding.%s exists in public/",
+    (_name, path) => {
+      expect(path.startsWith("/")).toBe(true);
+      expect(existsSync(join(process.cwd(), "public", path))).toBe(true);
+    },
+  );
+});
+
+/**
+ * Photography on rendered paths is this company's own.
+ *
+ * The homepage hero fallback, the /about story image and every unmatched
+ * facility card used to be Unsplash URLs. The /about one rendered
+ * unconditionally, so every visitor was shown a stranger's building as this
+ * developer's work.
+ *
+ * prisma/ is deliberately out of scope. Seeded rows carrying old URLs are a
+ * data question — `npm run media:legacy -- --host images.unsplash.com` —
+ * not a code one, and the same is true of the remotePatterns and CSP
+ * entries that keep those rows loading. See the uploads note in AGENTS.md.
+ */
+describe("photography", () => {
+  const SOURCE_DIRS = ["app", "components", "config"];
+
+  function sourceFiles(dir: string, found: string[] = []): string[] {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+
+      if (entry.isDirectory()) sourceFiles(path, found);
+      else if (/\.tsx?$/.test(entry.name)) found.push(path);
+    }
+
+    return found;
+  }
+
+  const files = SOURCE_DIRS.flatMap((dir) => sourceFiles(join(process.cwd(), dir)));
+  const read = (file: string) => readFileSync(file, "utf8");
+
+  it("references no stock-photography host from a rendered path", () => {
+    const offenders = files.filter((file) => /images\.unsplash\.com/.test(read(file)));
+
+    expect(offenders.map((f) => f.replace(`${process.cwd()}/`, ""))).toEqual([]);
+  });
+
+  /*
+    The other half, and the reason this is not just a grep: a local path is
+    a silent 404. A remote URL that 404s is at least visible in the network
+    tab of whoever typed it; "/gallery/residence-prime/pool-terace.webp"
+    renders as a blank card and nothing else in the suite would notice.
+  */
+  const LOCAL_ASSET = /"(\/[A-Za-z0-9_\-/. ]+\.(?:webp|jpg|jpeg|png|svg|avif|ico))"/g;
+
+  const referenced = [
+    ...new Set(files.flatMap((file) => [...read(file).matchAll(LOCAL_ASSET)].map((m) => m[1]))),
+  ];
+
+  it("finds the asset references it is supposed to be checking", () => {
+    expect(referenced.length).toBeGreaterThan(10);
+  });
+
+  it.each(referenced)("%s exists in public/", (path) => {
+    expect(existsSync(join(process.cwd(), "public", path))).toBe(true);
+  });
 });
 
 /**
@@ -182,4 +325,127 @@ describe("home page headings", () => {
       expect(countH1(read(...parts)), parts.join("/")).toBe(0);
     }
   });
+});
+
+describe("static rendering: setRequestLocale", () => {
+  /*
+    Every public layout and page that touches next-intl has to call
+    setRequestLocale before it does.
+
+    This is not style. next-intl resolves the locale from the request
+    headers when setRequestLocale has not run, and reading headers is a
+    dynamic API — which a route carrying `export const revalidate` is not
+    allowed to do. The render dies with DYNAMIC_SERVER_USAGE.
+
+    It shipped that way and stayed invisible, because the failure only
+    reaches a visitor on a page that has to be generated on demand. The
+    Docker build has no database, so generateStaticParams() returns nothing
+    for /projects/[slug], /news/[slug] and /events/[slug] — every one of
+    those 500'd in production while `npm run dev`, `next build` and every
+    prerendered page stayed green.
+
+    Admin routes are excluded: they are authenticated and never statically
+    rendered, so the constraint does not apply to them.
+  */
+  const routeFiles: string[] = [];
+
+  const collect = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+
+      if (entry.isDirectory()) collect(path);
+      else if (entry.name === "page.tsx" || entry.name === "layout.tsx") {
+        routeFiles.push(path);
+      }
+    }
+  };
+
+  collect(SITE_DIR);
+  routeFiles.push(join(process.cwd(), "app", "[locale]", "layout.tsx"));
+
+  const usesIntl = routeFiles
+    .map((path) => [path, readFileSync(path, "utf8")] as const)
+    .filter(([, source]) => source.includes("next-intl"));
+
+  it("covers every public route file that uses next-intl", () => {
+    // A guard on the guard: if the walk stops finding files, the assertion
+    // below passes vacuously and stops protecting anything.
+    expect(usesIntl.length).toBeGreaterThan(10);
+  });
+
+  it.each(usesIntl.map(([path]) => [path.replace(`${process.cwd()}/`, "")]))(
+    "%s calls setRequestLocale",
+    (relative) => {
+      const [, source] = usesIntl.find(([path]) =>
+        path.endsWith(relative),
+      )!;
+
+      expect(source).toContain("setRequestLocale(");
+    },
+  );
+});
+
+describe("no Suspense boundary above a notFound()", () => {
+  /*
+    A loading.tsx anywhere above a page that calls notFound() turns that
+    page into a soft 404.
+
+    loading.tsx is a Suspense boundary, and Next streams the shell the
+    moment one exists — the `200 OK` is already on the wire before the page
+    body runs, so notFound() can render the right page but can no longer
+    set the status. Google treats the 200 as real content and indexes the
+    not-found page.
+
+    app/[locale]/loading.tsx did exactly this to all four public detail
+    routes. It now lives at app/[locale]/admin/loading.tsx, where the pages
+    are noindex and no crawler is affected.
+
+    Checked by walking up from each page rather than by banning loading.tsx
+    outright, so a skeleton can still be added anywhere that has no
+    notFound() beneath it.
+  */
+  const APP_DIR = join(process.cwd(), "app");
+  const pagesWithNotFound: string[] = [];
+
+  const collect = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+
+      if (entry.isDirectory()) collect(path);
+      else if (
+        entry.name === "page.tsx" &&
+        readFileSync(path, "utf8").includes("notFound()")
+      ) {
+        pagesWithNotFound.push(path);
+      }
+    }
+  };
+
+  collect(SITE_DIR);
+
+  it("finds the public pages that call notFound()", () => {
+    // Guards the guard: an empty list would pass every assertion below
+    // while checking nothing. /projects, /news, /events and /e-brochure
+    // each have a [slug] page that 404s on an unknown slug.
+    expect(pagesWithNotFound.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it.each(pagesWithNotFound.map((path) => [path.replace(`${process.cwd()}/`, "")]))(
+    "%s has no loading.tsx above it",
+    (relative) => {
+      const offenders: string[] = [];
+
+      for (
+        let dir = dirname(join(process.cwd(), relative));
+        dir.startsWith(APP_DIR);
+        dir = dirname(dir)
+      ) {
+        if (existsSync(join(dir, "loading.tsx"))) {
+          offenders.push(join(dir, "loading.tsx").replace(`${process.cwd()}/`, ""));
+        }
+      }
+
+      expect(offenders).toEqual([]);
+    },
+  );
 });

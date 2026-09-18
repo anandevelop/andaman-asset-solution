@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 import { authOptions, hasRole } from "@/lib/auth";
+import { can, type Capability } from "@/lib/permissions";
 import { beginAuditScope, setAuditActor } from "@/lib/audit/context";
 
 export type AdminSession = {
@@ -107,6 +108,41 @@ export async function requireAdmin(
     role: session.user.role,
     twoFactorPending: session.user.twoFactorPending,
   };
+}
+
+/**
+ * Guard a page on a capability rather than a rank.
+ *
+ * Needed wherever "at least this role" asks the wrong question. The leads
+ * pages are the case that forced it: EDITOR outranks SALES, so guarding
+ * them with hasRole(role, SALES) admitted every content editor to the
+ * customer list. See lib/permissions.ts.
+ */
+export async function requireCapability(
+  locale: string,
+  capability: Capability,
+  { allowTwoFactorSetup = false }: GuardOptions = {},
+): Promise<AdminSession> {
+  // Everyone who can reach any admin page at all; the capability check
+  // below is what actually decides.
+  const session = await requireAdmin(locale, Role.VIEWER, { allowTwoFactorSetup });
+
+  if (!can(session.role, capability)) {
+    redirect(`/${locale}/admin?denied=1`);
+  }
+
+  return session;
+}
+
+/** The action-side twin of requireCapability — throws rather than redirects. */
+export async function requireCapabilityAction(capability: Capability): Promise<AdminSession> {
+  const session = await requireAdminAction(Role.VIEWER);
+
+  if (!can(session.role, capability)) {
+    throw new Error("UNAUTHORISED");
+  }
+
+  return session;
 }
 
 /**

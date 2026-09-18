@@ -9,7 +9,7 @@
  * this check.
  *
  * Disallowing /admin and /login is tidiness, not security: robots.txt is a
- * request, not an access control. middleware.ts is what actually protects
+ * request, not an access control. proxy.ts is what actually protects
  * those routes.
  * ─────────────────────────────────────────────────────────────────────────
  */

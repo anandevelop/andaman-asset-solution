@@ -10,7 +10,7 @@
  * organization, projectName, year and trophyImageUrl are not — an
  * awarding body's name and a project's name aren't translated. `lang`
  * selects which locale's title this instance shows/saves; the page
- * (app/[locale]/admin/awards/page.tsx) owns the single language selector
+ * (app/[locale]/admin/pages/about/awards/page.tsx) owns the single language selector
  * shared by every award's form on the page — see LanguageTabs there.
  * ─────────────────────────────────────────────────────────────────────────
  */
@@ -22,7 +22,7 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { AwardFormState } from "@/app/[locale]/admin/awards/actions";
+import type { AwardFormState } from "@/app/[locale]/admin/(content)/pages/about/awards/actions";
 
 export type AwardValues = {
   title: string;
@@ -205,7 +205,7 @@ export default function AwardForm({
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           {t("awards.active")}
         </label>

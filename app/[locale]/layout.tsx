@@ -3,11 +3,12 @@ import { Suspense } from "react";
 import { Roboto } from "next/font/google";
 import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
+import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates } from "@/lib/seo";
 import Analytics, { AnalyticsPageview } from "@/components/Analytics";
 import "../globals.css";
 
@@ -88,31 +89,31 @@ export async function generateMetadata(
   // config/site.ts) — the `?? .en` is just defensive against a future
   // locale being added to i18n.ts before its copy is written.
   const resolvedLocale = locale as Locale;
-  const title =
-    siteConfig.seo.defaultTitle[resolvedLocale] ?? siteConfig.seo.defaultTitle.en;
-  const description =
-    siteConfig.description[resolvedLocale] ?? siteConfig.description.en;
 
-  // Admin-editable (lib/settings.ts) — the Search Console "HTML tag"
-  // method just wants this one value rendered as
-  // <meta name="google-site-verification" content="...">, which Next
-  // does for us from here.
-  const { analytics } = await getSiteSettings();
+  /*
+    Admin-editable (lib/settings.ts), with config/site.ts behind every
+    field: a cleared row resolves back to the committed default, so this
+    renders exactly what it used to until someone changes something.
+
+    The homepage has its own generateMetadata that sets the same title and
+    description — see app/[locale]/(site)/page.tsx. Both read from here;
+    changing one without the other is how the most important page on the
+    site ends up ignoring the setting.
+  */
+  const { analytics, branding, seo } = await getSiteSettings();
+
+  const title = seo.metaTitle[resolvedLocale] ?? seo.metaTitle.en;
+  const description = seo.metaDescription[resolvedLocale] ?? seo.metaDescription.en;
 
   return {
     metadataBase: new URL(siteConfig.url),
     title: {
       default: title,
-      template: siteConfig.seo.titleTemplate,
+      template: seo.titleTemplate,
     },
     description,
     keywords: [...siteConfig.seo.keywords],
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}`]),
-      ),
-    },
+    alternates: localizedAlternates(locale, ""),
     openGraph: {
       title,
       description,
@@ -120,9 +121,11 @@ export async function generateMetadata(
       siteName: siteConfig.name,
       images: [
         {
-          url: siteConfig.seo.ogImage,
+          url: absoluteAssetUrl(branding.ogImageUrl),
           // Declared so Facebook and LINE can size the preview before the
-          // image itself has downloaded.
+          // image itself has downloaded. Both numbers describe the
+          // committed card; an upload of another shape will preview at its
+          // own dimensions once fetched.
           width: 1200,
           height: 630,
           alt: siteConfig.name,
@@ -133,20 +136,11 @@ export async function generateMetadata(
     },
 
     /*
-      ⚠ These files do not exist yet — see docs/LAUNCH_CHECKLIST.md.
-      Declaring the paths now means adding the assets is a drop-in, but
-      until they land each one 404s. That is deliberate and tracked;
-      shipping a wrong-looking placeholder icon is worse than none.
+      The committed set from config/site.ts until an admin uploads a mark,
+      and then exactly one icon link — see buildIconsMetadata() in
+      lib/seo.ts for why a second one would make the upload look broken.
     */
-    icons: {
-      icon: [
-        { url: "/favicon.ico", sizes: "any" },
-        { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-        { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
-      ],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-      shortcut: ["/favicon.ico"],
-    },
+    icons: buildIconsMetadata(branding.faviconUrl),
 
     // app/manifest.ts is served at this path by convention.
     manifest: "/manifest.webmanifest",
@@ -158,8 +152,8 @@ export async function generateMetadata(
       card: "summary_large_image",
       title,
       description,
-      site: siteConfig.seo.twitterHandle,
-      images: [siteConfig.seo.ogImage],
+      site: seo.twitterHandle,
+      images: [absoluteAssetUrl(branding.ogImageUrl)],
     },
     robots: {
       index: true,
@@ -186,8 +180,27 @@ export default async function LocaleLayout(props: Props) {
 
   if (!locales.includes(locale as (typeof locales)[number])) notFound();
 
+  /*
+    Opts this whole subtree into static rendering.
+
+    Without it, the first next-intl call in a Server Component — getMessages()
+    two lines down — falls back to reading the locale off the request headers,
+    which is a dynamic API. On a route with `revalidate` set that is not a
+    warning, it is a hard DYNAMIC_SERVER_USAGE failure the moment the page has
+    to be generated on demand rather than served from a build-time prerender.
+
+    Pages already prerendered at build time hid this: they are served from
+    disk and their failing background revalidation is silent. Project detail
+    pages were not, because the Docker build has no database (see Dockerfile)
+    so generateStaticParams() returns nothing — every one of them 500'd.
+
+    Must run before any other next-intl call, and in every layout and page of
+    a statically rendered route. See next-intl's static-rendering docs.
+  */
+  setRequestLocale(locale);
+
   const [messages, t, settings] = await Promise.all([
-    getMessages(),
+    getMessages({ locale }),
     getTranslations({ locale }),
     getSiteSettings(),
   ]);
@@ -213,7 +226,17 @@ export default async function LocaleLayout(props: Props) {
           useSearchParams(), which would otherwise force every static page
           into dynamic rendering.
         */}
-        <Analytics metaPixelId={settings.analytics.metaPixelId || undefined} />
+        {/*
+          Both IDs come from settings now. GA4 used to be env-only, which
+          meant switching it on required rebuilding the image — and per
+          docs/LAUNCH_CHECKLIST.md that is why it was not running in
+          production at all. NEXT_PUBLIC_GA_ID is still the deploy-time
+          default behind the setting (see defaultSettings()).
+        */}
+        <Analytics
+          gaId={settings.analytics.gaMeasurementId || undefined}
+          metaPixelId={settings.analytics.metaPixelId || undefined}
+        />
         <Suspense fallback={null}>
           <AnalyticsPageview />
         </Suspense>

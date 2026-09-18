@@ -91,10 +91,15 @@ export default function ProjectFilterBar({
   const lastSearchKey = useRef(searchKey);
   const requested = useRef<ProjectFilters>(filters);
 
+  /* eslint-disable react-hooks/refs -- the previous-value idiom, and the
+     reason is in the comment above: when the URL changes underneath an
+     in-flight navigation, the refs adopt it during render rather than
+     fighting it from an effect a frame later. */
   if (lastSearchKey.current !== searchKey) {
     lastSearchKey.current = searchKey;
     requested.current = filters;
   }
+  /* eslint-enable react-hooks/refs */
 
   const navigate = (next: ProjectFilters) => {
     requested.current = next;
@@ -230,7 +235,7 @@ export default function ProjectFilterBar({
                 onChange={(event) =>
                   navigate({ ...requested.current, sort: event.target.value as SortOption })
                 }
-                className="appearance-none rounded-md border border-ink/15 bg-white py-2 pl-3.5 pr-9 text-xs text-ink transition-colors hover:border-primary/40 focus:border-primary/40 focus:outline-none"
+                className="appearance-none rounded-md border border-ink/15 bg-white py-2 pl-3.5 pr-9 text-xs text-ink transition-colors hover:border-primary/40 focus:border-primary/40 focus:outline-hidden"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option} value={option}>

@@ -23,7 +23,7 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { SalesPersonFormState } from "@/app/[locale]/admin/sales-team/actions";
+import type { SalesPersonFormState } from "@/app/[locale]/admin/(crm)/sales-team/actions";
 
 export type SalesPersonValues = {
   name: string;
@@ -232,7 +232,7 @@ export default function SalesPersonForm({
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           {t("salesTeam.active")}
         </label>

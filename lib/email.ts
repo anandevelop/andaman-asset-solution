@@ -18,6 +18,16 @@
  * logged no-op — nothing here ever throws into the request that triggered
  * it, because the lead/RSVP is already committed to Postgres by the time
  * we try to email anyone.
+ *
+ * Every string in these messages came from a stranger's form submission, so
+ * the escaping contract is load-bearing and asymmetric:
+ *
+ *   - the `html` half escapes everything, and `row()` does it by default so
+ *     a new field is safe without anyone remembering;
+ *   - the `text` half escapes nothing — entities in a plaintext body are
+ *     the same bug pointing the other way;
+ *   - subjects are neither: a header is not HTML, but it cannot survive a
+ *     newline. See singleLine().
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -86,6 +96,76 @@ async function sendMail(args: SendArgs): Promise<void> {
   }
 }
 
+/**
+ * A real send, with the failure reported back rather than swallowed.
+ *
+ * Every other send in this file is fire-and-forget on purpose: a broken
+ * mailbox must not turn a visitor's successful enquiry into an error. The
+ * settings screen's "test" button is the exact opposite case — it exists to
+ * find out whether sending works, so a failure that printed to a log
+ * nobody is reading would make the button worthless.
+ */
+export async function sendDiagnosticEmail(
+  to: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!isEmailConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
+
+  try {
+    await getTransporter().sendMail({
+      from: fromAddress(),
+      to,
+      subject: `${siteConfig.name} — SMTP test`,
+      text:
+        "This is a test message from the Andaman Asset Solution back office.\n" +
+        "If you are reading it, outgoing email is working.",
+      html:
+        "<p>This is a test message from the Andaman Asset Solution back office.</p>" +
+        "<p>If you are reading it, outgoing email is working.</p>",
+    });
+    return { ok: true };
+  } catch (error) {
+    // The message is shown to an administrator, who is the person who can
+    // act on "Invalid login" or "ECONNREFUSED".
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ── Escaping ────────────────────────────────────────────────────────────
+
+/**
+ * Escape a value for interpolation into HTML text or a double-quoted
+ * attribute.
+ *
+ * Deliberately not DOMPurify, which lib/markdown.ts uses for article
+ * bodies. That sanitises markup an author meant to render, against a tag
+ * allowlist. A visitor's name is not markup — it is text, and the right
+ * handling of text in an HTML context is escaping. Sanitising would also
+ * *delete* what a hostile submitter sent, destroying the evidence in a
+ * notification whose whole job is to show staff what arrived. And it strips
+ * tags without escaping `"`, which is the character that matters at
+ * href="tel:…".
+ *
+ * `&` goes first, or the entities the later replacements introduce get
+ * escaped a second time.
+ */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Flatten a subject line. Escaping one would put a literal "&amp;" in front
+ * of the reader; what a header genuinely cannot carry is a newline, which
+ * is how a submitted name turns into an injected header.
+ */
+function singleLine(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
 // ── Shared layout ───────────────────────────────────────────────────────
 
 const PRIMARY = "#083551";
@@ -118,11 +198,32 @@ function wrap(bodyHtml: string): string {
 </html>`;
 }
 
+/**
+ * A label/value row. Escapes both halves, so every plain data row is safe
+ * without the call site doing anything.
+ *
+ * Escaping here rather than at each call site is the point: the six sites a
+ * review would name are not the whole set. `lead.projectName` reaches this
+ * function from `data.projectSlug` in the request body
+ * (app/api/leads/route.ts), constrained only by a max length, and it is
+ * never shown back to the person who sent it — so nobody would notice it
+ * being abused. Safe-by-default catches it for free.
+ */
 function row(label: string, value: string): string {
+  return rowHtml(label, escapeHtml(value));
+}
+
+/** Same markup, for a value that is already known-safe HTML. */
+function rowHtml(label: string, valueHtml: string): string {
   return `<tr>
-    <td style="padding:4px 12px 4px 0;color:#8C9BA5;font-size:12px;white-space:nowrap;vertical-align:top;">${label}</td>
-    <td style="padding:4px 0;color:#333333;font-size:13px;">${value}</td>
+    <td style="padding:4px 12px 4px 0;color:#8C9BA5;font-size:12px;white-space:nowrap;vertical-align:top;">${escapeHtml(label)}</td>
+    <td style="padding:4px 0;color:#333333;font-size:13px;">${valueHtml}</td>
   </tr>`;
+}
+
+/** The one place an anchor is built — href and text both escaped. */
+function link(href: string, text: string): string {
+  return `<a href="${escapeHtml(href)}" style="color:${PRIMARY};">${escapeHtml(text)}</a>`;
 }
 
 // ── Staff notifications ─────────────────────────────────────────────────
@@ -148,11 +249,11 @@ export async function notifyNewLeadByEmail(lead: {
     <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:${PRIMARY};">ผู้สนใจรายใหม่</h1>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
       ${row("ชื่อ", lead.name)}
-      ${row("โทร", `<a href="tel:${lead.phone}" style="color:${PRIMARY};">${lead.phone}</a>`)}
-      ${row("อีเมล", `<a href="mailto:${lead.email}" style="color:${PRIMARY};">${lead.email}</a>`)}
+      ${rowHtml("โทร", link(`tel:${lead.phone}`, lead.phone))}
+      ${rowHtml("อีเมล", link(`mailto:${lead.email}`, lead.email))}
       ${row("โครงการ", lead.projectName ?? `— (${lead.source})`)}
     </table>
-    ${lead.message ? `<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #EEEEEE;color:#666666;font-size:13px;">${lead.message.slice(0, 500)}</p>` : ""}
+    ${lead.message ? `<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #EEEEEE;color:#666666;font-size:13px;">${escapeHtml(lead.message.slice(0, 500))}</p>` : ""}
   `);
 
   const text = [
@@ -166,7 +267,12 @@ export async function notifyNewLeadByEmail(lead: {
     .filter(Boolean)
     .join("\n");
 
-  await sendMail({ to, subject: `ผู้สนใจรายใหม่: ${lead.name}`, html, text });
+  await sendMail({
+    to,
+    subject: singleLine(`ผู้สนใจรายใหม่: ${lead.name}`),
+    html,
+    text,
+  });
 }
 
 /** New RSVP — staff copy, mirrors lib/line.ts's leadCard. */
@@ -186,8 +292,8 @@ export async function notifyNewRegistrationByEmail(registration: {
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
       ${row("ชื่อ", registration.name)}
       ${row("บริษัท/ตัวแทน", registration.agencyName)}
-      ${row("โทร", `<a href="tel:${registration.phone}" style="color:${PRIMARY};">${registration.phone}</a>`)}
-      ${row("อีเมล", `<a href="mailto:${registration.email}" style="color:${PRIMARY};">${registration.email}</a>`)}
+      ${rowHtml("โทร", link(`tel:${registration.phone}`, registration.phone))}
+      ${rowHtml("อีเมล", link(`mailto:${registration.email}`, registration.email))}
       ${registration.whatsapp ? row("WhatsApp", registration.whatsapp) : ""}
       ${row("กิจกรรม", registration.eventTitle)}
     </table>
@@ -207,7 +313,7 @@ export async function notifyNewRegistrationByEmail(registration: {
 
   await sendMail({
     to,
-    subject: `ลงทะเบียนกิจกรรมใหม่: ${registration.name}`,
+    subject: singleLine(`ลงทะเบียนกิจกรรมใหม่: ${registration.name}`),
     html,
     text,
   });
@@ -249,19 +355,25 @@ export async function sendRsvpConfirmationEmail(args: {
     minute: "2-digit",
   });
 
-  const subject = t("subject", { event: args.eventTitle });
+  const subject = singleLine(t("subject", { event: args.eventTitle }));
 
+  /*
+    next-intl's ICU formatter substitutes values verbatim — it has no
+    concept of an HTML context — so a translated string carrying a name or
+    an event title needs the same escaping as a raw one. The message files
+    themselves are plain text, so escaping the whole result is lossless.
+  */
   const html = wrap(`
-    <h1 style="margin:0 0 4px;font-size:18px;font-weight:600;color:${PRIMARY};">${t("heading")}</h1>
-    <p style="margin:0 0 16px;color:#4B5563;">${t("greeting", { name: args.name })}</p>
-    <p style="margin:0 0 20px;color:#4B5563;">${t("intro", { event: args.eventTitle })}</p>
+    <h1 style="margin:0 0 4px;font-size:18px;font-weight:600;color:${PRIMARY};">${escapeHtml(t("heading"))}</h1>
+    <p style="margin:0 0 16px;color:#4B5563;">${escapeHtml(t("greeting", { name: args.name }))}</p>
+    <p style="margin:0 0 20px;color:#4B5563;">${escapeHtml(t("intro", { event: args.eventTitle }))}</p>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#F9FAFB;border-radius:4px;padding:4px 16px;">
       ${row(t("dateLabel"), dateFormat.format(args.startsAt))}
       ${row(t("timeLabel"), timeFormat.format(args.startsAt))}
       ${args.location ? row(t("locationLabel"), args.location) : ""}
     </table>
-    <p style="margin:20px 0 0;color:#4B5563;">${t("outro")}</p>
-    <p style="margin:16px 0 0;color:#9CA3AF;font-size:12px;">${t("signature")}</p>
+    <p style="margin:20px 0 0;color:#4B5563;">${escapeHtml(t("outro"))}</p>
+    <p style="margin:16px 0 0;color:#9CA3AF;font-size:12px;">${escapeHtml(t("signature"))}</p>
   `);
 
   const text = [
@@ -279,4 +391,55 @@ export async function sendRsvpConfirmationEmail(args: {
     .join("\n");
 
   await sendMail({ to: args.to, subject, html, text });
+}
+
+/**
+ * Tell a development's buyers that a new construction update is live.
+ *
+ * Sent one message per buyer rather than one with everyone in `to`: these
+ * are customers of the same development who have no business seeing each
+ * other's addresses, and a shared header would disclose the buyer list to
+ * every one of them.
+ *
+ * Fire-and-forget like every other send here — a mail outage must not fail
+ * the publish that already happened. The count of what was attempted is
+ * returned so the caller can record it.
+ */
+export async function notifyBuyersOfProgress(args: {
+  buyers: { email: string; name: string }[];
+  projectName: string;
+  monthLabel: string;
+  percentComplete: number | null;
+  summary: string | null;
+  url: string;
+}): Promise<number> {
+  if (!isEmailConfigured() || args.buyers.length === 0) return 0;
+
+  for (const buyer of args.buyers) {
+    const html = wrap(`
+      <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:${PRIMARY};">ความคืบหน้างานก่อสร้าง · ${escapeHtml(args.projectName)}</h1>
+      <p style="margin:0 0 12px;color:#666666;font-size:14px;">เรียน ${escapeHtml(buyer.name)}</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+        ${row("รอบเดือน", args.monthLabel)}
+        ${args.percentComplete !== null ? row("ความคืบหน้ารวม", `${args.percentComplete}%`) : ""}
+      </table>
+      ${args.summary ? `<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #EEEEEE;color:#666666;font-size:13px;">${escapeHtml(args.summary.slice(0, 800))}</p>` : ""}
+      <p style="margin:20px 0 0;">${link(args.url, "ดูความคืบหน้าทั้งหมด")}</p>
+    `);
+
+    const text = [
+      `ความคืบหน้างานก่อสร้าง · ${args.projectName}`,
+      `เรียน ${buyer.name}`,
+      `รอบเดือน: ${args.monthLabel}`,
+      args.percentComplete !== null ? `ความคืบหน้ารวม: ${args.percentComplete}%` : "",
+      args.summary ?? "",
+      args.url,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    await sendMail({ to: buyer.email, subject: `ความคืบหน้างานก่อสร้าง · ${args.projectName}`, html, text });
+  }
+
+  return args.buyers.length;
 }

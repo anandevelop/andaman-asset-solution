@@ -32,7 +32,8 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import bcrypt from "bcryptjs";
-import { Prisma, PrismaClient, PropertyType, ProjectStatus, Role } from "@prisma/client";
+import { Prisma, PrismaClient, PropertyType, ProjectStatus, Role, SectionIcon } from "@prisma/client";
+import { pgAdapter } from "../lib/prisma-adapter";
 
 // ─────────────────────────────────────────────────────────────────────────
 // RICH PROJECT CONTENT (Sale-Kit parity) — Phase 11.5
@@ -116,6 +117,35 @@ type UnitsSeed = {
 
 const contentSeed = readSeedJson<ContentSeed>("content-seed-data.json");
 const unitsSeed = readSeedJson<UnitsSeed>("units-and-types-seed-data.json");
+
+/**
+ * Corporate services / Why-us points / Mission principles — the icon-card
+ * sections that moved from messages/*.json + component-hardcoded constants
+ * to the database (CorporateService, WhyUsPoint, MissionPrinciple). Same
+ * reasoning as contentSeed/unitsSeed above: this is 4-locale translated
+ * copy, and hand-transcribing ~88 strings across 4 scripts is exactly the
+ * kind of copy error a JSON file avoids. Generated once from the
+ * messages/*.json strings that used to hold this content, at the moment
+ * those keys were deleted — not read from messages/*.json at seed time,
+ * so this stays a frozen snapshot independent of the live, editable
+ * translation catalog (a fresh clone with those keys already gone would
+ * otherwise seed blank rows).
+ */
+type CardSeed = {
+  key: string;
+  imageUrl?: string;
+  icon?: string;
+  sortOrder: number;
+  translations: Record<string, { label?: string; imageAlt?: string; title?: string; body?: string }>;
+};
+
+type HomeAboutCardsSeed = {
+  corporateServices: CardSeed[];
+  whyUsPoints: CardSeed[];
+  missionPrinciples: CardSeed[];
+};
+
+const homeAboutCardsSeed = readSeedJson<HomeAboutCardsSeed>("home-about-cards-seed-data.json");
 
 /**
  * Sale Kit facility names → the lowercase i18n keys the site already uses
@@ -281,6 +311,82 @@ Confirm the title deed (chanote is the strongest), check for encumbrances at the
   metaDescriptionTh:
     "freehold, leasehold หรือถือผ่านบริษัทไทย? แนวทางการถือครองอสังหาริมทรัพย์ภูเก็ตสำหรับชาวต่างชาติ ภาระที่ตามมาของแต่ละทาง และการตรวจสอบที่ต้องทำ",
 
+  // Content-studio fields (see the schema.prisma comments on NewsArticle
+  // for what each is for). contentFormat/schemaType are left at their
+  // column defaults (MARKDOWN, "NewsArticle") — both already match what
+  // this article actually is.
+  focusKeyword: "buying property in phuket",
+  secondaryKeywords: ["leasehold vs freehold thailand", "foreign ownership"],
+
+  isPublished: true,
+};
+
+// Second seed article — the content-studio phase needs two real articles
+// to bind example Keyword rows to (one primary + one secondary keyword
+// each), and this is the only one this file had before that requirement
+// existed.
+const ARTICLE_2 = {
+  slug: "phuket-rental-yields-by-zone-2026",
+
+  titleEn: "Phuket rental yields by zone: what the 2026 numbers actually show",
+  titleTh: "ผลตอบแทนค่าเช่าภูเก็ตแยกตามโซน: ตัวเลขปี 2569 บอกอะไรบ้าง",
+
+  excerptEn:
+    "Net yield varies more between Phuket's own zones than between Phuket and its regional competitors — a comparison of Bang Tao, Rawai and Kata.",
+  excerptTh:
+    "ผลตอบแทนสุทธิระหว่างโซนต่าง ๆ ในภูเก็ตเองต่างกันมากกว่าภูเก็ตเทียบกับคู่แข่งในภูมิภาค — เปรียบเทียบบางเทา ราไวย์ และกะตะ",
+
+  contentEn: `Villa buyers comparing Phuket to Bali or Koh Samui often miss the bigger gap: the spread between Phuket's own rental zones.
+
+## Net yield, not headline rent
+
+Advertised nightly rates say little on their own. Net yield — income after management fees, maintenance and the vacancy weeks every villa has — is what actually separates a good purchase from a loud one.
+
+**Bang Tao.** High occupancy, high management cost. Net yields cluster around 5.5–6.5% once a professional operator's cut is subtracted.
+
+**Rawai.** Lower nightly rates, lower fees, longer average stays from a growing long-term-rental segment. Net yields often land close to Bang Tao's despite a lower purchase price per square metre.
+
+**Kata.** Strong walk-up demand but the most seasonal of the three — yield swings further between high and low season than either of the others.
+
+## What the spread means for a buyer
+
+A villa's yield is a property of its zone and its operator, not just its build quality. The same floor plan in two zones, run by two different agencies, can post a yield gap wider than the difference between Phuket and a competing island entirely.
+
+Ask any agent for net figures, not gross — and ask what they exclude before you compare zone to zone.`,
+
+  contentTh: `ผู้ซื้อวิลล่าที่เปรียบเทียบภูเก็ตกับบาหลีหรือเกาะสมุย มักมองข้ามช่องว่างที่ใหญ่กว่านั้น คือส่วนต่างระหว่างโซนเช่าต่าง ๆ ภายในภูเก็ตเอง
+
+## ผลตอบแทนสุทธิ ไม่ใช่ราคาเช่าที่โฆษณา
+
+ราคาเช่าต่อคืนที่โฆษณาไว้บอกอะไรได้น้อยมากด้วยตัวเอง ผลตอบแทนสุทธิ หลังหักค่าบริหารจัดการ ค่าดูแลรักษา และช่วงว่างที่วิลล่าทุกหลังต้องเจอ คือสิ่งที่แยกการซื้อที่ดีออกจากการซื้อที่ดูดีแค่ภายนอก
+
+**บางเทา** อัตราเข้าพักสูง ค่าบริหารจัดการก็สูงตาม ผลตอบแทนสุทธิอยู่ที่ราว 5.5–6.5% หลังหักส่วนแบ่งของผู้บริหารมืออาชีพ
+
+**ราไวย์** ราคาเช่าต่อคืนต่ำกว่า ค่าธรรมเนียมต่ำกว่า และมีกลุ่มผู้เช่าระยะยาวที่กำลังเติบโต ทำให้ผลตอบแทนสุทธิมักใกล้เคียงกับบางเทา แม้ราคาซื้อต่อตารางเมตรจะต่ำกว่า
+
+**กะตะ** มีดีมานด์แบบ walk-up ที่แข็งแรง แต่มีความเป็นฤดูกาลสูงสุดในสามโซนนี้ ผลตอบแทนแกว่งระหว่างช่วง high season และ low season มากกว่าอีกสองโซน
+
+## ความหมายของส่วนต่างนี้สำหรับผู้ซื้อ
+
+ผลตอบแทนของวิลล่าขึ้นอยู่กับโซนและผู้บริหารจัดการ มากกว่าคุณภาพการก่อสร้างเพียงอย่างเดียว แบบบ้านเดียวกันในสองโซน บริหารโดยสองบริษัทต่างกัน อาจมีผลตอบแทนต่างกันมากกว่าส่วนต่างระหว่างภูเก็ตกับเกาะคู่แข่งเสียอีก
+
+ควรขอตัวเลขสุทธิจากตัวแทนทุกครั้ง ไม่ใช่ตัวเลขรวม และควรถามด้วยว่าตัวเลขนั้นไม่รวมอะไรบ้าง ก่อนเปรียบเทียบข้ามโซน`,
+
+  coverImageUrl:
+    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1600&q=80",
+  category: "Market Insight",
+  tags: ["rental yield", "market data", "phuket"],
+
+  metaTitleEn: "Phuket Rental Yields by Zone — Bang Tao, Rawai and Kata Compared",
+  metaTitleTh: "ผลตอบแทนค่าเช่าภูเก็ตแยกตามโซน — เปรียบเทียบบางเทา ราไวย์ กะตะ",
+  metaDescriptionEn:
+    "Net rental yields differ more between Phuket's own zones than between islands. A zone-by-zone comparison of Bang Tao, Rawai and Kata for villa investors.",
+  metaDescriptionTh:
+    "ผลตอบแทนค่าเช่าสุทธิระหว่างโซนในภูเก็ตต่างกันมากกว่าระหว่างเกาะ เปรียบเทียบบางเทา ราไวย์ และกะตะสำหรับนักลงทุนวิลล่า",
+
+  focusKeyword: "phuket rental yield",
+  secondaryKeywords: ["bang tao villas", "phuket real estate market"],
+
   isPublished: true,
 };
 
@@ -302,7 +408,7 @@ const EVENT = {
   isPublished: true,
 };
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: pgAdapter() });
 
 // ── Trinity Village (was PROJECT const in the Phase-1 page) ──────────────
 const TRINITY_VILLAGE = {
@@ -497,6 +603,82 @@ const AWARDS = [
     trophyImageUrl: "/awards/propertyguru-trophy.png",
     sortOrder: 6,
   },
+];
+
+// ── Milestones (About page "How we got here") ──────────────────────────────
+//
+// Transcribed from the company's own portfolio timeline graphic — the same
+// source content/company-timeline.ts used to hardcode, before the photo
+// timeline moved to /admin/milestones. `sortOrder` is global (not per-year)
+// so the original graphic's left-to-right order survives a re-seed;
+// multiples of 10 leave room for an admin to insert a row between two
+// existing ones later. `imageUrl` starts null for every row — no per-project
+// artwork was supplied for the historical entries — and falls back to a
+// generic tile until an admin uploads a real photo, same convention as
+// Award.trophyImageUrl.
+//
+// `brand` is set only where the source graphic showed a "BY ..." sub-label;
+// the public page only renders it when it differs from the company's own
+// name, so the four Andaman Asset Solution-branded rows below render with
+// no sub-label at all — see MilestonesRow's comment.
+const MILESTONES = [
+  { year: 2009, projectName: "The Tree Residence", brand: null, sortOrder: 0 },
+  { year: 2010, projectName: "Zen Space", brand: null, sortOrder: 10 },
+  { year: 2014, projectName: "Iconpark", brand: null, sortOrder: 20 },
+  { year: 2015, projectName: "Natural Touch", brand: null, sortOrder: 30 },
+  { year: 2017, projectName: "Wallaya Villas by the Lake", brand: null, sortOrder: 40 },
+  { year: 2017, projectName: "Wallaya Grand Residence", brand: null, sortOrder: 41 },
+  { year: 2017, projectName: "Natural Park Villas", brand: null, sortOrder: 42 },
+  { year: 2018, projectName: "Natural Park Pavillion", brand: null, sortOrder: 50 },
+  { year: 2018, projectName: "Natural Park Habitat", brand: null, sortOrder: 51 },
+  { year: 2018, projectName: "Oceana Kamala", brand: null, sortOrder: 52 },
+  { year: 2018, projectName: "Wallaya Villas Pasak Soi 8", brand: null, sortOrder: 53 },
+  { year: 2019, projectName: "Wallaya Villas Harmony Phase 1", brand: null, sortOrder: 60 },
+  { year: 2019, projectName: "Wallaya Villas Harmony Phase 2-3", brand: null, sortOrder: 61 },
+  { year: 2019, projectName: "Citygate Kamala", brand: null, sortOrder: 62 },
+  { year: 2019, projectName: "Wallaya Villas The Granary", brand: null, sortOrder: 63 },
+  { year: 2019, projectName: "Wallaya Villas The Nest", brand: null, sortOrder: 64 },
+  { year: 2020, projectName: "Wallaya Villas The Element", brand: null, sortOrder: 70 },
+  { year: 2020, projectName: "Wallaya Villas Town at Chalong", brand: null, sortOrder: 71 },
+  { year: 2021, projectName: "The Residence", brand: "Andaman Asset Solution", sortOrder: 80 },
+  { year: 2021, projectName: "The Trinity", brand: "Andaman Asset Solution", sortOrder: 81 },
+  { year: 2021, projectName: "The Victory", brand: "Andaman Asset Solution", sortOrder: 82 },
+  { year: 2022, projectName: "Luxpride 1–2", brand: "Wallaya Villas", sortOrder: 90 },
+  { year: 2023, projectName: "The Trinity Village", brand: "Andaman Asset Solution", sortOrder: 100 },
+  { year: 2023, projectName: "Luxpride 3–4", brand: "Wallaya Villas", sortOrder: 101 },
+  { year: 2023, projectName: "The Residence Prime", brand: "Andaman Asset Solution", sortOrder: 102 },
+  { year: 2023, projectName: "The Trinity Prime", brand: "Andaman Asset Solution", sortOrder: 103 },
+];
+
+// ── Home page "Who we are" gallery ──────────────────────────────────────────
+//
+// Transcribed from the PHOTOS array components/CompanyIntro.tsx hardcoded
+// before this moved to the database. `label` is the resolved project name
+// (what CompanyIntroGallery actually displayed), not the lookup key the old
+// array used — see HomeGalleryPhoto's schema comment for why the indirect
+// `common.projectNames.*` lookup isn't carried forward. The per-photo crop
+// override (`objectPosition`) is dropped for the same reason: it was a
+// literal Tailwind class fragment, which only exists as real CSS because
+// Tailwind's JIT scanner saw it in source — every new/admin-added photo
+// gets one default center crop instead, defined once in CompanyIntro.tsx.
+const HOME_GALLERY_PHOTOS = [
+  {
+    imageUrl: "/gallery/residence-prime/exterior-facade.webp",
+    label: "The Residence Prime",
+    sortOrder: 0,
+  },
+  { imageUrl: "/gallery/victory/cover.webp", label: "The Victory", sortOrder: 10 },
+  {
+    imageUrl: "/gallery/residence-prime/pool-terrace.webp",
+    label: "The Residence Prime",
+    sortOrder: 20,
+  },
+  {
+    imageUrl: "/gallery/trinity-village/cover.webp",
+    label: "Trinity Village",
+    sortOrder: 30,
+  },
+  { imageUrl: "/gallery/victory/the-victory30.webp", label: "The Victory", sortOrder: 40 },
 ];
 
 // ── Rich content merge (Sale-Kit parity): residence-prime, trinity-village,
@@ -794,6 +976,133 @@ async function main() {
     console.log(`  ✓ Award ${organization} — ${titleEn}`);
   }
 
+  // ── Milestones ───────────────────────────────────────────────────────
+  //
+  // Upserted on the (year, projectName) composite key, same reasoning as
+  // Award above: an admin is expected to upload a real photo per row
+  // almost immediately, and a re-seed must not throw that away. `update`
+  // only refreshes `brand` — never imageUrl, isActive or sortOrder.
+  for (const milestone of MILESTONES) {
+    const { year, projectName, brand, sortOrder } = milestone;
+    await db.milestone.upsert({
+      where: { year_projectName: { year, projectName } },
+      update: { brand },
+      create: { year, projectName, brand, sortOrder },
+    });
+    console.log(`  ✓ Milestone ${year} — ${projectName}`);
+  }
+
+  // ── Home page "Who we are" gallery ──────────────────────────────────
+  //
+  // Upserted on `imageUrl` (unique) — an admin is expected to swap in a
+  // new photo almost immediately, and a re-seed must not throw that
+  // away. `update` only refreshes `label`, never sortOrder or isActive.
+  for (const photo of HOME_GALLERY_PHOTOS) {
+    const { imageUrl, label, sortOrder } = photo;
+    await db.homeGalleryPhoto.upsert({
+      where: { imageUrl },
+      update: { label },
+      create: { imageUrl, label, sortOrder },
+    });
+    console.log(`  ✓ HomeGalleryPhoto ${label}`);
+  }
+
+  // ── Corporate services / Why-us points / Mission principles ─────────
+  //
+  // Unlike Award/Milestone/HomeGalleryPhoto above, these three have no
+  // natural per-row key to upsert on — the content itself (a translated
+  // title/label) is the only candidate, and keying on copy an admin is
+  // expected to edit would make an edited row "reappear" as a duplicate
+  // on the next re-seed. So the guard is at the collection level instead:
+  // seed the whole set only the first time, when the table is still
+  // empty. After that — whether the rows were left exactly as seeded or
+  // an admin has since edited, reordered, deleted or added to them — a
+  // re-seed changes nothing, the same way HeroStorySlide and Faq (seeded
+  // nowhere in this file) are never touched again once real content
+  // exists.
+  async function seedCardsOnceEmpty<T extends { id: string }>(
+    label: string,
+    count: () => Promise<number>,
+    seed: () => Promise<T[]>,
+  ) {
+    const existing = await count();
+    if (existing > 0) {
+      console.log(`  ↳ ${label} already has ${existing} row(s) — skipped (admin-owned)`);
+      return;
+    }
+    const created = await seed();
+    console.log(`  ✓ ${label} × ${created.length}`);
+  }
+
+  await seedCardsOnceEmpty(
+    "CorporateService",
+    () => db.corporateService.count(),
+    () =>
+      Promise.all(
+        homeAboutCardsSeed.corporateServices.map((service) =>
+          db.corporateService.create({
+            data: {
+              imageUrl: service.imageUrl!,
+              sortOrder: service.sortOrder,
+              translations: {
+                create: Object.entries(service.translations).map(([locale, t]) => ({
+                  locale,
+                  label: t.label!,
+                  imageAlt: t.imageAlt!,
+                })),
+              },
+            },
+          }),
+        ),
+      ),
+  );
+
+  await seedCardsOnceEmpty(
+    "WhyUsPoint",
+    () => db.whyUsPoint.count(),
+    () =>
+      Promise.all(
+        homeAboutCardsSeed.whyUsPoints.map((point) =>
+          db.whyUsPoint.create({
+            data: {
+              icon: point.icon as SectionIcon,
+              sortOrder: point.sortOrder,
+              translations: {
+                create: Object.entries(point.translations).map(([locale, t]) => ({
+                  locale,
+                  title: t.title!,
+                  body: t.body!,
+                })),
+              },
+            },
+          }),
+        ),
+      ),
+  );
+
+  await seedCardsOnceEmpty(
+    "MissionPrinciple",
+    () => db.missionPrinciple.count(),
+    () =>
+      Promise.all(
+        homeAboutCardsSeed.missionPrinciples.map((principle) =>
+          db.missionPrinciple.create({
+            data: {
+              icon: principle.icon as SectionIcon,
+              sortOrder: principle.sortOrder,
+              translations: {
+                create: Object.entries(principle.translations).map(([locale, t]) => ({
+                  locale,
+                  title: t.title!,
+                  body: t.body!,
+                })),
+              },
+            },
+          }),
+        ),
+      ),
+  );
+
   let richSortOrder = TRINITY_VILLAGE.sortOrder + 1;
   for (const { content, units } of RICH_PROJECTS) {
     const isNewProject = content.slug !== TRINITY_VILLAGE.slug;
@@ -1050,6 +1359,143 @@ async function main() {
   });
 
   console.log(`  ✓ Article  ${article.slug}`);
+
+  const article2 = await prisma.newsArticle.upsert({
+    where: { slug: ARTICLE_2.slug },
+    update: ARTICLE_2,
+    create: { ...ARTICLE_2, publishedAt: new Date() },
+  });
+
+  console.log(`  ✓ Article  ${article2.slug}`);
+
+  // ── Keywords ──────────────────────────────────────────────────────────
+  // Example data for the content-studio's keyword library — nothing in
+  // this codebase populates searchVolume/difficulty/rank yet (no rank
+  // tracker is wired up), so these are illustrative numbers for exercising
+  // the schema and the admin UI a later phase builds against it, not a
+  // claim about real search behaviour.
+
+  /** 12 evenly-spaced points from `from` to `to`, for Keyword.trend. */
+  function weeklyTrend(from: number, to: number): { w: number; rank: number }[] {
+    return Array.from({ length: 12 }, (_, i) => ({
+      w: i + 1,
+      rank: Math.round(from + ((to - from) * i) / 11),
+    }));
+  }
+
+  const KEYWORDS = [
+    {
+      phrase: "buying property in phuket",
+      locale: "en",
+      searchVolume: 2400,
+      difficulty: 38,
+      currentRank: 6,
+      previousRank: 9,
+      trend: weeklyTrend(9, 6),
+    },
+    {
+      phrase: "leasehold vs freehold thailand",
+      locale: "en",
+      searchVolume: 590,
+      difficulty: 34,
+      currentRank: 11,
+      previousRank: 15,
+      trend: weeklyTrend(15, 11),
+    },
+    {
+      phrase: "ซื้อบ้านภูเก็ตต่างชาติ",
+      locale: "th",
+      searchVolume: 320,
+      difficulty: 25,
+      currentRank: 3,
+      previousRank: 5,
+      trend: weeklyTrend(5, 3),
+    },
+    {
+      phrase: "phuket rental yield",
+      locale: "en",
+      searchVolume: 880,
+      difficulty: 29,
+      currentRank: 4,
+      previousRank: 4,
+      trend: weeklyTrend(4, 4),
+    },
+    {
+      phrase: "bang tao villas",
+      locale: "en",
+      searchVolume: 1300,
+      difficulty: 42,
+      currentRank: 8,
+      previousRank: 8,
+      trend: weeklyTrend(8, 8),
+    },
+    {
+      phrase: "ผลตอบแทนค่าเช่าภูเก็ต",
+      locale: "th",
+      searchVolume: 140,
+      difficulty: 20,
+      currentRank: 2,
+      previousRank: 2,
+      trend: weeklyTrend(2, 2),
+    },
+  ] as const;
+
+  const rankCheckedAt = new Date();
+  const keywordRows: Record<string, { id: string }> = {};
+
+  for (const keyword of KEYWORDS) {
+    const row = await prisma.keyword.upsert({
+      where: { phrase: keyword.phrase },
+      update: {},
+      create: { ...keyword, rankCheckedAt },
+    });
+    keywordRows[keyword.phrase] = row;
+  }
+
+  console.log(`  ✓ Keywords ${KEYWORDS.length} phrases`);
+
+  // One primary + one secondary assignment per article, across both
+  // locales the phrases above use — see KeywordAssignment's schema.prisma
+  // comment for why this table exists alongside NewsArticleTranslation.
+  // focusKeyword rather than replacing it in this phase.
+  const ASSIGNMENTS = [
+    { phrase: "buying property in phuket", contentId: article.id, locale: "en", isPrimary: true },
+    {
+      phrase: "leasehold vs freehold thailand",
+      contentId: article.id,
+      locale: "en",
+      isPrimary: false,
+    },
+    { phrase: "ซื้อบ้านภูเก็ตต่างชาติ", contentId: article.id, locale: "th", isPrimary: false },
+    { phrase: "phuket rental yield", contentId: article2.id, locale: "en", isPrimary: true },
+    { phrase: "bang tao villas", contentId: article2.id, locale: "en", isPrimary: false },
+    { phrase: "ผลตอบแทนค่าเช่าภูเก็ต", contentId: article2.id, locale: "th", isPrimary: false },
+  ] as const;
+
+  for (const assignment of ASSIGNMENTS) {
+    const keywordId = keywordRows[assignment.phrase].id;
+
+    await prisma.keywordAssignment.upsert({
+      where: {
+        keywordId_contentType_contentId_locale: {
+          keywordId,
+          contentType: "NEWS_ARTICLE",
+          contentId: assignment.contentId,
+          locale: assignment.locale,
+        },
+      },
+      update: { isPrimary: assignment.isPrimary },
+      create: {
+        keywordId,
+        contentType: "NEWS_ARTICLE",
+        contentId: assignment.contentId,
+        locale: assignment.locale,
+        isPrimary: assignment.isPrimary,
+      },
+    });
+  }
+
+  console.log(`  ✓ Keyword assignments ${ASSIGNMENTS.length}`);
 
   // Anchored 30 days out so a fresh clone always has a genuinely upcoming
   // event, rather than a hardcoded date that quietly goes stale.

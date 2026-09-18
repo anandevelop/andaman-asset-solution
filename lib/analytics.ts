@@ -162,3 +162,7 @@ export function trackLineClick(location: string): void {
 export function trackPhoneClick(location: string): void {
   track("phone_click", { location });
 }
+
+export function trackWhatsappClick(location: string): void {
+  track("whatsapp_click", { location });
+}

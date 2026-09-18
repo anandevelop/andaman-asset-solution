@@ -1,5 +1,5 @@
 /**
- * app/[locale]/admin/faqs/page.tsx
+ * app/[locale]/admin/pages/faq/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * FAQ manager: add at the top, each entry editable in place, grouped by
  * category so the order a visitor sees is the order the editor sees.
@@ -10,7 +10,9 @@ import { getTranslations } from "next-intl/server";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { getFaqCategories } from "@/lib/faqs";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { createFaq, deleteFaq, updateFaq } from "./actions";
@@ -28,7 +30,12 @@ export default async function AdminFaqsPage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  /* VIEWER may open this page to see what is published; only EDITOR
+     and above may submit either form below (canWrite gates both with a
+     disabled fieldset, matching the zone's real minimum, unchanged from
+     before this phase — see the actions in ./actions.ts). */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const lang = parseEditingLocale(searchParams.lang);
 
@@ -57,7 +64,7 @@ export default async function AdminFaqsPage(props: Props) {
       </header>
 
       {isDatabaseOffline() && (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
@@ -78,14 +85,16 @@ export default async function AdminFaqsPage(props: Props) {
           {t("faqs.newTitle")}
         </h2>
 
-        <FaqForm
-          key={lang}
-          lang={lang}
-          action={createFaq}
-          existingCategories={categories}
-          submitLabel={t("common.create")}
-          formId="faq-new"
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <FaqForm
+            key={lang}
+            lang={lang}
+            action={createFaq}
+            existingCategories={categories}
+            submitLabel={t("common.create")}
+            formId="faq-new"
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing ────────────────────────────────────────────────── */}
@@ -119,30 +128,32 @@ export default async function AdminFaqsPage(props: Props) {
                   <span
                     className={
                       faq.isPublished
-                        ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                     }
                   >
                     {faq.isPublished ? t("common.published") : t("common.draft")}
                   </span>
                 </div>
 
-                <FaqForm
-                  key={lang}
-                  lang={lang}
-                  action={updateFaq.bind(null, faq.id)}
-                  onDelete={deleteFaq.bind(null, faq.id)}
-                  existingCategories={categories}
-                  formId={`faq-${faq.id}`}
-                  values={{
-                    question: editing?.question ?? "",
-                    answer: editing?.answer ?? "",
-                    category: faq.category ?? "",
-                    isPublished: faq.isPublished,
-                    sortOrder: String(faq.sortOrder),
-                  }}
-                  submitLabel={t("common.save")}
-                />
+                <fieldset disabled={!canWrite} className="contents">
+                  <FaqForm
+                    key={lang}
+                    lang={lang}
+                    action={updateFaq.bind(null, faq.id)}
+                    onDelete={deleteFaq.bind(null, faq.id)}
+                    existingCategories={categories}
+                    formId={`faq-${faq.id}`}
+                    values={{
+                      question: editing?.question ?? "",
+                      answer: editing?.answer ?? "",
+                      category: faq.category ?? "",
+                      isPublished: faq.isPublished,
+                      sortOrder: String(faq.sortOrder),
+                    }}
+                    submitLabel={t("common.save")}
+                  />
+                </fieldset>
               </section>
             );
           })}

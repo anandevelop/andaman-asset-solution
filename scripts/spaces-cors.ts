@@ -62,7 +62,26 @@ const RULES: CORSRule[] = [
     // The signed headers travel with the PUT — content-type and x-amz-acl —
     // and a browser asks permission for each by name.
     AllowedHeaders: ["*"],
-    ExposeHeaders: ["ETag"],
+    /*
+      ETag is for the uploader. The other four are for the e-brochure
+      viewer, and they are not optional there.
+
+      pdf.js decides whether it may use HTTP range requests by calling
+      validateRangeRequestCapabilities(), which reads Content-Length,
+      Accept-Ranges and Content-Encoding off the response. The PDF is
+      cross-origin, and of those three only Content-Length is
+      CORS-safelisted — so without this list headers.get("Accept-Ranges")
+      is null, the `!== "bytes"` test fails, and pdf.js quietly gives up on
+      ranges and downloads the entire brochure before painting page one.
+      Up to 30MB, on a phone, every time, with nothing in any log.
+    */
+    ExposeHeaders: [
+      "ETag",
+      "Accept-Ranges",
+      "Content-Range",
+      "Content-Encoding",
+      "Content-Length",
+    ],
     // An hour: long enough that a burst of uploads sends one preflight, short
     // enough that fixing this rule takes effect the same afternoon.
     MaxAgeSeconds: 3600,

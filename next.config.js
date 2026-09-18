@@ -81,7 +81,14 @@ const CSP_DIRECTIVES = {
   "script-src": [
     "'self'",
     "'unsafe-inline'",
-    // next/script and the framework's own hydration payload.
+    /*
+      next/script and the framework's own hydration payload.
+
+      It also happens to be what permits WebAssembly.instantiate, which
+      pdf.js uses to decode JPEG 2000 images in some PDFs. If this token is
+      ever dropped — a good goal — add 'wasm-unsafe-eval' in the same
+      change, or those brochures render blank pages with no error.
+    */
     "'unsafe-eval'",
     "https://www.googletagmanager.com",
     "https://www.google-analytics.com",
@@ -117,7 +124,31 @@ const CSP_DIRECTIVES = {
     // Browser PUTs straight to the Space via the presigned URL.
     "https://*.digitaloceanspaces.com",
     "https://*.amazonaws.com",
+    /*
+      …and the e-brochure viewer reads a PDF back with fetch + Range from
+      whatever NEXT_PUBLIC_MEDIA_DOMAIN currently is. The two wildcards
+      above only cover that by coincidence, because the media host happens
+      to be a Spaces alias today. Point it at CloudFront — which section 6
+      of docs/DEPLOYMENT.md offers as an option — and every brochure stops
+      loading with nothing in any server log. img-src has spread mediaHosts
+      for exactly this reason since it was written; connect-src did not, and
+      that asymmetry was the bug.
+    */
+    ...mediaHosts.map((host) => `https://${host}`),
   ],
+
+  /*
+    Workers. Both were absent, which meant they fell back through child-src
+    to default-src — 'self', so a same-origin worker happened to be allowed.
+    Stated explicitly now because pdf.js is one wrong URL away from needing
+    blob:: given a cross-origin workerSrc it wraps the worker in
+    URL.createObjectURL itself (_createCDNWrapper in pdfjs-dist/build/pdf.mjs),
+    and this policy must keep refusing that. scripts/copy-pdfjs-assets.mjs
+    puts the worker under public/ so the same-origin branch is the only one
+    ever taken.
+  */
+  "worker-src": ["'self'"],
+  "child-src": ["'self'"],
 
   // reCAPTCHA renders its challenge in a frame; the contact page embeds a map.
   "frame-src": ["'self'", "https://www.google.com", "https://maps.google.com"],
@@ -126,7 +157,20 @@ const CSP_DIRECTIVES = {
   "base-uri": ["'self'"],
   // Where our own forms may post. Everything goes to same-origin routes.
   "form-action": ["'self'"],
-  "frame-ancestors": ["'none'"],
+  /*
+    'self', not 'none'.
+
+    Two reasons. It matches the X-Frame-Options: SAMEORIGIN header set
+    below — which has always allowed same-origin framing, so 'none' here
+    made the two headers state different policies and left which one
+    applied up to the browser. And the admin's 4-language content editor
+    previews the real public page in an iframe beside the fields, which
+    is same-origin.
+
+    Third-party framing — the clickjacking case both headers exist for —
+    is still refused.
+  */
+  "frame-ancestors": ["'self'"],
   "upgrade-insecure-requests": [],
 };
 
@@ -202,6 +246,73 @@ const nextConfig = {
     // Uploaded assets are immutable — the object key carries a UUID — so
     // the optimiser's cache can hold them for a day rather than 60s.
     minimumCacheTTL: 86400,
+  },
+
+  /**
+   * The eight section editors and the FAQ list moved under the Pages hub —
+   * see docs/ADMIN_IA_BLUEPRINT.md §3.1. These keep anybody's bookmarks and
+   * any link pasted into a chat working.
+   *
+   * `:path*` is deliberately absent: every one of these was a single page
+   * with no children, so matching the exact path is the whole job.
+   *
+   * No SEO consequence to weigh. Everything under /admin already answers
+   * with `X-Robots-Tag: noindex, nofollow` (see headers() below), so these
+   * paths were never in an index to move.
+   */
+  async redirects() {
+    return [
+      {
+        source: "/:locale/admin/home-builder",
+        destination: "/:locale/admin/pages/home/sections",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/hero-banner",
+        destination: "/:locale/admin/pages/home/hero",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/home-gallery",
+        destination: "/:locale/admin/pages/home/gallery",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/cta",
+        destination: "/:locale/admin/pages/home/cta",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/corporate",
+        destination: "/:locale/admin/pages/about/corporate",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/why-us",
+        destination: "/:locale/admin/pages/about/why-us",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/mission",
+        destination: "/:locale/admin/pages/about/mission",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/awards",
+        destination: "/:locale/admin/pages/about/awards",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/milestones",
+        destination: "/:locale/admin/pages/about/milestones",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/faqs",
+        destination: "/:locale/admin/pages/faq",
+        permanent: true,
+      },
+    ];
   },
 
   async headers() {

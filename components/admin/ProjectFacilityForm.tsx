@@ -21,7 +21,7 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { ProjectFacilityFormState } from "@/app/[locale]/admin/projects/[id]/facilities/actions";
+import type { ProjectFacilityFormState } from "@/app/[locale]/admin/(catalog)/projects/[id]/facilities/actions";
 
 export type ProjectFacilityValues = {
   name: string;
@@ -149,7 +149,7 @@ export default function ProjectFacilityForm({
             name="sortOrder"
             type="number"
             defaultValue={values.sortOrder}
-            className="admin-input max-w-[10rem]"
+            className="admin-input max-w-40"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function ProjectFacilityForm({
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           {t("facilities.active")}
         </label>

@@ -1,37 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AlertTriangle, RotateCw, Database } from "lucide-react";
+import { ROUTE_ERROR_COPY, localeFromPathname } from "@/lib/error-copy";
 
 /**
  * Route-level error boundary for everything under /[locale].
  *
  * Note it deliberately does NOT use next-intl: if the failure happened while
  * the layout was loading messages, useTranslations() would throw inside the
- * boundary itself. Copy is inlined per locale instead.
+ * boundary itself. Copy comes from lib/error-copy.ts, which imports nothing
+ * — see its header for why that matters.
  */
 
 type Props = {
   error: Error & { digest?: string };
   reset: () => void;
 };
-
-const COPY = {
-  th: {
-    title: "ขออภัย เกิดข้อผิดพลาด",
-    body: "เราไม่สามารถแสดงหน้านี้ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือติดต่อเราโดยตรง",
-    dbTitle: "เชื่อมต่อฐานข้อมูลไม่ได้",
-    dbBody: "ข้อมูลโครงการยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกสักครู่",
-    retry: "ลองใหม่อีกครั้ง",
-  },
-  en: {
-    title: "Something went wrong",
-    body: "We couldn't load this page right now. Please try again, or contact us directly.",
-    dbTitle: "Database unavailable",
-    dbBody: "Project data isn't reachable at the moment. Please try again shortly.",
-    retry: "Try again",
-  },
-} as const;
 
 export default function LocaleError({ error, reset }: Props) {
   const isDbError =
@@ -43,13 +29,17 @@ export default function LocaleError({ error, reset }: Props) {
     console.error("[route error]", error);
   }, [error]);
 
-  // The locale segment isn't available inside an error boundary's props,
-  // so read it off the URL.
-  const locale =
-    typeof window !== "undefined" && window.location.pathname.startsWith("/th")
-      ? "th"
-      : "en";
-  const t = COPY[locale];
+  /*
+    The locale segment isn't available inside an error boundary's props, so
+    it is read off the path.
+
+    usePathname() rather than window.location: it returns the right value
+    during the boundary's server render too, where a `typeof window` guard
+    can only return the fallback and then disagree with the client — this
+    used to serve a flash of English before hydration corrected it. Same
+    reasoning as not-found.tsx, which has run this way in production.
+  */
+  const t = ROUTE_ERROR_COPY[localeFromPathname(usePathname())];
 
   return (
     <section className="container-luxe flex min-h-[70vh] max-w-2xl flex-col items-center justify-center py-24 text-center">
@@ -71,7 +61,7 @@ export default function LocaleError({ error, reset }: Props) {
 
       {/* Developer-only guidance — stripped from production bundles. */}
       {process.env.NODE_ENV === "development" && (
-        <div className="mt-12 w-full rounded-sm border border-amber-500/30 bg-amber-500/[0.06] p-6 text-left">
+        <div className="mt-12 w-full rounded-xs border border-amber-500/30 bg-amber-500/6 p-6 text-left">
           <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
             Development only
           </p>
@@ -83,7 +73,7 @@ export default function LocaleError({ error, reset }: Props) {
                 <code className="text-ink">DATABASE_URL</code>. Start it and load
                 the seed data:
               </p>
-              <pre className="mt-3 overflow-x-auto rounded-sm bg-primary-900/[0.06] p-4 text-xs leading-relaxed text-ink/80">
+              <pre className="mt-3 overflow-x-auto rounded-xs bg-primary-900/6 p-4 text-xs leading-relaxed text-ink/80">
                 {`npm run db:up
 npm run prisma:migrate
 npm run prisma:seed`}
@@ -95,7 +85,7 @@ npm run prisma:seed`}
               </p>
             </>
           ) : (
-            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-sm bg-primary-900/[0.06] p-4 text-xs leading-relaxed text-ink/80">
+            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-xs bg-primary-900/6 p-4 text-xs leading-relaxed text-ink/80">
               {error.message}
             </pre>
           )}

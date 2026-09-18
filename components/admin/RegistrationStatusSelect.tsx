@@ -13,7 +13,7 @@
 import { useState, useTransition } from "react";
 import { EventStatus } from "@prisma/client";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
-import { updateRegistrationStatus } from "@/app/[locale]/admin/events/actions";
+import { updateRegistrationStatus } from "@/app/[locale]/admin/(content)/events/actions";
 
 type Props = {
   locale: string;
@@ -76,7 +76,7 @@ export default function RegistrationStatusSelect({
         onChange={onChange}
         disabled={pending}
         aria-label={labels[current]}
-        className={`rounded-sm border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${TONE[current]}`}
+        className={`rounded-xs border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-hidden focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${TONE[current]}`}
       >
         {Object.values(EventStatus).map((status) => (
           <option key={status} value={status}>

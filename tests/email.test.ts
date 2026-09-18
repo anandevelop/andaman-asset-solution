@@ -10,7 +10,13 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { isEmailConfigured, notifyNewLeadByEmail } from "@/lib/email";
+import {
+  escapeHtml,
+  isEmailConfigured,
+  notifyNewLeadByEmail,
+  notifyNewRegistrationByEmail,
+  sendRsvpConfirmationEmail,
+} from "@/lib/email";
 
 /*
   nodemailer is the only thing stubbed. The transporter in lib/email.ts is a
@@ -22,6 +28,32 @@ const { sendMailSpy } = vi.hoisted(() => ({ sendMailSpy: vi.fn() }));
 
 vi.mock("nodemailer", () => ({
   default: { createTransport: () => ({ sendMail: sendMailSpy }) },
+}));
+
+/*
+  The attendee confirmation is the one message that goes through next-intl.
+  Stubbing it with naive {placeholder} substitution keeps the test about
+  escaping rather than about translation loading, and lets the vectors below
+  travel through the ICU path the real code uses.
+*/
+vi.mock("next-intl/server", () => ({
+  getTranslations: async () => {
+    const messages: Record<string, string> = {
+      subject: "Registration confirmed: {event}",
+      heading: "You are registered",
+      greeting: "Hello {name},",
+      intro: "Your seat at {event} is confirmed.",
+      dateLabel: "Date",
+      timeLabel: "Time",
+      locationLabel: "Location",
+      outro: "We look forward to seeing you.",
+      signature: "Andaman Asset Solution",
+    };
+    return (key: string, values?: Record<string, unknown>) =>
+      (messages[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) =>
+        String(values?.[name] ?? ""),
+      );
+  },
 }));
 
 describe("isEmailConfigured", () => {
@@ -158,4 +190,249 @@ describe("notifyNewLeadByEmail", () => {
 
     expect(logged.mock.calls[0][0]).toContain("[email] send failed");
   });
+});
+
+// ── Escaping ──────────────────────────────────────────────────────────────
+
+describe("escapeHtml", () => {
+  it.each([
+    ["<", "&lt;"],
+    [">", "&gt;"],
+    ['"', "&quot;"],
+    ["'", "&#39;"],
+    ["&", "&amp;"],
+  ])("escapes %s", (input, expected) => {
+    expect(escapeHtml(input)).toBe(expected);
+  });
+
+  it("escapes the ampersand first, so entities are not doubled", () => {
+    // The ordering bug: replacing < before & turns "&lt;" into "&amp;lt;"
+    // only if & runs first. Running it last would produce "&lt;" — the
+    // literal text the visitor typed silently becoming markup.
+    expect(escapeHtml("&lt;")).toBe("&amp;lt;");
+  });
+
+  it("leaves ordinary text — Thai included — untouched", () => {
+    expect(escapeHtml("สมชาย ประเสริฐ")).toBe("สมชาย ประเสริฐ");
+  });
+});
+
+/*
+  Every string in a notification email came from a stranger's form
+  submission, and the staff mailbox renders HTML. The care lib/markdown.ts
+  takes over article bodies (17 vectors, tests/markdown.test.ts) has to
+  apply here too: a working phishing link or a tracking pixel inside a
+  message that appears to come from the company's own system is worth more
+  to an attacker than one on a public page.
+
+  Same audit shape as tests/markdown.test.ts — assert on what the output
+  cannot contain, not on the exact escaping, so the test survives a change
+  of escaping strategy.
+*/
+const VECTORS: [name: string, payload: string][] = [
+  ["script tag", '<script>alert(1)</script>'],
+  ["attribute break-out", '" onmouseover="alert(1)'],
+  ["img onerror", '<img src=x onerror=alert(1)>'],
+  ["anchor phishing", '<a href="https://evil.example">Reply here</a>'],
+  ["svg payload", "<svg/onload=alert(1)>"],
+];
+
+/**
+ * Every element the document opens or closes.
+ *
+ * Grepping the output for `<script` or ` onerror=` — the shape
+ * tests/markdown.test.ts uses — gives false positives here, because
+ * escaping *keeps* the payload as visible text: `&lt;img src=x
+ * onerror=alert(1)&gt;` still contains the substring " onerror=" and is
+ * entirely inert. Sanitising deletes, escaping neutralises, so the audit
+ * has to ask a different question: did the submission introduce an element
+ * that a benign one would not have?
+ */
+function tagNames(html: string): string[] {
+  return [...html.matchAll(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9]*)/g)].map((m) =>
+    m[1].toLowerCase(),
+  );
+}
+
+describe("HTML injection into the staff lead notification", () => {
+  const base = {
+    name: "Somchai",
+    email: "somchai@example.com",
+    phone: "0812345678",
+    message: "Please send the floor plans.",
+    projectName: "Trinity Village",
+    source: "PROJECT_PAGE",
+  };
+
+  beforeEach(() => {
+    sendMailSpy.mockReset();
+    sendMailSpy.mockResolvedValue({ messageId: "test" });
+    process.env.SMTP_HOST = "smtp.example.com";
+    process.env.LEAD_NOTIFICATION_TO_EMAIL = "sales@example.com";
+  });
+
+  async function sendLead(overrides: Record<string, unknown> = {}) {
+    await notifyNewLeadByEmail({ ...base, ...overrides });
+    return sendMailSpy.mock.calls.at(-1)![0];
+  }
+
+  // Each of these fields reaches the HTML through a different helper —
+  // row(), rowHtml()/link() and a bare interpolation — so they are not
+  // four spellings of one test. projectName is here because it is the one
+  // a call-site-by-call-site fix would have missed: it comes from
+  // `projectSlug` in the request body and is never shown back to the
+  // sender, so abuse of it would go unnoticed.
+  const FIELDS = ["name", "message", "projectName", "phone"] as const;
+
+  it.each(
+    FIELDS.flatMap((field) =>
+      VECTORS.map(([label, payload]) => [field, label, payload] as const),
+    ),
+  )("neutralises a %s in the %s field (%s)", async (field, _label, payload) => {
+    const benign = await sendLead();
+    const hostile = await sendLead({ [field]: payload });
+
+    expect(hostile.html).not.toContain(payload);
+    expect(hostile.html).toContain(escapeHtml(payload));
+    expect(new Set(tagNames(hostile.html))).toEqual(new Set(tagNames(benign.html)));
+  });
+
+  it("preserves the payload as text rather than deleting it", async () => {
+    // The staff copy exists to show what arrived. Sanitising — stripping
+    // the tag — would destroy the evidence that anything was attempted,
+    // which is why this escapes rather than sanitises.
+    await notifyNewLeadByEmail({ ...base, name: "<script>alert(1)</script>" });
+
+    const { html, text } = sendMailSpy.mock.calls[0][0];
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    // The plaintext half must NOT be escaped: entities in a text/plain body
+    // are the same bug pointing the other way. This assertion is here to
+    // stop a well-meaning fix from spreading.
+    expect(text).toContain("<script>alert(1)</script>");
+  });
+
+  it("keeps a newline out of the subject without mangling it into entities", async () => {
+    await notifyNewLeadByEmail({ ...base, name: "Somchai\r\nBcc: evil@example.com" });
+
+    const { subject } = sendMailSpy.mock.calls[0][0];
+    expect(subject).not.toMatch(/[\r\n]/);
+    expect(subject).toContain("Bcc: evil@example.com");
+  });
+
+  it("leaves an ampersand in the subject readable", async () => {
+    // A header is not HTML. Escaping one would show the reader "Tom &amp;
+    // Jerry" in their inbox list.
+    await notifyNewLeadByEmail({ ...base, name: "Tom & Jerry" });
+
+    expect(sendMailSpy.mock.calls[0][0].subject).toContain("Tom & Jerry");
+  });
+});
+
+describe("notifyNewRegistrationByEmail", () => {
+  const registration = {
+    name: "Ananya S.",
+    email: "ananya@example.com",
+    phone: "0898765432",
+    agencyName: "Phuket Prime Realty",
+    whatsapp: "+66898765432",
+    eventTitle: "Trinity Village Open House",
+  };
+
+  beforeEach(() => {
+    sendMailSpy.mockReset();
+    sendMailSpy.mockResolvedValue({ messageId: "test" });
+    process.env.SMTP_HOST = "smtp.example.com";
+    process.env.LEAD_NOTIFICATION_TO_EMAIL = "sales@example.com";
+  });
+
+  it("sends the staff copy with the registration's details", async () => {
+    await notifyNewRegistrationByEmail(registration);
+
+    const sent = sendMailSpy.mock.calls[0][0];
+    expect(sent.to).toBe("sales@example.com");
+    expect(sent.subject).toContain("Ananya S.");
+    expect(sent.text).toContain("Phuket Prime Realty");
+    expect(sent.html).toContain("Trinity Village Open House");
+  });
+
+  it("leaves the WhatsApp row out when there is no number", async () => {
+    await notifyNewRegistrationByEmail({ ...registration, whatsapp: null });
+
+    expect(sendMailSpy.mock.calls[0][0].text).not.toContain("WhatsApp");
+  });
+
+  it("sends nothing when no staff recipient is configured", async () => {
+    delete process.env.LEAD_NOTIFICATION_TO_EMAIL;
+
+    await notifyNewRegistrationByEmail(registration);
+
+    expect(sendMailSpy).not.toHaveBeenCalled();
+  });
+
+  it.each(VECTORS)("neutralises a %s in the agency name", async (_label, payload) => {
+    await notifyNewRegistrationByEmail(registration);
+    const benign = sendMailSpy.mock.calls.at(-1)![0];
+
+    await notifyNewRegistrationByEmail({ ...registration, agencyName: payload });
+    const hostile = sendMailSpy.mock.calls.at(-1)![0];
+
+    expect(hostile.html).not.toContain(payload);
+    expect(hostile.html).toContain(escapeHtml(payload));
+    expect(new Set(tagNames(hostile.html))).toEqual(new Set(tagNames(benign.html)));
+  });
+});
+
+describe("sendRsvpConfirmationEmail", () => {
+  const args = {
+    to: "ananya@example.com",
+    name: "Ananya S.",
+    locale: "en",
+    eventTitle: "Trinity Village Open House",
+    location: "Cherngtalay, Phuket",
+    startsAt: new Date("2026-10-15T10:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    sendMailSpy.mockReset();
+    sendMailSpy.mockResolvedValue({ messageId: "test" });
+    process.env.SMTP_HOST = "smtp.example.com";
+  });
+
+  it("sends the attendee a localised confirmation", async () => {
+    await sendRsvpConfirmationEmail(args);
+
+    const sent = sendMailSpy.mock.calls[0][0];
+    expect(sent.to).toBe("ananya@example.com");
+    expect(sent.subject).toContain("Trinity Village Open House");
+    expect(sent.html).toContain("Ananya S.");
+    expect(sent.text).toContain("Cherngtalay, Phuket");
+  });
+
+  it("skips when SMTP is not configured", async () => {
+    delete process.env.SMTP_HOST;
+    vi.spyOn(console, "info").mockImplementation(() => {});
+
+    await expect(sendRsvpConfirmationEmail(args)).resolves.toBeUndefined();
+
+    expect(sendMailSpy).not.toHaveBeenCalled();
+  });
+
+  it.each(["name", "eventTitle", "location"] as const)(
+    "escapes an injected %s even though it arrives through next-intl",
+    async (field) => {
+      // next-intl's ICU formatter substitutes values verbatim; it has no
+      // idea the result is about to become HTML.
+      const payload = "<img src=x onerror=alert(1)>";
+
+      await sendRsvpConfirmationEmail(args);
+      const benign = sendMailSpy.mock.calls.at(-1)![0];
+
+      await sendRsvpConfirmationEmail({ ...args, [field]: payload });
+      const hostile = sendMailSpy.mock.calls.at(-1)![0];
+
+      expect(hostile.html).not.toContain(payload);
+      expect(new Set(tagNames(hostile.html))).toEqual(new Set(tagNames(benign.html)));
+      expect(hostile.text).toContain(payload);
+    },
+  );
 });

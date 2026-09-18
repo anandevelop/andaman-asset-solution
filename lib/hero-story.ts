@@ -29,6 +29,9 @@ export type HeroStorySlide = {
   durationSeconds: number;
   /** Not translated — a URL doesn't have a language. */
   ctaUrl: string | null;
+  /** Names what is on screen — "Trinity Village · Cherngtalay". Null on a
+   *  slide that belongs to no particular development. */
+  label: string | null;
   /** Optional per-locale overlay text — a pure mood shot may have none. */
   caption: string | null;
   /** Short line under the headline — same role as Project.tagline. */
@@ -61,6 +64,7 @@ function toSlide(row: Row, locale: string): HeroStorySlide {
     posterImageUrl: row.posterImageUrl,
     durationSeconds: row.durationSeconds,
     ctaUrl: row.ctaUrl,
+    label: t?.label ?? null,
     caption: t?.caption ?? null,
     tagline: t?.tagline ?? null,
     ctaLabel: t?.ctaLabel ?? null,
@@ -74,11 +78,22 @@ function toSlide(row: Row, locale: string): HeroStorySlide {
  * components/HeroCarousel.tsx's `fallback` prop).
  */
 export async function getHeroStorySlides(locale: string): Promise<HeroStorySlide[]> {
+  // A slide's optional on-air window (see the schema comment on
+  // HeroStorySlide.startAt/endAt) narrows an isActive slide to a date
+  // range; either end left null means that side is open-ended.
+  const now = new Date();
+
   const rows = await safeQuery(
     "heroStorySlide.findMany(active)",
     () =>
       prisma.heroStorySlide.findMany({
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          AND: [
+            { OR: [{ startAt: null }, { startAt: { lte: now } }] },
+            { OR: [{ endAt: null }, { endAt: { gte: now } }] },
+          ],
+        },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         select: SELECT,
       }),

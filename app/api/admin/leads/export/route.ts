@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { rateLimit } from "@/lib/rate-limit";
 import { toCsv, csvFilename } from "@/lib/csv";
+import { countryByIso2 } from "@/lib/countries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,7 @@ export async function GET(request: Request) {
         name: true,
         email: true,
         phone: true,
+        phoneCountry: true,
         nationality: true,
         message: true,
         source: true,
@@ -133,7 +135,15 @@ export async function GET(request: Request) {
       "name",
       "email",
       "phone",
+      "phone_country",
+      // Two columns, not one: "nationality" is the English name a human
+      // reads, "nationality_code" is the raw stored value (an ISO2 for any
+      // lead captured through CountrySelect.tsx, or old free text for one
+      // from before it shipped — see LeadInquiry.nationality in
+      // schema.prisma). Losing the raw code would make an export unable to
+      // tell "GB" from a lead who genuinely typed the string "GB".
       "nationality",
+      "nationality_code",
       "project",
       "source",
       "status",
@@ -148,24 +158,29 @@ export async function GET(request: Request) {
       "utm_campaign",
     ];
 
-    const rows = leads.map((lead) => [
-      lead.id,
-      lead.createdAt.toISOString(),
-      lead.name,
-      lead.email,
-      lead.phone,
-      lead.nationality ?? "",
-      lead.project?.nameEn ?? "",
-      lead.source,
-      lead.status,
-      lead.message ?? "",
-      lead.consentGiven ? "yes" : "no",
-      lead.consentedAt?.toISOString() ?? "",
-      lead.consentVersion ?? "",
-      lead.utmSource ?? "",
-      lead.utmMedium ?? "",
-      lead.utmCampaign ?? "",
-    ]);
+    const rows = leads.map((lead) => {
+      const country = countryByIso2(lead.nationality);
+      return [
+        lead.id,
+        lead.createdAt.toISOString(),
+        lead.name,
+        lead.email,
+        lead.phone,
+        lead.phoneCountry ?? "",
+        country ? country.name.en : (lead.nationality ?? ""),
+        lead.nationality ?? "",
+        lead.project?.nameEn ?? "",
+        lead.source,
+        lead.status,
+        lead.message ?? "",
+        lead.consentGiven ? "yes" : "no",
+        lead.consentedAt?.toISOString() ?? "",
+        lead.consentVersion ?? "",
+        lead.utmSource ?? "",
+        lead.utmMedium ?? "",
+        lead.utmCampaign ?? "",
+      ];
+    });
 
     // Logged deliberately: a bulk export of personal data should leave a
     // trace naming who took it and how much.

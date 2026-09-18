@@ -1,0 +1,261 @@
+{
+  "corporateServices": [
+    {
+      "key": "acquisition",
+      "imageUrl": "/corporate/living-aerial.webp",
+      "sortOrder": 0,
+      "translations": {
+        "en": {
+          "label": "Land acquisition",
+          "imageAlt": "Aerial view of an Andaman Asset Solution villa plot"
+        },
+        "th": {
+          "label": "จัดหาที่ดิน",
+          "imageAlt": "มุมมองทางอากาศของที่ดินโครงการ Andaman Asset Solution"
+        },
+        "zh": {
+          "label": "土地收购",
+          "imageAlt": "Andaman Asset Solution 地块的航拍图"
+        },
+        "ru": {
+          "label": "Приобретение земли",
+          "imageAlt": "Вид с воздуха на участок Andaman Asset Solution"
+        }
+      }
+    },
+    {
+      "key": "construction",
+      "imageUrl": "/corporate/development-exterior.webp",
+      "sortOrder": 10,
+      "translations": {
+        "en": {
+          "label": "Construction",
+          "imageAlt": "An Andaman Asset Solution villa exterior under development"
+        },
+        "th": {
+          "label": "งานก่อสร้าง",
+          "imageAlt": "ภายนอกวิลล่า Andaman Asset Solution ระหว่างการพัฒนา"
+        },
+        "zh": {
+          "label": "工程建设",
+          "imageAlt": "开发中的 Andaman Asset Solution 别墅外观"
+        },
+        "ru": {
+          "label": "Строительство",
+          "imageAlt": "Экстерьер виллы Andaman Asset Solution в процессе строительства"
+        }
+      }
+    },
+    {
+      "key": "design",
+      "imageUrl": "/corporate/design-double-height.webp",
+      "sortOrder": 20,
+      "translations": {
+        "en": {
+          "label": "Design",
+          "imageAlt": "A double-height living room in an Andaman Asset Solution villa"
+        },
+        "th": {
+          "label": "งานออกแบบ",
+          "imageAlt": "ห้องนั่งเล่นเพดานสูงของวิลล่า Andaman Asset Solution"
+        },
+        "zh": {
+          "label": "建筑设计",
+          "imageAlt": "Andaman Asset Solution 别墅的挑高客厅"
+        },
+        "ru": {
+          "label": "Проектирование",
+          "imageAlt": "Гостиная с высоким потолком в вилле Andaman Asset Solution"
+        }
+      }
+    },
+    {
+      "key": "management",
+      "imageUrl": "/corporate/pool-lap.webp",
+      "sortOrder": 30,
+      "translations": {
+        "en": {
+          "label": "Property management",
+          "imageAlt": "The pool of a completed Andaman Asset Solution villa"
+        },
+        "th": {
+          "label": "บริหารทรัพย์สิน",
+          "imageAlt": "สระว่ายน้ำของวิลล่า Andaman Asset Solution ที่สร้างเสร็จแล้ว"
+        },
+        "zh": {
+          "label": "物业管理",
+          "imageAlt": "已竣工 Andaman Asset Solution 别墅的泳池"
+        },
+        "ru": {
+          "label": "Управление недвижимостью",
+          "imageAlt": "Бассейн в готовой вилле Andaman Asset Solution"
+        }
+      }
+    }
+  ],
+  "whyUsPoints": [
+    {
+      "key": "land",
+      "icon": "MOUNTAIN",
+      "sortOrder": 0,
+      "translations": {
+        "en": {
+          "title": "The land comes first",
+          "body": "We buy the plot before we design the house. Drainage, sightlines, afternoon sun and the road in are settled long before an architect is engaged."
+        },
+        "th": {
+          "title": "เริ่มจากที่ดินเสมอ",
+          "body": "เราซื้อที่ดินก่อนออกแบบบ้าน เรื่องการระบายน้ำ ระยะมองระหว่างแปลง แดดบ่าย และทางเข้าออก ถูกตกลงเรียบร้อยก่อนที่สถาปนิกจะเริ่มงาน"
+        },
+        "zh": {
+          "title": "土地优先",
+          "body": "我们先购地，后设计房屋。排水、视线、下午日照与进出道路，早在建筑师介入之前就已确定。"
+        },
+        "ru": {
+          "title": "Земля — прежде всего",
+          "body": "Мы покупаем участок до того, как спроектирован дом. Дренаж, направление обзора, послеполуденное солнце и подъездная дорога — всё это продумано ещё до привлечения архитектора."
+        }
+      }
+    },
+    {
+      "key": "privacy",
+      "icon": "SHIELD_CHECK",
+      "sortOrder": 10,
+      "translations": {
+        "en": {
+          "title": "Privacy by layout",
+          "body": "Units are positioned so no two owners share a sightline. It costs density. It is the reason people stay."
+        },
+        "th": {
+          "title": "ความเป็นส่วนตัวจากผังโครงการ",
+          "body": "วางตำแหน่งบ้านให้ไม่มีหลังใดมองเห็นกันโดยตรง แลกมาด้วยจำนวนยูนิตที่น้อยลง แต่นั่นคือเหตุผลที่ผู้ซื้ออยู่กับเราต่อ"
+        },
+        "zh": {
+          "title": "布局带来的私密性",
+          "body": "每户单位的布局都经过精心安排，确保业主之间互不遮挡视线。这会牺牲一些密度，但正是业主愿意长住的原因。"
+        },
+        "ru": {
+          "title": "Приватность через планировку",
+          "body": "Виллы расположены так, что ни у одной пары владельцев не пересекаются линии обзора. Это снижает плотность застройки — но именно поэтому люди остаются здесь жить."
+        }
+      }
+    },
+    {
+      "key": "progress",
+      "icon": "HARD_HAT",
+      "sortOrder": 20,
+      "translations": {
+        "en": {
+          "title": "Progress you can check",
+          "body": "Site photographs published every month, from the actual site. If work slows down, you will see it here before you hear it from us."
+        },
+        "th": {
+          "title": "ความคืบหน้าที่ตรวจสอบได้",
+          "body": "เผยแพร่ภาพหน้างานจริงทุกเดือน หากงานล่าช้า ท่านจะเห็นจากที่นี่ก่อนที่เราจะแจ้ง"
+        },
+        "zh": {
+          "title": "进度透明可查",
+          "body": "每月发布来自施工现场的实拍照片。如果工程放缓，您会在这里第一时间看到，而不是从我们口中听到。"
+        },
+        "ru": {
+          "title": "Прогресс, который можно проверить",
+          "body": "Фотографии со стройплощадки публикуются каждый месяц — прямо с объекта. Если темпы работ замедлятся, вы увидите это здесь раньше, чем услышите от нас."
+        }
+      }
+    },
+    {
+      "key": "aftercare",
+      "icon": "HAND_HEART",
+      "sortOrder": 30,
+      "translations": {
+        "en": {
+          "title": "We are still here afterwards",
+          "body": "Handover is not the end of the relationship. Maintenance, rental management and resale all stay with the same team."
+        },
+        "th": {
+          "title": "เราอยู่ต่อหลังส่งมอบ",
+          "body": "การส่งมอบไม่ใช่จุดจบของความสัมพันธ์ งานดูแลบ้าน บริหารการปล่อยเช่า และการขายต่อ ยังอยู่กับทีมเดิม"
+        },
+        "zh": {
+          "title": "交付之后，我们仍在",
+          "body": "交房并非关系的终点。维护保养、租赁管理与转售服务，始终由同一支团队负责。"
+        },
+        "ru": {
+          "title": "Мы остаёмся рядом и после сдачи",
+          "body": "Передача ключей — не конец отношений. Обслуживание, управление арендой и перепродажа остаются за той же командой."
+        }
+      }
+    }
+  ],
+  "missionPrinciples": [
+    {
+      "key": "quality",
+      "icon": "SHIELD_CHECK",
+      "sortOrder": 0,
+      "translations": {
+        "en": {
+          "title": "Build it once",
+          "body": "Specification is set at design stage and not value-engineered afterwards. What is in the contract is what gets poured."
+        },
+        "th": {
+          "title": "สร้างให้ดีตั้งแต่ครั้งแรก",
+          "body": "กำหนดสเปกตั้งแต่ขั้นออกแบบ และไม่ลดสเปกภายหลัง สิ่งที่ระบุในสัญญาคือสิ่งที่จะถูกสร้างจริง"
+        },
+        "zh": {
+          "title": "一次建好",
+          "body": "规格标准在设计阶段确定，事后绝不为压缩成本而降级。合同上写的是什么，浇筑的就是什么。"
+        },
+        "ru": {
+          "title": "Строим один раз, но правильно",
+          "body": "Спецификация утверждается на этапе проектирования и не пересматривается впоследствии ради экономии. Что указано в договоре — то и заливается в бетон."
+        }
+      }
+    },
+    {
+      "key": "transparency",
+      "icon": "EYE",
+      "sortOrder": 10,
+      "translations": {
+        "en": {
+          "title": "Show the work",
+          "body": "Monthly site photography, published whether the month went well or not. Buyers overseas should not have to take our word for it."
+        },
+        "th": {
+          "title": "เปิดเผยหน้างาน",
+          "body": "เผยแพร่ภาพความคืบหน้าทุกเดือน ไม่ว่าเดือนนั้นจะเป็นอย่างไร ผู้ซื้อจากต่างประเทศไม่ควรต้องเชื่อเราเพียงคำพูด"
+        },
+        "zh": {
+          "title": "公开进度",
+          "body": "每月发布现场实拍照片，无论当月进展顺利与否都会公开。海外买家不应只能听信我们的一面之词。"
+        },
+        "ru": {
+          "title": "Показываем процесс",
+          "body": "Ежемесячная фотосъёмка объекта публикуется независимо от того, насколько удачным был месяц. Зарубежные покупатели не должны верить нам на слово."
+        }
+      }
+    },
+    {
+      "key": "longTerm",
+      "icon": "HEART_HANDSHAKE",
+      "sortOrder": 20,
+      "translations": {
+        "en": {
+          "title": "Stay for the long term",
+          "body": "We hold units in our own developments. Our interests and our owners' interests point the same way."
+        },
+        "th": {
+          "title": "อยู่ระยะยาว",
+          "body": "เราถือครองยูนิตในโครงการของเราเอง ผลประโยชน์ของเรากับของเจ้าของบ้านจึงไปในทิศทางเดียวกัน"
+        },
+        "zh": {
+          "title": "长期共同持有",
+          "body": "我们自己也持有所开发项目中的单位。我们的利益与业主的利益方向一致。"
+        },
+        "ru": {
+          "title": "Остаёмся надолго",
+          "body": "Мы сами владеем виллами в собственных проектах. Наши интересы и интересы наших владельцев совпадают."
+        }
+      }
+    }
+  ]
+}

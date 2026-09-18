@@ -15,7 +15,7 @@ import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
-import type { UserFormState } from "@/app/[locale]/admin/users/actions";
+import type { UserFormState } from "@/app/[locale]/admin/(system)/users/actions";
 
 type Props = {
   action: (state: UserFormState, formData: FormData) => Promise<UserFormState>;

@@ -1,8 +1,8 @@
 /**
- * app/[locale]/admin/hero-banner/page.tsx
+ * app/[locale]/admin/pages/home/hero/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Hero Story Banner: add at the top, every existing slide editable in
- * place — same arrangement as /admin/awards. Reordering is the sortOrder
+ * place — same arrangement as /admin/pages/about/awards. Reordering is the sortOrder
  * field on each form, not drag-and-drop, matching every other list in this
  * admin; "toggling" a slide off is the isActive checkbox on its form.
  */
@@ -11,8 +11,11 @@ import { getTranslations } from "next-intl/server";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
+import { toDateTimeLocal } from "@/lib/format";
 import { createHeroStorySlide, deleteHeroStorySlide, updateHeroStorySlide } from "./actions";
 import HeroStorySlideForm from "@/components/admin/HeroStorySlideForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
@@ -28,7 +31,12 @@ export default async function AdminHeroBannerPage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  /* VIEWER may open this page to see what is published; only EDITOR
+     and above may submit either form below (canWrite gates both with a
+     disabled fieldset, matching the zone's real minimum, unchanged from
+     before this phase — see the actions in ./actions.ts). */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const db = prisma;
@@ -55,7 +63,7 @@ export default async function AdminHeroBannerPage(props: Props) {
       </header>
 
       {isDatabaseOffline() && (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
@@ -77,12 +85,14 @@ export default async function AdminHeroBannerPage(props: Props) {
           {t("heroBanner.newTitle")}
         </h2>
 
-        <HeroStorySlideForm
-          key={lang}
-          lang={lang}
-          action={createHeroStorySlide.bind(null, locale)}
-          submitLabel={t("common.create")}
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <HeroStorySlideForm
+            key={lang}
+            lang={lang}
+            action={createHeroStorySlide.bind(null, locale)}
+            submitLabel={t("common.create")}
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing ────────────────────────────────────────────────── */}
@@ -113,33 +123,38 @@ export default async function AdminHeroBannerPage(props: Props) {
                   <span
                     className={
                       slide.isActive
-                        ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                     }
                   >
                     {slide.isActive ? t("heroBanner.active") : t("heroBanner.inactive")}
                   </span>
                 </div>
 
-                <HeroStorySlideForm
-                  key={lang}
-                  lang={lang}
-                  action={updateHeroStorySlide.bind(null, locale, slide.id)}
-                  onDelete={deleteHeroStorySlide.bind(null, locale, slide.id)}
-                  values={{
-                    mediaType: slide.mediaType,
-                    mediaUrl: slide.mediaUrl,
-                    posterImageUrl: slide.posterImageUrl ?? "",
-                    durationSeconds: String(slide.durationSeconds),
-                    ctaUrl: slide.ctaUrl ?? "",
-                    caption: editing?.caption ?? "",
-                    tagline: editing?.tagline ?? "",
-                    ctaLabel: editing?.ctaLabel ?? "",
-                    isActive: slide.isActive,
-                    sortOrder: String(slide.sortOrder),
-                  }}
-                  submitLabel={t("common.save")}
-                />
+                <fieldset disabled={!canWrite} className="contents">
+                  <HeroStorySlideForm
+                    key={lang}
+                    lang={lang}
+                    action={updateHeroStorySlide.bind(null, locale, slide.id)}
+                    onDelete={deleteHeroStorySlide.bind(null, locale, slide.id)}
+                    values={{
+                      mediaType: slide.mediaType,
+                      mediaUrl: slide.mediaUrl,
+                      posterImageUrl: slide.posterImageUrl ?? "",
+                      durationSeconds: String(slide.durationSeconds),
+                      ctaUrl: slide.ctaUrl ?? "",
+                      label: editing?.label ?? "",
+                      caption: editing?.caption ?? "",
+                      tagline: editing?.tagline ?? "",
+                      ctaLabel: editing?.ctaLabel ?? "",
+                      isActive: slide.isActive,
+                      sortOrder: String(slide.sortOrder),
+                      startAt: toDateTimeLocal(slide.startAt),
+                      endAt: toDateTimeLocal(slide.endAt),
+                    }}
+                    submitLabel={t("common.save")}
+                  />
+                </fieldset>
               </section>
             );
           })}

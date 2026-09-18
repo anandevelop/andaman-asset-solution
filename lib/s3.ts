@@ -27,7 +27,7 @@
 
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { S3Client, PutObjectCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadBucketCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /** Five minutes: long enough for a slow phone upload, short enough that a
@@ -67,7 +67,7 @@ export type AllowedContentType = keyof typeof ALLOWED_CONTENT_TYPES;
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 /** A print-resolution brochure is legitimately larger than a photograph. */
-export const MAX_DOCUMENT_BYTES = 30 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
 /** A few seconds of 1080p story video is legitimately larger than either. */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
@@ -222,6 +222,23 @@ export function toPublicUrl(key: string, config?: S3Config): string {
   return `https://${resolved.mediaDomain}/${key.replace(/^\/+/, "")}`;
 }
 
+// ── Deletion ────────────────────────────────────────────────────────────
+
+/**
+ * Best-effort object delete for the media library's "remove from library"
+ * action. Callers should not let a failure here block removing the
+ * database row — an orphaned object left in the bucket is a small,
+ * recoverable storage cost; a Media row that can never be deleted because
+ * Spaces returned a 5xx is a worse failure mode for the person using the
+ * library. Throws only so the caller can log it; it does not retry.
+ */
+export async function deleteS3Object(key: string): Promise<void> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+
+  await getClient(config).send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }));
+}
+
 // ── Presigning ──────────────────────────────────────────────────────────
 
 export type PresignedUpload = {
@@ -322,6 +339,24 @@ export async function getPresignedUploadUrl(options: {
 
   const isDocument = isDocumentContentType(options.contentType);
 
+  /*
+    Force a download for documents, and give the file a human name — a
+    UUID.pdf in the downloads folder is useless a week later. This is also
+    what keeps a PDF out of the page's own origin.
+
+    Bound to a variable rather than inlined into the command, because it is
+    needed twice: once to sign, once to tell the browser to send it. Those
+    two used to be written out separately, and the copy the browser got did
+    not include this header — so every PDF was signed over
+    content-disposition and uploaded without it, and Spaces answered 400
+    "Missing one or more required signed header" on every brochure.
+  */
+  const contentDisposition = isDocument
+    ? `attachment; filename="${
+        sanitizeSegment(options.slug ?? "brochure", "brochure")
+      }-brochure.pdf"`
+    : undefined;
+
   const command = new PutObjectCommand({
     Bucket: config.bucket,
     Key: key,
@@ -330,22 +365,14 @@ export async function getPresignedUploadUrl(options: {
     // A year: these objects are immutable by construction, since every
     // upload gets a fresh UUID key.
     CacheControl: "public, max-age=31536000, immutable",
-
-    // Force a download for documents, and give the file a human name — a
-    // UUID.pdf in the downloads folder is useless a week later. This is
-    // also what keeps a PDF out of the page's own origin.
-    ...(isDocument
-      ? {
-          ContentDisposition: `attachment; filename="${
-            sanitizeSegment(options.slug ?? "brochure", "brochure")
-          }-brochure.pdf"`,
-        }
-      : {}),
+    ...(contentDisposition ? { ContentDisposition: contentDisposition } : {}),
   });
 
   const uploadUrl = await getSignedUrl(getClient(config), command, {
     expiresIn: EXPIRES_IN_SECONDS,
-    // Both are part of the signature, so both have to travel with the PUT.
+    // Every header the browser is expected to send. Anything the signature
+    // covers has to appear in `headers` below too — tests/s3.test.ts
+    // compares the two and fails if they drift.
     signableHeaders: new Set(["content-type", "x-amz-acl"]),
   });
 
@@ -358,6 +385,7 @@ export async function getPresignedUploadUrl(options: {
     headers: {
       "Content-Type": options.contentType,
       "x-amz-acl": OBJECT_ACL,
+      ...(contentDisposition ? { "Content-Disposition": contentDisposition } : {}),
     },
   };
 }

@@ -124,7 +124,7 @@ export default function LeadExportButton({ status }: Props) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="admin-btn-ghost !py-2"
+        className="admin-btn-ghost py-2!"
       >
         <CalendarRange size={14} aria-hidden />
         {open ? t("hideRange") : t("dateRange")}
@@ -134,7 +134,7 @@ export default function LeadExportButton({ status }: Props) {
         type="button"
         onClick={download}
         disabled={busy}
-        className="admin-btn !py-2"
+        className="admin-btn py-2!"
       >
         {busy ? (
           <Loader2 size={14} className="animate-spin" aria-hidden />

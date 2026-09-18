@@ -46,6 +46,35 @@ export function translationCompleteness<T extends { locale: string }>(
   return map;
 }
 
+export type CompletenessPercent = Record<Locale, number>;
+
+/**
+ * Per-locale completion percentage across an arbitrary set of required
+ * fields — a generalization of translationCompleteness() above (which only
+ * ever checks one field) for a caller that wants a ring rather than a
+ * check/warning icon. Not a replacement: lib/admin/news-list.ts's own
+ * REQUIRED_FIELDS-based per-row status intentionally checks a narrower,
+ * different field set for its own filtering purpose and is untouched by
+ * this addition.
+ */
+export function translationCompletenessPercent<T extends { locale: string }>(
+  translations: T[],
+  fields: readonly (keyof T)[],
+): CompletenessPercent {
+  const map = {} as CompletenessPercent;
+
+  for (const locale of locales) {
+    const row = translations.find((t) => t.locale === locale);
+    const filledCount = fields.filter((field) => {
+      const value = row?.[field];
+      return typeof value === "string" && value.trim().length > 0;
+    }).length;
+    map[locale] = fields.length === 0 ? 0 : Math.round((filledCount / fields.length) * 100);
+  }
+
+  return map;
+}
+
 /**
  * The row for exactly the locale being edited — no fallback chain. Unlike
  * getTranslation() (used for public rendering, where falling back to "en"

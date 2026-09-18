@@ -51,7 +51,7 @@ const REVEAL_STEP = 0.09;
 
 export default function VisionMissionMosaic({ photos }: { photos: MosaicPhoto[] }) {
   return (
-    <div className="mx-auto grid aspect-square w-full max-w-[32rem] grid-cols-4 grid-rows-4 gap-3">
+    <div className="mx-auto grid aspect-square w-full max-w-lg grid-cols-4 grid-rows-4 gap-3">
       {photos.map((photo, index) => (
         <motion.div
           key={photo.src}

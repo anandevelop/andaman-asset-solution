@@ -57,6 +57,10 @@ const ALLOWED_PREFIXES = [
   // kind of page this escape hatch is for. Its absence meant the one route
   // that could not be purged by hand was one of the slowest to refresh.
   "/achievements",
+  // The brochure catalogue and every /e-brochure/<slug> under it. Same
+  // hour-long window, and a replaced PDF is exactly the edit an operator
+  // wants live immediately rather than up to an hour later.
+  "/e-brochure",
   "/contact",
 ] as const;
 
@@ -168,7 +172,11 @@ export async function POST(request: Request) {
   }
 
   for (const tag of tags) {
-    revalidateTag(tag);
+    /* "max" is the shortest way to say "this entry is stale now". Next 16
+       made the profile argument required; updateTag would be the more
+       direct call, but it is only legal inside a Server Action and this is
+       a route handler answering an external trigger. */
+    revalidateTag(tag, "max");
     revalidated.push(`tag:${tag}`);
   }
 

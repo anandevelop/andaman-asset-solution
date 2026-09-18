@@ -23,7 +23,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Check, AlertTriangle } from "lucide-react";
-import { locales, type Locale } from "@/i18n";
+import { LOCALE_DISPLAY_ORDER, type Locale } from "@/i18n";
 
 /** Native-script names — see the same map in components/Navbar.tsx for why
  *  these aren't translated. */
@@ -34,14 +34,57 @@ const LOCALE_LABELS: Record<Locale, string> = {
   ru: "RU",
 };
 
+/** Same emerald/amber/red thresholds components/admin/NewsSeoPanel.tsx's
+ *  ScoreDonut/scoreStroke already use for a 0-100 score — one ring
+ *  convention across the admin, not a second one invented here. */
+function ringStroke(percent: number): string {
+  if (percent >= 80) return "#047857"; // emerald-700
+  if (percent >= 40) return "#b45309"; // amber-700
+  return "#b91c1c"; // red-700
+}
+
+/** A tab-sized copy of ScoreDonut's SVG math, scaled down to sit where the
+ *  Check/AlertTriangle icon normally does. No text inside — at 16px there
+ *  is no room to render "83" legibly, so the ring's fill alone carries the
+ *  signal, and `title` on the tab link already carries the exact number
+ *  for anyone who hovers. */
+function CompletenessRing({ percent, dim }: { percent: number; dim: boolean }) {
+  const radius = 7;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - percent / 100);
+
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" role="img" aria-label={`${percent}%`}>
+      <circle cx="10" cy="10" r={radius} fill="none" stroke="currentColor" strokeWidth="3" className={dim ? "text-white/30" : "text-primary/10"} />
+      <circle
+        cx="10"
+        cy="10"
+        r={radius}
+        fill="none"
+        stroke={dim ? "rgba(255,255,255,0.85)" : ringStroke(percent)}
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        transform="rotate(-90 10 10)"
+      />
+    </svg>
+  );
+}
+
 type Props = {
   active: Locale;
   completeness: Record<Locale, boolean>;
   completeLabel: string;
   missingLabel: string;
+  /** Optional per-locale completion percentage (0-100) — when present for
+   *  a locale, a small ring replaces that tab's Check/AlertTriangle icon.
+   *  Additive: every other caller of this component omits it and sees
+   *  identical behavior to before. */
+  percent?: Partial<Record<Locale, number>>;
 };
 
-export default function LanguageTabs({ active, completeness, completeLabel, missingLabel }: Props) {
+export default function LanguageTabs({ active, completeness, completeLabel, missingLabel, percent }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -53,9 +96,10 @@ export default function LanguageTabs({ active, completeness, completeLabel, miss
 
   return (
     <div role="tablist" aria-label="Content language" className="flex flex-wrap items-center gap-2">
-      {locales.map((lang) => {
+      {LOCALE_DISPLAY_ORDER.map((lang) => {
         const isActive = lang === active;
         const complete = completeness[lang];
+        const ringPercent = percent?.[lang];
 
         return (
           <Link
@@ -63,7 +107,7 @@ export default function LanguageTabs({ active, completeness, completeLabel, miss
             href={hrefFor(lang)}
             role="tab"
             aria-selected={isActive}
-            title={complete ? completeLabel : missingLabel}
+            title={ringPercent !== undefined ? `${ringPercent}%` : complete ? completeLabel : missingLabel}
             className={[
               "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
               isActive
@@ -72,7 +116,9 @@ export default function LanguageTabs({ active, completeness, completeLabel, miss
             ].join(" ")}
           >
             {LOCALE_LABELS[lang]}
-            {complete ? (
+            {ringPercent !== undefined ? (
+              <CompletenessRing percent={ringPercent} dim={isActive} />
+            ) : complete ? (
               <Check
                 size={12}
                 aria-hidden

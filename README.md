@@ -13,7 +13,7 @@ TypeScript), Tailwind CSS, PostgreSQL + Prisma, `next-intl` (TH/EN), `framer-mot
 | Full data model | `prisma/schema.prisma` |
 | Centralized contact/social config | `config/site.ts` |
 | Brand tokens (colors, fonts, motion) | `tailwind.config.ts`, `app/globals.css` |
-| i18n routing (TH/EN) | `i18n.ts`, `middleware.ts`, `messages/*.json` |
+| i18n routing (TH/EN) | `i18n.ts`, `proxy.ts`, `messages/*.json` |
 | Global layout + SEO | `app/[locale]/layout.tsx` |
 | Shared UI | `components/*` |
 

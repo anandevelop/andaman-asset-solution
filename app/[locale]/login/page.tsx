@@ -45,30 +45,30 @@ export async function generateMetadata(
 /**
  * Which build is answering.
  *
- * Read here, at request time, and that is the whole trick. APP_VERSION and
- * GIT_COMMIT_SHA are declared in the Dockerfile's *runner* stage only —
- * they do not exist during `next build`, so anything that captured them
- * while building would bake in an empty string and stay empty on every
- * deployed container, which is exactly the bug /api/health had before
- * those two became build arguments. This page awaits `searchParams`, a
- * dynamic API, so it is rendered per request and the read is a real one.
+ * Read here, at request time, and that is the whole trick. APP_VERSION is
+ * declared in the Dockerfile's *runner* stage only — it does not exist
+ * during `next build`, so anything that captured it while building would
+ * bake in an empty string and stay empty on every deployed container,
+ * which is exactly the bug /api/health had before it became a build
+ * argument. This page awaits `searchParams`, a dynamic API, so it is
+ * rendered per request and the read is a real one.
+ *
+ * The version, and only the version. The commit SHA used to be shown
+ * beside it, but this page is reachable by anyone who finds /login and the
+ * release number is all a person signing in needs to name a build. The
+ * commit is still there for whoever is actually diagnosing one: it is in
+ * /api/health and it is the Sentry release (lib/sentry.ts).
  *
  * "dev" rather than nothing when unset: an image built locally has no
  * stamp to show, and a blank space would look identical to a deploy whose
- * build arguments went missing. The point of the stamp is to tell those
+ * build argument went missing. The point of the stamp is to tell those
  * apart.
  */
 function buildStamp(): string {
-  const version = process.env.APP_VERSION;
-  const commit = process.env.GIT_COMMIT_SHA;
-
-  const parts = [
-    version ? `v${version}` : null,
-    // Enough to find the commit, short enough to read off a screen.
-    commit ? commit.slice(0, 7) : null,
-  ].filter(Boolean);
-
-  return parts.length > 0 ? parts.join(" · ") : "dev";
+  // `||`, not `??`: the Dockerfile declares `ARG APP_VERSION=""`, so an
+  // image built without the build argument arrives here with an empty
+  // string rather than an undefined, and `??` would print nothing at all.
+  return process.env.APP_VERSION || "dev";
 }
 
 export default async function LoginPage(props: Props) {
@@ -104,7 +104,7 @@ export default async function LoginPage(props: Props) {
           </Link>
         </div>
 
-        <div className="rounded-sm bg-surface-raised p-8 shadow-card sm:p-10">
+        <div className="rounded-xs bg-surface-raised p-8 shadow-card sm:p-10">
           <p className="eyebrow">{siteConfig.shortName}</p>
           <h1 className="mt-2 text-2xl font-semibold text-primary">
             {t("signInTitle")}

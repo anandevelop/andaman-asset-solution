@@ -25,8 +25,10 @@
  *
  * That exception is switched off for the models holding customer data.
  * Every readable field on a lead or an RSVP is the person's name, email or
- * phone, so labelling those entries would quietly accumulate a second copy
- * of the contact database in a table with no retention story of its own.
+ * phone (and a LeadNote's body is a free-text call log about that same
+ * person), so labelling those entries would quietly accumulate a second
+ * copy of the contact database in a table with no retention story of its
+ * own.
  * Those entries carry recordId instead, which finds the row while it
  * exists and identifies it in the first table's own records afterwards.
  * ─────────────────────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@
 */
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { getAuditActor, withoutAudit } from "@/lib/audit/context";
+import { redirectOnRename } from "@/lib/redirect-on-rename";
 import { reportError } from "@/lib/sentry";
 
 /** Operations that change data. Reads are not audited. */
@@ -71,7 +74,7 @@ const WRITE_OPERATIONS = new Set([
  * Their entries get no label. See the header: the point of the audit table
  * is who changed what, and it can say that with an id.
  */
-const UNLABELLED_MODELS = new Set(["LeadInquiry", "EventRegistration"]);
+const UNLABELLED_MODELS = new Set(["LeadInquiry", "EventRegistration", "LeadNote"]);
 
 /**
  * Fields tried, in order, for a human-readable name of the affected row.
@@ -130,6 +133,79 @@ export function changedFieldsFrom(args: unknown): string[] {
   return Object.keys(source as Record<string, unknown>).sort();
 }
 
+
+/**
+ * Longest value kept in an audit entry. A project description runs to
+ * thousands of characters, and storing two copies of every one of them on
+ * every save would grow this table faster than the changes it records are
+ * worth. Longer values are truncated with a marker, which is enough to see
+ * *that* the copy changed; the revert path refuses to use a truncated
+ * value rather than writing a clipped paragraph back onto the site.
+ */
+export const MAX_AUDIT_VALUE_CHARS = 2000;
+
+export const TRUNCATION_MARKER = "…[truncated]";
+
+export type AuditChange = { before: unknown; after: unknown };
+
+function shrink(value: unknown): unknown {
+  if (typeof value === "string" && value.length > MAX_AUDIT_VALUE_CHARS) {
+    return value.slice(0, MAX_AUDIT_VALUE_CHARS) + TRUNCATION_MARKER;
+  }
+  // Dates and Decimals do not survive JSON on their own terms; store the
+  // string form so the diff panel has something to print and the revert
+  // path something Prisma can coerce back.
+  if (value instanceof Date) return value.toISOString();
+  if (value && typeof value === "object" && "toString" in value && !Array.isArray(value)) {
+    const proto = Object.getPrototypeOf(value);
+    if (proto && proto.constructor && proto.constructor.name === "Decimal") return String(value);
+  }
+  return value;
+}
+
+/** Same value, for the purpose of "is this worth recording". */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || a === undefined) return b === null || b === undefined;
+  if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+  // Arrays and nested writes: a structural compare is close enough, and
+  // cheaper to reason about than a deep walk.
+  try {
+    return JSON.stringify(shrink(a)) === JSON.stringify(shrink(b));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The fields that genuinely changed, with what they went from and to.
+ *
+ * `before` is the row as it was read just before the write; `after` is
+ * what the write returned. A field the operation set to the value it
+ * already had is left out — see AuditLog.changes in schema.prisma for why
+ * that matters.
+ */
+export function changesBetween(
+  fields: string[],
+  before: Record<string, unknown> | null,
+  after: unknown,
+): Record<string, AuditChange> | null {
+  if (!before || !after || typeof after !== "object") return null;
+
+  const next = after as Record<string, unknown>;
+  const changes: Record<string, AuditChange> = {};
+
+  for (const field of fields) {
+    // Relation writes ({ translations: { upsert: ... } }) have no
+    // comparable scalar on either side; changedFields still names them.
+    if (!(field in next)) continue;
+    if (sameValue(before[field], next[field])) continue;
+    changes[field] = { before: shrink(before[field]), after: shrink(next[field]) };
+  }
+
+  return Object.keys(changes).length > 0 ? changes : null;
+}
+
 /** "upsert" is create or update depending on how it landed; the rest map straight through. */
 export function normaliseAction(operation: string, existedBefore: boolean): string {
   if (operation === "upsert") return existedBefore ? "update" : "create";
@@ -178,8 +254,40 @@ export function auditExtension(base: PrismaClient) {
             there is no way to tell which half happened. One extra read,
             only on upserts by an administrator.
           */
+          /*
+            The row as it stands, read before the write so the entry can
+            say what each field changed *from*.
+
+            One extra read per admin update — the price of a history that
+            can be reverted rather than merely listed. Skipped entirely for
+            the customer-data models (their values are never stored, see
+            AuditLog.changes) and for creates and bulk operations, where
+            there is no single prior row to read.
+          */
+          let beforeRow: Record<string, unknown> | null = null;
+          const capturesValues =
+            !UNLABELLED_MODELS.has(model) && (operation === "update" || operation === "upsert");
+
+          if (capturesValues) {
+            const where = (args as { where?: Record<string, unknown> }).where;
+            if (where) {
+              beforeRow = (await withoutAudit(() =>
+                (base as unknown as Record<string, { findUnique: (a: unknown) => Promise<unknown> }>)[
+                  model
+                ].findUnique({ where }),
+              ).catch(() => null)) as Record<string, unknown> | null;
+            }
+          }
+
           let existedBefore = false;
           if (operation === "upsert") {
+            // Already read above when this model captures values; only pay
+            // for a second lookup when it does not.
+            if (beforeRow !== null) {
+              existedBefore = true;
+            } else if (capturesValues) {
+              existedBefore = false;
+            } else {
             const where = (args as { where?: Record<string, unknown> }).where;
             if (where) {
               const found = await withoutAudit(() =>
@@ -187,13 +295,47 @@ export function auditExtension(base: PrismaClient) {
                 // string, and there is no typed way back to the delegate.
                 (base as unknown as Record<string, { findUnique: (a: unknown) => Promise<unknown> }>)[
                   model
-                ].findUnique({ where, select: { id: true } }),
+                ].findUnique({
+                  where,
+                  /*
+                    No `select`.
+
+                    This asked for `{ id: true }`, which is a validation
+                    error on any model whose primary key is not called
+                    `id` — SiteSetting's is `key`. The .catch() below then
+                    swallowed it, so every settings save was recorded as a
+                    CREATE no matter how many times the row had been
+                    edited, and printed "Unknown field `id`" to stderr on
+                    the way past. Only existence is needed here, and every
+                    model can answer that without being told which column
+                    to return.
+                  */
+                }),
               ).catch(() => null);
               existedBefore = Boolean(found);
+            }
             }
           }
 
           const result = await query(args);
+
+          /*
+            A renamed slug leaves a 301 behind it.
+
+            Here rather than in the four edit forms because the prior row
+            is already in hand two blocks up — read for the audit trail's
+            before/after — and because this is the one place every write
+            passes through. See lib/redirect-on-rename.ts for what it does
+            with the two slugs and why it is not simply an insert.
+
+            Awaited, not fired and forgotten: the admin is about to be
+            redirected to a list that shows the redirect, and a rename that
+            reports success before its cover exists is a rename somebody
+            will check and not find.
+          */
+          if (capturesValues) {
+            await withoutAudit(() => redirectOnRename(base, model, beforeRow, result));
+          }
 
           /*
             Logging never fails the operation it describes.
@@ -221,6 +363,11 @@ export function auditExtension(base: PrismaClient) {
                   recordId: idFrom(result),
                   recordLabel: UNLABELLED_MODELS.has(model) ? null : labelFrom(result),
                   changedFields: changedFieldsFrom(args),
+                  changes: capturesValues
+                    ? (changesBetween(changedFieldsFrom(args), beforeRow, result) as
+                        | Prisma.InputJsonValue
+                        | undefined) ?? Prisma.DbNull
+                    : Prisma.DbNull,
                   count: bulkCount,
                 },
               }),

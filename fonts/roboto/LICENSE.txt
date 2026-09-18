@@ -1,0 +1,10 @@
+Roboto is licensed under the SIL Open Font License, Version 1.1.
+
+Downloaded from Google Fonts (fonts.gstatic.com), the same distribution
+next/font/google uses elsewhere in this project (see app/[locale]/layout.tsx).
+Bundled here as raw TrueType files because next/font's own output cannot be
+read back as the ArrayBuffer next/og's ImageResponse requires — see
+lib/og-image.ts's header.
+
+Full license text: https://openfontlicense.org (the URL this build's own
+`name` table records as its license, nameID 14)

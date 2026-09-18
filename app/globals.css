@@ -1,37 +1,461 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Drives the HeroCarousel progress-dash fill for an IMAGE slide —
-   animation-duration is set inline per slide's durationSeconds, and
-   animation-play-state toggles paused/running on hover. See
-   components/HeroCarousel.tsx. */
-@keyframes story-progress {
-  from {
-    width: 0%;
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-primary-50: #e7edf1;
+  --color-primary-100: #c3d3dd;
+  --color-primary-200: #9bb6c6;
+  --color-primary-300: #7099af;
+  --color-primary-400: #4d8099;
+  --color-primary-500: #296682;
+  --color-primary-600: #1c4e69;
+  --color-primary-700: #123a50;
+  --color-primary-800: #083551;
+  --color-primary-900: #041d2c;
+  --color-primary: #083551;
+
+  --color-accent-50: #fdf7f0;
+  --color-accent-100: #f9e9d7;
+  --color-accent-200: #f3d5b3;
+  --color-accent-300: #edc199;
+  --color-accent-400: #e8b384;
+  --color-accent-500: #dd9758;
+  --color-accent-600: #c47b3a;
+  --color-accent-700: #9c602c;
+  --color-accent-800: #7a4a20;
+  --color-accent: #e8b384;
+
+  --color-surface: #f9f9fa;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f0f1f3;
+
+  --color-ink: #0d2635;
+  --color-ink-muted: #516573;
+
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
+  --font-thai: var(--font-fc-vision), var(--font-roboto), system-ui, sans-serif;
+
+  --tracking-widest2: 0.28em;
+
+  --container-container: 1440px;
+
+  --shadow-card: 0 10px 40px -12px rgba(8, 53, 81, 0.18);
+  --shadow-cardHover: 0 20px 60px -16px rgba(8, 53, 81, 0.28);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    width: 100%;
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 }
 
-/* Hero slide backdrop — a very slow push-in on the still image behind the
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility container-luxe {
+  @apply mx-auto w-full max-w-container px-5 sm:px-8 lg:px-12;
+}
+
+@utility eyebrow {
+  @apply text-xs sm:text-sm font-medium uppercase tracking-widest2 text-accent-700;
+}
+
+@utility brochure-shell {
+  /* The e-brochure viewer's outer box — the element handed to
+     requestFullscreen(), and the box its own JS measures to decide how big
+     the book may be.
+
+     Stated in viewport units rather than left to the UA's `height: 100%`.
+     A percentage resolves against the containing block, and the viewer sits
+     inside react-zoom-pan-pinch's transformed wrapper: a transform makes an
+     ancestor the containing block for its descendants, so a browser that
+     resolves the percentage before promoting the element to the top layer
+     can hand it the height of the *in-page* column for a frame. Everything
+     downstream is measured from this box, so one wrong frame is a book
+     sized for the wrong screen. 100vw/100vh inside a fullscreen element is
+     the screen, and it is the screen on the first frame too. */
+  &:fullscreen {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+@utility btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xs bg-primary px-7 py-3.5
+      text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300
+      hover:bg-primary-700 focus-visible:outline-accent;
+}
+
+@utility btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/25
+      bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
+      transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-white;
+}
+
+@utility btn-hero {
+  /* Hero CTA over a photograph — same rounded-sm/px-7/py-3.5 footprint as
+     .btn-primary, but a solid accent fill read as too loud sitting on top
+     of a hero photo (a flat saturated block competing with the villa
+     itself). This is a glass button instead of a flat one: a thin white
+     border, a light blurred wash, small letter-spaced caps — the frame's
+     own brightness and blur do the work instead of a slab of color, so it
+     reads as restrained against any photo. Resolves to the same solid,
+     obvious accent fill on hover/focus that .btn-primary gives, so the
+     affordance doesn't get lost along with the boldness. */
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-white/50
+      bg-white/10 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-white
+      backdrop-blur-md transition-all duration-300 hover:border-accent hover:bg-accent
+      hover:text-primary focus-visible:outline-accent;
+}
+
+@utility hero-scrim {
+  /* Hero scrim.
+
+     The job is to make white type legible on a sunlit photograph without
+     veiling the building — which is the product, and the reason anyone is
+     looking at the page. An earlier version stacked a full-height ramp, a
+     flat 20% wash and a vignette; it measured well and looked like fog.
+
+     So the darkening is shaped, not directional. From `sm` up the copy
+     sits in one corner of the frame, and the scrim is an ellipse anchored
+     to that corner: strong under the copy, gone by ~84% of the way out.
+     A phone keeps the ramp below, where the copy is centred and full
+     width and there is no corner to aim at.
+
+     It used to be two half-frame ramps — one bottom-up to 62% of the
+     height, one left-to-right to 62% of the width. Between them they
+     darkened three quarters of the photograph to protect copy occupying
+     about a fifth of it, and the villa (the product, and the reason
+     anyone is on the page) came out grey. Swapping the pair for the
+     corner ellipse is strictly better on both counts, measured over the
+     real text boxes against the brightest slide in the set and against a
+     pure white plate as the worst case any uploaded photo could be:
+
+       mean frame luminance   0.322 -> 0.388   (+21%)
+       right of frame         0.448 -> 0.561   (+25%)
+       gold eyebrow, photo     2.39 -> 2.99
+       headline, photo         2.65 -> 2.68
+       tagline, photo          4.48 -> 5.06
+       ...and on white         1.94 -> 2.37, 1.84 -> 1.90, 3.71 -> 4.22
+
+     Those ratios are the worst single pixel anywhere in each text's box,
+     not the average behind the glyphs, so they read lower than what the
+     eye gets. What matters is that every one of them improved while the
+     photograph got brighter — shaping the scrim to the copy is what buys
+     both at once, where simply lightening the old ramps traded one for
+     the other. Re-measure with the same method before retuning. */
+  /* Phones get the stronger ramp: the copy is centered and full-width
+       there, so there is no clear side to push the darkening toward.
+       Lightened from the originally measured 0.88/0.72/0.4/0.08 stops —
+       those left the building looking dim; re-measure contrast before
+       retuning further if copy legibility ever regresses. */
+  background: linear-gradient(
+    to top,
+    rgba(4, 29, 44, 0.55) 0%,
+    rgba(4, 29, 44, 0.42) 20%,
+    rgba(4, 29, 44, 0.24) 40%,
+    rgba(4, 29, 44, 0.06) 60%,
+    rgba(4, 29, 44, 0) 72%
+  );
+
+  @media (min-width: 640px) {
+    /* Barely more than a footing for the progress dashes and the arrow
+       pair along the bottom edge — .hero-scrim-side carries the copy from
+       here up. */
+    /* Lightened from 0.66/0.22 — see the mobile .hero-scrim comment above. */
+    background: linear-gradient(
+      to top,
+      rgba(4, 29, 44, 0.4) 0%,
+      rgba(4, 29, 44, 0.12) 11%,
+      rgba(4, 29, 44, 0) 22%
+    );
+  }
+}
+
+@utility hero-scrim-side {
+  /* Named "side" from when it was a left-to-right ramp; it is the corner
+     ellipse described above. Anchored at the bottom-left because that is
+     where the copy is — move the copy and this has to move with it. */
+  /* Lightened from 0.97/0.88/0.64/0.3/0.05 — those stops were darkening
+       the villa itself (the subject of the shot) enough that it read as
+       "the hero photo is too dark." Same shape, softer ramp. */
+  background: radial-gradient(
+    100% 155% at 0% 100%,
+    rgba(4, 29, 44, 0.62) 0%,
+    rgba(4, 29, 44, 0.5) 26%,
+    rgba(4, 29, 44, 0.32) 42%,
+    rgba(4, 29, 44, 0.14) 58%,
+    rgba(4, 29, 44, 0.02) 72%,
+    rgba(4, 29, 44, 0) 84%
+  );
+}
+
+@utility company-intro-scrim {
+  /* The "Who we are" photo mosaic — components/CompanyIntroGallery.tsx.
+     Multi-stop rather than a two-stop Tailwind gradient: the label sits
+     ~20px off the bottom edge over bright white architecture, so the base
+     has to be solid while the top ~40% of the photograph stays clean.
+     One from/via/to ramp cannot do both, and the version that could was
+     dimming the photographs badly enough to be the first thing anyone
+     noticed about the section. Stops picked by measuring the worst pixel
+     behind every label against all five photos: 4.5:1 or better. */
+  background: linear-gradient(
+    to top,
+    rgba(4, 29, 44, 0.9) 0%,
+    rgba(4, 29, 44, 0.62) 12%,
+    rgba(4, 29, 44, 0.22) 30%,
+    rgba(4, 29, 44, 0.02) 58%,
+    rgba(4, 29, 44, 0) 100%
+  );
+}
+
+@utility prose-article {
+  /* Vision & Mission photo mosaic — components/VisionMissionMosaic.tsx.
+     v3: a bento grid of straight rounded rectangles, per direct reference
+     images, replacing a v2 pass that rotated the same 4x4 grid composition
+     45deg into a tessellating diamond mosaic. A bento grid needs none of
+     that rotation machinery — every cell is already upright, so the grid
+     just fills its own box (grid-cols-4/grid-rows-4/gap-3/rounded-2xl, all
+     plain Tailwind utility classes on the component itself) instead of
+     needing a fixed oversized grid clipped by an unconditionally-capped
+     container. No custom CSS is needed here any more. */
+
+  /* Article body. Written by hand rather than pulled in via
+     @tailwindcss/typography: the allowlist in lib/markdown.ts is short
+     enough that styling it directly is less code than a plugin plus the
+     overrides needed to match the CI palette. */
+  @apply text-[15px] leading-[1.85] text-ink/75 sm:text-base;
+
+  & > * + * {
+    @apply mt-6;
+  }
+
+  /* h1 only ever appears in rich-text body content when an editor typed
+     one deliberately — see lib/heading-policy.ts — so it needs its own
+     style rather than inheriting h2's, even though the page's *own*
+     `<h1>{article.title}</h1>` is what visitors normally see instead. */
+  & h1 {
+    @apply mt-12 text-3xl font-light text-primary sm:text-4xl;
+  }
+
+  & h2 {
+    @apply mt-12 text-2xl font-light text-primary sm:text-3xl;
+  }
+
+  & h3 {
+    @apply mt-10 text-xl font-light text-primary sm:text-2xl;
+  }
+
+  & h4 {
+    @apply mt-8 text-lg font-medium text-primary;
+  }
+
+  & h5 {
+    @apply mt-6 text-base font-medium text-primary;
+  }
+
+  & h6 {
+    @apply mt-6 text-sm font-semibold uppercase tracking-wide text-ink/70;
+  }
+
+  & a {
+    @apply text-accent-700 underline decoration-accent/40 underline-offset-4
+      transition-colors hover:decoration-accent;
+  }
+
+  & strong {
+    @apply font-medium text-primary;
+  }
+
+  & ul {
+    @apply list-disc space-y-2 pl-5 marker:text-accent;
+  }
+
+  & ol {
+    @apply list-decimal space-y-2 pl-5 marker:text-ink/65;
+  }
+
+  & blockquote {
+    @apply border-l-2 border-accent pl-6 text-lg font-light italic text-ink/65;
+  }
+
+  & img {
+    @apply w-full rounded-xs shadow-card;
+  }
+
+  & figcaption {
+    @apply mt-3 text-center text-xs text-ink/65;
+  }
+
+  /* components/admin/InsertImageModal.tsx's alignment option — carried as
+     `data-align` rather than a class, since that's what lib/markdown.ts's
+     sanitizer allowlist permits (see ALLOWED_ATTR's comment on it). Left
+     unset (the "none" choice) falls through to the full-width default
+     above. */
+  & figure[data-align="left"] {
+    @apply float-left mr-6 w-1/2 sm:w-2/5;
+  }
+
+  & figure[data-align="right"] {
+    @apply float-right ml-6 w-1/2 sm:w-2/5;
+  }
+
+  & figure[data-align="center"] {
+    @apply mx-auto max-w-2xl;
+  }
+
+  & code {
+    @apply rounded-xs bg-primary/5 px-1.5 py-0.5 font-mono text-[0.85em] text-primary;
+  }
+
+  & pre {
+    @apply overflow-x-auto rounded-xs bg-primary-900/6 p-5 text-xs leading-relaxed;
+  }
+
+  & pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* A neutral hairline, not the old gold "horizon" gradient — an <hr> in
+     an article is a real section break the author typed, so it still has
+     to be visible, but it is no longer the decorative accent line that
+     used to run under every heading on the site. */
+  & hr {
+    @apply my-12 h-px border-0 bg-ink/10;
+  }
+
+  & table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  & th {
+    @apply border-b border-primary/15 px-3 py-2 text-left font-medium text-primary;
+  }
+
+  & td {
+    @apply border-b border-primary/5 px-3 py-2 align-top;
+  }
+}
+
+@utility admin-label {
+  /* ── Back-office primitives ───────────────────────────────────────────
+     The admin uses the same palette as the public site but a denser,
+     lower-contrast rhythm: forms are worked in for hours, not admired. */
+  @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted;
+}
+
+@utility admin-input {
+  @apply w-full rounded-xs border border-primary/15 bg-surface-raised px-3.5 py-2.5
+      text-sm text-ink placeholder:text-ink-muted
+      focus:border-primary/40 focus:outline-hidden focus:ring-1 focus:ring-primary/20;
+}
+
+@utility admin-textarea {
+  @apply admin-input min-h-[120px] resize-y leading-relaxed;
+}
+
+@utility admin-hint {
+  @apply mt-1.5 text-xs leading-relaxed text-ink-muted;
+}
+
+@utility admin-card {
+  @apply rounded-xs border border-primary/10 bg-surface-raised p-6 shadow-card;
+}
+
+@utility admin-btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xs bg-primary px-5 py-2.5
+      text-sm font-medium text-white transition-colors hover:bg-primary-700
+      disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility admin-btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/20
+      px-5 py-2.5 text-sm font-medium text-primary transition-colors
+      hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60;
+}
+
+@utility admin-btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-red-200
+      px-4 py-2.5 text-sm font-medium text-red-700 transition-colors
+      hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
+}
+
+@utility admin-th {
+  @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase
+      tracking-wide text-ink-muted;
+}
+
+@utility admin-td {
+  @apply px-4 py-3 align-top text-sm text-ink;
+}
+
+@utility admin-section-title {
+  @apply text-xs font-semibold uppercase tracking-widest2 text-accent-700;
+}
+
+@layer utilities {
+  /* Drives the HeroCarousel progress-dash fill for an IMAGE slide —
+   animation-duration is set inline per slide's durationSeconds, and
+   animation-play-state toggles paused/running on hover. See
+   components/HeroCarousel.tsx. */
+  @keyframes story-progress {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  /* Hero slide backdrop — a very slow push-in on the still image behind the
    carousel copy. `animation-duration` is set inline per slide to match that
    slide's durationSeconds, so the move finishes exactly as the slide hands
    over. VIDEO slides don't get it: they carry their own motion already.
    The prefers-reduced-motion block at the end of this file collapses the
    duration to ~0, which lands the image on its end scale with no movement —
    a slightly tighter crop, which is the correct degradation. */
-@keyframes hero-zoom {
-  from {
-    transform: scale(1.001);
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.001);
+    }
+    to {
+      transform: scale(1.09);
+    }
   }
-  to {
-    transform: scale(1.09);
-  }
-}
 
-/* Loading skeleton for section/heading photos (components/ImageWithSkeleton
+  /* Loading skeleton for section/heading photos (components/ImageWithSkeleton
    .tsx) — a soft navy sweep instead of a static blank box while an image's
    bytes are still in flight. Sits on top of the real <img> as an absolute
    sibling and fades out on load, so it never needs to touch that image's
@@ -40,24 +464,25 @@
    two transition-property utilities on one element don't merge, the later
    one in the stylesheet wins). prefers-reduced-motion is already handled by
    the blanket animation-duration override at the bottom of this file. */
-@keyframes skeleton-shimmer-sweep {
-  from {
-    background-position: 200% 0;
+  @keyframes skeleton-shimmer-sweep {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
   }
-  to {
-    background-position: -200% 0;
-  }
-}
 
-.skeleton-shimmer {
-  background-image: linear-gradient(
-    100deg,
-    rgba(8, 53, 81, 0.05) 30%,
-    rgba(8, 53, 81, 0.12) 50%,
-    rgba(8, 53, 81, 0.05) 70%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer-sweep 1.6s ease-in-out infinite;
+  .skeleton-shimmer {
+    background-image: linear-gradient(
+      100deg,
+      rgba(8, 53, 81, 0.05) 30%,
+      rgba(8, 53, 81, 0.12) 50%,
+      rgba(8, 53, 81, 0.05) 70%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer-sweep 1.6s ease-in-out infinite;
+  }
 }
 
 @layer base {
@@ -102,369 +527,8 @@
 
   /* Visible keyboard focus everywhere — accessibility floor */
   :focus-visible {
-    outline: 2px solid theme("colors.accent.DEFAULT");
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-  }
-}
-
-@layer components {
-  .container-luxe {
-    @apply mx-auto w-full max-w-container px-5 sm:px-8 lg:px-12;
-  }
-
-  .eyebrow {
-    @apply text-xs sm:text-sm font-medium uppercase tracking-widest2 text-accent-700;
-  }
-
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-7 py-3.5
-      text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300
-      hover:bg-primary-700 focus-visible:outline-accent;
-  }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-primary/25
-      bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
-      transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-white;
-  }
-
-  /* Hero CTA over a photograph — same rounded-sm/px-7/py-3.5 footprint as
-     .btn-primary, but a solid accent fill read as too loud sitting on top
-     of a hero photo (a flat saturated block competing with the villa
-     itself). This is a glass button instead of a flat one: a thin white
-     border, a light blurred wash, small letter-spaced caps — the frame's
-     own brightness and blur do the work instead of a slab of color, so it
-     reads as restrained against any photo. Resolves to the same solid,
-     obvious accent fill on hover/focus that .btn-primary gives, so the
-     affordance doesn't get lost along with the boldness. */
-  .btn-hero {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-white/50
-      bg-white/10 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-white
-      backdrop-blur-md transition-all duration-300 hover:border-accent hover:bg-accent
-      hover:text-primary focus-visible:outline-accent;
-  }
-
-  /* Hero scrim.
-
-     The job is to make white type legible on a sunlit photograph without
-     veiling the building — which is the product, and the reason anyone is
-     looking at the page. An earlier version stacked a full-height ramp, a
-     flat 20% wash and a vignette; it measured well and looked like fog.
-
-     So the darkening is shaped, not directional. From `sm` up the copy
-     sits in one corner of the frame, and the scrim is an ellipse anchored
-     to that corner: strong under the copy, gone by ~84% of the way out.
-     A phone keeps the ramp below, where the copy is centred and full
-     width and there is no corner to aim at.
-
-     It used to be two half-frame ramps — one bottom-up to 62% of the
-     height, one left-to-right to 62% of the width. Between them they
-     darkened three quarters of the photograph to protect copy occupying
-     about a fifth of it, and the villa (the product, and the reason
-     anyone is on the page) came out grey. Swapping the pair for the
-     corner ellipse is strictly better on both counts, measured over the
-     real text boxes against the brightest slide in the set and against a
-     pure white plate as the worst case any uploaded photo could be:
-
-       mean frame luminance   0.322 -> 0.388   (+21%)
-       right of frame         0.448 -> 0.561   (+25%)
-       gold eyebrow, photo     2.39 -> 2.99
-       headline, photo         2.65 -> 2.68
-       tagline, photo          4.48 -> 5.06
-       ...and on white         1.94 -> 2.37, 1.84 -> 1.90, 3.71 -> 4.22
-
-     Those ratios are the worst single pixel anywhere in each text's box,
-     not the average behind the glyphs, so they read lower than what the
-     eye gets. What matters is that every one of them improved while the
-     photograph got brighter — shaping the scrim to the copy is what buys
-     both at once, where simply lightening the old ramps traded one for
-     the other. Re-measure with the same method before retuning. */
-  .hero-scrim {
-    /* Phones get the stronger ramp: the copy is centered and full-width
-       there, so there is no clear side to push the darkening toward.
-       Lightened from the originally measured 0.88/0.72/0.4/0.08 stops —
-       those left the building looking dim; re-measure contrast before
-       retuning further if copy legibility ever regresses. */
-    background: linear-gradient(
-      to top,
-      rgba(4, 29, 44, 0.55) 0%,
-      rgba(4, 29, 44, 0.42) 20%,
-      rgba(4, 29, 44, 0.24) 40%,
-      rgba(4, 29, 44, 0.06) 60%,
-      rgba(4, 29, 44, 0) 72%
-    );
-  }
-
-  @media (min-width: 640px) {
-    /* Barely more than a footing for the progress dashes and the arrow
-       pair along the bottom edge — .hero-scrim-side carries the copy from
-       here up. */
-    .hero-scrim {
-      /* Lightened from 0.66/0.22 — see the mobile .hero-scrim comment above. */
-      background: linear-gradient(
-        to top,
-        rgba(4, 29, 44, 0.4) 0%,
-        rgba(4, 29, 44, 0.12) 11%,
-        rgba(4, 29, 44, 0) 22%
-      );
-    }
-  }
-
-  /* Named "side" from when it was a left-to-right ramp; it is the corner
-     ellipse described above. Anchored at the bottom-left because that is
-     where the copy is — move the copy and this has to move with it. */
-  .hero-scrim-side {
-    /* Lightened from 0.97/0.88/0.64/0.3/0.05 — those stops were darkening
-       the villa itself (the subject of the shot) enough that it read as
-       "the hero photo is too dark." Same shape, softer ramp. */
-    background: radial-gradient(
-      100% 155% at 0% 100%,
-      rgba(4, 29, 44, 0.62) 0%,
-      rgba(4, 29, 44, 0.5) 26%,
-      rgba(4, 29, 44, 0.32) 42%,
-      rgba(4, 29, 44, 0.14) 58%,
-      rgba(4, 29, 44, 0.02) 72%,
-      rgba(4, 29, 44, 0) 84%
-    );
-  }
-
-  /* The "Who we are" photo strip — components/CompanyIntroGallery.tsx.
-     Multi-stop rather than a two-stop Tailwind gradient: the label sits
-     ~20px off the bottom edge over bright white architecture, so the base
-     has to be solid while the top ~40% of the photograph stays clean.
-     One from/via/to ramp cannot do both, and the version that could was
-     dimming the photographs badly enough to be the first thing anyone
-     noticed about the section. Stops picked by measuring the worst pixel
-     behind every label against all five photos: 4.5:1 or better. */
-  .intro-strip-scrim {
-    background: linear-gradient(
-      to top,
-      rgba(4, 29, 44, 0.9) 0%,
-      rgba(4, 29, 44, 0.62) 12%,
-      rgba(4, 29, 44, 0.22) 30%,
-      rgba(4, 29, 44, 0.02) 58%,
-      rgba(4, 29, 44, 0) 100%
-    );
-  }
-
-  /* Collapsed panels only — the expanded one must not have it, or the
-     photograph the whole section is showing off goes dark for no reason.
-
-     Two different jobs at the two layouts. Stacked on a phone the label
-     sits at the left of a wide 44px-tall bar, so the base runs left to
-     right and leaves the right third of the photograph clean. Side by
-     side from `sm` up the label is set vertically and runs far higher up
-     the panel than the expanded one's does, so the base runs bottom to
-     top instead. */
-  .intro-strip-band {
-    background: linear-gradient(
-      to right,
-      rgba(4, 29, 44, 0.9) 0%,
-      rgba(4, 29, 44, 0.75) 45%,
-      rgba(4, 29, 44, 0) 78%
-    );
-  }
-
-  @media (min-width: 640px) {
-    .intro-strip-band {
-      background: linear-gradient(
-        to top,
-        rgba(4, 29, 44, 0.8) 0%,
-        rgba(4, 29, 44, 0.55) 45%,
-        rgba(4, 29, 44, 0) 100%
-      );
-    }
-  }
-
-  /* Panel sizing lives here rather than in a style prop so the expanded
-     share can differ per breakpoint. Stacked on a phone the expanded
-     panel has to earn far more of the column than it needs beside four
-     narrow neighbours on a desktop — at the desktop's 5 the phone's
-     "main" photo came out barely half the height of the four bars put
-     together, which is what this ratio split fixes.
-
-     flex-basis 0 so the ratio is the whole story; with a content-derived
-     basis each collapsed panel would keep a size of its own. */
-  .intro-strip-panel {
-    @apply basis-0 grow;
-    transition: flex-grow 700ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .intro-strip-panel[data-expanded="true"] {
-    flex-grow: 7;
-  }
-
-  @media (min-width: 640px) {
-    .intro-strip-panel[data-expanded="true"] {
-      flex-grow: 5;
-    }
-  }
-
-  /* Set flat in the stacked layout, rotated to run up the narrow strips
-     once they are side by side. A media query rather than a style prop
-     for the same reason as the sizing above. */
-  .intro-strip-label {
-    @apply text-[0.625rem] font-medium uppercase tracking-widest2 text-white/90;
-  }
-
-  @media (min-width: 640px) {
-    .intro-strip-label {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      white-space: nowrap;
-    }
-  }
-
-  /* Vision & Mission photo mosaic — components/VisionMissionMosaic.tsx.
-     v3: a bento grid of straight rounded rectangles, per direct reference
-     images, replacing a v2 pass that rotated the same 4x4 grid composition
-     45deg into a tessellating diamond mosaic. A bento grid needs none of
-     that rotation machinery — every cell is already upright, so the grid
-     just fills its own box (grid-cols-4/grid-rows-4/gap-3/rounded-2xl, all
-     plain Tailwind utility classes on the component itself) instead of
-     needing a fixed oversized grid clipped by an unconditionally-capped
-     container. No custom CSS is needed here any more. */
-
-  /* Article body. Written by hand rather than pulled in via
-     @tailwindcss/typography: the allowlist in lib/markdown.ts is short
-     enough that styling it directly is less code than a plugin plus the
-     overrides needed to match the CI palette. */
-  .prose-article {
-    @apply text-[15px] leading-[1.85] text-ink/75 sm:text-base;
-  }
-
-  .prose-article > * + * {
-    @apply mt-6;
-  }
-
-  .prose-article h2 {
-    @apply mt-12 text-2xl font-light text-primary sm:text-3xl;
-  }
-
-  .prose-article h3 {
-    @apply mt-10 text-xl font-light text-primary sm:text-2xl;
-  }
-
-  .prose-article h4 {
-    @apply mt-8 text-lg font-medium text-primary;
-  }
-
-  .prose-article a {
-    @apply text-accent-700 underline decoration-accent/40 underline-offset-4
-      transition-colors hover:decoration-accent;
-  }
-
-  .prose-article strong {
-    @apply font-medium text-primary;
-  }
-
-  .prose-article ul {
-    @apply list-disc space-y-2 pl-5 marker:text-accent;
-  }
-
-  .prose-article ol {
-    @apply list-decimal space-y-2 pl-5 marker:text-ink/65;
-  }
-
-  .prose-article blockquote {
-    @apply border-l-2 border-accent pl-6 text-lg font-light italic text-ink/65;
-  }
-
-  .prose-article img {
-    @apply w-full rounded-sm shadow-card;
-  }
-
-  .prose-article figcaption {
-    @apply mt-3 text-center text-xs text-ink/65;
-  }
-
-  .prose-article code {
-    @apply rounded-sm bg-primary/5 px-1.5 py-0.5 font-mono text-[0.85em] text-primary;
-  }
-
-  .prose-article pre {
-    @apply overflow-x-auto rounded-sm bg-primary-900/[0.06] p-5 text-xs leading-relaxed;
-  }
-
-  .prose-article pre code {
-    @apply bg-transparent p-0;
-  }
-
-  /* A neutral hairline, not the old gold "horizon" gradient — an <hr> in
-     an article is a real section break the author typed, so it still has
-     to be visible, but it is no longer the decorative accent line that
-     used to run under every heading on the site. */
-  .prose-article hr {
-    @apply my-12 h-px border-0 bg-ink/10;
-  }
-
-  .prose-article table {
-    @apply w-full border-collapse text-sm;
-  }
-
-  .prose-article th {
-    @apply border-b border-primary/15 px-3 py-2 text-left font-medium text-primary;
-  }
-
-  .prose-article td {
-    @apply border-b border-primary/5 px-3 py-2 align-top;
-  }
-
-  /* ── Back-office primitives ───────────────────────────────────────────
-     The admin uses the same palette as the public site but a denser,
-     lower-contrast rhythm: forms are worked in for hours, not admired. */
-
-  .admin-label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted;
-  }
-
-  .admin-input {
-    @apply w-full rounded-sm border border-primary/15 bg-surface-raised px-3.5 py-2.5
-      text-sm text-ink placeholder:text-ink-muted
-      focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20;
-  }
-
-  .admin-textarea {
-    @apply admin-input min-h-[120px] resize-y leading-relaxed;
-  }
-
-  .admin-hint {
-    @apply mt-1.5 text-xs leading-relaxed text-ink-muted;
-  }
-
-  .admin-card {
-    @apply rounded-sm border border-primary/10 bg-surface-raised p-6 shadow-card;
-  }
-
-  .admin-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-5 py-2.5
-      text-sm font-medium text-white transition-colors hover:bg-primary-700
-      disabled:cursor-not-allowed disabled:opacity-60;
-  }
-
-  .admin-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-primary/20
-      px-5 py-2.5 text-sm font-medium text-primary transition-colors
-      hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60;
-  }
-
-  .admin-btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm border border-red-200
-      px-4 py-2.5 text-sm font-medium text-red-700 transition-colors
-      hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
-  }
-
-  .admin-th {
-    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase
-      tracking-wide text-ink-muted;
-  }
-
-  .admin-td {
-    @apply px-4 py-3 align-top text-sm text-ink;
-  }
-
-  .admin-section-title {
-    @apply text-xs font-semibold uppercase tracking-widest2 text-accent-700;
   }
 }
 
@@ -476,5 +540,37 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+  Every browser's print/"Save as PDF" dialog defaults "Background graphics"
+  to OFF, which strips any background-color — not text color, just
+  background — from the printed output. First hit on privacy-policy/terms
+  (components/LegalPolicyPage.tsx's numbered section badges and bullet
+  dots both rely on a background-color to show at all), but scoped
+  site-wide rather than to those two pages: nothing else prints today, so
+  this changes nothing anywhere else, and the next page that adds a print
+  button gets it for free instead of rediscovering the same bug.
+  print-color-adjust is the standard property; the -webkit- form is what
+  Chrome/Safari actually read as of this writing.
+*/
+@media print {
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /*
+    See components/Reveal.tsx's own header for why this is a CSS rule and
+    not a beforeprint-triggered animation: `!important` on a plain
+    (non-inline) rule is the one thing guaranteed to beat framer-motion's
+    un-!important inline opacity/transform before the print layout pass
+    runs, independent of whether that section had ever scrolled into
+    view or whether an animation toward "visible" had time to finish.
+  */
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

@@ -11,6 +11,23 @@ export function intlLocale(locale: string): string {
   return INTL_LOCALE[locale] ?? "en-US";
 }
 
+/**
+ * "ปวีณา สุขสมบูรณ์" → "ปส", "John Smith" → "JS", "Cher" → "C" — an avatar
+ * chip's fallback when there is no photo. First letter of up to the first
+ * two whitespace-separated words, matching AdminSidebar.tsx's identity
+ * block so the same person's initials look the same everywhere they
+ * appear, rather than each place inventing its own rule. `.toUpperCase()`
+ * is a no-op on Thai, so it is safe to apply unconditionally.
+ */
+export function initialsFrom(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
 /** 26230 → "26,230" */
 export function formatNumber(locale: string, value: number | null): string {
   if (value === null) return "—";
@@ -49,4 +66,15 @@ export function formatMonthYear(locale: string, year: number, month: number): st
     month: "short",
     year: "numeric",
   }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+/** 2026-08-13 → "13 Aug 2026" / "13 ส.ค. 2569" — same shape
+ *  components/admin/MediaLibrary.tsx already formats dates in, so the site
+ *  and the admin don't read two different date styles. */
+export function formatDateShort(locale: string, value: Date): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
 }

@@ -16,7 +16,8 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { pickLocale } from "@/lib/locale";
 import { getTranslation } from "@/lib/get-translation";
-import { renderMarkdown, markdownToText } from "@/lib/markdown";
+import { renderMarkdown } from "@/lib/markdown";
+import { markdownToText } from "@/lib/markdown-text";
 
 export type Faq = {
   id: string;

@@ -18,6 +18,9 @@ import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
 import { locales } from "@/i18n";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
+import JsonLd from "@/components/JsonLd";
 import { getPublishedEvents, type EventCard } from "@/lib/events";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
@@ -43,12 +46,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: t("title"),
     description: t("subtitle"),
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}/events`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/events`]),
-      ),
-    },
+    alternates: localizedAlternates(locale, "/events"),
   };
 }
 
@@ -61,8 +59,9 @@ export default async function EventsPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, { upcoming, past }] = await Promise.all([
+  const [t, tNav, { upcoming, past }] = await Promise.all([
     getTranslations("events"),
+    getTranslations("nav"),
     getPublishedEvents(locale),
   ]);
 
@@ -87,11 +86,11 @@ export default async function EventsPage(props: Props) {
     <Reveal key={event.id} delay={index * 0.08}>
       <Link
         href={`/${locale}/events/${event.slug}`}
-        className={`group flex h-full flex-col overflow-hidden rounded-sm border border-white/10 bg-primary shadow-card transition-all hover:shadow-cardHover ${
+        className={`group flex h-full flex-col overflow-hidden rounded-xs border border-white/10 bg-primary shadow-card transition-all hover:shadow-cardHover ${
           muted ? "opacity-70 hover:opacity-100" : ""
         }`}
       >
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary-900">
+        <div className="relative aspect-16/10 w-full overflow-hidden bg-primary-900">
           {event.coverImageUrl && (
             <ImageWithSkeleton
               src={event.coverImageUrl}
@@ -107,7 +106,7 @@ export default async function EventsPage(props: Props) {
           {/* Fades the photo into the card's navy panel below it, rather
               than cutting off on a hard edge — an invitation's photo and
               its text block read as one piece, not two stacked ones. */}
-          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-primary to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-14 bg-linear-to-t from-primary to-transparent" />
 
           {!muted && event.seatsLeft !== null && (
             <span
@@ -164,11 +163,23 @@ export default async function EventsPage(props: Props) {
 
   const next = upcoming[0];
 
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("events"), path: "/events" },
+  ]);
+
   return (
     <>
+      <JsonLd
+        id="breadcrumb-schema"
+        data={breadcrumbList(trail)}
+      />
       {/* ── Header ───────────────────────────────────────────────────── */}
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
+          <Breadcrumb items={trail} className="mb-5" />
+
           <p className="eyebrow">{t("eyebrow")}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
@@ -185,7 +196,7 @@ export default async function EventsPage(props: Props) {
           <Reveal>
             <Link
               href={`/${locale}/events/${next.slug}`}
-              className="group flex flex-wrap items-center justify-between gap-4 rounded-sm border border-accent/30 bg-accent/[0.07] px-6 py-5"
+              className="group flex flex-wrap items-center justify-between gap-4 rounded-xs border border-accent/30 bg-accent/[0.07] px-6 py-5"
             >
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-widest2 text-accent-700">
@@ -235,7 +246,7 @@ export default async function EventsPage(props: Props) {
 
       {/* ── Past ─────────────────────────────────────────────────────── */}
       {past.length > 0 && (
-        <section className="bg-primary-900/[0.03] py-16 sm:py-24">
+        <section className="bg-primary-900/3 py-16 sm:py-24">
           <div className="container-luxe">
             <Reveal>
               <h2 className="text-2xl font-light text-primary sm:text-3xl">

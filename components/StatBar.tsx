@@ -24,7 +24,7 @@ export default function StatBar({ stats, tone = "plain" }: Props) {
     <div
       className={
         elevated
-          ? "grid grid-cols-2 divide-x divide-y divide-primary/10 rounded-sm bg-white shadow-cardHover sm:grid-cols-4 sm:divide-y-0"
+          ? "grid grid-cols-2 divide-x divide-y divide-primary/10 rounded-xs bg-white shadow-cardHover sm:grid-cols-4 sm:divide-y-0"
           : "grid grid-cols-2 divide-x divide-primary/10 border border-primary/10 bg-white sm:grid-cols-4"
       }
     >

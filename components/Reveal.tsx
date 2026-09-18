@@ -17,11 +17,30 @@ const variants: Variants = {
 /**
  * Fades + slides content into view once as it scrolls into the viewport.
  * Respects prefers-reduced-motion via framer-motion's built-in handling.
+ *
+ * The "reveal" class exists for exactly one consumer: app/globals.css's
+ * `@media print` override, which forces this back to fully visible when
+ * printing. whileInView only fires once a section has actually scrolled
+ * past the viewport threshold, so anything a visitor has not yet
+ * scrolled to is still sitting at opacity: 0 the moment they print —
+ * privacy-policy/terms's "Download PDF" (window.print(), see
+ * components/PrintButtons.tsx) produced a PDF missing every section
+ * below the fold on a page nobody had scrolled down first.
+ *
+ * A CSS override, not a beforeprint/afterprint listener flipping this to
+ * `animate="visible"`: that was tried first and is wrong for a subtler
+ * reason than it looks broken for. framer-motion drives the transition
+ * to "visible" over the full 0.7s via requestAnimationFrame, but
+ * window.print() can block the main thread the instant the dialog opens
+ * — often before that animation has run more than a frame or two — so
+ * the printed page caught it mid-fade instead of either state cleanly.
+ * print media's layout pass happens independently of any JS timing, so
+ * only a CSS rule is guaranteed to apply before the page is captured.
  */
 export default function Reveal({ children, delay = 0, className }: RevealProps) {
   return (
     <motion.div
-      className={className}
+      className={["reveal", className].filter(Boolean).join(" ")}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-80px" }}

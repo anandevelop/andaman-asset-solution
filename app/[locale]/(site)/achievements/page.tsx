@@ -13,7 +13,7 @@
  *  - The award lists themselves are NOT static content. They come from the
  *    same getAwards(locale) query the homepage AwardsSection uses
  *    (lib/awards.ts), so this page can never drift out of sync with the
- *    homepage or with an admin's edits in /admin/awards.
+ *    homepage or with an admin's edits in /admin/pages/about/awards.
  *
  * Grouping: an award with projectName === null is a company-level award
  * ("Corporate Awards" on the old site); everything else is a project-level
@@ -29,8 +29,12 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Trophy } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
-import { siteConfig } from "@/config/site";
+import DbOfflineNotice from "@/components/DbOfflineNotice";
+import { isDatabaseOffline } from "@/lib/db";
 import { locales } from "@/i18n";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
+import JsonLd from "@/components/JsonLd";
 import { getAwards, type Award } from "@/lib/awards";
 import { getAchievementsContent } from "@/content/achievements";
 
@@ -66,19 +70,14 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: t("title"),
     description: t("metaDescription"),
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}/achievements`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/achievements`]),
-      ),
-    },
+    alternates: localizedAlternates(locale, "/achievements"),
   };
 }
 
 function AwardCard({ award, index }: { award: Award; index: number }) {
   return (
     <Reveal delay={Math.min(index, 6) * 0.05}>
-      <div className="group relative flex h-full flex-col rounded-sm border border-primary/10 bg-white p-6 pt-16 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-cardHover">
+      <div className="group relative flex h-full flex-col rounded-xs border border-primary/10 bg-white p-6 pt-16 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-cardHover">
         <div className="absolute left-1/2 -top-10 h-20 w-20 -translate-x-1/2 sm:h-24 sm:w-24">
           {award.trophyImageUrl ? (
             <ImageWithSkeleton
@@ -116,9 +115,10 @@ export default async function AchievementsPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, tAwards, awards] = await Promise.all([
+  const [t, tAwards, tNav, awards] = await Promise.all([
     getTranslations("achievements"),
     getTranslations("awards"),
+    getTranslations("nav"),
     getAwards(locale),
   ]);
 
@@ -140,16 +140,30 @@ export default async function AchievementsPage(props: Props) {
     }
   }
 
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("achievements"), path: "/achievements" },
+  ]);
+
   return (
     <>
+      <JsonLd id="breadcrumb-schema" data={breadcrumbList(trail)} />
       {/* ── Header ───────────────────────────────────────────────────── */}
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
+          <Breadcrumb items={trail} className="mb-5" />
+
           <p className="eyebrow">{t("eyebrow")}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
           </h1>
         </Reveal>
+
+        {/* Development-only, like every other page that reads the database:
+            getAwards() degrades to an empty list, and a page about awards
+            with no awards on it needs to say why. */}
+        {isDatabaseOffline() && <DbOfflineNotice />}
       </section>
 
       {/* ── Hero photo ───────────────────────────────────────────────────
@@ -165,7 +179,7 @@ export default async function AchievementsPage(props: Props) {
         <>
           <section className="container-luxe pb-4">
             <Reveal>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[21/8]">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xs shadow-card sm:aspect-21/8">
                 <ImageWithSkeleton
                   src={HERO_IMAGE}
                   alt={HERO_CAPTION}
@@ -174,7 +188,7 @@ export default async function AchievementsPage(props: Props) {
                   sizes="100vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary-900/75 via-primary-900/10 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-primary-900/75 via-primary-900/10 to-transparent" />
                 <p className="absolute bottom-4 left-4 text-xs text-white/85 sm:bottom-6 sm:left-6 sm:text-sm">
                   {HERO_CAPTION}
                 </p>
@@ -203,7 +217,7 @@ export default async function AchievementsPage(props: Props) {
           blocks so the page doesn't repeat the same layout twice in a row. */}
       <section className="container-luxe grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:gap-16">
         <Reveal>
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card">
+          <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
             <ImageWithSkeleton
               src={NARRATIVE_IMAGE_1}
               alt=""
@@ -227,7 +241,7 @@ export default async function AchievementsPage(props: Props) {
 
       <section className="container-luxe grid gap-10 pb-16 sm:pb-24 lg:grid-cols-2 lg:gap-16">
         <Reveal className="lg:order-2">
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card">
+          <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
             <ImageWithSkeleton
               src={NARRATIVE_IMAGE_2}
               alt=""
@@ -259,7 +273,7 @@ export default async function AchievementsPage(props: Props) {
         <>
           {/* ── Corporate Awards ─────────────────────────────────────── */}
           {corporateAwards.length > 0 && (
-            <section className="bg-primary-900/[0.03] py-20 sm:py-28">
+            <section className="bg-primary-900/3 py-20 sm:py-28">
               <div className="container-luxe">
                 <Reveal>
                   <h2 className="text-xl font-medium text-primary sm:text-2xl">

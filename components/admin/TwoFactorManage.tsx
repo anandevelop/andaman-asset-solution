@@ -77,7 +77,7 @@ function ErrorBanner({ state }: { state: TwoFactorState }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      className="flex items-start gap-2 rounded-xs border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
     >
       <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
       <span>{t(`errors.${state.message}` as never)}</span>
@@ -113,7 +113,7 @@ export default function TwoFactorManage({
       {disabled && (
         <div
           role="status"
-          className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
           {mandatory ? t("disabledMandatory") : t("disabledOk")}
         </div>

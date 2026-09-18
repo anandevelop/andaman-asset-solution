@@ -11,6 +11,8 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { saveRoutingRules } from "@/lib/lead-routing";
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
@@ -154,4 +156,94 @@ export async function deleteSalesPerson(locale: string, id: string): Promise<voi
   await prisma.salesPerson.delete({ where: { id } });
 
   revalidateSalesTeam(locale);
+}
+
+const routingRulesSchema = z.object({
+  enabled: z.boolean(),
+  // partialRecord: a rule that names a person for Thai and nobody for
+  // Russian is the normal case. See the note in lib/validations.ts — an
+  // enum-keyed z.record became exhaustive in zod 4.
+  byLanguage: z.partialRecord(z.enum(locales), z.string().max(40)),
+  // A cap of zero would route nothing while looking switched on.
+  perPersonCap: z.number().int().min(1).max(500),
+  escalateAfterHours: z.number().min(0.5).max(72),
+  teamLeadUserId: z.string().max(40),
+});
+
+// ── Automatic lead distribution ─────────────────────────────────────────
+
+/**
+ * Save the routing rules shown beside the team (SalesTeam.dc.html).
+ *
+ * ADMIN and above, not EDITOR: these rules decide who gets paid for which
+ * enquiry, which is a different kind of decision from editing a bio.
+ */
+export async function updateLeadRouting(
+  locale: string,
+  input: {
+    enabled: boolean;
+    byLanguage: Record<string, string>;
+    perPersonCap: number;
+    escalateAfterHours: number;
+    teamLeadUserId: string | null;
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await requireAdminAction(Role.ADMIN);
+
+  const parsed = routingRulesSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+
+  try {
+    await saveRoutingRules(
+      {
+        enabled: parsed.data.enabled,
+        // Blank means "no preference for this language" rather than a rule
+        // pointing at an empty id.
+        byLanguage: Object.fromEntries(
+          Object.entries(parsed.data.byLanguage).filter(([, userId]) => userId.length > 0),
+        ),
+        perPersonCap: parsed.data.perPersonCap,
+        escalateAfterHours: parsed.data.escalateAfterHours,
+        teamLeadUserId: parsed.data.teamLeadUserId || null,
+      },
+      session.id,
+    );
+  } catch (error) {
+    console.error("[updateLeadRouting]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+
+  revalidatePath(`/${locale}/admin/sales-team`);
+  revalidatePath(`/${locale}/admin/leads`);
+
+  return { ok: true };
+}
+
+/**
+ * The "show on the website" switch on each team card.
+ *
+ * Its own action rather than a trip through updateSalesPerson: that one
+ * takes the whole profile as FormData and revalidates accordingly, which
+ * is far more than a single boolean needs, and would make an accidental
+ * half-filled form overwrite a bio.
+ */
+export async function setSalesPersonVisible(
+  locale: string,
+  id: string,
+  isActive: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdminAction(Role.EDITOR);
+
+  try {
+    const result = await prisma.salesPerson.updateMany({ where: { id }, data: { isActive } });
+    if (result.count === 0) return { ok: false, error: "NOT_FOUND" };
+  } catch (error) {
+    console.error("[setSalesPersonVisible]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+
+  revalidatePath(`/${locale}/admin/sales-team`);
+  for (const target of locales) revalidatePath(`/${target}`);
+
+  return { ok: true };
 }

@@ -25,6 +25,9 @@ import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
 import { locales } from "@/i18n";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
+import JsonLd from "@/components/JsonLd";
 import { getProjectsWithProgress } from "@/lib/projects";
 import { isDatabaseOffline } from "@/lib/db";
 import { formatMonthYear } from "@/lib/format";
@@ -51,12 +54,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: t("title"),
     description: t("subtitle"),
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}/progress`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/progress`]),
-      ),
-    },
+    alternates: localizedAlternates(locale, "/progress"),
   };
 }
 
@@ -69,17 +67,30 @@ export default async function ProgressIndexPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, tProjects, projects] = await Promise.all([
+  const [t, tProjects, tNav, projects] = await Promise.all([
     getTranslations("progress"),
     getTranslations("projects"),
+    getTranslations("nav"),
     getProjectsWithProgress(locale),
+  ]);
+
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("progress"), path: "/progress" },
   ]);
 
   return (
     <>
+      <JsonLd
+        id="breadcrumb-schema"
+        data={breadcrumbList(trail)}
+      />
       {/* ── Header ───────────────────────────────────────────────────── */}
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
+          <Breadcrumb items={trail} className="mb-5" />
+
           <p className="eyebrow">{t("eyebrow")}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-light text-primary sm:text-5xl">
             {t("title")}
@@ -111,7 +122,7 @@ export default async function ProgressIndexPage(props: Props) {
               <Reveal key={project.id} delay={index * 0.08}>
                 <Link
                   href={`/${locale}/projects/${project.slug}#progress`}
-                  className="group grid overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg sm:grid-cols-[42%_1fr] sm:items-center"
+                  className="group grid overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg sm:grid-cols-[42%_1fr] sm:items-center"
                 >
                   {/* A fixed 16:9 at every breakpoint, not just a box that
                       happened to be 4:3 on a phone and then stretched to

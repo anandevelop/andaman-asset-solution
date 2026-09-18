@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { redirectIfMoved } from "@/lib/redirects";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ChevronDown, FileDown, MapPin, Navigation } from "lucide-react";
+import { ArrowRight, ChevronDown, Compass, FileDown, MapPin } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
 import SitePlanMap from "@/components/SitePlanMap";
+import MapCard from "@/components/MapCard";
 import ProgressGallery from "@/components/ProgressGallery";
 import LeadForm from "@/components/LeadForm";
 import JsonLd from "@/components/JsonLd";
@@ -17,19 +20,21 @@ import FloorPlanViewer from "@/components/FloorPlanViewer";
 import { getFaqs } from "@/lib/faqs";
 import { getAwards } from "@/lib/awards";
 import { getSiteSettings } from "@/lib/settings";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
-import { locales } from "@/i18n";
 import {
   getProjectBySlug,
   getProjectProgress,
   getPublishedProjectSlugs,
   getUnitTypesForProject,
   getProjectUnits,
+  getProjectUnitsUpdatedAt,
   getNearbyAttractions,
   getProjectFacilities,
 } from "@/lib/projects";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatDateShort } from "@/lib/format";
 import { resolveMapEmbedSrc } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 
@@ -50,20 +55,6 @@ export const dynamicParams = true;
   published monthly.
 */
 export const revalidate = 3600;
-
-/** Site Plan + Unit Status legend/chip styling, keyed by the UnitStatus enum. */
-const UNIT_STATUS_STYLE: Record<string, string> = {
-  AVAILABLE: "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200",
-  RESERVED: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200",
-  // Red, not the previous muted grey — a sold-out plot should read as
-  // "ruled out" at a glance, and matches SitePlanMap's own SOLD colour.
-  SOLD: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
-};
-const UNIT_STATUS_DOT: Record<string, string> = {
-  AVAILABLE: "bg-emerald-500",
-  RESERVED: "bg-amber-500",
-  SOLD: "bg-red-500",
-};
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
@@ -90,21 +81,25 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: `${siteConfig.url}/${locale}/projects/${project.slug}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/projects/${project.slug}`]),
-      ),
+      ...localizedAlternates(locale, `/projects/${project.slug}`),
+      /* An explicit canonical, when one is set on the project (the SEO
+         tab). Overrides the self-referencing default localizedAlternates
+         produces — used when the same development is also listed
+         somewhere that has to be treated as the original. */
+      ...(project.canonicalUrl ? { canonical: project.canonicalUrl } : {}),
     },
+    // Per-locale admin toggle (ProjectForm's SEO section) — see the
+    // schema.prisma comment on ProjectTranslation.noIndex.
+    robots: project.noIndex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       title,
       description,
       type: "article",
       url: `${siteConfig.url}/${locale}/projects/${project.slug}`,
-      // Falls back to the site default (config/site.ts: seo.ogImage) when
-      // this project has no hero photo yet — see the matching comment on
-      // the news article page for why `undefined` here would ship with no
-      // og:image at all rather than inheriting the root layout's default.
-      images: [{ url: project.heroImageUrl ?? siteConfig.seo.ogImage }],
+      // No `images` here: opengraph-image.tsx in this same folder
+      // generates the card (name, location, hero photo, or ogImageUrl
+      // passed through untouched) and, per Next's file-convention
+      // precedence, replaces whatever this field would have set anyway.
     },
   };
 }
@@ -125,12 +120,27 @@ export default async function ProjectPage(props: Props) {
     // A missing record and an unreachable database look identical here.
     // Only the former is a real 404 — the latter must not be cached as one.
     if (isDatabaseOffline()) throw new DatabaseUnavailableError(`projects/${slug}`);
+    await redirectIfMoved(locale, `/projects/${slug}`);
     notFound();
   }
 
-  const [t, progress, faqs, settings, unitTypes, units, attractionCategories, awards, facilities] =
-    await Promise.all([
+  const [
+    t,
+    tNav,
+    tChat,
+    progress,
+    faqs,
+    settings,
+    unitTypes,
+    units,
+    unitsUpdatedAt,
+    attractionCategories,
+    awards,
+    facilities
+  ] = await Promise.all([
       getTranslations("projects"),
+      getTranslations("nav"),
+      getTranslations("chatButtons"),
       getProjectProgress(project.id, locale),
       // The questions a buyer asks while looking at one development, rather
       // than the whole FAQ — the rest lives on the home page.
@@ -138,6 +148,7 @@ export default async function ProjectPage(props: Props) {
       getSiteSettings(),
       getUnitTypesForProject(project.id, locale),
       getProjectUnits(project.id),
+      getProjectUnitsUpdatedAt(project.id),
       getNearbyAttractions(locale),
       // Company-wide trust signal for the lead-form mini stat row below —
       // same source as the home page Awards section, not project-specific
@@ -148,13 +159,71 @@ export default async function ProjectPage(props: Props) {
       getProjectFacilities(project.id, locale),
     ]);
 
-  // Site Plan + Unit Status groups individual plots under their type name
-  // rather than a flat list of 30–60+ rows — see the section below.
-  const unitsByType = units.reduce<Record<string, typeof units>>((acc, u) => {
-    const key = u.unitTypeName ?? t("unitTypeLabels.unspecified");
-    (acc[key] ??= []).push(u);
-    return acc;
-  }, {});
+  // Site Plan + Unit Status: sales phases the map's tabs switch between —
+  // absent (null) on the majority of projects sold as one release, and
+  // rendered as no tabs at all rather than a single meaningless "Phase 1"
+  // pill in that case (see SitePlanMap's own guard on this array's length).
+  const phases = Array.from(
+    new Set(units.map((u) => u.phase).filter((p): p is number => p !== null)),
+  )
+    .sort((a, b) => a - b)
+    .map((value) => ({ value, label: t("sitePlanPhase", { n: value }) }));
+
+  // "Updated {date}" chip: null and therefore hidden entirely once the
+  // last real edit is more than 30 days old — a visible "updated 4 months
+  // ago" reads as evidence the map is stale, which is worse than saying
+  // nothing about when it was last touched at all.
+  const UPDATED_CHIP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  const unitsUpdatedRecently =
+    unitsUpdatedAt !== null && Date.now() - unitsUpdatedAt.getTime() <= UPDATED_CHIP_MAX_AGE_MS;
+
+  // Built by splitting the translated sentence around its own {date}
+  // placeholder (a private-use marker that can't collide with real
+  // content) rather than reaching for next-intl's t.rich — this project
+  // has no other rich-text usage, and a plain split needs no new pattern
+  // to keep straight for one bolded date in a corner chip.
+  let updatedChip: { full: ReactNode; date: string } | null = null;
+  if (unitsUpdatedRecently) {
+    const formattedDate = formatDateShort(locale, unitsUpdatedAt!);
+    const MARKER = "\uE000";
+    const [prefix, suffix] = t("sitePlanUpdated", { date: MARKER }).split(MARKER);
+    updatedChip = {
+      date: formattedDate,
+      full: (
+        <>
+          {prefix}
+          <span className="font-medium text-primary">{formattedDate}</span>
+          {suffix}
+        </>
+      ),
+    };
+  }
+
+  // Same wa.me construction as SalesTeamSection.tsx and Footer.tsx — the
+  // site-wide sales number, not a specific rep, since this CTA sits on a
+  // project page rather than beside a named person's card.
+  const whatsappUrl = `https://wa.me/${settings.contact.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+    tChat("whatsappGreeting"),
+  )}`;
+
+  // Hero badge ("TYPE R · 398.28 SQ.M") — the first unit type by the same
+  // sortOrder the Unit Types section below iterates in, not a "starting
+  // from" or "cheapest" pick. Hidden entirely when a project has no unit
+  // types yet, or that type has no living area set.
+  const heroUnitType = unitTypes[0] ?? null;
+
+  // Hero distance line ("7 km to Layan Beach, 15 km to the airport") — the
+  // same site-wide, code-owned facts the "Nearby Attractions" section
+  // below already shows (see content/nearby-attractions.ts's header for
+  // why this isn't per-project data), just surfaced as a compact one-liner
+  // up top too. Looked up by the categories' own stable ids rather than
+  // array position, so a reorder of CATEGORIES there can't silently break
+  // this line.
+  const heroBeach = attractionCategories.find((c) => c.id === "beach")?.items[0] ?? null;
+  const heroAirport =
+    attractionCategories
+      .flatMap((c) => c.items)
+      .find((item) => item.name.toLowerCase().includes("airport")) ?? null;
 
   const stats = [
     { label: t("specs.type"), value: t(`propertyType.${project.propertyType}` as any) },
@@ -200,22 +269,32 @@ export default async function ProjectPage(props: Props) {
   //  - googleMapsUrl otherwise — resolved to an embeddable URL by
   //    resolveMapEmbedSrc (see lib/google-maps.ts for why a plain pasted
   //    share link can't just be dropped into an <iframe> src as-is).
-  //  - googleMapsUrl is also what "Get Directions" opens directly (not
-  //    embed-resolved — the button just needs the original link), since
-  //    the admin's pasted pin/place is more precise than a directions URL
-  //    built from the coordinate pair alone. Falls back to a directions
-  //    URL from the coordinates, then a text search on the project's
-  //    address, so the button always has somewhere to send people even
-  //    for older projects that only ever had one of the two inputs.
+  //
+  // Two separate outbound links, not one doing double duty: mapViewUrl
+  // opens the place itself (the admin's pasted pin/place is the most
+  // precise version of that, hence first in the chain), mapDirectionsUrl
+  // always builds a genuine turn-by-turn URL regardless of which input
+  // was set — a visitor tapping "Get Directions" wants routing, not just
+  // the same place page "View on Maps" already opens.
   const hasCoords = project.latitude !== null && project.longitude !== null;
   const mapEmbedSrc = hasCoords
     ? `https://www.google.com/maps?q=${project.latitude},${project.longitude}&z=15&output=embed`
     : await resolveMapEmbedSrc(project.googleMapsUrl);
-  const directionsUrl =
+  const mapViewUrl =
     project.googleMapsUrl ||
     (hasCoords
-      ? `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`
+      ? `https://www.google.com/maps?q=${project.latitude},${project.longitude}`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`);
+  const mapDirectionsUrl = hasCoords
+    ? `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location)}`;
+
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("projects"), path: "/projects" },
+    { name: project.name, path: `/projects/${project.slug}` },
+  ]);
 
   return (
     <>
@@ -224,6 +303,10 @@ export default async function ProjectPage(props: Props) {
         development itself. No `offers` block — the site doesn't publish
         prices, and an Offer without one isn't meaningful structured data.
       */}
+      <JsonLd
+        id="breadcrumb-schema"
+        data={breadcrumbList(trail)}
+      />
       <JsonLd
         id="project-schema"
         data={{
@@ -318,63 +401,123 @@ export default async function ProjectPage(props: Props) {
             />
           )
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/85 via-primary-900/20 to-primary-900/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-primary-900/90 via-primary-900/35 to-primary-900/10" />
 
-        <div className="container-luxe relative z-10 flex flex-col items-center pb-28 text-center text-white sm:pb-36">
-          <Reveal>
-            {/* Location strings run long (e.g. "Laguna Area (Ban
-                Don-Cherngtalay, Phuket)") — the shared .eyebrow class's
-                text-xs + very wide tracking-widest2 letter-spacing was
-                sized for short one-word eyebrows elsewhere on the site, so
-                on a narrow mobile screen this line wrapped into a cramped,
-                unevenly-spaced two-liner. Smaller size + tighter tracking
-                below sm: only affects this instance, not the shared class. */}
-            <p className="eyebrow flex items-center justify-center gap-1.5 text-center text-[10px] tracking-wide text-accent-200 sm:gap-2 sm:text-sm sm:tracking-widest2">
-              <MapPin size={13} className="shrink-0 sm:hidden" aria-hidden />
-              <MapPin size={14} className="hidden shrink-0 sm:block" aria-hidden />
-              {project.location}
-            </p>
-          </Reveal>
+        {/* Top-left rather than in the copy stack below: matches the
+            reference layout's own uppercase, letter-spaced trail. A small
+            offset, not top-28/32 — that value is left over from the
+            previous vertically-centered hero, where it cleared a content
+            block starting much lower; against this bottom-anchored layout
+            it just left a bare gap under the navbar. */}
+        <div className="container-luxe absolute inset-x-0 top-6 z-10 sm:top-8">
+          <Breadcrumb items={trail} tone="onImage" className="uppercase tracking-wide" />
+        </div>
+
+        <div className="container-luxe relative z-10 flex flex-col items-start pb-28 text-left text-white sm:pb-36">
+          {/* Unit-type badge — the first type by the admin's own sortOrder
+              (same order the Unit Types section below iterates), not a
+              "starting from" pick. Hidden for a project with no unit types
+              yet, or whose first type has no living area set. */}
+          {heroUnitType && heroUnitType.livingAreaSqm !== null && (
+            <Reveal>
+              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 py-1.5 text-[11px] uppercase tracking-widest2 backdrop-blur-sm sm:text-xs">
+                {heroUnitType.name}
+                <span aria-hidden>·</span>
+                {formatNumber(locale, heroUnitType.livingAreaSqm)} {t("units.sqm")}
+              </p>
+            </Reveal>
+          )}
+
           <Reveal delay={0.1}>
-            <h1 className="mt-3 max-w-2xl text-white text-4xl font-light leading-[1.05] sm:text-6xl">
+            <h1 className="max-w-2xl text-white text-4xl font-light leading-[1.05] sm:text-6xl">
               {project.name}
             </h1>
           </Reveal>
+
+          <Reveal delay={0.15}>
+            <div className="mt-5 h-[3px] w-16 bg-accent" />
+          </Reveal>
+
           <Reveal delay={0.2}>
-            <p className="mt-4 max-w-md text-sm text-white/80 sm:text-base">
-              {project.tagline}
+            <p className="mt-5 flex flex-wrap items-center gap-1.5 text-sm text-white/85 sm:text-base">
+              <MapPin size={15} className="shrink-0" aria-hidden />
+              {project.location}
+              {/* Same site-wide, code-owned distances the "Nearby
+                  Attractions" section below already shows (see
+                  content/nearby-attractions.ts's header) — not
+                  project-specific, just surfaced here as a one-liner too. */}
+              {heroBeach && heroAirport && (
+                <>
+                  <span aria-hidden>·</span>
+                  {t("heroDistanceLine", {
+                    beachDistance: heroBeach.distanceKm,
+                    beachName: heroBeach.name,
+                    airportDistance: heroAirport.distanceKm,
+                  })}
+                </>
+              )}
             </p>
           </Reveal>
+
           <Reveal delay={0.3}>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {/* Stacked full-width on mobile — the primary action on its own
+                row, the two secondary ones sharing the row below (each
+                filling the space when only one of them exists). `contents`
+                on the secondary-pair wrapper drops it out of the layout
+                from sm: up, so those two rejoin the primary button's own
+                flex-wrap row exactly as before on larger screens. */}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <a
                 href="#enquire"
-                className="rounded-full border border-white/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-primary"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:bg-accent-500 sm:w-auto"
               >
-                {t("formTitle")}
+                {t("arrangeViewing")}
+                <ArrowRight size={16} aria-hidden />
               </a>
 
-              {/*
-                A brochure download is a lower-commitment action than the
-                enquiry form, so it sits beside it rather than replacing it.
-                No gate: asking for an email before a PDF costs more leads
-                than it captures when the same page already has a form.
+              <div className="flex gap-3 sm:contents">
+                {/*
+                  A brochure download is a lower-commitment action than the
+                  enquiry form, so it sits beside it rather than replacing
+                  it. No gate: asking for an email before a PDF costs more
+                  leads than it captures when the same page already has a
+                  form.
 
-                `download` is advisory — the real behaviour comes from the
-                Content-Disposition header set on upload in lib/s3.ts.
-              */}
-              {project.brochureUrl && (
-                <a
-                  href={project.brochureUrl}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium text-white/85 underline-offset-4 transition-colors hover:text-white hover:underline"
-                >
-                  <FileDown size={16} aria-hidden />
-                  {t("downloadBrochure")}
-                </a>
-              )}
+                  `download` is advisory — the real behaviour comes from the
+                  Content-Disposition header set on upload in lib/s3.ts.
+                */}
+                {project.brochureUrl && (
+                  <a
+                    href={project.brochureUrl}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-hero flex-1 sm:flex-none"
+                  >
+                    <FileDown size={16} aria-hidden />
+                    {/* Full label from sm: up, where the reference layout
+                        gives it room; the mobile row splits with the tour
+                        button and "Download " stopped fitting. */}
+                    <span className="sm:hidden">{t("brochureShort")}</span>
+                    <span className="hidden sm:inline">{t("downloadBrochure")}</span>
+                  </a>
+                )}
+
+                {/* Matterport/Kuula/360°-video link, admin-set — see
+                    Project.virtualTourUrl's schema.prisma comment. Hidden
+                    entirely when empty, same as the brochure button above. */}
+                {project.virtualTourUrl && (
+                  <a
+                    href={project.virtualTourUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-hero flex-1 sm:flex-none"
+                  >
+                    <Compass size={16} aria-hidden />
+                    {t("virtualTour")}
+                  </a>
+                )}
+              </div>
             </div>
           </Reveal>
         </div>
@@ -395,7 +538,7 @@ export default async function ProjectPage(props: Props) {
       {/* ── Concept Design (Sale Kit narrative) ──────────────────────────
           Image left / text right when a conceptDesignImageUrl is set —
           same split-layout pattern as the Overview section below (Reveal +
-          aspect-[4/5] image). Falls back to the original
+          aspect-4/5 image). Falls back to the original
           full-width text block when there's no image, so a project seeded
           before this field existed still renders without a layout gap. ── */}
       {project.conceptDesign && (
@@ -403,7 +546,7 @@ export default async function ProjectPage(props: Props) {
           {project.conceptDesignImageUrl ? (
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
               <Reveal>
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[5/6]">
+                <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card sm:aspect-5/6">
                   <ImageWithSkeleton
                     src={project.conceptDesignImageUrl}
                     alt={`${project.name} — ${t("conceptDesignTitle")}`}
@@ -446,7 +589,7 @@ export default async function ProjectPage(props: Props) {
           split sections don't repeat the same left/right rhythm. Same
           text-only fallback when there's no image. ────────────────────── */}
       {project.aboutThisProject && (
-        <section className="bg-primary-900/[0.03] py-20 sm:py-28">
+        <section className="bg-primary-900/3 py-20 sm:py-28">
           <div className="container-luxe">
             {project.aboutThisProjectImageUrl ? (
               <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -463,7 +606,7 @@ export default async function ProjectPage(props: Props) {
                 </Reveal>
 
                 <Reveal delay={0.15}>
-                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-card sm:aspect-[5/6]">
+                  <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card sm:aspect-5/6">
                     <ImageWithSkeleton
                       src={project.aboutThisProjectImageUrl}
                       alt={`${project.name} — ${t("aboutProjectTitle")}`}
@@ -559,7 +702,11 @@ export default async function ProjectPage(props: Props) {
                 close: t("galleryClose"),
                 previous: t("galleryPrevious"),
                 next: t("galleryNext"),
-                viewAll: t("galleryViewAll"),
+                // The count has to be supplied here, not substituted in the
+                // component: t() formats the ICU message on the spot, so a
+                // missing `count` is a FORMATTING_ERROR that renders the key
+                // path ("projects.galleryViewAll") in place of the label.
+                viewAll: t("galleryViewAll", { count: villaImages.length }),
               }}
             />
           </div>
@@ -568,7 +715,7 @@ export default async function ProjectPage(props: Props) {
 
       {/* ── Unit Types ───────────────────────────────────────────────── */}
       {unitTypes.length > 0 && (
-        <section id="unit-types" className="scroll-mt-24 bg-primary-900/[0.03] py-20 sm:py-28">
+        <section id="unit-types" className="scroll-mt-24 bg-primary-900/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
               <p className="eyebrow">{t("unitTypesEyebrow")}</p>
@@ -672,108 +819,60 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           {/*
-            Map + unit list side by side from lg up — previously both were
-            full container-luxe width, stacked. At this page's max
-            container width (1440px) the map's locked aspect ratio
-            (1754:1241, matching the source artwork — see SitePlanMap's
-            file comment) turned that into a ~950px-tall image on its own,
-            before the legend and a 60+-unit chip list even started; the
-            whole section could run several viewport-heights long. Splitting
-            the row narrows the map (shorter at the same aspect ratio) and,
-            more importantly, caps the unit list's own height with an
-            internal scroll area instead of letting it grow open-ended —
-            together those keep the section's total height roughly
-            constant regardless of how many units or unit types a project
-            has. Below lg there's no room for a side-by-side split, so it
-            stacks — the list still gets its own scroll cap there too, for
-            the same reason.
-            Either half can be absent (no master plan image yet, or no
-            units digitized yet) — flex rather than a fixed grid-cols so a
-            missing half doesn't leave a dead empty column, just the one
-            block at full width.
+            Full-width now, not a 58/42 map/list split — the unit-chip list
+            that used to fill the right column is gone; the summary bar
+            SitePlanMap renders under the map is its replacement, and it
+            reads better at the map's own full width than squeezed beside a
+            list. The map still only renders when there is at least one
+            unit to plot (see SitePlanMap's own `!masterPlanImageUrl`
+            branch for the "units but no photo yet" case, and the plain
+            <ImageWithSkeleton> fallback below for the reverse).
           */}
-          <div className="mt-10 lg:flex lg:items-start lg:gap-10">
-            {project.masterPlanImageUrl && (
-              <div className={units.length > 0 ? "lg:w-[58%] lg:shrink-0" : "w-full"}>
-                {units.length > 0 ? (
-                  <Reveal delay={0.1}>
-                    <SitePlanMap
-                      projectName={project.name}
-                      masterPlanImageUrl={project.masterPlanImageUrl}
-                      units={units}
-                      labels={{
-                        all: t("unitStatus.ALL"),
-                        available: t("unitStatus.AVAILABLE"),
-                        reserved: t("unitStatus.RESERVED"),
-                        sold: t("unitStatus.SOLD"),
-                        zoomIn: t("sitePlanZoomIn"),
-                        zoomOut: t("sitePlanZoomOut"),
-                        fullscreen: t("sitePlanFullscreen"),
-                        resetView: t("sitePlanResetView"),
-                      }}
-                    />
-                  </Reveal>
-                ) : (
-                  // Plain fallback — a master plan photo with no digitized
-                  // units yet still deserves to be shown, just without the
-                  // interactive overlay (which would have nothing to plot).
-                  <Reveal delay={0.1}>
-                    <div className="relative aspect-[16/10] w-full overflow-hidden border border-primary/10 bg-white">
-                      <ImageWithSkeleton
-                        src={project.masterPlanImageUrl}
-                        alt={`${project.name} — ${t("sitePlanTitle")}`}
-                        fill
-                        sizes="100vw"
-                        className="object-contain"
-                      />
-                    </div>
-                  </Reveal>
-                )}
+          {project.masterPlanImageUrl && units.length === 0 && (
+            // A master plan photo with no digitized units yet still
+            // deserves to be shown, just without the interactive overlay
+            // (which would have nothing to plot) or the summary bar
+            // (which would have nothing to summarise).
+            <Reveal delay={0.1}>
+              <div className="relative mt-10 aspect-16/10 w-full overflow-hidden border border-primary/10 bg-white">
+                <ImageWithSkeleton
+                  src={project.masterPlanImageUrl}
+                  alt={`${project.name} — ${t("sitePlanTitle")}`}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                />
               </div>
-            )}
+            </Reveal>
+          )}
 
-            {units.length > 0 && (
-              <div
-                className={`mt-8 lg:mt-0 lg:min-w-0 lg:flex-1 ${
-                  project.masterPlanImageUrl ? "" : "w-full"
-                }`}
-              >
-                <Reveal delay={0.15}>
-                  <div className="mb-5 flex flex-wrap gap-5 text-xs text-ink/70">
-                    {(["AVAILABLE", "RESERVED", "SOLD"] as const).map((status) => (
-                      <span key={status} className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 rounded-full ${UNIT_STATUS_DOT[status]}`} />
-                        {t(`unitStatus.${status}`)}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div
-                    className="max-h-[340px] space-y-6 overflow-y-auto pr-2 sm:max-h-[400px] lg:max-h-[560px]
-                      [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full
-                      [&::-webkit-scrollbar-thumb]:bg-primary/15 [&::-webkit-scrollbar-track]:bg-transparent"
-                  >
-                    {Object.entries(unitsByType).map(([typeName, groupUnits]) => (
-                      <div key={typeName}>
-                        <h3 className="text-sm font-medium text-primary">{typeName}</h3>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {groupUnits.map((u) => (
-                            <span
-                              key={u.id}
-                              title={`${u.unitNumber} — ${t(`unitStatus.${u.status}`)}`}
-                              className={`rounded-sm px-2.5 py-1 text-xs font-medium ${UNIT_STATUS_STYLE[u.status]}`}
-                            >
-                              {u.unitNumber}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Reveal>
-              </div>
-            )}
-          </div>
+          {units.length > 0 && (
+            <div className="mt-10">
+              <Reveal delay={0.1}>
+                <SitePlanMap
+                  projectName={project.name}
+                  masterPlanImageUrl={project.masterPlanImageUrl}
+                  units={units}
+                  phases={phases}
+                  updated={updatedChip}
+                  whatsappUrl={whatsappUrl}
+                  labels={{
+                    all: t("unitStatus.ALL"),
+                    available: t("unitStatus.AVAILABLE"),
+                    reserved: t("unitStatus.RESERVED"),
+                    sold: t("unitStatus.SOLD"),
+                    zoomIn: t("sitePlanZoomIn"),
+                    zoomOut: t("sitePlanZoomOut"),
+                    fullscreen: t("sitePlanFullscreen"),
+                    resetView: t("sitePlanResetView"),
+                    allPhases: t("sitePlanAllPhases"),
+                    askDetails: t("sitePlanAskDetails"),
+                    unitsSuffix: t("sitePlanUnitsSuffix"),
+                  }}
+                />
+              </Reveal>
+            </div>
+          )}
         </section>
       )}
 
@@ -782,7 +881,7 @@ export default async function ProjectPage(props: Props) {
           list on every project page, code-owned content rather than a
           database query (see content/nearby-attractions.ts). */}
       {attractionCategories.length > 0 && (
-        <section className="bg-primary-900/[0.03] py-20 sm:py-28">
+        <section className="bg-primary-900/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
               <p className="eyebrow">{t("nearbyEyebrow")}</p>
@@ -859,10 +958,9 @@ export default async function ProjectPage(props: Props) {
 
       {/* ── Location & Map ──────────────────────────────────────────── */}
       {/* Embedded preview needs coordinates (Google's no-key embed
-          endpoint takes a lat/lng pair, not an arbitrary share link); the
-          "Get Directions" button always renders once there's a location,
-          since directionsUrl always resolves to something — see the
-          computation above. */}
+          endpoint takes a lat/lng pair, not an arbitrary share link);
+          mapViewUrl/mapDirectionsUrl always resolve to something once
+          there's a location — see the computation above. */}
       <section className="py-20 sm:py-28">
         <div className="container-luxe">
           <Reveal>
@@ -877,51 +975,22 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.1} className="mt-10">
-            <div className="overflow-hidden border border-primary/10 bg-surface-muted shadow-card">
-              {mapEmbedSrc ? (
-                // Google's no-API-key embed doesn't take a custom style
-                // (that needs the paid Maps JavaScript API), so the CI
-                // match happens in CSS instead: desaturate the tile
-                // imagery, then lay a navy overlay over it in
-                // `mix-blend-color` — that blend mode keeps the map's own
-                // light/dark structure (roads, water, buildings) but
-                // recolors it with the overlay's hue, landing on a
-                // monochrome navy map instead of Google's stock palette.
-                // `pointer-events-none` on the overlay keeps the map
-                // itself draggable/zoomable underneath it.
-                <div className="relative h-[360px] w-full sm:h-[440px]">
-                  <iframe
-                    src={mapEmbedSrc}
-                    title={t("mapTitle")}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    className="h-full w-full grayscale contrast-125 saturate-0"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-primary-800/40 mix-blend-color" />
-                </div>
-              ) : (
-                <div className="flex h-[280px] w-full items-center justify-center bg-primary-900/[0.04] text-sm text-ink/50 sm:h-[360px]">
-                  <MapPin size={20} className="mr-2 shrink-0" aria-hidden />
-                  {project.location}
-                </div>
-              )}
-              <a
-                href={directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-primary px-6 py-4 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-primary-700"
-              >
-                <Navigation size={16} aria-hidden />
-                {t("mapGetDirections")}
-              </a>
-            </div>
+            <MapCard
+              embedSrc={mapEmbedSrc}
+              title={t("mapTitle")}
+              name={project.name}
+              address={project.location}
+              viewUrl={mapViewUrl}
+              directionsUrl={mapDirectionsUrl}
+              labels={{ viewOnMaps: t("mapViewOnMaps"), getDirections: t("mapGetDirections") }}
+            />
           </Reveal>
         </div>
       </section>
 
       {/* ── Construction progress (from ProjectProgress) ─────────────── */}
       {/* id targeted by /progress — scroll-mt clears the sticky navbar. */}
-      <section id="progress" className="scroll-mt-24 bg-primary-900/[0.03] py-20 sm:py-28">
+      <section id="progress" className="scroll-mt-24 bg-primary-900/3 py-20 sm:py-28">
         <div className="container-luxe">
           <Reveal>
             <p className="eyebrow">{t("galleryTitle")}</p>

@@ -6,27 +6,19 @@
 
 generator client {
   provider = "prisma-client-js"
-
-  /// Engines to build, named rather than detected.
-  ///
-  /// `native` covers whatever machine runs `prisma generate` — a developer's
-  /// laptop, and CI's Ubuntu runners for lint/typecheck/test. The two musl
-  /// entries are the deploy target: node:22-alpine on amd64 in CI, arm64 on
-  /// an Apple-silicon machine building locally.
-  ///
-  /// Named because detection failed silently. Without the openssl package
-  /// in the image, Prisma could not read the system's OpenSSL version,
-  /// defaulted to openssl-1.1.x, and shipped an engine that Alpine 3.24
-  /// cannot load — every query in the container failing while the site kept
-  /// serving empty pages. The Dockerfile installs openssl now, so detection
-  /// works; this makes the answer explicit rather than inferred, so a base
-  /// image change cannot quietly move it again.
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
 }
 
+// The connection URL is no longer allowed here. Prisma 7 dropped the Rust
+// query engine, so the client talks to Postgres through a driver adapter
+// built in lib/prisma.ts, and the CLI reads its own URL from
+// prisma.config.ts. Both still come from DATABASE_URL — there is one
+// source for it, it just is not this file any more.
+//
+// `binaryTargets` went with the engine: there is no binary to target, which
+// also retires the Alpine/OpenSSL detection problem the old list existed to
+// pin down. See the Dockerfile.
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -37,6 +29,15 @@ enum Role {
   SUPER_ADMIN
   ADMIN
   EDITOR
+  /// CRM-scoped: leads, appointments, the sales-team roster. Cannot touch
+  /// project/news/event content or settings — see ROLE_RANK in lib/auth.ts
+  /// for why SALES sits below EDITOR rather than beside it, and
+  /// lib/leads.ts for the row-level scoping (a SALES user sees only leads
+  /// assigned to them) that rank alone cannot express.
+  SALES
+  /// Read-only across every admin page it can reach at all. Never passes
+  /// requireAdminAction for any minimum — see hasRole/ROLE_RANK.
+  VIEWER
 }
 
 enum PropertyType {
@@ -64,6 +65,21 @@ enum LeadStatus {
   LOST
 }
 
+/// Draft → in review → published, for the four content types with their
+/// own public detail page and 4-locale translations (Project, NewsArticle,
+/// Event, EBrochure). Deliberately separate from each model's own
+/// `isPublished` boolean, which alone still controls whether a row is
+/// visible on the public site — nothing here changes that. `isPublished`
+/// can only be set to true while `contentStatus` is PUBLISHED (enforced in
+/// each model's admin publish action, not by the database), so the
+/// workflow is a gate in front of the switch the site already reads, not
+/// a second switch the site has to learn about too.
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+}
+
 enum LeadSource {
   PROJECT_PAGE
   CONTACT_PAGE
@@ -72,6 +88,14 @@ enum LeadSource {
   LINE_OA
   REFERRAL
   OTHER
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
 }
 
 /// Sale status of one physical plot. Drives the Site Plan legend.
@@ -131,6 +155,36 @@ model User {
   articles          NewsArticle[]
   projectProgresses ProjectProgress[]
   auditEntries      AuditLog[]
+
+  /// A SALES user's entry in the public sales-team roster, so an
+  /// appointment or a "reassigned to" notice can show the same
+  /// photo/WhatsApp a visitor would see on /about's team section instead
+  /// of a bare name. Optional and one-directional-unique: not every admin
+  /// account is a public-facing salesperson, and not every SalesPerson row
+  /// has a login (some are photo/WhatsApp-only entries with no admin
+  /// account at all).
+  salesPersonId String?      @unique
+  salesPerson   SalesPerson? @relation(fields: [salesPersonId], references: [id], onDelete: SetNull)
+
+  /// Which developments this account is limited to — the "ขอบเขตที่เข้าถึงได้"
+  /// column on the Users & Permissions page.
+  ///
+  /// Empty means "not scoped", which is the whole company, not nothing:
+  /// most accounts are unscoped and adding this field must not silently
+  /// lock everyone out. It narrows a SALES account's lead list to the
+  /// projects listed here (see lib/permissions.ts and the leads query);
+  /// on roles that already see everything it is informational.
+  scopedProjects Project[] @relation("UserProjectScope")
+
+  assignedLeads        LeadInquiry[]       @relation("LeadAssignee")
+  leadNotes            LeadNote[]
+  uploadedMedia        Media[]
+  assignedAppointments Appointment[]       @relation("AppointmentAssignee")
+  createdAppointments  Appointment[]       @relation("AppointmentCreator")
+  redirects            Redirect[]
+  contentRevisions     ContentRevision[]
+  notifications        AdminNotification[]
+  reservedUnits        ProjectUnit[]       @relation("UnitReservedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -315,17 +369,53 @@ model Project {
   /// Not translated — a map link doesn't have a language.
   googleMapsUrl String?
 
+  /// An external 360° walkthrough — Matterport, Kuula, a YouTube 360 video,
+  /// whatever the sales team was given. Shown as a hero CTA on the public
+  /// page when set, and hidden entirely otherwise. Not translated — a link
+  /// doesn't have a language.
+  virtualTourUrl String?
+
   /// @deprecated — see nameEn/nameTh above.
   metaTitleEn       String?
   metaTitleTh       String?
   metaDescriptionEn String?
   metaDescriptionTh String?
 
+  /// Overrides the share image on social cards. Falls back to
+  /// heroImageUrl, which is what the page already used — this exists for
+  /// the case where the hero crops badly at 1200×630.
+  ogImageUrl String?
+
+  /// A canonical URL to declare instead of this page's own address. Left
+  /// empty on almost every project; it is here for the case where the
+  /// same development is also listed on a partner site and one of the two
+  /// has to be the original.
+  canonicalUrl String?
+
+  /// Sitemap hints for this specific project. Null means "use the section
+  /// default" (app/sitemap.ts), which is what every project does until
+  /// somebody decides one of them deserves otherwise.
+  sitemapPriority   Float?
+  sitemapChangeFreq String?
+
   isPublished Boolean @default(false)
   sortOrder   Int     @default(0)
 
+  /// Draft → review → publish workflow state — see the ContentStatus enum
+  /// comment. Existing rows default to PUBLISHED so a project that is
+  /// already live (isPublished: true) does not silently need re-approval.
+  contentStatus      ContentStatus @default(PUBLISHED)
+  /// A target go-live date shown on the admin Publishing dashboard as a
+  /// reminder/sort key — nothing reads this to flip isPublished
+  /// automatically. There is no scheduler in this app to enforce a real
+  /// auto-publish time, and a date field that silently does nothing would
+  /// be worse than one that is honestly just a reminder.
+  scheduledPublishAt DateTime?
+
   progressUpdates ProjectProgress[]
+  phases          ProjectPhase[]
   leads           LeadInquiry[]
+  appointments    Appointment[]
 
   unitTypes ProjectUnitType[]
   units     ProjectUnit[]
@@ -340,6 +430,13 @@ model Project {
   /// Back-reference required by Prisma for ProjectAttraction's FK — see
   /// that model's comment for why nothing writes to it.
   attractions ProjectAttraction[]
+
+  /// Back-reference required by Prisma for EBrochure's optional FK. The FK
+  /// is SetNull, so these survive the project being deleted.
+  eBrochures EBrochure[]
+
+  /// Accounts limited to this development — see User.scopedProjects.
+  scopedUsers User[] @relation("UserProjectScope")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -375,6 +472,20 @@ model ProjectTranslation {
   aboutThisProject String? @db.Text
   metaTitle        String? @db.Text
   metaDescription  String? @db.Text
+
+  /// Per-locale opt-out of indexing — see EventTranslation.noIndex's
+  /// comment for the reasoning; same field, same default.
+  noIndex Boolean @default(false)
+
+  /// The phrases this page is written to rank for, in this language.
+  ///
+  /// Stored, shown beside the title and description, and exported — but
+  /// nothing in this application reads them back to *do* anything: there
+  /// is no Search Console connection here, so they are the team's own
+  /// record of intent, not a live ranking report. Per locale because
+  /// "พูลวิลล่า เชิงทะเล" and "pool villa Cherngtalay" are different
+  /// searches by different people, not translations of one keyword.
+  targetKeywords String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -524,9 +635,62 @@ model ProjectUnit {
   landAreaSqm Decimal? @db.Decimal(8, 2)
   priceTHB    Decimal? @db.Decimal(14, 2)
 
+  /// Which way the plot faces, and what it looks out on — the Units & Site
+  /// Plan page's "ทิศ / วิว" column, and two of the first three questions a
+  /// buyer asks about a specific plot on a Phuket villa development.
+  ///
+  /// Free text rather than enums on purpose: the Sale Kits write these as
+  /// prose ("West · Sea view", "North-east · Mountain"), the vocabulary
+  /// differs per project (sea / lagoon / garden / mountain / pool), and an
+  /// enum would force every new development's wording through a migration.
+  /// Living area is deliberately absent — that belongs to the unit *type*
+  /// (ProjectUnitType.livingAreaSqm), which is what actually determines it.
+  facing    String?
+  viewLabel String?
+
+  /// Sales phase this plot belongs to, when a development releases in
+  /// stages ("เฟส 1", "เฟส 2"). Null on projects sold as one release —
+  /// which is most of them, and why this is not defaulted to 1: a null
+  /// says "this project isn't phased", where a 1 would claim a phasing
+  /// scheme nobody set up.
+  phase Int?
+
+  /// False while a plot exists on the master plan but is not on sale yet —
+  /// the "เฟส 2 (8 ยูนิต) ยังไม่เปิดขาย" state. Distinct from
+  /// UnitStatus.AVAILABLE, which means "on sale and unsold": a phase-2
+  /// plot is neither available nor reserved nor sold, and squeezing it
+  /// into one of those three would either advertise it or imply it went.
+  ///
+  /// The public site filters these out entirely (lib/projects.ts's
+  /// getProjectUnits) rather than rendering them in a fourth colour — a
+  /// plot a visitor cannot buy yet is not information they asked for, and
+  /// the admin site plan is where the release schedule is managed.
+  releasedForSale Boolean @default(true)
+
   /// Internal only — never rendered publicly. A place for "buyer backed
   /// out, re-list after Feb" without it living in someone's inbox.
   adminNotes String?
+
+  /// Who this unit is being held for while status is RESERVED — set from
+  /// the Lead Detail page's "unit of interest" picker (a minimal stand-in
+  /// until the full Units & Site Plan reservation workflow exists there
+  /// instead). SetNull rather than cascading: a deleted lead should not
+  /// silently delete the unit it once had claim to.
+  reservedByLeadId String?
+  reservedByLead   LeadInquiry? @relation(fields: [reservedByLeadId], references: [id], onDelete: SetNull)
+
+  /// The rep who made the reservation — informational (who to ask), not an
+  /// access-control gate; any EDITOR-and-above session can still change
+  /// the reservation, same as every other unit field.
+  reservedById String?
+  reservedBy   User?   @relation("UnitReservedBy", fields: [reservedById], references: [id], onDelete: SetNull)
+
+  /// A target date to follow up by, shown next to the reservation — not
+  /// enforced automatically. Same honest framing as scheduledPublishAt on
+  /// the content-workflow models: there is no scheduler in this app, so a
+  /// date that silently reverted the unit to AVAILABLE on its own would be
+  /// a control that does not actually exist. An admin releases it by hand.
+  reservationExpiresAt DateTime?
 
   sortOrder Int @default(0)
 
@@ -535,6 +699,7 @@ model ProjectUnit {
 
   @@unique([projectId, unitNumber])
   @@index([projectId, status])
+  @@index([reservedByLeadId])
   @@map("project_units")
 }
 
@@ -648,7 +813,61 @@ model CompanyProfile {
   aboutUsEn String  @db.Text
   aboutUsTh String? @db.Text
 
-  /// EN/TH/ZH/RU `aboutUs` rows — see CompanyProfileTranslation below.
+  /// The About page Story section's photo. Defaulted to the photo that
+  /// was hardcoded directly in app/[locale]/(site)/about/page.tsx before
+  /// this column existed, so the migration that adds it is a no-op for
+  /// every visitor until an admin uploads a replacement.
+  storyImageUrl String @default("/gallery/residence-prime/exterior-facade.webp")
+
+  /// The full-bleed photo behind the About page's header — the same
+  /// hero-with-scrim-and-breadcrumb treatment a project or event detail
+  /// page uses, applied here for the first time on a page that isn't a
+  /// single listing. Deliberately a different default photo from
+  /// storyImageUrl above: the two sit one screen apart on the same page,
+  /// and a fresh install showing the identical picture twice reads as a
+  /// bug rather than as "nobody has customised this yet".
+  aboutHeroImageUrl String @default("/gallery/trinity-village/pool-garden.webp")
+
+  /// The four figures in the home page's Vision & Mission section
+  /// (components/VisionMission.tsx's STATS, labelled team/feedback/
+  /// awards/projects — NOT the same section as the About page's stats
+  /// bar, which is derived from Project and stays that way). Plain
+  /// strings, not numbers — the "+" is part of what's displayed, and (per
+  /// VisionMission's own comment) the same glyph sequence is shown in all
+  /// four locales, so these stay here rather than in messages/*.json.
+  /// Defaulted to the values that were hardcoded there before this
+  /// migration, for the same no-op reason as storyImageUrl above.
+  ///
+  /// ⚠ Marketing claims supplied by the company, not values derived from
+  /// the database — statAwards in particular is independent of the
+  /// Award model/`/admin/awards`, which renders the awards actually on
+  /// record. If the two disagree, a visitor can see both on the same
+  /// page. Carried over from the pre-existing hardcoded values; not a
+  /// new problem introduced here.
+  /// The year the company was founded — the one figure in the home page's
+  /// Vision & Mission block that cannot be counted from anything, so it is
+  /// stored rather than derived. Null until somebody fills it in, and the
+  /// tile is left out entirely until then rather than showing a guess.
+  foundedYear Int?
+
+  /// @deprecated — the four figures below were typed marketing claims and
+  /// are no longer read by anything. The Vision & Mission block now counts
+  /// what it shows: delivered projects from Milestone, awards from Award,
+  /// villas under construction from ProjectUnit (see lib/company-stats.ts).
+  /// That was the fix for the warning this component's own header used to
+  /// carry — an awards figure typed here could disagree with the awards
+  /// actually listed further down the same page, and a visitor saw both.
+  ///
+  /// Kept as columns rather than dropped: they hold text a client typed,
+  /// and a migration that deletes it to tidy up is not reversible. Nothing
+  /// writes them any more — the admin form's four inputs are gone.
+  statTeamMembers      String @default("300+")
+  statClientFeedback   String @default("1,000+")
+  statAwards           String @default("10+")
+  statProjectsComplete String @default("30+")
+
+  /// EN/TH/ZH/RU `aboutUs`/`storyEyebrow`/`storyTitle` rows — see
+  /// CompanyProfileTranslation below.
   translations CompanyProfileTranslation[]
 
   updatedAt DateTime @updatedAt
@@ -670,6 +889,17 @@ model CompanyProfileTranslation {
 
   aboutUs String @db.Text
 
+  /// The About page Story section's eyebrow/heading, next to storyImageUrl
+  /// on CompanyProfile above. `@default("")` rather than nullable: an
+  /// empty string still falls back correctly through the page's existing
+  /// `companyProfile?.storyEyebrow || t("story.eyebrow")` pattern (same
+  /// one aboutUs already uses), which is what a locale an admin hasn't
+  /// filled in yet — zh/ru, typically — needs. The migration backfills
+  /// real values into the en/th rows that already exist; zh/ru start
+  /// blank the same way aboutUs itself does for those locales today.
+  storyEyebrow String @default("")
+  storyTitle   String @default("")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -678,6 +908,49 @@ model CompanyProfileTranslation {
 }
 
 // Monthly construction-progress photo galleries per project.
+/// One phase of a development's build programme — the timeline across the
+/// top of the admin's construction-progress page.
+///
+/// Per project rather than a fixed list: a villa estate and a condominium
+/// do not run the same stages, and a shared enum would force one shape on
+/// both. Names are a nameEn/nameTh pair rather than a translation table,
+/// matching ProjectFacility — these are short stage names, and the page
+/// they appear on is admin-only.
+model ProjectPhase {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  nameEn String
+  nameTh String
+
+  status PhaseStatus @default(PLANNED)
+
+  /// How far along this stage is, 0-100. Kept per phase rather than
+  /// derived: the monthly log records overall progress, which says nothing
+  /// about how much of the roofing is done.
+  percentComplete Int @default(0)
+
+  /// The date the row is captioned with. What it *means* comes from
+  /// `status` — finished on, started on, or expected — so a phase that
+  /// slips needs its status changed rather than a second column.
+  milestoneDate DateTime?
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@map("project_phases")
+}
+
+enum PhaseStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
 model ProjectProgress {
   id        String  @id @default(cuid())
   projectId String
@@ -685,6 +958,16 @@ model ProjectProgress {
 
   month Int // 1-12
   year  Int
+
+  /// Overall completion as of this month's update, 0-100. The page's
+  /// headline figure is the newest published entry's value, and the
+  /// "+7% since last month" beside it is the step up from the one before
+  /// — both derived, so there is no separate total to keep in step.
+  percentComplete Int?
+
+  /// EN/TH/ZH/RU write-ups of what happened this month — see
+  /// ProjectProgressTranslation below.
+  translations ProjectProgressTranslation[]
 
   images String[] // image URLs for this month's gallery
 
@@ -707,6 +990,24 @@ model ProjectProgress {
   @@unique([projectId, year, month])
   @@index([projectId, year, month])
   @@map("project_progress")
+}
+
+/// One month's write-up, per locale. Same shape as every other
+/// Translation table here; `summary` is the only field, because that is
+/// all a progress entry has to say that needs translating.
+model ProjectProgressTranslation {
+  id         String          @id @default(cuid())
+  progressId String
+  progress   ProjectProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  locale  String
+  summary String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([progressId, locale])
+  @@map("project_progress_translations")
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -767,6 +1068,146 @@ model FaqTranslation {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// CLOSING CTA — the invitation band above the footer, on every public page
+//
+// Rendered by components/SiteCta.tsx, mounted once in
+// app/[locale]/(site)/layout.tsx. Two tables because the question "what
+// does this block say" and the question "which pages show it" have
+// different owners: a block is written once and may appear on several
+// pages, and a page shows exactly one block or none.
+//
+// EMPTY IS A VALID STATE. With no rows here the public component renders
+// the copy that ships in messages/*.json, which is what the site did
+// before this existed — so a fresh database, a failed migration and a
+// deliberately cleared table all degrade to a working CTA rather than a
+// blank band. /admin/cta offers a one-click import of that file copy as
+// the starting point for editing.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// What a CTA button points at. The href column is only read for PAGE and
+/// URL; the other three build their target from data that already lives
+/// somewhere else, so a changed office number does not leave a stale link
+/// behind in a CTA nobody thought to re-edit.
+enum CtaLinkKind {
+  /// A page on this site — href is a locale-relative path ("/contact"),
+  /// and the visitor's locale is prefixed at render time.
+  PAGE
+  /// Anything else — href is an absolute URL, opened in a new tab.
+  URL
+  /// wa.me link built from Settings → contact → WhatsApp number.
+  WHATSAPP
+  /// tel: link built from Settings → contact → phone number.
+  PHONE
+  /// Button not rendered at all.
+  NONE
+}
+
+/// One set of words + one background for the closing CTA. `name` is
+/// admin-facing only — it is how the block is referred to in the page
+/// assignment table, and is never shown to a visitor.
+model SiteCtaBlock {
+  id   String @id @default(cuid())
+  name String
+
+  isActive Boolean @default(true)
+
+  /// The block used on any public page with no SiteCtaPlacement row of its
+  /// own. At most one row may have this set; the actions enforce it by
+  /// clearing the flag on the others inside the same transaction, and a
+  /// block holding it cannot be deleted — that is what stops a delete from
+  /// silently emptying the CTA on a dozen pages at once.
+  isDefault Boolean @default(false)
+
+  /// Null means "use a published project's own hero photograph", which is
+  /// what the section did before it was editable. Not translated — an
+  /// image URL has no language, same convention as Award.trophyImageUrl.
+  backgroundImageUrl String?
+
+  primaryKind CtaLinkKind @default(PAGE)
+  /// Read only when the matching kind is PAGE or URL.
+  primaryHref String?
+
+  secondaryKind CtaLinkKind @default(WHATSAPP)
+  secondaryHref String?
+
+  /// Lower sorts first; only consulted to break a tie between two blocks
+  /// placed on the same page, which the admin UI does not allow but a
+  /// direct database edit could.
+  sortOrder Int @default(0)
+
+  translations SiteCtaBlockTranslation[]
+  placements   SiteCtaPlacement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("site_cta_blocks")
+}
+
+/// EN/TH/ZH/RU words for one block. Button *labels* live here; button
+/// *targets* live on the block above, untranslated.
+model SiteCtaBlockTranslation {
+  id      String       @id @default(cuid())
+  blockId String
+  block   SiteCtaBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  locale  String
+
+  /// Small line above the headline ("Speak to us"). Optional — blank
+  /// renders nothing rather than an empty gap.
+  eyebrow String?
+
+  /// The headline. The one field that must be filled in for a locale to
+  /// count as translated (see translationCompleteness in
+  /// lib/admin/translated-form.ts).
+  ///
+  /// title and subtitle are parsed as ICU messages, so a sentence that
+  /// mentions how many developments there are can count them:
+  ///   {count, plural, =3 {all three} other {all #}}
+  /// `count` is the number of published projects. Malformed syntax is
+  /// rejected at save time by lib/validations.ts rather than at render
+  /// time, where it would take the page down.
+  title    String  @db.Text
+  subtitle String? @db.Text
+
+  primaryLabel   String?
+  secondaryLabel String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([blockId, locale])
+  @@map("site_cta_block_translations")
+}
+
+/// Which block a public page shows. `path` is a locale-relative page group
+/// from lib/public-paths.ts STATIC_PATHS — "/projects" covers the list and
+/// every project under it, matching how the section was gated before this
+/// table existed.
+///
+/// A row with a null blockId means "show nothing here", which is a real
+/// answer and not a missing one: /contact wants no CTA, because its
+/// primary button would link to the page the visitor is already reading.
+/// No row at all means "use the default block".
+///
+/// onDelete: Cascade rather than SetNull, so deleting a block returns its
+/// pages to the default block instead of silently converting them to the
+/// "show nothing" state above.
+model SiteCtaPlacement {
+  id   String @id @default(cuid())
+  path String @unique
+
+  blockId String?
+  block   SiteCtaBlock? @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blockId])
+  @@map("site_cta_placements")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // HERO STORY BANNER — homepage IG-Stories-style hero (image + video slides)
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -809,6 +1250,14 @@ model HeroStorySlide {
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
 
+  /// Optional on-air window: when set, the public StoryBanner query only
+  /// includes this slide while now is within [startAt, endAt] (either end
+  /// may be left open). `isActive` above still has to be true too — this
+  /// narrows an active slide's visibility to a date range, it does not
+  /// override isActive being false.
+  startAt DateTime?
+  endAt   DateTime?
+
   /// EN/TH/ZH/RU caption + CTA label rows — see HeroStorySlideTranslation
   /// below.
   translations HeroStorySlideTranslation[]
@@ -831,6 +1280,14 @@ model HeroStorySlideTranslation {
   slideId String
   slide   HeroStorySlide @relation(fields: [slideId], references: [id], onDelete: Cascade)
   locale  String
+
+  /// The small line above the headline naming what is on screen — a
+  /// project and where it is, "Trinity Village · Cherngtalay". Separate
+  /// from `caption` because it answers a different question: the caption
+  /// is the pitch, this is the credit for the photograph behind it, and a
+  /// mood shot that belongs to no particular development simply leaves it
+  /// blank and renders nothing.
+  label String? @db.Text
 
   caption String? @db.Text
 
@@ -898,6 +1355,10 @@ model SalesPerson {
 
   /// EN/TH/ZH/RU `name`/`position` rows — see SalesPersonTranslation below.
   translations SalesPersonTranslation[]
+
+  /// The admin login this roster entry belongs to, when the person also
+  /// has SALES access to the back office — see User.salesPersonId above.
+  staffAccount User?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -989,12 +1450,346 @@ model AwardTranslation {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// MILESTONES — the "How we got here" photo timeline on the About page.
+// Formerly a static array (content/company-timeline.ts); moved into the
+// database so it can be managed from /admin/milestones instead of a code
+// change. content/company-timeline.ts still exists for COMPANY_FOUNDED_YEAR
+// alone — that constant also drives the About page's "years of experience"
+// stat and a project page mini-stat, neither of which is a milestone row.
+// ─────────────────────────────────────────────────────────────────────────
+
+model Milestone {
+  id String @id @default(cuid())
+
+  year Int
+
+  /// The development's name, e.g. "The Trinity Village". A proper noun —
+  /// not translated, same reasoning as Award.projectName.
+  projectName String
+
+  /// "BY ..." sub-label shown under the project name when it was sold
+  /// under a brand distinct from the company's own name (e.g. "Wallaya
+  /// Villas"). Null, not the company's own name — the public page only
+  /// shows this when it says something a visitor doesn't already know
+  /// from being on this company's own website.
+  brand String?
+
+  /// S3/Spaces URL from ImageUploader. Null falls back to a generic tile,
+  /// same convention as Award.trophyImageUrl / EBrochure.coverImageUrl —
+  /// a freshly-seeded row has no photo until an admin uploads one.
+  imageUrl String?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// What prisma/seed.ts upserts on for the historical rows transcribed
+  /// from the old static file, so a re-seed refreshes `brand` without
+  /// clobbering a photo an admin has since uploaded or a sortOrder they've
+  /// changed — same reasoning as Award's unique triple.
+  @@unique([year, projectName])
+  @@index([isActive, year, sortOrder])
+  @@map("milestones")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// HOME PAGE "WHO WE ARE" GALLERY — the photo strip beside the intro copy
+// (components/CompanyIntro.tsx → CompanyIntroGallery.tsx).
+// ─────────────────────────────────────────────────────────────────────────
+
+model HomeGalleryPhoto {
+  id String @id @default(cuid())
+
+  imageUrl String
+
+  /// What CompanyIntroGallery shows on the panel — the development the
+  /// photo is from, e.g. "The Trinity Village". A proper noun, not
+  /// translated, same reasoning as Milestone.projectName. Previously an
+  /// indirect lookup key into a shared `common.projectNames.*` message
+  /// (so every panel's caption stayed in sync with other sections quoting
+  /// the same project name); an admin now types the caption directly,
+  /// which trades that guaranteed consistency for being editable at all.
+  label String
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// What prisma/seed.ts upserts the 5 transcribed rows on.
+  @@unique([imageUrl])
+  @@index([isActive, sortOrder])
+  @@map("home_gallery_photos")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ICON CARDS — the two "icon + short title + body" card sections below.
+// One enum shared by both rather than two near-identical ones: ShieldCheck
+// is used by both WhyUsPoint and MissionPrinciple today, so a shared list
+// is less duplication, not more coupling — the two models remain entirely
+// separate (own table, own admin page), matching Award vs Milestone vs
+// EBrochure staying separate models despite similar shapes.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// The union of every icon app/[locale]/(site)/page.tsx's WHY_POINTS and
+/// app/[locale]/(site)/about/page.tsx's PRINCIPLES used before those
+/// became database rows. A real enum, not a bare validated String — an
+/// invalid value can't reach the column even from outside the admin
+/// UI/Zod path, the same reasoning HeroStoryMediaType already applies to
+/// "one of a small fixed set of options." Adding a 7th icon to the
+/// picker is a migration + a new case in the lucide lookup map in
+/// whichever component reads it — a deliberate, occasional code change,
+/// not something either admin page's own "add" button can reach.
+enum SectionIcon {
+  MOUNTAIN
+  SHIELD_CHECK
+  HARD_HAT
+  HAND_HEART
+  EYE
+  HEART_HANDSHAKE
+}
+
+/// "Why us" — the 4-card section on the home page, directly below Awards
+/// (app/[locale]/(site)/page.tsx). Brand new model, created after the
+/// 4-locale Translation-table pattern was already in place (see
+/// AwardTranslation's comment for the general shape) — no deprecated
+/// EN/TH column pair here, every translated field starts life in
+/// WhyUsPointTranslation below.
+model WhyUsPoint {
+  id String @id @default(cuid())
+
+  icon SectionIcon
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  /// EN/TH/ZH/RU `title`/`body` rows — see WhyUsPointTranslation below.
+  translations WhyUsPointTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("why_us_points")
+}
+
+/// One row per (WhyUsPoint, locale) — see ProjectTranslation's comment
+/// for the general pattern.
+model WhyUsPointTranslation {
+  id      String     @id @default(cuid())
+  pointId String
+  point   WhyUsPoint @relation(fields: [pointId], references: [id], onDelete: Cascade)
+  locale  String
+
+  title String
+  body  String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pointId, locale])
+  @@map("why_us_point_translations")
+}
+
+/// The 3-card "how we work" section on the About page
+/// (app/[locale]/(site)/about/page.tsx, previously the PRINCIPLES
+/// constant). Same shape as WhyUsPoint and deliberately its own model
+/// rather than a shared one — see the section banner comment above.
+model MissionPrinciple {
+  id String @id @default(cuid())
+
+  icon SectionIcon
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  /// EN/TH/ZH/RU `title`/`body` rows — see MissionPrincipleTranslation
+  /// below.
+  translations MissionPrincipleTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("mission_principles")
+}
+
+/// One row per (MissionPrinciple, locale) — see ProjectTranslation's
+/// comment for the general pattern.
+model MissionPrincipleTranslation {
+  id          String           @id @default(cuid())
+  principleId String
+  principle   MissionPrinciple @relation(fields: [principleId], references: [id], onDelete: Cascade)
+  locale      String
+
+  title String
+  body  String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([principleId, locale])
+  @@map("mission_principle_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// CORPORATE SERVICES — the row of tall photo cards on the home page
+// (components/Corporate.tsx). Four across from `lg`, two on a phone: a 5th
+// active row wraps onto a second line and leaves one card alone under
+// four, rather than filling out a grid the way WhyUsPoint's and
+// MissionPrinciple's do. Worth knowing before adding a 5th, the way
+// Milestone's and Award's own comments flag their layout assumptions.
+//
+// The section heading counts these rows (an ICU plural on
+// home.corporate.title), so switching one off changes "Four things we do
+// in-house" to "3 things we do in-house" instead of leaving the heading
+// claiming a card that is not there.
+// ─────────────────────────────────────────────────────────────────────────
+
+model CorporateService {
+  id String @id @default(cuid())
+
+  imageUrl String
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  /// EN/TH/ZH/RU `label`/`imageAlt` rows — see CorporateServiceTranslation
+  /// below.
+  translations CorporateServiceTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("corporate_services")
+}
+
+/// One row per (CorporateService, locale) — see ProjectTranslation's
+/// comment for the general pattern.
+model CorporateServiceTranslation {
+  id        String           @id @default(cuid())
+  serviceId String
+  service   CorporateService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  locale    String
+
+  /// The short label shown on the tile and pulled out as a standalone
+  /// list above it, e.g. "Construction" — not a paragraph, see
+  /// components/Corporate.tsx for why: the four labels are what a
+  /// skimming visitor is looking for, deliberately pulled out of the
+  /// section's own prose rather than left buried in it.
+  label String
+
+  imageAlt String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, locale])
+  @@map("corporate_service_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// E-BROCHURES — a PDF read page-by-page in the browser at /e-brochure/<slug>.
+//
+// Separate from Project.brochureUrl rather than an extension of it. That
+// field is one download link on one project; this is a catalogue with its
+// own URL, its own copy in four locales, and its own publish state, and a
+// project can have several editions or none. The two coexist: the download
+// link on a project page is untouched.
+// ─────────────────────────────────────────────────────────────────────────
+
+model EBrochure {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  /// The PDF itself — an S3/Spaces URL from ImageUploader kind="document".
+  /// Not translated: one artwork serves every locale, the same call
+  /// Project.brochureUrl makes. A Thai-only edition is a second row with
+  /// its own slug, which keeps the viewer from having to decide which file
+  /// a zh visitor should get when only th and en exist.
+  fileUrl String
+
+  /// Poster for the index card. Without it the index would have to fetch
+  /// and rasterise every published PDF just to draw a row of covers, which
+  /// is the one thing the whole lazy-render design exists to avoid. Null
+  /// falls back to an icon tile, same convention as Award.trophyImageUrl.
+  coverImageUrl String?
+
+  /// The development this brochure is for. Optional — a corporate profile
+  /// belongs to no project.
+  ///
+  /// SetNull, not Cascade: deleting a project must not silently delete its
+  /// brochures. The file and the copy are still real, they have just lost
+  /// their parent, and an admin can re-point or remove them deliberately.
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  /// See ContentStatus's comment on Project — same workflow, same rule.
+  contentStatus      ContentStatus @default(PUBLISHED)
+  scheduledPublishAt DateTime?
+
+  /// EN/TH/ZH/RU `title` + `description` rows.
+  translations EBrochureTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("e_brochures")
+}
+
+/// One row per (brochure, locale) — see ProjectTranslation's comment for the
+/// general pattern. Born after the four-locale migration, so unlike Award
+/// there is no deprecated En/Th column pair to fall back to.
+model EBrochureTranslation {
+  id         String    @id @default(cuid())
+  brochureId String
+  brochure   EBrochure @relation(fields: [brochureId], references: [id], onDelete: Cascade)
+  locale     String
+
+  title String @db.Text
+
+  /// Nullable so a brand-new zh row with only a title filled in does not
+  /// fail validation before the admin gets to it — same reasoning as
+  /// FaqTranslation.answer.
+  description String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([brochureId, locale])
+  @@map("e_brochure_translations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // NEWS / SEO BLOG
 // ─────────────────────────────────────────────────────────────────────────
+
+/// Every article shipped before this field existed is MARKDOWN, and
+/// lib/markdown.ts is what renders that. HTML is for a future rich-text
+/// editor that will store already-sanitized markup instead — the two
+/// formats coexist by design (no backfill, no forced migration of old
+/// rows), and the renderer a given article uses is read straight off
+/// this field rather than sniffed from the content itself.
+enum ArticleFormat {
+  MARKDOWN
+  HTML
+}
 
 model NewsArticle {
   id   String @id @default(cuid())
   slug String @unique
+
+  /// Which renderer lib/news.ts and the article page use for `content` —
+  /// see ArticleFormat's own comment.
+  contentFormat ArticleFormat @default(MARKDOWN)
 
   /// @deprecated — superseded by `NewsArticleTranslation` below.
   titleEn String
@@ -1009,8 +1804,14 @@ model NewsArticle {
   contentTh String @db.Text
 
   coverImageUrl String?
-  category      String? // e.g. "Market Insight", "Company News", "Guides"
-  tags          String[]
+
+  /// Overrides the share image on social cards. Falls back to
+  /// coverImageUrl — see Project.ogImageUrl's comment for why this exists
+  /// as a separate field rather than just cropping the cover on the fly.
+  ogImageUrl String?
+
+  category String? // e.g. "Market Insight", "Company News", "Guides"
+  tags     String[]
 
   /// @deprecated — see titleEn/titleTh above.
   metaTitleEn       String?
@@ -1018,11 +1819,54 @@ model NewsArticle {
   metaDescriptionEn String?
   metaDescriptionTh String?
 
+  /// The default-locale focus keyword — a convenience copy for screens
+  /// (the article list, the keyword library) that show one keyword per
+  /// article without opening a specific language tab. The keyword an
+  /// editor actually sets per language lives on
+  /// NewsArticleTranslation.focusKeyword; this is not a separate value
+  /// to keep in sync by hand, see that field's own comment.
+  focusKeyword String? @db.Text
+
+  /// Supporting phrases, same per-default-locale scope as focusKeyword
+  /// above. Not translated per language in this phase — see
+  /// KeywordAssignment for the model that will eventually carry
+  /// per-locale secondary keywords with rank/volume data attached.
+  secondaryKeywords String[] @default([])
+
+  /// JSON-LD @type for the article schema this page emits — see
+  /// app/[locale]/(site)/news/[slug]/page.tsx's structured-data block.
+  /// A plain string, not an enum: Google's article types are an open set
+  /// (NewsArticle, BlogPosting, Report, …) and this project has no
+  /// business enumerating all of them up front.
+  schemaType String? @default("NewsArticle")
+
+  /// Overrides the self-referential canonical URL the page would
+  /// otherwise emit — for the rare article that is a deliberate reprint
+  /// or syndication of content that already has a canonical home
+  /// elsewhere. Null is the common case: "this page is its own
+  /// canonical," which needs no override.
+  canonicalUrl String?
+
+  /// Cached copies so a list screen showing many articles at once (the
+  /// admin index, a future keyword-library cross-reference) does not
+  /// recompute lib/markdown-text.ts's readingMinutes() or re-run
+  /// lib/seo-score.ts's checklist per row on every render. The editor
+  /// screen itself still computes both live from the real content — see
+  /// components/admin/NewsSeoPanel.tsx — these are read paths only.
+  readingMinutes Int?
+  seoScore       Int?
+  seoScoreAt     DateTime?
+
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   isPublished Boolean   @default(false)
   publishedAt DateTime?
+
+  /// See ContentStatus's comment on Project — same workflow, same rule
+  /// (isPublished only flips to true while this is PUBLISHED).
+  contentStatus      ContentStatus @default(PUBLISHED)
+  scheduledPublishAt DateTime?
 
   /// EN/TH/ZH/RU content rows — see NewsArticleTranslation below.
   translations NewsArticleTranslation[]
@@ -1053,6 +1897,22 @@ model NewsArticleTranslation {
   metaTitle       String? @db.Text
   metaDescription String? @db.Text
 
+  /// The phrase this locale's version is written to rank for — feeds
+  /// lib/seo-score.ts's checklist and lib/keyword-density.ts. Per-locale,
+  /// not on NewsArticle: a Thai keyword and its English equivalent are
+  /// different strings a translator picks independently, not a single
+  /// value that happens to get translated.
+  focusKeyword String? @db.Text
+
+  /// Cached lib/seo-score.ts result for this language version — see
+  /// NewsArticle.seoScore's comment for why this is a cache, not a
+  /// computed column.
+  seoScore Int?
+
+  /// Per-locale opt-out of indexing — see EventTranslation.noIndex's
+  /// comment for the reasoning; same field, same default.
+  noIndex Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1067,17 +1927,80 @@ model NewsArticleTranslation {
 model LeadInquiry {
   id String @id @default(cuid())
 
-  name        String
-  email       String
-  phone       String
+  name  String
+  email String
+  phone String
+
+  /// ISO 3166-1 alpha-2 dial-code country CountrySelect.tsx resolved
+  /// `phone`'s calling code from ("TH" for +66) — kept alongside `phone`
+  /// rather than re-derived from it on every read, and because a calling
+  /// code alone is ambiguous between the several countries that can share
+  /// one (+1 alone covers the US, Canada and a dozen Caribbean nations).
+  phoneCountry String?
+
+  /// ISO 3166-1 alpha-2 ("GB"), picked from CountrySelect.tsx's flag list
+  /// — not free text. Leads created before that picker shipped still hold
+  /// whatever a visitor typed into a plain text field ("Russian", "รัสเซีย",
+  /// "RU"), and are deliberately left as-is rather than migrated: there is
+  /// no reliable way to turn arbitrary free text into an ISO2 code
+  /// automatically, and guessing wrong would be worse than leaving an old
+  /// lead showing its original text. Display code must handle both shapes
+  /// — see the admin lead pages' nationalityLabel() for how.
   nationality String?
-  message     String? @db.Text
+
+  message String? @db.Text
 
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   source LeadSource @default(OTHER)
   status LeadStatus @default(NEW)
+
+  /// The sales rep working this lead. Null = unassigned, shown in the
+  /// Kanban/list as an explicit "ยังไม่มอบหมาย" bucket rather than hidden —
+  /// an unassigned lead is the one most likely to go stale. SetNull on
+  /// delete: removing a User account must not delete the leads they
+  /// worked, only orphan the assignment back to the unassigned bucket.
+  assignedToId String?
+  assignedTo   User?   @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  /// Next contact date a rep committed to, surfaced as a due/overdue
+  /// badge in the admin list. Independent of `status` — a QUALIFIED lead
+  /// can still be overdue for its next call.
+  followUpAt DateTime?
+
+  /// The locale of the page the enquiry form was actually submitted from
+  /// (LeadForm.tsx's own useLocale()), not a guess and not the visitor's
+  /// browser language — this is what LeadDetail's "สื่อสาร EN" badge shows:
+  /// which language version of the site they used, independent of
+  /// `nationality`, which is a citizenship, not a language preference — a
+  /// French national browsing the Chinese site is still French.
+  commsLanguage String?
+
+  /// The pathname of that same page (e.g. "/en/projects/andaman-bay-villa"),
+  /// for the activity timeline's "entered the system from…" entry. Null on
+  /// every lead created before this column existed, and on any lead a rep
+  /// enters manually — the timeline falls back to the plain `source` label
+  /// in that case.
+  sourcePath String?
+
+  /// Free text a rep writes down from a conversation ("3-bedroom villa,
+  /// sea view") — a preference, not a commitment. Deliberately not a
+  /// relation to a specific ProjectUnit: a lead can want "something like
+  /// this" before any real unit is on the table, and linking a lead to the
+  /// unit they have actually reserved is a separate concern (Units & Site
+  /// Plan's reservation workflow, not yet built).
+  housePreference String?
+
+  notes             LeadNote[]
+  appointments      Appointment[]
+  /// Back-reference for the registration this lead was created from, when
+  /// it came from an event — see EventRegistration.leadId.
+  eventRegistration EventRegistration?
+  /// The unit(s) currently held for this lead — in practice at most one at
+  /// a time, but Prisma's back-relation is a list regardless of how the
+  /// Lead Detail picker constrains it in the UI.
+  reservedUnits     ProjectUnit[]
 
   // PDPA (Thailand Personal Data Protection Act) consent trail
   consentGiven   Boolean   @default(false)
@@ -1103,7 +2026,55 @@ model LeadInquiry {
   @@index([status, createdAt])
   @@index([createdAt, status])
   @@index([projectId])
+  @@index([assignedToId, status])
+  @@index([followUpAt])
   @@map("lead_inquiries")
+}
+
+/// A timestamped note a rep leaves on a lead — the call log / activity
+/// timeline LeadDetail shows. Deliberately its own table rather than a
+/// growing Text column on LeadInquiry: each entry needs its own author and
+/// timestamp, and AuditLog (field-names-only, see its own comment) is the
+/// wrong place for free-text sales notes.
+model LeadNote {
+  id     String      @id @default(cuid())
+  leadId String
+  lead   LeadInquiry @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  body String @db.Text
+
+  /// Which of the activity composer's tabs produced this row — NOTE by
+  /// default so every entry created before this column existed reads
+  /// exactly as it always has. APPOINTMENT is deliberately not a value
+  /// here: booking a viewing creates a real Appointment row, not a note.
+  kind LeadNoteKind @default(NOTE)
+
+  /// Call length, CALL rows only — optional, a rep can skip it. Null for
+  /// every other kind.
+  durationSeconds Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+  @@map("lead_notes")
+}
+
+enum LeadNoteKind {
+  NOTE
+  CALL
+  EMAIL
+  /// A system-generated entry the write actions themselves create — "status
+  /// changed to Qualified", "assigned to Paweena" — with the real new value
+  /// baked into `body` at write time, in the locale the acting admin was
+  /// using. This exists because AuditLog (lib/audit/extension.ts) only ever
+  /// records which field names changed, never the values, by design — it
+  /// cannot answer "changed to what" no matter how the timeline reads it.
+  /// A SYSTEM note is written by the one place that does know the new
+  /// value: the action performing the write.
+  SYSTEM
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1136,6 +2107,217 @@ model SiteSetting {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// MEDIA LIBRARY
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One uploaded file (DigitalOcean Spaces). Every image/document field
+/// elsewhere in the schema (heroImageUrl, gallery, coverImageUrl, ...)
+/// still stores a plain URL string, not a relation to this table — Media
+/// is the admin's browsable/searchable index of what has been uploaded and
+/// where alt text lives, not a replacement for those columns. Introducing
+/// it as a hard foreign key everywhere it's used would have meant
+/// migrating every existing image column across four content types in one
+/// change; the URL stays the source of truth, Media is metadata about it.
+model Media {
+  id  String  @id @default(cuid())
+  url String  @db.Text
+  /// Storage key/path inside the Spaces bucket, kept alongside the public
+  /// URL so a future delete can target the object directly rather than
+  /// re-deriving the key from the URL string.
+  key String? @db.Text
+
+  mimeType  String?
+  width     Int?
+  height    Int?
+  sizeBytes Int?
+
+  /// { en, th, zh, ru } → alt text. A Json map rather than a fifth
+  /// translation child-table (the pattern every other 4-locale field in
+  /// this schema uses) because alt text is the one piece of copy attached
+  /// to every single upload rather than to a handful of content records —
+  /// at library scale a join table would be one row per (photo, locale)
+  /// for what is functionally a small object. Validated against the same
+  /// four locale keys at the zod layer (lib/validations.ts), same as
+  /// everywhere else.
+  altText Json?
+
+  tags String[] @default([])
+
+  uploadedBy String?
+  uploader   User?   @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("media")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// REDIRECTS & 404 TRACKING
+// ─────────────────────────────────────────────────────────────────────────
+
+/// An old URL → new URL rule, applied by middleware.ts ahead of routing.
+/// `fromPath`/`toPath` are locale-relative and always start with "/" (e.g.
+/// "/projects/old-slug" → "/projects/new-slug") — the locale segment is
+/// prepended/matched by the caller, so one row covers all four locales at
+/// once rather than needing four rows for the same rename.
+/// Where a Redirect row came from. The distinction is the whole point of
+/// the "ที่มา" column on the admin screen: an AUTO_SLUG row exists because
+/// somebody renamed a project and the system covered the old URL for them,
+/// and deleting it re-breaks every link Google and every printed brochure
+/// still holds. A MANUAL row is a vanity URL somebody typed on purpose —
+/// /qr-brochure, /promo — and only the person who made it knows what it is
+/// printed on, which is what `note` is for.
+enum RedirectSource {
+  AUTO_SLUG
+  MANUAL
+}
+
+model Redirect {
+  id         String  @id @default(cuid())
+  fromPath   String  @unique
+  toPath     String
+  /// 301 (permanent) or 302 (temporary) — almost always 301; 302 exists
+  /// for a short-lived redirect an admin does not want search engines to
+  /// treat as final.
+  statusCode Int     @default(301)
+  isActive   Boolean @default(true)
+
+  hits      Int       @default(0)
+  lastHitAt DateTime?
+
+  source RedirectSource @default(MANUAL)
+
+  /// What the old link is printed on — "QR in the paper brochure", "the
+  /// billboard on Bypass Road". Only meaningful for a MANUAL row: an
+  /// AUTO_SLUG row's story is its createdAt and the slug it came from,
+  /// both of which the admin screen renders without a note.
+  note String? @db.Text
+
+  /// A redirect that stops working on a date. Written for the campaign
+  /// case — /promo points at this month's open house and should go back to
+  /// 404 rather than quietly sending next year's visitors to a finished
+  /// event. Enforced at lookup time (lib/redirects.ts), not by a job:
+  /// nothing in this application runs on a schedule, so an expiry that
+  /// needed a cron would be an expiry that never fired.
+  expiresAt DateTime?
+
+  createdBy String?
+  author    User?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([source])
+  @@map("redirects")
+}
+
+/// Which counter a PathHitDay row belongs to.
+enum PathHitKind {
+  REDIRECT
+  NOT_FOUND
+  /// A public form submission refused by reCAPTCHA. Counted per route per
+  /// day so the settings screen can say what spam filtering is actually
+  /// stopping, rather than only that a key is configured.
+  FORM_REJECTED
+  /// A page somebody actually read. Recorded for the pages whose
+  /// performance is a content decision — articles today — so the admin can
+  /// compare "how many read it" against "how many enquired because of it"
+  /// without a Google Analytics account in the room.
+  PAGE_VIEW
+}
+
+/// One row per path per day, so "used 1,204 times in 30 days" can be a
+/// real rolling number instead of a lifetime total wearing a 30-day label.
+///
+/// Redirect.hits and NotFoundHit.hits stay where they are and keep
+/// counting for ever — they answer "has this ever been used", which is the
+/// question that decides whether a redirect is safe to delete. This table
+/// answers "is it still being used", which is a different question and the
+/// one the admin screen leads with.
+///
+/// `day` is a DATE, not a timestamp: the grain is deliberate, one upsert
+/// per path per day rather than a row per visit, so a bot crawling a dead
+/// URL ten thousand times costs ten thousand increments of one row.
+model PathHitDay {
+  id   String      @id @default(cuid())
+  kind PathHitKind
+  path String
+  day  DateTime    @db.Date
+  hits Int         @default(1)
+
+  @@unique([kind, path, day])
+  @@index([day])
+  @@map("path_hit_days")
+}
+
+/// A path that returned 404, with a running count — the admin's worklist
+/// for "what should probably become a Redirect." Upserted by the
+/// not-found route on every miss (see app/[locale]/not-found.tsx), not
+/// logged forever: a path fixed by a Redirect or by restoring the page
+/// stops accumulating hits and can be cleared from the list.
+/// One thing an administrator should know about, addressed to one person.
+///
+/// A row per recipient rather than one row plus a read-marker table: the
+/// list is short-lived and small, and "has Nat read this" is then a column
+/// on the thing itself instead of a join. Recipients are chosen by
+/// capability (lib/permissions.ts), so somebody who cannot see leads is
+/// never told about one — the notification would name a customer to
+/// somebody the PDPA work deliberately keeps that away from.
+model AdminNotification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// One of NOTIFICATION_EVENTS in lib/notifications.ts. Kept as a plain
+  /// string rather than an enum so adding an event is not a migration —
+  /// the list that matters is the one the settings screen renders, and it
+  /// lives in that file.
+  event String
+
+  /// Already-composed, already-translated text. Composed at send time
+  /// because the record it describes may be edited or deleted afterwards,
+  /// and a notification that re-reads the row would then change its own
+  /// past — "a new lead from Elena" must keep saying that.
+  title String  @db.Text
+  body  String? @db.Text
+
+  /// Locale-relative admin path to open, e.g. "/admin/leads/abc".
+  href String?
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("admin_notifications")
+}
+
+model NotFoundHit {
+  id        String   @id @default(cuid())
+  path      String   @unique
+  referer   String?  @db.Text
+  hits      Int      @default(1)
+  lastHitAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  /// Set when an administrator has looked at this path and decided it
+  /// needs nothing — almost always a bot guessing filenames (/wp-login.php,
+  /// /sitemap_index.xml). The row stays and keeps counting; it is only
+  /// kept off the worklist.
+  ///
+  /// Deleting it instead, which is what this screen used to do, does not
+  /// work: the next request for the same path recreates it, so a path
+  /// nobody can fix reappears at the top of the list every few minutes.
+  hiddenAt DateTime?
+
+  @@index([hits])
+  @@map("not_found_hits")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // EVENTS — open house / showroom events with RSVP
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -1162,9 +2344,20 @@ model Event {
   endsAt        DateTime?
   coverImageUrl String?
 
+  /// Overrides the share image on social cards. Falls back to
+  /// coverImageUrl — see Project.ogImageUrl's comment for why this exists
+  /// as a separate field rather than just cropping the cover on the fly.
+  ogImageUrl String?
+
   capacity Int? // max attendees, null = unlimited
 
   isPublished Boolean @default(false)
+
+  /// See ContentStatus's comment on Project — same workflow, same rule.
+  /// Unrelated to `status` above (EventStatus is this event's own
+  /// PENDING/ONGOING/... lifecycle, not the content-publish workflow).
+  contentStatus      ContentStatus @default(PUBLISHED)
+  scheduledPublishAt DateTime?
 
   registrations EventRegistration[]
   translations  EventTranslation[]
@@ -1182,8 +2375,16 @@ model EventTranslation {
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   locale  String
 
-  title       String  @db.Text
-  description String? @db.Text
+  title           String  @db.Text
+  description     String? @db.Text
+  metaTitle       String? @db.Text
+  metaDescription String? @db.Text
+
+  /// Per-locale opt-out of indexing (a duplicate-content translation still
+  /// being finished, a members-only showroom event, etc.). Defaults to
+  /// false — every existing row keeps being indexed exactly as before this
+  /// column existed.
+  noIndex Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1221,6 +2422,28 @@ model EventRegistration {
 
   status EventStatus @default(PENDING) @map("status")
 
+  /// Which language version of the site they registered on — the same
+  /// real signal LeadInquiry.commsLanguage records, captured from the RSVP
+  /// form's own locale rather than guessed from a name or a phone code.
+  /// Null on every row that predates this column.
+  locale String?
+
+  /// Set the moment they are marked present at the door. Null means "has
+  /// not arrived", which is different from CANCELLED and from NO_SHOW —
+  /// the latter is a judgement made after the event, this is a fact
+  /// recorded during it.
+  checkedInAt DateTime?
+
+  /// The lead this registration was turned into, if anyone has done so.
+  ///
+  /// A registration is not automatically a lead: most people at an open
+  /// house are looking, and a sales pipeline filled with everyone who
+  /// walked through the door is a pipeline nobody reads. Converting is a
+  /// decision a rep makes, and this records that they made it — which is
+  /// also what stops the same person being converted twice.
+  leadId String?      @unique
+  lead   LeadInquiry? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
   consentGiven   Boolean   @default(false)
   consentedAt    DateTime?
   consentVersion String?
@@ -1241,6 +2464,43 @@ enum EventStatus {
   CANCELLED
   ATTENDED
   NO_SHOW
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// APPOINTMENTS — site visits / showroom viewings a sales rep owns
+// ─────────────────────────────────────────────────────────────────────────
+
+/// A scheduled viewing or call, independent of EventRegistration (that's
+/// an RSVP to a public open-house Event; this is one rep's one-on-one
+/// calendar entry, usually but not always tied to a LeadInquiry).
+model Appointment {
+  id String @id @default(cuid())
+
+  leadId String?
+  lead   LeadInquiry? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  assignedToId String?
+  assignedTo   User?   @relation("AppointmentAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  scheduledAt     DateTime
+  durationMinutes Int               @default(60)
+  status          AppointmentStatus @default(REQUESTED)
+  location        String?
+  notes           String?           @db.Text
+
+  createdBy String?
+  creator   User?   @relation("AppointmentCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scheduledAt])
+  @@index([assignedToId, scheduledAt])
+  @@index([leadId])
+  @@map("appointments")
 }
 
 /// What an administrator changed in the back office, and when.
@@ -1299,6 +2559,25 @@ model AuditLog {
   /// Names of the fields the operation set, alphabetical. No values.
   changedFields String[]
 
+  /// Before/after values for the fields that actually changed, as
+  /// `{ field: { before, after } }` — what makes "revert" possible and the
+  /// diff panel readable.
+  ///
+  /// Deliberately narrower than changedFields above, in two ways.
+  ///
+  /// It is null for the models holding customer data (see UNLABELLED_MODELS
+  /// in lib/audit/extension.ts). Every readable field on a lead or an RSVP
+  /// is somebody's name, phone or email, and a LeadNote's body is a call
+  /// log about them; copying those values here would build a second,
+  /// longer-lived copy of the contact database — the same reasoning that
+  /// already suppresses recordLabel for those models, applied to values.
+  ///
+  /// And it holds only fields whose value genuinely differs, where
+  /// changedFields lists every field the write *set*. A form that submits
+  /// all thirty of its inputs records thirty names and, usually, one or
+  /// two real changes.
+  changes Json?
+
   /// Rows affected by a bulk operation; null for single-row ones.
   count Int?
 
@@ -1319,4 +2598,175 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([model, createdAt])
   @@map("audit_logs")
+}
+
+/// A saved snapshot of one content row at one point in time — the "revert
+/// to a previous version" and "compare draft vs. published" half of the
+/// draft/review/publish workflow (see ContentStatus). Deliberately one
+/// generic table rather than a *Revision model per content type: the shape
+/// being snapshotted is "whatever that row's own fields were", which
+/// `snapshot` (Json) captures without needing a matching column for every
+/// field on four different models, and a revert reads back exactly what
+/// was written rather than reconstructing it from a schema that may have
+/// grown new fields since.
+///
+/// `contentType` + `contentId` name the row this snapshot is of rather
+/// than a foreign key, because a real FK would need one nullable column
+/// per content type (only ever one populated) for the same reason
+/// LeadInquiry.projectId is a plain optional relation rather than a
+/// polymorphic one elsewhere in this schema — Prisma has no native
+/// polymorphic relation. `contentId` is not enforced against the row
+/// still existing: a deleted project's revision history is exactly the
+/// record of what it used to say, and it must survive the row it was
+/// taken from, the same reasoning as AuditLog.recordId being unenforced.
+model ContentRevision {
+  id String @id @default(cuid())
+
+  /// "PROJECT" | "NEWS_ARTICLE" | "EVENT" | "E_BROCHURE" — matches the
+  /// admin Publishing dashboard's ContentTypeKey, kept as a plain string
+  /// for the same reason AuditLog.model is a string: a fifth content type
+  /// gaining revision history should not need a migration.
+  contentType String
+  contentId   String
+
+  /// The row's own fields (including its translations) at save time —
+  /// exactly what a revert writes back, and exactly what the compare view
+  /// diffs against the current row.
+  snapshot Json
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  /// "link_opportunity" for an automated link-insertion edit (see
+  /// lib/admin/link-opportunities.ts); null for the two existing writers,
+  /// approveAndPublish and revertToRevision, which are unaffected by this
+  /// column. A plain string for the same "a fifth writer shouldn't need a
+  /// migration" reasoning as contentType above.
+  source String?
+
+  @@index([contentType, contentId, createdAt])
+  @@map("content_revisions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// KEYWORDS & LINK HEALTH — content-studio infrastructure
+// ─────────────────────────────────────────────────────────────────────────
+
+/// A phrase being tracked for SEO purposes, independent of any one piece
+/// of content — the same keyword can be a News article's focus keyword
+/// today and a Project page's secondary keyword tomorrow, which is what
+/// KeywordAssignment below is for.
+///
+/// searchVolume/difficulty/currentRank/trend are nullable and unpopulated
+/// by anything in this codebase as of this migration — there is no rank
+/// tracker or keyword-data integration wired up yet, so every row starts
+/// with these blank rather than a placeholder number. Filling them in is
+/// a later phase's job; this phase only gives them somewhere to live.
+model Keyword {
+  id     String @id @default(cuid())
+  phrase String @unique
+  locale String
+
+  searchVolume Int?
+  difficulty   Int?
+
+  currentRank   Int?
+  previousRank  Int?
+  rankCheckedAt DateTime?
+
+  /// Up to the last 12 weeks of rank history, `[{w, rank}, …]` — a plain
+  /// JSON array rather than its own table, since nothing here queries
+  /// across keywords by week yet. Reconsider if that changes.
+  trend Json?
+
+  /// Admin-curated related terms for this phrase — manually filled in
+  /// from the keyword library or the news editor's Keywords tab (Phase 4),
+  /// not from any external LSI/NLP API. Empty until someone adds one.
+  lsiTerms String[] @default([])
+
+  assignments KeywordAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("keywords")
+}
+
+/// Which content a Keyword is targeting, and where. `contentType` is a
+/// plain string rather than an enum for the same reason
+/// ContentRevision.contentType and AuditLog.model are: a fifth content
+/// type gaining keyword assignments should not need a migration.
+///
+/// `isPrimary` marks the one assignment that is "the" focus keyword for
+/// that (content, locale) pair — but NewsArticleTranslation.focusKeyword
+/// remains the field the News editor actually reads and writes in this
+/// phase. This table is the future home for that relationship once
+/// keyword assignment moves beyond a single free-text field per article;
+/// it is not yet wired into any read path.
+model KeywordAssignment {
+  id String @id @default(cuid())
+
+  keywordId String
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  contentType String
+  contentId   String
+  locale      String
+
+  isPrimary Boolean @default(false)
+
+  @@unique([keywordId, contentType, contentId, locale])
+  @@map("keyword_assignments")
+}
+
+/// One row per link found in a piece of content, populated by re-running
+/// lib/content-links.ts's extractLinks() over content bodies — this
+/// table does not add a second way of parsing links out of a body, it
+/// just gives the existing scan somewhere to persist its results instead
+/// of recomputing them from scratch on every visit to /admin's link
+/// health screen. See lib/admin/url-health.ts for the scan this backs.
+model ContentLink {
+  id String @id @default(cuid())
+
+  fromType   String
+  fromId     String
+  fromLocale String
+
+  toPath     String
+  anchorText String?
+  isInternal Boolean
+
+  httpStatus Int?
+  checkedAt  DateTime?
+
+  @@index([toPath])
+  @@index([fromType, fromId])
+  @@map("content_links")
+}
+
+/// One row per homepage section (hero, projects, news, awards, …) — the
+/// Home Builder's drag-to-reorder / show-hide list. `key` is a fixed
+/// identifier the homepage's own render code already switches on (it is
+/// not itself content — there is nothing to translate), `sortOrder` is
+/// what dragging changes, and `isVisible` is the per-section toggle.
+///
+/// No seed migration ships default rows for this table on purpose: the
+/// admin Home Builder page creates the default set itself (in the order
+/// the homepage already renders them in today) the first time it finds
+/// none, so a fresh migration never leaves the homepage looking at an
+/// empty section list before anyone has opened that page.
+model HomeSection {
+  id String @id @default(cuid())
+
+  key String @unique
+
+  sortOrder Int     @default(0)
+  isVisible Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("home_sections")
 }

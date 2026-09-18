@@ -12,7 +12,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { locales, type Locale } from "@/i18n";
+import { LOCALE_DISPLAY_ORDER, type Locale } from "@/i18n";
 import type { CompletenessMap } from "@/lib/admin/translated-form";
 
 const LOCALE_LABELS: Record<Locale, string> = {
@@ -29,7 +29,7 @@ export default function TranslationStatusBadges({
 }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      {locales.map((lang) => (
+      {LOCALE_DISPLAY_ORDER.map((lang) => (
         <span
           key={lang}
           title={LOCALE_LABELS[lang]}

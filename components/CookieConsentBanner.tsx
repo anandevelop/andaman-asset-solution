@@ -38,11 +38,11 @@ const ALL_REJECTED: ConsentDecision = { analytics: false, marketing: false };
 // Bespoke rather than reused from .btn-primary/.btn-outline (public CTAs,
 // too large for a row of three inline buttons) or .admin-btn/.admin-btn-ghost
 // (the back-office's denser rhythm, not this component's home) — same
-// palette and rounded-sm corners as both, sized for a banner.
+// palette and rounded-xs corners as both, sized for a banner.
 const PRIMARY_BTN =
-  "inline-flex items-center justify-center rounded-sm bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-primary-700 sm:text-sm";
+  "inline-flex items-center justify-center rounded-xs bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-primary-700 sm:text-sm";
 const GHOST_BTN =
-  "inline-flex items-center justify-center rounded-sm border border-primary/20 px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-primary/5 sm:text-sm";
+  "inline-flex items-center justify-center rounded-xs border border-primary/20 px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-primary/5 sm:text-sm";
 
 export default function CookieConsentBanner() {
   const t = useTranslations("cookieConsent");
@@ -84,7 +84,7 @@ export default function CookieConsentBanner() {
       role="dialog"
       aria-live="polite"
       aria-label={t("necessaryTitle")}
-      // Solid, not translucent: bg-white/97 + backdrop-blur read as a hazy
+      // Solid, not translucent: bg-white/97 + backdrop-blur-sm read as a hazy
       // strip with the page bleeding through behind it, which is what made
       // this hard to read. A fully opaque background plus a visible border
       // and stronger shadow reads as a distinct panel instead.
@@ -108,16 +108,6 @@ export default function CookieConsentBanner() {
             </p>
 
             <div className="flex shrink-0 flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft(consent ?? ALL_REJECTED);
-                  setCustomizing(true);
-                }}
-                className={GHOST_BTN}
-              >
-                {t("customize")}
-              </button>
               <button
                 type="button"
                 onClick={() => decide(ALL_REJECTED)}

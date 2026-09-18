@@ -27,7 +27,7 @@ import { LEAD_PROJECT } from "./fixtures";
 const ACTIVITY = "/en/admin/activity";
 
 /** Forces the English editing tab, so the entry's label is predictable. */
-const FAQS = "/en/admin/faqs?lang=en";
+const FAQS = "/en/admin/pages/faq?lang=en";
 
 /** Distinct per run, so a row cannot be confused with an earlier one. */
 const uniqueQuestion = () => `E2E audit probe ${Date.now()}`;
@@ -183,7 +183,7 @@ test.describe("The activity log", () => {
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Request viewing" }).click();
 
-    await expect(page.getByText(/we've received your request/i)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
 
     await page.goto("/en/login");
     await signIn(page, nextAccount().email);

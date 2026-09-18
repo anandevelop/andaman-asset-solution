@@ -61,6 +61,20 @@ function toNumber(value: Prisma.Decimal | number | null): number | null {
 
 // ── Serialized shapes handed to components ──────────────────────────────
 
+/**
+ * The one thing worth saying about a project beyond its specification —
+ * an award it won, or photographs that have just gone up.
+ *
+ * Derived, never stored: `kind` decides the icon and which translation
+ * key the card reads, and the numbers come with it. Null when there is
+ * nothing true to say, and the card then shows no second badge rather
+ * than a filler one.
+ */
+export type ProjectSignal =
+  | { kind: "awards"; count: number; year: number }
+  | { kind: "newPhotos"; count: number }
+  | { kind: "photosAdded"; year: number; month: number };
+
 export type ProjectCard = {
   id: string;
   slug: string;
@@ -72,6 +86,28 @@ export type ProjectCard = {
   totalUnits: number | null;
   landAreaSqm: number | null;
   heroImageUrl: string | null;
+};
+
+/**
+ * A card on a listing page, which shows more than the detail page's own
+ * header needs.
+ *
+ * Separate from ProjectCard rather than folded into it because
+ * ProjectDetail extends ProjectCard, and a detail page has no use for a
+ * bedroom span it renders a full unit-type table for. `facilityNames`, not
+ * `facilities`: ProjectDetail already carries a `facilities` string array
+ * from the deprecated column, and two fields of the same name meaning
+ * different things is a bug waiting for somebody to read the wrong one.
+ */
+export type ProjectListCard = ProjectCard & {
+  /** Bedroom span across this project's unit types — equal when it offers
+   *  only one size, null when no unit type records a bedroom count. */
+  bedroomsMin: number | null;
+  bedroomsMax: number | null;
+  /** Active facilities in the order an administrator arranged them,
+   *  already locale-picked. The card shows the first few. */
+  facilityNames: string[];
+  signal: ProjectSignal | null;
 };
 
 export type FloorPlanSummary = {
@@ -115,6 +151,11 @@ export type ProjectUnitSummary = {
   positionYPercent: number | null;
   landAreaSqm: number | null;
   sortOrder: number;
+  /** Sales phase, when this project releases in stages — see the field
+   *  comment on ProjectUnit.phase. Null on the (majority) single-release
+   *  projects, which is exactly why the site plan's phase tabs disappear
+   *  rather than show one meaningless "Phase" pill for them. */
+  phase: number | null;
 };
 
 export type AttractionSummary = {
@@ -207,6 +248,10 @@ export type ProjectDetail = ProjectCard & {
   latitude: number | null;
   longitude: number | null;
   googleMapsUrl: string | null;
+  /// External Matterport/Kuula/YouTube-360 link — see the schema.prisma
+  /// comment on Project.virtualTourUrl. Null hides the hero's 360° Tour
+  /// button entirely.
+  virtualTourUrl: string | null;
   /// "IMAGE" | "VIDEO" — see the schema.prisma comment on
   /// Project.heroMediaType. Kept as a plain string (not the Prisma enum
   /// type) for the same reason every other enum in this file's serialized
@@ -215,6 +260,14 @@ export type ProjectDetail = ProjectCard & {
   heroVideoUrl: string | null;
   metaTitle: string;
   metaDescription: string;
+  /// Per-locale opt-out of indexing — see the schema.prisma comment on
+  /// ProjectTranslation.noIndex.
+  noIndex: boolean;
+  /// Per-project overrides set from the admin's SEO tab; null on almost
+  /// every project, in which case the page falls back to its own URL and
+  /// its hero image.
+  canonicalUrl: string | null;
+  ogImageUrl: string | null;
   /// Sale Kit "Concept Design" narrative. See the schema.prisma comment on
   /// Project.conceptDesignEn/Th for how this differs from `description`.
   conceptDesign: string;
@@ -316,12 +369,16 @@ export const getProjectBySlug = cache(
       latitude: toNumber(project.latitude),
       longitude: toNumber(project.longitude),
       googleMapsUrl: project.googleMapsUrl,
+      virtualTourUrl: project.virtualTourUrl,
       heroMediaType: project.heroMediaType ?? "IMAGE",
       heroVideoUrl: project.heroVideoUrl,
       metaTitle: t?.metaTitle ?? pickLocale(locale, project.metaTitleTh, project.metaTitleEn),
       metaDescription:
         t?.metaDescription ??
         pickLocale(locale, project.metaDescriptionTh, project.metaDescriptionEn),
+      noIndex: t?.noIndex ?? false,
+      canonicalUrl: project.canonicalUrl ?? null,
+      ogImageUrl: project.ogImageUrl ?? null,
       conceptDesign:
         t?.conceptDesign ?? pickLocale(locale, project.conceptDesignTh, project.conceptDesignEn),
       aboutThisProject: hasAboutThisProject
@@ -342,11 +399,17 @@ export const getProjectBySlug = cache(
  * With five projects the difference is nothing; with fifty it is the
  * difference between a query and a full table read on every page view, and
  * the shape of the code should not have to change when that day arrives.
+ *
+ * cache()d because three separate components ask for the same unfiltered
+ * list on the same render — the footer's "Developments" column, the
+ * closing CTA's background photograph, and the projects grid itself. React
+ * dedupes them to one query per request, keyed on the arguments, so a
+ * filtered call still runs its own.
  */
-export async function getPublishedProjects(
+export const getPublishedProjects = cache(async function getPublishedProjects(
   locale: string,
   filters: ProjectFilters = EMPTY_FILTERS,
-): Promise<ProjectCard[]> {
+): Promise<ProjectListCard[]> {
   const where: Prisma.ProjectWhereInput = {
     isPublished: true,
     deletedAt: null,
@@ -356,14 +419,54 @@ export async function getPublishedProjects(
 
   const orderBy = buildOrderBy(filters.sort);
 
-  const projects: any[] = await safeQuery(
-    "project.findMany(published)",
-    () => prisma.project.findMany({ where, orderBy, include: { translations: true } }),
-    [],
-  );
+  const [projects, awards] = await Promise.all([
+    safeQuery(
+      "project.findMany(published)",
+      () =>
+        prisma.project.findMany({
+          where,
+          orderBy,
+          include: {
+            translations: true,
+            // Bedroom span for the card's spec row.
+            unitTypes: { select: { bedrooms: true } },
+            facilityItems: {
+              where: { isActive: true },
+              orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+              include: { translations: true },
+            },
+            /*
+              Only the updates that actually carry photographs, newest
+              first, and only one of them. An update with no images is not
+              a photo drop and must not produce a badge claiming one.
+            */
+            progressUpdates: {
+              where: { isPublished: true, NOT: { images: { isEmpty: true } } },
+              orderBy: [{ year: "desc" }, { month: "desc" }],
+              take: 1,
+              select: { year: true, month: true, images: true, createdAt: true },
+            },
+          },
+        }),
+      [] as any[],
+    ),
+    safeQuery(
+      "award.findMany(byProject)",
+      () =>
+        prisma.award.findMany({
+          where: { isActive: true, projectName: { not: null } },
+          select: { projectName: true, year: true },
+        }),
+      [] as { projectName: string | null; year: number }[],
+    ),
+  ]);
 
-  return projects.map((project) => {
+  return (projects as any[]).map((project) => {
     const t = getTranslation<any>(project.translations, locale);
+
+    const bedrooms = (project.unitTypes as { bedrooms: number | null }[])
+      .map((unitType) => unitType.bedrooms)
+      .filter((value): value is number => typeof value === "number");
 
     return {
       id: project.id,
@@ -376,8 +479,60 @@ export async function getPublishedProjects(
       totalUnits: project.totalUnits,
       landAreaSqm: toNumber(project.landAreaSqm),
       heroImageUrl: project.heroImageUrl,
+      bedroomsMin: bedrooms.length > 0 ? Math.min(...bedrooms) : null,
+      bedroomsMax: bedrooms.length > 0 ? Math.max(...bedrooms) : null,
+      facilityNames: (project.facilityItems as any[]).map(
+        (facility) =>
+          getTranslation<any>(facility.translations, locale)?.name ??
+          pickLocale(locale, facility.nameTh, facility.nameEn),
+      ),
+      signal: signalFor(project, awards),
     };
   });
+});
+
+/** A photo drop counts as "new" for this long before it becomes a date. */
+const NEW_PHOTOS_DAYS = 60;
+
+/**
+ * The one extra thing a card says about a project.
+ *
+ * Awards first: an award is a fact about the development that does not
+ * expire, and it is the strongest thing any of these cards can say. Photos
+ * are the fallback, and they change wording rather than quietly going
+ * stale — "14 new photographs" for the first two months after an update
+ * goes up, "Photos added March 2026" for ever after. A badge that still
+ * says "new" a year later is a badge nobody believes twice.
+ *
+ * Awards are matched on the exact project name an administrator typed into
+ * Award.projectName. Deliberately exact: a "contains" match would hang
+ * "The Residence"'s awards on any project whose name starts the same way,
+ * and attributing somebody else's award to a development is a worse
+ * failure than showing no badge. An award that matches nothing still
+ * appears in the awards section — it just does not decorate a card.
+ */
+function signalFor(
+  project: { nameEn: string; progressUpdates: any[] },
+  awards: { projectName: string | null; year: number }[],
+): ProjectSignal | null {
+  const mine = awards.filter((award) => award.projectName === project.nameEn);
+
+  if (mine.length > 0) {
+    return {
+      kind: "awards",
+      count: mine.length,
+      year: Math.max(...mine.map((award) => award.year)),
+    };
+  }
+
+  const latest = project.progressUpdates[0];
+  if (!latest) return null;
+
+  const ageDays = (Date.now() - new Date(latest.createdAt).getTime()) / 86_400_000;
+
+  return ageDays <= NEW_PHOTOS_DAYS
+    ? { kind: "newPhotos", count: latest.images.length }
+    : { kind: "photosAdded", year: latest.year, month: latest.month };
 }
 
 /**
@@ -605,7 +760,11 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     `projectUnit.findMany(${projectId})`,
     () =>
       db.projectUnit.findMany({
-        where: { projectId },
+        // Unreleased plots are absent from the public plan entirely — see
+        // ProjectUnit.releasedForSale. They exist on the master plan and in
+        // the admin, but a visitor cannot buy one yet, so showing it would
+        // only invite an enquiry the sales team has to turn down.
+        where: { projectId, releasedForSale: true },
         orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
         include: { unitType: { select: { name: true } } },
       }),
@@ -623,7 +782,57 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     positionYPercent: toNumber(u.positionYPercent),
     landAreaSqm: toNumber(u.landAreaSqm),
     sortOrder: u.sortOrder,
+    phase: u.phase ?? null,
   }));
+}
+
+/**
+ * When the sales team last touched this project's unit statuses — the
+ * site plan's "updated {date}" chip, so a buyer scanning the map knows
+ * whether "available" means "as of this morning" or "as of some point
+ * this year." Scoped to `releasedForSale` for the same reason
+ * getProjectUnits() is: a phase-2 plot's status is not information a
+ * visitor asked for, so a rep editing it should not silently bump a date
+ * that is supposed to describe what the public map shows.
+ */
+export async function getProjectUnitsUpdatedAt(projectId: string): Promise<Date | null> {
+  return safeQuery(
+    `projectUnit.updatedAt(${projectId})`,
+    async () => {
+      const result = await prisma.projectUnit.aggregate({
+        _max: { updatedAt: true },
+        where: { projectId, releasedForSale: true },
+      });
+      return result._max.updatedAt ?? null;
+    },
+    null,
+  );
+}
+
+export type ReservableUnit = { id: string; unitNumber: string; unitTypeName: string | null };
+
+/**
+ * Units a rep can newly reserve for a lead — the Lead Detail page's
+ * minimal "unit of interest" picker (LeadDetail.dc.html), not the full
+ * Units & Site Plan workflow. Deliberately just AVAILABLE units: a lead
+ * already holding one shows up through its own reservedUnits relation
+ * instead (see the lead's own query), and a SOLD unit is never offerable.
+ */
+export async function getReservableUnits(projectId: string): Promise<ReservableUnit[]> {
+  return safeQuery(
+    `projectUnit.reservable(${projectId})`,
+    async () => {
+      const units = await prisma.projectUnit.findMany({
+        // releasedForSale as well as AVAILABLE: a plot held back for a
+        // later phase is not something a rep can promise a lead today.
+        where: { projectId, status: "AVAILABLE", releasedForSale: true },
+        orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
+        select: { id: true, unitNumber: true, unitType: { select: { name: true } } },
+      });
+      return units.map((u) => ({ id: u.id, unitNumber: u.unitNumber, unitTypeName: u.unitType?.name ?? null }));
+    },
+    [],
+  );
 }
 
 /**

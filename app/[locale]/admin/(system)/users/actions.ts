@@ -208,8 +208,11 @@ export async function changeOwnPassword(
   _previous: UserFormState,
   formData: FormData,
 ): Promise<UserFormState> {
-  // Any signed-in role may change their own password.
-  const actor = await requireAdminAction();
+  // Any signed-in role may change their own password — Role.VIEWER, not
+  // the requireAdminAction() default of EDITOR, which the bare call above
+  // silently substituted, contradicting this comment for every VIEWER and
+  // SALES account.
+  const actor = await requireAdminAction(Role.VIEWER);
 
   const parsed = changePasswordSchema.safeParse({
     currentPassword: text(formData, "currentPassword"),

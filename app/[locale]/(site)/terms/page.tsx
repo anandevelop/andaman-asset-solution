@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
-import { Mail, Phone, MapPin, FileText } from "lucide-react";
-import Reveal from "@/components/Reveal";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { FileText } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { locales, type Locale } from "@/i18n";
+import { locales } from "@/i18n";
+import { breadcrumbList, localizedAlternates, trailFor } from "@/lib/seo";
+import JsonLd from "@/components/JsonLd";
+import Breadcrumb from "@/components/Breadcrumb";
+import LegalPolicyPage from "@/components/LegalPolicyPage";
 import { getTermsOfService } from "@/content/terms";
 import { intlLocale } from "@/lib/format";
 
@@ -25,15 +28,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: terms.title,
     description: terms.intro[0].slice(0, 160),
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}${siteConfig.legal.termsPath}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [
-          l,
-          `${siteConfig.url}/${l}${siteConfig.legal.termsPath}`,
-        ]),
-      ),
-    },
+    alternates: localizedAlternates(locale, siteConfig.legal.termsPath),
     robots: { index: true, follow: true },
   };
 }
@@ -55,111 +50,48 @@ export default async function TermsOfServicePage(props: Props) {
     year: "numeric",
   }).format(new Date(terms.effectiveDate));
 
+  const [tNav, tFooter, tLegal] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("footer"),
+    getTranslations("legalPage"),
+  ]);
+
+  /*
+    One array for the trail a visitor reads and the one Google reads. This
+    page had neither before — the legal pages were the two the breadcrumb
+    work skipped, and the crumb's own name comes from the footer, which is
+    the only place either page is linked from.
+  */
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tFooter("terms"), path: "/terms" },
+  ]);
+
   return (
-    <article className="container-luxe max-w-3xl pb-24 pt-28 sm:pt-36">
-      <Reveal>
-        <p className="eyebrow flex items-center gap-2">
-          <FileText size={14} /> Legal
-        </p>
-        <h1 className="mt-3 text-4xl font-light text-primary sm:text-5xl">
-          {terms.title}
-        </h1>
+    <>
+      <JsonLd id="breadcrumb-schema" data={breadcrumbList(trail)} />
 
-        <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/65">
-          <span>
-            {terms.lastUpdatedLabel}: {effectiveDate}
-          </span>
-          <span className="hidden sm:inline">·</span>
-          <span>
-            {terms.versionLabel}: <code className="text-ink/70">{terms.version}</code>
-          </span>
-        </p>
+      {/* print:pt-0: the normal top padding exists only to clear the fixed
+          Navbar, which (site)/layout.tsx hides for print. */}
+      <article className="container-luxe max-w-6xl pb-24 pt-28 sm:pt-36 print:pb-0 print:pt-0">
+        <Breadcrumb items={trail} className="mb-5 print:hidden" />
 
-        <div className="mt-10">
-          {terms.intro.map((paragraph, i) => (
-            <p key={i} className="mt-4 text-sm leading-relaxed text-ink/70 sm:text-base">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-      </Reveal>
-
-      {/* ── Sections ─────────────────────────────────────────────────── */}
-      <div className="mt-14 space-y-12">
-        {terms.sections.map((section, i) => (
-          <Reveal key={section.heading} delay={Math.min(i, 4) * 0.05}>
-            <section>
-              <h2 className="text-xl font-medium text-primary sm:text-2xl">
-                {section.heading}
-              </h2>
-
-              {section.body?.map((paragraph, j) => (
-                <p key={j} className="mt-3 text-sm leading-relaxed text-ink/70">
-                  {paragraph}
-                </p>
-              ))}
-
-              {section.bullets && (
-                <ul className="mt-4 space-y-2.5">
-                  {section.bullets.map((bullet, j) => (
-                    <li
-                      key={j}
-                      className="relative pl-5 text-sm leading-relaxed text-ink/70 before:absolute before:left-0 before:top-[0.6em] before:h-1 before:w-1 before:rounded-full before:bg-accent-700"
-                    >
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </Reveal>
-        ))}
-      </div>
-
-      {/* ── Contact ──────────────────────────────────────────────────── */}
-      <Reveal>
-        <section className="mt-16 border border-primary/10 bg-white p-7 shadow-card sm:p-9">
-          <h2 className="text-xl font-medium text-primary sm:text-2xl">
-            {terms.contactHeading}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-ink/70">
-            {terms.contactIntro}
-          </p>
-
-          <dl className="mt-6 space-y-3 text-sm">
-            <div className="flex items-start gap-3">
-              <MapPin size={16} className="mt-0.5 shrink-0 text-accent-700" />
-              <dd className="text-ink/70">
-                {siteConfig.legalName}
-                <br />
-                {siteConfig.contact.address[locale as Locale] ?? siteConfig.contact.address.en}
-              </dd>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail size={16} className="shrink-0 text-accent-700" />
-              <dd>
-                <a
-                  href={`mailto:${siteConfig.contact.email}`}
-                  className="text-ink/70 underline hover:text-primary"
-                >
-                  {siteConfig.contact.email}
-                </a>
-              </dd>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone size={16} className="shrink-0 text-accent-700" />
-              <dd>
-                <a
-                  href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`}
-                  className="text-ink/70 underline hover:text-primary"
-                >
-                  {siteConfig.contact.phoneDisplay}
-                </a>
-              </dd>
-            </div>
-          </dl>
-        </section>
-      </Reveal>
-    </article>
+        <LegalPolicyPage
+          locale={locale}
+          eyebrowIcon={<FileText size={14} />}
+          eyebrowLabel="Legal"
+          content={terms}
+          effectiveDateFormatted={effectiveDate}
+          strings={{
+            tableOfContents: tLegal("tableOfContents"),
+            downloadPdf: tLegal("downloadPdf"),
+            print: tLegal("print"),
+            needHelp: tLegal("needHelp"),
+            needHelpBody: tLegal("needHelpBody"),
+            contactCta: tLegal("contactCta"),
+          }}
+        />
+      </article>
+    </>
   );
 }

@@ -8,11 +8,14 @@
  */
 
 import Link from "next/link";
+import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { saveUnitType, deleteUnitType } from "./actions";
 import UnitTypeForm from "@/components/admin/UnitTypeForm";
@@ -35,7 +38,10 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { locale, id: projectId } = params;
-  await requireAdmin(locale);
+  /* VIEWER may open this to see a project's unit types; only EDITOR
+     and above may submit either form below. */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const db = prisma;
@@ -74,6 +80,21 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("unitTypes.subtitle")}</p>
       </header>
 
+      <ProjectHubTabs
+        locale={locale}
+        projectId={project.id}
+        active="unitTypes"
+        labels={{
+          overview: t("projects.hubOverview"),
+          content: t("projectContent.tab"),
+          seo: t("pageSeo.tab"),
+          unitTypes: t("unitTypes.title"),
+          units: t("units.title"),
+          facilities: t("facilities.title"),
+          progress: t("progress.title"),
+        }}
+      />
+
       {/* One language selection drives every unit type's description field
           on this page — see the file comment on LanguageTabs. Hardcoded
           "all complete" here for the same reason facilities/page.tsx's
@@ -94,13 +115,15 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
           {t("unitTypes.newTitle")}
         </h2>
 
-        <UnitTypeForm
-          key={lang}
-          lang={lang}
-          projectSlug={project.slug}
-          action={saveUnitType.bind(null, locale, project.id, project.slug, null)}
-          submitLabel={t("common.create")}
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <UnitTypeForm
+            key={lang}
+            lang={lang}
+            projectSlug={project.slug}
+            action={saveUnitType.bind(null, locale, project.id, project.slug, null)}
+            submitLabel={t("common.create")}
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing ────────────────────────────────────────────────── */}
@@ -121,28 +144,30 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
                   <TranslationStatusBadges completeness={completeness} />
                 </div>
 
-                <UnitTypeForm
-                  key={lang}
-                  lang={lang}
-                  projectSlug={project.slug}
-                  action={saveUnitType.bind(null, locale, project.id, project.slug, type.id)}
-                  onDelete={deleteUnitType.bind(null, locale, project.id, project.slug, type.id)}
-                  values={{
-                    name: type.name,
-                    description: editing?.description ?? "",
-                    livingAreaSqm: str(type.livingAreaSqm),
-                    bedrooms: str(type.bedrooms),
-                    bathrooms: str(type.bathrooms),
-                    totalUnits: str(type.totalUnits),
-                    sortOrder: String(type.sortOrder),
-                    floorPlans: type.floorPlans.map((fp: any) => ({
-                      id: fp.id,
-                      floorName: fp.floorName,
-                      imageUrl: fp.imageUrl,
-                    })),
-                  }}
-                  submitLabel={t("common.save")}
-                />
+                <fieldset disabled={!canWrite} className="contents">
+                  <UnitTypeForm
+                    key={lang}
+                    lang={lang}
+                    projectSlug={project.slug}
+                    action={saveUnitType.bind(null, locale, project.id, project.slug, type.id)}
+                    onDelete={deleteUnitType.bind(null, locale, project.id, project.slug, type.id)}
+                    values={{
+                      name: type.name,
+                      description: editing?.description ?? "",
+                      livingAreaSqm: str(type.livingAreaSqm),
+                      bedrooms: str(type.bedrooms),
+                      bathrooms: str(type.bathrooms),
+                      totalUnits: str(type.totalUnits),
+                      sortOrder: String(type.sortOrder),
+                      floorPlans: type.floorPlans.map((fp: any) => ({
+                        id: fp.id,
+                        floorName: fp.floorName,
+                        imageUrl: fp.imageUrl,
+                      })),
+                    }}
+                    submitLabel={t("common.save")}
+                  />
+                </fieldset>
               </section>
             );
           })}

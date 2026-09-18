@@ -34,19 +34,32 @@ import {
   fieldErrors,
   leadInquirySchema,
   leadInquiryServerSchema,
+  ARTICLE_FORMATS,
+  contentLinkSchema,
+  keywordAssignmentSchema,
+  keywordSchema,
   linesToArray,
+  newsArticleContentStudioSchema,
   newsArticleSchema,
+  newsArticleSeoCacheSchema,
+  newsArticleStudioFieldsSchema,
   projectSchema,
+  secondaryKeywordsToArray,
   setPasswordSchema,
   tagsToArray,
   userCreateSchema,
+  META_TITLE_MAX,
+  SETTING_VALIDATORS,
 } from "@/lib/validations";
 
-/** A minimal lead that every field-level test starts from. */
+/** A minimal lead that every field-level test starts from. `phone` is
+ *  E.164 — the shape CountrySelect.tsx's toE164() always produces, and the
+ *  only shape leadInquirySchema accepts now (see the "phone" describe
+ *  block below for why the old loose formats no longer pass). */
 const VALID_LEAD = {
   name: "Somchai Prasert",
   email: "somchai@example.com",
-  phone: "+66 81 234 5678",
+  phone: "+66812345678",
   consentGiven: true as const,
 };
 
@@ -95,20 +108,96 @@ describe("leadInquirySchema", () => {
     expect(leadInquirySchema.safeParse({ ...VALID_LEAD, email }).success).toBe(false);
   });
 
-  it.each([
-    "081-234-5678",
-    "+66 (0) 81 234 5678",
-    "6681234567",
-  ])("accepts the phone format %s", (phone) => {
-    expect(leadInquirySchema.safeParse({ ...VALID_LEAD, phone }).success).toBe(true);
-  });
+  it.each(["+66812345678", "+12025550143", "+8613800138000"])(
+    "accepts the E.164 phone number %s",
+    (phone) => {
+      expect(leadInquirySchema.safeParse({ ...VALID_LEAD, phone }).success).toBe(true);
+    },
+  );
 
   it.each([
+    // Every one of these used to be accepted, back when the field held
+    // whatever a visitor typed. CountrySelect.tsx now assembles E.164
+    // before the value ever reaches this schema, so only that shape is
+    // valid input — a loose format arriving here means something upstream
+    // (a script hitting the API directly, most likely) skipped assembly.
+    ["a local format with no country code", "081-234-5678"],
+    ["a loosely-formatted international number", "+66 (0) 81 234 5678"],
+    ["digits with no + prefix at all", "6681234567"],
     ["letters", "call me maybe"],
-    ["an extension marker", "081234567 ext 12"],
-    ["too short", "0812"],
+    ["an extension marker", "+66812345678 ext 12"],
+    ["too short to be a real calling code + number", "+1234567"],
+    ["a leading zero right after the +", "+0812345678"],
   ])("rejects a phone number with %s", (_label, phone) => {
     expect(leadInquirySchema.safeParse({ ...VALID_LEAD, phone }).success).toBe(false);
+  });
+
+  describe("phoneCountry cross-check", () => {
+    it("accepts a phone number that is genuinely valid for the given country", () => {
+      expect(
+        leadInquirySchema.safeParse({ ...VALID_LEAD, phone: "+66812345678", phoneCountry: "TH" })
+          .success,
+      ).toBe(true);
+    });
+
+    it("rejects a validly-shaped number from the wrong country", () => {
+      // +1 always matches E.164's regex, but a US number is not a Thai
+      // one just because both happen to have 10 national digits — this is
+      // exactly the gap the regex alone cannot close, which is why
+      // isValidPhoneForCountry runs separately in a superRefine.
+      const result = leadInquirySchema.safeParse({
+        ...VALID_LEAD,
+        phone: "+12025550143",
+        phoneCountry: "TH",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("skips the cross-check when phoneCountry is not sent", () => {
+      // Older or third-party clients that never learned about
+      // phoneCountry still get the plain E.164-shape check, not a hard
+      // failure for a field they were never told to send.
+      expect(
+        leadInquirySchema.safeParse({ ...VALID_LEAD, phone: "+12025550143" }).success,
+      ).toBe(true);
+    });
+  });
+
+  describe("nationality", () => {
+    it("accepts a known ISO2 code", () => {
+      expect(leadInquirySchema.safeParse({ ...VALID_LEAD, nationality: "GB" }).success).toBe(
+        true,
+      );
+    });
+
+    it("is case-insensitive", () => {
+      expect(leadInquirySchema.safeParse({ ...VALID_LEAD, nationality: "gb" }).success).toBe(
+        true,
+      );
+    });
+
+    it("rejects a code that is not a real country", () => {
+      // "XX" is exactly two letters — the .length(2) check alone would let
+      // it through, which is why isKnownIso2 runs as well.
+      expect(leadInquirySchema.safeParse({ ...VALID_LEAD, nationality: "XX" }).success).toBe(
+        false,
+      );
+    });
+
+    it("rejects free text from before CountrySelect.tsx existed", () => {
+      // The exact shape old leads were stored with — this schema is what
+      // a *new* submission goes through, not what a stored row must have
+      // been at some point in the past. See LeadInquiry.nationality's
+      // comment in schema.prisma for why those old rows are untouched.
+      expect(
+        leadInquirySchema.safeParse({ ...VALID_LEAD, nationality: "Russian" }).success,
+      ).toBe(false);
+    });
+
+    it("is optional", () => {
+      expect(leadInquirySchema.safeParse(VALID_LEAD).success).toBe(true);
+    });
   });
 
   it("requires consent to be exactly true", () => {
@@ -127,14 +216,11 @@ describe("leadInquirySchema", () => {
     ).toBe("Consent is required to submit this form");
   });
 
-  it("treats an empty optional field as absent", () => {
-    const result = leadInquirySchema.parse({
-      ...VALID_LEAD,
-      nationality: "",
-      message: "",
-    });
-
-    expect(result.nationality).toBe("");
+  it("treats an empty optional message as absent", () => {
+    // Unlike nationality (see the describe block above), message keeps its
+    // pre-existing "" .or(z.literal("")) shape — a text field submits an
+    // empty string when untouched, not undefined.
+    const result = leadInquirySchema.parse({ ...VALID_LEAD, message: "" });
     expect(result.message).toBe("");
   });
 
@@ -142,6 +228,36 @@ describe("leadInquirySchema", () => {
     expect(
       leadInquirySchema.safeParse({ ...VALID_LEAD, message: "x".repeat(2001) }).success,
     ).toBe(false);
+  });
+
+  describe("link-blocking", () => {
+    it("rejects a message containing a link", () => {
+      // See tests/links.test.ts for containsLink's own, more thorough
+      // coverage — this just confirms the schema actually wires it in.
+      expect(
+        leadInquirySchema.safeParse({ ...VALID_LEAD, message: "check bit.ly/cheap-villa" })
+          .success,
+      ).toBe(false);
+    });
+
+    it("accepts a message with a phone number and an email address", () => {
+      // The false positive that would matter most: a genuine buyer's own
+      // contact details getting blocked as if they were spam.
+      expect(
+        leadInquirySchema.safeParse({
+          ...VALID_LEAD,
+          message: "โทร 081-234-5678 หรือ james@gmail.com",
+        }).success,
+      ).toBe(true);
+    });
+
+    it("gives the link rejection an identifiable sentinel, not Zod's default", () => {
+      // LeadForm.tsx matches on this exact string to swap in a translated
+      // sentence — see its phoneError/messageError mapping.
+      expect(
+        messageFor(leadInquirySchema, { ...VALID_LEAD, message: "bit.ly/x" }, "message"),
+      ).toBe("LINK_DETECTED");
+    });
   });
 });
 
@@ -235,8 +351,11 @@ describe("fieldErrors", () => {
       startsAt: "2026-09-01T18:00",
       endsAt: "2026-09-01T17:00", // before the start
       coverImageUrl: "",
+      ogImageUrl: "",
       capacity: "",
       isPublished: "",
+      metaTitle: "",
+      metaDescription: "",
     });
 
     expect(result.success).toBe(false);
@@ -368,6 +487,7 @@ describe("projectSchema", () => {
     latitude: "",
     longitude: "",
     googleMapsUrl: "",
+    virtualTourUrl: "",
     metaTitle: "",
     metaDescription: "",
     isPublished: "on",
@@ -479,10 +599,13 @@ describe("newsArticleSchema", () => {
     excerpt: "",
     content: "Body copy.",
     coverImageUrl: "",
+    ogImageUrl: "",
     category: "",
     tags: "",
     metaTitle: "",
     metaDescription: "",
+    focusKeyword: "",
+    contentFormat: "MARKDOWN",
     isPublished: "on",
     publishedAt: "",
   };
@@ -491,6 +614,31 @@ describe("newsArticleSchema", () => {
     expect(
       newsArticleSchema.safeParse({ ...VALID_ARTICLE, content: "" }).success,
     ).toBe(false);
+  });
+
+  it("only accepts a known ArticleFormat value", () => {
+    expect(ARTICLE_FORMATS).toEqual(["MARKDOWN", "HTML"]);
+    expect(newsArticleSchema.safeParse({ ...VALID_ARTICLE, contentFormat: "RICH_TEXT" }).success).toBe(
+      false,
+    );
+    expect(newsArticleSchema.safeParse({ ...VALID_ARTICLE, contentFormat: "HTML" }).success).toBe(true);
+  });
+
+  it("blocks a second H1 in an HTML article", () => {
+    const twoH1s = { ...VALID_ARTICLE, contentFormat: "HTML", content: "<h1>One</h1><h1>Two</h1>" };
+    expect(newsArticleSchema.safeParse(twoH1s).success).toBe(false);
+  });
+
+  it("allows a single H1 in an HTML article", () => {
+    const oneH1 = { ...VALID_ARTICLE, contentFormat: "HTML", content: "<h1>One</h1><p>Body</p>" };
+    expect(newsArticleSchema.safeParse(oneH1).success).toBe(true);
+  });
+
+  it("never applies the H1 gate to a Markdown article", () => {
+    // Old articles typed through the plain-textarea editor were never
+    // subject to this rule and must keep saving exactly as before.
+    const twoH1s = { ...VALID_ARTICLE, contentFormat: "MARKDOWN", content: "# One\n\n# Two" };
+    expect(newsArticleSchema.safeParse(twoH1s).success).toBe(true);
   });
 
   it("turns an empty publish date into null", () => {
@@ -516,6 +664,213 @@ describe("newsArticleSchema", () => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────
+// CONTENT STUDIO — schema-only phase (see lib/validations.ts's own header
+// comment on this section for why none of this is wired into
+// newsArticleSchema yet).
+// ─────────────────────────────────────────────────────────────────────────
+
+describe("secondaryKeywordsToArray", () => {
+  it("splits, trims and de-duplicates comma-separated phrases", () => {
+    expect(secondaryKeywordsToArray.parse("Phuket villas, beachfront , Phuket villas")).toEqual([
+      "Phuket villas",
+      "beachfront",
+    ]);
+  });
+
+  it("returns an empty array for blank input", () => {
+    expect(secondaryKeywordsToArray.parse("")).toEqual([]);
+    expect(secondaryKeywordsToArray.parse("   ")).toEqual([]);
+  });
+
+  it("accepts exactly 5 secondary keywords", () => {
+    const result = secondaryKeywordsToArray.safeParse("a, b, c, d, e");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toHaveLength(5);
+  });
+
+  it("rejects a 6th secondary keyword", () => {
+    const result = secondaryKeywordsToArray.safeParse("a, b, c, d, e, f");
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("newsArticleContentStudioSchema", () => {
+  const VALID = {
+    focusKeyword: "beachfront villas",
+    secondaryKeywords: "phuket, real estate",
+    schemaType: "NewsArticle",
+    canonicalUrl: "https://example.com/news/original",
+  };
+
+  it("accepts a well-formed submission", () => {
+    const result = newsArticleContentStudioSchema.safeParse(VALID);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.secondaryKeywords).toEqual(["phuket", "real estate"]);
+    }
+  });
+
+  it("turns blank optional text fields into null", () => {
+    const result = newsArticleContentStudioSchema.parse({
+      ...VALID,
+      focusKeyword: "",
+      schemaType: "",
+      canonicalUrl: "",
+    });
+    expect(result.focusKeyword).toBeNull();
+    expect(result.schemaType).toBeNull();
+    expect(result.canonicalUrl).toBeNull();
+  });
+});
+
+describe("newsArticleStudioFieldsSchema", () => {
+  const VALID = {
+    secondaryKeywords: "phuket, real estate",
+    schemaType: "BlogPosting",
+    canonicalUrl: "https://example.com/news/original",
+  };
+
+  it("accepts the three Settings-tab fields, without focusKeyword", () => {
+    const result = newsArticleStudioFieldsSchema.safeParse(VALID);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        secondaryKeywords: ["phuket", "real estate"],
+        schemaType: "BlogPosting",
+        canonicalUrl: "https://example.com/news/original",
+      });
+    }
+  });
+
+  it("accepts a schemaType outside the dropdown's three options", () => {
+    // Deliberately loose — see this schema's own comment on why schemaType
+    // isn't a z.enum of just NewsArticle/BlogPosting/Report.
+    const result = newsArticleStudioFieldsSchema.safeParse({ ...VALID, schemaType: "SomeFutureType" });
+    expect(result.success).toBe(true);
+  });
+
+  it("turns a blank schemaType/canonicalUrl into null", () => {
+    const result = newsArticleStudioFieldsSchema.parse({ ...VALID, schemaType: "", canonicalUrl: "" });
+    expect(result.schemaType).toBeNull();
+    expect(result.canonicalUrl).toBeNull();
+  });
+});
+
+describe("newsArticleSeoCacheSchema", () => {
+  it("accepts null across every field — the state before anything runs", () => {
+    expect(
+      newsArticleSeoCacheSchema.safeParse({
+        readingMinutes: null,
+        seoScore: null,
+        seoScoreAt: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a score outside 0–100", () => {
+    expect(
+      newsArticleSeoCacheSchema.safeParse({ readingMinutes: 3, seoScore: 101, seoScoreAt: null })
+        .success,
+    ).toBe(false);
+    expect(
+      newsArticleSeoCacheSchema.safeParse({ readingMinutes: 3, seoScore: -1, seoScoreAt: null })
+        .success,
+    ).toBe(false);
+  });
+
+  it("accepts the boundary scores", () => {
+    expect(
+      newsArticleSeoCacheSchema.safeParse({ readingMinutes: 3, seoScore: 0, seoScoreAt: null }).success,
+    ).toBe(true);
+    expect(
+      newsArticleSeoCacheSchema.safeParse({ readingMinutes: 3, seoScore: 100, seoScoreAt: null })
+        .success,
+    ).toBe(true);
+  });
+});
+
+describe("keywordSchema", () => {
+  const VALID_KEYWORD = { phrase: "beachfront villas phuket", locale: "en" };
+
+  it("accepts a bare phrase with nothing else known yet", () => {
+    expect(keywordSchema.safeParse(VALID_KEYWORD).success).toBe(true);
+  });
+
+  it("rejects an empty phrase", () => {
+    expect(keywordSchema.safeParse({ ...VALID_KEYWORD, phrase: "  " }).success).toBe(false);
+  });
+
+  it("rejects a locale outside the site's four", () => {
+    expect(keywordSchema.safeParse({ ...VALID_KEYWORD, locale: "fr" }).success).toBe(false);
+  });
+
+  it("rejects a difficulty outside 0–100", () => {
+    expect(keywordSchema.safeParse({ ...VALID_KEYWORD, difficulty: 101 }).success).toBe(false);
+  });
+
+  it("accepts up to 12 weeks of trend, rejects a 13th", () => {
+    const trend = Array.from({ length: 12 }, (_, i) => ({ w: i + 1, rank: 10 }));
+    expect(keywordSchema.safeParse({ ...VALID_KEYWORD, trend }).success).toBe(true);
+    expect(
+      keywordSchema.safeParse({ ...VALID_KEYWORD, trend: [...trend, { w: 13, rank: 9 }] }).success,
+    ).toBe(false);
+  });
+});
+
+describe("keywordAssignmentSchema", () => {
+  const VALID_ASSIGNMENT = {
+    keywordId: "kw_1",
+    contentType: "NEWS_ARTICLE",
+    contentId: "article_1",
+    locale: "en",
+  };
+
+  it("defaults isPrimary to false", () => {
+    const result = keywordAssignmentSchema.parse(VALID_ASSIGNMENT);
+    expect(result.isPrimary).toBe(false);
+  });
+
+  it("accepts any non-empty contentType — a free string, not an enum", () => {
+    expect(
+      keywordAssignmentSchema.safeParse({ ...VALID_ASSIGNMENT, contentType: "PROJECT" }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an empty contentType or contentId", () => {
+    expect(keywordAssignmentSchema.safeParse({ ...VALID_ASSIGNMENT, contentType: "" }).success).toBe(
+      false,
+    );
+    expect(keywordAssignmentSchema.safeParse({ ...VALID_ASSIGNMENT, contentId: "" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("contentLinkSchema", () => {
+  const VALID_LINK = {
+    fromType: "NEWS_ARTICLE",
+    fromId: "article_1",
+    fromLocale: "en",
+    toPath: "/projects/andaman-bay",
+    isInternal: true,
+  };
+
+  it("accepts a link not yet checked", () => {
+    expect(contentLinkSchema.safeParse(VALID_LINK).success).toBe(true);
+  });
+
+  it("rejects an httpStatus outside the valid HTTP range", () => {
+    expect(contentLinkSchema.safeParse({ ...VALID_LINK, httpStatus: 99 }).success).toBe(false);
+    expect(contentLinkSchema.safeParse({ ...VALID_LINK, httpStatus: 600 }).success).toBe(false);
+    expect(contentLinkSchema.safeParse({ ...VALID_LINK, httpStatus: 404 }).success).toBe(true);
+  });
+
+  it("requires isInternal to be an explicit boolean", () => {
+    expect(contentLinkSchema.safeParse({ ...VALID_LINK, isInternal: undefined }).success).toBe(false);
+  });
+});
+
 describe("eventSchema", () => {
   const VALID_EVENT = {
     locale: "en",
@@ -526,8 +881,13 @@ describe("eventSchema", () => {
     startsAt: "2026-09-01T14:00",
     endsAt: "",
     coverImageUrl: "",
+    ogImageUrl: "",
     capacity: "",
     isPublished: "on",
+    // Blank, not absent: optionalText() turns "" into null but a missing
+    // key is a validation error, and the form always submits both.
+    metaTitle: "",
+    metaDescription: "",
   };
 
   it("accepts an event with no end time", () => {
@@ -642,5 +1002,171 @@ describe("changePasswordSchema", () => {
     expect(
       changePasswordSchema.safeParse({ ...VALID_CHANGE, currentPassword: "" }).success,
     ).toBe(false);
+  });
+});
+
+/**
+ * Site settings.
+ *
+ * These moved out of the settings server action so they could be tested at
+ * all — a `"use server"` module exports only callable actions, so the map
+ * was unreachable from a test file while it lived there.
+ *
+ * The cases below are the ones where being nearly right is invisible: a
+ * title template missing its %s ships fifty identical <title> tags and
+ * raises no error anywhere, and a validator that normalises is worthless
+ * unless the action actually keeps `parsed.data`.
+ */
+describe("site setting validators", () => {
+  /** Parse through the same map the action uses, by key. */
+  const parse = (key: Parameters<typeof settingFor>[0], value: string) =>
+    settingFor(key).safeParse(value);
+
+  function settingFor(key: keyof typeof SETTING_VALIDATORS) {
+    const validator = SETTING_VALIDATORS[key];
+    if (!validator) throw new Error(`no validator registered for ${key}`);
+    return validator;
+  }
+
+  describe("analytics.gaMeasurementId", () => {
+    it("accepts a measurement ID and uppercases it", () => {
+      // The normalisation half matters as much as the accept: it only
+      // reaches the database because the action writes parsed.data.
+      const result = parse("analytics.gaMeasurementId", "g-abc1234567");
+
+      expect(result.success && result.data).toBe("G-ABC1234567");
+    });
+
+    it("names Universal Analytics when given a UA- id", () => {
+      const result = parse("analytics.gaMeasurementId", "UA-12345678-1");
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues[0]?.message).toContain(
+        "Universal Analytics",
+      );
+    });
+
+    it("names Tag Manager when given a GTM- container", () => {
+      const result = parse("analytics.gaMeasurementId", "GTM-ABCD12");
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues[0]?.message).toContain(
+        "Tag Manager",
+      );
+    });
+
+    it("rejects a pasted gtag snippet", () => {
+      expect(
+        parse("analytics.gaMeasurementId", "<script src=gtag.js?id=G-ABCD123456>")
+          .success,
+      ).toBe(false);
+    });
+  });
+
+  describe("analytics.googleSiteVerification", () => {
+    it("accepts an opaque token", () => {
+      expect(
+        parse("analytics.googleSiteVerification", "aBc123_def-456.ghi~789").success,
+      ).toBe(true);
+    });
+
+    it("rejects a whole pasted meta tag, by name", () => {
+      const result = parse(
+        "analytics.googleSiteVerification",
+        '<meta name="google-site-verification" content="abc123" />',
+      );
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues[0]?.message).toContain("<meta>");
+    });
+
+    it("rejects something far too short to be a token", () => {
+      expect(parse("analytics.googleSiteVerification", "abc").success).toBe(false);
+    });
+  });
+
+  describe("seo.titleTemplate", () => {
+    it("accepts a template with the substitution point", () => {
+      expect(parse("seo.titleTemplate", "%s | Andaman Asset Solution").success).toBe(
+        true,
+      );
+    });
+
+    it("rejects one without %s", () => {
+      // Without this check the site silently ships one title for every page.
+      const result = parse("seo.titleTemplate", "Andaman Asset Solution");
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues[0]?.message).toContain("%s");
+    });
+  });
+
+  describe("seo.twitterHandle", () => {
+    it("adds the missing @", () => {
+      const result = parse("seo.twitterHandle", "andamanasset");
+
+      expect(result.success && result.data).toBe("@andamanasset");
+    });
+
+    it("leaves an existing @ alone", () => {
+      const result = parse("seo.twitterHandle", "@andamanasset");
+
+      expect(result.success && result.data).toBe("@andamanasset");
+    });
+
+    it("rejects a handle over the 15-character limit", () => {
+      expect(parse("seo.twitterHandle", "a".repeat(16)).success).toBe(false);
+    });
+  });
+
+  describe("branding image settings", () => {
+    it.each(["/og-image.jpg", "https://cdn.example.test/x/y.webp"])(
+      "accepts %s",
+      (value) => {
+        expect(parse("branding.ogImageUrl", value).success).toBe(true);
+      },
+    );
+
+    it.each([
+      ["javascript:alert(1)", "a script URL"],
+      ["//evil.example/x.png", "a protocol-relative host"],
+      ["https://x.test/y.svg", "an SVG, which lib/s3.ts also refuses"],
+      ["http://x.test/y.png", "plain http"],
+      ["data:image/png;base64,AA", "a data URI"],
+      ["/not-an-image", "no image extension"],
+    ])("rejects %s (%s)", (value) => {
+      expect(parse("branding.ogImageUrl", value).success).toBe(false);
+    });
+
+    it("accepts .ico for the favicon but not for the og image", () => {
+      expect(parse("branding.faviconUrl", "/favicon.ico").success).toBe(true);
+      expect(parse("branding.ogImageUrl", "/favicon.ico").success).toBe(false);
+    });
+
+    it("rejects a JPEG favicon", () => {
+      expect(parse("branding.faviconUrl", "/mark.jpg").success).toBe(false);
+    });
+  });
+
+  describe("meta title and description length", () => {
+    it("accepts a 70-character title", () => {
+      /*
+        Deliberate, and asserted so nobody later "fixes" it into a hard
+        60-character limit. Google truncates on pixel width, not characters,
+        and the same 60 characters are two different widths in Thai and in
+        Chinese. Over-length is a truncated snippet, not an invalid value.
+      */
+      expect(parse("seo.metaTitleEn", "x".repeat(70)).success).toBe(true);
+    });
+
+    it("rejects a title past the abuse ceiling", () => {
+      expect(parse("seo.metaTitleEn", "x".repeat(META_TITLE_MAX + 1)).success).toBe(
+        false,
+      );
+    });
+
+    it("accepts a description longer than Google will show", () => {
+      expect(parse("seo.metaDescriptionTh", "ก".repeat(200)).success).toBe(true);
+    });
   });
 });

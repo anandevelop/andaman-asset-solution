@@ -58,6 +58,7 @@ const TOOLTIP_STYLE = {
 
 export type MonthlyPoint = { label: string; total: number; won: number };
 export type SourcePoint = { label: string; count: number };
+export type TrendPoint = { label: string; count: number };
 
 export function MonthlyLeadsChart({
   data,
@@ -101,6 +102,45 @@ export function MonthlyLeadsChart({
 
           <Bar dataKey="total" name={labels.total} fill={SERIES.total} radius={[2, 2, 0, 0]} />
           <Bar dataKey="won" name={labels.won} fill={SERIES.won} radius={[2, 2, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** One series over time — the page-view trend, and anything else this
+ *  admin ever needs a plain day-by-day bar for. */
+export function TrendChart({
+  data,
+  labels,
+}: {
+  data: TrendPoint[];
+  labels: { count: string; empty: string };
+}) {
+  const hasData = data.some((point) => point.count > 0);
+
+  if (!hasData) {
+    return (
+      <p className="flex h-[260px] items-center justify-center text-sm text-ink-muted">
+        {labels.empty}
+      </p>
+    );
+  }
+
+  return (
+    <div className="h-[260px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+          <XAxis
+            dataKey="label"
+            tick={AXIS}
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+          />
+          <YAxis tick={AXIS} axisLine={false} tickLine={false} allowDecimals={false} />
+          <Tooltip {...TOOLTIP_STYLE} cursor={{ fill: "rgba(8,53,81,0.04)" }} />
+          <Bar dataKey="count" name={labels.count} fill={SERIES.total} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

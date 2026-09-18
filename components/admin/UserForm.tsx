@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { ROLES } from "@/lib/validations";
 import SaveToast from "@/components/admin/SaveToast";
-import type { UserFormState } from "@/app/[locale]/admin/users/actions";
+import type { UserFormState } from "@/app/[locale]/admin/(system)/users/actions";
 
 type Props = {
   action: (state: UserFormState, formData: FormData) => Promise<UserFormState>;
@@ -194,7 +194,7 @@ export default function UserForm({
           name="isActive"
           defaultChecked={values.isActive}
           disabled={locked}
-          className="mt-0.5 h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+          className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
         />
         <span>
           {t("users.isActive")}

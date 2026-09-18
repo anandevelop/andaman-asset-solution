@@ -20,21 +20,19 @@
 # unpatched runtime by choice. 22 is what CI builds and tests against.
 FROM node:22-alpine AS base
 #
-# openssl is not optional, despite Alpine shipping libssl.so.3 already.
+# The openssl package used to be load-bearing here for a long and expensive
+# reason: Prisma picked its Rust query engine by sniffing the installed
+# OpenSSL at `prisma generate` time, guessed openssl-1.1.x when it could not
+# tell, and shipped an engine Alpine 3.24 cannot load — every query failing
+# at PrismaClient construction while the site still served pages, empty ones,
+# because lib/db.ts degrades rather than crashes. It survived a green smoke
+# test.
 #
-# Prisma picks its query engine by sniffing the installed OpenSSL at
-# `prisma generate` time. With no openssl package present it cannot tell,
-# says so, and falls back:
-#
-#   prisma:warn Prisma failed to detect the libssl/openssl version to use,
-#               and may not work as expected. Defaulting to "openssl-1.1.x".
-#
-# Alpine 3.24 has no libssl.so.1.1, so the engine it then ships cannot load
-# and every query in the container fails at PrismaClient construction. The
-# site still starts and still serves pages — every one of them empty, since
-# lib/db.ts is built to degrade rather than crash — and /api/health answers
-# 503, which is the same answer it gives when no database is configured at
-# all. That is why this survived a green smoke test.
+# Prisma 7 has no Rust engine and no binary to choose: the client talks to
+# Postgres through node-postgres (see lib/prisma-adapter.ts), so there is
+# nothing left to detect and nothing left to guess wrong. openssl stays
+# anyway — Node's TLS uses it, and a database connection over SSL is not a
+# thing to discover missing in production.
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -43,6 +41,11 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json package-lock.json* ./
+# package.json's postinstall runs this, and `npm ci` fails outright if the
+# file is missing — so it has to be here even though this stage's output
+# (public/pdfjs) is discarded and only node_modules is carried forward.
+# The build stage regenerates the assets through prebuild.
+COPY scripts/copy-pdfjs-assets.mjs ./scripts/
 # `npm ci` for a lockfile-exact, reproducible install.
 RUN npm ci
 
@@ -121,10 +124,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Schema and migrations, so `prisma migrate deploy` can run from this image
-# as a release step. The engine binaries come along inside standalone's
-# node_modules.
+# Schema, migrations and the CLI's own config, so `prisma migrate deploy`
+# can run from this image as a release step. No engine binaries to carry
+# since Prisma 7 — what these directories now hold is JavaScript.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma

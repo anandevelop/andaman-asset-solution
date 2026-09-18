@@ -36,15 +36,28 @@ export default function AdminError({ error, reset }: Props) {
     console.error("[admin]", error);
   }, [error]);
 
+  /*
+    next-intl is allowed here, unlike the three public boundaries, and the
+    reason is the tree: NextIntlClientProvider is mounted in
+    app/[locale]/layout.tsx, an *ancestor*. A failure that destroyed the
+    provider would be caught above this boundary by app/[locale]/error.tsx,
+    which is why that one has to stay next-intl-free and this one does not.
+
+    What is not safe is the runtime-selected key. t() throws on a missing
+    one, so a typo in KNOWN — or a renamed message — would make this
+    boundary throw inside itself and escalate a handled invariant to the
+    full-page crash screen. t.has() is the guard; tests/error-copy.test.ts
+    pins the five keys, which tests/i18n.test.ts cannot see because they are
+    never written as literals at a call site.
+  */
   const key = KNOWN[error.message];
+  const message = key && t.has(key as never) ? t(key as never) : t("common.error");
 
   return (
     <div className="admin-card flex flex-col items-center gap-4 py-14 text-center">
       <AlertTriangle size={28} strokeWidth={1.5} className="text-red-600" aria-hidden />
 
-      <p className="max-w-md text-sm leading-relaxed text-ink">
-        {key ? t(key as never) : t("common.error")}
-      </p>
+      <p className="max-w-md text-sm leading-relaxed text-ink">{message}</p>
 
       <button type="button" onClick={reset} className="admin-btn-ghost">
         <RotateCw size={15} aria-hidden />

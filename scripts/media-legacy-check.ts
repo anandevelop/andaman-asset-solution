@@ -28,6 +28,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { pgAdapter } from "../lib/prisma-adapter";
 import { loadEnv, OK, FAIL, DIM, RESET } from "./spaces-runtime";
 
 loadEnv();
@@ -47,7 +48,7 @@ if (!LEGACY_HOST) {
 type TextColumn = { table_name: string; column_name: string; data_type: string };
 type Hit = { table: string; column: string; count: number; sampleIds: string[] };
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: pgAdapter() });
 
 /**
  * Every column that could hold a URL. `ARRAY` covers `String[]` fields like

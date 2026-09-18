@@ -62,6 +62,82 @@ export function toCsv(headers: string[], rows: unknown[][]): string {
 }
 
 /**
+ * Parse a CSV document into rows of raw strings — the reading half, for
+ * the units importer (Units.dc.html's "นำเข้า CSV").
+ *
+ * Deliberately small rather than a dependency: this reads files a person
+ * exported from Excel or Sheets minutes earlier, which is the well-behaved
+ * end of the format. It handles what those actually produce — quoted
+ * fields, embedded commas and newlines, doubled quotes, CRLF or LF, and a
+ * leading BOM (including one this module's own toCsv wrote).
+ *
+ * It does not attempt other delimiters, alternate encodings, or the
+ * ambiguous cases RFC 4180 leaves open; a file that needs those is one to
+ * re-export rather than to guess at. The importer surfaces the row it
+ * could not read instead of silently dropping it.
+ */
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  // Distinguishes an empty trailing line (which is not a row) from a real
+  // row whose last field happens to be empty.
+  let started = false;
+
+  const input = text.replace(/^﻿/, "");
+
+  const endField = () => {
+    row.push(field);
+    field = "";
+    started = true;
+  };
+
+  const endRow = () => {
+    endField();
+    rows.push(row);
+    row = [];
+    started = false;
+  };
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+
+    if (quoted) {
+      if (char === '"') {
+        // A doubled quote inside a quoted field is one literal quote.
+        if (input[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        field += char;
+      }
+      continue;
+    }
+
+    if (char === '"' && field === "") {
+      quoted = true;
+    } else if (char === ",") {
+      endField();
+    } else if (char === "\r") {
+      // Swallow CR; the LF that follows ends the row (a lone CR does too).
+      if (input[index + 1] !== "\n") endRow();
+    } else if (char === "\n") {
+      endRow();
+    } else {
+      field += char;
+    }
+  }
+
+  if (started || field !== "" || quoted) endRow();
+
+  return rows;
+}
+
+/**
  * A filename that is safe in Content-Disposition and on every filesystem.
  *
  * Quotes and semicolons in a filename can break out of the header value,

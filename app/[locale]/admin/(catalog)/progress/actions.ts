@@ -11,11 +11,14 @@
  */
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
-import { projectProgressSchema, fieldErrors } from "@/lib/validations";
+import { projectProgressSchema, progressDetailSchema, fieldErrors } from "@/lib/validations";
+import { buyerEmailsFor } from "@/lib/admin/project-progress";
+import { notifyBuyersOfProgress } from "@/lib/email";
+import { siteConfig } from "@/config/site";
 
 export type ProgressFormState = {
   ok: boolean;
@@ -166,4 +169,126 @@ export async function deleteProgress(
 
   await prisma.projectProgress.delete({ where: { id } });
   await revalidateProgress(locale, projectId);
+}
+
+// ── Phase timeline, and publishing a monthly update ─────────────────────
+
+/**
+ * Save one month's write-up and completion figure.
+ *
+ * Separate from createProgress/updateProgress above, which own the older
+ * month/images/video form. This is the Progress.dc.html editor: the two
+ * write to the same row, so both stay usable, but only this one knows
+ * about percentages and the translated summary.
+ */
+export async function saveProgressDetail(
+  locale: string,
+  projectId: string,
+  input: {
+    id?: string;
+    month: number;
+    year: number;
+    percentComplete: number | null;
+    summaries: Record<string, string>;
+    images: string[];
+  },
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const session = await requireAdminAction(Role.EDITOR);
+
+  const parsed = progressDetailSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+
+  const { id, month, year, percentComplete, summaries, images } = parsed.data;
+
+  try {
+    const row = await prisma.projectProgress.upsert({
+      where: id
+        ? { id }
+        : { projectId_year_month: { projectId, year, month } },
+      update: { month, year, percentComplete, images, publishedBy: session.id },
+      create: { projectId, month, year, percentComplete, images, publishedBy: session.id },
+      select: { id: true },
+    });
+
+    // Blank means "nothing written in this language", one state rather
+    // than two — same convention as the project content editor.
+    for (const [code, summary] of Object.entries(summaries)) {
+      const value = summary.trim();
+      await prisma.projectProgressTranslation.upsert({
+        where: { progressId_locale: { progressId: row.id, locale: code } },
+        update: { summary: value || null },
+        create: { progressId: row.id, locale: code, summary: value || null },
+      });
+    }
+
+    await revalidateProgress(locale, projectId);
+    return { ok: true, id: row.id };
+  } catch (error) {
+    console.error("[saveProgressDetail]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+}
+
+/**
+ * Publish or unpublish one month's update, optionally emailing the
+ * development's buyers.
+ *
+ * The email only goes out when the entry is being published *and* the box
+ * was ticked, and it is sent after the write: a mail failure must leave a
+ * published update rather than an unpublished one and a confusing error.
+ * The number actually attempted comes back so the screen can report what
+ * happened instead of assuming.
+ */
+export async function setProgressPublished(
+  locale: string,
+  projectId: string,
+  progressId: string,
+  isPublished: boolean,
+  notifyBuyers = false,
+): Promise<{ ok: true; notified: number } | { ok: false; error: string }> {
+  await requireAdminAction(Role.EDITOR);
+
+  let entry;
+  try {
+    const result = await prisma.projectProgress.updateMany({
+      where: { id: progressId, projectId },
+      data: { isPublished },
+    });
+    if (result.count === 0) return { ok: false, error: "NOT_FOUND" };
+
+    entry = await prisma.projectProgress.findUnique({
+      where: { id: progressId },
+      select: {
+        month: true,
+        year: true,
+        percentComplete: true,
+        translations: { select: { locale: true, summary: true } },
+        project: { select: { slug: true, nameEn: true, nameTh: true } },
+      },
+    });
+  } catch (error) {
+    console.error("[setProgressPublished]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+
+  await revalidateProgress(locale, projectId);
+
+  if (!isPublished || !notifyBuyers || !entry) return { ok: true, notified: 0 };
+
+  const buyers = await buyerEmailsFor(projectId);
+  const projectName = locale === "th" ? entry.project.nameTh : entry.project.nameEn;
+
+  const notified = await notifyBuyersOfProgress({
+    buyers,
+    projectName,
+    monthLabel: `${entry.month}/${entry.year}`,
+    percentComplete: entry.percentComplete,
+    summary:
+      entry.translations.find((t) => t.locale === locale)?.summary ??
+      entry.translations.find((t) => (t.summary ?? "").trim())?.summary ??
+      null,
+    url: `${siteConfig.url}/${locale}/projects/${entry.project.slug}`,
+  });
+
+  return { ok: true, notified };
 }

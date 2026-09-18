@@ -23,7 +23,9 @@ oversight, but none of them should reach production untouched.
       disk, unused, in case a real team roster is added later.
 - [ ] **`public/og-image.jpg` is a generated placeholder.** Typographic
       only, correct brand colours. Fine to launch with; replace when
-      photography is available.
+      photography is available — no longer a deploy, since Admin →
+      Settings → Branding & SEO uploads one over it. The committed file
+      stays as the fallback behind that setting.
 - [ ] **30 rows still point at the retired Supabase host.** Re-scanned
       2026-09-02 in local dev: 30 rows across 12 columns — every project's
       hero, gallery, concept and master-plan image, all three sales-team
@@ -178,11 +180,28 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] CloudFront distribution in front, with Origin Access Control
 - [ ] Bucket policy allows `s3:GetObject` **only** to that distribution
 - [ ] IAM user limited to `s3:PutObject` on this bucket alone
-- [ ] Bucket policy enforces `s3:content-length-range` ≤ 15728640 — the
-      client-side cap is advisory and a presigned URL can be replayed
+- [ ] Bucket policy enforces `s3:content-length-range` — the client-side
+      cap is advisory and a presigned URL can be replayed. **Use 31457280
+      (30MB), not 15728640.** The app allows 30MB for a PDF
+      (`MAX_DOCUMENT_BYTES`), so a 15MB condition refuses a legitimate
+      brochure at the bucket while every layer of the app says it should
+      work — and the browser reports that as a generic network failure, not
+      a size error. See the note in DEPLOYMENT.md §6.
 - [ ] CORS `AllowedOrigins` is the real domain, **not** `*`
+- [ ] **`npm run spaces:cors` has been run against production**, and
+      `npm run spaces:check` reports `CORS allows GET + range headers` for
+      the real origin. This is not the same as the upload working: the
+      e-brochure viewer reads the PDF back with `fetch` and range requests,
+      and pdf.js decides whether it may use ranges by reading
+      `Accept-Ranges` and `Content-Encoding` off the response — headers
+      cross-origin JavaScript cannot see unless the bucket exposes them.
+      The failure mode is not an error, it is every brochure downloading in
+      full before its first page appears.
 - [ ] Upload tested end to end from `/admin/projects/new`
 - [ ] Uploaded image renders on the public page through CloudFront
+- [ ] A brochure opens at `/e-brochure/<slug>` on production and turns a
+      page — this exercises the CORS read path, the same-origin pdf.js
+      worker and the range requests in one go
 - [ ] Lifecycle rule considered for orphaned objects — removing an image
       from a record does **not** delete it from the bucket
 
@@ -204,18 +223,18 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] `RECAPTCHA_MIN_SCORE` agreed — 0.5 to start
 
 ### Analytics
-- [ ] `NEXT_PUBLIC_GA_ID` is the real GA4 property, not a test one.
-      **This one is not a runtime setting.** `lib/analytics.ts` reads it
-      literally, so it is inlined at build time, and `components/
-      Analytics.tsx` says so: "GA stays env-only". Unlike the pixel and the
-      Search Console token below, there is no admin field to fall back on —
-      setting GA4 means adding the id to `IMAGE_BUILD_ARGS` in
-      `.github/workflows/ci.yml` and shipping a new image. CI leaves it out
-      today because no property exists yet, which means GA4 currently does
-      not load at all in production.
+- [ ] GA4 measurement ID is the real property, not a test one — either
+      `NEXT_PUBLIC_GA_ID` at deploy time, or **Admin → Settings →
+      Analytics & verification** (the admin field wins if both are set).
+      This used to be env-only, which is why the note here said GA4 "does
+      not load at all in production": the id is inlined at build time, CI
+      leaves it out of `IMAGE_BUILD_ARGS` because no property existed yet,
+      and switching it on therefore meant shipping a new image. It is now
+      a runtime setting like the pixel below, so a real property can be
+      turned on without a deploy.
 - [ ] Meta Pixel ID is real — either `NEXT_PUBLIC_META_PIXEL_ID` at deploy
-      time, or Admin → Settings → Analytics & SEO (the admin field wins if
-      both are set)
+      time, or Admin → Settings → Analytics & verification (the admin field
+      wins if both are set)
 - [ ] Google Search Console verified — either `GOOGLE_SITE_VERIFICATION`
       at deploy time, or the same admin field
 - [ ] Pageviews arriving in GA4 realtime, including after client-side
@@ -246,6 +265,19 @@ Cross-check against `.env.example`, which annotates each one.
 - [ ] `next.config.js` allowlist corrected against those reports
 - [ ] Only then set `CSP_ENFORCE=true` and re-test every page with a
       third-party script: home, contact, any project page
+- [ ] **Include `/e-brochure/<slug>` in that re-test.** It is the page most
+      exposed to an enforced CSP: it loads a module worker and imports
+      pdf.js as a same-origin ESM URL, so it depends on `worker-src`,
+      `child-src` and `connect-src` all being right. Everything works under
+      Report-Only whether or not the policy is correct, so this cannot be
+      verified before the flag is flipped — do it once locally with
+      `CSP_ENFORCE=true npm run build && npm start` before production.
+- [ ] `public/pdfjs/pdf.worker.min.mjs` is served as `text/javascript`.
+      It is loaded as a module worker, so a proxy in front of `public/`
+      with an old `mime.types` would serve `.mjs` as
+      `application/octet-stream` and the browser would refuse it. Next's
+      own static handler gets this right; only a hand-rolled proxy would
+      not. `curl -I` the URL on production.
 - [ ] Security headers verified on production — `securityheaders.com` or
       `curl -I`
 - [x] `X-Powered-By` absent — `poweredByHeader: false` in

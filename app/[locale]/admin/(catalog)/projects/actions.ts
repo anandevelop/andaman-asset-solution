@@ -20,6 +20,7 @@ import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
+import { resolveIsPublished } from "@/lib/publishing-gate";
 import {
   projectSchema,
   projectUnitSchema,
@@ -65,9 +66,11 @@ function readForm(formData: FormData) {
     latitude: text("latitude"),
     longitude: text("longitude"),
     googleMapsUrl: text("googleMapsUrl"),
+    virtualTourUrl: text("virtualTourUrl"),
     metaTitle: text("metaTitle"),
     metaDescription: text("metaDescription"),
     // An unchecked checkbox sends nothing at all.
+    noIndex: formData.get("noIndex") === "on",
     isPublished: formData.get("isPublished") === "on",
     sortOrder: text("sortOrder") || "0",
   };
@@ -114,6 +117,7 @@ function toPrismaData(input: ReturnType<typeof projectSchema.parse>) {
     latitude: input.latitude === null ? null : new Prisma.Decimal(input.latitude),
     longitude: input.longitude === null ? null : new Prisma.Decimal(input.longitude),
     googleMapsUrl: input.googleMapsUrl,
+    virtualTourUrl: input.virtualTourUrl,
     isPublished: input.isPublished,
     sortOrder: input.sortOrder,
   };
@@ -130,6 +134,7 @@ function translatedFields(input: ReturnType<typeof projectSchema.parse>) {
     aboutThisProject: input.aboutThisProject,
     metaTitle: input.metaTitle,
     metaDescription: input.metaDescription,
+    noIndex: input.noIndex,
   };
 }
 
@@ -163,7 +168,7 @@ export async function createProject(
   }
 
   const editingLocale = parsed.data.locale;
-  const { name, tagline, description, conceptDesign, aboutThisProject, metaTitle, metaDescription } =
+  const { name, tagline, description, conceptDesign, aboutThisProject, metaTitle, metaDescription, noIndex } =
     translatedFields(parsed.data);
 
   let created;
@@ -198,6 +203,7 @@ export async function createProject(
             aboutThisProject,
             metaTitle,
             metaDescription,
+            noIndex,
           },
         },
       },
@@ -232,14 +238,29 @@ export async function updateProject(
   }
 
   const editingLocale = parsed.data.locale;
-  const { name, tagline, description, conceptDesign, aboutThisProject, metaTitle, metaDescription } =
+  const { name, tagline, description, conceptDesign, aboutThisProject, metaTitle, metaDescription, noIndex } =
     translatedFields(parsed.data);
+
+  // See lib/publishing-gate.ts: isPublished can only become true while
+  // contentStatus is PUBLISHED — every other edited field still saves
+  // either way.
+  const gateRow = await prisma.project.findUnique({
+    where: { id },
+    select: { contentStatus: true, isPublished: true },
+  });
+  if (!gateRow) return { ok: false, message: "SAVE_FAILED" };
+  const resolvedIsPublished = resolveIsPublished({
+    contentStatus: gateRow.contentStatus,
+    requestedIsPublished: parsed.data.isPublished,
+    currentIsPublished: gateRow.isPublished,
+  });
 
   try {
     const updated = await prisma.project.update({
       where: { id },
       data: {
         ...toPrismaData(parsed.data),
+        isPublished: resolvedIsPublished,
         // Only touch the deprecated column matching the locale being
         // saved — editing zh/ru must never blank out or overwrite en/th.
         ...(editingLocale === "en"
@@ -275,6 +296,7 @@ export async function updateProject(
               aboutThisProject,
               metaTitle,
               metaDescription,
+              noIndex,
             },
             create: {
               locale: editingLocale,
@@ -285,6 +307,7 @@ export async function updateProject(
               aboutThisProject,
               metaTitle,
               metaDescription,
+              noIndex,
             },
           },
         },
@@ -344,7 +367,15 @@ export async function bulkSetPublished(
     });
 
     const result = await prisma.project.updateMany({
-      where: { id: { in: ids }, deletedAt: null },
+      where: {
+        id: { in: ids },
+        deletedAt: null,
+        // See lib/publishing-gate.ts — publishing (not unpublishing) only
+        // takes on rows already through review. `result.count` below then
+        // honestly reports how many of the selection actually changed,
+        // rather than the size of the selection itself.
+        ...(isPublished ? { contentStatus: "PUBLISHED" as const } : {}),
+      },
       data: { isPublished },
     });
 
@@ -353,6 +384,64 @@ export async function bulkSetPublished(
     return { ok: true, updated: result.count };
   } catch (error) {
     console.error("[bulkSetPublished] failed", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+}
+
+// ── Display order ───────────────────────────────────────────────────────
+
+/**
+ * Rewrite `sortOrder` for a run of projects the admin has just dragged
+ * into a new order (Projects.dc.html's "จัดลำดับการแสดงผล").
+ *
+ * `ids` is the full, contiguous list in its new order and `startIndex` is
+ * where that run begins in the overall list, so page 2 of a 25-row page
+ * writes 25…49 rather than starting over at 0 and colliding with page 1.
+ * The caller is responsible for only offering this on an unfiltered list
+ * in custom order — see ProjectsTable's own guard for why a reordering of
+ * a *filtered* view cannot be written back coherently: the rows on screen
+ * are not adjacent in the real order, so the positions between them belong
+ * to projects the admin cannot see.
+ *
+ * One transaction: a half-applied reorder would leave duplicate sortOrder
+ * values, and the list's own tie-break (updatedAt) would then silently
+ * decide the order instead of the person who just dragged the rows.
+ */
+export async function reorderProjects(
+  locale: string,
+  ids: string[],
+  startIndex: number,
+): Promise<BulkResult> {
+  await requireAdminAction(Role.ADMIN);
+
+  if (ids.length === 0) return { ok: false, error: "NOTHING_SELECTED" };
+  if (ids.length > 100) return { ok: false, error: "TOO_MANY" };
+  if (!Number.isInteger(startIndex) || startIndex < 0) return { ok: false, error: "INVALID_INPUT" };
+  // A repeated id would write two positions to one row and leave a gap.
+  if (new Set(ids).size !== ids.length) return { ok: false, error: "INVALID_INPUT" };
+
+  try {
+    const projects = await prisma.project.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: { id: true, slug: true },
+    });
+
+    // Every id must name a live project: a stale page whose rows have since
+    // been deleted would otherwise write an order derived from rows that
+    // no longer exist.
+    if (projects.length !== ids.length) return { ok: false, error: "STALE" };
+
+    await prisma.$transaction(
+      ids.map((id, index) =>
+        prisma.project.update({ where: { id }, data: { sortOrder: startIndex + index } }),
+      ),
+    );
+
+    for (const { slug } of projects) revalidateProject(locale, slug);
+
+    return { ok: true, updated: ids.length };
+  } catch (error) {
+    console.error("[reorderProjects] failed", error);
     return { ok: false, error: "SAVE_FAILED" };
   }
 }

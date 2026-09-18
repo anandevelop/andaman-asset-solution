@@ -31,7 +31,7 @@
  *
  * Trophies float above each card rather than sitting in a boxed tile: no
  * background tile behind the image, positioned to overlap the card's own
- * top edge, with a drop-shadow standing in for the depth the old gray tile
+ * top edge, with a drop-shadow-sm standing in for the depth the old gray tile
  * used to provide. The first award gets a wider grid column, a bigger
  * trophy, and larger type — the one worth leading with should read as the
  * headline, not tie visually with the rest.
@@ -65,32 +65,39 @@ export default async function AwardsSection() {
   const latestYear = Math.max(...awards.map((award) => award.year));
 
   return (
-    <section className="py-20 sm:py-28">
+    <section className="bg-primary py-20 sm:py-28">
       <div className="container-luxe">
         <Reveal>
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="max-w-xl">
-              <p className="eyebrow">{t("eyebrow")}</p>
-              <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
+              {/* Not .eyebrow — that utility hardcodes text-accent-700
+                  (a dark bronze sized for a light page background), which
+                  reads poorly on this section's own navy background. Same
+                  text-accent SiteCta's dark hero already uses for the
+                  identical situation. */}
+              <p className="text-xs font-medium uppercase tracking-widest2 text-accent sm:text-sm">
+                {t("eyebrow")}
+              </p>
+              <h2 className="mt-3 text-3xl font-light text-white sm:text-4xl">
                 {t("title")}
               </h2>
-              <p className="mt-6 text-sm leading-relaxed text-ink/70 sm:text-base">
+              <p className="mt-6 text-sm leading-relaxed text-white/70 sm:text-base">
                 {t("intro")}
               </p>
             </div>
 
             <div className="flex shrink-0 items-start gap-8 sm:gap-10">
               <div className="text-right">
-                <p className="text-3xl font-light text-primary sm:text-4xl">
+                <p className="text-3xl font-light text-white sm:text-4xl">
                   {String(awardsCount).padStart(2, "0")}
                 </p>
-                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink/50">
+                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-white/50">
                   {t("awardsCountLabel")}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-light text-primary sm:text-4xl">{latestYear}</p>
-                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink/50">
+                <p className="text-3xl font-light text-white sm:text-4xl">{latestYear}</p>
+                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-white/50">
                   {t("yearLabel")}
                 </p>
               </div>
@@ -126,7 +133,7 @@ export default async function AwardsSection() {
                 className={`shrink-0 lg:w-full ${featured ? "w-72" : "w-64"}`}
               >
                 <div
-                  className={`relative flex h-full flex-col rounded-sm border bg-white p-6 shadow-card lg:w-full ${
+                  className={`relative flex h-full flex-col rounded-xs border bg-white p-6 shadow-card lg:w-full ${
                     featured
                       ? "border-accent-700/20 pt-20 shadow-lg"
                       : "border-primary/10 pt-16"

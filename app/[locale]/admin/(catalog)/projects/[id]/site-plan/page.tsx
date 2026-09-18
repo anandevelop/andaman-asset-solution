@@ -11,8 +11,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import SitePlanDrawer from "@/components/admin/SitePlanDrawer";
 import { saveUnitShape } from "./actions";
 
@@ -25,7 +27,13 @@ export default async function AdminSitePlanPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { locale, id: projectId } = params;
-  await requireAdmin(locale);
+  // VIEWER may open this to see which units are already mapped; drawing or
+  // saving a shape stays behind a disabled fieldset for anyone below
+  // EDITOR — the actual boundary is still saveUnitShape's own guard,
+  // unchanged, since a canvas tool has drag interactions a plain
+  // <fieldset disabled> cannot reach.
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const db = prisma;
@@ -70,6 +78,7 @@ export default async function AdminSitePlanPage(props: Props) {
           {t("units.empty")}
         </div>
       ) : (
+        <fieldset disabled={!canWrite} className="contents">
         <SitePlanDrawer
           masterPlanImageUrl={project.masterPlanImageUrl}
           units={units.map((u: any) => ({
@@ -104,6 +113,7 @@ export default async function AdminSitePlanPage(props: Props) {
             resetView: t("sitePlan.resetView"),
           }}
         />
+        </fieldset>
       )}
     </div>
   );

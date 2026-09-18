@@ -97,7 +97,7 @@ export default function FloorPlanViewer({ floorPlans, typeName, labels }: Props)
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="group relative block w-full overflow-hidden rounded-sm border border-primary/10 bg-white"
+        className="group relative block w-full overflow-hidden rounded-xs border border-primary/10 bg-white"
         style={{ aspectRatio: ratio }}
         aria-label={`${typeName} — ${active.floorName}`}
       >

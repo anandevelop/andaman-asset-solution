@@ -51,9 +51,38 @@ export const SETTING_KEYS = [
   "social.facebook",
   "social.instagram",
   "social.youtube",
+  "branding.faviconUrl",
+  "branding.logoUrl",
+  "branding.ogImageUrl",
+  "seo.metaTitleTh",
+  "seo.metaTitleEn",
+  "seo.metaTitleZh",
+  "seo.metaTitleRu",
+  "seo.metaDescriptionTh",
+  "seo.metaDescriptionEn",
+  "seo.metaDescriptionZh",
+  "seo.metaDescriptionRu",
+  "seo.titleTemplate",
+  "seo.twitterHandle",
   "analytics.metaPixelId",
+  "analytics.gaMeasurementId",
   "analytics.googleSiteVerification",
 ] as const;
+
+/**
+ * The keys holding a brand asset URL.
+ *
+ * Named here because the admin form previews the *effective* value in an
+ * uploader — there is no such thing as a placeholder for an image — so a
+ * form saved without touching the field posts back the committed default.
+ * The action treats that as a clear rather than an override; see
+ * app/[locale]/admin/settings/actions.ts.
+ */
+export const IMAGE_SETTING_KEYS = [
+  "branding.faviconUrl",
+  "branding.logoUrl",
+  "branding.ogImageUrl",
+] as const satisfies readonly SettingKey[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
 
@@ -78,9 +107,38 @@ export type SiteSettings = {
     instagram: string;
     youtube: string;
   };
+  /**
+   * Brand assets. Each is either a /public-relative path (the committed
+   * default) or an absolute CDN URL (an admin upload) — anywhere the value
+   * is concatenated rather than handed to Next's metadata, put it through
+   * absoluteAssetUrl() in lib/seo.ts.
+   */
+  branding: {
+    faviconUrl: string;
+    logoUrl: string;
+    ogImageUrl: string;
+  };
+  /**
+   * Metadata only.
+   *
+   * The footer's body copy stays on siteConfig.description and so does the
+   * PWA install prompt's: a SERP snippet, a paragraph of footer prose and
+   * an install blurb are three different artefacts written to three
+   * different budgets, and letting one field drive all three means
+   * optimising the snippet silently rewrites the page.
+   */
+  seo: {
+    metaTitle: { th: string; en: string; zh: string; ru: string };
+    metaDescription: { th: string; en: string; zh: string; ru: string };
+    titleTemplate: string;
+    twitterHandle: string;
+  };
   analytics: {
     /** Facebook Events Manager → the numeric Pixel ID, nothing else. */
     metaPixelId: string;
+    /** GA4 measurement ID (`G-…`). Overrides NEXT_PUBLIC_GA_ID, which is
+     *  inlined at build time and therefore needs a new image to change. */
+    gaMeasurementId: string;
     /** The `content` value of Google's `google-site-verification` meta
      *  tag — just the code, not the whole tag. */
     googleSiteVerification: string;
@@ -107,11 +165,25 @@ export function defaultSettings(): Record<SettingKey, string> {
     "social.facebook": siteConfig.social.facebook,
     "social.instagram": siteConfig.social.instagram,
     "social.youtube": siteConfig.social.youtube,
+    "branding.faviconUrl": siteConfig.branding.favicon,
+    "branding.logoUrl": siteConfig.branding.logo,
+    "branding.ogImageUrl": siteConfig.seo.ogImage,
+    "seo.metaTitleTh": siteConfig.seo.defaultTitle.th,
+    "seo.metaTitleEn": siteConfig.seo.defaultTitle.en,
+    "seo.metaTitleZh": siteConfig.seo.defaultTitle.zh,
+    "seo.metaTitleRu": siteConfig.seo.defaultTitle.ru,
+    "seo.metaDescriptionTh": siteConfig.description.th,
+    "seo.metaDescriptionEn": siteConfig.description.en,
+    "seo.metaDescriptionZh": siteConfig.description.zh,
+    "seo.metaDescriptionRu": siteConfig.description.ru,
+    "seo.titleTemplate": siteConfig.seo.titleTemplate,
+    "seo.twitterHandle": siteConfig.seo.twitterHandle,
     // Env vars are the deploy-time fallback — the admin field takes
     // priority the moment someone fills it in, same as every other key
     // here, but a fresh environment with nothing in the database yet still
     // picks up whatever was set at build/deploy time.
     "analytics.metaPixelId": process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "",
+    "analytics.gaMeasurementId": process.env.NEXT_PUBLIC_GA_ID ?? "",
     "analytics.googleSiteVerification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
   };
 }
@@ -213,8 +285,30 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       instagram: values["social.instagram"],
       youtube: values["social.youtube"],
     },
+    branding: {
+      faviconUrl: values["branding.faviconUrl"],
+      logoUrl: values["branding.logoUrl"],
+      ogImageUrl: values["branding.ogImageUrl"],
+    },
+    seo: {
+      metaTitle: {
+        th: values["seo.metaTitleTh"],
+        en: values["seo.metaTitleEn"],
+        zh: values["seo.metaTitleZh"],
+        ru: values["seo.metaTitleRu"],
+      },
+      metaDescription: {
+        th: values["seo.metaDescriptionTh"],
+        en: values["seo.metaDescriptionEn"],
+        zh: values["seo.metaDescriptionZh"],
+        ru: values["seo.metaDescriptionRu"],
+      },
+      titleTemplate: values["seo.titleTemplate"],
+      twitterHandle: values["seo.twitterHandle"],
+    },
     analytics: {
       metaPixelId: values["analytics.metaPixelId"],
+      gaMeasurementId: values["analytics.gaMeasurementId"],
       googleSiteVerification: values["analytics.googleSiteVerification"],
     },
   };

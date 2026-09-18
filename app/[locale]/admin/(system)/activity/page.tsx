@@ -21,6 +21,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import AuditDetailPanel, { type AuditEntryView } from "@/components/admin/AuditDetailPanel";
 import { History } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -43,7 +44,7 @@ const PAGE_SIZE = 50;
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ page?: string; actor?: string; model?: string }>;
+  searchParams: Promise<{ page?: string; actor?: string; model?: string; entry?: string }>;
 };
 
 /** 1-based, clamped — a hand-edited ?page=0 or ?page=abc lands on page one. */
@@ -59,6 +60,9 @@ export default async function AdminActivityPage(props: Props) {
   await requireAdmin(locale, Role.SUPER_ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });
+  // Field labels are already written for the publishing screen; one
+  // vocabulary for "which field changed" across the admin, not two.
+  const tPublishing = await getTranslations({ locale, namespace: "admin.publishing" });
 
   const page = parsePage(searchParams.page);
   const actorFilter = searchParams.actor?.trim() || undefined;
@@ -170,6 +174,87 @@ export default async function AdminActivityPage(props: Props) {
       .filter(Boolean)
       .join(" · ");
 
+  /*
+    The entry the panel is showing. Defaults to the newest one so the panel
+    is never an empty box on arrival, matching how the leads and publishing
+    screens seed their own side panels.
+  */
+  const selected = entries.find((row) => row.id === searchParams.entry) ?? entries[0] ?? null;
+
+  const EDIT_PATHS: Record<string, string> = {
+    Project: "projects",
+    NewsArticle: "news",
+    Event: "events",
+    EBrochure: "e-brochures",
+  };
+
+  const CUSTOMER_MODELS = new Set(["LeadInquiry", "EventRegistration", "LeadNote"]);
+
+  const printable = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "boolean") return value ? "✓" : "✗";
+    return JSON.stringify(value);
+  };
+
+  const selectedView: AuditEntryView | null = selected
+    ? (() => {
+        const changes = (selected.changes ?? null) as Record<
+          string,
+          { before: unknown; after: unknown }
+        > | null;
+
+        const rows = Object.entries(changes ?? {}).map(([field, change]) => ({
+          field,
+          // The publishing screen already names these fields; reuse those
+          // labels rather than inventing a second vocabulary.
+          label: tPublishing.has(`changed.field.${field}` as never)
+            ? tPublishing(`changed.field.${field}` as never)
+            : field,
+          before: printable(change.before),
+          after: printable(change.after),
+        }));
+
+        const reason =
+          rows.length > 0
+            ? null
+            : CUSTOMER_MODELS.has(selected.model)
+              ? ("customerData" as const)
+              : selected.action !== "update"
+                ? ("notAnUpdate" as const)
+                : ("noChange" as const);
+
+        return {
+          id: selected.id,
+          recordLabel: selected.recordLabel,
+          modelLabel: selected.model,
+          actionLabel: actionLabels[selected.action] ?? selected.action,
+          actorName: selected.actorEmail,
+          actorRole: selected.actorRole,
+          at: formatter.format(selected.createdAt),
+          ip: selected.ipAddress,
+          userAgent: null,
+          changes: rows,
+          noValuesReason: reason,
+          canRevert: rows.length > 0 && selected.action === "update",
+          recordHref:
+            selected.recordId && EDIT_PATHS[selected.model]
+              ? `/${locale}/admin/${EDIT_PATHS[selected.model]}/${selected.recordId}/edit`
+              : null,
+        };
+      })()
+    : null;
+
+  /** Selects one entry without dropping the current filters or page. */
+  const entryHref = (id: string) => {
+    const query = new URLSearchParams();
+    if (actorFilter) query.set("actor", actorFilter);
+    if (modelFilter) query.set("model", modelFilter);
+    if (page > 1) query.set("page", String(page));
+    query.set("entry", id);
+    return `/${locale}/admin/activity?${query.toString()}`;
+  };
+
   /** Keeps the current filters when only the page changes. */
   const pageHref = (target: number) => {
     const query = new URLSearchParams();
@@ -235,77 +320,123 @@ export default async function AdminActivityPage(props: Props) {
           warning is more use than a blank one, and the same banner appears
           on every other admin index. */}
       {offline && (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="rounded-sm border border-primary/10 bg-white p-6 text-sm text-ink/60">
+        <p className="rounded-xs border border-primary/10 bg-white p-6 text-sm text-ink/60">
           {t("activity.empty")}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-primary/10 bg-white">
-          <table className="w-full min-w-[52rem] text-left text-sm">
-            <thead className="border-b border-primary/10 text-xs uppercase tracking-wide text-ink/50">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-medium">{t("activity.when")}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t("activity.who")}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t("activity.what")}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t("activity.record")}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t("activity.fields")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primary/5">
-              {entries.map((entry) => (
-                <tr key={entry.id} className="align-top">
-                  <td className="whitespace-nowrap px-4 py-3 text-ink/70">
-                    <time dateTime={entry.createdAt.toISOString()}>
-                      {formatter.format(entry.createdAt)}
-                    </time>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="block text-ink">{entry.actorEmail}</span>
-                    <span className="block text-xs text-ink/50">{actorNote(entry)}</span>
-                    {/* Under the name rather than in a column of its own:
-                        it is only ever read together with the person, and a
-                        sixth column pushed the table into a horizontal
-                        scroll on every laptop. */}
-                    {entry.ipAddress && (
-                      <span className="block font-mono text-[11px] text-ink/40">
-                        {entry.ipAddress}
-                      </span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-ink">
-                    {actionLabel(entry.action)}
-                    {/* "signed in" says it all; "signed in Session" does not. */}
-                    {!isAuthEvent(entry.model) && (
-                      <span className="ml-1 text-ink/50">{entry.model}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-ink/70">
-                    {/* An auth event is about a person, not a row. "no name
-                        recorded" would read as a fault; there was never a
-                        record to name. */}
-                    {isAuthEvent(entry.model) ? (
-                      <span className="text-ink/40">{t("common.none")}</span>
-                    ) : entry.count !== null ? (
-                      t("activity.bulk", { count: entry.count })
-                    ) : (
-                      (entry.recordLabel ?? (
-                        <span className="text-ink/40">{t("activity.noLabel")}</span>
-                      ))
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-ink/50">
-                    {entry.changedFields.join(", ")}
-                  </td>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <div className="overflow-x-auto rounded-xs border border-primary/10 bg-white">
+            <table className="w-full min-w-208 text-left text-sm">
+              <thead className="border-b border-primary/10 text-xs uppercase tracking-wide text-ink/50">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium">{t("activity.when")}</th>
+                  <th scope="col" className="px-4 py-3 font-medium">{t("activity.who")}</th>
+                  <th scope="col" className="px-4 py-3 font-medium">{t("activity.what")}</th>
+                  <th scope="col" className="px-4 py-3 font-medium">{t("activity.record")}</th>
+                  <th scope="col" className="px-4 py-3 font-medium">{t("activity.fields")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-primary/5">
+                {entries.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    className={`align-top transition-colors ${
+                      selected?.id === entry.id ? "bg-accent/6" : "hover:bg-surface-muted/60"
+                    }`}
+                  >
+                    {/* The time cell is the row's own link: a plain <a>
+                        keeps the selection in the URL, so a particular
+                        entry can be sent to someone. */}
+                    <td className="whitespace-nowrap px-4 py-3 text-ink/70">
+                      <Link href={entryHref(entry.id)} className="hover:text-primary">
+                        <time dateTime={entry.createdAt.toISOString()}>
+                          {formatter.format(entry.createdAt)}
+                        </time>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="block text-ink">{entry.actorEmail}</span>
+                      <span className="block text-xs text-ink/50">{actorNote(entry)}</span>
+                      {/* Under the name rather than in a column of its own:
+                          it is only ever read together with the person, and a
+                          sixth column pushed the table into a horizontal
+                          scroll on every laptop. */}
+                      {entry.ipAddress && (
+                        <span className="block font-mono text-[11px] text-ink/40">
+                          {entry.ipAddress}
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink">
+                      {actionLabel(entry.action)}
+                      {/* "signed in" says it all; "signed in Session" does not. */}
+                      {!isAuthEvent(entry.model) && (
+                        <span className="ml-1 text-ink/50">{entry.model}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-ink/70">
+                      {/* An auth event is about a person, not a row. "no name
+                          recorded" would read as a fault; there was never a
+                          record to name. */}
+                      {isAuthEvent(entry.model) ? (
+                        <span className="text-ink/40">{t("common.none")}</span>
+                      ) : entry.count !== null ? (
+                        t("activity.bulk", { count: entry.count })
+                      ) : (
+                        (entry.recordLabel ?? (
+                          <span className="text-ink/40">{t("activity.noLabel")}</span>
+                        ))
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-ink/50">
+                      {entry.changedFields.join(", ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <AuditDetailPanel
+          locale={locale}
+          entry={selectedView}
+          labels={{
+            title: t("activity.detail.title"),
+            empty: t("activity.detail.empty"),
+            record: t("activity.detail.record"),
+            actor: t("activity.detail.actor"),
+            time: t("activity.detail.time"),
+            from: t("activity.detail.from"),
+            openRecord: t("activity.detail.openRecord"),
+            revert: t("activity.detail.revert"),
+            revertNote: t("activity.detail.revertNote"),
+            reverted: t("activity.detail.reverted"),
+            confirm: t("activity.detail.confirm"),
+            reason: {
+              customerData: t("activity.detail.reason.customerData"),
+              notAnUpdate: t("activity.detail.reason.notAnUpdate"),
+              noChange: t("activity.detail.reason.noChange"),
+            },
+            error: {
+              NOT_FOUND: t("activity.detail.error.NOT_FOUND"),
+              NOT_REVERTABLE: t("activity.detail.error.NOT_REVERTABLE"),
+              CUSTOMER_DATA: t("activity.detail.error.CUSTOMER_DATA"),
+              NO_VALUES: t("activity.detail.error.NO_VALUES"),
+              TRUNCATED: t("activity.detail.error.TRUNCATED"),
+              RECORD_GONE: t("activity.detail.error.RECORD_GONE"),
+              REVERT_FAILED: t("common.error"),
+            },
+          }}
+        />
+      </div>
       )}
 
       {pageCount > 1 && (

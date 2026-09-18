@@ -21,8 +21,17 @@
 import { execFileSync } from "node:child_process";
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
+import { pgAdapter } from "../lib/prisma-adapter";
 import bcrypt from "bcryptjs";
-import { ADMIN, ADMIN_POOL, PENDING_ADMIN, PROJECTS } from "./fixtures";
+import {
+  ADMIN,
+  ADMIN_POOL,
+  DRAFT_BROCHURE,
+  E_BROCHURE,
+  PENDING_ADMIN,
+  PROJECTS,
+  VIEWER,
+} from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
 /*
@@ -108,6 +117,47 @@ async function seed(prisma: PrismaClient) {
     });
   }
 
+  /*
+    One published e-brochure, attached to the first project so the spec
+    covers the project-link path, translated into all four locales so the
+    viewer's chrome can be asserted in any of them.
+  */
+  const trinity = await prisma.project.findUnique({
+    where: { slug: PROJECTS[0].slug },
+    select: { id: true },
+  });
+
+  await prisma.eBrochure.create({
+    data: {
+      slug: E_BROCHURE.slug,
+      fileUrl: E_BROCHURE.fileUrl,
+      projectId: trinity?.id ?? null,
+      isPublished: true,
+      sortOrder: 0,
+      translations: {
+        create: (Object.keys(E_BROCHURE.title) as (keyof typeof E_BROCHURE.title)[]).map(
+          (locale) => ({
+            locale,
+            title: E_BROCHURE.title[locale],
+            description: E_BROCHURE.description[locale],
+          }),
+        ),
+      },
+    },
+  });
+
+  // Unpublished, so the index has something it must not show and the
+  // detail route has a slug it must 404 rather than serve.
+  await prisma.eBrochure.create({
+    data: {
+      slug: DRAFT_BROCHURE.slug,
+      fileUrl: DRAFT_BROCHURE.fileUrl,
+      isPublished: false,
+      sortOrder: 1,
+      translations: { create: { locale: "en", title: DRAFT_BROCHURE.title } },
+    },
+  });
+
   await prisma.user.create({
     data: {
       name: ADMIN.name,
@@ -163,6 +213,20 @@ async function seed(prisma: PrismaClient) {
       isActive: true,
     },
   });
+
+  // Phase 4's read-only role — enrolled the same way ADMIN is, since
+  // lib/two-factor-policy.ts exempts nobody.
+  await prisma.user.create({
+    data: {
+      name: VIEWER.name,
+      email: VIEWER.email,
+      passwordHash: await bcrypt.hash(VIEWER.password, BCRYPT_ROUNDS),
+      role: "VIEWER",
+      isActive: true,
+      totpSecret: encryptSecret(VIEWER.totpSecret),
+      totpEnabledAt: new Date(),
+    },
+  });
 }
 
 /**
@@ -184,12 +248,21 @@ export async function prepareDatabase() {
     migrations themselves are exercised by CI's own migrate job, which is
     the right place for that check.
   */
-  execFileSync("npx", ["prisma", "db", "push", "--skip-generate", "--accept-data-loss"], {
+  /*
+    `--url`, and no `--skip-generate`. Both changed in Prisma 7: the CLI
+    now reads its connection string from prisma.config.ts rather than the
+    environment, so the e2e database has to be named on the command line or
+    the config's DATABASE_URL wins and the suite quietly rebuilds the
+    development database instead. `--skip-generate` is gone because push no
+    longer generates a client at all.
+  */
+  execFileSync("npx", ["prisma", "db", "push", "--url", url, "--accept-data-loss"], {
     env: { ...process.env, DATABASE_URL: url },
     stdio: "inherit",
   });
 
-  const prisma = new PrismaClient({ datasources: { db: { url } } });
+  // `datasources` is gone in Prisma 7 — the URL rides on the adapter now.
+  const prisma = new PrismaClient({ adapter: pgAdapter(url) });
 
   try {
     await wipe(prisma);

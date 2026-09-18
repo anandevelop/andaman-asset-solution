@@ -30,10 +30,20 @@ export type EventCard = {
   startsAt: Date;
   endsAt: Date | null;
   coverImageUrl: string | null;
+  /** Manual social-share override — see Event.ogImageUrl's schema.prisma
+   *  comment. Null falls back to coverImageUrl. */
+  ogImageUrl: string | null;
   capacity: number | null;
   /** Null when capacity is unlimited. */
   seatsLeft: number | null;
   isPast: boolean;
+  /// Falls back to title/description (mirrors project/news pages) when an
+  /// admin has not filled these in — see EventTranslation.metaTitle in
+  /// schema.prisma.
+  metaTitle: string;
+  metaDescription: string;
+  /// Per-locale opt-out of indexing — see EventTranslation.noIndex.
+  noIndex: boolean;
 };
 
 /** Registration statuses that occupy a seat. */
@@ -62,6 +72,7 @@ const CARD_SELECT = {
   startsAt: true,
   endsAt: true,
   coverImageUrl: true,
+  ogImageUrl: true,
   capacity: true,
 } satisfies Prisma.EventSelect;
 
@@ -114,9 +125,15 @@ function toCard(row: CardRow, locale: string, now: Date, taken: number): EventCa
     startsAt: row.startsAt,
     endsAt: row.endsAt,
     coverImageUrl: row.coverImageUrl,
+    ogImageUrl: row.ogImageUrl,
     capacity: row.capacity,
     seatsLeft: row.capacity === null ? null : Math.max(0, row.capacity - taken),
     isPast: (row.endsAt ?? row.startsAt) < now,
+    metaTitle: t?.metaTitle || (t?.title ?? pickLocale(locale, row.titleTh, row.titleEn)),
+    metaDescription:
+      t?.metaDescription ||
+      (t?.description ?? pickLocale(locale, row.descriptionTh, row.descriptionEn)),
+    noIndex: t?.noIndex ?? false,
   };
 }
 

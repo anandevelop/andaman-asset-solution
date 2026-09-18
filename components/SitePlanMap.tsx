@@ -3,10 +3,20 @@
 /**
  * components/SitePlanMap.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Interactive master plan — SVG polygon overlay on top of the site plan
- * image, colour-coded by unit status, with zoom/pan (react-zoom-pan-pinch)
- * and filter pills. Renders inside the "Site Plan + Unit Status" section
- * on the project page, in place of the previous plain <Image>.
+ * The whole "Site Plan + Unit Status" section body: phase tabs, the status
+ * filter pills, the interactive master plan, and the summary bar
+ * underneath it — one client component rather than four, because the
+ * phase a visitor has selected has to dim the same map the status filter
+ * dims, and the summary bar's counts have to react to both. Splitting that
+ * state across a server-rendered wrapper and a client map would mean
+ * either lifting the map's own zoom/pan state up too (react-zoom-pan-
+ * pinch's context has to wrap whatever reads it) or duplicating the dim
+ * logic in two places; keeping everything here keeps it in one.
+ *
+ * The map itself is unchanged from the previous version: SVG polygon
+ * overlay, zoom/pan (react-zoom-pan-pinch), flat-size unit-number labels
+ * with a crowd-collision shrink pass. See the sections below for what
+ * that part still does — this header now covers the section as a whole.
  *
  * Coordinate system: the overlay <svg> uses viewBox="0 0 100 100" and the
  * image sits in a container whose aspect ratio is fixed to match the
@@ -35,14 +45,14 @@
  * hover/tap tooltip instead, on a fine (mouse) pointer only; on a coarse
  * (touch) pointer, where there's no hover to reveal that tooltip with, it
  * always showed the number regardless of size. That mouse/touch split
- * stopped making sense once the project page started rendering this map
- * in a narrower column (see the "Site Plan + Unit Status" section on the
- * project page) rather than the full container width — plenty of desktop
- * visitors with a mouse now see the exact same undersized-on-first-paint
- * boxes touch users always did, and silently hiding their numbers behind
- * a hover they have no reason to try reads as "the number is just
- * missing," not "hover to reveal it." So the touch behaviour — always
- * show, floored at MIN_FONT_PX — is now what every pointer type gets.
+ * stopped making sense once the map started rendering at the section's
+ * full container width (see below) rather than a narrower column — plenty
+ * of desktop visitors with a mouse now see the exact same undersized-on-
+ * first-paint boxes touch users always did, and silently hiding their
+ * numbers behind a hover they have no reason to try reads as "the number
+ * is just missing," not "hover to reveal it." So the touch behaviour —
+ * always show, floored at MIN_FONT_PX — is now what every pointer type
+ * gets.
  *
  * Every label now renders at the same flat size (FLAT_FONT_PX) rather
  * than one scaled to its own polygon's bounding box — the earlier
@@ -73,10 +83,35 @@
  * matters most; the initial zoom is also higher on narrow viewports (see
  * MOBILE_INITIAL_SCALE below) so there's more physical room per badge
  * before the shrink pass even has to act.
+ *
+ * ── Full-width layout, phases, and the summary bar ───────────────────────
+ * This used to render at ~58% width beside a scrollable column of unit-
+ * number chips grouped by type. That list is gone: it duplicated the map
+ * it sat next to (the same unit, twice, in two visual languages) without
+ * telling a visitor anything the map's own colours and a plain count
+ * couldn't. The map now takes the section's full width, and what used to
+ * be "which units exist" is now "how many are left" — the summary bar
+ * below the map, which is the thing a buyer scanning the plan actually
+ * wants to know.
+ *
+ * Phase tabs are new. `ProjectUnit.phase` lets a development release in
+ * stages, and a project using it wants its plan filterable by stage the
+ * same way the status pills already filter by AVAILABLE/RESERVED/SOLD —
+ * both dim non-matching units rather than removing them, so the plan's
+ * overall shape stays legible while a visitor narrows what they're
+ * looking at. `phases` arrives empty for the (majority) single-release
+ * projects, and the tab row simply does not render rather than showing
+ * one meaningless "Phase 1" pill.
+ *
+ * The summary bar's counts are always scoped to the *phase* filter (never
+ * to the status filter, which would make "Available: 5" and "Reserved: 2"
+ * add up to something other than the total) — see the render below for
+ * exactly which units feed it.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import {
   TransformWrapper,
   TransformComponent,
@@ -85,6 +120,25 @@ import {
 } from "react-zoom-pan-pinch";
 import { Maximize, Minus, Plus, RotateCcw } from "lucide-react";
 import type { ProjectUnitSummary, UnitStatus, ShapePoint } from "@/lib/projects";
+
+/** WhatsApp's own glyph. Inline rather than from lucide, which has no
+ *  brand marks — same copy as SalesTeamSection.tsx's, and for the same
+ *  reason: the whole point of this button is that it looks like the app
+ *  it hands you to. */
+function WhatsAppGlyph({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+    </svg>
+  );
+}
 
 type Labels = {
   all: string;
@@ -95,16 +149,33 @@ type Labels = {
   zoomOut: string;
   fullscreen: string;
   resetView: string;
+  allPhases: string;
+  askDetails: string;
+  unitsSuffix: string;
 };
+
+export type PhaseOption = { value: number; label: string };
 
 type Props = {
   projectName: string;
-  masterPlanImageUrl: string;
+  /** Null when no master plan photo has been uploaded yet — the map,
+   *  zoom controls and "updated" chip are skipped entirely in that case,
+   *  and only the summary bar renders (see the render below). */
+  masterPlanImageUrl: string | null;
   units: ProjectUnitSummary[];
   labels: Labels;
+  /** Ascending, translated — empty on a project sold as one release. */
+  phases: PhaseOption[];
+  /** Pre-built server-side (locale-aware date formatting, the "updated
+   *  {date}" sentence with its date already bolded) — null hides the
+   *  chip entirely, which is also what happens when the last edit is
+   *  over 30 days old; see the page's own comment on that rule. */
+  updated: { full: ReactNode; date: string } | null;
+  whatsappUrl: string;
 };
 
 type FilterValue = "ALL" | UnitStatus;
+type PhaseValue = "ALL" | number;
 type Transform = { scale: number; positionX: number; positionY: number };
 
 // Tailwind classes are looked up whole, never string-concatenated, so the
@@ -143,9 +214,19 @@ const PIN_FILL: Record<UnitStatus, string> = {
 // Small dot rendered inside each filter pill, so status is still readable
 // at a glance once the pill itself switched to the site's standard
 // solid-navy-when-active chip (see ProjectFilterBar's `chip()`) rather
-// than a colour-coded border.
+// than a colour-coded border. Also reused, unchanged, for the summary
+// bar's own status dots below.
 const STATUS_DOT: Record<FilterValue, string> = {
   ALL: "bg-primary",
+  AVAILABLE: "bg-emerald-500",
+  RESERVED: "bg-accent",
+  SOLD: "bg-red-500",
+};
+
+// The summary bar's proportion strip under each status figure — solid,
+// not the polygon's translucent fill, since a 4px sliver reads as a
+// smudge rather than a colour at that low an opacity.
+const STATUS_BAR_FILL: Record<UnitStatus, string> = {
   AVAILABLE: "bg-emerald-500",
   RESERVED: "bg-accent",
   SOLD: "bg-red-500",
@@ -215,7 +296,7 @@ function ZoomControls({
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
   const buttonClass =
-    "flex h-9 w-9 items-center justify-center rounded-sm border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
+    "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
 
   return (
     <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
@@ -255,13 +336,107 @@ function ZoomControls({
   );
 }
 
+/**
+ * Available / Reserved / Sold + the WhatsApp CTA — the map's replacement
+ * for the old unit-chip list. Renders on its own (no map, no tabs, no
+ * pills) when the project has no master plan photo yet, and underneath
+ * the map otherwise; either way its counts come from whichever units the
+ * caller hands it, already narrowed to the selected phase.
+ */
+function SummaryBar({
+  units,
+  labels,
+  whatsappUrl,
+  attached,
+}: {
+  units: ProjectUnitSummary[];
+  labels: Labels;
+  whatsappUrl: string;
+  /** True when rendered directly under the map frame — drops its own top
+   *  corners/border so the two read as one continuous card. */
+  attached: boolean;
+}) {
+  const t = useTranslations("projects");
+
+  const total = units.length;
+  const counts = units.reduce(
+    (acc, u) => {
+      acc[u.status] += 1;
+      return acc;
+    },
+    { AVAILABLE: 0, RESERVED: 0, SOLD: 0 } as Record<UnitStatus, number>,
+  );
+
+  const cells: { status: UnitStatus; label: string }[] = [
+    { status: "AVAILABLE", label: labels.available },
+    { status: "RESERVED", label: labels.reserved },
+    { status: "SOLD", label: labels.sold },
+  ];
+
+  return (
+    <div
+      className={`grid grid-cols-1 border border-primary/10 bg-white sm:grid-cols-4 ${
+        attached ? "rounded-b-xs border-t-0" : "rounded-xs shadow-card"
+      }`}
+    >
+      {cells.map(({ status, label }) => {
+        const count = counts[status];
+        const share = total > 0 ? Math.round((count / total) * 100) : 0;
+
+        return (
+          <div
+            key={status}
+            className="border-b border-primary/10 p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+          >
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/60">
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[status]}`} aria-hidden />
+              {label}
+            </span>
+            <p className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-light text-primary">{count}</span>
+              <span className="text-xs text-ink/50">
+                / {total} {labels.unitsSuffix}
+              </span>
+            </p>
+            <span className="mt-2.5 block h-1 w-full overflow-hidden rounded-full bg-primary/8">
+              <span
+                className={`block h-full rounded-full ${STATUS_BAR_FILL[status]}`}
+                style={{ width: `${share}%` }}
+              />
+            </span>
+          </div>
+        );
+      })}
+
+      <div className="flex flex-col justify-center gap-3 bg-primary p-4 text-white">
+        <p className="text-sm leading-snug">
+          {t("sitePlanRemaining", { count: counts.AVAILABLE })}
+        </p>
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 rounded-xs bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1DA851]"
+        >
+          <WhatsAppGlyph size={15} />
+          {labels.askDetails}
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function SitePlanMap({
   projectName,
   masterPlanImageUrl,
   units,
   labels,
+  phases,
+  updated,
+  whatsappUrl,
 }: Props) {
-  const [filter, setFilter] = useState<FilterValue>("ALL");
+  const [statusFilter, setStatusFilter] = useState<FilterValue>("ALL");
+  const [phaseFilter, setPhaseFilter] = useState<PhaseValue>("ALL");
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState<Transform>({ scale: 1, positionX: 0, positionY: 0 });
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -290,7 +465,16 @@ export default function SitePlanMap({
     return () => observer.disconnect();
   }, []);
 
-  const counts = units.reduce(
+  // Phase always narrows first — the summary bar's counts, the map's
+  // dimming, and the status pills' own counts all read from this rather
+  // than the raw `units` prop, so "5 available" and the map's dimmed-out
+  // units can never disagree about which phase they're describing.
+  const phaseUnits = useMemo(
+    () => (phaseFilter === "ALL" ? units : units.filter((u) => u.phase === phaseFilter)),
+    [units, phaseFilter],
+  );
+
+  const counts = phaseUnits.reduce(
     (acc, u) => {
       acc[u.status] += 1;
       return acc;
@@ -298,8 +482,8 @@ export default function SitePlanMap({
     { AVAILABLE: 0, RESERVED: 0, SOLD: 0 } as Record<UnitStatus, number>,
   );
 
-  const pills: { value: FilterValue; label: string; count: number }[] = [
-    { value: "ALL", label: labels.all, count: units.length },
+  const statusPills: { value: FilterValue; label: string; count: number }[] = [
+    { value: "ALL", label: labels.all, count: phaseUnits.length },
     { value: "AVAILABLE", label: labels.available, count: counts.AVAILABLE },
     { value: "RESERVED", label: labels.reserved, count: counts.RESERVED },
     { value: "SOLD", label: labels.sold, count: counts.SOLD },
@@ -395,22 +579,62 @@ export default function SitePlanMap({
     return geo;
   }, [units, size, transform.scale]);
 
+  // No photo yet: the map, its zoom controls and the "updated" chip all
+  // have nothing to sit on top of, and phase/status filtering would be
+  // controls with no visual to act on — so none of it renders, just the
+  // plain counts. See the file header's "Full-width layout" section.
+  if (!masterPlanImageUrl) {
+    return <SummaryBar units={units} labels={labels} whatsappUrl={whatsappUrl} attached={false} />;
+  }
+
   return (
     <div>
-      {/* ── Filter pills ────────────────────────────────────────────── */}
+      {/* ── Phase tabs ──────────────────────────────────────────────── */}
+      {phases.length > 1 && (
+        <div
+          role="tablist"
+          aria-label={labels.allPhases}
+          className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
+        >
+          {[{ value: "ALL" as PhaseValue, label: labels.allPhases }, ...phases].map((tab) => {
+            const active = phaseFilter === tab.value;
+            const count =
+              tab.value === "ALL" ? units.length : units.filter((u) => u.phase === tab.value).length;
+
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setPhaseFilter(tab.value)}
+                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
+                  active
+                    ? "border-primary bg-primary text-white"
+                    : "border-primary/15 text-ink/70 hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                {tab.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Status filter pills ─────────────────────────────────────── */}
       {/* Same solid-navy-when-active chip language as ProjectFilterBar's
           chip() on /projects, rather than the old colour-coded-border
           treatment — a status dot inside each pill still carries the
           colour meaning, so nothing is lost switching to the shared
           convention. */}
       <div className="mb-5 flex flex-wrap gap-2.5">
-        {pills.map((pill) => {
-          const active = filter === pill.value;
+        {statusPills.map((pill) => {
+          const active = statusFilter === pill.value;
           return (
             <button
               key={pill.value}
               type="button"
-              onClick={() => setFilter(pill.value)}
+              onClick={() => setStatusFilter(pill.value)}
               aria-pressed={active}
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
                 active
@@ -428,171 +652,180 @@ export default function SitePlanMap({
         })}
       </div>
 
-      {/* ── Map ─────────────────────────────────────────────────────── */}
-      {/* rounded-sm + shadow-card matches every other framed white panel
-          on the site (news/event cards, the fallback master-plan block
-          above) — this was previously flat square corners with no
-          elevation, which read as a generic template widget rather than
-          part of the site. */}
-      <div
-        ref={containerRef}
-        className="relative aspect-[1754/1241] w-full overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card"
-      >
-        <TransformWrapper
-          minScale={1}
-          maxScale={6}
-          initialScale={initialScale}
-          centerOnInit
+      {/* ── Map + summary bar, one continuous card ───────────────────── */}
+      <div className="overflow-hidden rounded-xs border border-primary/10 shadow-card">
+        <div
+          ref={containerRef}
+          className="relative aspect-1754/1241 w-full overflow-hidden bg-white"
         >
-          <TransformSync onChange={setTransform} />
-          <ZoomControls labels={labels} onFullscreen={handleFullscreen} />
+          <TransformWrapper minScale={1} maxScale={6} initialScale={initialScale} centerOnInit>
+            <TransformSync onChange={setTransform} />
+            <ZoomControls labels={labels} onFullscreen={handleFullscreen} />
 
-          <TransformComponent
-            wrapperClass="!w-full !h-full"
-            contentClass="!w-full !h-full"
-          >
-            <div className="relative h-full w-full">
-              {/* eslint-disable-next-line @next/next/no-img-element -- inside
-                  a react-zoom-pan-pinch transform target; next/image's fill
-                  layout fights the library's own width/height measuring. */}
-              <img
-                src={masterPlanImageUrl}
-                alt={`${projectName} — site plan`}
-                className="h-full w-full object-cover"
-                draggable={false}
-              />
+            <TransformComponent wrapperClass="w-full! h-full!" contentClass="w-full! h-full!">
+              <div className="relative h-full w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element -- inside
+                    a react-zoom-pan-pinch transform target; next/image's fill
+                    layout fights the library's own width/height measuring. */}
+                <img
+                  src={masterPlanImageUrl}
+                  alt={`${projectName} — site plan`}
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
 
-              <svg
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                className="absolute inset-0 h-full w-full"
-              >
-                {units.map((unit) => {
-                  const dimmed = filter !== "ALL" && unit.status !== filter;
-                  const opacity = dimmed ? 0.15 : 1;
-                  // Assigned to a local so TS narrows it inside the .reduce
-                  // callbacks below — narrowing a property access like
-                  // `unit.shapePoints` doesn't carry into a nested function
-                  // scope the way narrowing a plain variable does.
-                  const shapePoints = unit.shapePoints;
+                <svg
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  className="absolute inset-0 h-full w-full"
+                >
+                  {units.map((unit) => {
+                    const dimmed =
+                      (statusFilter !== "ALL" && unit.status !== statusFilter) ||
+                      (phaseFilter !== "ALL" && unit.phase !== phaseFilter);
+                    const opacity = dimmed ? 0.15 : 1;
+                    // Assigned to a local so TS narrows it inside the .reduce
+                    // callbacks below — narrowing a property access like
+                    // `unit.shapePoints` doesn't carry into a nested function
+                    // scope the way narrowing a plain variable does.
+                    const shapePoints = unit.shapePoints;
 
-                  if (shapePoints && shapePoints.length >= 3) {
-                    // The unit-number label itself is rendered in the HTML
-                    // layer below, not here — see that layer's header
-                    // comment for why an SVG <text> can't carry a literal
-                    // pixel font-size inside a viewBox="0 0 100 100".
-                    return (
-                      <polygon
-                        key={unit.id}
-                        points={pointsToAttr(shapePoints)}
-                        style={{ opacity }}
-                        className={`${POLYGON_FILL[unit.status]} ${POLYGON_STROKE[unit.status]}`}
-                        /* vector-effect keeps this a literal on-screen
-                           pixel border at any zoom level, per spec,
-                           rather than N viewBox units (which would look
-                           wildly thick — the box is only 100 units
-                           wide). */
-                        strokeWidth={POLYGON_STROKE_WIDTH[unit.status]}
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    );
-                  }
-
-                  if (unit.positionXPercent !== null && unit.positionYPercent !== null) {
-                    return (
-                      <g key={unit.id} style={{ opacity }}>
-                        <circle
-                          cx={unit.positionXPercent}
-                          cy={unit.positionYPercent}
-                          r={2}
-                          className={PIN_FILL[unit.status]}
-                          stroke="white"
-                          strokeWidth={0.4}
+                    if (shapePoints && shapePoints.length >= 3) {
+                      // The unit-number label itself is rendered in the HTML
+                      // layer below, not here — see that layer's header
+                      // comment for why an SVG <text> can't carry a literal
+                      // pixel font-size inside a viewBox="0 0 100 100".
+                      return (
+                        <polygon
+                          key={unit.id}
+                          points={pointsToAttr(shapePoints)}
+                          style={{ opacity }}
+                          className={`${POLYGON_FILL[unit.status]} ${POLYGON_STROKE[unit.status]}`}
+                          /* vector-effect keeps this a literal on-screen
+                             pixel border at any zoom level, per spec,
+                             rather than N viewBox units (which would look
+                             wildly thick — the box is only 100 units
+                             wide). */
+                          strokeWidth={POLYGON_STROKE_WIDTH[unit.status]}
                           vectorEffect="non-scaling-stroke"
                         />
-                        <text
-                          x={unit.positionXPercent}
-                          y={unit.positionYPercent - 3}
-                          textAnchor="middle"
-                          className="fill-white font-sans text-[2.5px] font-bold"
-                          style={{
-                            paintOrder: "stroke",
-                            stroke: "rgba(15,23,42,0.85)",
-                            strokeWidth: 0.4,
-                          }}
-                        >
-                          {unit.unitNumber}
-                        </text>
-                      </g>
+                      );
+                    }
+
+                    if (unit.positionXPercent !== null && unit.positionYPercent !== null) {
+                      return (
+                        <g key={unit.id} style={{ opacity }}>
+                          <circle
+                            cx={unit.positionXPercent}
+                            cy={unit.positionYPercent}
+                            r={2}
+                            className={PIN_FILL[unit.status]}
+                            stroke="white"
+                            strokeWidth={0.4}
+                            vectorEffect="non-scaling-stroke"
+                          />
+                          <text
+                            x={unit.positionXPercent}
+                            y={unit.positionYPercent - 3}
+                            textAnchor="middle"
+                            className="fill-white font-sans text-[2.5px] font-bold"
+                            style={{
+                              paintOrder: "stroke",
+                              stroke: "rgba(15,23,42,0.85)",
+                              strokeWidth: 0.4,
+                            }}
+                          >
+                            {unit.unitNumber}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    return null;
+                  })}
+                </svg>
+
+                {/* Unit-number labels — plain HTML, not SVG <text>. Root
+                    cause of the earlier oversized-label bug: an SVG
+                    <text>'s `font-size` presentation attribute, when given a
+                    bare number (no unit), is resolved in the SVG's own user/
+                    viewBox coordinate space — 1 "unit" here is 1/100th of
+                    the whole image, so a "14" meant to be 14px rendered as
+                    14% of the image width instead, tens of times too big.
+                    A plain HTML element has no such ambiguity: `fontSize`
+                    set in real CSS px is real CSS px, full stop.
+                    This layer is positioned with the same left/top-percent
+                    scheme as the polygons above and sits inside the very
+                    same <TransformComponent>, so react-zoom-pan-pinch's
+                    pan/zoom transform moves both layers together for free —
+                    no separate position math needed here. Only the already-
+                    computed `fontPx` (which itself already reacts to the
+                    current zoom scale, see labelGeometry above) needs an
+                    inverse `scale(1/zoom)` on each label so the ancestor's
+                    own zoom transform doesn't apply on top of it a second
+                    time.
+
+                    Rendered as a small white badge rather than bare
+                    coloured-outline text — the badge reads the same crisp
+                    size against every fill colour (emerald, gold, or ink)
+                    instead of relying on a text-shadow outline that looked
+                    fine on the old saturated red but washed out against the
+                    new, more muted palette. */}
+                <div className="pointer-events-none absolute inset-0">
+                  {units.map((unit) => {
+                    const shapePoints = unit.shapePoints;
+                    if (!shapePoints || shapePoints.length < 3) return null;
+
+                    const geo = labelGeometry.get(unit.id);
+                    const labelX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
+                    const labelY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
+                    const fontPx = geo?.fontPx ?? FLAT_FONT_PX;
+                    const dimmed =
+                      (statusFilter !== "ALL" && unit.status !== statusFilter) ||
+                      (phaseFilter !== "ALL" && unit.phase !== phaseFilter);
+
+                    return (
+                      <span
+                        key={unit.id}
+                        className="absolute whitespace-nowrap rounded-xs border border-primary/10 bg-white/95 font-sans font-semibold leading-none text-primary shadow-xs"
+                        style={{
+                          left: `${labelX}%`,
+                          top: `${labelY}%`,
+                          // translate centres the label on its anchor;
+                          // scale is the inverse-zoom compensation from the
+                          // comment above — combined in one transform so
+                          // they apply as a single, predictable operation.
+                          transform: `translate(-50%, -50%) scale(${1 / transform.scale})`,
+                          fontSize: `${fontPx}px`,
+                          padding: `${fontPx * 0.15}px ${fontPx * 0.35}px`,
+                          opacity: dimmed ? 0.15 : 1,
+                        }}
+                      >
+                        {unit.unitNumber}
+                      </span>
                     );
-                  }
-
-                  return null;
-                })}
-              </svg>
-
-              {/* Unit-number labels — plain HTML, not SVG <text>. Root
-                  cause of the earlier oversized-label bug: an SVG
-                  <text>'s `font-size` presentation attribute, when given a
-                  bare number (no unit), is resolved in the SVG's own user/
-                  viewBox coordinate space — 1 "unit" here is 1/100th of
-                  the whole image, so a "14" meant to be 14px rendered as
-                  14% of the image width instead, tens of times too big.
-                  A plain HTML element has no such ambiguity: `fontSize`
-                  set in real CSS px is real CSS px, full stop.
-                  This layer is positioned with the same left/top-percent
-                  scheme as the polygons above and sits inside the very
-                  same <TransformComponent>, so react-zoom-pan-pinch's
-                  pan/zoom transform moves both layers together for free —
-                  no separate position math needed here. Only the already-
-                  computed `fontPx` (which itself already reacts to the
-                  current zoom scale, see labelGeometry above) needs an
-                  inverse `scale(1/zoom)` on each label so the ancestor's
-                  own zoom transform doesn't apply on top of it a second
-                  time.
-
-                  Rendered as a small white badge rather than bare
-                  coloured-outline text — the badge reads the same crisp
-                  size against every fill colour (emerald, gold, or ink)
-                  instead of relying on a text-shadow outline that looked
-                  fine on the old saturated red but washed out against the
-                  new, more muted palette. */}
-              <div className="pointer-events-none absolute inset-0">
-                {units.map((unit) => {
-                  const shapePoints = unit.shapePoints;
-                  if (!shapePoints || shapePoints.length < 3) return null;
-
-                  const geo = labelGeometry.get(unit.id);
-                  const labelX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
-                  const labelY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
-                  const fontPx = geo?.fontPx ?? FLAT_FONT_PX;
-                  const dimmed = filter !== "ALL" && unit.status !== filter;
-
-                  return (
-                    <span
-                      key={unit.id}
-                      className="absolute whitespace-nowrap rounded-sm border border-primary/10 bg-white/95 font-sans font-semibold leading-none text-primary shadow-sm"
-                      style={{
-                        left: `${labelX}%`,
-                        top: `${labelY}%`,
-                        // translate centres the label on its anchor;
-                        // scale is the inverse-zoom compensation from the
-                        // comment above — combined in one transform so
-                        // they apply as a single, predictable operation.
-                        transform: `translate(-50%, -50%) scale(${1 / transform.scale})`,
-                        fontSize: `${fontPx}px`,
-                        padding: `${fontPx * 0.15}px ${fontPx * 0.35}px`,
-                        opacity: dimmed ? 0.15 : 1,
-                      }}
-                    >
-                      {unit.unitNumber}
-                    </span>
-                  );
-                })}
+                  })}
+                </div>
               </div>
+            </TransformComponent>
+          </TransformWrapper>
+
+          {/* ── "Updated" chip ──────────────────────────────────────── */}
+          {/* Outside <TransformComponent> — it has to sit still while the
+              plan zooms and pans underneath it, not travel with it — but
+              still inside this `relative` frame, so it stays pinned to the
+              frame's own corner rather than the viewport's. bottom-right
+              is where the zoom controls live, hence top-right here. */}
+          {updated && (
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-2 border border-primary/10 bg-white/90 px-3 py-2 text-xs text-ink/70 shadow-sm backdrop-blur-sm sm:px-2.5 sm:py-1.5 sm:text-[11px]">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+              <span className="hidden sm:inline">{updated.full}</span>
+              <span className="font-medium text-primary sm:hidden">{updated.date}</span>
             </div>
-          </TransformComponent>
-        </TransformWrapper>
+          )}
+        </div>
+
+        <SummaryBar units={phaseUnits} labels={labels} whatsappUrl={whatsappUrl} attached />
       </div>
     </div>
   );

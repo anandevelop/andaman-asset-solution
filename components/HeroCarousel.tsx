@@ -4,7 +4,7 @@
  * components/HeroCarousel.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Homepage hero: a calm Insta360-style carousel of full-bleed image/video
- * slides (HeroStorySlide, managed at /admin/hero-banner — schema, S3 and
+ * slides (HeroStorySlide, managed at /admin/pages/home/hero — schema, S3 and
  * the admin form are all unchanged from the original IG-Stories build,
  * only this presentation layer is new). Formerly StoryBanner.tsx; renamed
  * because the UX it now implements is a real carousel, not a Story:
@@ -191,76 +191,123 @@ function Carousel({
         <div className="hero-scrim-side absolute inset-0 hidden sm:block" />
       </div>
 
-      {/* ── Prev / next arrows ────────────────────────────────────────
-          Phones keep them low on the left and right of the centered copy.
+      {/* ── Slide label ───────────────────────────────────────────────
+          Which development is on screen, credited above the pitch rather
+          than inside it. Renders nothing when the slide has no label —
+          a general mood shot belongs to no project and should not be
+          made to claim one. Hidden on phones: the copy there is centred
+          and a line pinned to the top-left would sit on its own with
+          nothing to relate to. */}
+      {slide.label && (
+        <div className="absolute inset-x-0 top-[18%] z-20 hidden sm:block">
+          <div className="container-luxe flex items-center gap-4">
+            {/* The rule and the text both carry a shadow: this line sits
+                near the top of the frame, which on a villa photograph is
+                usually sky, and white-on-white needs something behind it.
+                The same trick the arrows use rather than a scrim, which
+                would be a visible box in the corner of the picture. */}
+            <span
+              aria-hidden
+              className="h-px w-10 bg-white/70 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
+            />
+            <p className="text-xs font-light uppercase tracking-widest2 text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.65)]">
+              {slide.label}
+            </p>
+          </div>
+        </div>
+      )}
 
-          From `sm:` up they pair off in the bottom-right corner instead of
-          sitting vertically centered on the edges. Once the copy moved to
-          the bottom-left, a centered left arrow landed on top of the CTA
-          — caught by a collision check, not by eye, because the two only
-          overlap at some viewport heights. Pairing them bottom-right
-          removes the class of bug rather than nudging a magic number, and
-          gives the frame three clean anchors: copy left, progress centre,
-          controls right.
+      {/* ── Controls ──────────────────────────────────────────────────
+          Progress, position and the two arrows as one cluster in the
+          bottom-right corner, which gives the frame three clean anchors:
+          copy left, controls right, photograph between them.
 
-          Bare arrows now — no circle, no border, no blur backdrop. That
-          chip read as its own UI element sitting on top of the photo;
-          dropping it back to just the glyph is what "minimal" meant here.
-          A drop-shadow on the icon stands in for the old backdrop's
-          contrast job (keeping the arrow readable over a bright patch of
-          sky or a light wall) without drawing a shape of its own. */}
+          Phones keep the arrows low on the left and right of the centred
+          copy instead — a corner cluster on a 375px screen puts three
+          controls inside a thumb's width of each other.
+
+          The counter is the one piece of state this carousel had no way
+          of showing. Four dashes tell you there are four slides; they do
+          not tell you which one you are on once the fill animation has
+          finished, and "01 / 04" does, without asking anyone to count. */}
       <button
         type="button"
         onClick={goPrev}
         aria-label={labels.previousSlide}
-        className="absolute bottom-16 left-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:bottom-6 sm:left-auto sm:right-[4.75rem] sm:top-auto sm:h-12 sm:w-12 sm:translate-y-0"
+        className="absolute bottom-16 left-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:hidden"
       >
-        <ChevronLeft size={18} strokeWidth={1.75} aria-hidden className="sm:hidden" />
-        <ChevronLeft size={22} strokeWidth={1.75} aria-hidden className="hidden sm:block" />
+        <ChevronLeft size={18} strokeWidth={1.75} aria-hidden />
       </button>
 
       <button
         type="button"
         onClick={goNext}
         aria-label={labels.nextSlide}
-        className="absolute bottom-16 right-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:bottom-6 sm:right-5 sm:top-auto sm:h-12 sm:w-12 sm:translate-y-0"
+        className="absolute bottom-16 right-3 z-30 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-colors hover:text-white/70 sm:hidden"
       >
-        <ChevronRight size={18} strokeWidth={1.75} aria-hidden className="sm:hidden" />
-        <ChevronRight size={22} strokeWidth={1.75} aria-hidden className="hidden sm:block" />
+        <ChevronRight size={18} strokeWidth={1.75} aria-hidden />
       </button>
 
-      {/* ── Progress dashes — fixed-length, each one fills as its slide
-          plays ───────────────────────────────────────────────────────── */}
-      <div className="absolute inset-x-0 bottom-5 z-20 flex justify-center gap-3 sm:bottom-[2.1rem] sm:gap-4">
+      {/* Phones: the dashes alone, centred under the copy. */}
+      <div className="absolute inset-x-0 bottom-5 z-20 flex justify-center gap-3 sm:hidden">
         {slides.map((s, i) => (
-          <div
+          <ProgressDash
             key={s.id}
-            aria-hidden
-            className="h-[2px] w-14 overflow-hidden bg-white/25 sm:w-20"
-          >
-            <div
-              className="h-full bg-white"
-              style={
-                i < index
-                  ? { width: "100%" }
-                  : i > index
-                    ? { width: "0%" }
-                    : slide.mediaType === "IMAGE"
-                      ? {
-                          width: "0%",
-                          animationName: "story-progress",
-                          animationDuration: `${Math.max(slide.durationSeconds, 1)}s`,
-                          animationTimingFunction: "linear",
-                          animationFillMode: "forwards",
-                        }
-                      : { width: `${videoProgress}%` }
-              }
-              onAnimationEnd={
-                i === index && slide.mediaType === "IMAGE" ? goNext : undefined
-              }
-            />
-          </div>
+            index={i}
+            current={index}
+            slide={slide}
+            videoProgress={videoProgress}
+            onEnded={goNext}
+          />
         ))}
+      </div>
+
+      <div className="absolute inset-x-0 bottom-8 z-30 hidden sm:block lg:bottom-10">
+        <div className="container-luxe flex items-center justify-end gap-6">
+          <div className="flex items-center gap-2.5">
+            {slides.map((s, i) => (
+              <ProgressDash
+                key={s.id}
+                index={i}
+                current={index}
+                slide={slide}
+                videoProgress={videoProgress}
+                onEnded={goNext}
+              />
+            ))}
+          </div>
+
+          {/* aria-live so a screen reader hears the slide change at all:
+              everything else in this cluster is decorative, and the
+              arrows only announce what they do, not where you are. */}
+          <p
+            aria-live="polite"
+            className="text-sm font-light tabular-nums tracking-[0.15em] text-white/80"
+          >
+            {String(index + 1).padStart(2, "0")}
+            <span className="mx-1.5 text-white/40">/</span>
+            {String(slides.length).padStart(2, "0")}
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label={labels.previousSlide}
+              className="flex h-11 w-11 items-center justify-center border border-white/40 text-white transition-colors hover:border-white hover:bg-white/10"
+            >
+              <ChevronLeft size={18} strokeWidth={1.5} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label={labels.nextSlide}
+              className="flex h-11 w-11 items-center justify-center border border-white/40 text-white transition-colors hover:border-white hover:bg-white/10"
+            >
+              <ChevronRight size={18} strokeWidth={1.5} aria-hidden />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ── Mobile content: headline and buttons grouped together, just
@@ -287,7 +334,7 @@ function Carousel({
 
             {slide.caption && (
               <motion.div variants={textItemVariants}>
-                <p className="max-w-sm whitespace-pre-line text-3xl font-light leading-[1.1] tracking-[0.05em] text-white">
+                <p className="max-w-sm whitespace-pre-line text-3xl font-light leading-[1.1] tracking-wider text-white">
                   {slide.caption}
                 </p>
               </motion.div>
@@ -315,6 +362,11 @@ function Carousel({
       </div>
 
       {/* ── Desktop content ───────────────────────────────────────────
+          Anchored at 22% of the frame's height rather than a fixed offset
+          from the bottom: the controls now sit in the bottom-right corner,
+          and a fixed offset put the CTA on top of them on a short laptop
+          screen while leaving a gap on a tall monitor.
+
           Left-aligned on the site's own container, not centered between
           the arrows. Two reasons. It puts the copy over the shaded left
           of a typical frame and leaves the building — the thing being
@@ -323,7 +375,7 @@ function Carousel({
           (`ml-0`), and this component's own StaticFallbackHero are all
           left-aligned on container-luxe. The centered carousel was the
           one exception. */}
-      <div className="absolute inset-x-0 bottom-24 z-20 hidden sm:block lg:bottom-28">
+      <div className="absolute inset-x-0 bottom-[22%] z-20 hidden sm:block">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -351,7 +403,7 @@ function Carousel({
                   the tracking gets wide. Same call as the <h1> in
                   components/CompanyIntro.tsx.
                 */}
-                <p className="whitespace-pre-line text-5xl font-light leading-[1.04] tracking-[0.05em] text-white lg:text-6xl">
+                <p className="whitespace-pre-line text-5xl font-light leading-[1.04] tracking-wider text-white lg:text-6xl">
                   {slide.caption}
                 </p>
               </motion.div>
@@ -382,11 +434,61 @@ function Carousel({
 }
 
 /**
+ * One fixed-length progress dash.
+ *
+ * Extracted when the controls split into a phone row and a desktop
+ * cluster: the fill logic — done / not started / animating on a timer /
+ * following a video's currentTime — is fiddly enough that two copies of it
+ * would eventually disagree about which slide is playing.
+ */
+function ProgressDash({
+  index,
+  current,
+  slide,
+  videoProgress,
+  onEnded,
+}: {
+  index: number;
+  current: number;
+  slide: HeroStorySlide;
+  videoProgress: number;
+  onEnded: () => void;
+}) {
+  const style =
+    index < current
+      ? { width: "100%" }
+      : index > current
+        ? { width: "0%" }
+        : slide.mediaType === "IMAGE"
+          ? {
+              width: "0%",
+              animationName: "story-progress",
+              animationDuration: `${Math.max(slide.durationSeconds, 1)}s`,
+              animationTimingFunction: "linear" as const,
+              animationFillMode: "forwards" as const,
+            }
+          : { width: `${videoProgress}%` };
+
+  return (
+    <div aria-hidden className="h-[2px] w-14 overflow-hidden bg-white/25 sm:w-12">
+      <div
+        // The playing dash is accent, the finished ones white: the frame
+        // then says "this one" as well as "this many", which a row of
+        // identical white bars cannot.
+        className={`h-full ${index === current ? "bg-accent" : "bg-white"}`}
+        style={style}
+        onAnimationEnd={index === current && slide.mediaType === "IMAGE" ? onEnded : undefined}
+      />
+    </div>
+  );
+}
+
+/**
  * The slide's own call to action, shared between the mobile and desktop
  * content blocks.
  *
  * Exactly one button, and it is entirely the admin's: label and link both
- * come from the row an editor fills in at /admin/hero-banner, and a slide
+ * come from the row an editor fills in at /admin/pages/home/hero, and a slide
  * that leaves them blank renders no button at all — which is what the
  * field's own hint there ("Leave both blank for no button") has always
  * promised. This used to render a second, always-on button whose label
@@ -434,7 +536,7 @@ function StaticFallbackHero({
   return (
     <section className="relative flex h-[88vh] min-h-[560px] w-full items-end overflow-hidden">
       <ImageWithSkeleton src={imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-primary-900/95 via-primary-900/50 to-primary-900/30" />
+      <div className="absolute inset-0 bg-linear-to-t from-primary-900/95 via-primary-900/50 to-primary-900/30" />
 
       <div className="container-luxe relative z-10 pb-20 sm:pb-28">
         <Reveal>
@@ -469,7 +571,7 @@ function StaticFallbackHero({
 
             <Link
               href={ctaSecondaryHref}
-              className="btn-outline !border-white/50 !text-white hover:!border-white hover:!bg-white/10"
+              className="btn-outline border-white/50! text-white! hover:border-white! hover:bg-white/10!"
             >
               {ctaSecondaryLabel}
             </Link>

@@ -10,8 +10,9 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ShieldCheck } from "lucide-react";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
-import { changeOwnPassword } from "../users/actions";
+import { changeOwnPassword } from "@/app/[locale]/admin/(system)/users/actions";
 import PasswordForm from "@/components/admin/PasswordForm";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -23,7 +24,12 @@ export default async function AdminAccountPage(props: Props) {
     locale
   } = params;
 
-  const actor = await requireAdmin(locale);
+  // Role.VIEWER, not the requireAdmin() default of EDITOR — the file
+  // header above says "open to every role" and the bare call did not
+  // deliver that, leaving VIEWER and SALES unable to change their own
+  // password even though this page exists precisely so nobody in that
+  // position has to wait on a super admin.
+  const actor = await requireAdmin(locale, Role.VIEWER);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 

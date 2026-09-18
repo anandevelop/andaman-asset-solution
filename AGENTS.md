@@ -46,7 +46,7 @@ npm run db:up         # local Postgres via docker compose
 `npm run test:e2e:install` once, then `npm run test:e2e`. It builds the app
 in CI mode, so it is slow — but it is the only thing that catches routing,
 form and admin-flow regressions, and it is the check most worth running
-after any change to middleware, auth, or a form.
+after any change to proxy.ts, auth, or a form.
 
 **Stop `npm run dev` before running it.** The suite starts its own Next
 server on port 3100, and two Next processes in this directory share
@@ -86,7 +86,7 @@ in it.
 
 ### Every admin page and server action re-checks authorisation
 
-`lib/admin/guard.ts`. `middleware.ts` already redirects anonymous requests,
+`lib/admin/guard.ts`. `proxy.ts` already redirects anonymous requests,
 but middleware is a routing concern and does not protect a server action
 invoked directly. Middleware is for UX; the guard is for security. A new
 admin page or action without a guard call is a hole.
@@ -123,6 +123,23 @@ admin writes through it.
 re-assert are now editable from `/admin`. An `update` branch that
 re-asserts seed values silently reverts real content on the next
 `npm run setup`. The seed also refuses to run when `NODE_ENV=production`.
+
+### pdf.js must never go through the bundler
+
+The e-brochure viewer imports pdf.js from `/pdfjs/pdf.min.mjs` — a static
+file in `public/`, with a `/* webpackIgnore: true */` comment — and not
+from the `pdfjs-dist` package. That looks like a workaround and is not
+optional: `pdf.min.mjs` is itself a webpack bundle carrying its own
+`__webpack_require__` runtime, and nesting it inside Next's webpack makes
+the two collide. `import("pdfjs-dist")` throws `TypeError:
+Object.defineProperty called on non-object` before a line of pdf.js runs,
+and the legacy build fails identically.
+
+`scripts/copy-pdfjs-assets.mjs` puts the files there on postinstall, predev
+and prebuild — and it has to exist in the Dockerfile's `deps` stage too, or
+`npm ci` fails there. The worker has to stay same-origin for a second
+reason: given a cross-origin `workerSrc`, pdf.js re-hosts it from a `blob:`
+URL, which `worker-src 'self'` refuses.
 
 ### Adding a third-party script means editing the CSP
 
@@ -211,3 +228,13 @@ app starts, and a reverse proxy in front terminating TLS.
 `/api/health` returns 200 or 503, and only the database gates readiness —
 S3, LINE and reCAPTCHA are reported but never pull the container out of
 rotation.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

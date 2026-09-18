@@ -260,7 +260,53 @@ const PIPELINE_ORDER: LeadStatus[] = [
   LeadStatus.LOST,
 ];
 
-export type PipelineStage = { status: LeadStatus; count: number };
+export type PipelineStage = {
+  status: LeadStatus;
+  count: number;
+  /**
+   * Average days since each lead in this stage was last updated — a proxy
+   * for "time in this stage", not a tracked per-status timestamp (this
+   * schema has no status-change history). The same proxy
+   * getPublishingOverview() already uses for reviewAvgWaitDays. Null when
+   * the stage is empty.
+   */
+  avgDaysInStage: number | null;
+};
+
+/** Stages that represent a still-open lead — everything except the two
+ *  terminal outcomes. Used for the funnel's "backlog" total. */
+export const OPEN_PIPELINE_STATUSES: LeadStatus[] = PIPELINE_ORDER.filter(
+  (status) => status !== LeadStatus.WON && status !== LeadStatus.LOST,
+);
+
+/** Stages shown in the funnel visual — LOST is a dead end, not a stage a
+ *  lead moves through, so it is tracked in the pipeline data but not drawn
+ *  as a funnel bar. */
+export const FUNNEL_STAGES: LeadStatus[] = PIPELINE_ORDER.filter(
+  (status) => status !== LeadStatus.LOST,
+);
+
+/**
+ * Candidates for the "bottleneck" flag — stages a lead is actively being
+ * worked in. NEW is excluded: a lead that just arrived is not stuck, it is
+ * new (see getOverdueResponseQueue() for that concern instead). WON/LOST
+ * are terminal, not a stage to get stuck in.
+ */
+const BOTTLENECK_CANDIDATES: LeadStatus[] = [
+  LeadStatus.CONTACTED,
+  LeadStatus.QUALIFIED,
+  LeadStatus.VIEWING_SCHEDULED,
+  LeadStatus.NEGOTIATING,
+];
+
+export type PipelineSummary = {
+  stages: PipelineStage[];
+  /** Total leads sitting in any non-terminal stage right now. */
+  openTotal: number;
+  /** The worked-but-not-closed stage with the highest average time in
+   *  stage, when at least one candidate stage is non-empty; otherwise null. */
+  bottleneck: { status: LeadStatus; avgDaysInStage: number } | null;
+};
 
 /**
  * Current backlog by status, across every lead ever recorded — deliberately
@@ -268,21 +314,59 @@ export type PipelineStage = { status: LeadStatus; count: number };
  * NEGOTIATING since three months ago is still stuck; scoping this to a
  * recent window would answer "what came in lately" rather than the question
  * this exists for: where is everything sitting right now.
+ *
+ * Fetches every lead's (status, updatedAt) and aggregates in JavaScript,
+ * same trade-off as getMonthlyLeads() above: at a few thousand leads this
+ * is unmeasurable, and revisiting it (a groupBy can answer the count half
+ * but not the average-age half) can wait until it is not.
  */
-export async function getLeadPipeline(): Promise<PipelineStage[]> {
+export async function getLeadPipeline(): Promise<PipelineSummary> {
   const rows = await safeQuery(
     "report:leadPipeline",
-    () =>
-      prisma.leadInquiry.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-      }),
-    [] as { status: LeadStatus; _count: { _all: number } }[],
+    () => prisma.leadInquiry.findMany({ select: { status: true, updatedAt: true } }),
+    [] as { status: LeadStatus; updatedAt: Date }[],
   );
 
-  const counts = new Map(rows.map((row) => [row.status, row._count._all]));
+  const now = Date.now();
+  const byStatus = new Map<LeadStatus, { count: number; totalDays: number }>();
 
-  return PIPELINE_ORDER.map((status) => ({ status, count: counts.get(status) ?? 0 }));
+  for (const row of rows) {
+    const entry = byStatus.get(row.status) ?? { count: 0, totalDays: 0 };
+    entry.count += 1;
+    entry.totalDays += (now - row.updatedAt.getTime()) / DAY_MS;
+    byStatus.set(row.status, entry);
+  }
+
+  const stages = PIPELINE_ORDER.map((status) => {
+    const entry = byStatus.get(status);
+    return {
+      status,
+      count: entry?.count ?? 0,
+      avgDaysInStage:
+        entry && entry.count > 0 ? Math.round((entry.totalDays / entry.count) * 10) / 10 : null,
+    };
+  });
+
+  const openTotal = stages
+    .filter((stage) => OPEN_PIPELINE_STATUSES.includes(stage.status))
+    .reduce((sum, stage) => sum + stage.count, 0);
+
+  const bottleneckStage = stages
+    .filter(
+      (stage) =>
+        BOTTLENECK_CANDIDATES.includes(stage.status) &&
+        stage.count > 0 &&
+        stage.avgDaysInStage !== null,
+    )
+    .sort((a, b) => (b.avgDaysInStage as number) - (a.avgDaysInStage as number))[0];
+
+  return {
+    stages,
+    openTotal,
+    bottleneck: bottleneckStage
+      ? { status: bottleneckStage.status, avgDaysInStage: bottleneckStage.avgDaysInStage as number }
+      : null,
+  };
 }
 
 export type EventRsvpSummary = {

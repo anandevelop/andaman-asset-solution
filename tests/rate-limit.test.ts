@@ -136,8 +136,14 @@ describe("RATE_LIMITS policies", () => {
     expect(Object.keys(RATE_LIMITS).sort()).toEqual(
       [
         "cookieConsent",
+        // app/api/validate-email/route.ts — the lead form's inline check.
+        "emailCheck",
         "leads",
         "login",
+        // app/api/not-found/route.ts — anonymous broken-link reporting.
+        "notFound",
+        // app/api/page-view/route.ts — the article read counter.
+        "pageView",
         "presign",
         "rsvp",
         "twoFactor",

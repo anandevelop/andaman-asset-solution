@@ -18,9 +18,12 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  ALLOWED_CONTENT_TYPES,
   MAX_DOCUMENT_BYTES,
   MAX_UPLOAD_BYTES,
+  MAX_VIDEO_BYTES,
   buildObjectKey,
+  getPresignedUploadUrl,
   isAllowedContentType,
   isDocumentContentType,
   maxBytesFor,
@@ -205,5 +208,113 @@ describe("toPublicUrl", () => {
     delete process.env.NEXT_PUBLIC_MEDIA_DOMAIN;
 
     expect(() => toPublicUrl("a.jpg")).toThrow("S3_NOT_CONFIGURED");
+  });
+});
+
+/**
+ * Every header the signature covers must also be handed to the browser.
+ *
+ * This is the invariant that broke, silently and only for PDFs. Signing a
+ * PutObject with ContentDisposition puts `content-disposition` into
+ * X-Amz-SignedHeaders, but the `headers` map returned to the uploader was
+ * written out by hand and listed only Content-Type and x-amz-acl. The
+ * browser therefore replayed an incomplete set and DigitalOcean Spaces
+ * answered 400 "Missing one or more required signed header" on every
+ * brochure upload.
+ *
+ * It was invisible for three compounding reasons: images and video sign no
+ * extra header, so only PDF was affected; a cross-origin error response
+ * carries no CORS headers, so the browser reported the 400 to XHR as a
+ * network failure with status 0; and the uploader labelled that "likely a
+ * CORS rule", which pointed every investigation at the bucket instead.
+ *
+ * Signing is pure crypto — no network, no real credentials needed.
+ */
+describe("presigned upload headers", () => {
+  const original = { ...process.env };
+
+  beforeEach(() => {
+    process.env.DO_SPACES_REGION = "sgp1";
+    process.env.DO_SPACES_BUCKET = "andamanasset-media";
+    process.env.DO_SPACES_ACCESS_KEY_ID = "test";
+    process.env.DO_SPACES_SECRET_ACCESS_KEY = "test";
+    process.env.DO_SPACES_ENDPOINT = "https://sgp1.digitaloceanspaces.com";
+    process.env.NEXT_PUBLIC_MEDIA_DOMAIN =
+      "andamanasset-media.sgp1.digitaloceanspaces.com";
+  });
+
+  afterEach(() => {
+    process.env = { ...original };
+  });
+
+  /** The headers the URL's signature commits to, `host` aside. */
+  function signedHeaders(uploadUrl: string): string[] {
+    const raw = new URL(uploadUrl).searchParams.get("X-Amz-SignedHeaders") ?? "";
+
+    return decodeURIComponent(raw)
+      .split(";")
+      .filter((header) => header.length > 0 && header !== "host");
+  }
+
+  const types = Object.keys(ALLOWED_CONTENT_TYPES) as (keyof typeof ALLOWED_CONTENT_TYPES)[];
+
+  it.each(types)("%s sends every header its signature covers", async (contentType) => {
+    const presigned = await getPresignedUploadUrl({
+      contentType,
+      prefix: "projects",
+      slug: "trinity-village",
+    });
+
+    const sent = Object.keys(presigned.headers).map((header) => header.toLowerCase());
+    const missing = signedHeaders(presigned.uploadUrl).filter(
+      (header) => !sent.includes(header),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  it("tells the browser to download a PDF rather than render it", async () => {
+    // Content-Disposition is what keeps an uploaded PDF out of the site's
+    // own origin, so it has to survive as more than a signing detail.
+    const presigned = await getPresignedUploadUrl({
+      contentType: "application/pdf",
+      prefix: "projects",
+      slug: "trinity-village",
+    });
+
+    expect(presigned.headers["Content-Disposition"]).toBe(
+      'attachment; filename="trinity-village-brochure.pdf"',
+    );
+    expect(signedHeaders(presigned.uploadUrl)).toContain("content-disposition");
+  });
+
+  it("adds no such header to an image or a video", async () => {
+    for (const contentType of ["image/jpeg", "video/mp4"] as const) {
+      const presigned = await getPresignedUploadUrl({ contentType, prefix: "projects" });
+
+      expect(presigned.headers["Content-Disposition"], contentType).toBeUndefined();
+    }
+  });
+
+  it("always sends the content type and the object ACL", async () => {
+    const presigned = await getPresignedUploadUrl({ contentType: "image/webp" });
+
+    expect(presigned.headers["Content-Type"]).toBe("image/webp");
+    expect(presigned.headers["x-amz-acl"]).toBe("public-read");
+  });
+});
+
+describe("size caps by type", () => {
+  it("gives video the largest allowance", () => {
+    // Untested until now, which is how MAX_VIDEO_BYTES could have drifted
+    // from the client-side cap in components/admin/ImageUploader.tsx.
+    expect(maxBytesFor("video/mp4")).toBe(MAX_VIDEO_BYTES);
+    expect(maxBytesFor("video/webm")).toBe(MAX_VIDEO_BYTES);
+    expect(MAX_VIDEO_BYTES).toBeGreaterThan(MAX_DOCUMENT_BYTES);
+  });
+
+  it("orders the three caps image < document < video", () => {
+    expect(MAX_UPLOAD_BYTES).toBeLessThan(MAX_DOCUMENT_BYTES);
+    expect(MAX_DOCUMENT_BYTES).toBeLessThan(MAX_VIDEO_BYTES);
   });
 });

@@ -90,7 +90,7 @@ export default function FloorPlansEditor({ name, slug, initialRows, labels }: Pr
         {rows.map((row) => (
           <div
             key={row.key}
-            className="grid gap-4 border border-primary/10 bg-primary-900/[0.02] p-4 sm:grid-cols-[1fr_auto]"
+            className="grid gap-4 border border-primary/10 bg-primary-900/2 p-4 sm:grid-cols-[1fr_auto]"
           >
             <div className="space-y-3">
               <div>

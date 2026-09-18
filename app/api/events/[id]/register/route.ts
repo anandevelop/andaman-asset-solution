@@ -24,12 +24,14 @@
  */
 
 import { NextResponse } from "next/server";
-import { EventStatus, Prisma } from "@prisma/client";
+import { EventStatus, PathHitKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { eventRegistrationServerSchema, fieldErrors } from "@/lib/validations";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { isDatabaseOfflineError } from "@/lib/db";
 import { verifyRecaptcha, describeOutcome } from "@/lib/recaptcha";
+import { isEnabled, notifyAdmins } from "@/lib/notifications";
+import { countPathHit } from "@/lib/redirects";
 import { notifyNewRegistration } from "@/lib/line";
 import { notifyNewRegistrationByEmail, sendRsvpConfirmationEmail } from "@/lib/email";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
@@ -96,6 +98,8 @@ export async function POST(request: Request, props: Params) {
 
   if (!captcha.allowed) {
     console.warn(`[POST /api/events/${params.id}/register] ${describeOutcome(captcha)}`);
+    // Counted for the settings screen's spam figure. See app/api/leads.
+    countPathHit(PathHitKind.FORM_REJECTED, "/api/events/register");
     return NextResponse.json({ ok: false, error: "RECAPTCHA_FAILED" }, { status: 403 });
   }
 
@@ -210,14 +214,27 @@ export async function POST(request: Request, props: Params) {
     // copy explicitly promises the attendee ("we will confirm by email").
     // Both fire-and-forget: the registration is already committed, so an
     // SMTP outage must never turn a successful RSVP into an error here.
-    void notifyNewRegistrationByEmail({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      agencyName: data.agencyName,
-      whatsapp: nullify(data.whatsapp),
-      // Staff read Thai first, same as the LINE notification's copy.
-      eventTitle: eventTitleFor("th"),
+    // The staff half is a switch on /admin/settings/notifications; the
+    // attendee's confirmation below is not, because the RSVP copy promises
+    // it and an admin preference must not quietly break that promise.
+    void isEnabled("eventRegistration", "email").then((on) => {
+      if (!on) return;
+      return notifyNewRegistrationByEmail({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        agencyName: data.agencyName,
+        whatsapp: nullify(data.whatsapp),
+        // Staff read Thai first, same as the LINE notification's copy.
+        eventTitle: eventTitleFor("th"),
+      });
+    });
+
+    void notifyAdmins({
+      event: "eventRegistration",
+      title: data.name,
+      body: eventTitleFor("th"),
+      href: `/admin/events/${params.id}/registrations`,
     });
 
     void sendRsvpConfirmationEmail({

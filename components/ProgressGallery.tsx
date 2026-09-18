@@ -46,7 +46,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Youtube, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Youtube } from "@/components/BrandGlyphs";
 import type { ProgressMonth } from "@/lib/projects";
 import { formatMonthYear } from "@/lib/format";
 
@@ -158,7 +159,7 @@ function PhotoRow({
       <ul
         ref={trackRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-1
-          [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
       >
         {images.map((src, i) => (
           <motion.li
@@ -172,9 +173,9 @@ function PhotoRow({
             // from the track's own gap-4 (16px), same approach as
             // FacilityScroller's 4-across math, so there's no fractional
             // sliver of a 5th photo poking in at the edge on desktop.
-            className="relative aspect-[4/3] w-full shrink-0 snap-start overflow-hidden
-              rounded-sm bg-primary/5 shadow-card sm:w-[calc((100%_-_16px)/2)]
-              lg:w-[calc((100%_-_3*16px)/4)]"
+            className="relative aspect-4/3 w-full shrink-0 snap-start overflow-hidden
+              rounded-xs bg-primary/5 shadow-card sm:w-[calc((100%-16px)/2)]
+              lg:w-[calc((100%-3*16px)/4)]"
           >
             <button
               type="button"
@@ -358,7 +359,7 @@ export default function ProgressGallery({ months, locale, emptyLabel, labels }: 
               <span
                 className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5
                   rounded-full bg-primary-900/70 px-3 py-1.5 text-[11px] font-medium uppercase
-                  tracking-wide text-white backdrop-blur-sm sm:left-6 sm:top-6"
+                  tracking-wide text-white backdrop-blur-xs sm:left-6 sm:top-6"
               >
                 <Youtube size={13} aria-hidden />
                 {labels.video}

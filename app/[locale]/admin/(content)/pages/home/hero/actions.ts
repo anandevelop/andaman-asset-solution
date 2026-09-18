@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * app/[locale]/admin/hero-banner/actions.ts
+ * app/[locale]/admin/pages/home/hero/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * HeroStorySlide CRUD, same shape as ../awards/actions.ts — except there is
  * no deprecated EN/TH column pair to keep in sync, since this model was
@@ -37,17 +37,22 @@ function readForm(formData: FormData) {
     posterImageUrl: text("posterImageUrl"),
     durationSeconds: text("durationSeconds") || "5",
     ctaUrl: text("ctaUrl"),
+    label: text("label"),
     caption: text("caption"),
     tagline: text("tagline"),
     ctaLabel: text("ctaLabel"),
     isActive: formData.get("isActive") === "on",
     sortOrder: text("sortOrder") || "0",
+    // datetime-local inputs; blank means open-ended (see the schema
+    // comment on optionalDateTime's use here).
+    startAt: text("startAt"),
+    endAt: text("endAt"),
   };
 }
 
 /** Shown only on the home page. */
 function revalidateHeroBanner(locale: string) {
-  revalidatePath(`/${locale}/admin/hero-banner`);
+  revalidatePath(`/${locale}/admin/pages/home/hero`);
   for (const target of locales) {
     revalidatePath(`/${target}`);
   }
@@ -63,13 +68,13 @@ export async function createHeroStorySlide(
   const parsed = heroStorySlideSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
-  const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
+  const { locale: editingLocale, label, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
     await prisma.heroStorySlide.create({
       data: {
         ...rest,
-        translations: { create: { locale: editingLocale, caption, tagline, ctaLabel } },
+        translations: { create: { locale: editingLocale, label, caption, tagline, ctaLabel } },
       },
     });
   } catch (error) {
@@ -98,7 +103,7 @@ export async function updateHeroStorySlide(
   const parsed = heroStorySlideSchema.safeParse(readForm(formData));
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
-  const { locale: editingLocale, caption, tagline, ctaLabel, ...rest } = parsed.data;
+  const { locale: editingLocale, label, caption, tagline, ctaLabel, ...rest } = parsed.data;
 
   try {
     await prisma.heroStorySlide.update({
@@ -108,8 +113,8 @@ export async function updateHeroStorySlide(
         translations: {
           upsert: {
             where: { slideId_locale: { slideId: id, locale: editingLocale } },
-            update: { caption, tagline, ctaLabel },
-            create: { locale: editingLocale, caption, tagline, ctaLabel },
+            update: { label, caption, tagline, ctaLabel },
+            create: { locale: editingLocale, label, caption, tagline, ctaLabel },
           },
         },
       },

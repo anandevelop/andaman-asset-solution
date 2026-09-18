@@ -1,12 +1,17 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/guard";
 import { getArticleCategories } from "@/lib/news";
 import { parseEditingLocale } from "@/lib/admin/translated-form";
 import { createArticle } from "../actions";
 import NewsForm from "@/components/admin/NewsForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
+import { addLinkOpportunity } from "@/app/[locale]/admin/(growth)/seo/links/actions";
+import type { ArticleLinkPanel } from "@/lib/admin/link-opportunities";
+
+/** A brand-new, unsaved article has no id to compute opportunities/inbound
+ *  links/external statuses from — see NewsForm's own comment on why this
+ *  prop is required rather than optional. */
+const EMPTY_LINK_PANEL: ArticleLinkPanel = { opportunities: [], inboundLinks: [], externalStatuses: {} };
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
@@ -18,7 +23,7 @@ export default async function NewArticlePage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  const session = await requireAdmin(locale);
 
   const [t, categories] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
@@ -28,20 +33,6 @@ export default async function NewArticlePage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/news`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("news.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold text-primary sm:text-3xl">
-          {t("news.newTitle")}
-        </h1>
-      </header>
-
       <LanguageTabs
         active={lang}
         completeness={{ en: false, th: false, zh: false, ru: false }}
@@ -53,9 +44,16 @@ export default async function NewArticlePage(props: Props) {
         key={lang}
         locale={locale}
         lang={lang}
+        role={session.role}
         action={createArticle.bind(null, locale)}
         categories={categories}
         submitLabel={t("common.create")}
+        languageComplete={false}
+        linkPanel={EMPTY_LINK_PANEL}
+        addLinkAction={addLinkOpportunity}
+        headerTitle={t("news.newTitle")}
+        backHref={`/${locale}/admin/news`}
+        backLabel={t("news.title")}
       />
     </div>
   );

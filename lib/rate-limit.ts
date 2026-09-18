@@ -173,4 +173,24 @@ export const RATE_LIMITS = {
    * banner reopened a few times via "Cookie Preferences" doesn't trip it.
    */
   cookieConsent: { limit: 20, windowMs: 60_000 },
+
+  /**
+   * Anonymous 404 reporting (app/api/not-found/route.ts). One real hit per
+   * genuinely broken link per pageload — generous enough for someone
+   * clicking around a stale bookmark a few times, tight enough that
+   * scripting requests to a thousand made-up paths cannot flood
+   * NotFoundHit with noise or spend the redirect lookup's DB query budget.
+   */
+  notFound: { limit: 20, windowMs: 60_000 },
+
+  /**
+   * Article view beacons. Loose on purpose — this is a counter, not a
+   * gate, and an office of ten people reading the newsroom over lunch
+   * must not start dropping counts. It is here to stop one client
+   * hammering the endpoint into a write loop, nothing more.
+   */
+  pageView: { limit: 60, windowMs: 60_000 },
+
+  /** Inline email check. Generous — one visitor may correct the field a few times. */
+  emailCheck: { limit: 30, windowMs: 10 * 60_000 },
 } as const;

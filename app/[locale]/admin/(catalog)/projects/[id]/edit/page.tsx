@@ -9,9 +9,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, CheckCircle2, ExternalLink, Grid3x3, HardHat, Image as ImageIcon, Layers } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import {
   parseEditingLocale,
   pickEditingTranslation,
@@ -21,6 +23,8 @@ import { deleteProject, updateProject } from "../../actions";
 import ProjectForm, { type ProjectFormValues } from "@/components/admin/ProjectForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import SaveToast from "@/components/admin/SaveToast";
+import PublishingRevisionPanel from "@/components/admin/PublishingRevisionPanel";
+import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -37,7 +41,10 @@ export default async function EditProjectPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { locale, id } = params;
-  await requireAdmin(locale);
+  // VIEWER may open this to see a project's own overview; saving or
+  // deleting stays behind a disabled fieldset for anyone below EDITOR.
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
@@ -79,8 +86,10 @@ export default async function EditProjectPage(props: Props) {
     latitude: str(project.latitude),
     longitude: str(project.longitude),
     googleMapsUrl: str(project.googleMapsUrl),
+    virtualTourUrl: str(project.virtualTourUrl),
     metaTitle: editing?.metaTitle ?? "",
     metaDescription: editing?.metaDescription ?? "",
+    noIndex: editing?.noIndex ?? false,
     isPublished: project.isPublished,
     sortOrder: String(project.sortOrder),
   };
@@ -104,38 +113,6 @@ export default async function EditProjectPage(props: Props) {
         </h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-          <Link
-            href={`/${locale}/admin/progress/${project.id}`}
-            className="inline-flex items-center gap-1.5 text-accent-700 hover:text-accent-800"
-          >
-            <HardHat size={14} aria-hidden />
-            {t("projects.manageProgress")}
-          </Link>
-
-          <Link
-            href={`/${locale}/admin/projects/${project.id}/units`}
-            className="inline-flex items-center gap-1.5 text-accent-700 hover:text-accent-800"
-          >
-            <Grid3x3 size={14} aria-hidden />
-            {t("projects.manageUnits")}
-          </Link>
-
-          <Link
-            href={`/${locale}/admin/projects/${project.id}/facilities`}
-            className="inline-flex items-center gap-1.5 text-accent-700 hover:text-accent-800"
-          >
-            <ImageIcon size={14} aria-hidden />
-            {t("projects.manageFacilities")}
-          </Link>
-
-          <Link
-            href={`/${locale}/admin/projects/${project.id}/unit-types`}
-            className="inline-flex items-center gap-1.5 text-accent-700 hover:text-accent-800"
-          >
-            <Layers size={14} aria-hidden />
-            {t("projects.manageUnitTypes")}
-          </Link>
-
           {project.isPublished && (
             <Link
               href={`/${locale}/projects/${project.slug}`}
@@ -149,12 +126,46 @@ export default async function EditProjectPage(props: Props) {
         </div>
       </header>
 
+      <ProjectHubTabs
+        locale={locale}
+        projectId={project.id}
+        active="overview"
+        labels={{
+          overview: t("projects.hubOverview"),
+          content: t("projectContent.tab"),
+          seo: t("pageSeo.tab"),
+          unitTypes: t("unitTypes.title"),
+          units: t("units.title"),
+          facilities: t("facilities.title"),
+          progress: t("progress.title"),
+        }}
+      />
+
       {searchParams.created && (
         <SaveToast tone="success" token="created">
           <CheckCircle2 size={16} aria-hidden />
           {t("common.saved")}
         </SaveToast>
       )}
+
+      <PublishingRevisionPanel
+        locale={locale}
+        type="PROJECT"
+        id={project.id}
+        labels={{
+          toggle: t("publishing.revision.toggle"),
+          compareTitle: t("publishing.revision.compareTitle"),
+          noRevisionYet: t("publishing.revision.noRevisionYet"),
+          currentLabel: t("publishing.revision.currentLabel"),
+          publishedLabel: t("publishing.revision.publishedLabel"),
+          historyTitle: t("publishing.revision.historyTitle"),
+          historyEmpty: t("publishing.revision.historyEmpty"),
+          revertAction: t("publishing.revision.revertAction"),
+          confirmRevert: t("publishing.revision.confirmRevert"),
+          error: t("common.error"),
+          autoEditBadge: t("publishing.revision.autoEditBadge"),
+        }}
+      />
 
       <LanguageTabs
         active={lang}
@@ -163,16 +174,17 @@ export default async function EditProjectPage(props: Props) {
         missingLabel={t("common.translationMissing")}
       />
 
-      <ProjectForm
-        key={lang}
-        locale={locale}
-        lang={lang}
-        action={action}
-        values={values}
-        onDelete={onDelete}
-        submitLabel={t("common.save")}
-      />
-
+      <fieldset disabled={!canWrite} className="contents">
+        <ProjectForm
+          key={lang}
+          locale={locale}
+          lang={lang}
+          action={action}
+          values={values}
+          onDelete={onDelete}
+          submitLabel={t("common.save")}
+        />
+      </fieldset>
     </div>
   );
 }

@@ -32,8 +32,9 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { PROJECT_STATUSES, PROPERTY_TYPES } from "@/lib/validations";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
+import SlugField from "@/components/admin/SlugField";
 import type { Locale } from "@/i18n";
-import type { ProjectFormState } from "@/app/[locale]/admin/projects/actions";
+import type { ProjectFormState } from "@/app/[locale]/admin/(catalog)/projects/actions";
 
 export type ProjectFormValues = {
   slug: string;
@@ -64,8 +65,12 @@ export type ProjectFormValues = {
   latitude: string;
   longitude: string;
   googleMapsUrl: string;
+  /** External Matterport/Kuula/YouTube-360 link — shown as a hero CTA on
+   *  the public page when set. */
+  virtualTourUrl: string;
   metaTitle: string;
   metaDescription: string;
+  noIndex: boolean;
   isPublished: boolean;
   sortOrder: string;
 };
@@ -96,8 +101,10 @@ export const EMPTY_PROJECT: ProjectFormValues = {
   latitude: "",
   longitude: "",
   googleMapsUrl: "",
+  virtualTourUrl: "",
   metaTitle: "",
   metaDescription: "",
+  noIndex: false,
   isPublished: false,
   sortOrder: "0",
 };
@@ -246,12 +253,10 @@ export default function ProjectForm({
 
         <Field name="slug"
           error={err("slug")} label={t("projects.slug")} hint={t("projects.slugHint")}>
-          <input
+          <SlugField
             id="slug"
-            name="slug"
             defaultValue={values.slug}
             required
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
             className="admin-input font-mono"
           />
         </Field>
@@ -466,6 +471,22 @@ export default function ProjectForm({
             className="admin-input"
           />
         </Field>
+
+        <Field
+          name="virtualTourUrl"
+          error={err("virtualTourUrl")}
+          label={t("projects.virtualTourUrl")}
+          hint={t("projects.virtualTourUrlHint")}
+        >
+          <input
+            id="virtualTourUrl"
+            name="virtualTourUrl"
+            type="url"
+            placeholder="https://my.matterport.com/show/..."
+            defaultValue={values.virtualTourUrl}
+            className="admin-input"
+          />
+        </Field>
       </section>
 
       {/* ── Imagery ─────────────────────────────────────────────────── */}
@@ -560,33 +581,18 @@ export default function ProjectForm({
         />
       </section>
 
-      {/* ── SEO ─────────────────────────────────────────────────────── */}
-      <section className="admin-card space-y-5">
-        <h2 className="admin-section-title">{t("projects.seo")}</h2>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field name="metaTitle"
-          error={err("metaTitle")} label={`${t("projects.metaTitle")} · ${lang.toUpperCase()}`}>
-            <input
-              id="metaTitle"
-              name="metaTitle"
-              defaultValue={values.metaTitle}
-              className="admin-input"
-            />
-          </Field>
-
-          <Field name="metaDescription"
-          error={err("metaDescription")} label={`${t("projects.metaDescription")} · ${lang.toUpperCase()}`}>
-            <textarea
-              id="metaDescription"
-              name="metaDescription"
-              defaultValue={values.metaDescription}
-              rows={3}
-              className="admin-textarea"
-            />
-          </Field>
-        </div>
-      </section>
+      {/* Meta title/description and "hide from search engines" are edited
+          on this project's dedicated SEO tab (PageSeoEditor,
+          ProjectHubTabs' "seo" route) — that screen shows every language
+          at once, which this one-locale-at-a-time Overview form can't. No
+          section here for them any more; these hidden inputs just carry
+          whatever a project already has through unchanged on every
+          Overview save, same pattern as the latitude/longitude fields
+          above, so an Overview edit can't silently blank out what the SEO
+          tab already set. */}
+      <input type="hidden" name="metaTitle" defaultValue={values.metaTitle} />
+      <input type="hidden" name="metaDescription" defaultValue={values.metaDescription} />
+      <input type="hidden" name="noIndex" defaultValue={values.noIndex ? "on" : ""} />
 
       {/* ── Publication ─────────────────────────────────────────────── */}
       <section className="admin-card space-y-5">
@@ -595,7 +601,7 @@ export default function ProjectForm({
             type="checkbox"
             name="isPublished"
             defaultChecked={values.isPublished}
-            className="mt-0.5 h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           <span>{t("projects.publish")}</span>
         </label>

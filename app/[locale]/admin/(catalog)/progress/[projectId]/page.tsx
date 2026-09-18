@@ -11,14 +11,20 @@
  */
 
 import Link from "next/link";
+import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, Plus } from "lucide-react";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { formatMonthYear, intlLocale } from "@/lib/format";
 import { createProgress, deleteProgress, updateProgress } from "../actions";
 import ProgressForm, { type ProgressValues } from "@/components/admin/ProgressForm";
+import ProgressPhaseTimeline from "@/components/admin/ProgressPhaseTimeline";
+import ProgressWorkspace, { type ProgressCard } from "@/components/admin/ProgressWorkspace";
+import { getProgressOverview } from "@/lib/admin/project-progress";
 
 type Props = { params: Promise<{ locale: string; projectId: string }> };
 
@@ -33,7 +39,12 @@ function monthNames(locale: string): string[] {
 export default async function AdminProgressPage(props: Props) {
   const params = await props.params;
   const { locale, projectId } = params;
-  await requireAdmin(locale);
+  /* VIEWER may open this workspace to see a project's own progress log;
+     logging a new month or editing an existing one stays behind a
+     disabled fieldset for anyone below EDITOR, unchanged from before this
+     phase. */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -43,6 +54,46 @@ export default async function AdminProgressPage(props: Props) {
   });
 
   if (!project) notFound();
+
+  const overview = await getProgressOverview(projectId, locale);
+
+  /* "Done · Jan 26" / "Starts · Oct 26" / "Expected · Jun 27" — what the
+     stored date means comes from the phase's status, not a second column
+     (see ProjectPhase.milestoneDate). */
+  const phaseDateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    month: "short",
+    year: "2-digit",
+  });
+
+  const phaseCaptions = Object.fromEntries(
+    overview.phases.map((phase) => {
+      if (!phase.milestoneDate) {
+        return [phase.id, t(`progress.phaseStatus.${phase.status}` as never)];
+      }
+      const when = phaseDateFormat.format(phase.milestoneDate);
+      return [
+        phase.id,
+        `${t(`progress.phaseStatus.${phase.status}` as never)} · ${when}`,
+      ];
+    }),
+  );
+
+  const progressCards: ProgressCard[] = overview.entries.map((entry) => ({
+    id: entry.id,
+    monthLabel: formatMonthYear(locale, entry.year, entry.month),
+    percentComplete: entry.percentComplete,
+    summary: entry.summary,
+    images: entry.images,
+    isPublished: entry.isPublished,
+    authorLine: [
+      entry.authorName ? t("progress.recordedBy", { name: entry.authorName }) : null,
+      new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short" }).format(
+        entry.updatedAt,
+      ),
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
 
   const updates = await prisma.projectProgress.findMany({
     where: { projectId },
@@ -96,6 +147,73 @@ export default async function AdminProgressPage(props: Props) {
         </p>
       </header>
 
+      <ProjectHubTabs
+        locale={locale}
+        projectId={project.id}
+        active="progress"
+        labels={{
+          overview: t("projects.hubOverview"),
+          content: t("projectContent.tab"),
+          seo: t("pageSeo.tab"),
+          unitTypes: t("unitTypes.title"),
+          units: t("units.title"),
+          facilities: t("facilities.title"),
+          progress: t("progress.title"),
+        }}
+      />
+
+      <ProgressPhaseTimeline
+        phases={overview.phases}
+        overallPercent={overview.overallPercent}
+        deltaPercent={overview.deltaPercent}
+        captions={phaseCaptions}
+        labels={{
+          overall: t("progress.overall"),
+          delta: t("progress.delta", { delta: "{delta}" }),
+          noData: t("progress.noPublishedYet"),
+          empty: t("progress.noPhases"),
+        }}
+      />
+
+      <fieldset disabled={!canWrite} className="contents">
+      <ProgressWorkspace
+        locale={locale}
+        projectId={project.id}
+        entries={progressCards}
+        buyerCount={overview.buyerCount}
+        nextPeriod={{
+          month: nextMonth.month,
+          year: nextMonth.year,
+          label: formatMonthYear(locale, nextMonth.year, nextMonth.month),
+        }}
+        labels={{
+          logTitle: t("progress.logTitle"),
+          logCount: t("progress.logCount", {
+            total: overview.entries.length,
+            published: overview.publishedCount,
+          }),
+          draftTag: t("progress.draftTag"),
+          published: t("progress.publishedToggle"),
+          addTitle: t("progress.addNewTitle"),
+          period: t("progress.period"),
+          percent: t("progress.percent"),
+          summaryTh: t("progress.summaryTh"),
+          summaryEn: t("progress.summaryEn"),
+          summaryPlaceholder: t("progress.summaryPlaceholder"),
+          notTranslated: t("progress.notTranslated"),
+          images: t("progress.images"),
+          imagesHint: t("progress.imagesHint"),
+          imagesHelp: t("progress.imagesHelp"),
+          notifyNobody: t("progress.notifyNobody"),
+          saveDraft: t("progress.saveDraft"),
+          publish: t("progress.publish"),
+          saved: t("common.saved"),
+          error: t("common.error"),
+          empty: t("progress.empty"),
+        }}
+      />
+      </fieldset>
+
       {/* ── Add a month ─────────────────────────────────────────────── */}
       <section className="admin-card">
         <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
@@ -103,13 +221,15 @@ export default async function AdminProgressPage(props: Props) {
           {t("progress.addTitle")}
         </h2>
 
-        <ProgressForm
-          action={createProgress.bind(null, locale, projectId)}
-          values={blank}
-          submitLabel={t("common.create")}
-          projectSlug={project.slug}
-          monthLabels={months}
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <ProgressForm
+            action={createProgress.bind(null, locale, projectId)}
+            values={blank}
+            submitLabel={t("common.create")}
+            projectSlug={project.slug}
+            monthLabels={months}
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing months ─────────────────────────────────────────── */}
@@ -129,28 +249,30 @@ export default async function AdminProgressPage(props: Props) {
                 <span
                   className={
                     update.isPublished
-                      ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                      : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                      ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                      : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                   }
                 >
                   {update.isPublished ? t("common.published") : t("common.draft")}
                 </span>
               </div>
 
-              <ProgressForm
-                action={updateProgress.bind(null, locale, projectId, update.id)}
-                onDelete={deleteProgress.bind(null, locale, projectId, update.id)}
-                values={{
-                  month: update.month,
-                  year: update.year,
-                  videoUrl: update.videoUrl ?? "",
-                  images: update.images.join("\n"),
-                  isPublished: update.isPublished,
-                }}
-                submitLabel={t("common.save")}
-                projectSlug={project.slug}
-                monthLabels={months}
-              />
+              <fieldset disabled={!canWrite} className="contents">
+                <ProgressForm
+                  action={updateProgress.bind(null, locale, projectId, update.id)}
+                  onDelete={deleteProgress.bind(null, locale, projectId, update.id)}
+                  values={{
+                    month: update.month,
+                    year: update.year,
+                    videoUrl: update.videoUrl ?? "",
+                    images: update.images.join("\n"),
+                    isPublished: update.isPublished,
+                  }}
+                  submitLabel={t("common.save")}
+                  projectSlug={project.slug}
+                  monthLabels={months}
+                />
+              </fieldset>
             </section>
           ))}
         </div>

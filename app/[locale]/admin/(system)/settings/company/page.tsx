@@ -9,9 +9,9 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { updateCompanyProfile } from "./actions";
@@ -34,32 +34,30 @@ export default async function AdminCompanyProfilePage(props: Props) {
   const lang = parseEditingLocale(searchParams.lang);
 
   const db = prisma;
-  const profile = await db.companyProfile.findUnique({
-    where: { id: "default" },
-    include: { translations: true },
-  });
+  const profile = await safeQuery(
+    "admin:companyProfile",
+    () =>
+      db.companyProfile.findUnique({
+        where: { id: "default" },
+        include: { translations: true },
+      }),
+    null,
+  );
   const completeness = translationCompleteness<any>(profile?.translations ?? [], "aboutUs");
   const editing = pickEditingTranslation<any>(profile?.translations ?? [], lang);
 
   return (
     <div className="space-y-8">
       <header>
-        <Link
-          href={`/${locale}/admin/settings`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("settings.title")}
-        </Link>
-
-        <p className="admin-section-title mt-4">{t("settings.company.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">
-          {t("settings.company.title")}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-          {t("settings.company.subtitle")}
-        </p>
+        <h2 className="text-lg font-semibold text-primary">{t("settings.company.title")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.company.subtitle")}</p>
       </header>
+
+      {isDatabaseOffline() && (
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("common.offline")}
+        </p>
+      )}
 
       <LanguageTabs
         active={lang}
@@ -72,7 +70,14 @@ export default async function AdminCompanyProfilePage(props: Props) {
         key={lang}
         lang={lang}
         action={updateCompanyProfile.bind(null, locale)}
-        aboutUs={editing?.aboutUs ?? ""}
+        values={{
+          aboutUs: editing?.aboutUs ?? "",
+          storyEyebrow: editing?.storyEyebrow ?? "",
+          storyTitle: editing?.storyTitle ?? "",
+          storyImageUrl: profile?.storyImageUrl ?? "",
+          aboutHeroImageUrl: profile?.aboutHeroImageUrl ?? "",
+          foundedYear: profile?.foundedYear ? String(profile.foundedYear) : "",
+        }}
         submitLabel={t("common.save")}
       />
     </div>

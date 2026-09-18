@@ -11,7 +11,7 @@
  */
 
 import { useActionState, useRef } from "react";
-import type { UnitStatusFormState } from "@/app/[locale]/admin/projects/[id]/units/actions";
+import type { UnitStatusFormState } from "@/app/[locale]/admin/(catalog)/projects/[id]/units/actions";
 
 type Props = {
   action: (state: UnitStatusFormState, formData: FormData) => Promise<UnitStatusFormState>;
@@ -31,7 +31,7 @@ export default function UnitStatusSelect({ action, status, labels }: Props) {
         name="status"
         defaultValue={status}
         onChange={() => formRef.current?.requestSubmit()}
-        className="rounded-sm border border-primary/15 bg-surface-raised px-2.5 py-1.5 text-xs text-ink focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
+        className="rounded-xs border border-primary/15 bg-surface-raised px-2.5 py-1.5 text-xs text-ink focus:border-primary/40 focus:outline-hidden focus:ring-1 focus:ring-primary/20"
       >
         <option value="AVAILABLE">{labels.AVAILABLE}</option>
         <option value="RESERVED">{labels.RESERVED}</option>

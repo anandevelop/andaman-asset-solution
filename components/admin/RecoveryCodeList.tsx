@@ -33,7 +33,7 @@ export default function RecoveryCodeList({ codes }: Props) {
   }
 
   return (
-    <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-5">
+    <div className="rounded-xs border border-emerald-200 bg-emerald-50 p-5">
       <div className="flex items-start gap-2">
         <KeyRound size={16} className="mt-0.5 shrink-0 text-emerald-700" aria-hidden />
         <div>
@@ -46,7 +46,7 @@ export default function RecoveryCodeList({ codes }: Props) {
 
       <ul className="mt-4 grid grid-cols-2 gap-2 font-mono text-sm text-emerald-950 sm:grid-cols-2">
         {codes.map((code) => (
-          <li key={code} className="rounded-sm bg-white/70 px-3 py-2 tracking-wider">
+          <li key={code} className="rounded-xs bg-white/70 px-3 py-2 tracking-wider">
             {code}
           </li>
         ))}

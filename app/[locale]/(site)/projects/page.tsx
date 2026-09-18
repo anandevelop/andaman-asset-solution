@@ -25,9 +25,12 @@ import ProjectsHero from "@/components/ProjectsHero";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import FeaturedProjectCard from "@/components/FeaturedProjectCard";
 import ProjectFilterBar from "@/components/ProjectFilterBar";
-import { siteConfig } from "@/config/site";
 import { locales } from "@/i18n";
-import { getProjectFacets, getPublishedProjects } from "@/lib/projects";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import Breadcrumb from "@/components/Breadcrumb";
+import JsonLd from "@/components/JsonLd";
+import { getProjectFacets, getPublishedProjects, type ProjectSignal } from "@/lib/projects";
+import { intlLocale } from "@/lib/format";
 import { isDatabaseOffline } from "@/lib/db";
 import {
   SORT_OPTIONS,
@@ -67,14 +70,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: t("title"),
     description: t("subtitle"),
-    alternates: {
-      // Always points at the unfiltered page, so link equity from a shared
-      // filtered URL consolidates onto one canonical.
-      canonical: `${siteConfig.url}/${locale}/projects`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}/projects`]),
-      ),
-    },
+    // Always points at the unfiltered page, so link equity from a shared
+    // filtered URL consolidates onto one canonical.
+    alternates: localizedAlternates(locale, "/projects"),
     robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
@@ -91,8 +89,9 @@ export default async function ProjectsPage(props: Props) {
 
   const filters = parseProjectFilters(searchParams);
 
-  const [t, projects, facets] = await Promise.all([
+  const [t, tNav, projects, facets] = await Promise.all([
     getTranslations("projects"),
+    getTranslations("nav"),
     getPublishedProjects(locale, filters),
     getProjectFacets(),
   ]);
@@ -107,12 +106,24 @@ export default async function ProjectsPage(props: Props) {
   ): Record<string, string> =>
     Object.fromEntries(values.map((value) => [value, t(`${prefix}.${value}` as never)]));
 
+  // One array for the trail a visitor reads and the one Google reads.
+  const trail = trailFor(locale, [
+    { name: tNav("home"), path: "" },
+    { name: tNav("projects"), path: "/projects" },
+  ]);
+
   return (
     <>
+      <JsonLd
+        id="breadcrumb-schema"
+        data={breadcrumbList(trail)}
+      />
       {/* ── Header ─────────────────────────────────────────────────────
           Staggered/animated in ProjectsHero rather than one flat Reveal —
           see that component for why. */}
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
+        <Breadcrumb items={trail} className="mb-5" />
+
         <ProjectsHero eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
       </section>
 
@@ -179,10 +190,11 @@ export default async function ProjectsPage(props: Props) {
                   priority={i === 0}
                   labels={{
                     status: t(`status.${project.status}` as never),
-                    propertyType: t(`propertyType.${project.propertyType}` as never),
-                    cta: t("viewProject"),
-                    specType: t("specs.type"),
-                    specUnits: t("specs.units"),
+                    cta: t(ctaKey(project.status) as never),
+                    specVillas: t("specs.villas"),
+                    specBedrooms: t("specs.bedrooms"),
+                    specLand: t("specs.land"),
+                    signal: signalLabel(project.signal, t as never, locale),
                   }}
                 />
               </Reveal>
@@ -192,4 +204,40 @@ export default async function ProjectsPage(props: Props) {
       </section>
     </>
   );
+}
+
+/**
+ * The second badge's text, or null when the project has nothing to say.
+ *
+ * Formatted here rather than in the card so the numbers go through the
+ * page's own translator once, and the card stays a component that renders
+ * strings it is handed.
+ */
+function signalLabel(
+  signal: ProjectSignal | null,
+  t: (key: never, values?: Record<string, unknown>) => string,
+  locale: string,
+): string | null {
+  if (!signal) return null;
+
+  if (signal.kind === "awards") {
+    return t("signal.awards" as never, { count: signal.count, year: signal.year });
+  }
+
+  if (signal.kind === "newPhotos") {
+    return t("signal.newPhotos" as never, { count: signal.count });
+  }
+
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(Date.UTC(signal.year, signal.month - 1, 1)));
+
+  return t("signal.photosAdded" as never, { when });
+}
+
+/** An upcoming development has nothing to walk through yet — see the note
+ *  on the CTA in components/FeaturedProjectCard.tsx. */
+function ctaKey(status: string): "registerInterest" | "viewProject" {
+  return status === "UPCOMING" ? "registerInterest" : "viewProject";
 }

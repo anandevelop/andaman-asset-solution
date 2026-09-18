@@ -12,8 +12,8 @@
  *  • It must supply its own <html> and <body>. The layout that normally
  *    provides them is the thing that failed.
  *  • It cannot use next-intl. The i18n provider lives in that same layout,
- *    so useTranslations() would throw inside the boundary. Copy is inlined
- *    per locale and the locale is read off the URL.
+ *    so useTranslations() would throw inside the boundary. Copy comes from
+ *    lib/error-copy.ts and the locale is read off the URL.
  *  • It cannot rely on the stylesheet having loaded. Styles are inline.
  *
  * This should essentially never render. When it does, something is badly
@@ -23,30 +23,12 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { GLOBAL_ERROR_COPY, localeFromPathname } from "@/lib/error-copy";
 
 type Props = {
   error: Error & { digest?: string };
   reset: () => void;
 };
-
-const COPY = {
-  th: {
-    lang: "th",
-    title: "ระบบขัดข้อง",
-    body: "ขออภัย เกิดข้อผิดพลาดที่เราไม่ได้คาดไว้ ทีมงานได้รับแจ้งแล้ว กรุณาลองใหม่อีกครั้ง",
-    retry: "ลองใหม่อีกครั้ง",
-    home: "กลับหน้าแรก",
-    reference: "รหัสอ้างอิง",
-  },
-  en: {
-    lang: "en",
-    title: "Something went badly wrong",
-    body: "An unexpected error stopped this page from loading. Our team has been notified. Please try again.",
-    retry: "Try again",
-    home: "Back to home",
-    reference: "Reference",
-  },
-} as const;
 
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
@@ -56,14 +38,23 @@ export default function GlobalError({ error, reset }: Props) {
     console.error("[global error]", error);
   }, [error]);
 
-  const locale =
-    typeof window !== "undefined" && window.location.pathname.startsWith("/en")
-      ? "en"
-      : "th";
-  const t = COPY[locale];
+  /*
+    window.location here, not usePathname() as the other two boundaries use.
+
+    This boundary replaces the root layout, so it renders in the one
+    situation where the router context it would depend on may itself be
+    what failed. Reading the URL directly assumes nothing. The cost is the
+    server render falling back to the default locale for one paint.
+  */
+  const locale = localeFromPathname(
+    typeof window === "undefined" ? null : window.location.pathname,
+  );
+  const t = GLOBAL_ERROR_COPY[locale];
 
   return (
-    <html lang={t.lang}>
+    // th/en/zh/ru are all valid BCP-47 primary subtags, so the locale is
+    // the lang attribute — one fewer field to keep in parity.
+    <html lang={locale}>
       <body
         style={{
           margin: 0,

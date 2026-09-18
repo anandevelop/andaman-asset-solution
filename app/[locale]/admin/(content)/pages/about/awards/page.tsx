@@ -1,5 +1,5 @@
 /**
- * app/[locale]/admin/awards/page.tsx
+ * app/[locale]/admin/pages/about/awards/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Awards: add at the top, every existing award editable in place — same
  * arrangement as /admin/sales-team. Reordering is the sortOrder field on
@@ -10,7 +10,9 @@ import { getTranslations } from "next-intl/server";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { createAward, deleteAward, updateAward } from "./actions";
 import AwardForm from "@/components/admin/AwardForm";
@@ -27,7 +29,12 @@ export default async function AdminAwardsPage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  /* VIEWER may open this page to see what is published; only EDITOR
+     and above may submit either form below (canWrite gates both with a
+     disabled fieldset, matching the zone's real minimum, unchanged from
+     before this phase — see the actions in ./actions.ts). */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const db = prisma;
@@ -54,7 +61,7 @@ export default async function AdminAwardsPage(props: Props) {
       </header>
 
       {isDatabaseOffline() && (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
@@ -76,12 +83,14 @@ export default async function AdminAwardsPage(props: Props) {
           {t("awards.newTitle")}
         </h2>
 
-        <AwardForm
-          key={lang}
-          lang={lang}
-          action={createAward.bind(null, locale)}
-          submitLabel={t("common.create")}
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <AwardForm
+            key={lang}
+            lang={lang}
+            action={createAward.bind(null, locale)}
+            submitLabel={t("common.create")}
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing ────────────────────────────────────────────────── */}
@@ -108,30 +117,32 @@ export default async function AdminAwardsPage(props: Props) {
                   <span
                     className={
                       award.isActive
-                        ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                     }
                   >
                     {award.isActive ? t("awards.active") : t("awards.inactive")}
                   </span>
                 </div>
 
-                <AwardForm
-                  key={lang}
-                  lang={lang}
-                  action={updateAward.bind(null, locale, award.id)}
-                  onDelete={deleteAward.bind(null, locale, award.id)}
-                  values={{
-                    title: editing?.title ?? "",
-                    organization: award.organization,
-                    projectName: award.projectName ?? "",
-                    year: String(award.year),
-                    trophyImageUrl: award.trophyImageUrl ?? "",
-                    isActive: award.isActive,
-                    sortOrder: String(award.sortOrder),
-                  }}
-                  submitLabel={t("common.save")}
-                />
+                <fieldset disabled={!canWrite} className="contents">
+                  <AwardForm
+                    key={lang}
+                    lang={lang}
+                    action={updateAward.bind(null, locale, award.id)}
+                    onDelete={deleteAward.bind(null, locale, award.id)}
+                    values={{
+                      title: editing?.title ?? "",
+                      organization: award.organization,
+                      projectName: award.projectName ?? "",
+                      year: String(award.year),
+                      trophyImageUrl: award.trophyImageUrl ?? "",
+                      isActive: award.isActive,
+                      sortOrder: String(award.sortOrder),
+                    }}
+                    submitLabel={t("common.save")}
+                  />
+                </fieldset>
               </section>
             );
           })}

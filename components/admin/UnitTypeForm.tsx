@@ -24,7 +24,7 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import FloorPlansEditor from "@/components/admin/FloorPlansEditor";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { UnitTypeFormState } from "@/app/[locale]/admin/projects/[id]/unit-types/actions";
+import type { UnitTypeFormState } from "@/app/[locale]/admin/(catalog)/projects/[id]/unit-types/actions";
 
 export type UnitTypeValues = {
   name: string;
@@ -207,7 +207,7 @@ export default function UnitTypeForm({
             name="sortOrder"
             type="number"
             defaultValue={values.sortOrder}
-            className="admin-input max-w-[10rem]"
+            className="admin-input max-w-40"
           />
         </div>
 

@@ -81,6 +81,21 @@ export const PENDING_ADMIN = {
   name: "E2E Pending Administrator",
 } as const;
 
+/**
+ * A read-only account — Phase 4's VIEWER access, proven end to end.
+ *
+ * lib/two-factor-policy.ts's EXEMPT_ROLES is empty, so VIEWER owes a second
+ * factor exactly like every other role; this fixture is enrolled up front
+ * with the same shared secret as ADMIN for the reason given on it above —
+ * the secret is not what these accounts are testing.
+ */
+export const VIEWER = {
+  email: "e2e-viewer@andaman.test",
+  password: "e2e-only-passphrase-9012",
+  name: "E2E Viewer",
+  totpSecret: ADMIN.totpSecret,
+} as const;
+
 /*
   Four projects, chosen so the filter bar has something to do.
 
@@ -147,3 +162,40 @@ export const DRAFT_PROJECT = PROJECTS.find(
 
 /** The project detail page the lead-submission spec enquires about. */
 export const LEAD_PROJECT = PROJECTS[0];
+
+/*
+  The e-brochure the flipbook spec reads.
+
+  `fileUrl` is a same-origin path that does not exist on disk on purpose —
+  the spec fulfils it with e2e/fixtures/sample-pdf.ts through page.route().
+  Serving the bytes from the test rather than from public/ is what makes
+  the failure cases testable: an aborted route is exactly the 50MB-brochure
+  -on-bad-hotel-wifi case, and there is no other way to produce it on
+  demand.
+
+  Same origin so the fetch is covered by connect-src 'self' and needs no
+  CORS rule from a bucket the suite does not talk to.
+*/
+export const E_BROCHURE = {
+  slug: "e2e-trinity-brochure",
+  fileUrl: "/e2e-fixtures/trinity.pdf",
+  title: {
+    en: "Trinity Village Brochure",
+    th: "โบรชัวร์ ทรินิตี้ วิลเลจ",
+    zh: "Trinity Village 手册",
+    ru: "Брошюра Trinity Village",
+  },
+  description: {
+    en: "Seeded by e2e/global-setup.ts. Not real inventory.",
+    th: "ข้อมูลทดสอบ ไม่ใช่โครงการจริง",
+    zh: "测试数据，非真实项目。",
+    ru: "Тестовые данные, не реальный проект.",
+  },
+} as const;
+
+/** Unpublished, so the index has something it must NOT list. */
+export const DRAFT_BROCHURE = {
+  slug: "e2e-draft-brochure",
+  fileUrl: "/e2e-fixtures/draft.pdf",
+  title: "Unreleased Brochure",
+} as const;

@@ -6,10 +6,10 @@
  * One story-banner slide. Doubles as the "add" form and the inline editor
  * for an existing one — same arrangement as AwardForm.
  *
- * `caption`/`ctaLabel` are translated (HeroStorySlideTranslation); every
+ * `label`/`caption`/`ctaLabel` are translated (HeroStorySlideTranslation); every
  * other field is not — a media URL, a CTA link and a duration don't have a
  * language. `lang` selects which locale's caption/CTA this instance
- * shows/saves; the page (app/[locale]/admin/hero-banner/page.tsx) owns the
+ * shows/saves; the page (app/[locale]/admin/pages/home/hero/page.tsx) owns the
  * single language selector shared by every slide's form — see LanguageTabs
  * there.
  *
@@ -29,7 +29,7 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { HeroStorySlideFormState } from "@/app/[locale]/admin/hero-banner/actions";
+import type { HeroStorySlideFormState } from "@/app/[locale]/admin/(content)/pages/home/hero/actions";
 
 export type HeroStorySlideValues = {
   mediaType: "IMAGE" | "VIDEO";
@@ -37,11 +37,16 @@ export type HeroStorySlideValues = {
   posterImageUrl: string;
   durationSeconds: string;
   ctaUrl: string;
+  label: string;
   caption: string;
   tagline: string;
   ctaLabel: string;
   isActive: boolean;
   sortOrder: string;
+  // On-air window — datetime-local strings, blank when open-ended. See
+  // the schema comment on HeroStorySlide.startAt/endAt.
+  startAt: string;
+  endAt: string;
 };
 
 export const EMPTY_HERO_STORY_SLIDE: HeroStorySlideValues = {
@@ -50,11 +55,14 @@ export const EMPTY_HERO_STORY_SLIDE: HeroStorySlideValues = {
   posterImageUrl: "",
   durationSeconds: "5",
   ctaUrl: "",
+  label: "",
   caption: "",
   tagline: "",
   ctaLabel: "",
   isActive: true,
   sortOrder: "0",
+  startAt: "",
+  endAt: "",
 };
 
 type Props = {
@@ -203,7 +211,7 @@ export default function HeroStorySlideForm({
               max={60}
               defaultValue={values.durationSeconds}
               required
-              className="admin-input max-w-[10rem]"
+              className="admin-input max-w-40"
             />
             <p className="admin-hint">{t("heroBanner.durationSecondsHint")}</p>
             {err("durationSeconds") && (
@@ -224,6 +232,13 @@ export default function HeroStorySlideForm({
             readOnly
           />
         )}
+
+        <div>
+          <label className="admin-label">{`${t("heroBanner.label")} · ${lang.toUpperCase()}`}</label>
+          <input name="label" defaultValue={values.label} className="admin-input" />
+          <p className="admin-hint">{t("heroBanner.labelHint")}</p>
+          {err("label") && <p className="mt-1.5 text-xs text-red-700">{err("label")}</p>}
+        </div>
 
         <div>
           <label className="admin-label">{`${t("heroBanner.caption")} · ${lang.toUpperCase()}`}</label>
@@ -278,7 +293,7 @@ export default function HeroStorySlideForm({
             name="sortOrder"
             type="number"
             defaultValue={values.sortOrder}
-            className="admin-input max-w-[10rem]"
+            className="admin-input max-w-40"
           />
         </div>
 
@@ -287,10 +302,36 @@ export default function HeroStorySlideForm({
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-sm border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
           />
           {t("heroBanner.active")}
         </label>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="admin-label">{t("heroBanner.startAt")}</label>
+            <input
+              name="startAt"
+              type="datetime-local"
+              defaultValue={values.startAt}
+              className="admin-input"
+            />
+            <p className="admin-hint">{t("heroBanner.startAtHint")}</p>
+            {err("startAt") && <p className="mt-1.5 text-xs text-red-700">{err("startAt")}</p>}
+          </div>
+
+          <div>
+            <label className="admin-label">{t("heroBanner.endAt")}</label>
+            <input
+              name="endAt"
+              type="datetime-local"
+              defaultValue={values.endAt}
+              className="admin-input"
+            />
+            <p className="admin-hint">{t("heroBanner.endAtHint")}</p>
+            {err("endAt") && <p className="mt-1.5 text-xs text-red-700">{err("endAt")}</p>}
+          </div>
+        </div>
 
         <SubmitButton label={submitLabel} />
       </form>

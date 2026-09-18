@@ -12,18 +12,28 @@
  * The hero image is the lead project's own photograph, so uploading a new
  * hero in the admin changes the front page without a code deploy. The
  * fallback only appears on a fresh database.
+ *
+ * Section order/visibility below the hero is admin-editable — see
+ * /admin/pages/home/sections and lib/home-sections.ts. Every section still hides
+ * itself on empty data exactly as before; the admin only controls WHICH
+ * of the always-safe-to-render sections appear and in what order. The
+ * hero carousel and the closing CTA are not part of that list — see the
+ * comment on HOME_SECTION_KEYS for why.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   ArrowRight,
   CalendarDays,
+  Eye,
   HandHeart,
   HardHat,
+  HeartHandshake,
   MapPin,
   Mountain,
   ShieldCheck,
@@ -40,14 +50,18 @@ import VisionMission from "@/components/VisionMission";
 import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
 import { locales, type Locale } from "@/i18n";
-import { getPublishedProjects } from "@/lib/projects";
+import { localizedAlternates } from "@/lib/seo";
+import { getPublishedProjects, type ProjectSignal } from "@/lib/projects";
 import { getPublishedArticles } from "@/lib/news";
 import { getPublishedEvents } from "@/lib/events";
 import { getFaqs } from "@/lib/faqs";
 import { getHeroStorySlides } from "@/lib/hero-story";
 import { getSiteSettings } from "@/lib/settings";
+import { getWhyUsPoints } from "@/lib/home-content";
+import { getOrderedVisibleSectionKeys, type HomeSectionKey } from "@/lib/home-sections";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
+import type { SectionIcon } from "@prisma/client";
 
 /*
   One hour.
@@ -60,16 +74,31 @@ export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: string }> };
 
-/** Used only when no published project has a hero image yet. */
-const FALLBACK_HERO =
-  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=80";
+/**
+ * Used only when no published project has a hero image yet — a fresh
+ * database, or one the site cannot reach.
+ *
+ * A local photograph of an actual development rather than the Unsplash URL
+ * this used to be. The two moments it renders are a first deploy and an
+ * outage, which are precisely the moments a stranger's house on the
+ * homepage of a property developer is least affordable.
+ */
+const FALLBACK_HERO = "/corporate/development-exterior.webp";
 
-const WHY_POINTS = [
-  { key: "land", icon: Mountain },
-  { key: "privacy", icon: ShieldCheck },
-  { key: "progress", icon: HardHat },
-  { key: "aftercare", icon: HandHeart },
-] as const;
+/**
+ * Every icon a WhyUsPoint row can pick (see the SectionIcon enum in
+ * schema.prisma) — not just the four the section happened to use when
+ * this was still a hardcoded WHY_POINTS array. /admin/pages/about/why-us's icon
+ * picker offers all six, so this map has to resolve all six.
+ */
+const WHY_US_ICONS: Record<SectionIcon, typeof Mountain> = {
+  MOUNTAIN: Mountain,
+  SHIELD_CHECK: ShieldCheck,
+  HARD_HAT: HardHat,
+  HAND_HEART: HandHeart,
+  EYE: Eye,
+  HEART_HANDSHAKE: HeartHandshake,
+};
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -84,20 +113,23 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   const resolvedLocale = locale as Locale;
 
+  /*
+    The same admin-editable values the root layout reads (lib/settings.ts),
+    resolved the same defensive way. This page cannot simply inherit them:
+    it overrides `title` to escape the "%s | …" template, and an override
+    that read config/site.ts directly would leave the site's single most
+    important page as the only one ignoring the setting.
+  */
+  const { seo } = await getSiteSettings();
+
   return {
     // The layout already sets a default title; the homepage should use it
     // verbatim rather than running through the "%s | …" template.
     title: {
-      absolute:
-        siteConfig.seo.defaultTitle[resolvedLocale] ?? siteConfig.seo.defaultTitle.en,
+      absolute: seo.metaTitle[resolvedLocale] ?? seo.metaTitle.en,
     },
-    description: siteConfig.description[resolvedLocale] ?? siteConfig.description.en,
-    alternates: {
-      canonical: `${siteConfig.url}/${locale}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${siteConfig.url}/${l}`]),
-      ),
-    },
+    description: seo.metaDescription[resolvedLocale] ?? seo.metaDescription.en,
+    alternates: localizedAlternates(locale, ""),
   };
 }
 
@@ -110,28 +142,33 @@ export default async function HomePage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, tProjects, tChat, projects, articles, events, faqs, heroSlides, settings] =
-    await Promise.all([
-      getTranslations("home"),
-      getTranslations("projects"),
-      getTranslations("chatButtons"),
-      getPublishedProjects(locale),
-      getPublishedArticles(locale, { take: 3 }),
-      getPublishedEvents(locale),
-      getFaqs(locale, { take: 8 }),
-      getHeroStorySlides(locale),
-      getSiteSettings(),
-    ]);
+  const [
+    t,
+    tProjects,
+    projects,
+    articles,
+    events,
+    faqs,
+    heroSlides,
+    settings,
+    whyUsPoints,
+    sectionKeys,
+  ] = await Promise.all([
+    getTranslations("home"),
+    getTranslations("projects"),
+    getPublishedProjects(locale),
+    getPublishedArticles(locale, { take: 3 }),
+    getPublishedEvents(locale),
+    getFaqs(locale, { take: 8 }),
+    getHeroStorySlides(locale),
+    getSiteSettings(),
+    getWhyUsPoints(locale),
+    getOrderedVisibleSectionKeys(),
+  ]);
 
   const featured = projects.slice(0, 3);
   const heroImage = featured.find((p) => p.heroImageUrl)?.heroImageUrl ?? FALLBACK_HERO;
   const nextEvent = events.upcoming[0];
-
-  // This CTA used to link to LINE, which the site no longer uses anywhere;
-  // WhatsApp is the only chat channel now.
-  const waNumber = settings.contact.whatsapp.replace(/\D/g, "");
-  const waGreeting = encodeURIComponent(tChat("whatsappGreeting"));
-  const whatsappUrl = `https://wa.me/${waNumber}?text=${waGreeting}`;
 
   const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
@@ -146,43 +183,20 @@ export default async function HomePage(props: Props) {
     year: "numeric",
   });
 
-  return (
-    <>
-      {/* ── Hero (carousel, falls back to a static hero when there are no
-          active slides — see components/HeroCarousel.tsx) ──────────────── */}
-      <HeroCarousel
-        slides={heroSlides}
-        fallback={{
-          imageUrl: heroImage,
-          eyebrow: t("hero.eyebrow"),
-          title: t("hero.title"),
-          subtitle: t("hero.subtitle"),
-          ctaLabel: t("hero.cta"),
-          ctaHref: `/${locale}/projects`,
-          ctaSecondaryLabel: t("hero.ctaSecondary"),
-          ctaSecondaryHref: `/${locale}/contact`,
-        }}
-        labels={{
-          previousSlide: t("hero.storyBanner.previousSlide"),
-          nextSlide: t("hero.storyBanner.nextSlide"),
-        }}
-        eyebrow={t("hero.eyebrow")}
-      />
+  /*
+    One renderer per manageable key (see HOME_SECTION_KEYS in
+    lib/home-sections.ts). Every section's own empty-data guard is
+    preserved exactly as it was before this was extracted — the admin only
+    controls order/visibility among sections that already have something
+    to show; it can't force an empty section to render.
+  */
+  const SECTION_RENDERERS: Record<HomeSectionKey, () => React.ReactNode> = {
+    COMPANY_INTRO: () => <CompanyIntro />,
 
-      {isDatabaseOffline() && (
-        <div className="container-luxe pt-10">
-          <DbOfflineNotice />
-        </div>
-      )}
+    VISION_MISSION: () => <VisionMission />,
 
-      {/* ── Who we are (owns the page's only <h1>) ───────────────────── */}
-      <CompanyIntro />
-
-      {/* ── Vision & Mission ─────────────────────────────────────────── */}
-      <VisionMission />
-
-      {/* ── Featured projects ────────────────────────────────────────── */}
-      {featured.length > 0 && (
+    FEATURED_PROJECTS: () =>
+      featured.length > 0 && (
         <section className="container-luxe py-20 sm:py-28">
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-6">
@@ -210,72 +224,76 @@ export default async function HomePage(props: Props) {
                 <FeaturedProjectCard
                   project={project}
                   locale={locale}
-                  variant="compact"
                   labels={{
                     status: tProjects(`status.${project.status}` as never),
-                    propertyType: tProjects(
-                      `propertyType.${project.propertyType}` as never,
-                    ),
-                    cta: tProjects("viewProject"),
+                    cta: tProjects(ctaKey(project.status) as never),
+                    specVillas: tProjects("specs.villas"),
+                    specBedrooms: tProjects("specs.bedrooms"),
+                    specLand: tProjects("specs.land"),
+                    signal: signalLabel(project.signal, tProjects as never, locale),
                   }}
                 />
               </Reveal>
             ))}
           </div>
         </section>
-      )}
+      ),
 
-      {/* ── Corporate ────────────────────────────────────────────────── */}
-      <Corporate />
+    CORPORATE: () => <Corporate />,
 
-      {/* ── Awards ───────────────────────────────────────────────────── */}
-      <AwardsSection />
+    AWARDS: () => <AwardsSection />,
 
-      {/* ── Why us ───────────────────────────────────────────────────── */}
-      <section className="bg-primary-900/[0.03] py-20 sm:py-28">
-        <div className="container-luxe">
-          <Reveal>
-            <p className="eyebrow">{t("why.eyebrow")}</p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
-              {t("why.title")}
-            </h2>
-            <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink/70 sm:text-base">
-              {t("why.subtitle")}
-            </p>
-          </Reveal>
+    WHY_US: () =>
+      whyUsPoints.length > 0 && (
+        <section className="bg-primary-900/3 py-20 sm:py-28">
+          <div className="container-luxe">
+            <Reveal>
+              <p className="eyebrow">{t("why.eyebrow")}</p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
+                {t("why.title")}
+              </h2>
+              <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink/70 sm:text-base">
+                {t("why.subtitle")}
+              </p>
+            </Reveal>
 
-          <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-sm border border-primary/10 bg-primary/10 sm:grid-cols-2 lg:grid-cols-4">
-            {WHY_POINTS.map(({ key, icon: Icon }, index) => (
-              <Reveal key={key} delay={index * 0.08}>
-                <div className="flex h-full flex-col bg-white p-7">
-                  <Icon
-                    size={24}
-                    strokeWidth={1.5}
-                    className="text-accent-700"
-                    aria-hidden
-                  />
-                  <h3 className="mt-5 text-base font-medium text-primary">
-                    {t(`why.${key}.title` as never)}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-ink/70">
-                    {t(`why.${key}.body` as never)}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
+            <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-xs border border-primary/10 bg-primary/10 sm:grid-cols-2 lg:grid-cols-4">
+              {whyUsPoints.map((point, index) => {
+                const Icon = WHY_US_ICONS[point.icon];
+
+                return (
+                  <Reveal key={point.id} delay={index * 0.08}>
+                    <div className="flex h-full flex-col bg-white p-7">
+                      <Icon
+                        size={24}
+                        strokeWidth={1.5}
+                        className="text-accent-700"
+                        aria-hidden
+                      />
+                      <h3 className="mt-5 text-base font-medium text-primary">
+                        {point.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-relaxed text-ink/70">
+                        {point.body}
+                      </p>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ),
 
-      {/* ── Upcoming event ───────────────────────────────────────────── */}
-      {nextEvent && (
+    UPCOMING_EVENT: () =>
+      nextEvent && (
         <section className="container-luxe py-20 sm:py-24">
           <Reveal>
             <Link
               href={`/${locale}/events/${nextEvent.slug}`}
-              className="group grid overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.1fr_1fr]"
+              className="group grid overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.1fr_1fr]"
             >
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:h-full">
+              <div className="relative aspect-video w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:h-full">
                 {nextEvent.coverImageUrl && (
                   <ImageWithSkeleton
                     src={nextEvent.coverImageUrl}
@@ -331,10 +349,10 @@ export default async function HomePage(props: Props) {
             </Link>
           </Reveal>
         </section>
-      )}
+      ),
 
-      {/* ── Latest news ──────────────────────────────────────────────── */}
-      {articles.length > 0 && (
+    LATEST_NEWS: () =>
+      articles.length > 0 && (
         <section className="container-luxe pb-20 sm:pb-28">
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-6">
@@ -361,9 +379,9 @@ export default async function HomePage(props: Props) {
               <Reveal key={article.id} delay={index * 0.1}>
                 <Link
                   href={`/${locale}/news/${article.slug}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-sm border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
+                  className="group flex h-full flex-col overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
                 >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-primary/5">
+                  <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
                     {article.coverImageUrl && (
                       <ImageWithSkeleton
                         src={article.coverImageUrl}
@@ -399,11 +417,11 @@ export default async function HomePage(props: Props) {
             ))}
           </div>
         </section>
-      )}
+      ),
 
-      {/* ── FAQ ──────────────────────────────────────────────────────── */}
-      {/* This accordion owns the FAQPage schema for the whole site: it
-          carries the full set, and Google honours only one per page. */}
+    // This accordion owns the FAQPage schema for the whole site: it
+    // carries the full set, and Google honours only one per page.
+    FAQ: () => (
       <FaqAccordion
         faqs={faqs}
         withSchema
@@ -420,52 +438,79 @@ export default async function HomePage(props: Props) {
           },
         }}
       />
+    ),
+  };
 
-      {/* ── Final CTA ────────────────────────────────────────────────── */}
-     <section className="relative bg-primary py-24 sm:py-32 text-white overflow-hidden">
-  <div className="container-luxe max-w-3xl text-center relative z-10">
-    <Reveal>
-      {/* 1. Title / Eyebrow: ใช้ตัวพิมพ์ใหญ่และถ่างช่องไฟให้ดูหรูหรา */}
-      {t("cta.eyebrow") && (
-        <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[#E2AD7F]">
-          {t("cta.eyebrow")}
-        </p>
+  return (
+    <>
+      {/* ── Hero (carousel, falls back to a static hero when there are no
+          active slides — see components/HeroCarousel.tsx) ──────────────── */}
+      <HeroCarousel
+        slides={heroSlides}
+        fallback={{
+          imageUrl: heroImage,
+          eyebrow: t("hero.eyebrow"),
+          title: t("hero.title"),
+          subtitle: t("hero.subtitle"),
+          ctaLabel: t("hero.cta"),
+          ctaHref: `/${locale}/projects`,
+          ctaSecondaryLabel: t("hero.ctaSecondary"),
+          ctaSecondaryHref: `/${locale}/contact`,
+        }}
+        labels={{
+          previousSlide: t("hero.storyBanner.previousSlide"),
+          nextSlide: t("hero.storyBanner.nextSlide"),
+        }}
+        eyebrow={t("hero.eyebrow")}
+      />
+
+      {isDatabaseOffline() && (
+        <div className="container-luxe pt-10">
+          <DbOfflineNotice />
+        </div>
       )}
-      
-      {/* ปรับ Title ให้คล้ายคำว่า "SPEAK TO US" ในภาพ */}
-      <h2 className="text-sm sm:text-base uppercase tracking-[0.25em] text-[#E2AD7F] font-medium">
-        {t("cta.title")}
-      </h2>
-      
-      {/* 2. Divider: เส้นคั่นแบบไล่สี (Gradient) เส้นเล็กๆ ตรงกลาง */}
-      <div className="w-20 h-[1px] mx-auto bg-gradient-to-r from-transparent via-[#E2AD7F]/70 to-transparent my-8 sm:my-10" />
-      
-      {/* 3. Subtitle: ปรับฟอนต์ให้บางลง (font-light) และเพิ่มขนาดเล็กน้อยให้อ่านง่าย */}
-      <p className="mx-auto max-w-xl text-base leading-relaxed text-white/80 font-light sm:text-lg">
-        {t("cta.subtitle")}
-      </p>
 
-      {/* 4. Buttons: ปรับปุ่มให้เป็นทรงเหลี่ยม (หรือมนน้อยที่สุด) ดูหนักแน่นและพรีเมียม */}
-      <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-        <Link
-          href={`/${locale}/contact`}
-          className="w-full sm:w-auto px-10 py-4 bg-[#E2AD7F] text-primary text-sm uppercase tracking-widest font-medium hover:bg-[#d19b6e] transition-colors duration-300 text-center"
-        >
-          {t("cta.primary")}
-        </Link>
+      {/* ── Admin-ordered sections (see /admin/pages/home/sections) ─────────── */}
+      {sectionKeys.map((key) => (
+        <Fragment key={key}>{SECTION_RENDERERS[key]()}</Fragment>
+      ))}
 
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full sm:w-auto px-10 py-4 border border-white/20 text-white text-sm uppercase tracking-widest font-medium hover:border-white/60 hover:bg-white/5 transition-all duration-300 text-center"
-        >
-          {t("cta.secondary")}
-        </a>
-      </div>
-    </Reveal>
-  </div>
-</section>
     </>
   );
+}
+
+/**
+ * The second badge's text, or null when the project has nothing to say.
+ *
+ * Formatted here rather than in the card so the numbers go through the
+ * page's own translator once, and the card stays a component that renders
+ * strings it is handed.
+ */
+function signalLabel(
+  signal: ProjectSignal | null,
+  t: (key: never, values?: Record<string, unknown>) => string,
+  locale: string,
+): string | null {
+  if (!signal) return null;
+
+  if (signal.kind === "awards") {
+    return t("signal.awards" as never, { count: signal.count, year: signal.year });
+  }
+
+  if (signal.kind === "newPhotos") {
+    return t("signal.newPhotos" as never, { count: signal.count });
+  }
+
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(Date.UTC(signal.year, signal.month - 1, 1)));
+
+  return t("signal.photosAdded" as never, { when });
+}
+
+/** An upcoming development has nothing to walk through yet — see the note
+ *  on the CTA in components/FeaturedProjectCard.tsx. */
+function ctaKey(status: string): "registerInterest" | "viewProject" {
+  return status === "UPCOMING" ? "registerInterest" : "viewProject";
 }

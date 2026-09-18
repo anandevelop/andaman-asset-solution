@@ -9,8 +9,9 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ChevronRight } from "lucide-react";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { safeQuery } from "@/lib/db";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { formatMonthYear } from "@/lib/format";
 
@@ -23,7 +24,9 @@ export default async function AdminProgressIndexPage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  // A picker with nothing to write — every row is a Link to the per-project
+  // editor, which carries its own guard.
+  await requireAdmin(locale, Role.VIEWER);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -49,6 +52,14 @@ export default async function AdminProgressIndexPage(props: Props) {
     [],
   );
 
+  /*
+    safeQuery degrades to [] when Postgres is unreachable, which renders as
+    "no projects yet" — indistinguishable from someone having deleted them.
+    Every other admin list page says which it is; this one did not, so an
+    outage read as data loss to whoever was editing at the time.
+  */
+  const offline = isDatabaseOffline();
+
   return (
     <div className="space-y-8">
       <header>
@@ -57,6 +68,12 @@ export default async function AdminProgressIndexPage(props: Props) {
           {t("progress.title")}
         </h1>
       </header>
+
+      {offline && (
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("common.offline")}
+        </p>
+      )}
 
       {projects.length === 0 ? (
         <div className="admin-card text-center text-sm text-ink-muted">

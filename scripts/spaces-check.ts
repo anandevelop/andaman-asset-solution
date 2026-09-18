@@ -177,6 +177,92 @@ async function main() {
     );
   }
 
+  // ── 4b. The read path, which is not the write path ────────────────────
+  //
+  // Everything above preflights a PUT against the signing endpoint. The
+  // e-brochure viewer does something different: pdf.js GETs the PDF from
+  // NEXT_PUBLIC_MEDIA_DOMAIN with range requests. A bucket can allow the
+  // upload and still break every brochure, and until this block existed
+  // that combination reported a clean "✓ CORS allows …".
+  //
+  // Two separate things have to be true, with two different fixes, so they
+  // are reported separately rather than as one pass/fail.
+  for (const { url: origin, required } of origins) {
+    const preflight = await fetch(presigned.publicUrl, {
+      method: "OPTIONS",
+      headers: {
+        Origin: origin,
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "range",
+      },
+    }).catch(() => null);
+
+    const allowed = preflight?.headers.get("access-control-allow-origin");
+    const exposed =
+      preflight?.headers.get("access-control-expose-headers")?.toLowerCase() ?? "";
+
+    const originOk = allowed === "*" || allowed === origin;
+    /*
+      Only Content-Length is CORS-safelisted. pdf.js also reads
+      Accept-Ranges and Content-Encoding, and treats a null as "ranges are
+      not available" — so a short expose list is not a warning, it is the
+      whole 30MB downloading before page one.
+    */
+    const rangeVisible =
+      exposed.includes("*") ||
+      (exposed.includes("accept-ranges") && exposed.includes("content-encoding"));
+
+    if (!originOk) {
+      const line = required ? `${FAIL} CORS blocks GET from ${origin}` : `${DIM}·${RESET} CORS not set for GET from ${origin}`;
+      console.log(`  ${line}`);
+      console.log(`    ${DIM}allow-origin: ${allowed ?? "(none)"}${RESET}`);
+      if (required) {
+        fixes.push(
+          `The e-brochure viewer cannot read the PDF from ${origin}.`,
+          "  Run `npm run spaces:cors` — the rule needs GET and HEAD, not just PUT.",
+        );
+      }
+      continue;
+    }
+
+    if (!rangeVisible) {
+      console.log(`  ${FAIL} Range requests will not work from ${origin}`);
+      console.log(
+        `    ${DIM}expose-headers: ${exposed || "(none)"} — needs accept-ranges and content-encoding${RESET}`,
+      );
+      fixes.push(
+        "Every e-brochure will download in full before its first page appears.",
+        "  pdf.js reads Accept-Ranges and Content-Encoding off the response and",
+        "  cannot see either unless the Space exposes them.",
+        "  Run `npm run spaces:cors` (ExposeHeaders in scripts/spaces-cors.ts).",
+      );
+      continue;
+    }
+
+    console.log(`  ${OK} CORS allows GET + range headers from ${origin}`);
+  }
+
+  /*
+    And a real range GET, not just a preflight. A CDN in front of the Space
+    can answer the preflight correctly and still strip or ignore the Range
+    header, which no amount of OPTIONS probing would reveal.
+  */
+  const ranged = await fetch(presigned.publicUrl, {
+    headers: { Range: "bytes=0-15" },
+  }).catch(() => null);
+
+  if (ranged?.status === 206) {
+    console.log(`  ${OK} Range requests answered (206 Partial Content)`);
+  } else {
+    console.log(
+      `  ${FAIL} Range request returned ${ranged?.status ?? "no response"}, expected 206`,
+    );
+    fixes.push(
+      "The object host ignored a Range header, so pdf.js will fetch whole PDFs.",
+      "  If a CDN sits in front of the Space, check that it forwards Range.",
+    );
+  }
+
   // ── 5. Tidy up ────────────────────────────────────────────────────────
   const client = new S3Client({
     region: config.region,
@@ -202,7 +288,12 @@ function report() {
   }
 
   console.log("\n  Next steps:\n");
-  for (const fix of fixes) console.log(`    ${fix}`);
+  /*
+    Deduplicated: the CORS checks run once per origin and a Space is
+    configured with one rule covering all of them, so the same remedy would
+    otherwise be printed two or three times and read as three problems.
+  */
+  for (const fix of [...new Set(fixes)]) console.log(`    ${fix}`);
   console.log("");
   process.exitCode = 1;
 }

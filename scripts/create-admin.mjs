@@ -28,9 +28,13 @@
 
 import { randomBytes } from "node:crypto";
 import { PrismaClient, Role } from "@prisma/client";
+// Prisma 7 has no built-in engine: every client needs a driver adapter.
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 /** Matches lib/auth.ts and the admin user actions. */
 const BCRYPT_ROUNDS = 12;

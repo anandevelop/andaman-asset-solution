@@ -22,7 +22,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -78,6 +78,14 @@ type Props = {
    * Ignored when kind is "document".
    */
   acceptVideo?: boolean;
+  /**
+   * Fires with the newline-joined URL list whenever it changes — the same
+   * value the hidden input carries. This component stays uncontrolled (see
+   * the file header) for every existing FormData-based caller; this is an
+   * opt-in for the rare caller that also needs the current value outside
+   * the form, e.g. PageSeoEditor.tsx mirroring it into a live preview.
+   */
+  onChange?: (value: string) => void;
 };
 
 const ACCEPT = {
@@ -91,11 +99,32 @@ const VIDEO_ACCEPT = "video/mp4,video/webm";
 const MAX_BYTES = {
   image: 15 * 1024 * 1024,
   // A print-resolution brochure is legitimately larger than a photograph.
-  document: 30 * 1024 * 1024,
+  document: 50 * 1024 * 1024,
   // A few seconds of 1080p story-banner footage, legitimately larger than
   // either — mirrors lib/s3.ts's MAX_VIDEO_BYTES.
   video: 100 * 1024 * 1024,
 } as const;
+
+/**
+ * Every error code POST /api/uploads/presign can answer with, mapped to the
+ * message that tells the operator what to do about it.
+ *
+ * Kept as a table rather than a ternary chain so that adding a code to the
+ * route and forgetting it here is visible: an unmapped code falls through
+ * to failedWithReason, which prints the code itself.
+ */
+const PRESIGN_ERROR_KEYS: Record<string, string> = {
+  S3_NOT_CONFIGURED: "notConfigured",
+  UNSUPPORTED_TYPE: "unsupportedType",
+  FILE_TOO_LARGE: "tooLarge",
+  RATE_LIMITED: "rateLimited",
+  // Both are a 403, and they are not the same problem: one is fixed by
+  // signing in again, the other by finishing enrolment at
+  // /admin/account/security. The route has always distinguished them; the
+  // uploader did not.
+  UNAUTHORISED: "sessionExpired",
+  TWO_FACTOR_SETUP_REQUIRED: "twoFactorRequired",
+};
 
 /** Extension-based, not content-sniffed — matches lib/s3.ts's
  *  buildObjectKey(), which always names the object from its content type,
@@ -142,12 +171,19 @@ function putToS3(
         : reject(new Error(xhr.status === 403 ? "DENIED" : `HTTP_${xhr.status}`));
 
     /*
-      onerror fires with status 0 for a blocked CORS preflight exactly as it
-      does for a dead network — the browser refuses to tell a page why a
-      cross-origin request failed. Reported as BLOCKED rather than "network
-      error" because on a working laptop the overwhelmingly likelier cause
-      is a missing CORS rule on the bucket, and "check your connection" sends
-      the reader looking in the wrong place entirely.
+      onerror fires with status 0 for far more than a dead network.
+
+      A cross-origin *error* response from Spaces carries no CORS headers,
+      so the browser refuses to expose it and XHR sees a network failure —
+      a 400 for a malformed request, a 403 for an expired URL or a revoked
+      key, and a genuinely blocked preflight are indistinguishable here.
+      This was read as "must be CORS" for a long time while the real cause
+      was a signed header the uploader was not sending; see the header
+      parity test in tests/s3.test.ts.
+
+      Which is why the onload branch below still checks for 403 even though
+      it is only reachable same-origin: the status is worth reporting on the
+      rare occasion the browser lets us see it.
     */
     xhr.onerror = () => reject(new Error("BLOCKED"));
     xhr.onabort = () => reject(new Error("ABORTED"));
@@ -202,7 +238,7 @@ function SortableImage({
         // Lift the dragged tile above its neighbours.
         zIndex: isDragging ? 10 : undefined,
       }}
-      className={`group relative h-24 w-32 overflow-hidden rounded-sm border bg-surface-muted ${
+      className={`group relative h-24 w-32 overflow-hidden rounded-xs border bg-surface-muted ${
         isDragging
           ? "border-accent opacity-90 shadow-cardHover"
           : "border-primary/10"
@@ -302,6 +338,7 @@ export default function ImageUploader({
   hint,
   kind = "image",
   acceptVideo = false,
+  onChange,
 }: Props) {
   // A brochure is one file, and "reordering" a single PDF is meaningless.
   const isDocument = kind === "document";
@@ -318,6 +355,17 @@ export default function ImageUploader({
       .map((line) => line.trim())
       .filter(Boolean),
   );
+
+  useEffect(() => {
+    onChange?.(urls.join("\n"));
+    // A caller passing a fresh inline arrow every render re-fires this on
+    // every render of theirs, not just an actual urls change — harmless,
+    // since mirroring the same joined string back is a same-value setState
+    // React bails out of, but worth knowing if `onChange` ever does
+    // something less idempotent than that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urls]);
+
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [broken, setBroken] = useState<Record<string, boolean>>({});
@@ -360,7 +408,11 @@ export default function ImageUploader({
               id,
               name: file.name,
               progress: 0,
-              error: isVideoFile ? t("tooLargeVideo") : t("tooLarge"),
+              error: isVideoFile
+                ? t("tooLargeVideo")
+                : isDocument
+                  ? t("tooLargeDocument")
+                  : t("tooLarge"),
             },
           ]);
           continue;
@@ -384,22 +436,29 @@ export default function ImageUploader({
           const result = await response.json().catch(() => null);
 
           if (!response.ok || !result?.ok) {
-            // Surface the actionable cases by name; everything else is
-            // "something went wrong".
-            const code = result?.error;
-            const message =
-              code === "S3_NOT_CONFIGURED"
-                ? t("notConfigured")
-                : code === "UNSUPPORTED_TYPE"
-                  ? t("unsupportedType")
-                  : code === "FILE_TOO_LARGE"
-                    ? t("tooLarge")
-                    : code === "RATE_LIMITED"
-                      ? t("rateLimited")
-                      : t("failed");
+            const code: string | undefined = result?.error;
+            const key = code ? PRESIGN_ERROR_KEYS[code] : undefined;
+
+            /*
+              Anything without a name shows its code rather than collapsing
+              into "upload failed".
+
+              Five distinct causes used to land on that one line —
+              UNAUTHORISED, TWO_FACTOR_SETUP_REQUIRED, VALIDATION_FAILED,
+              INVALID_JSON and SERVER_ERROR — which made a working bucket
+              and an expired session look identical to whoever was
+              uploading, and left nothing to go on but the browser console.
+              A screenshot should be enough to tell them apart.
+            */
+            const message = key
+              ? t(key as never)
+              : t("failedWithReason", { reason: code ?? `HTTP ${response.status}` });
 
             setUploads((u) =>
               u.map((item) => (item.id === id ? { ...item, error: message } : item)),
+            );
+            console.error(
+              `[upload] ${file.name}: presign refused — HTTP ${response.status} ${code ?? "(no code)"}`,
             );
             continue;
           }
@@ -423,7 +482,12 @@ export default function ImageUploader({
               ? t("storageBlocked")
               : reason === "DENIED"
                 ? t("storageDenied")
-                : t("failed");
+                : // putToS3 rejects with `HTTP_<status>` for any other
+                  // refusal from storage. Showing the status is the
+                  // difference between "it broke" and a fixable report.
+                  reason.startsWith("HTTP_")
+                  ? t("failedWithReason", { reason: reason.replace("HTTP_", "HTTP ") })
+                  : t("failed");
 
           setUploads((u) =>
             u.map((item) => (item.id === id ? { ...item, error: message } : item)),
@@ -438,7 +502,7 @@ export default function ImageUploader({
       // Allow re-selecting the same file after a removal.
       if (inputRef.current) inputRef.current.value = "";
     },
-    [addUrls, allowMultiple, allowVideo, kind, prefix, slug, t],
+    [addUrls, allowMultiple, allowVideo, isDocument, kind, prefix, slug, t],
   );
 
   const remove = (url: string) => setUrls((u) => u.filter((item) => item !== url));
@@ -528,9 +592,9 @@ export default function ImageUploader({
           setDragging(false);
           void handleFiles(event.dataTransfer.files);
         }}
-        className={`rounded-sm border border-dashed px-5 py-6 text-center transition-colors ${
+        className={`rounded-xs border border-dashed px-5 py-6 text-center transition-colors ${
           dragging
-            ? "border-accent bg-accent/[0.06]"
+            ? "border-accent bg-accent/6"
             : "border-primary/20 bg-surface-muted/40"
         }`}
       >
@@ -602,7 +666,7 @@ export default function ImageUploader({
       {uploads.length > 0 && (
         <ul className="mt-4 space-y-2">
           {uploads.map((upload) => (
-            <li key={upload.id} className="rounded-sm border border-primary/10 px-3 py-2">
+            <li key={upload.id} className="rounded-xs border border-primary/10 px-3 py-2">
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="truncate text-ink">{upload.name}</span>
 
@@ -657,7 +721,7 @@ export default function ImageUploader({
           {urls.map((url) => (
             <li
               key={url}
-              className="flex items-center gap-3 rounded-sm border border-primary/10 bg-surface-muted/50 px-3 py-2.5"
+              className="flex items-center gap-3 rounded-xs border border-primary/10 bg-surface-muted/50 px-3 py-2.5"
             >
               <FileText size={18} className="shrink-0 text-accent-700" aria-hidden />
 

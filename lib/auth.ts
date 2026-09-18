@@ -29,18 +29,14 @@ import {
   AUTH_TOTP_FAILED,
   recordAuthEvent,
 } from "@/lib/audit/events";
+import { notifyAdmins } from "@/lib/notifications";
 
-/** Role hierarchy — higher number grants everything below it. */
-const ROLE_RANK: Record<Role, number> = {
-  EDITOR: 1,
-  ADMIN: 2,
-  SUPER_ADMIN: 3,
-};
-
-export function hasRole(role: Role | undefined | null, minimum: Role): boolean {
-  if (!role) return false;
-  return ROLE_RANK[role] >= ROLE_RANK[minimum];
-}
+// Role hierarchy lives in lib/role-rank.ts, imported and re-exported here
+// (rather than defined inline) so a client component like AdminSidebar can
+// filter nav items by the same ranks without pulling this module's
+// next-auth/bcryptjs weight into the browser bundle — see that file's
+// header for the full reasoning.
+export { hasRole } from "@/lib/role-rank";
 
 /** How often to re-validate the role/isActive flag against the database. */
 const ROLE_REFRESH_MS = 5 * 60_000;
@@ -121,6 +117,25 @@ export const authOptions: NextAuthOptions = {
 
         if (!rateLimit(limitKey, { ...RATE_LIMITS.login, check: true }).ok) {
           console.warn(`[auth] sign-in temporarily locked for ${email}`);
+
+          /*
+            The "unusual failed sign-ins" notification, sent from here
+            rather than from each failure branch below: one mistyped
+            password is not news, and a switch that fired on every typo
+            would be turned off within a day. The bucket being empty is
+            the point at which a run of attempts stops looking like a
+            person who forgot their password.
+
+            Fire-and-forget, and deliberately after the decision to refuse
+            — nothing about whether this sign-in is allowed depends on
+            whether anybody was told.
+          */
+          void notifyAdmins({
+            event: "failedLogins",
+            title: email,
+            href: "/admin/activity?action=login_failed",
+          });
+
           return null;
         }
 

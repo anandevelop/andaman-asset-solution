@@ -34,13 +34,31 @@ export async function updateCompanyProfile(
   const parsed = companyProfileSchema.safeParse({
     locale: editingLocale,
     aboutUs: (formData.get("aboutUs") as string) ?? "",
+    storyEyebrow: (formData.get("storyEyebrow") as string) ?? "",
+    storyTitle: (formData.get("storyTitle") as string) ?? "",
+    storyImageUrl: (formData.get("storyImageUrl") as string) ?? "",
+    aboutHeroImageUrl: (formData.get("aboutHeroImageUrl") as string) ?? "",
+    foundedYear: (formData.get("foundedYear") as string) ?? "",
   });
 
   if (!parsed.success) {
     return { ok: false, fields: fieldErrors(parsed.error) };
   }
 
-  const { aboutUs } = parsed.data;
+  const {
+    aboutUs,
+    storyEyebrow,
+    storyTitle,
+    storyImageUrl,
+    aboutHeroImageUrl,
+    foundedYear,
+  } = parsed.data;
+  // storyImageUrl/aboutHeroImageUrl/foundedYear are not translated — a
+  // photo and a year do not have a language — so they live on
+  // CompanyProfile itself and are saved from whichever `lang` tab happens
+  // to submit, same as every other untranslated field on a page a
+  // LanguageTabs selector otherwise drives.
+  const untranslated = { storyImageUrl, aboutHeroImageUrl, foundedYear };
   const db = prisma;
 
   try {
@@ -53,18 +71,22 @@ export async function updateCompanyProfile(
         // created, same reasoning as AwardForm's titleEn/titleTh.
         aboutUsEn: editingLocale === "en" ? aboutUs : "",
         aboutUsTh: editingLocale === "th" ? aboutUs : null,
-        translations: { create: { locale: editingLocale, aboutUs } },
+        ...untranslated,
+        translations: {
+          create: { locale: editingLocale, aboutUs, storyEyebrow, storyTitle },
+        },
       },
       update: {
         ...(editingLocale === "en" ? { aboutUsEn: aboutUs } : {}),
         ...(editingLocale === "th" ? { aboutUsTh: aboutUs } : {}),
+        ...untranslated,
         translations: {
           upsert: {
             where: {
               companyProfileId_locale: { companyProfileId: "default", locale: editingLocale },
             },
-            update: { aboutUs },
-            create: { locale: editingLocale, aboutUs },
+            update: { aboutUs, storyEyebrow, storyTitle },
+            create: { locale: editingLocale, aboutUs, storyEyebrow, storyTitle },
           },
         },
       },
@@ -74,10 +96,13 @@ export async function updateCompanyProfile(
     return { ok: false, message: "SAVE_FAILED" };
   }
 
-  // The company blurb appears on /about and can appear on any project page.
+  // The company blurb/story appear on /about and can appear on any project
+  // page; the four stat figures appear on the home page's Vision & Mission
+  // section — purged as a locale subtree so both surfaces pick up an edit
+  // immediately rather than waiting out the page's own revalidate window.
   revalidatePath(`/${locale}/admin/settings/company`);
   for (const target of locales) {
-    revalidatePath(`/${target}/about`);
+    revalidatePath(`/${target}`, "layout");
   }
 
   return { ok: true, message: "SAVED" };

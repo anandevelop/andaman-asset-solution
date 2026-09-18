@@ -13,6 +13,8 @@ import { Pencil, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
+import { Role } from "@prisma/client";
+import { hasRole } from "@/lib/role-rank";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale } from "@/lib/format";
 import { translationCompleteness } from "@/lib/admin/translated-form";
@@ -27,7 +29,14 @@ export default async function AdminEventsPage(props: Props) {
     locale
   } = params;
 
-  await requireAdmin(locale);
+  // VIEWER may see the list — every action from here on is a Link to a
+  // page with its own guard (edit: EDITOR, registrations:
+  // viewCustomerContact), so there is no in-page write control to gate
+  // beyond the "New" button below.
+  const session = await requireAdmin(locale, Role.VIEWER);
+  // Matches ../new/page.tsx's own guard exactly — see the note by the
+  // "New" button below.
+  const canCreate = hasRole(session.role, Role.ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -83,14 +92,21 @@ export default async function AdminEventsPage(props: Props) {
           <p className="mt-2 text-sm text-ink-muted">{t("events.subtitle")}</p>
         </div>
 
-        <Link href={`/${locale}/admin/events/new`} className="admin-btn">
-          <Plus size={16} aria-hidden />
-          {t("events.new")}
-        </Link>
+        {/* Hidden below ADMIN because ../new/page.tsx guards at
+            requireAdmin(locale, Role.ADMIN). The button follows the page,
+            not the other way round: widening the page to match the button
+            would hand every editor the ability to create events, which is
+            a permissions change, not a UI fix. */}
+        {canCreate && (
+          <Link href={`/${locale}/admin/events/new`} className="admin-btn">
+            <Plus size={16} aria-hidden />
+            {t("events.new")}
+          </Link>
+        )}
       </header>
 
       {offline && (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
@@ -100,7 +116,7 @@ export default async function AdminEventsPage(props: Props) {
           {t("events.empty")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-primary/10 bg-surface-raised shadow-card">
+        <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
           <table className="w-full min-w-[820px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>
@@ -170,8 +186,8 @@ export default async function AdminEventsPage(props: Props) {
                       <span
                         className={
                           event.isPublished
-                            ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                            : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                            ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                            : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                         }
                       >
                         {event.isPublished ? t("common.published") : t("common.draft")}
@@ -179,13 +195,22 @@ export default async function AdminEventsPage(props: Props) {
                     </td>
 
                     <td className="admin-td whitespace-nowrap text-right">
-                      <Link
-                        href={`/${locale}/admin/events/${event.id}/edit`}
-                        className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
-                      >
-                        <Pencil size={14} aria-hidden />
-                        {t("common.edit")}
-                      </Link>
+                      <span className="flex justify-end gap-3">
+                        <Link
+                          href={`/${locale}/admin/events/${event.id}/registrations`}
+                          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+                        >
+                          <Users size={14} aria-hidden />
+                          {t("events.manageRegistrations")}
+                        </Link>
+                        <Link
+                          href={`/${locale}/admin/events/${event.id}/edit`}
+                          className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
+                        >
+                          <Pencil size={14} aria-hidden />
+                          {t("common.edit")}
+                        </Link>
+                      </span>
                     </td>
                   </tr>
                 );

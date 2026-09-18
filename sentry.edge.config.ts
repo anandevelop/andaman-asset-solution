@@ -1,7 +1,7 @@
 /**
  * sentry.edge.config.ts
  * ─────────────────────────────────────────────────────────────────────────
- * Edge-runtime Sentry — in this application, middleware.ts only.
+ * Edge-runtime Sentry — in this application, proxy.ts only.
  *
  * Small but not skippable: middleware runs on every request and handles
  * both locale routing and the admin auth gate. A failure there takes down

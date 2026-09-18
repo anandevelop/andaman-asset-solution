@@ -1,154 +1,164 @@
-"use client";
-
 /**
  * components/CompanyIntroGallery.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The expanding-strip photo accordion beside the "Who we are" copy — see
+ * The photo mosaic beside the "Who we are" copy — see
  * components/CompanyIntro.tsx, which owns the section and the slide data.
  *
- * One panel is expanded at a time; the rest collapse to narrow vertical
- * strips carrying a rotated project label. The active panel advances on
- * its own and wraps around forever, and any pointer or keyboard focus
- * inside the strip stops it, so it never moves under someone who is
- * actually looking at it.
+ * One large photo plus up to four more beside it, arranged differently at
+ * each breakpoint on purpose rather than the same grid just reflowed:
  *
- * A Client Component for exactly that reason (hover, focus, a timer).
- * Everything it renders arrives already-localized from the server
- * component above it — the same split as HeroCarousel/lib/hero-story.ts.
+ *   - Mobile only ever shows the main photo plus its first two secondaries,
+ *     side by side below it. That ceiling is deliberate, not a cut corner —
+ *     a phone-width 2x2 grid of thumbnails is too small to read a label on,
+ *     so a fifth+ photo simply isn't shown there.
+ *   - From `sm:` up there is room for the rest: up to four secondaries in a
+ *     2-per-row grid beside the main photo (an odd one out spans the full
+ *     row rather than leaving a gap — the same resolution VisionMission.tsx
+ *     uses for its own 2-column stat grid).
+ *
+ * Replaces the previous auto-advancing accordion — that mechanic existed to
+ * show an arbitrary number of photos one at a time; a static grid showing
+ * several at once needs no client-side JS at all, hence no "use client"
+ * here. A sixth+ photo, if one is ever added in the admin, still isn't
+ * shown anywhere — trim the list to five for this section to stay
+ * intentional.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useState } from "react";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 
 export type IntroGallerySlide = {
   src: string;
   /**
-   * A whole Tailwind object-position class, not a raw value: a collapsed
-   * panel is an ~80px slice of a landscape photo and the middle of the
-   * frame is not always the part worth showing, so each photo names its
-   * own crop. Written out in full so Tailwind's scanner can see them.
+   * A whole Tailwind object-position class, not a raw value: Tailwind's
+   * scanner only generates CSS for strings it sees in source, and this
+   * value comes from the database — see HomeGalleryPhoto's schema.prisma
+   * comment.
    */
   objectPosition: string;
   label: string;
   alt: string;
 };
 
-/** Long enough to look at a photo, short enough to notice it moves. */
-const ADVANCE_MS = 4500;
+function GalleryPhoto({
+  slide,
+  sizes,
+  className = "",
+}: {
+  slide: IntroGallerySlide;
+  sizes: string;
+  className?: string;
+}) {
+  return (
+    <div className={`relative min-h-0 min-w-0 overflow-hidden rounded-xs ${className}`}>
+      <ImageWithSkeleton
+        src={slide.src}
+        alt={slide.alt}
+        fill
+        sizes={sizes}
+        className={`${slide.objectPosition} object-cover`}
+      />
 
-/** Shared so the expand and the fades land together. */
-const EASE = "ease-[cubic-bezier(0.16,1,0.3,1)]";
+      {/* Bottom-fade scrim so the label reads over any photo — see the
+          utility's own comment in globals.css for the contrast-tuning
+          behind its exact stops. */}
+      <span aria-hidden className="company-intro-scrim absolute inset-0" />
+
+      <span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 block p-4 text-left text-sm font-light uppercase leading-snug tracking-[0.06em] text-white sm:p-5 sm:text-base lg:text-lg"
+      >
+        {slide.label}
+      </span>
+    </div>
+  );
+}
 
 export default function CompanyIntroGallery({ slides }: { slides: IntroGallerySlide[] }) {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // Renders nothing when there is nothing to show — matching
+  // AwardsSection/FaqAccordion's convention — rather than an empty,
+  // fixed-height box. CompanyIntro.tsx's own grid collapses to one column
+  // in that case.
+  if (slides.length === 0) return null;
 
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReducedMotion(query.matches);
+  const [main, ...secondaries] = slides;
 
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-
-  useEffect(() => {
-    // Never runs for a visitor who asked for less motion — they still get
-    // the accordion, they just drive it themselves.
-    if (paused || reducedMotion || slides.length < 2) return;
-
-    const id = window.setInterval(
-      () => setActive((current) => (current + 1) % slides.length),
-      ADVANCE_MS,
+  // One photo: the whole area, no split — there is nothing to pair it with.
+  if (secondaries.length === 0) {
+    return (
+      <div className="h-128 w-full sm:aspect-4/3 sm:h-auto">
+        <GalleryPhoto slide={main} sizes="(max-width: 1024px) 100vw, 48vw" />
+      </div>
     );
+  }
 
-    return () => window.clearInterval(id);
-  }, [paused, reducedMotion, slides.length]);
+  // Two photos total: the same 2:1 split as below, just with one photo
+  // filling the whole right-hand side instead of a stacked or gridded set.
+  if (secondaries.length === 1) {
+    return (
+      <div className="grid h-128 grid-cols-2 gap-2 sm:aspect-4/3 sm:h-auto sm:grid-cols-[2fr_1fr]">
+        <GalleryPhoto slide={main} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 60vw, 32vw" />
+        <GalleryPhoto slide={secondaries[0]} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 30vw, 16vw" />
+      </div>
+    );
+  }
+
+  // Three photos total (exactly two secondaries): stacked, not gridded —
+  // two thumbnails side by side would be squarer and smaller than they are
+  // worth at this count. Four+ secondaries below switch to an actual grid.
+  if (secondaries.length === 2) {
+    return (
+      <div className="grid h-128 grid-cols-2 grid-rows-[2fr_1fr] gap-2 sm:aspect-4/3 sm:h-auto sm:grid-cols-[2fr_1fr] sm:grid-rows-1">
+        <GalleryPhoto
+          slide={main}
+          className="col-span-2 sm:col-span-1"
+          sizes="(max-width: 1024px) 100vw, 32vw"
+        />
+
+        {/* Side by side on a phone, stacked from sm: up. */}
+        <div className="col-span-2 grid grid-cols-2 gap-2 sm:col-span-1 sm:grid-cols-1 sm:grid-rows-2">
+          <GalleryPhoto slide={secondaries[0]} sizes="(max-width: 1024px) 50vw, 16vw" />
+          <GalleryPhoto slide={secondaries[1]} sizes="(max-width: 1024px) 50vw, 16vw" />
+        </div>
+      </div>
+    );
+  }
+
+  // Four or more secondaries (five or more total): a real 2-per-row grid
+  // beside the main photo, capped at four — desktop's cap on how many fit
+  // beside one large photo without each shrinking past readable.
+  const desktopSecondaries = secondaries.slice(0, 4);
+  // Mobile's own, lower cap — see the file header for why this stays at
+  // two regardless of how many desktop shows.
+  const mobileCount = 2;
 
   return (
-    <div
-      className="flex h-[32rem] w-full flex-col gap-1.5 sm:aspect-[4/3] sm:h-auto sm:flex-row sm:gap-2"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={() => setPaused(false)}
-    >
-      {slides.map((slide, index) => {
-        const isActive = index === active;
+    <div className="grid h-128 grid-cols-2 grid-rows-[2fr_1fr] gap-2 sm:aspect-4/3 sm:h-auto sm:grid-cols-[2fr_1fr] sm:grid-rows-1">
+      <GalleryPhoto
+        slide={main}
+        className="col-span-2 sm:col-span-1"
+        sizes="(max-width: 1024px) 100vw, 32vw"
+      />
 
-        return (
-          <button
+      <div className="col-span-2 grid grid-cols-2 gap-2 sm:col-span-1 sm:grid-rows-2">
+        {desktopSecondaries.map((slide, index) => (
+          <GalleryPhoto
             key={slide.src}
-            type="button"
-            aria-pressed={isActive}
-            aria-label={slide.label}
-            onMouseEnter={() => setActive(index)}
-            onFocus={() => setActive(index)}
-            onClick={() => setActive(index)}
-            // Sizing is .intro-strip-panel in app/globals.css, driven off
-            // this attribute — it has to change at the `sm` breakpoint and
-            // a style prop cannot.
-            data-expanded={isActive}
-            className="intro-strip-panel relative min-h-0 min-w-0 overflow-hidden rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            <ImageWithSkeleton
-              src={slide.src}
-              alt={slide.alt}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 45vw, 30vw"
-              className={`${slide.objectPosition} object-cover`}
-            />
-
-            {/* Sets the collapsed strips back from the expanded one. Kept
-                deliberately light — a heavier version read as "the photos
-                are dark" rather than as depth. */}
-            <span
-              aria-hidden
-              className={`absolute inset-0 bg-primary-900 transition-opacity duration-700 ${EASE} ${
-                isActive ? "opacity-0" : "opacity-[0.12]"
-              }`}
-            />
-
-            {/* Carries the label, whichever way it is set. */}
-            <span aria-hidden className="intro-strip-scrim absolute inset-0" />
-
-            {/* Extra base under the collapsed label only — see the class
-                comment in app/globals.css. Whole bar when stacked, bottom
-                three fifths of the strip when side by side. */}
-            <span
-              aria-hidden
-              className={`intro-strip-band absolute inset-x-0 bottom-0 h-full transition-opacity duration-500 ${EASE} sm:h-3/5 ${
-                isActive ? "opacity-0" : "opacity-100"
-              }`}
-            />
-
-            {/* Collapsed: flat at the left of the bar when stacked, running
-                up the strip once they are side by side. */}
-            <span
-              aria-hidden
-              className={`absolute inset-0 flex items-center px-4 transition-opacity duration-300 sm:items-end sm:justify-center sm:px-0 sm:pb-4 ${
-                isActive ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              <span className="intro-strip-label">{slide.label}</span>
-            </span>
-
-            {/* Expanded: the same label, always set flat. Allowed to wrap —
-                a narrow strip at the `sm` breakpoint does not fit "The
-                Residence Prime" on one line. */}
-            <span
-              aria-hidden
-              className={`absolute inset-x-0 bottom-0 block p-4 text-left text-sm font-light uppercase leading-snug tracking-[0.06em] text-white transition-opacity duration-500 sm:p-5 sm:text-base lg:text-lg ${
-                isActive ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {slide.label}
-            </span>
-          </button>
-        );
-      })}
+            slide={slide}
+            sizes="(max-width: 1024px) 50vw, 16vw"
+            className={[
+              index >= mobileCount ? "hidden sm:block" : "",
+              // An odd four-out-of-four leaves no gap; an odd three-out-of-
+              // four's last tile spans the row instead of leaving one.
+              desktopSecondaries.length % 2 === 1 && index === desktopSecondaries.length - 1
+                ? "col-span-2"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          />
+        ))}
+      </div>
     </div>
   );
 }

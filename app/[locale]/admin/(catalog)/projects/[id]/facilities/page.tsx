@@ -2,18 +2,21 @@
  * app/[locale]/admin/projects/[id]/facilities/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Facilities: add at the top, every existing facility editable in place —
- * same arrangement as /admin/awards and /admin/sales-team, just scoped to
+ * same arrangement as /admin/pages/about/awards and /admin/sales-team, just scoped to
  * one project instead of global (a "Clubhouse" card on this project can
  * carry a different photo, or none, from "Clubhouse" on another — see the
  * model comment on ProjectFacility in schema.prisma).
  */
 
 import Link from "next/link";
+import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { createProjectFacility, deleteProjectFacility, updateProjectFacility } from "./actions";
 import ProjectFacilityForm from "@/components/admin/ProjectFacilityForm";
@@ -29,7 +32,11 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { locale, id: projectId } = params;
-  await requireAdmin(locale);
+  /* VIEWER may open this to see a project's facilities; only EDITOR
+     and above may submit either form below (canWrite gates both with a
+     disabled fieldset). */
+  const session = await requireAdmin(locale, Role.VIEWER);
+  const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
   const db = prisma;
@@ -65,6 +72,21 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("facilities.subtitle")}</p>
       </header>
 
+      <ProjectHubTabs
+        locale={locale}
+        projectId={project.id}
+        active="facilities"
+        labels={{
+          overview: t("projects.hubOverview"),
+          content: t("projectContent.tab"),
+          seo: t("pageSeo.tab"),
+          unitTypes: t("unitTypes.title"),
+          units: t("units.title"),
+          facilities: t("facilities.title"),
+          progress: t("progress.title"),
+        }}
+      />
+
       {/* One language selection drives every facility's form on this page —
           see the file comment on LanguageTabs. */}
       <LanguageTabs
@@ -81,12 +103,14 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
           {t("facilities.newTitle")}
         </h2>
 
-        <ProjectFacilityForm
-          key={lang}
-          lang={lang}
-          action={createProjectFacility.bind(null, locale, project.id, project.slug)}
-          submitLabel={t("common.create")}
-        />
+        <fieldset disabled={!canWrite} className="contents">
+          <ProjectFacilityForm
+            key={lang}
+            lang={lang}
+            action={createProjectFacility.bind(null, locale, project.id, project.slug)}
+            submitLabel={t("common.create")}
+          />
+        </fieldset>
       </section>
 
       {/* ── Existing ────────────────────────────────────────────────── */}
@@ -111,39 +135,41 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
                   <span
                     className={
                       facility.isActive
-                        ? "rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-sm bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
+                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
                     }
                   >
                     {facility.isActive ? t("facilities.active") : t("facilities.inactive")}
                   </span>
                 </div>
 
-                <ProjectFacilityForm
-                  key={lang}
-                  lang={lang}
-                  action={updateProjectFacility.bind(
-                    null,
-                    locale,
-                    project.id,
-                    project.slug,
-                    facility.id,
-                  )}
-                  onDelete={deleteProjectFacility.bind(
-                    null,
-                    locale,
-                    project.id,
-                    project.slug,
-                    facility.id,
-                  )}
-                  values={{
-                    name: editing?.name ?? "",
-                    imageUrl: facility.imageUrl ?? "",
-                    isActive: facility.isActive,
-                    sortOrder: String(facility.sortOrder),
-                  }}
-                  submitLabel={t("common.save")}
-                />
+                <fieldset disabled={!canWrite} className="contents">
+                  <ProjectFacilityForm
+                    key={lang}
+                    lang={lang}
+                    action={updateProjectFacility.bind(
+                      null,
+                      locale,
+                      project.id,
+                      project.slug,
+                      facility.id,
+                    )}
+                    onDelete={deleteProjectFacility.bind(
+                      null,
+                      locale,
+                      project.id,
+                      project.slug,
+                      facility.id,
+                    )}
+                    values={{
+                      name: editing?.name ?? "",
+                      imageUrl: facility.imageUrl ?? "",
+                      isActive: facility.isActive,
+                      sortOrder: String(facility.sortOrder),
+                    }}
+                    submitLabel={t("common.save")}
+                  />
+                </fieldset>
               </section>
             );
           })}

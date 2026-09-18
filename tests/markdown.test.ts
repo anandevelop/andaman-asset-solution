@@ -14,12 +14,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  renderMarkdown,
-  markdownToText,
-  readingMinutes,
-  truncate,
-} from "@/lib/markdown";
+import { renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
+import { markdownToText, readingMinutes, truncate } from "@/lib/markdown-text";
 
 const SAFE_URI = /^(?:https?:|mailto:|tel:|#|\/)/i;
 
@@ -130,6 +126,86 @@ describe("renderMarkdown — legitimate content", () => {
     expect(renderMarkdown("   ")).toBe("");
     expect(renderMarkdown(null)).toBe("");
     expect(renderMarkdown(undefined)).toBe("");
+  });
+
+  it("keeps h1/h5/h6 now that the rich-text editor can produce them", () => {
+    const html = renderMarkdown("# Top\n\n##### Deep\n\n###### Deepest");
+    expect(html).toMatch(/<h1>Top<\/h1>/);
+    expect(html).toMatch(/<h5>Deep<\/h5>/);
+    expect(html).toMatch(/<h6>Deepest<\/h6>/);
+  });
+});
+
+describe("sanitizeArticleHtml — hostile input", () => {
+  // Same vectors renderMarkdown's own suite runs, minus the Markdown-only
+  // ones (a "javascript:" markdown link isn't a distinct code path here —
+  // there's no marked.parse() step at all) — this function is a second,
+  // independent entry point into the exact same DOMPurify call, and
+  // deserves the same scrutiny renderMarkdown gets.
+  const vectors: [name: string, html: string][] = [
+    ["script tag", "<script>alert(1)</script>"],
+    ["img onerror", '<img src=x onerror="alert(1)">'],
+    ["raw anchor with javascript href", '<a href="javascript:alert(1)">x</a>'],
+    ["vbscript href", '<a href="vbscript:msgbox(1)">x</a>'],
+    [
+      "raw img with base64 data: uri",
+      '<img src="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">',
+    ],
+    ["data: svg with onload", '<img src="data:image/svg+xml,%3Csvg onload%3Dalert(1)%3E">'],
+    ["iframe", '<iframe src="https://evil.test"></iframe>'],
+    ["div onclick", '<div onclick="alert(1)">hi</div>'],
+    ["svg onload", "<svg/onload=alert(1)>"],
+    ["style tag", "<style>body{background:red}</style>"],
+    ["form", '<form action="https://evil.test"></form>'],
+    ["base tag", '<base href="https://evil.test/">'],
+    ["meta refresh", '<meta http-equiv="refresh" content="0;url=https://evil.test">'],
+  ];
+
+  it.each(vectors)("neutralises %s", (_name, html) => {
+    const result = audit(sanitizeArticleHtml(html));
+
+    expect(result.unsafeUrls).toEqual([]);
+    expect(result.hasHandler).toBe(false);
+    expect(result.hasExecutableTag).toBe(false);
+  });
+
+  it("returns an empty string for empty input", () => {
+    expect(sanitizeArticleHtml("")).toBe("");
+    expect(sanitizeArticleHtml("   ")).toBe("");
+    expect(sanitizeArticleHtml(null)).toBe("");
+    expect(sanitizeArticleHtml(undefined)).toBe("");
+  });
+});
+
+describe("sanitizeArticleHtml — legitimate content", () => {
+  const source = [
+    "<h1>Title</h1>",
+    "<h2>Section</h2>",
+    '<p>Body with <a href="/projects/x" data-internal="true">an internal link</a>',
+    ' and <a href="https://example.com">an external one</a>.</p>',
+    '<figure data-align="center"><img id="cover" src="https://images.unsplash.com/photo.jpg" alt="A villa" loading="lazy" data-media-id="m1"><figcaption>Caption</figcaption></figure>',
+    "<table><thead><tr><th>a</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table>",
+  ].join("");
+
+  const html = sanitizeArticleHtml(source);
+
+  it.each([
+    ["h1", /<h1>Title<\/h1>/],
+    ["h2", /<h2>Section<\/h2>/],
+    ["figure/figcaption", /<figure.*<figcaption>Caption<\/figcaption><\/figure>/],
+    ["the id attribute", /id="cover"/],
+    ["data-internal", /data-internal="true"/],
+    ["data-media-id", /data-media-id="m1"/],
+    ["data-align", /data-align="center"/],
+    ["tables", /<table>/],
+  ])("preserves %s", (_name, pattern) => {
+    expect(html).toMatch(pattern);
+  });
+
+  it("does not run the content through a Markdown parser", () => {
+    // "*not bold*" would become <em>not bold</em> if this accidentally
+    // piped through marked.parse() first.
+    expect(sanitizeArticleHtml("<p>*not bold*</p>")).toBe("<p>*not bold*</p>");
   });
 });
 
