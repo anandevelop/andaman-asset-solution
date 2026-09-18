@@ -51,6 +51,13 @@ jobs:
   quality:
     name: Lint & typecheck
     runs-on: ubuntu-latest
+    env:
+      # prisma.config.ts resolves DATABASE_URL eagerly on load — even for
+      # `prisma generate`, which never used to need it — so this job fails
+      # before reaching lint/typecheck without a well-formed value here.
+      # Nothing connects; see the same pattern (and reasoning) on the
+      # `prisma` job above.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - uses: actions/checkout@v4
 
@@ -80,6 +87,11 @@ jobs:
   test:
     name: Unit tests
     runs-on: ubuntu-latest
+    env:
+      # Same reason as the quality job above: prisma.config.ts needs a
+      # well-formed DATABASE_URL just to generate the client, before any
+      # test runs. Nothing connects here.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - uses: actions/checkout@v4
 
