@@ -54,6 +54,12 @@ const TOOLTIP_STYLE = {
     fontSize: 12,
     boxShadow: "0 10px 40px -12px rgba(8, 53, 81, 0.18)",
   },
+  // Recharts colors each tooltip row with its series' own fill by default —
+  // right for a bar or a legend swatch, wrong for text: SERIES.won's
+  // #e8b384 reads at 1.87:1 on white. Forced to the body ink color, which
+  // every series clears comfortably; the color coding still lives in the
+  // bars and the legend.
+  itemStyle: { color: "#0d2635" },
 } as const;
 
 export type MonthlyPoint = { label: string; total: number; won: number };

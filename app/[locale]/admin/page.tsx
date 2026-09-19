@@ -310,7 +310,7 @@ export default async function AdminDashboardPage(props: Props) {
                   {t("dashboard.workQueue.unassigned.oldest", { hours: oldestUnassignedHours })} ·{" "}
                   <Link
                     href={`/${locale}/admin/leads?assignedTo=unassigned`}
-                    className="text-accent-700 hover:text-accent-800"
+                    className="text-accent-700 underline hover:text-accent-800"
                   >
                     {t("dashboard.workQueue.unassigned.assignAll")}
                   </Link>
@@ -397,7 +397,7 @@ export default async function AdminDashboardPage(props: Props) {
               ) : (
                 <>
                   {reviewBreakdownParts.join(" · ")} ·{" "}
-                  <Link href={`/${locale}/admin/publishing`} className="text-accent-700 hover:text-accent-800">
+                  <Link href={`/${locale}/admin/publishing`} className="text-accent-700 underline hover:text-accent-800">
                     {t("dashboard.workQueue.review.reviewNow")}
                   </Link>
                 </>
