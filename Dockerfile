@@ -51,6 +51,23 @@ COPY scripts/copy-pdfjs-assets.mjs scripts/copy-flag-assets.mjs ./scripts/
 RUN npm ci
 
 
+# ── Prisma CLI, standalone ───────────────────────────────────────────────
+# A clean, isolated `npm install` of just the CLI — not a cherry-picked
+# subset of the app's own node_modules — because the app installs prisma
+# as a devDependency, and its runtime closure is neither small nor
+# obvious: @prisma/config's dist bundle externalizes effect (which pulls
+# in fast-check, pure-rand, @standard-schema/spec), and @prisma/dev loads
+# unconditionally the moment the CLI starts, pulling in its own tree
+# again. Chasing "Cannot find module" one at a time here previously
+# turned into an eight-round game of whack-a-mole. Letting npm resolve it
+# properly, in its own directory, is what the CLI actually needs — no
+# more, no less — verified by running `prisma migrate deploy` against
+# this exact install.
+FROM base AS prisma-cli
+WORKDIR /prisma-cli
+RUN npm install prisma@7.10.0 --omit=dev --no-audit --no-fund
+
+
 # ── Build ────────────────────────────────────────────────────────────────
 FROM base AS builder
 
@@ -131,11 +148,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Schema, migrations and the CLI's own config, so `prisma migrate deploy`
 # can run from this image as a release step. No engine binaries to carry
 # since Prisma 7 — what these directories now hold is JavaScript.
+#
+# The CLI's whole dependency closure comes from the isolated prisma-cli
+# stage above, not cherry-picked from this app's own node_modules — see
+# that stage's comment for why. .prisma and @prisma are copied again
+# afterwards, from builder, so the client actually generated against this
+# app's schema wins over whatever prisma-cli's own install resolved.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+COPY --from=prisma-cli --chown=nextjs:nodejs /prisma-cli/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
 # Creating the first admin is a first-deployment step, so the tool for it
 # has to run where the deployment is:
