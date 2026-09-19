@@ -57,6 +57,13 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Pages that read the database are `force-dynamic` or wrapped in safeQuery,
+# so the build completes without a reachable Postgres. This placeholder only
+# satisfies Prisma Client's constructor — and, since prisma.config.ts
+# resolves it eagerly on load, prisma generate below needs it just as much
+# as the build does.
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
+
 # Prisma Client is generated code — it must exist before next build type-checks.
 RUN npx prisma generate
 
@@ -81,11 +88,7 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 
-# Pages that read the database are `force-dynamic` or wrapped in safeQuery,
-# so the build completes without a reachable Postgres. This placeholder only
-# satisfies Prisma Client's constructor.
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
-
+# DATABASE_URL is already set above, ahead of prisma generate.
 RUN npm run build
 
 
