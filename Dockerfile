@@ -41,11 +41,12 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json package-lock.json* ./
-# package.json's postinstall runs this, and `npm ci` fails outright if the
-# file is missing — so it has to be here even though this stage's output
-# (public/pdfjs) is discarded and only node_modules is carried forward.
-# The build stage regenerates the assets through prebuild.
-COPY scripts/copy-pdfjs-assets.mjs ./scripts/
+# package.json's postinstall runs both of these, and `npm ci` fails outright
+# if either file is missing — so both have to be here even though this
+# stage's output (public/pdfjs, public/flags) is discarded and only
+# node_modules is carried forward. The build stage regenerates the assets
+# through prebuild.
+COPY scripts/copy-pdfjs-assets.mjs scripts/copy-flag-assets.mjs ./scripts/
 # `npm ci` for a lockfile-exact, reproducible install.
 RUN npm ci
 
