@@ -116,7 +116,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
               <span className="mx-3 mb-2 block h-px bg-white/10" aria-hidden />
             )}
             {group.labelKey && !isCollapsed && (
-              <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/35">
+              <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/60">
                 {t(`navGroups.${group.labelKey}` as never)}
               </p>
             )}

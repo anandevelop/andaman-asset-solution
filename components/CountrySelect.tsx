@@ -226,7 +226,7 @@ export default function CountrySelect({
                 one" — the same reason a language switcher shows a globe
                 rather than leaving its own trigger bare. */}
             <Globe size={16} className="shrink-0 text-ink/40" aria-hidden />
-            <span className="truncate text-ink/40">{placeholder}</span>
+            <span className="truncate text-ink-muted">{placeholder}</span>
           </>
         )}
         <ChevronDown size={16} className="ml-auto shrink-0 text-ink/40" aria-hidden />
@@ -290,12 +290,12 @@ export default function CountrySelect({
                       reasoning as the trigger's flag above. */}
                   <img src={flagSrc(country.iso2)} alt="" aria-hidden className="h-4 w-5 shrink-0 rounded-[2px] object-cover" />
                   <span className="truncate">{variant === "dial" ? country.name[locale] : country.demonym[locale]}</span>
-                  {variant === "dial" && <span className="ml-auto shrink-0 text-ink/50">{country.dial}</span>}
+                  {variant === "dial" && <span className="ml-auto shrink-0 text-ink-muted">{country.dial}</span>}
                 </li>
               );
             })}
 
-            {optionCount === 0 && <li className="px-3 py-2 text-sm text-ink/50">{noResultsLabel}</li>}
+            {optionCount === 0 && <li className="px-3 py-2 text-sm text-ink-muted">{noResultsLabel}</li>}
           </ul>
         </div>
       )}

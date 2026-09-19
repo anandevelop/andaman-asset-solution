@@ -500,7 +500,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
 
   const emailHint =
     emailCheck.status === "checking" ? (
-      <span className="text-ink/50">{t("emailCheck.checking")}</span>
+      <span className="text-ink-muted">{t("emailCheck.checking")}</span>
     ) : emailCheck.status === "deliverable" ? (
       <span className="text-[#15704a]">{t("emailCheck.deliverable")}</span>
     ) : emailCheck.status === "typo" && emailCheck.suggestion ? (
@@ -669,7 +669,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
                 />
               </div>
               {phoneValue && E164.test(phoneValue) && (
-                <p className="mt-1 text-xs text-ink/50">{t("phoneHint", { value: phoneValue })}</p>
+                <p className="mt-1 text-xs text-ink-muted">{t("phoneHint", { value: phoneValue })}</p>
               )}
             </>
           )}
@@ -759,7 +759,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
             {...register("message", { onChange: () => trigger("message") })}
             className={`${INPUT} resize-none`}
           />
-          <p className="mt-1 text-xs text-ink/50">{t("messageNoLinks")}</p>
+          <p className="mt-1 text-xs text-ink-muted">{t("messageNoLinks")}</p>
           </>
         )}
       </Field>

@@ -99,7 +99,11 @@ test.describe("Signing in", () => {
     await signIn(page);
 
     await expect(page).toHaveURL(/\/en\/admin/);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    // Not matched by name: the dashboard's H1 is a time-of-day greeting
+// ("Good morning/afternoon/evening, {name}") — see app/[locale]/admin/
+// page.tsx — not a static "Dashboard" label, and both vary with when
+// and as whom the test runs.
+await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
   test("returns to the page that triggered the redirect", async ({ page }) => {
@@ -147,7 +151,11 @@ test.describe("Signing in", () => {
 
     await page.reload();
 
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    // Not matched by name: the dashboard's H1 is a time-of-day greeting
+// ("Good morning/afternoon/evening, {name}") — see app/[locale]/admin/
+// page.tsx — not a static "Dashboard" label, and both vary with when
+// and as whom the test runs.
+await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 });
 
@@ -196,7 +204,11 @@ test.describe("Accessibility", () => {
     // it earns the same floor as the marketing site, not a lower one.
     await page.goto(LOGIN);
     await signIn(page);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    // Not matched by name: the dashboard's H1 is a time-of-day greeting
+// ("Good morning/afternoon/evening, {name}") — see app/[locale]/admin/
+// page.tsx — not a static "Dashboard" label, and both vary with when
+// and as whom the test runs.
+await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     await expectNoA11yViolations(page);
   });
@@ -287,7 +299,11 @@ test.describe("The second factor", () => {
     await signIn(page);
 
     await expect(page).toHaveURL(/\/en\/admin/);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    // Not matched by name: the dashboard's H1 is a time-of-day greeting
+// ("Good morning/afternoon/evening, {name}") — see app/[locale]/admin/
+// page.tsx — not a static "Dashboard" label, and both vary with when
+// and as whom the test runs.
+await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 });
 
