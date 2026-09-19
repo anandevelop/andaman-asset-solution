@@ -601,7 +601,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
                   layout on the page that must stay side-by-side even at
                   390px, so it does not follow that pattern. */}
               <div className="flex gap-2">
-                <div className="w-[102px] shrink-0">
+                <div className="w-[120px] shrink-0">
                   <Controller
                     name="phoneCountry"
                     control={control}
