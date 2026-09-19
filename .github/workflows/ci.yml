@@ -199,6 +199,10 @@ jobs:
 
       - name: Upload the report
         if: always()
+        # Same reasoning as the coverage upload in the test job: a
+        # storage-quota hit here is not a reason to fail a job whose
+        # actual tests already passed.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -210,6 +214,7 @@ jobs:
         # `npx playwright show-trace` and replays the run frame by frame,
         # which beats guessing from a screenshot.
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces
