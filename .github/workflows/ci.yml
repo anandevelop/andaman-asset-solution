@@ -113,6 +113,10 @@ jobs:
         # Retained even on failure: the coverage report is often how you
         # work out which branch the failing test was meant to reach.
         if: always()
+        # A storage-quota hit or other upload hiccup is not a reason to
+        # fail a job whose actual tests already passed — this step is a
+        # convenience for debugging, not a correctness gate.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: coverage

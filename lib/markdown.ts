@@ -76,10 +76,19 @@ function installHooks() {
 
   DOMPurify.addHook("afterSanitizeAttributes", (node) => {
     for (const attribute of ["href", "src"] as const) {
+      /* v8 ignore next -- afterSanitizeAttributes only ever fires for
+         Element nodes in DOMPurify's actual implementation (verified
+         directly: text and comment nodes never reach this hook at all),
+         so this guard's true branch cannot be exercised from the public
+         API. Kept because the hook's declared type is a plain DOM Node,
+         and a defensive check costs nothing against a future DOMPurify
+         version that widens the contract. */
       if (typeof node.hasAttribute !== "function") continue;
       if (!node.hasAttribute(attribute)) continue;
 
-      const value = node.getAttribute(attribute) ?? "";
+      // getAttribute cannot return null once hasAttribute has confirmed
+      // the attribute exists — same reasoning as above.
+      const value = node.getAttribute(attribute) ?? /* v8 ignore next */ "";
       if (!SAFE_URI.test(value.trim())) node.removeAttribute(attribute);
     }
   });
