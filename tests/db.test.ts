@@ -157,6 +157,11 @@ describe("isDatabaseOfflineError", () => {
     ["P1017", "server closed the connection"],
     ["P2021", "table missing — migrations never ran"],
     ["P2022", "column missing — migrations never ran"],
+    ["ECONNREFUSED", "driver adapter: connection refused"],
+    ["ENOTFOUND", "driver adapter: host not found"],
+    ["ETIMEDOUT", "driver adapter: connection timed out"],
+    ["ECONNRESET", "driver adapter: connection reset"],
+    ["EHOSTUNREACH", "driver adapter: host unreachable"],
   ])("treats %s (%s) as offline", (code) => {
     expect(isDatabaseOfflineError(connectionError(code))).toBe(true);
   });

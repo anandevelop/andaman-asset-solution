@@ -23,6 +23,15 @@ import { Prisma } from "@prisma/client";
  *   P1010 access denied · P1017 server closed the connection
  * P2021/P2022 = table/column missing, i.e. migrations were never run —
  * treated the same way so a fresh clone renders instead of exploding.
+ *
+ * Since the move to a driver adapter (lib/prisma-adapter.ts), a connection
+ * failure no longer always arrives as one of the P1xxx codes above — `pg`'s
+ * own raw Node network error code comes through as `error.code` on a
+ * PrismaClientKnownRequestError instead, confirmed in production by a
+ * build that queried EBrochure with no reachable database and got
+ * `ECONNREFUSED` rather than P1001. Same "can't reach server" family, just
+ * unmapped by Prisma at this layer, so the equivalents are listed here
+ * too rather than trusting P1001 alone.
  */
 const OFFLINE_CODES = new Set([
   "P1000",
@@ -34,6 +43,11 @@ const OFFLINE_CODES = new Set([
   "P1017",
   "P2021",
   "P2022",
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "EHOSTUNREACH",
 ]);
 
 export function isDatabaseOfflineError(error: unknown): boolean {
