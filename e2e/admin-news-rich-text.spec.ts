@@ -24,6 +24,7 @@ import { nextAccount, signIn } from "./sign-in";
 const NEW_ARTICLE = "/en/admin/news/new";
 
 const uniqueTitle = () => `E2E rich text article ${Date.now()}`;
+const uniqueSlug = () => `e2e-rich-text-article-${Date.now()}`;
 
 test.describe("The rich-text news editor", () => {
   test("creates an article with H2/H3/H4 headings and an internal link", async ({ page }) => {
@@ -36,6 +37,10 @@ test.describe("The rich-text news editor", () => {
     await page.goto(NEW_ARTICLE);
 
     await page.locator('input[name="title"]').fill(title);
+    // The slug field never auto-fills from the title — SlugField.tsx only
+    // normalizes what's typed directly into it — and it's `required`, so
+    // an admin (and this test) has to set one explicitly.
+    await page.locator('input[name="slug"]').fill(uniqueSlug());
 
     const editor = page.locator('[contenteditable="true"]');
     await editor.click();
@@ -58,11 +63,15 @@ test.describe("The rich-text news editor", () => {
     await page.keyboard.type("Body copy long enough to read as a real paragraph.");
 
     // Select the paragraph's text so the link modal has something to
-    // attach the link to.
-    await page.keyboard.press("Home");
-    await page.keyboard.down("Shift");
-    await page.keyboard.press("End");
-    await page.keyboard.up("Shift");
+    // attach the link to. Home/Shift+End does not move the caret at all
+    // in this ProseMirror contenteditable region — verified directly:
+    // the native browser selection never changes, so the "Insert" button
+    // stays disabled forever waiting on anchor text that never arrives.
+    // A triple-click, the way a real reader selects a paragraph, works
+    // reliably where the keyboard approach did not — matched by text
+    // rather than `.last()`, since the document keeps a trailing empty
+    // paragraph after this one.
+    await editor.getByText("Body copy long enough to read as a real paragraph.").click({ clickCount: 3 });
 
     await page.getByRole("button", { name: "Insert link (⌘K)" }).click();
     await expect(page.getByRole("dialog", { name: "Insert internal link" })).toBeVisible();
@@ -71,7 +80,10 @@ test.describe("The rich-text news editor", () => {
     await page.getByRole("button", { name: "Insert", exact: true }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
 
-    await page.getByRole("button", { name: "Create", exact: true }).click();
+    // Two "Create" buttons exist since the workflow header refactor put
+    // one at the top of the page alongside the one at the bottom of the
+    // form — see the same fix in admin-activity.spec.ts.
+    await page.getByRole("button", { name: "Create", exact: true }).first().click();
 
     // createArticle() redirects to the edit page with ?created=1 on
     // success — the same idiom this repo's other content-creation specs

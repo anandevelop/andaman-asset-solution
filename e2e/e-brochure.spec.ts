@@ -283,8 +283,14 @@ test.describe("Flipbook", () => {
     // falling back.
     await expect(page.locator(".stf__parent")).toBeVisible();
 
+    // Desktop Chrome's viewport is well above the 767px breakpoint
+    // Flipbook.tsx uses for single-page mode, so this opens in a two-page
+    // spread — EBrochureViewer.tsx's next()/previous() deliberately step
+    // by 2 pages in that mode, not 1, to advance a whole spread at a time.
+    // "Page 3", not "Page 2", is what one Next click actually produces
+    // here.
     await page.getByRole("button", { name: "Next page" }).click();
-    await expect(page.getByRole("status")).toContainText("Page 2");
+    await expect(page.getByRole("status")).toContainText("Page 3");
   });
 });
 
