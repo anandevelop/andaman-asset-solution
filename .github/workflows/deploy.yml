@@ -1,0 +1,39 @@
+name: Deploy
+
+# Runs after CI finishes on main, not on push directly — `docker
+# compose pull` below only makes sense once the `docker` job in
+# ci.yml has actually pushed a new :latest image to GHCR, and that job
+# itself only runs after the build and its smoke test pass. Triggering
+# on push instead would race CI's own image push, sometimes deploying
+# before the new image exists yet.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+# One deploy at a time, queued rather than cancelled — an in-flight
+# `docker compose up -d` is not something to interrupt.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    # Only when CI's full run (lint, tests, e2e, build, docker) actually
+    # succeeded — a red CI run should never reach the server.
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            cd /opt/app
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
