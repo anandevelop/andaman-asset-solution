@@ -221,6 +221,14 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: [prisma, quality, test]
+    env:
+      # Same reason as the quality/test jobs above: prisma.config.ts needs
+      # this to resolve just to generate the client, before Build even
+      # starts — and Build (below) needs the identical placeholder for its
+      # own reason (Prisma Client's constructor wants a parseable URL even
+      # though nothing is queried at build time), so it lives here once
+      # rather than twice.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - uses: actions/checkout@v4
 
@@ -237,10 +245,6 @@ jobs:
 
       - name: Build
         env:
-          # Placeholder: nothing is queried at build time — data pages are
-          # force-dynamic or wrapped in safeQuery — but Prisma Client's
-          # constructor still wants a parseable URL.
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
           NEXTAUTH_SECRET: ci-build-placeholder-secret
           NEXT_PUBLIC_SITE_URL: https://andamanassetsolution.com
           NEXT_PUBLIC_DEFAULT_LOCALE: th
