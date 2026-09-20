@@ -67,8 +67,7 @@
         "projectsComplete": "Projects complete",
         "awards": "Winning awards",
         "villasInBuild": "Villas in build now"
-      },
-      "statsNote": "Projects, awards and villas under construction are counted from the site's own records — the milestones, the awards list and the unit plans — not typed into a template. They move when the content does."
+      }
     },
     "featured": {
       "eyebrow": "Selected Developments",

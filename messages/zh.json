@@ -67,8 +67,7 @@
         "projectsComplete": "已交付项目",
         "awards": "所获奖项",
         "villasInBuild": "在建别墅"
-      },
-      "statsNote": "项目数、奖项数与在建别墅数均取自站内实际记录——里程碑、获奖列表与单元规划，并非手工填写。内容变动，数字随之变动。"
+      }
     },
     "featured": {
       "eyebrow": "精选开发项目",

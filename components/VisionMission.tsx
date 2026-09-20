@@ -33,7 +33,6 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Info } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { getCompanyStats } from "@/lib/company-stats";
 
@@ -121,11 +120,6 @@ export default async function VisionMission() {
                   </div>
                 ))}
               </dl>
-
-              <p className="mt-6 flex items-start gap-3 rounded-xs bg-white/5 px-5 py-4 text-xs leading-relaxed text-white/65">
-                <Info size={15} className="mt-0.5 shrink-0" aria-hidden />
-                <span>{t("statsNote")}</span>
-              </p>
             </div>
           </div>
         </Reveal>
