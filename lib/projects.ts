@@ -107,15 +107,6 @@ export type ProjectListCard = ProjectCard & {
    *  already locale-picked. The card shows the first few. */
   facilityNames: string[];
   signal: ProjectSignal | null;
-  /** The newest published progress entry's completion figure — same
-   *  "latest published, not an average" rule as the admin overview's
-   *  own overallPercent (lib/admin/project-progress.ts). Null when no
-   *  published entry has ever recorded one. */
-  constructionPercent: number | null;
-  /** The month that percentage was published as of, for "updated {when}".
-   *  Kept separate from the signal's own date: a photo drop and a
-   *  percentage update are not always the same month's entry. */
-  constructionUpdated: { year: number; month: number } | null;
 };
 
 export type FloorPlanSummary = {
@@ -444,16 +435,14 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
               include: { translations: true },
             },
             /*
-              Every published update, newest first — the card needs more
-              than the latest one now: a running photo count across all of
-              them, plus the newest entry that actually carries a
-              percentage, which is not always the same entry as the newest
-              photo drop.
+              Every published update, newest first — the card's signal
+              needs a running photo count across all of them, not just the
+              latest one.
             */
             progressUpdates: {
               where: { isPublished: true },
               orderBy: [{ year: "desc" }, { month: "desc" }],
-              select: { year: true, month: true, images: true, percentComplete: true },
+              select: { year: true, month: true, images: true },
             },
           },
         }),
@@ -496,8 +485,6 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
           pickLocale(locale, facility.nameTh, facility.nameEn),
       ),
       signal: signalFor(project, awards),
-      constructionPercent: constructionPercentFor(project.progressUpdates),
-      constructionUpdated: constructionUpdatedFor(project.progressUpdates),
     };
   });
 });
@@ -546,25 +533,6 @@ function signalFor(
     year: withPhotos[0].year,
     month: withPhotos[0].month,
   };
-}
-
-/** The newest published entry that actually recorded a completion
- *  figure — same rule as the admin overview's overallPercent, since a
- *  card claiming a different percentage than the progress page itself
- *  would be a worse failure than the two simply agreeing to show
- *  nothing. */
-function constructionPercentFor(
-  progressUpdates: { percentComplete: number | null }[],
-): number | null {
-  return progressUpdates.find((entry) => entry.percentComplete !== null)?.percentComplete ?? null;
-}
-
-/** The month constructionPercentFor's figure was published as of. */
-function constructionUpdatedFor(
-  progressUpdates: { year: number; month: number; percentComplete: number | null }[],
-): { year: number; month: number } | null {
-  const entry = progressUpdates.find((row) => row.percentComplete !== null);
-  return entry ? { year: entry.year, month: entry.month } : null;
 }
 
 /**

@@ -195,8 +195,6 @@ export default async function ProjectsPage(props: Props) {
                     specBedrooms: t("specs.bedrooms"),
                     specLand: t("specs.land"),
                     signal: signalLabel(project.signal, t as never, locale),
-                    construction: constructionLabel(project, t as never, locale),
-                    constructionTitle: t("galleryTitle"),
                   }}
                 />
               </Reveal>
@@ -230,38 +228,6 @@ function signalLabel(
     count: signal.count,
     when: formatMonthYear(locale, signal.year, signal.month),
   });
-}
-
-/**
- * The card's construction-progress row, or null when there is nothing
- * true to show — an upcoming development with no progress entries yet
- * gets no row at all, rather than a bar claiming 0%.
- *
- * "Complete" is a status fact (ready to move in / sold out), not a
- * hundred-percent reading — the two usually agree, but a development can
- * be marked ready before its last progress entry catches up to say so.
- */
-function constructionLabel(
-  project: { status: string; constructionPercent: number | null; constructionUpdated: { year: number; month: number } | null },
-  t: (key: never, values?: Record<string, unknown>) => string,
-  locale: string,
-): { text: string; percent: number | null } | null {
-  const complete =
-    project.status === "READY_TO_MOVE_IN" ||
-    project.status === "SOLD_OUT" ||
-    project.constructionPercent === 100;
-
-  if (complete) return { text: t("progressComplete" as never), percent: null };
-
-  if (project.constructionPercent === null || !project.constructionUpdated) return null;
-
-  return {
-    text: t("progressUpdated" as never, {
-      percent: project.constructionPercent,
-      when: formatMonthYear(locale, project.constructionUpdated.year, project.constructionUpdated.month),
-    }),
-    percent: project.constructionPercent,
-  };
 }
 
 /** An upcoming development has nothing to walk through yet — see the note

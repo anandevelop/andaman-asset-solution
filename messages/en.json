@@ -329,8 +329,6 @@
       "awards": "{count, plural, one {One award} other {# awards}}, {year}",
       "progressPhotos": "{count, plural, one {# progress photo} other {# progress photos}} · {when}"
     },
-    "progressComplete": "Complete",
-    "progressUpdated": "{percent}% · updated {when}",
     "cta": {
       "title": "{count, plural, =2 {Walk both in one morning} =3 {Walk all three in one morning} other {Walk all # in one morning}}",
       "subtitle": "Our office is five minutes from every site. Pick a day and we will drive you between them."

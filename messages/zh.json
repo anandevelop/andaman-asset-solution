@@ -329,8 +329,6 @@
       "awards": "{year} 年获 {count} 项大奖",
       "progressPhotos": "{count} 张进度照片 · {when}"
     },
-    "progressComplete": "已完工",
-    "progressUpdated": "{percent}% · 更新于 {when}",
     "cta": {
       "title": "{count, plural, =2 {一个上午两处都看完} =3 {一个上午三处都看完} other {一个上午 # 处都看完}}",
       "subtitle": "我们的办公室距离每个项目只需五分钟。选好日子，我们开车带您逐一走一遍。"

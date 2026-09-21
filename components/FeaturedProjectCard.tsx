@@ -74,15 +74,6 @@ export type FeaturedProjectCardProps = {
     /** Already formatted with its own numbers; null when the project has
      *  no signal worth showing. */
     signal: string | null;
-    /** "Construction Progress" — the row's own label, not a per-card
-     *  figure, so it arrives as a single string rather than a key. */
-    constructionTitle: string;
-    /** Already formatted — either "Complete" or "{percent}% · updated
-     *  {when}". `percent` rides along separately only because the bar's
-     *  width needs the raw number; null when there is nothing to show at
-     *  all, distinct from `percent: null` inside a non-null object (which
-     *  means "complete", no bar). */
-    construction: { text: string; percent: number | null } | null;
   };
   /** Set on the first card above the fold so it is not lazy-loaded. */
   priority?: boolean;
@@ -170,32 +161,6 @@ export default function FeaturedProjectCard({
                 <dd className="mt-1 text-sm font-medium text-primary">{spec.value}</dd>
               </div>
             ))}
-          </dl>
-        )}
-
-        {labels.construction && (
-          <dl className="mt-5 border-t border-primary/10 pt-5">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-xs uppercase tracking-wide text-ink/60">
-                {labels.constructionTitle}
-              </dt>
-              <dd
-                className={`text-sm font-medium ${
-                  labels.construction.percent === null ? "text-emerald-700" : "text-primary"
-                }`}
-              >
-                {labels.construction.text}
-              </dd>
-            </div>
-
-            {labels.construction.percent !== null && (
-              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/10">
-                <div
-                  className="h-full rounded-full bg-accent-700"
-                  style={{ width: `${labels.construction.percent}%` }}
-                />
-              </div>
-            )}
           </dl>
         )}
 
