@@ -1038,6 +1038,7 @@
       "listSubtitle": "{phase}共 {count} 块",
       "searchPlaceholder": "查找地块…",
       "importCsv": "导入 CSV",
+      "exportCsv": "导出 CSV",
       "addUnit": "新增地块",
       "bedroomsLabel": "{count} 卧别墅",
       "area": {
@@ -1102,6 +1103,11 @@
           "BAD_PHASE": "期数必须是 1 到 99 的整数",
           "BAD_RELEASED": "released_for_sale 必须为 yes 或 no"
         }
+      },
+      "export": {
+        "failed": "导出失败，请重试。",
+        "rateLimited": "导出过于频繁，请稍后再试。",
+        "truncated": "导出已达到 5,000 行上限。"
       },
       "untracedNote": "尚未显示规划图，因为还有 {count} 个地块未在图上定位。"
     },

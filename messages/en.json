@@ -1038,6 +1038,7 @@
       "listSubtitle": "{count, plural, one {# plot} other {# plots}} in {phase}",
       "searchPlaceholder": "Find a plot…",
       "importCsv": "Import CSV",
+      "exportCsv": "Export CSV",
       "addUnit": "Add plot",
       "bedroomsLabel": "{count, plural, one {# bedroom} other {# bedrooms}}",
       "area": {
@@ -1102,6 +1103,11 @@
           "BAD_PHASE": "phase must be a whole number from 1 to 99",
           "BAD_RELEASED": "released_for_sale must be yes or no"
         }
+      },
+      "export": {
+        "failed": "The export failed. Please try again.",
+        "rateLimited": "Too many exports. Wait a minute and try again.",
+        "truncated": "The export hit the 5,000-row limit."
       },
       "untracedNote": "The master plan image is not shown because {count, plural, one {# plot has} other {# plots have}} not been placed on it yet."
     },

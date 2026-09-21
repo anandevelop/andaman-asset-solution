@@ -31,6 +31,7 @@ import {
 } from "@/app/[locale]/admin/(catalog)/projects/[id]/units/actions";
 import UnitStatusSelect from "@/components/admin/UnitStatusSelect";
 import UnitForm, { type UnitFormValues } from "@/components/admin/UnitForm";
+import UnitExportButton from "@/components/admin/UnitExportButton";
 
 export type UnitTableRow = {
   id: string;
@@ -62,6 +63,10 @@ type Props = {
     subtitle: string;
     search: string;
     importCsv: string;
+    exportCsv: string;
+    exportFailed: string;
+    exportRateLimited: string;
+    exportTruncated: string;
     addUnit: string;
     columnUnit: string;
     columnType: string;
@@ -159,6 +164,14 @@ export default function UnitsPanel({
               className="admin-input w-48! py-1.5! pl-8! text-xs"
             />
           </div>
+
+          <UnitExportButton
+            projectId={projectId}
+            label={labels.exportCsv}
+            failedLabel={labels.exportFailed}
+            rateLimitedLabel={labels.exportRateLimited}
+            truncatedLabel={labels.exportTruncated}
+          />
 
           <button
             type="button"

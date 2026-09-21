@@ -1038,6 +1038,7 @@
       "listSubtitle": "{count} ยูนิตใน{phase}",
       "searchPlaceholder": "ค้นหายูนิต…",
       "importCsv": "นำเข้า CSV",
+      "exportCsv": "ส่งออก CSV",
       "addUnit": "เพิ่มยูนิต",
       "bedroomsLabel": "วิลล่า {count} ห้องนอน",
       "area": {
@@ -1102,6 +1103,11 @@
           "BAD_PHASE": "เฟสต้องเป็นจำนวนเต็ม 1 ถึง 99",
           "BAD_RELEASED": "released_for_sale ต้องเป็น yes หรือ no"
         }
+      },
+      "export": {
+        "failed": "ส่งออกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+        "rateLimited": "ส่งออกบ่อยเกินไป รอสักครู่แล้วลองใหม่",
+        "truncated": "ไฟล์ส่งออกถึงขีดจำกัด 5,000 แถวแล้ว"
       },
       "untracedNote": "ยังไม่แสดงรูปผังโครงการ เพราะยังมี {count} ยูนิตที่ยังไม่ได้กำหนดตำแหน่งบนผัง"
     },

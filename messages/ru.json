@@ -1038,6 +1038,7 @@
       "listSubtitle": "{count, plural, one {# участок} few {# участка} many {# участков} other {# участка}} — {phase}",
       "searchPlaceholder": "Найти участок…",
       "importCsv": "Импорт CSV",
+      "exportCsv": "Экспорт CSV",
       "addUnit": "Добавить участок",
       "bedroomsLabel": "{count, plural, one {# спальня} few {# спальни} many {# спален} other {# спальни}}",
       "area": {
@@ -1102,6 +1103,11 @@
           "BAD_PHASE": "очередь должна быть целым числом от 1 до 99",
           "BAD_RELEASED": "released_for_sale должно быть yes или no"
         }
+      },
+      "export": {
+        "failed": "Не удалось экспортировать. Попробуйте ещё раз.",
+        "rateLimited": "Слишком много экспортов подряд. Подождите минуту и повторите.",
+        "truncated": "Экспорт достиг предела в 5000 строк."
       },
       "untracedNote": "План не показан: {count, plural, one {# участок ещё не размещён} few {# участка ещё не размещены} many {# участков ещё не размещены} other {# участка ещё не размещены}} на нём."
     },
