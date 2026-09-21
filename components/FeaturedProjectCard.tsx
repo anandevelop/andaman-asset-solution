@@ -174,7 +174,7 @@ export default function FeaturedProjectCard({
         )}
 
         {labels.construction && (
-          <div className="mt-5 border-t border-primary/10 pt-5">
+          <dl className="mt-5 border-t border-primary/10 pt-5">
             <div className="flex items-center justify-between gap-3">
               <dt className="text-xs uppercase tracking-wide text-ink/60">
                 {labels.constructionTitle}
@@ -196,7 +196,7 @@ export default function FeaturedProjectCard({
                 />
               </div>
             )}
-          </div>
+          </dl>
         )}
 
         <span className="mt-auto inline-flex items-center gap-2 border-t border-primary/10 pt-6 text-xs font-medium uppercase tracking-[0.14em] text-accent-700">
