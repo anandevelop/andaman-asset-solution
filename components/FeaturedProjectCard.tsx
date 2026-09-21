@@ -35,7 +35,7 @@
 
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
-import { ArrowRight, Camera, Clock, MapPin, Trophy } from "lucide-react";
+import { ArrowRight, Camera, MapPin, Trophy } from "lucide-react";
 import type { ProjectListCard } from "@/lib/projects";
 import { formatNumber } from "@/lib/format";
 
@@ -58,12 +58,8 @@ const STATUS_TONE: Record<string, string> = {
 
 const SIGNAL_ICON = {
   awards: Trophy,
-  newPhotos: Camera,
-  photosAdded: Clock,
+  progressPhotos: Camera,
 } as const;
-
-/** How many facility chips fit on one card before they wrap to a third row. */
-const MAX_FACILITY_CHIPS = 4;
 
 export type FeaturedProjectCardProps = {
   project: ProjectListCard;
@@ -78,6 +74,15 @@ export type FeaturedProjectCardProps = {
     /** Already formatted with its own numbers; null when the project has
      *  no signal worth showing. */
     signal: string | null;
+    /** "Construction Progress" — the row's own label, not a per-card
+     *  figure, so it arrives as a single string rather than a key. */
+    constructionTitle: string;
+    /** Already formatted — either "Complete" or "{percent}% · updated
+     *  {when}". `percent` rides along separately only because the bar's
+     *  width needs the raw number; null when there is nothing to show at
+     *  all, distinct from `percent: null` inside a non-null object (which
+     *  means "complete", no bar). */
+    construction: { text: string; percent: number | null } | null;
   };
   /** Set on the first card above the fold so it is not lazy-loaded. */
   priority?: boolean;
@@ -153,7 +158,7 @@ export default function FeaturedProjectCard({
           <MapPin size={12} aria-hidden /> {project.location}
         </p>
 
-        <h3 className="mt-2 text-xl font-light text-primary">{project.name}</h3>
+        <h3 className="mt-2 text-xl font-semibold text-primary">{project.name}</h3>
 
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/70">{project.tagline}</p>
 
@@ -168,17 +173,30 @@ export default function FeaturedProjectCard({
           </dl>
         )}
 
-        {project.facilityNames.length > 0 && (
-          <ul className="mt-5 flex flex-wrap gap-2">
-            {project.facilityNames.slice(0, MAX_FACILITY_CHIPS).map((facility) => (
-              <li
-                key={facility}
-                className="rounded-full border border-primary/15 px-3 py-1 text-xs text-ink/70"
+        {labels.construction && (
+          <div className="mt-5 border-t border-primary/10 pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-xs uppercase tracking-wide text-ink/60">
+                {labels.constructionTitle}
+              </dt>
+              <dd
+                className={`text-sm font-medium ${
+                  labels.construction.percent === null ? "text-emerald-700" : "text-primary"
+                }`}
               >
-                {facility}
-              </li>
-            ))}
-          </ul>
+                {labels.construction.text}
+              </dd>
+            </div>
+
+            {labels.construction.percent !== null && (
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/10">
+                <div
+                  className="h-full rounded-full bg-accent-700"
+                  style={{ width: `${labels.construction.percent}%` }}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         <span className="mt-auto inline-flex items-center gap-2 border-t border-primary/10 pt-6 text-xs font-medium uppercase tracking-[0.14em] text-accent-700">

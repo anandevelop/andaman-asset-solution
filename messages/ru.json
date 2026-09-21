@@ -327,9 +327,10 @@
     "registerInterest": "Оставить заявку",
     "signal": {
       "awards": "Наград: {count}, {year}",
-      "newPhotos": "{count, plural, one {# новое фото} few {# новых фото} other {# новых фото}}",
-      "photosAdded": "Фото добавлены {when}"
+      "progressPhotos": "{count} фото хода строительства · {when}"
     },
+    "progressComplete": "Готово",
+    "progressUpdated": "{percent}% · обновлено {when}",
     "cta": {
       "title": "{count, plural, =2 {Обойти обе за одно утро} =3 {Обойти все три за одно утро} other {Обойти все # за одно утро}}",
       "subtitle": "Наш офис в пяти минутах от каждой площадки. Выберите день — и мы отвезём вас от одной к другой."

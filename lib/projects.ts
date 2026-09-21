@@ -63,7 +63,7 @@ function toNumber(value: Prisma.Decimal | number | null): number | null {
 
 /**
  * The one thing worth saying about a project beyond its specification —
- * an award it won, or photographs that have just gone up.
+ * an award it won, or how many construction photos are on record.
  *
  * Derived, never stored: `kind` decides the icon and which translation
  * key the card reads, and the numbers come with it. Null when there is
@@ -72,8 +72,7 @@ function toNumber(value: Prisma.Decimal | number | null): number | null {
  */
 export type ProjectSignal =
   | { kind: "awards"; count: number; year: number }
-  | { kind: "newPhotos"; count: number }
-  | { kind: "photosAdded"; year: number; month: number };
+  | { kind: "progressPhotos"; count: number; year: number; month: number };
 
 export type ProjectCard = {
   id: string;
@@ -108,6 +107,15 @@ export type ProjectListCard = ProjectCard & {
    *  already locale-picked. The card shows the first few. */
   facilityNames: string[];
   signal: ProjectSignal | null;
+  /** The newest published progress entry's completion figure — same
+   *  "latest published, not an average" rule as the admin overview's
+   *  own overallPercent (lib/admin/project-progress.ts). Null when no
+   *  published entry has ever recorded one. */
+  constructionPercent: number | null;
+  /** The month that percentage was published as of, for "updated {when}".
+   *  Kept separate from the signal's own date: a photo drop and a
+   *  percentage update are not always the same month's entry. */
+  constructionUpdated: { year: number; month: number } | null;
 };
 
 export type FloorPlanSummary = {
@@ -436,15 +444,16 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
               include: { translations: true },
             },
             /*
-              Only the updates that actually carry photographs, newest
-              first, and only one of them. An update with no images is not
-              a photo drop and must not produce a badge claiming one.
+              Every published update, newest first — the card needs more
+              than the latest one now: a running photo count across all of
+              them, plus the newest entry that actually carries a
+              percentage, which is not always the same entry as the newest
+              photo drop.
             */
             progressUpdates: {
-              where: { isPublished: true, NOT: { images: { isEmpty: true } } },
+              where: { isPublished: true },
               orderBy: [{ year: "desc" }, { month: "desc" }],
-              take: 1,
-              select: { year: true, month: true, images: true, createdAt: true },
+              select: { year: true, month: true, images: true, percentComplete: true },
             },
           },
         }),
@@ -487,22 +496,21 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
           pickLocale(locale, facility.nameTh, facility.nameEn),
       ),
       signal: signalFor(project, awards),
+      constructionPercent: constructionPercentFor(project.progressUpdates),
+      constructionUpdated: constructionUpdatedFor(project.progressUpdates),
     };
   });
 });
-
-/** A photo drop counts as "new" for this long before it becomes a date. */
-const NEW_PHOTOS_DAYS = 60;
 
 /**
  * The one extra thing a card says about a project.
  *
  * Awards first: an award is a fact about the development that does not
- * expire, and it is the strongest thing any of these cards can say. Photos
- * are the fallback, and they change wording rather than quietly going
- * stale — "14 new photographs" for the first two months after an update
- * goes up, "Photos added March 2026" for ever after. A badge that still
- * says "new" a year later is a badge nobody believes twice.
+ * expire, and it is the strongest thing any of these cards can say.
+ * Otherwise, the running photo count across every published update —
+ * not just the latest one, so a project three updates into construction
+ * says "34 progress photos", not "6" — dated to the newest entry that
+ * actually added one.
  *
  * Awards are matched on the exact project name an administrator typed into
  * Award.projectName. Deliberately exact: a "contains" match would hang
@@ -512,7 +520,7 @@ const NEW_PHOTOS_DAYS = 60;
  * appears in the awards section — it just does not decorate a card.
  */
 function signalFor(
-  project: { nameEn: string; progressUpdates: any[] },
+  project: { nameEn: string; progressUpdates: { year: number; month: number; images: string[] }[] },
   awards: { projectName: string | null; year: number }[],
 ): ProjectSignal | null {
   const mine = awards.filter((award) => award.projectName === project.nameEn);
@@ -525,14 +533,38 @@ function signalFor(
     };
   }
 
-  const latest = project.progressUpdates[0];
-  if (!latest) return null;
+  // Already newest-first from the query, so the first entry that has any
+  // images at all is the one that dates the pill.
+  const withPhotos = project.progressUpdates.filter((entry) => entry.images.length > 0);
+  if (withPhotos.length === 0) return null;
 
-  const ageDays = (Date.now() - new Date(latest.createdAt).getTime()) / 86_400_000;
+  const totalPhotos = withPhotos.reduce((sum, entry) => sum + entry.images.length, 0);
 
-  return ageDays <= NEW_PHOTOS_DAYS
-    ? { kind: "newPhotos", count: latest.images.length }
-    : { kind: "photosAdded", year: latest.year, month: latest.month };
+  return {
+    kind: "progressPhotos",
+    count: totalPhotos,
+    year: withPhotos[0].year,
+    month: withPhotos[0].month,
+  };
+}
+
+/** The newest published entry that actually recorded a completion
+ *  figure — same rule as the admin overview's overallPercent, since a
+ *  card claiming a different percentage than the progress page itself
+ *  would be a worse failure than the two simply agreeing to show
+ *  nothing. */
+function constructionPercentFor(
+  progressUpdates: { percentComplete: number | null }[],
+): number | null {
+  return progressUpdates.find((entry) => entry.percentComplete !== null)?.percentComplete ?? null;
+}
+
+/** The month constructionPercentFor's figure was published as of. */
+function constructionUpdatedFor(
+  progressUpdates: { year: number; month: number; percentComplete: number | null }[],
+): { year: number; month: number } | null {
+  const entry = progressUpdates.find((row) => row.percentComplete !== null);
+  return entry ? { year: entry.year, month: entry.month } : null;
 }
 
 /**

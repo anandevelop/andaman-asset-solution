@@ -327,9 +327,10 @@
     "registerInterest": "ลงทะเบียนรับข้อมูล",
     "signal": {
       "awards": "{count} รางวัล ปี {year}",
-      "newPhotos": "รูปใหม่ {count} รูป",
-      "photosAdded": "เพิ่มรูปเมื่อ {when}"
+      "progressPhotos": "รูปความคืบหน้า {count} รูป · {when}"
     },
+    "progressComplete": "เสร็จสมบูรณ์",
+    "progressUpdated": "{percent}% · อัปเดตล่าสุด {when}",
     "cta": {
       "title": "{count, plural, =2 {เดินดูทั้งสองที่ในเช้าเดียว} =3 {เดินดูครบทั้งสามที่ในเช้าเดียว} other {เดินดูครบทั้ง # ที่ในเช้าเดียว}}",
       "subtitle": "สำนักงานเราห่างจากทุกไซต์แค่ห้านาที เลือกวันมา แล้วเราพาไปดูให้ครบ"

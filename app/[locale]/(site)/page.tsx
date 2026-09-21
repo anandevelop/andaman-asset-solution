@@ -60,7 +60,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getWhyUsPoints } from "@/lib/home-content";
 import { getOrderedVisibleSectionKeys, type HomeSectionKey } from "@/lib/home-sections";
 import { isDatabaseOffline } from "@/lib/db";
-import { intlLocale } from "@/lib/format";
+import { intlLocale, formatMonthYear } from "@/lib/format";
 import type { SectionIcon } from "@prisma/client";
 
 /*
@@ -231,6 +231,8 @@ export default async function HomePage(props: Props) {
                     specBedrooms: tProjects("specs.bedrooms"),
                     specLand: tProjects("specs.land"),
                     signal: signalLabel(project.signal, tProjects as never, locale),
+                    construction: constructionLabel(project, tProjects as never, locale),
+                    constructionTitle: tProjects("galleryTitle"),
                   }}
                 />
               </Reveal>
@@ -497,16 +499,42 @@ function signalLabel(
     return t("signal.awards" as never, { count: signal.count, year: signal.year });
   }
 
-  if (signal.kind === "newPhotos") {
-    return t("signal.newPhotos" as never, { count: signal.count });
-  }
+  return t("signal.progressPhotos" as never, {
+    count: signal.count,
+    when: formatMonthYear(locale, signal.year, signal.month),
+  });
+}
 
-  const when = new Intl.DateTimeFormat(intlLocale(locale), {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(Date.UTC(signal.year, signal.month - 1, 1)));
+/**
+ * The card's construction-progress row, or null when there is nothing
+ * true to show — an upcoming development with no progress entries yet
+ * gets no row at all, rather than a bar claiming 0%.
+ *
+ * "Complete" is a status fact (ready to move in / sold out), not a
+ * hundred-percent reading — the two usually agree, but a development can
+ * be marked ready before its last progress entry catches up to say so.
+ */
+function constructionLabel(
+  project: { status: string; constructionPercent: number | null; constructionUpdated: { year: number; month: number } | null },
+  t: (key: never, values?: Record<string, unknown>) => string,
+  locale: string,
+): { text: string; percent: number | null } | null {
+  const complete =
+    project.status === "READY_TO_MOVE_IN" ||
+    project.status === "SOLD_OUT" ||
+    project.constructionPercent === 100;
 
-  return t("signal.photosAdded" as never, { when });
+  if (complete) return { text: t("progressComplete" as never), percent: null };
+
+  if (project.constructionPercent === null || !project.constructionUpdated) return null;
+
+  return {
+    text: t("progressUpdated" as never, {
+      percent: project.constructionPercent,
+      when: formatMonthYear(locale, project.constructionUpdated.year, project.constructionUpdated.month),
+    }),
+    percent: project.constructionPercent,
+  };
 }
 
 /** An upcoming development has nothing to walk through yet — see the note
