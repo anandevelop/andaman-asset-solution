@@ -2140,7 +2140,7 @@
         "cta": "Open the consent overview"
       },
       "system": {
-        "subtitle": "Facts about the running container. Read-only.",
+        "subtitle": "Facts about the running container, plus the one action here that isn't a deploy.",
         "buildTitle": "Version and connections",
         "version": "Running version",
         "database": "Database",
@@ -2158,7 +2158,12 @@
         "volumeStorage": "Total file size",
         "gigabytes": "{gb} GB",
         "backupTitle": "Backups",
-        "backupNote": "This application does not take backups and cannot — that is the database host's job. Configure and check them in the provider's console; the restore procedure is in docs/DEPLOYMENT.md."
+        "backupNote": "This application does not take backups and cannot — that is the database host's job. Configure and check them in the provider's console; the restore procedure is in docs/DEPLOYMENT.md.",
+        "cacheTitle": "Cache",
+        "cacheNote": "Saving already clears the pages that edit touched — this is only for the rest: a bulk script that wrote through the database directly, or a page that still looks stale for a reason a specific save couldn't reach.",
+        "cacheButton": "Clear site cache",
+        "cacheSuccess": "Cleared",
+        "cacheError": "Could not clear the cache — check the server log."
       }
     },
     "security": {

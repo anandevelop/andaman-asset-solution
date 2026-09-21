@@ -4,9 +4,9 @@
  * "ระบบและการสำรองข้อมูล" — what this container is, whether its environment
  * is complete, and how much data it is holding.
  *
- * Read-only, and deliberately so. Everything on this page is either a fact
- * about the running process or a count from the database; nothing here is
- * a setting, because nothing on it can be changed without a deploy.
+ * Almost entirely read-only, and deliberately so. Every section but one is
+ * either a fact about the running process or a count from the database —
+ * not a setting, because nothing there can be changed without a deploy.
  *
  * THE BACKUP SECTION DOES NOT OFFER A BACKUP BUTTON
  *
@@ -16,6 +16,13 @@
  * dump inside a container whose disk disappears on the next deploy. So the
  * section states where the responsibility actually sits and what to check,
  * which is the honest and more useful thing.
+ *
+ * THE CACHE SECTION IS THE ONE EXCEPTION
+ *
+ * clearSiteCache() runs in this process, right now, no deploy involved —
+ * a manual escape hatch for whatever a normal save's own revalidatePath
+ * call can't reach: a bulk script that wrote through Prisma directly, or
+ * a page that still looks stale for a reason specific to it.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -27,6 +34,8 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { collectEnvProblems } from "@/lib/env";
 import { formatGigabytes, getSystemHealth } from "@/lib/admin/system-health";
+import ClearCacheButton from "@/components/admin/ClearCacheButton";
+import { clearSiteCache } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -176,6 +185,20 @@ export default async function AdminSystemSettingsPage(props: Props) {
           <Info size={15} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
           {t("settings.system.backupNote")}
         </p>
+      </section>
+
+      <section className="admin-card space-y-3">
+        <h3 className="text-sm font-semibold text-primary">{t("settings.system.cacheTitle")}</h3>
+        <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-muted">
+          <Info size={15} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+          {t("settings.system.cacheNote")}
+        </p>
+        <ClearCacheButton
+          action={clearSiteCache}
+          label={t("settings.system.cacheButton")}
+          successLabel={t("settings.system.cacheSuccess")}
+          errorLabel={t("settings.system.cacheError")}
+        />
       </section>
     </div>
   );

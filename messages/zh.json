@@ -2140,7 +2140,7 @@
         "cta": "查看同意情况总览"
       },
       "system": {
-        "subtitle": "当前运行容器的信息，仅供查看。",
+        "subtitle": "当前运行容器的信息，另加本页唯一无需重新部署即可执行的操作。",
         "buildTitle": "版本与连接",
         "version": "运行版本",
         "database": "数据库",
@@ -2158,7 +2158,12 @@
         "volumeStorage": "文件总大小",
         "gigabytes": "{gb} GB",
         "backupTitle": "备份",
-        "backupNote": "本系统不进行备份，也无法进行——备份由数据库服务商负责。请在服务商控制台配置并检查；恢复步骤见 docs/DEPLOYMENT.md。"
+        "backupNote": "本系统不进行备份，也无法进行——备份由数据库服务商负责。请在服务商控制台配置并检查；恢复步骤见 docs/DEPLOYMENT.md。",
+        "cacheTitle": "缓存",
+        "cacheNote": "保存内容时已自动清除对应页面的缓存——此按钮仅用于其他情况，例如直接通过数据库写入的批量脚本，或某个页面在正常保存后仍未更新。",
+        "cacheButton": "清除网站缓存",
+        "cacheSuccess": "已清除",
+        "cacheError": "清除缓存失败——请检查服务器日志。"
       }
     },
     "security": {
