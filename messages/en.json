@@ -1714,7 +1714,7 @@
       "projectName": "Project name",
       "projectNameHint": "The development's name, e.g. \"The Trinity Village\". Not translated.",
       "brand": "Brand",
-      "brandHint": "Optional. Only shown on the site when it differs from the company's own name — e.g. \"Wallaya Villas\".",
+      "brandHint": "Optional. Only shown on the site when it differs from the company's own name — e.g. \"Blue Horizon Villas\".",
       "year": "Year",
       "image": "Photo",
       "imageHint": "Optional. Without one, a generic tile is shown instead.",

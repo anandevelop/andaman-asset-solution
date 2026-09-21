@@ -360,8 +360,8 @@ export default async function AboutPage(props: Props) {
                 {milestones.map((milestone, index) => {
                   // Only worth telling a visitor when it's news to them —
                   // "by Andaman Asset Solution" on Andaman Asset Solution's
-                  // own site says nothing a "Wallaya Villas" sub-brand
-                  // credit does.
+                  // own site says nothing a different sub-brand credit
+                  // does.
                   const brandLabel =
                     milestone.brand && milestone.brand !== siteConfig.name
                       ? milestone.brand

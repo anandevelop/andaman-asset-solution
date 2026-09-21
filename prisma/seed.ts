@@ -619,33 +619,31 @@ const AWARDS = [
 //
 // `brand` is set only where the source graphic showed a "BY ..." sub-label;
 // the public page only renders it when it differs from the company's own
-// name, so the four Andaman Asset Solution-branded rows below render with
-// no sub-label at all — see MilestonesRow's comment.
+// name, so the Andaman Asset Solution-branded rows below render with no
+// sub-label at all — see MilestonesRow's comment.
+//
+// Eleven rows from the original graphic are deliberately absent: every
+// "Wallaya Villas"-branded or -named project (nine rows carrying the name
+// outright, plus "Luxpride 1–2"/"Luxpride 3–4", which carried it only as
+// `brand`) turned out to belong to an unrelated company, not a sub-brand
+// of this one — confirmed directly, not an assumption. Removed rather
+// than re-branded, since none of the eleven were ever Andaman Asset
+// Solution's own work. sortOrder keeps the gaps rather than renumbering,
+// consistent with the "room to insert a row later" reasoning above.
 const MILESTONES = [
   { year: 2009, projectName: "The Tree Residence", brand: null, sortOrder: 0 },
   { year: 2010, projectName: "Zen Space", brand: null, sortOrder: 10 },
   { year: 2014, projectName: "Iconpark", brand: null, sortOrder: 20 },
   { year: 2015, projectName: "Natural Touch", brand: null, sortOrder: 30 },
-  { year: 2017, projectName: "Wallaya Villas by the Lake", brand: null, sortOrder: 40 },
-  { year: 2017, projectName: "Wallaya Grand Residence", brand: null, sortOrder: 41 },
   { year: 2017, projectName: "Natural Park Villas", brand: null, sortOrder: 42 },
   { year: 2018, projectName: "Natural Park Pavillion", brand: null, sortOrder: 50 },
   { year: 2018, projectName: "Natural Park Habitat", brand: null, sortOrder: 51 },
   { year: 2018, projectName: "Oceana Kamala", brand: null, sortOrder: 52 },
-  { year: 2018, projectName: "Wallaya Villas Pasak Soi 8", brand: null, sortOrder: 53 },
-  { year: 2019, projectName: "Wallaya Villas Harmony Phase 1", brand: null, sortOrder: 60 },
-  { year: 2019, projectName: "Wallaya Villas Harmony Phase 2-3", brand: null, sortOrder: 61 },
   { year: 2019, projectName: "Citygate Kamala", brand: null, sortOrder: 62 },
-  { year: 2019, projectName: "Wallaya Villas The Granary", brand: null, sortOrder: 63 },
-  { year: 2019, projectName: "Wallaya Villas The Nest", brand: null, sortOrder: 64 },
-  { year: 2020, projectName: "Wallaya Villas The Element", brand: null, sortOrder: 70 },
-  { year: 2020, projectName: "Wallaya Villas Town at Chalong", brand: null, sortOrder: 71 },
   { year: 2021, projectName: "The Residence", brand: "Andaman Asset Solution", sortOrder: 80 },
   { year: 2021, projectName: "The Trinity", brand: "Andaman Asset Solution", sortOrder: 81 },
   { year: 2021, projectName: "The Victory", brand: "Andaman Asset Solution", sortOrder: 82 },
-  { year: 2022, projectName: "Luxpride 1–2", brand: "Wallaya Villas", sortOrder: 90 },
   { year: 2023, projectName: "The Trinity Village", brand: "Andaman Asset Solution", sortOrder: 100 },
-  { year: 2023, projectName: "Luxpride 3–4", brand: "Wallaya Villas", sortOrder: 101 },
   { year: 2023, projectName: "The Residence Prime", brand: "Andaman Asset Solution", sortOrder: 102 },
   { year: 2023, projectName: "The Trinity Prime", brand: "Andaman Asset Solution", sortOrder: 103 },
 ];

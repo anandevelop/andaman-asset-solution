@@ -1714,7 +1714,7 @@
       "projectName": "项目名称",
       "projectNameHint": "项目名称，例如“The Trinity Village”。不进行翻译。",
       "brand": "品牌",
-      "brandHint": "选填。仅当与公司自身名称不同时才会在网站上显示，例如“Wallaya Villas”。",
+      "brandHint": "选填。仅当与公司自身名称不同时才会在网站上显示，例如“Blue Horizon Villas”。",
       "year": "年份",
       "image": "图片",
       "imageHint": "选填。若未设置，将显示通用图块代替。",
