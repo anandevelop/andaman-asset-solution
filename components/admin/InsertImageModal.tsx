@@ -23,8 +23,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import AdminModal from "@/components/admin/AdminModal";
-import MediaLibrary, { type MediaItem } from "@/components/admin/MediaLibrary";
-import { fetchMediaLibrary, updateMediaMeta } from "@/app/[locale]/admin/(content)/media/actions";
+import MediaLibraryPicker, { type MediaItem } from "@/components/admin/MediaLibraryPicker";
+import { updateMediaMeta } from "@/app/[locale]/admin/(content)/media/actions";
 import type { InsertedImage } from "@/components/admin/RichTextEditor";
 import type { Locale } from "@/i18n";
 
@@ -41,8 +41,6 @@ type Align = "left" | "center" | "right" | null;
 export default function InsertImageModal({ open, onClose, locale, onInsert }: Props) {
   const t = useTranslations("admin.news.imageModal");
   const [step, setStep] = useState<Step>("pick");
-  const [library, setLibrary] = useState<Awaited<ReturnType<typeof fetchMediaLibrary>> | null>(null);
-  const [loadingLibrary, setLoadingLibrary] = useState(false);
   const [selected, setSelected] = useState<MediaItem | null>(null);
   const [alt, setAlt] = useState("");
   const [caption, setCaption] = useState("");
@@ -58,11 +56,6 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
     setCaption("");
     setAlign(null);
     setLoading("lazy");
-
-    setLoadingLibrary(true);
-    fetchMediaLibrary()
-      .then(setLibrary)
-      .finally(() => setLoadingLibrary(false));
   }, [open]);
 
   function handleSelect(item: MediaItem) {
@@ -109,22 +102,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
       className="max-w-4xl"
     >
       {step === "pick" ? (
-        loadingLibrary || !library ? (
-          <p className="py-10 text-center text-sm text-ink-muted">{t("loading")}</p>
-        ) : (
-          <div className="max-h-[70vh] overflow-y-auto">
-            <MediaLibrary
-              locale={locale}
-              initialItems={library.items}
-              tagCounts={library.tagCounts}
-              missingAltCount={library.missingAltCount}
-              unusedCount={library.unusedCount}
-              legacyHostCount={library.legacyHostCount}
-              truncated={library.truncated}
-              onSelect={handleSelect}
-            />
-          </div>
-        )
+        <MediaLibraryPicker open={open} locale={locale} loadingLabel={t("loading")} onSelect={handleSelect} />
       ) : selected ? (
         <div className="space-y-4">
           <button

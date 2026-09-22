@@ -46,6 +46,27 @@ vi.mock("@/app/[locale]/admin/(growth)/seo/links/actions", () => ({
   addLinkOpportunity,
 }));
 
+// This panel's cover-image field is an ImageUploader, which registers
+// every upload into the Media table and offers a "choose from library"
+// picker — both reach the same "use server" media/actions.ts this panel
+// never otherwise touches, so every export it has to have needs a stub
+// here too, same reasoning as the two mocks above.
+const { createMedia, fetchMediaLibrary, updateMediaMeta, deleteMedia, getMediaUsage } = vi.hoisted(() => ({
+  createMedia: vi.fn(),
+  fetchMediaLibrary: vi.fn(),
+  updateMediaMeta: vi.fn(),
+  deleteMedia: vi.fn(),
+  getMediaUsage: vi.fn(),
+}));
+
+vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({
+  createMedia,
+  fetchMediaLibrary,
+  updateMediaMeta,
+  deleteMedia,
+  getMediaUsage,
+}));
+
 // useRouter() throws "invariant expected app router to be mounted" with no
 // real App Router above it — the panel only ever calls .refresh(), so a
 // spy is all router.refresh() in the Add-link flow needs.

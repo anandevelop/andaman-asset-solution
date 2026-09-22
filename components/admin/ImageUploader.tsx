@@ -23,7 +23,7 @@
  */
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   DndContext,
   KeyboardSensor,
@@ -46,6 +46,7 @@ import {
   ArrowDown,
   ArrowUp,
   FileText,
+  FolderOpen,
   GripVertical,
   ImageOff,
   Link2,
@@ -53,6 +54,10 @@ import {
   Trash2,
   UploadCloud,
 } from "lucide-react";
+import AdminModal from "@/components/admin/AdminModal";
+import MediaLibraryPicker, { type MediaItem } from "@/components/admin/MediaLibraryPicker";
+import { createMedia } from "@/app/[locale]/admin/(content)/media/actions";
+import type { Locale } from "@/i18n";
 
 type Props = {
   /** Form field name. Receives a URL, or newline-joined URLs when multiple. */
@@ -132,6 +137,27 @@ const PRESIGN_ERROR_KEYS: Record<string, string> = {
  *  manual-URL box) ends in a recognisable extension. */
 function isVideoUrl(url: string): boolean {
   return /\.(mp4|webm)$/i.test(url);
+}
+
+/** Best-effort — a file that fails to decode (e.g. a PDF) just registers
+ *  with no recorded dimensions, which Media.width/height already allow
+ *  for. Mirrors MediaUploadButton.tsx's own copy of this. */
+function readImageDimensions(file: File): Promise<{ width?: number; height?: number }> {
+  if (!file.type.startsWith("image/")) return Promise.resolve({});
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    const cleanup = () => URL.revokeObjectURL(url);
+    img.onload = () => {
+      cleanup();
+      resolve({ width: img.naturalWidth || undefined, height: img.naturalHeight || undefined });
+    };
+    img.onerror = () => {
+      cleanup();
+      resolve({});
+    };
+    img.src = url;
+  });
 }
 
 type Upload = { id: string; name: string; progress: number; error?: string };
@@ -346,6 +372,7 @@ export default function ImageUploader({
   // Documents never get video support — a brochure field only ever means PDF.
   const allowVideo = acceptVideo && !isDocument;
   const t = useTranslations("admin.upload");
+  const locale = useLocale() as Locale;
   const fieldId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -371,6 +398,7 @@ export default function ImageUploader({
   const [broken, setBroken] = useState<Record<string, boolean>>({});
   const [manualUrl, setManualUrl] = useState("");
   const [showManual, setShowManual] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [dragging, setDragging] = useState(false);
 
   const addUrls = useCallback(
@@ -475,6 +503,30 @@ export default function ImageUploader({
 
           addUrls([result.publicUrl]);
           setUploads((u) => u.filter((item) => item.id !== id));
+
+          // Best-effort: the object is already in the field and in the
+          // bucket, so a failure here (an edge-case permission gap, a
+          // validation mismatch) shouldn't undo an upload that already
+          // succeeded — it just means this one file doesn't show up in
+          // the Media Library later, same as any upload from before this
+          // registration existed.
+          const dims = await readImageDimensions(file);
+          createMedia(locale, {
+            url: result.publicUrl,
+            key: result.key,
+            mimeType: file.type,
+            width: dims.width,
+            height: dims.height,
+            sizeBytes: file.size,
+          })
+            .then((created) => {
+              if (!created.ok) {
+                console.error(`[upload] ${file.name}: createMedia failed — ${created.error}`);
+              }
+            })
+            .catch((error) => {
+              console.error(`[upload] ${file.name}: createMedia threw`, error);
+            });
         } catch (error) {
           const reason = error instanceof Error ? error.message : "";
           const message =
@@ -502,7 +554,7 @@ export default function ImageUploader({
       // Allow re-selecting the same file after a removal.
       if (inputRef.current) inputRef.current.value = "";
     },
-    [addUrls, allowMultiple, allowVideo, isDocument, kind, prefix, slug, t],
+    [addUrls, allowMultiple, allowVideo, isDocument, kind, locale, prefix, slug, t],
   );
 
   const remove = (url: string) => setUrls((u) => u.filter((item) => item !== url));
@@ -567,15 +619,45 @@ export default function ImageUploader({
           {label}
         </label>
 
-        <button
-          type="button"
-          onClick={() => setShowManual((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-primary"
-        >
-          <Link2 size={12} aria-hidden />
-          {showManual ? t("hideUrl") : t("pasteUrl")}
-        </button>
+        <span className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowLibrary(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-primary"
+          >
+            <FolderOpen size={12} aria-hidden />
+            {t("pickFromLibrary")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowManual((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-primary"
+          >
+            <Link2 size={12} aria-hidden />
+            {showManual ? t("hideUrl") : t("pasteUrl")}
+          </button>
+        </span>
       </div>
+
+      <AdminModal
+        open={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        titleId={`${fieldId}-library-title`}
+        title={t("libraryTitle")}
+        closeLabel={t("libraryClose")}
+        className="max-w-4xl"
+      >
+        <MediaLibraryPicker
+          open={showLibrary}
+          locale={locale}
+          loadingLabel={t("libraryLoading")}
+          onSelect={(item: MediaItem) => {
+            addUrls([item.url]);
+            setShowLibrary(false);
+          }}
+        />
+      </AdminModal>
 
       {/* The value the surrounding form actually submits. */}
       <input type="hidden" name={name} value={urls.join("\n")} readOnly />
