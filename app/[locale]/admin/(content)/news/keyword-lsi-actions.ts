@@ -21,10 +21,22 @@ import { Role } from "@prisma/client";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { prisma } from "@/lib/prisma";
 
+export type TrackedKeyword = {
+  id: string;
+  lsiTerms: string[];
+  /** Whatever the last rank-tracking CSV import recorded — see
+   *  lib/keywords/rank-updates.ts. Null when this phrase has never been
+   *  in an import, not "zero". */
+  searchVolume: number | null;
+  difficulty: number | null;
+  currentRank: number | null;
+  rankCheckedAt: Date | null;
+};
+
 export async function getKeywordForPhrase(
   phrase: string,
   locale: string,
-): Promise<{ id: string; lsiTerms: string[] } | null> {
+): Promise<TrackedKeyword | null> {
   await requireAdminAction(Role.VIEWER);
 
   const trimmed = phrase.trim();
@@ -32,7 +44,14 @@ export async function getKeywordForPhrase(
 
   const row = await prisma.keyword.findFirst({
     where: { locale, phrase: { equals: trimmed, mode: "insensitive" } },
-    select: { id: true, lsiTerms: true },
+    select: {
+      id: true,
+      lsiTerms: true,
+      searchVolume: true,
+      difficulty: true,
+      currentRank: true,
+      rankCheckedAt: true,
+    },
   });
 
   return row;

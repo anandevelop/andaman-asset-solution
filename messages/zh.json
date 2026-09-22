@@ -1194,10 +1194,20 @@
       "seo": {
         "tabKeywords": "关键词",
         "scoreHint": "仅根据此语言版本计算。",
+        "scoreStatus": {
+          "ready": "可以发布",
+          "needsWork": "发布前建议改进",
+          "notReady": "尚未准备好发布"
+        },
         "checklistTitle": "SEO 检查清单",
-        "checklistSummary": "已通过 {passed} / {total} 项",
+        "checklistSummary": "通过 {passed} · 建议修复 {shouldFix} · 必须修复 {mustFix},共 {total} 项",
         "focusKeyword": "核心关键词 (Focus keyword)",
         "focusKeywordHint": "此语言版本希望获得排名的关键词。",
+        "keywordSearchVolume": "每月搜索 {count, number} 次",
+        "keywordDifficulty": "难度 {value}",
+        "keywordCurrentRank": "当前排名 #{rank}",
+        "keywordStatsCaveat": "来自最近一次排名数据导入，非实时数据。",
+        "idealLengthHint": "建议长度 {min}–{max} 字符",
         "densityTarget": "目标 0.8–2.5%",
         "densityKeywordHeader": "关键词",
         "densityCountHeader": "出现次数",
@@ -1249,6 +1259,7 @@
         "linksInternalHeading": "内部链接",
         "linksExternalHeading": "外部链接",
         "linksEmpty": "正文中暂无链接。",
+        "linksCheckedAt": "检测于 {when}",
         "schemaTypeLabel": "Schema 类型",
         "schemaTypeHint": "此文章发布时使用的 JSON-LD @type。",
         "schemaTypeOptions": {
@@ -1263,6 +1274,7 @@
         "schemaPreviewTitle": "JSON-LD 预览",
         "schemaPreviewHint": "公开页面将嵌入的结构化数据，与此完全一致。",
         "schemaPreviewType": "类型",
+        "breadcrumbTitle": "面包屑导航",
         "publishBlockedReason": "{count, plural, other {以下检查项正在阻止发布：}}",
         "overridePublishLabel": "仍然发布",
         "overridePublishHint": "仅管理员可用 —— 使用后会记录到活动日志中。",
@@ -1272,6 +1284,11 @@
         "lsiHintNoFocusKeyword": "请先设置核心关键词，才能查看或添加相关建议词。",
         "linksOpportunitiesHeading": "应该添加链接",
         "linksOpportunitiesEmpty": "本文中尚未发现应添加链接但未添加的提及。",
+        "targetType": {
+          "PROJECT": "项目",
+          "NEWS_ARTICLE": "文章",
+          "EVENT": "活动"
+        },
         "linksInboundHeading": "指向本文的链接",
         "linksInboundEmpty": "网站上还没有其他页面链接到这篇文章。"
       },

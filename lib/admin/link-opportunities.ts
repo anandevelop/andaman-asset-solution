@@ -445,7 +445,14 @@ export type InboundLink = {
   fromId: string;
   label: string;
   adminHref: string | null;
+  /** The clickable text used on the linking page, when the scan recorded
+   *  one — null for a link syntax with no text between the brackets. */
+  anchorText: string | null;
 };
+
+/** Last-checked HTTP status plus when — the "checked 2h ago" a stale badge
+ *  needs to read as stale rather than as a live result. */
+export type ExternalLinkStatus = { status: number | null; checkedAt: Date | null };
 
 export type ArticleLinkPanel = {
   /** "Should link to" — opportunities scoped to this one article. */
@@ -453,11 +460,11 @@ export type ArticleLinkPanel = {
   /** "Links that point in" — every other place with a real ContentLink
    *  row targeting this article's own public path. */
   inboundLinks: InboundLink[];
-  /** toPath → last-checked httpStatus, for annotating the body's live
+  /** toPath → last-checked status, for annotating the body's live
    *  external-link list with its last known status. Reflects the last
    *  save-and-rescan, not the editor's unsaved keystrokes — see this
    *  panel's own "stated limitation" in the phase plan. */
-  externalStatuses: Record<string, number | null>;
+  externalStatuses: Record<string, ExternalLinkStatus>;
 };
 
 export async function getArticleLinkPanel(params: {
@@ -469,11 +476,11 @@ export async function getArticleLinkPanel(params: {
     findLinkOpportunities({ type: "NEWS_ARTICLE", id: params.id }),
     prisma.contentLink.findMany({
       where: { toPath: params.publicPath, isInternal: true },
-      select: { fromType: true, fromId: true },
+      select: { fromType: true, fromId: true, anchorText: true },
     }),
     prisma.contentLink.findMany({
       where: { fromType: "NEWS_ARTICLE", fromId: params.id, isInternal: false },
-      select: { toPath: true, httpStatus: true },
+      select: { toPath: true, httpStatus: true, checkedAt: true },
     }),
   ]);
 
@@ -484,11 +491,19 @@ export async function getArticleLinkPanel(params: {
 
   const inboundLinks: InboundLink[] = uniqueSources.map((row) => {
     const info = sourceLabels.get(`${row.fromType}:${row.fromId}`);
-    return { fromType: row.fromType, fromId: row.fromId, label: info?.label ?? row.fromId, adminHref: info?.adminHref ?? null };
+    return {
+      fromType: row.fromType,
+      fromId: row.fromId,
+      label: info?.label ?? row.fromId,
+      adminHref: info?.adminHref ?? null,
+      anchorText: row.anchorText,
+    };
   });
 
-  const externalStatuses: Record<string, number | null> = {};
-  for (const row of externalRows) externalStatuses[row.toPath] = row.httpStatus;
+  const externalStatuses: Record<string, ExternalLinkStatus> = {};
+  for (const row of externalRows) {
+    externalStatuses[row.toPath] = { status: row.httpStatus, checkedAt: row.checkedAt };
+  }
 
   return {
     opportunities: opportunities.filter((o) => o.sourceLocale === params.locale),

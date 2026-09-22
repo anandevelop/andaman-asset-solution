@@ -1194,10 +1194,20 @@
       "seo": {
         "tabKeywords": "คีย์เวิร์ด",
         "scoreHint": "คำนวณจากเนื้อหาภาษานี้เท่านั้น",
+        "scoreStatus": {
+          "ready": "พร้อมเผยแพร่",
+          "needsWork": "ควรปรับปรุงก่อนเผยแพร่",
+          "notReady": "ยังไม่พร้อมเผยแพร่"
+        },
         "checklistTitle": "รายการตรวจ SEO",
-        "checklistSummary": "ผ่าน {passed} จาก {total} ข้อ",
+        "checklistSummary": "ผ่าน {passed} · ควรแก้ {shouldFix} · ต้องแก้ {mustFix} จาก {total} ข้อ",
         "focusKeyword": "คีย์เวิร์ดหลัก (Focus keyword)",
         "focusKeywordHint": "วลีที่บทความภาษานี้ตั้งใจทำอันดับด้วย",
+        "keywordSearchVolume": "ค้นหา {count, number} ครั้ง/เดือน",
+        "keywordDifficulty": "ความยาก {value}",
+        "keywordCurrentRank": "อันดับปัจจุบัน #{rank}",
+        "keywordStatsCaveat": "ข้อมูลจากการนำเข้าล่าสุด ไม่ใช่การตรวจสดแบบเรียลไทม์",
+        "idealLengthHint": "ความยาวเหมาะสม {min}–{max} ตัวอักษร",
         "densityTarget": "เป้าหมาย 0.8–2.5%",
         "densityKeywordHeader": "คีย์เวิร์ด",
         "densityCountHeader": "พบ",
@@ -1249,6 +1259,7 @@
         "linksInternalHeading": "ลิงก์ภายใน",
         "linksExternalHeading": "ลิงก์ภายนอก",
         "linksEmpty": "ยังไม่มีลิงก์ในเนื้อหา",
+        "linksCheckedAt": "ตรวจพบเมื่อ {when}",
         "schemaTypeLabel": "ประเภท Schema",
         "schemaTypeHint": "ค่า @type ของ JSON-LD ที่บทความนี้จะเผยแพร่",
         "schemaTypeOptions": {
@@ -1263,6 +1274,7 @@
         "schemaPreviewTitle": "ตัวอย่าง JSON-LD",
         "schemaPreviewHint": "โครงสร้างข้อมูลที่หน้าเว็บสาธารณะจะฝังไว้จริง",
         "schemaPreviewType": "ประเภท",
+        "breadcrumbTitle": "เส้นทางนำทาง (Breadcrumb)",
         "publishBlockedReason": "{count, plural, other {รายการตรวจต่อไปนี้กำลังบล็อกการเผยแพร่:}}",
         "overridePublishLabel": "เผยแพร่ต่อไป",
         "overridePublishHint": "เฉพาะแอดมินเท่านั้น — จะถูกบันทึกลงในบันทึกกิจกรรมเมื่อใช้งาน",
@@ -1272,6 +1284,11 @@
         "lsiHintNoFocusKeyword": "ตั้งคีย์เวิร์ดหลักก่อน จึงจะดูหรือเพิ่มคำแนะนำที่เกี่ยวข้องได้",
         "linksOpportunitiesHeading": "ควรลิงก์ไปเพิ่ม",
         "linksOpportunitiesEmpty": "ยังไม่พบข้อความในบทความนี้ที่ควรลิงก์แต่ยังไม่ได้ลิงก์",
+        "targetType": {
+          "PROJECT": "โครงการ",
+          "NEWS_ARTICLE": "บทความ",
+          "EVENT": "กิจกรรม"
+        },
         "linksInboundHeading": "ลิงก์ที่ชี้เข้ามา",
         "linksInboundEmpty": "ยังไม่มีหน้าอื่นในเว็บไซต์ลิงก์มาที่บทความนี้"
       },

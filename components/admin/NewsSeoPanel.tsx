@@ -4,18 +4,20 @@
  * components/admin/NewsSeoPanel.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The news editor's sticky inspector, in 5 tabs: SEO (score, checklist,
- * SERP/OG previews), Keywords (focus-keyword density), Links (the body's
- * own internal/external links, live), Settings (noIndex, share image,
- * schema type, canonical URL, secondary keywords), and Schema (the exact
- * JSON-LD the public page will embed).
+ * SERP/OG previews), Keywords (focus-keyword density, secondary keywords,
+ * LSI terms), Links (the body's own internal/external links, live, plus
+ * link-opportunity and inbound-link data from lib/admin/link-opportunities.ts),
+ * Settings (noIndex, share image, schema type, canonical URL), and Schema
+ * (the exact JSON-LD the public page will embed, plus its breadcrumb).
  *
  * Everything here is computed by lib/article-seo.ts, lib/keyword-density.ts,
  * lib/content-stats.ts and lib/article-schema.ts straight from what the
- * editor has typed so far — no keyword-rank, search-volume or
- * AI-translation numbers, because this codebase has no real data source
- * for any of them and a guessed number next to real ones makes the real
- * ones look guessed too (see lib/seo-audit.ts's header for the established
- * version of this rule).
+ * editor has typed so far — still no AI-translation numbers, because
+ * nothing in this codebase generates them. Search volume/difficulty/rank
+ * ARE shown, but only when the focus keyword matches a Keyword row a rank
+ * import has actually populated (lib/keywords/rank-updates.ts) — real
+ * numbers from the last CSV import, not a live Google check, and the UI
+ * says so next to them rather than letting them pass for real-time.
  *
  * `values` mirrors NewsForm's own field state rather than reading the DOM
  * — see NewsForm's header comment for which fields are live and which
@@ -46,8 +48,15 @@ import { extractCheckableLinks, getContentStats, getPlainText, type ContentForma
 import { getKeywordDensity } from "@/lib/keyword-density";
 import { auditArticle, type SeoCheck, type SeoScoreResult } from "@/lib/article-seo";
 import { buildArticleJsonLd } from "@/lib/article-schema";
+import { SEO_LIMITS } from "@/lib/seo-limits";
+import { relativeTime } from "@/lib/relative-time";
+import { trailFor } from "@/lib/seo";
 import { MAX_SECONDARY_KEYWORDS } from "@/lib/validations";
-import { getKeywordForPhrase, upsertLsiTerms } from "@/app/[locale]/admin/(content)/news/keyword-lsi-actions";
+import {
+  getKeywordForPhrase,
+  upsertLsiTerms,
+  type TrackedKeyword,
+} from "@/app/[locale]/admin/(content)/news/keyword-lsi-actions";
 import type { addLinkOpportunity } from "@/app/[locale]/admin/(growth)/seo/links/actions";
 import type { ArticleLinkPanel } from "@/lib/admin/link-opportunities";
 import { hasRole } from "@/lib/role-rank";
@@ -121,6 +130,16 @@ function scoreStroke(score: number): string {
   if (score >= 80) return "#047857"; // emerald-700
   if (score >= 60) return "#b45309"; // amber-700
   return "#b91c1c"; // red-700
+}
+
+/** Same thresholds as scoreColor/scoreStroke, so the label never disagrees
+ *  with the ring's own colour. A holistic read of the score, not "every
+ *  must-fix item is gone" — the checklist below already says that on its
+ *  own terms. */
+function scoreStatusKey(score: number): "ready" | "needsWork" | "notReady" {
+  if (score >= 80) return "ready";
+  if (score >= 60) return "needsWork";
+  return "notReady";
 }
 
 function densityColor(density: number): string {
@@ -210,6 +229,7 @@ export default function NewsSeoPanel({
   addLinkAction,
 }: Props) {
   const t = useTranslations("admin");
+  const tNav = useTranslations("nav");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("seo");
   const [addLinkPending, startAddLinkTransition] = useTransition();
@@ -268,6 +288,11 @@ export default function NewsSeoPanel({
   const [lsiTracked, setLsiTracked] = useState(false);
   const [lsiSaved, setLsiSaved] = useState(false);
   const [lsiPending, startLsiTransition] = useTransition();
+  /** The same tracked Keyword row the LSI lookup above already fetches —
+   *  search volume/difficulty/rank ride along on it rather than a second
+   *  round trip. Null fields mean "never in a rank-tracking import", not
+   *  zero — see keyword-lsi-actions.ts's TrackedKeyword. */
+  const [trackedKeyword, setTrackedKeyword] = useState<TrackedKeyword | null>(null);
 
   useEffect(() => {
     const phrase = debounced.focusKeyword.trim();
@@ -275,14 +300,15 @@ export default function NewsSeoPanel({
     if (!phrase) {
       setLsiTerms("");
       setLsiTracked(false);
+      setTrackedKeyword(null);
       return;
     }
     startLsiTransition(async () => {
       const row = await getKeywordForPhrase(phrase, lang);
       setLsiTracked(row !== null);
       setLsiTerms(row?.lsiTerms.join(", ") ?? "");
+      setTrackedKeyword(row);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced.focusKeyword, lang]);
 
   function saveLsiTerms() {
@@ -351,6 +377,19 @@ export default function NewsSeoPanel({
     [debounced, lang, t],
   );
 
+  /** The exact trail the public article page itself builds (see
+   *  app/[locale]/(site)/news/[slug]/page.tsx) — three levels, no category
+   *  step, since the real page has none. */
+  const breadcrumbTrail = useMemo(
+    () =>
+      trailFor(lang, [
+        { name: tNav("home"), path: "" },
+        { name: tNav("news"), path: "/news" },
+        { name: debounced.title || t("projects.seoPreviewNoTitle"), path: `/news/${debounced.slug || "…"}` },
+      ]),
+    [lang, tNav, debounced.title, debounced.slug, t],
+  );
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "seo", label: t("news.seo.tabSeo") },
     { id: "keywords", label: t("news.seo.tabKeywords") },
@@ -382,7 +421,12 @@ export default function NewsSeoPanel({
         <div className="space-y-5">
           <div className="flex items-center gap-4">
             <ScoreDonut score={seo.score} />
-            <p className="text-xs text-ink-muted">{t("news.seo.scoreHint")}</p>
+            <div>
+              <p className={`text-sm font-semibold ${scoreColor(seo.score)}`}>
+                {t(`news.seo.scoreStatus.${scoreStatusKey(seo.score)}`)}
+              </p>
+              <p className="text-xs text-ink-muted">{t("news.seo.scoreHint")}</p>
+            </div>
           </div>
 
           <div>
@@ -401,6 +445,24 @@ export default function NewsSeoPanel({
             ) : (
               <p className="admin-hint">{t("news.seo.focusKeywordHint")}</p>
             )}
+            {trackedKeyword &&
+              (trackedKeyword.searchVolume !== null ||
+                trackedKeyword.difficulty !== null ||
+                trackedKeyword.currentRank !== null) && (
+                <p className="mt-1.5 text-xs text-ink-muted">
+                  {[
+                    trackedKeyword.searchVolume !== null &&
+                      t("news.seo.keywordSearchVolume", { count: trackedKeyword.searchVolume }),
+                    trackedKeyword.difficulty !== null &&
+                      t("news.seo.keywordDifficulty", { value: trackedKeyword.difficulty }),
+                    trackedKeyword.currentRank !== null &&
+                      t("news.seo.keywordCurrentRank", { rank: trackedKeyword.currentRank }),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  <span className="block">{t("news.seo.keywordStatsCaveat")}</span>
+                </p>
+              )}
           </div>
 
           <div className="space-y-4 border-t border-primary/10 pt-5">
@@ -421,6 +483,11 @@ export default function NewsSeoPanel({
               previewLabel={t("projects.seoPreviewLabel")}
               previewHint={t("projects.seoPreviewHint")}
               focusKeyword={values.focusKeyword}
+              titleLengthHint={t("news.seo.idealLengthHint", { min: SEO_LIMITS.titleMin, max: SEO_LIMITS.title })}
+              descriptionLengthHint={t("news.seo.idealLengthHint", {
+                min: SEO_LIMITS.descriptionMin,
+                max: SEO_LIMITS.description,
+              })}
             />
 
             <OgPreviewCard
@@ -438,7 +505,12 @@ export default function NewsSeoPanel({
             <div className="mb-2 flex items-baseline justify-between">
               <h3 className="admin-section-title">{t("news.seo.checklistTitle")}</h3>
               <span className="text-xs text-ink-muted">
-                {t("news.seo.checklistSummary", { passed: passed.length, total: seo.checks.length })}
+                {t("news.seo.checklistSummary", {
+                  passed: passed.length,
+                  shouldFix: shouldFix.length,
+                  mustFix: mustFix.length,
+                  total: seo.checks.length,
+                })}
               </span>
             </div>
 
@@ -641,11 +713,11 @@ export default function NewsSeoPanel({
                   {links
                     .filter((l) => !l.internal)
                     .map((l, index) => {
-                      const status = linkPanel.externalStatuses[l.target];
-                      const checked = typeof status === "number";
-                      const broken = checked && !(status >= 200 && status < 400);
+                      const entry = linkPanel.externalStatuses[l.target];
+                      const checked = typeof entry?.status === "number";
+                      const broken = checked && !(entry!.status! >= 200 && entry!.status! < 400);
                       return (
-                        <li key={index} className="flex items-center gap-2 text-sm text-ink">
+                        <li key={index} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink">
                           <span className="truncate">{l.target}</span>
                           {checked && (
                             <span
@@ -653,7 +725,12 @@ export default function NewsSeoPanel({
                                 broken ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
                               }`}
                             >
-                              {status === 0 ? <AlertTriangle size={10} aria-hidden /> : status}
+                              {entry!.status === 0 ? <AlertTriangle size={10} aria-hidden /> : entry!.status}
+                            </span>
+                          )}
+                          {entry?.checkedAt && (
+                            <span className="shrink-0 text-[11px] text-ink-muted">
+                              {t("news.seo.linksCheckedAt", { when: relativeTime(uiLocale, entry.checkedAt) })}
                             </span>
                           )}
                         </li>
@@ -676,6 +753,9 @@ export default function NewsSeoPanel({
                 {linkPanel.opportunities.map((opportunity) => (
                   <li key={opportunity.id} className="flex items-center justify-between gap-2 text-sm text-ink">
                     <span className="min-w-0 truncate">
+                      <span className="mr-1.5 shrink-0 rounded-xs bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
+                        {t(`news.seo.targetType.${opportunity.targetType}` as never)}
+                      </span>
                       {opportunity.targetTitle}{" "}
                       <span className="text-ink-muted">— “{opportunity.matchedText}”</span>
                     </span>
@@ -713,6 +793,9 @@ export default function NewsSeoPanel({
                 {linkPanel.inboundLinks.map((inbound, index) => (
                   <li key={index} className="truncate text-sm text-ink">
                     {inbound.label}
+                    {inbound.anchorText && (
+                      <span className="text-ink-muted"> — “{inbound.anchorText}”</span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -799,6 +882,13 @@ export default function NewsSeoPanel({
           <pre className="max-h-96 overflow-auto rounded-xs border border-primary/10 bg-surface-muted/40 p-3 text-xs leading-relaxed text-ink">
             {JSON.stringify(schemaJsonLd, null, 2)}
           </pre>
+
+          <div className="border-t border-primary/10 pt-4">
+            <h4 className="admin-label">{t("news.seo.breadcrumbTitle")}</h4>
+            <p className="mt-1 truncate text-sm text-ink">
+              {breadcrumbTrail.map((item) => item.name).join(" › ")}
+            </p>
+          </div>
         </div>
       )}
     </div>

@@ -16,10 +16,12 @@
  * reads these by `name` at submit time, the same as every uncontrolled
  * field beside them.
  *
- * The 60/155 character figures are Google's rough, pixel-based truncation
- * points, not a hard limit — going over does not break anything, it just
- * means Google may cut the rest off in the result, which is why this is a
- * counter with a warning colour rather than a maxLength on the input.
+ * The character figures (lib/seo-limits.ts's SEO_LIMITS — the same numbers
+ * lib/article-seo.ts's News checklist and PageSeoEditor.tsx's counter
+ * already score against) are Google's rough, pixel-based truncation
+ * points, not a hard limit — going under wastes the snippet space Google
+ * gives a result, going over risks it being cut off, which is why this is
+ * a bar with a warning colour rather than a maxLength on the input.
  *
  * title/onTitleChange and description/onDescriptionChange are an optional
  * escape hatch into the state above: pass them and this component stops
@@ -37,6 +39,7 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { SEO_LIMITS } from "@/lib/seo-limits";
 
 type Props = {
   titleLabel: string;
@@ -58,16 +61,37 @@ type Props = {
   onDescriptionChange?: (value: string) => void;
   /** Highlights matches in the preview below — see the file header. */
   focusKeyword?: string;
+  /** "Ideal length: 30–60 characters" (or your own translated wording) —
+   *  shown under the title's bar. Omit and the bar renders with no hint,
+   *  as it did before this existed. */
+  titleLengthHint?: string;
+  /** Same, under the description's bar. */
+  descriptionLengthHint?: string;
 };
-
-const TITLE_SOFT_LIMIT = 60;
-const DESCRIPTION_SOFT_LIMIT = 155;
 
 function CharCount({ length, limit }: { length: number; limit: number }) {
   return (
     <span className={length > limit ? "text-amber-700" : "text-ink-muted"}>
       {length}/{limit}
     </span>
+  );
+}
+
+/** In-range fills emerald; short-of-min or past-max fills amber — the same
+ *  pass/fail lib/article-seo.ts's metaTitleLength/metaDescriptionLength
+ *  checks already compute, so this bar never disagrees with the checklist
+ *  below it. */
+function CharBar({ length, min, max }: { length: number; min: number; max: number }) {
+  const inRange = length >= min && length <= max;
+  const fillPercent = Math.min(100, Math.round((length / max) * 100));
+
+  return (
+    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-primary/10">
+      <div
+        className={`h-full rounded-full transition-[width] ${inRange ? "bg-emerald-600" : "bg-amber-500"}`}
+        style={{ width: `${fillPercent}%` }}
+      />
+    </div>
   );
 }
 
@@ -109,6 +133,8 @@ export default function SeoPreviewFields({
   description: controlledDescription,
   onDescriptionChange,
   focusKeyword,
+  titleLengthHint,
+  descriptionLengthHint,
 }: Props) {
   const [internalTitle, setInternalTitle] = useState(defaultTitle);
   const [internalDescription, setInternalDescription] = useState(defaultDescription);
@@ -134,7 +160,7 @@ export default function SeoPreviewFields({
             <label className="admin-label" htmlFor="metaTitle">
               {titleLabel}
             </label>
-            <CharCount length={title.length} limit={TITLE_SOFT_LIMIT} />
+            <CharCount length={title.length} limit={SEO_LIMITS.title} />
           </div>
           <input
             id="metaTitle"
@@ -143,6 +169,8 @@ export default function SeoPreviewFields({
             onChange={(event) => setTitle(event.target.value)}
             className="admin-input"
           />
+          <CharBar length={title.length} min={SEO_LIMITS.titleMin} max={SEO_LIMITS.title} />
+          {titleLengthHint && <p className="admin-hint">{titleLengthHint}</p>}
           {titleError && <p className="mt-1.5 text-xs text-red-700">{titleError}</p>}
         </div>
 
@@ -151,7 +179,7 @@ export default function SeoPreviewFields({
             <label className="admin-label" htmlFor="metaDescription">
               {descriptionLabel}
             </label>
-            <CharCount length={description.length} limit={DESCRIPTION_SOFT_LIMIT} />
+            <CharCount length={description.length} limit={SEO_LIMITS.description} />
           </div>
           <textarea
             id="metaDescription"
@@ -161,6 +189,8 @@ export default function SeoPreviewFields({
             rows={3}
             className="admin-textarea"
           />
+          <CharBar length={description.length} min={SEO_LIMITS.descriptionMin} max={SEO_LIMITS.description} />
+          {descriptionLengthHint && <p className="admin-hint">{descriptionLengthHint}</p>}
           {descriptionError && (
             <p className="mt-1.5 text-xs text-red-700">{descriptionError}</p>
           )}

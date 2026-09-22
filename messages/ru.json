@@ -1194,10 +1194,20 @@
       "seo": {
         "tabKeywords": "Ключевые слова",
         "scoreHint": "Рассчитано только для этой языковой версии.",
+        "scoreStatus": {
+          "ready": "Готово к публикации",
+          "needsWork": "Стоит доработать перед публикацией",
+          "notReady": "Не готово к публикации"
+        },
         "checklistTitle": "Чек-лист SEO",
-        "checklistSummary": "Пройдено {passed} из {total}",
+        "checklistSummary": "Пройдено {passed} · желательно исправить {shouldFix} · обязательно исправить {mustFix} из {total}",
         "focusKeyword": "Ключевой запрос (Focus keyword)",
         "focusKeywordHint": "Фраза, по которой эта языковая версия должна ранжироваться.",
+        "keywordSearchVolume": "{count, number} запросов/мес.",
+        "keywordDifficulty": "сложность {value}",
+        "keywordCurrentRank": "текущая позиция #{rank}",
+        "keywordStatsCaveat": "По данным последнего импорта позиций — не в реальном времени.",
+        "idealLengthHint": "Оптимальная длина: {min}–{max} символов",
         "densityTarget": "Цель 0.8–2.5%",
         "densityKeywordHeader": "Ключевое слово",
         "densityCountHeader": "Найдено",
@@ -1249,6 +1259,7 @@
         "linksInternalHeading": "Внутренние ссылки",
         "linksExternalHeading": "Внешние ссылки",
         "linksEmpty": "В тексте пока нет ссылок.",
+        "linksCheckedAt": "проверено {when}",
         "schemaTypeLabel": "Тип Schema",
         "schemaTypeHint": "Значение @type в JSON-LD, с которым публикуется эта статья.",
         "schemaTypeOptions": {
@@ -1263,6 +1274,7 @@
         "schemaPreviewTitle": "Предпросмотр JSON-LD",
         "schemaPreviewHint": "Ровно те структурированные данные, которые будут встроены в публичную страницу.",
         "schemaPreviewType": "Тип",
+        "breadcrumbTitle": "Хлебные крошки",
         "publishBlockedReason": "{count, plural, one {Эта проверка блокирует публикацию:} few {Эти проверки блокируют публикацию:} many {Эти проверки блокируют публикацию:} other {Эти проверки блокируют публикацию:}}",
         "overridePublishLabel": "Опубликовать всё равно",
         "overridePublishHint": "Доступно только администраторам — использование записывается в журнал активности.",
@@ -1272,6 +1284,11 @@
         "lsiHintNoFocusKeyword": "Укажите ключевой запрос, чтобы увидеть или добавить связанные термины.",
         "linksOpportunitiesHeading": "Стоит добавить ссылку",
         "linksOpportunitiesEmpty": "В этой статье пока не найдено упоминаний без ссылки.",
+        "targetType": {
+          "PROJECT": "Проект",
+          "NEWS_ARTICLE": "Статья",
+          "EVENT": "Мероприятие"
+        },
         "linksInboundHeading": "Входящие ссылки",
         "linksInboundEmpty": "Пока ни одна страница сайта не ссылается на эту статью."
       },

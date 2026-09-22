@@ -346,7 +346,18 @@ describe("NewsSeoPanel — links tab", () => {
     const user = userEvent.setup();
     render(
       <Harness
-        linkPanel={{ ...EMPTY_LINK_PANEL, inboundLinks: [{ fromType: "PROJECT", fromId: "p1", label: "Trinity Village", adminHref: "/admin/projects/p1/edit" }] }}
+        linkPanel={{
+          ...EMPTY_LINK_PANEL,
+          inboundLinks: [
+            {
+              fromType: "PROJECT",
+              fromId: "p1",
+              label: "Trinity Village",
+              adminHref: "/admin/projects/p1/edit",
+              anchorText: null,
+            },
+          ],
+        }}
       />,
     );
 
@@ -361,7 +372,10 @@ describe("NewsSeoPanel — links tab", () => {
     render(
       <Harness
         initial={{ ...BASE_VALUES, content: "[theirs](https://example.com)" }}
-        linkPanel={{ ...EMPTY_LINK_PANEL, externalStatuses: { "https://example.com": 404 } }}
+        linkPanel={{
+          ...EMPTY_LINK_PANEL,
+          externalStatuses: { "https://example.com": { status: 404, checkedAt: new Date("2026-01-01") } },
+        }}
       />,
     );
 

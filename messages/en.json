@@ -1194,10 +1194,20 @@
       "seo": {
         "tabKeywords": "Keywords",
         "scoreHint": "Based on this language version only.",
+        "scoreStatus": {
+          "ready": "Ready to publish",
+          "needsWork": "Could use work before publishing",
+          "notReady": "Not ready to publish"
+        },
         "checklistTitle": "SEO checklist",
-        "checklistSummary": "{passed} of {total} checks passed",
+        "checklistSummary": "{passed} passed · {shouldFix} should fix · {mustFix} must fix, out of {total}",
         "focusKeyword": "Focus keyword",
         "focusKeywordHint": "The phrase this language's version is written to rank for.",
+        "keywordSearchVolume": "{count, number} searches/month",
+        "keywordDifficulty": "difficulty {value}",
+        "keywordCurrentRank": "currently #{rank}",
+        "keywordStatsCaveat": "From the last rank-tracking import — not a live check.",
+        "idealLengthHint": "Ideal length: {min}–{max} characters",
         "densityTarget": "Target 0.8–2.5%",
         "densityKeywordHeader": "Keyword",
         "densityCountHeader": "Occurrences",
@@ -1249,6 +1259,7 @@
         "linksInternalHeading": "Internal links",
         "linksExternalHeading": "External links",
         "linksEmpty": "No links in the body yet.",
+        "linksCheckedAt": "checked {when}",
         "schemaTypeLabel": "Schema type",
         "schemaTypeHint": "The JSON-LD @type this article publishes as.",
         "schemaTypeOptions": {
@@ -1263,6 +1274,7 @@
         "schemaPreviewTitle": "JSON-LD preview",
         "schemaPreviewHint": "The exact structured data the public page will embed.",
         "schemaPreviewType": "Type",
+        "breadcrumbTitle": "Breadcrumb",
         "publishBlockedReason": "{count, plural, one {This check is blocking publish:} other {These checks are blocking publish:}}",
         "overridePublishLabel": "Publish anyway",
         "overridePublishHint": "Only available to admins — recorded to the activity log when used.",
@@ -1272,6 +1284,11 @@
         "lsiHintNoFocusKeyword": "Set a focus keyword to see or add related terms.",
         "linksOpportunitiesHeading": "Should link to",
         "linksOpportunitiesEmpty": "No unlinked mentions found in this article yet.",
+        "targetType": {
+          "PROJECT": "Project",
+          "NEWS_ARTICLE": "Article",
+          "EVENT": "Event"
+        },
         "linksInboundHeading": "Links pointing in",
         "linksInboundEmpty": "Nothing on the site links to this article yet."
       },
