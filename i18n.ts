@@ -19,6 +19,17 @@ export const LOCALE_DISPLAY_ORDER = ["th", "en", "zh", "ru"] as const;
 export const defaultLocale: Locale = "th";
 
 /**
+ * Locales the admin backend's own UI (chrome, labels, dates — not content)
+ * is reachable under. Separate from `locales` above: every admin
+ * content-editing screen still manages all four `locales` for the public
+ * site's own translations regardless of this list — this only restricts
+ * which language the admin interface itself renders in, since editors only
+ * ever use Thai or English. See proxy.ts, which redirects /admin and
+ * /login off any other locale prefix, and AdminTopbar.tsx's switcher.
+ */
+export const adminLocales = ["th", "en"] as const satisfies readonly Locale[];
+
+/**
  * next-intl ≥3.22 deprecated the `locale` argument in favour of the
  * `requestLocale` promise, and now expects the resolved locale to be
  * returned alongside the messages. Returning it is not cosmetic: without

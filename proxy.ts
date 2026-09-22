@@ -21,7 +21,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { getToken } from "next-auth/jwt";
-import { locales, defaultLocale } from "./i18n";
+import { locales, defaultLocale, adminLocales } from "./i18n";
 import { roleRequiresTwoFactor } from "./lib/two-factor-policy";
 
 const intlMiddleware = createMiddleware({
@@ -46,6 +46,16 @@ export default async function proxy(request: NextRequest) {
 
   if (adminMatch || loginMatch) {
     const locale = (adminMatch ?? loginMatch)![1];
+
+    // The admin backend's own UI only renders in Thai or English (see
+    // i18n.ts's adminLocales) — a stray /zh or /ru admin/login link (an old
+    // bookmark, a locale cookie left over from the public site) bounces to
+    // the same page under Thai rather than rendering an admin nobody reads.
+    if (!(adminLocales as readonly string[]).includes(locale)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${defaultLocale}${pathname.slice(locale.length + 1)}`;
+      return NextResponse.redirect(url);
+    }
 
     const token = await getToken({
       req: request,

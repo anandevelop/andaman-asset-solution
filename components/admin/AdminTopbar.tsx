@@ -26,7 +26,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Bell, Check, ChevronDown, Search } from "lucide-react";
-import { locales, type Locale } from "@/i18n";
+import { adminLocales, type Locale } from "@/i18n";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
 import { markNotificationsRead } from "@/app/[locale]/admin/notifications-actions";
 
@@ -220,7 +220,7 @@ export default function AdminTopbar({
               aria-label={labels.language}
               className="absolute right-0 top-full z-20 mt-2 min-w-40 overflow-hidden rounded-xs border border-primary/10 bg-white py-1 shadow-card"
             >
-              {locales.map((code) => (
+              {adminLocales.map((code) => (
                 <Link
                   key={code}
                   href={localizedPath(code)}
