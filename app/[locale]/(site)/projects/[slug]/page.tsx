@@ -125,7 +125,6 @@ export default async function ProjectPage(props: Props) {
   const [
     t,
     tNav,
-    tChat,
     progress,
     faqs,
     settings,
@@ -137,7 +136,6 @@ export default async function ProjectPage(props: Props) {
   ] = await Promise.all([
       getTranslations("projects"),
       getTranslations("nav"),
-      getTranslations("chatButtons"),
       getProjectProgress(project.id, locale),
       // The questions a buyer asks while looking at one development, rather
       // than the whole FAQ — the rest lives on the home page.
@@ -154,13 +152,6 @@ export default async function ProjectPage(props: Props) {
       // project.facilities (the deprecated string array) directly.
       getProjectFacilities(project.id, locale),
     ]);
-
-  // Same wa.me construction as SalesTeamSection.tsx and Footer.tsx — the
-  // site-wide sales number, not a specific rep, since this CTA sits on a
-  // project page rather than beside a named person's card.
-  const whatsappUrl = `https://wa.me/${settings.contact.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-    tChat("whatsappGreeting"),
-  )}`;
 
   // Hero badge ("TYPE R · 398.28 SQ.M") — the first unit type by the same
   // sortOrder the Unit Types section below iterates in, not a "starting
@@ -805,7 +796,6 @@ export default async function ProjectPage(props: Props) {
                   projectName={project.name}
                   masterPlanImageUrl={project.masterPlanImageUrl}
                   units={units}
-                  whatsappUrl={whatsappUrl}
                   labels={{
                     all: t("unitStatus.ALL"),
                     available: t("unitStatus.AVAILABLE"),
@@ -815,7 +805,6 @@ export default async function ProjectPage(props: Props) {
                     zoomOut: t("sitePlanZoomOut"),
                     fullscreen: t("sitePlanFullscreen"),
                     resetView: t("sitePlanResetView"),
-                    askDetails: t("sitePlanAskDetails"),
                     viewMap: t("sitePlanViewMap"),
                     viewList: t("sitePlanViewList"),
                     hint: t("sitePlanHint"),

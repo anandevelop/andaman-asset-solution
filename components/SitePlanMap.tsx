@@ -56,25 +56,6 @@ import { useTranslations } from "next-intl";
 import { LayoutGrid, Map as MapIcon, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
 import type { ProjectUnitSummary, UnitStatus } from "@/lib/projects";
 
-/** WhatsApp's own glyph. Inline rather than from lucide, which has no
- *  brand marks — same copy as SalesTeamSection.tsx's, and for the same
- *  reason: the whole point of this button is that it looks like the app
- *  it hands you to. */
-function WhatsAppGlyph({ size = 14 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      fill="currentColor"
-      className="shrink-0"
-      aria-hidden
-    >
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-    </svg>
-  );
-}
-
 type Labels = {
   all: string;
   available: string;
@@ -84,7 +65,6 @@ type Labels = {
   zoomOut: string;
   fullscreen: string;
   resetView: string;
-  askDetails: string;
   viewMap: string;
   viewList: string;
   hint: string;
@@ -109,7 +89,6 @@ type Props = {
   masterPlanImageUrl: string | null;
   units: ProjectUnitSummary[];
   labels: Labels;
-  whatsappUrl: string;
 };
 
 type FilterValue = "ALL" | UnitStatus;
@@ -889,11 +868,11 @@ function DetailPanel({
   const revealed = useRevealed(reduced);
 
   return (
-    <div className={`mt-1.5 transition-all duration-300 ease-out ${revealed ? "opacity-100" : "translate-y-2 opacity-0"}`}>
-      <div className="mt-1 flex items-start justify-between gap-3">
-        <span className="font-sans text-[28px] font-extralight leading-none text-primary">{unit.unitNumber}</span>
+    <div className={`mt-1 transition-all duration-300 ease-out ${revealed ? "opacity-100" : "translate-y-2 opacity-0"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <span className="font-sans text-xl font-extralight leading-none text-primary">{unit.unitNumber}</span>
         <span
-          className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium"
+          className="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium"
           style={{ background: STATUS_TONE[unit.status].soft, color: STATUS_TONE[unit.status].text }}
         >
           {unit.status === "AVAILABLE" ? labels.available : unit.status === "RESERVED" ? labels.reserved : labels.sold}
@@ -902,8 +881,8 @@ function DetailPanel({
 
       {unit.unitTypeName && (
         <>
-          <p className="mt-3 text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailType}</p>
-          <p className="mt-1 text-[13.5px] text-ink">
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailType}</p>
+          <p className="mt-0.5 text-xs text-ink">
             {[
               unit.unitTypeName,
               unit.unitTypeBedrooms ? t("sitePlanBedroomsCount", { count: unit.unitTypeBedrooms }) : null,
@@ -915,24 +894,24 @@ function DetailPanel({
         </>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-2 grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLand}</p>
-          <p className="mt-1 text-[13.5px] text-ink">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLand}</p>
+          <p className="mt-0.5 text-xs text-ink">
             {unit.landAreaSqm !== null ? `${unit.landAreaSqm} ${t("units.sqm")}` : "—"}
           </p>
         </div>
         {unit.unitTypeLivingAreaSqm !== null && (
           <div>
-            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLiving}</p>
-            <p className="mt-1 text-[13.5px] text-ink">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLiving}</p>
+            <p className="mt-0.5 text-xs text-ink">
               {unit.unitTypeLivingAreaSqm} {t("units.sqm")}
             </p>
           </div>
         )}
       </div>
 
-      <p className="mt-3 border-t border-primary/10 pt-3 text-[12px] leading-relaxed text-ink/60">{labels.detailNote}</p>
+      <p className="mt-2 border-t border-primary/10 pt-2 text-[11px] leading-relaxed text-ink/60">{labels.detailNote}</p>
     </div>
   );
 }
@@ -945,14 +924,12 @@ function SummaryColumn({
   units,
   selected,
   labels,
-  whatsappUrl,
   reduced,
   t,
 }: {
   units: ProjectUnitSummary[];
   selected: EngineUnit | null;
   labels: Labels;
-  whatsappUrl: string;
   reduced: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
@@ -980,16 +957,16 @@ function SummaryColumn({
   return (
     <aside className="flex flex-col border border-primary/10 bg-white @min-[1000px]:border-t @min-[1000px]:border-l-0">
       {/* 1 — status breakdown */}
-      <div className="border-b border-primary/10 p-4 @min-[1000px]:p-5">
-        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/50">{labels.statusTitle}</p>
-        <div className="mt-1">
+      <div className="border-b border-primary/10 p-3.5 @min-[1000px]:p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/50">{labels.statusTitle}</p>
+        <div className="mt-0.5">
           {STATUS_ORDER.map((status) => (
-            <div key={status} className="flex items-center justify-between gap-3 border-b border-primary/10 py-2.5 last:border-b-0 last:pb-0.5">
-              <span className="flex items-center gap-2.5 text-[13.5px] text-ink">
-                <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: STATUS_TONE[status].dot }} aria-hidden />
+            <div key={status} className="flex items-center justify-between gap-3 border-b border-primary/10 py-1.5 last:border-b-0 last:pb-0">
+              <span className="flex items-center gap-2 text-xs text-ink">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-sm" style={{ background: STATUS_TONE[status].dot }} aria-hidden />
                 {status === "AVAILABLE" ? labels.available : status === "RESERVED" ? labels.reserved : labels.sold}
               </span>
-              <b className="font-sans text-2xl font-extralight leading-none" style={{ color: STATUS_TONE[status].text }}>
+              <b className="font-sans text-lg font-extralight leading-none" style={{ color: STATUS_TONE[status].text }}>
                 {animatedCounts[status]}
               </b>
             </div>
@@ -998,15 +975,15 @@ function SummaryColumn({
       </div>
 
       {/* 2 — total + proportion bar */}
-      <div className="border-b border-primary/10 p-4 @min-[1000px]:p-5">
+      <div className="border-b border-primary/10 p-3.5 @min-[1000px]:p-4">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[13.5px] text-ink/60">{labels.totalUnitsLabel}</span>
-          <b className="inline-flex items-baseline gap-1.5 font-sans text-xl font-light leading-none text-primary">
+          <span className="text-xs text-ink/60">{labels.totalUnitsLabel}</span>
+          <b className="inline-flex items-baseline gap-1 font-sans text-base font-light leading-none text-primary">
             {animatedTotal}
-            <em className="font-sans text-[13px] font-normal not-italic text-ink/60">{labels.unitsSuffix}</em>
+            <em className="font-sans text-[11px] font-normal not-italic text-ink/60">{labels.unitsSuffix}</em>
           </b>
         </div>
-        <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-primary/8">
+        <div className="mt-2 flex h-1 overflow-hidden rounded-full bg-primary/8">
           {[...STATUS_ORDER].reverse().map((status) => (
             <span
               key={status}
@@ -1015,27 +992,23 @@ function SummaryColumn({
             />
           ))}
         </div>
-        <p className="mt-2.5 text-[11.5px] text-ink/60">{t("sitePlanTakenPercent", { percent: takenPercent })}</p>
+        <p className="mt-1.5 text-[10.5px] text-ink/60">{t("sitePlanTakenPercent", { percent: takenPercent })}</p>
       </div>
 
       {/* 3 — selected plot's own details, empty until something is picked */}
-      <div className="flex-1 border-b border-primary/10 p-4 @min-[1000px]:p-5">
-        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/50">{labels.detailTitle}</p>
+      <div className="flex-1 border-b border-primary/10 p-3.5 @min-[1000px]:p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/50">{labels.detailTitle}</p>
         {!selectedFull ? (
-          <p className="mt-2 text-[13px] font-light leading-relaxed text-ink/60">{labels.detailEmpty}</p>
+          <p className="mt-1.5 text-xs font-light leading-relaxed text-ink/60">{labels.detailEmpty}</p>
         ) : (
           <DetailPanel key={selectedFull.id} unit={selectedFull} labels={labels} t={t} reduced={reduced} />
         )}
       </div>
 
-      {/* 4 — CTAs */}
-      <div className="flex flex-col gap-2.5 p-4 @min-[1000px]:p-5">
+      {/* 4 — CTA */}
+      <div className="p-3.5 @min-[1000px]:p-4">
         <a href="#enquire" className="btn-primary w-full">
           {labels.bookViewing}
-        </a>
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-outline w-full">
-          <WhatsAppGlyph size={14} />
-          {labels.askDetails}
         </a>
       </div>
     </aside>
@@ -1108,7 +1081,7 @@ function ListView({
   );
 }
 
-export default function SitePlanMap({ projectName, masterPlanImageUrl, units, labels, whatsappUrl }: Props) {
+export default function SitePlanMap({ projectName, masterPlanImageUrl, units, labels }: Props) {
   const t = useTranslations("projects");
   const cardRef = useRef<HTMLDivElement>(null);
   const mapboxRef = useRef<HTMLDivElement>(null);
@@ -1239,7 +1212,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
   // No photo yet: nothing for a map, filter chips or view toggle to act on
   // — see the file header's "!masterPlanImageUrl" note.
   if (!masterPlanImageUrl) {
-    return <SummaryColumn units={units} selected={null} labels={labels} whatsappUrl={whatsappUrl} reduced={reduced} t={t} />;
+    return <SummaryColumn units={units} selected={null} labels={labels} reduced={reduced} t={t} />;
   }
 
   return (
@@ -1370,7 +1343,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
           )}
         </div>
 
-        <SummaryColumn units={units} selected={selected} labels={labels} whatsappUrl={whatsappUrl} reduced={reduced} t={t} />
+        <SummaryColumn units={units} selected={selected} labels={labels} reduced={reduced} t={t} />
       </div>
     </div>
   );
