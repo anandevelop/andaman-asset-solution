@@ -154,7 +154,7 @@ export default function FeaturedProjectCard({
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/70">{project.tagline}</p>
 
         {specs.length > 0 && (
-          <dl className="mt-5 grid grid-cols-3 gap-x-4 border-t border-primary/10 pt-5">
+          <dl className="mt-5 grid grid-cols-3 gap-x-4 border-t border-primary/10 pb-5 pt-5">
             {specs.map((spec) => (
               <div key={spec.key}>
                 <dt className="text-xs text-ink/60">{spec.label}</dt>
