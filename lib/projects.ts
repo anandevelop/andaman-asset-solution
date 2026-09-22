@@ -144,6 +144,13 @@ export type ProjectUnitSummary = {
   unitNumber: string;
   unitTypeId: string | null;
   unitTypeName: string | null;
+  /** The unit type's own spec — for the site plan's selected-plot detail
+   *  panel (bedrooms/bathrooms/living area), which has nothing else to
+   *  read this from. Null whenever unitTypeId is, or when that type
+   *  hasn't had the figure filled in. */
+  unitTypeBedrooms: number | null;
+  unitTypeBathrooms: number | null;
+  unitTypeLivingAreaSqm: number | null;
   status: UnitStatus;
   shapePoints: ShapePoint[] | null;
   positionXPercent: number | null;
@@ -152,8 +159,10 @@ export type ProjectUnitSummary = {
   sortOrder: number;
   /** Sales phase, when this project releases in stages — see the field
    *  comment on ProjectUnit.phase. Null on the (majority) single-release
-   *  projects, which is exactly why the site plan's phase tabs disappear
-   *  rather than show one meaningless "Phase" pill for them. */
+   *  projects. No longer read by the public site plan (SitePlanMap.tsx
+   *  dropped its phase tabs and filter) — kept on this type rather than
+   *  trimmed, since ProjectUnit.phase itself is still very much live in
+   *  the admin drawing tool, which reads it through its own query. */
   phase: number | null;
 };
 
@@ -766,7 +775,9 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
         // only invite an enquiry the sales team has to turn down.
         where: { projectId, releasedForSale: true },
         orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
-        include: { unitType: { select: { name: true } } },
+        include: {
+          unitType: { select: { name: true, bedrooms: true, bathrooms: true, livingAreaSqm: true } },
+        },
       }),
     [] as any[],
   );
@@ -776,6 +787,9 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     unitNumber: u.unitNumber,
     unitTypeId: u.unitTypeId,
     unitTypeName: u.unitType?.name ?? null,
+    unitTypeBedrooms: u.unitType?.bedrooms ?? null,
+    unitTypeBathrooms: u.unitType?.bathrooms ?? null,
+    unitTypeLivingAreaSqm: toNumber(u.unitType?.livingAreaSqm ?? null),
     status: u.status as UnitStatus,
     shapePoints: (u.shapePoints as ShapePoint[] | null) ?? null,
     positionXPercent: toNumber(u.positionXPercent),
@@ -784,29 +798,6 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     sortOrder: u.sortOrder,
     phase: u.phase ?? null,
   }));
-}
-
-/**
- * When the sales team last touched this project's unit statuses — the
- * site plan's "updated {date}" chip, so a buyer scanning the map knows
- * whether "available" means "as of this morning" or "as of some point
- * this year." Scoped to `releasedForSale` for the same reason
- * getProjectUnits() is: a phase-2 plot's status is not information a
- * visitor asked for, so a rep editing it should not silently bump a date
- * that is supposed to describe what the public map shows.
- */
-export async function getProjectUnitsUpdatedAt(projectId: string): Promise<Date | null> {
-  return safeQuery(
-    `projectUnit.updatedAt(${projectId})`,
-    async () => {
-      const result = await prisma.projectUnit.aggregate({
-        _max: { updatedAt: true },
-        where: { projectId, releasedForSale: true },
-      });
-      return result._max.updatedAt ?? null;
-    },
-    null,
-  );
 }
 
 export type ReservableUnit = { id: string; unitNumber: string; unitTypeName: string | null };

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { notFound, redirect } from "next/navigation";
 import { redirectIfMoved } from "@/lib/redirects";
@@ -29,12 +28,11 @@ import {
   getPublishedProjectSlugs,
   getUnitTypesForProject,
   getProjectUnits,
-  getProjectUnitsUpdatedAt,
   getNearbyAttractions,
   getProjectFacilities,
 } from "@/lib/projects";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
-import { formatNumber, formatDateShort } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { resolveMapEmbedSrc } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 
@@ -133,7 +131,6 @@ export default async function ProjectPage(props: Props) {
     settings,
     unitTypes,
     units,
-    unitsUpdatedAt,
     attractionCategories,
     awards,
     facilities
@@ -148,7 +145,6 @@ export default async function ProjectPage(props: Props) {
       getSiteSettings(),
       getUnitTypesForProject(project.id, locale),
       getProjectUnits(project.id),
-      getProjectUnitsUpdatedAt(project.id),
       getNearbyAttractions(locale),
       // Company-wide trust signal for the lead-form mini stat row below —
       // same source as the home page Awards section, not project-specific
@@ -158,46 +154,6 @@ export default async function ProjectPage(props: Props) {
       // project.facilities (the deprecated string array) directly.
       getProjectFacilities(project.id, locale),
     ]);
-
-  // Site Plan + Unit Status: sales phases the map's tabs switch between —
-  // absent (null) on the majority of projects sold as one release, and
-  // rendered as no tabs at all rather than a single meaningless "Phase 1"
-  // pill in that case (see SitePlanMap's own guard on this array's length).
-  const phases = Array.from(
-    new Set(units.map((u) => u.phase).filter((p): p is number => p !== null)),
-  )
-    .sort((a, b) => a - b)
-    .map((value) => ({ value, label: t("sitePlanPhase", { n: value }) }));
-
-  // "Updated {date}" chip: null and therefore hidden entirely once the
-  // last real edit is more than 30 days old — a visible "updated 4 months
-  // ago" reads as evidence the map is stale, which is worse than saying
-  // nothing about when it was last touched at all.
-  const UPDATED_CHIP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
-  const unitsUpdatedRecently =
-    unitsUpdatedAt !== null && Date.now() - unitsUpdatedAt.getTime() <= UPDATED_CHIP_MAX_AGE_MS;
-
-  // Built by splitting the translated sentence around its own {date}
-  // placeholder (a private-use marker that can't collide with real
-  // content) rather than reaching for next-intl's t.rich — this project
-  // has no other rich-text usage, and a plain split needs no new pattern
-  // to keep straight for one bolded date in a corner chip.
-  let updatedChip: { full: ReactNode; date: string } | null = null;
-  if (unitsUpdatedRecently) {
-    const formattedDate = formatDateShort(locale, unitsUpdatedAt!);
-    const MARKER = "\uE000";
-    const [prefix, suffix] = t("sitePlanUpdated", { date: MARKER }).split(MARKER);
-    updatedChip = {
-      date: formattedDate,
-      full: (
-        <>
-          {prefix}
-          <span className="font-medium text-primary">{formattedDate}</span>
-          {suffix}
-        </>
-      ),
-    };
-  }
 
   // Same wa.me construction as SalesTeamSection.tsx and Footer.tsx — the
   // site-wide sales number, not a specific rep, since this CTA sits on a
@@ -819,14 +775,10 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           {/*
-            Full-width now, not a 58/42 map/list split — the unit-chip list
-            that used to fill the right column is gone; the summary bar
-            SitePlanMap renders under the map is its replacement, and it
-            reads better at the map's own full width than squeezed beside a
-            list. The map still only renders when there is at least one
-            unit to plot (see SitePlanMap's own `!masterPlanImageUrl`
-            branch for the "units but no photo yet" case, and the plain
-            <ImageWithSkeleton> fallback below for the reverse).
+            The map still only renders when there is at least one unit to
+            plot (see SitePlanMap's own `!masterPlanImageUrl` branch for the
+            "units but no photo yet" case, and the plain <ImageWithSkeleton>
+            fallback below for the reverse).
           */}
           {project.masterPlanImageUrl && units.length === 0 && (
             // A master plan photo with no digitized units yet still
@@ -853,8 +805,6 @@ export default async function ProjectPage(props: Props) {
                   projectName={project.name}
                   masterPlanImageUrl={project.masterPlanImageUrl}
                   units={units}
-                  phases={phases}
-                  updated={updatedChip}
                   whatsappUrl={whatsappUrl}
                   labels={{
                     all: t("unitStatus.ALL"),
@@ -865,9 +815,21 @@ export default async function ProjectPage(props: Props) {
                     zoomOut: t("sitePlanZoomOut"),
                     fullscreen: t("sitePlanFullscreen"),
                     resetView: t("sitePlanResetView"),
-                    allPhases: t("sitePlanAllPhases"),
                     askDetails: t("sitePlanAskDetails"),
+                    viewMap: t("sitePlanViewMap"),
+                    viewList: t("sitePlanViewList"),
+                    hint: t("sitePlanHint"),
+                    canvasLabel: t("sitePlanCanvasLabel"),
+                    statusTitle: t("sitePlanStatusTitle"),
+                    totalUnitsLabel: t("sitePlanTotalUnitsLabel"),
                     unitsSuffix: t("sitePlanUnitsSuffix"),
+                    detailTitle: t("sitePlanDetailTitle"),
+                    detailEmpty: t("sitePlanDetailEmpty"),
+                    detailType: t("sitePlanDetailType"),
+                    detailLand: t("sitePlanDetailLand"),
+                    detailLiving: t("sitePlanDetailLiving"),
+                    detailNote: t("sitePlanDetailNote"),
+                    bookViewing: t("sitePlanBookViewing"),
                   }}
                 />
               </Reveal>

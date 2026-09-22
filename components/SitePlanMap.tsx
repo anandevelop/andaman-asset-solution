@@ -3,123 +3,58 @@
 /**
  * components/SitePlanMap.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The whole "Site Plan + Unit Status" section body: phase tabs, the status
- * filter pills, the interactive master plan, and the summary bar
- * underneath it — one client component rather than four, because the
- * phase a visitor has selected has to dim the same map the status filter
- * dims, and the summary bar's counts have to react to both. Splitting that
- * state across a server-rendered wrapper and a client map would mean
- * either lifting the map's own zoom/pan state up too (react-zoom-pan-
- * pinch's context has to wrap whatever reads it) or duplicating the dim
- * logic in two places; keeping everything here keeps it in one.
+ * The whole "Site Plan + Unit Status" section body: view toggle (map/unit
+ * list), the status filter chips, the interactive master plan, and the
+ * summary column beside it.
  *
- * The map itself is unchanged from the previous version: SVG polygon
- * overlay, zoom/pan (react-zoom-pan-pinch), flat-size unit-number labels
- * with a crowd-collision shrink pass. See the sections below for what
- * that part still does — this header now covers the section as a whole.
+ * Ported from Claude outputs/siteplan-canvas-mockup.html — that file is the
+ * design source of truth (CSS tokens, the canvas engine's math, every
+ * animation timing) and every constant/comment below traces back to a
+ * specific decision explained there. This is not a reinterpretation of it.
  *
- * Coordinate system: the overlay <svg> uses viewBox="0 0 100 100" and the
- * image sits in a container whose aspect ratio is fixed to match the
- * actual site plan artwork (1754×1241 — see the three files under
- * public/site-plans/). Both unit.shapePoints and unit.positionX/YPercent
- * are already stored as 0-100 percentages of that box (see the field
- * comment on ProjectUnit.shapePoints in schema.prisma), so no runtime
- * conversion is needed here — the two just have to keep sharing the same
- * box. A future site-plan photo with a different aspect ratio would need
- * this container's aspect-[...] adjusted, the same pragmatic constraint
- * already documented for the Award trophy images and the project gallery
- * picks in prisma/seed.ts.
+ * WHY A HAND-ROLLED <canvas>, NOT SVG + react-zoom-pan-pinch (the previous
+ * version)
  *
- * Units with shapePoints render as filled polygons. Units with only
- * positionXPercent/Y (or none at all — nothing to plot) fall back to a
- * round pin marker so an unmapped unit doesn't just vanish from the map
- * the moment a project starts using this component. Units with neither
- * don't render on the map at all, but still count in the filter pills —
- * see the "N/Total units mapped" progress figure on the admin drawing
- * tool for the same distinction from the other side.
+ * The previous map layered an SVG polygon overlay over a plain <img>, with
+ * react-zoom-pan-pinch driving pan/zoom via CSS transforms and a parallel
+ * HTML layer for unit-number badges (SVG <text> can't carry a literal-pixel
+ * font-size inside a viewBox). That is three coordinate systems agreeing
+ * with each other by convention. A canvas is one surface, one coordinate
+ * system, and draws markers, ripples, the fly-to tween and the crowd-safe
+ * label sizing in a single pass — see PlanMapEngine.draw() below.
  *
- * ── Unit-number label sizing ─────────────────────────────────────────────
- * Every mapped unit always shows its number — there is no hidden-below-a-
- * size-threshold state any more. An earlier version hid a polygon's label
- * once its on-screen box fell under a ~24px floor and swapped in a
- * hover/tap tooltip instead, on a fine (mouse) pointer only; on a coarse
- * (touch) pointer, where there's no hover to reveal that tooltip with, it
- * always showed the number regardless of size. That mouse/touch split
- * stopped making sense once the map started rendering at the section's
- * full container width (see below) rather than a narrower column — plenty
- * of desktop visitors with a mouse now see the exact same undersized-on-
- * first-paint boxes touch users always did, and silently hiding their
- * numbers behind a hover they have no reason to try reads as "the number
- * is just missing," not "hover to reveal it." So the touch behaviour —
- * always show, floored at MIN_FONT_PX — is now what every pointer type
- * gets.
+ * MARKERS ONLY, NOT POLYGONS
  *
- * Every label now renders at the same flat size (FLAT_FONT_PX) rather
- * than one scaled to its own polygon's bounding box — the earlier
- * per-plot scaling made a big villa's number noticeably larger than the
- * townhome row's right next to it, which read as unpolished rather than
- * intentional once every label was made permanently visible (see above).
- * The box still has to account for the current zoom level —
- * `transform.scale` (kept in sync by <TransformSync>, a required child of
- * TransformWrapper since the sync hook isn't callable from outside it)
- * and the container's actual rendered pixel size (via ResizeObserver,
- * since this is a responsive component) both feed into the label
- * geometry calculation below, purely so the on-screen size stays literal
- * pixels at any zoom/viewport rather than for per-plot sizing.
+ * The previous version filled each unit's drawn shapePoints as a coloured
+ * polygon. This one plots a single round marker per unit at
+ * positionXPercent/Y — which the schema already derives as the centroid of
+ * shapePoints when they exist, so no shape data is lost, just not painted.
+ * shapePoints stays in the DB and the admin drawing tool untouched.
  *
- * The label lives inside the same zoomed content as the polygon (so its
- * *position* just follows along for free via percentage placement), but
- * its `fontSize`/stroke-width are pre-divided by the current scale — so
- * that once the ancestor's CSS transform re-multiplies them back on
- * render, the result is the literal on-screen pixel size the geometry
- * calculation decided on, not that size multiplied by zoom a second time.
+ * NO PHASES, NO "UPDATED" CHIP, NO PRICE
  *
- * A size-aware collision fallback (CROWD_SHRINK_STEP_PX/CROWD_SHRINK_ROUNDS,
- * see labelGeometry below) still shrinks two labels a step further when
- * their *estimated badge widths* — not just a flat distance — would
- * overlap. With every label always visible now, tightly packed rows of
- * small units (and narrow, mobile-width containers, where the whole plan
- * has much less on-screen room to begin with) are exactly where that
- * matters most; the initial zoom is also higher on narrow viewports (see
- * MOBILE_INITIAL_SCALE below) so there's more physical room per badge
- * before the shrink pass even has to act.
- *
- * ── Full-width layout, phases, and the summary bar ───────────────────────
- * This used to render at ~58% width beside a scrollable column of unit-
- * number chips grouped by type. That list is gone: it duplicated the map
- * it sat next to (the same unit, twice, in two visual languages) without
- * telling a visitor anything the map's own colours and a plain count
- * couldn't. The map now takes the section's full width, and what used to
- * be "which units exist" is now "how many are left" — the summary bar
- * below the map, which is the thing a buyer scanning the plan actually
- * wants to know.
- *
- * Phase tabs are new. `ProjectUnit.phase` lets a development release in
- * stages, and a project using it wants its plan filterable by stage the
- * same way the status pills already filter by AVAILABLE/RESERVED/SOLD —
- * both dim non-matching units rather than removing them, so the plan's
- * overall shape stays legible while a visitor narrows what they're
- * looking at. `phases` arrives empty for the (majority) single-release
- * projects, and the tab row simply does not render rather than showing
- * one meaningless "Phase 1" pill.
- *
- * The summary bar's counts are always scoped to the *phase* filter (never
- * to the status filter, which would make "Available: 5" and "Reserved: 2"
- * add up to something other than the total) — see the render below for
- * exactly which units feed it.
+ * All three were deliberately cut from this section (not from the schema —
+ * ProjectUnit.phase and the admin tooling that reads it are untouched).
+ * Phase tabs added a second filter axis on top of status that doubled the
+ * combinations to reason about for one number's worth of value; the
+ * "updated {date}" chip read as evidence the map might be stale more often
+ * than it reassured anyone it was fresh; and this site does not show prices
+ * anywhere, this section included — priceFromTHB stays unused here on
+ * purpose, same as every other public page.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
 import {
-  TransformWrapper,
-  TransformComponent,
-  useControls,
-  useTransformEffect,
-} from "react-zoom-pan-pinch";
-import { Maximize, Minus, Plus, RotateCcw } from "lucide-react";
-import type { ProjectUnitSummary, UnitStatus, ShapePoint } from "@/lib/projects";
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { useTranslations } from "next-intl";
+import { LayoutGrid, Map as MapIcon, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
+import type { ProjectUnitSummary, UnitStatus } from "@/lib/projects";
 
 /** WhatsApp's own glyph. Inline rather than from lucide, which has no
  *  brand marks — same copy as SalesTeamSection.tsx's, and for the same
@@ -149,215 +84,878 @@ type Labels = {
   zoomOut: string;
   fullscreen: string;
   resetView: string;
-  allPhases: string;
   askDetails: string;
+  viewMap: string;
+  viewList: string;
+  hint: string;
+  canvasLabel: string;
+  statusTitle: string;
+  totalUnitsLabel: string;
   unitsSuffix: string;
+  detailTitle: string;
+  detailEmpty: string;
+  detailType: string;
+  detailLand: string;
+  detailLiving: string;
+  detailNote: string;
+  bookViewing: string;
 };
-
-export type PhaseOption = { value: number; label: string };
 
 type Props = {
   projectName: string;
-  /** Null when no master plan photo has been uploaded yet — the map,
-   *  zoom controls and "updated" chip are skipped entirely in that case,
-   *  and only the summary bar renders (see the render below). */
+  /** Null when no master plan photo has been uploaded yet — the map, view
+   *  toggle and filter chips are skipped entirely in that case, and only
+   *  the status/total blocks of the summary column render. */
   masterPlanImageUrl: string | null;
   units: ProjectUnitSummary[];
   labels: Labels;
-  /** Ascending, translated — empty on a project sold as one release. */
-  phases: PhaseOption[];
-  /** Pre-built server-side (locale-aware date formatting, the "updated
-   *  {date}" sentence with its date already bolded) — null hides the
-   *  chip entirely, which is also what happens when the last edit is
-   *  over 30 days old; see the page's own comment on that rule. */
-  updated: { full: ReactNode; date: string } | null;
   whatsappUrl: string;
 };
 
 type FilterValue = "ALL" | UnitStatus;
-type PhaseValue = "ALL" | number;
-type Transform = { scale: number; positionX: number; positionY: number };
+type View = "map" | "list";
 
-// Tailwind classes are looked up whole, never string-concatenated, so the
-// JIT compiler can see every one of them statically (same convention as
-// UNIT_STATUS_STYLE/DOT on the project page).
+// ── Status visual language — Claude outputs/siteplan-canvas-mockup.html §2 ──
+// Solid dot/marker colour + a separate, deliberately lighter text colour for
+// the same status: SOLD's near-neutral grey reads fine as a small map
+// marker (where it is meant to recede) but is close to illegible as 26px
+// figures in the summary column — the two contexts need different values
+// from the same status, not one colour doing both jobs.
 //
-// Palette matches the muted emerald/accent-gold treatment the project
-// page's own legend and unit chip list already use (UNIT_STATUS_STYLE in
-// projects/[slug]/page.tsx) — this used to be stock Tailwind green-500,
-// which read as a generic web-template map dropped into an otherwise
-// navy-and-gold site. SOLD is a deliberate exception to the muted
-// treatment (per explicit request): a sold-out plot is the one status a
-// buyer scanning the plan needs to rule out at a glance, so it keeps a
-// red — just Tailwind's red-500/600 rather than a near-opaque alarm red.
-const POLYGON_FILL: Record<UnitStatus, string> = {
-  AVAILABLE: "fill-emerald-500/30",
-  RESERVED: "fill-accent/40",
-  SOLD: "fill-red-500/45",
+// Red/green are cut entirely — no colour outside the navy/sand brand
+// palette. AVAILABLE and RESERVED reuse this app's own design tokens
+// (primary-500, accent-600 in app/globals.css); SOLD's neutral grey has no
+// existing token to reuse, since nothing else in this app needed a
+// deliberately-receding neutral before this map did.
+const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string }> = {
+  AVAILABLE: { dot: "#296682", soft: "#DFE9EF", text: "#20536B" },
+  RESERVED: { dot: "#C47B3A", soft: "#FAEEDF", text: "#9C602C" },
+  SOLD: { dot: "#B6BDC1", soft: "#F3F4F5", text: "#77838A" },
 };
-const POLYGON_STROKE: Record<UnitStatus, string> = {
-  AVAILABLE: "stroke-emerald-600",
-  RESERVED: "stroke-accent",
-  SOLD: "stroke-red-600",
-};
-const POLYGON_STROKE_WIDTH: Record<UnitStatus, number> = {
-  AVAILABLE: 2,
-  RESERVED: 2,
-  SOLD: 1.5,
-};
-const PIN_FILL: Record<UnitStatus, string> = {
-  AVAILABLE: "fill-emerald-500",
-  RESERVED: "fill-accent",
-  SOLD: "fill-red-500",
-};
+const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
+/** The selection ring — sand, so it contrasts against every marker colour
+ *  above rather than just the navy one. */
+const SELECTION_RING = "#e8b384";
 
-// Small dot rendered inside each filter pill, so status is still readable
-// at a glance once the pill itself switched to the site's standard
-// solid-navy-when-active chip (see ProjectFilterBar's `chip()`) rather
-// than a colour-coded border. Also reused, unchanged, for the summary
-// bar's own status dots below.
-const STATUS_DOT: Record<FilterValue, string> = {
-  ALL: "bg-primary",
-  AVAILABLE: "bg-emerald-500",
-  RESERVED: "bg-accent",
-  SOLD: "bg-red-500",
-};
-
-// The summary bar's proportion strip under each status figure — solid,
-// not the polygon's translucent fill, since a 4px sliver reads as a
-// smudge rather than a colour at that low an opacity.
-const STATUS_BAR_FILL: Record<UnitStatus, string> = {
-  AVAILABLE: "bg-emerald-500",
-  RESERVED: "bg-accent",
-  SOLD: "bg-red-500",
-};
-
-// Every label renders at the same flat size now, rather than scaled to
-// its own polygon's on-screen box — the previous per-plot scaling made
-// adjacent unit numbers look randomly mismatched in size (a big villa
-// plot's "R01" noticeably larger than the townhome row's "R11" right next
-// to it), which read as unpolished rather than intentional. The only
-// thing that still shrinks a label now is the crowd-collision fallback
-// below, for the genuinely tight rows where two flat-size badges would
-// overlap.
-const FLAT_FONT_PX = 10;
-const MIN_FONT_PX = 6;
-// Per-character/padding multipliers mirroring the actual badge CSS below
-// (fontSize * 0.35 horizontal padding, roughly 0.6em per character) — used
-// to estimate each badge's on-screen half-width for collision checking.
-// Approximate on purpose: real text metrics aren't worth measuring here,
-// this just has to be close enough that two badges stop fully overlapping.
-const CHAR_WIDTH_EM = 0.6;
-const PAD_X_EM = 0.35;
-const CROWD_SHRINK_STEP_PX = 1;
-// How many shrink rounds to run — since a badge's own estimated size
-// feeds back into the next round's collision test, one pass isn't enough
-// for a tight cluster of 3+ units (a mobile-width map with a dense row of
-// townhomes easily has that). Five rounds converges well before it'd
-// matter that this isn't a real physics solver.
-const CROWD_SHRINK_ROUNDS = 5;
-
-// `centerOnInit` fits the *entire* site plan into whatever width the
-// container has at scale 1 — on a ~360-430px phone viewport that squeezes
-// every unit down to a fraction of its desktop on-screen size before the
-// collision pass even runs, which is what actually made numbers vanish
-// under one another. Starting mobile viewports pre-zoomed in gives every
-// badge real room; a visitor can still pinch/tap "-" out to the full plan.
-const MOBILE_BREAKPOINT_PX = 640; // matches Tailwind's `sm`
-const MOBILE_INITIAL_SCALE = 1.6;
-
-function pointsToAttr(points: ShapePoint[]): string {
-  return points.map((p) => `${p.x},${p.y}`).join(" ");
+function clamp(value: number, min: number, max: number): number {
+  return value < min ? min : value > max ? max : value;
+}
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+/** Overshoots past 1 then settles — the marker "drop" on load. c=1.9 is the
+ *  mockup's own tuned constant, not the textbook 1.70158 default; higher c
+ *  means more overshoot. */
+function easeOutBack(t: number): number {
+  const c = 1.9;
+  return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+}
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+/** '#rrggbb' + alpha -> 'rgba(r,g,b,a)', for the ripple stroke's fade. */
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha.toFixed(3)})`;
 }
 
-function average(values: number[]): number {
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
+// ── Zoom range, in multiples of the "fit the whole plan" scale ─────────────
+const MIN_ZOOM_FACTOR = 0.92;
+const MAX_ZOOM_FACTOR = 7;
+/** Below this container width, the fly-to-a-plot zoom goes in further — a
+ *  narrow map has much less on-screen room per plot to begin with. */
+const NARROW_BOX_PX = 560;
+
+type EngineUnit = {
+  id: string;
+  code: string;
+  status: UnitStatus;
+  land: number | null;
+  xPct: number;
+  yPct: number;
+  /** Stable per-unit integer used only to offset the ripple animation's
+   *  phase (see draw()) — any stable distinct number per unit works; this
+   *  is the unit's index when the engine was built. */
+  n: number;
+  // Animation state, mutated every frame by draw() — not React state, so a
+  // marker's bounce/ripple/fade doesn't cost a re-render per frame.
+  appear: number;
+  visible: number;
+  targetVisible: number;
+};
+
+type Tween = { t0: number; duration: number; k0: number; x0: number; y0: number; k1: number; x1: number; y1: number };
+
+/**
+ * Owns the canvas surface end to end — image draw, pan/zoom, hit-testing,
+ * every animation — in one requestAnimationFrame loop. Deliberately not a
+ * React component: none of this (a mutable transform, 60fps marker easing,
+ * imperative pointer capture) benefits from a virtual-DOM diff, and routing
+ * it through React state would mean a re-render on every animation frame.
+ *
+ * The two things React *does* need to know about — which unit is selected,
+ * and what the hover/selection tooltip should say — arrive through
+ * onSelect/onTooltipChange, fired only when they actually change rather
+ * than every frame. The tooltip's on-screen *position* stays imperative
+ * (written straight to tipEl.style in draw(), see the note in the
+ * constructor) since that does change every frame during pan/zoom/fly-to.
+ */
+class PlanMapEngine {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private box: HTMLElement;
+  private tipEl: HTMLDivElement;
+  private img: HTMLImageElement;
+  private imgReady = false;
+  private reduced: boolean;
+
+  units: EngineUnit[];
+  k = 1;
+  x = 0;
+  y = 0;
+  fitK = 1;
+  private dpr = 1;
+  private w = 0;
+  private h = 0;
+  private fitted = false;
+
+  sel: string | null = null;
+  private hov: string | null = null;
+  private tipId: string | null = null;
+  private filter: FilterValue = "ALL";
+
+  private started = 0;
+  private live = false;
+  private playing = false;
+  private tween: Tween | null = null;
+
+  private pointers = new Map<number, { x: number; y: number; startX: number; startY: number }>();
+  private pinch: { distance: number; k: number } | null = null;
+  private dragged = false;
+
+  private resizeObserver: ResizeObserver;
+  private rafId: number | null = null;
+
+  onSelect: ((unit: EngineUnit | null) => void) | null = null;
+  onTooltipChange: ((unit: EngineUnit | null) => void) | null = null;
+  onFirstInteract: (() => void) | null = null;
+  onDragStateChange: ((dragging: boolean) => void) | null = null;
+
+  constructor(
+    canvas: HTMLCanvasElement,
+    box: HTMLElement,
+    tipEl: HTMLDivElement,
+    imageUrl: string,
+    units: ProjectUnitSummary[],
+    reduced: boolean,
+  ) {
+    this.canvas = canvas;
+    this.box = box;
+    this.tipEl = tipEl;
+    this.reduced = reduced;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("2D canvas context unavailable");
+    this.ctx = ctx;
+
+    this.units = units
+      .filter((u) => u.positionXPercent !== null && u.positionYPercent !== null)
+      .map((u, index) => ({
+        id: u.id,
+        code: u.unitNumber,
+        status: u.status,
+        land: u.landAreaSqm,
+        xPct: u.positionXPercent!,
+        yPct: u.positionYPercent!,
+        n: index,
+        appear: 0,
+        visible: 1,
+        targetVisible: 1,
+      }));
+
+    this.img = new Image();
+    this.img.onload = () => {
+      this.imgReady = true;
+      this.fit();
+      this.kick();
+    };
+    this.img.src = imageUrl;
+
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(box);
+    this.resize();
+
+    this.bindInput();
+  }
+
+  private bindInput() {
+    const cv = this.canvas;
+
+    cv.addEventListener("pointerdown", (e) => {
+      this.onFirstInteract?.();
+      cv.setPointerCapture(e.pointerId);
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, startX: e.clientX, startY: e.clientY });
+      this.dragged = false;
+      if (this.pointers.size === 2) {
+        const [a, b] = [...this.pointers.values()];
+        this.pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y), k: this.k };
+      }
+    });
+
+    cv.addEventListener("pointermove", (e) => {
+      const p = this.pointers.get(e.pointerId);
+      if (p) {
+        const dx = e.clientX - p.x;
+        const dy = e.clientY - p.y;
+        p.x = e.clientX;
+        p.y = e.clientY;
+        // 5px slop separates a tap from a drag — without it, the pointerup
+        // that ends a pan also selects whatever plot happened to be under
+        // the cursor when the finger lifted.
+        if (Math.abs(e.clientX - p.startX) + Math.abs(e.clientY - p.startY) > 5 && !this.dragged) {
+          this.dragged = true;
+          this.onDragStateChange?.(true);
+        }
+        if (this.pointers.size === 2 && this.pinch) {
+          const [a, b] = [...this.pointers.values()];
+          const distance = Math.hypot(a.x - b.x, a.y - b.y);
+          const r = this.box.getBoundingClientRect();
+          this.zoomAt(
+            (a.x + b.x) / 2 - r.left,
+            (a.y + b.y) / 2 - r.top,
+            ((distance / this.pinch.distance) * this.pinch.k) / this.k,
+          );
+        } else if (this.pointers.size === 1) {
+          this.tween = null;
+          this.x += dx;
+          this.y += dy;
+          this.clampPan();
+          this.kick();
+        }
+        return;
+      }
+      const r = this.box.getBoundingClientRect();
+      this.setHover(this.hit(e.clientX - r.left, e.clientY - r.top));
+    });
+
+    const up = (e: PointerEvent) => {
+      const had = this.pointers.has(e.pointerId);
+      this.pointers.delete(e.pointerId);
+      if (this.pointers.size < 2) this.pinch = null;
+      if (this.pointers.size === 0 && this.dragged) this.onDragStateChange?.(false);
+      if (had && !this.dragged) {
+        const r = this.box.getBoundingClientRect();
+        const u = this.hit(e.clientX - r.left, e.clientY - r.top);
+        this.select(u ? u.id : null);
+      }
+    };
+    cv.addEventListener("pointerup", up);
+    cv.addEventListener("pointercancel", up);
+    cv.addEventListener("pointerleave", () => this.setHover(null));
+
+    cv.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const r = this.box.getBoundingClientRect();
+        this.zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
+      },
+      { passive: false },
+    );
+
+    cv.addEventListener("dblclick", (e) => {
+      const r = this.box.getBoundingClientRect();
+      this.zoomAt(e.clientX - r.left, e.clientY - r.top, 1.7);
+    });
+  }
+
+  private nx(u: EngineUnit): number {
+    return u.xPct / 100;
+  }
+  private ny(u: EngineUnit): number {
+    return u.yPct / 100;
+  }
+  private sx(u: EngineUnit): number {
+    return this.nx(u) * this.img.naturalWidth * this.k + this.x;
+  }
+  private sy(u: EngineUnit): number {
+    return this.ny(u) * this.img.naturalHeight * this.k + this.y;
+  }
+
+  resize() {
+    const r = this.box.getBoundingClientRect();
+    if (!r.width) return;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    this.w = r.width;
+    this.h = r.height;
+    this.canvas.width = Math.round(r.width * this.dpr);
+    this.canvas.height = Math.round(r.height * this.dpr);
+    if (!this.fitted) this.fit();
+    else this.clampPan();
+    this.kick();
+  }
+
+  fit() {
+    if (!this.img.naturalWidth || !this.w) return;
+    // Opens on the whole plan, every time — never pre-zoomed, not even on a
+    // narrow viewport. A plan that's cropped from the first frame can't be
+    // read as "what does this development look like," which is this
+    // section's one job before anyone touches it.
+    this.k = this.fitK = Math.min(this.w / this.img.naturalWidth, this.h / this.img.naturalHeight);
+    this.x = (this.w - this.img.naturalWidth * this.k) / 2;
+    this.y = (this.h - this.img.naturalHeight * this.k) / 2;
+    this.fitted = true;
+    this.clampPan();
+    this.kick();
+  }
+
+  private clampPan() {
+    const iw = this.img.naturalWidth * this.k;
+    const ih = this.img.naturalHeight * this.k;
+    const margin = 40;
+    this.x = iw <= this.w ? (this.w - iw) / 2 : clamp(this.x, this.w - iw - margin, margin);
+    this.y = ih <= this.h ? (this.h - ih) / 2 : clamp(this.y, this.h - ih - margin, margin);
+  }
+
+  zoomAt(cx: number, cy: number, factor: number) {
+    this.tween = null;
+    const nk = clamp(this.k * factor, this.fitK * MIN_ZOOM_FACTOR, this.fitK * MAX_ZOOM_FACTOR);
+    const f = nk / this.k;
+    this.x = cx - (cx - this.x) * f;
+    this.y = cy - (cy - this.y) * f;
+    this.k = nk;
+    this.clampPan();
+    this.kick();
+  }
+  zoomCenter(factor: number) {
+    this.zoomAt(this.w / 2, this.h / 2, factor);
+  }
+  resetView() {
+    this.fit();
+    this.select(null);
+  }
+
+  /** Zooms and pans to a plot at once — used both when a marker is tapped
+   *  directly (kept at whatever zoom the visitor is already at) and from
+   *  the unit list ("fly to that marker"). */
+  flyTo(unit: EngineUnit, zoomFactor: number) {
+    if (!this.img.naturalWidth) return;
+    const targetK = clamp(this.fitK * zoomFactor, this.fitK, this.fitK * MAX_ZOOM_FACTOR);
+    const targetX = this.w / 2 - this.nx(unit) * this.img.naturalWidth * targetK;
+    const targetY = this.h / 2 - this.ny(unit) * this.img.naturalHeight * targetK;
+    if (this.reduced) {
+      this.k = targetK;
+      this.x = targetX;
+      this.y = targetY;
+      this.clampPan();
+      this.kick();
+      return;
+    }
+    this.tween = {
+      t0: performance.now(),
+      duration: 720,
+      k0: this.k,
+      x0: this.x,
+      y0: this.y,
+      k1: targetK,
+      x1: targetX,
+      y1: targetY,
+    };
+    this.kick();
+  }
+
+  byId(id: string): EngineUnit | null {
+    return this.units.find((u) => u.id === id) ?? null;
+  }
+  private isVisible(u: EngineUnit): boolean {
+    return this.filter === "ALL" || u.status === this.filter;
+  }
+  setFilter(filter: FilterValue) {
+    this.filter = filter;
+    for (const u of this.units) u.targetVisible = this.isVisible(u) ? 1 : 0.18;
+    if (this.sel) {
+      const selected = this.byId(this.sel);
+      if (selected && !this.isVisible(selected)) this.select(null);
+    }
+    this.kick();
+  }
+
+  private markerRadius(): number {
+    // Bound to both the zoom level *and* the container's own width — on a
+    // phone the plan itself renders roughly a third the size, and a marker
+    // sized only for zoom would crowd into a string of beads there.
+    const zoomRatio = this.k / this.fitK;
+    const sizeScale = clamp(this.w / 900, 0.6, 1.12);
+    return clamp((6.2 + (zoomRatio - 1) * 6.4) * sizeScale, 5.2, 15);
+  }
+  private hitPadding(): number {
+    return this.w < NARROW_BOX_PX ? 11 : 7;
+  }
+
+  private hit(cx: number, cy: number): EngineUnit | null {
+    if (!this.img.naturalWidth) return null;
+    const r = this.markerRadius() + this.hitPadding();
+    let best: EngineUnit | null = null;
+    let bestDistSq = Infinity;
+    for (const u of this.units) {
+      if (u.targetVisible < 0.5) continue;
+      const dx = this.sx(u) - cx;
+      const dy = this.sy(u) - cy;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < r * r && distSq < bestDistSq) {
+        bestDistSq = distSq;
+        best = u;
+      }
+    }
+    return best;
+  }
+
+  private showTip(u: EngineUnit | null) {
+    this.tipId = u ? u.id : null;
+    this.onTooltipChange?.(u);
+    this.kick();
+  }
+  private setHover(u: EngineUnit | null) {
+    const id = u ? u.id : null;
+    if (id === this.hov) return;
+    this.hov = id;
+    this.canvas.style.cursor = id ? "pointer" : "grab";
+    // Desktop only: no hover on touch, so showing a tap-revealed tooltip
+    // here too would make it vanish the instant a finger lifts.
+    if (this.w > 520) this.showTip(u ?? (this.sel ? this.byId(this.sel) : null));
+    this.kick();
+  }
+  select(id: string | null) {
+    if (id) {
+      const u = this.byId(id);
+      if (!u || !this.isVisible(u)) return;
+    }
+    this.sel = id;
+    this.showTip(id ? this.byId(id) : null);
+    this.onSelect?.(id ? this.byId(id) : null);
+    this.kick();
+  }
+
+  private kick() {
+    if (this.live && !this.playing) {
+      this.playing = true;
+      this.loop();
+    }
+  }
+  /** First call also stamps `started` — the bounce-in stagger's epoch —
+   *  and only that first call does, so pausing/resuming via the
+   *  IntersectionObserver never replays it. */
+  start() {
+    this.live = true;
+    if (!this.started) this.started = performance.now();
+    this.kick();
+  }
+  pause() {
+    this.live = false;
+  }
+  private loop() {
+    if (!this.live) {
+      this.playing = false;
+      return;
+    }
+    this.draw();
+    this.rafId = requestAnimationFrame(() => this.loop());
+  }
+
+  destroy() {
+    this.live = false;
+    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
+    this.resizeObserver.disconnect();
+  }
+
+  private draw() {
+    const ctx = this.ctx;
+    const t = performance.now();
+    if (!this.img.naturalWidth || !this.w) return;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.w, this.h);
+
+    if (this.tween) {
+      const p = clamp((t - this.tween.t0) / this.tween.duration, 0, 1);
+      const e = easeInOutCubic(p);
+      this.k = this.tween.k0 + (this.tween.k1 - this.tween.k0) * e;
+      this.x = this.tween.x0 + (this.tween.x1 - this.tween.x0) * e;
+      this.y = this.tween.y0 + (this.tween.y1 - this.tween.y0) * e;
+      this.clampPan();
+      if (p >= 1) this.tween = null;
+    }
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, this.w, this.h);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(this.img, this.x, this.y, this.img.naturalWidth * this.k, this.img.naturalHeight * this.k);
+
+    const radius = this.markerRadius();
+    const showText = radius >= 10.5;
+    const since = t - (this.started || t);
+
+    for (const u of this.units) {
+      // Markers bounce in one at a time, staggered by index.
+      const want = this.reduced ? 1 : clamp((since - 120 - u.n * 14) / 420, 0, 1);
+      u.appear = want;
+      // Eases toward its filtered/unfiltered target rather than snapping,
+      // so toggling a status chip fades markers rather than popping them.
+      if (Math.abs(u.visible - u.targetVisible) > 0.004) u.visible += (u.targetVisible - u.visible) * 0.16;
+      else u.visible = u.targetVisible;
+      if (u.appear <= 0.001) continue;
+
+      const px = this.sx(u);
+      const py = this.sy(u);
+      if (px < -60 || px > this.w + 60 || py < -60 || py > this.h + 60) continue;
+
+      const isSelected = this.sel === u.id;
+      const isHovered = this.hov === u.id;
+      const r = radius * (isSelected ? 1.55 : isHovered ? 1.3 : 1) * (this.reduced ? 1 : easeOutBack(u.appear));
+      const alpha = u.visible * clamp(u.appear * 1.4, 0, 1);
+      if (r <= 0.4) continue;
+
+      const tone = STATUS_TONE[u.status];
+
+      // Ripple — selected plot always, an AVAILABLE plot on a slow,
+      // low-opacity cycle. Phase-offset by `u.n` so dozens of AVAILABLE
+      // ripples don't flash in lockstep across the whole plan.
+      if (!this.reduced && u.visible > 0.9 && (isSelected || u.status === "AVAILABLE")) {
+        const period = isSelected ? 1500 : 3400;
+        const window = isSelected ? 1 : 0.3;
+        const phase = ((t + u.n * 211) % period) / period;
+        if (phase < window) {
+          ctx.beginPath();
+          ctx.arc(px, py, r * (1 + (phase / window) * 1.5), 0, Math.PI * 2);
+          ctx.strokeStyle = hexToRgba(tone.dot, (1 - phase / window) * (isSelected ? 0.55 : 0.3) * alpha);
+          ctx.lineWidth = isSelected ? 2 : 1.3;
+          ctx.stroke();
+        }
+      }
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = "rgba(4,29,44,.35)";
+      ctx.shadowBlur = isSelected || isHovered ? 12 : 5;
+      ctx.shadowOffsetY = 1.5;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fillStyle = tone.dot;
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.lineWidth = clamp(r * 0.17, 1, 2.4);
+      ctx.strokeStyle = isSelected ? "#ffffff" : "rgba(255,255,255,.88)";
+      ctx.stroke();
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(px, py, r + 4.5, 0, Math.PI * 2);
+        ctx.strokeStyle = SELECTION_RING;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      if ((showText || isSelected || isHovered) && r > 7.5) {
+        const fontSize = clamp(r * 0.92, 8, 13);
+        ctx.font = `600 ${fontSize.toFixed(1)}px Roboto, system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#fff";
+        ctx.fillText(u.code, px, py + fontSize * 0.06);
+      }
+      ctx.restore();
+    }
+
+    // Tooltip position — imperative, every frame, since it has to track its
+    // marker through pan/zoom/fly-to. Content is React's job (onTooltipChange).
+    if (this.tipId) {
+      const u = this.byId(this.tipId);
+      if (u) {
+        const tx = this.sx(u);
+        const ty = this.sy(u);
+        const halfWidth = this.tipEl.offsetWidth / 2;
+        const tipHeight = this.tipEl.offsetHeight;
+        // Flips below the marker when there's no room above — otherwise
+        // the frame's own overflow:hidden clips it away entirely.
+        this.tipEl.classList.toggle("site-plan-tip-below", ty - tipHeight - 18 < 0);
+        const left = clamp(tx, halfWidth + 8, Math.max(halfWidth + 8, this.w - halfWidth - 8));
+        this.tipEl.style.left = `${left}px`;
+        this.tipEl.style.top = `${ty}px`;
+        this.tipEl.style.setProperty(
+          "--tip-arrow-left",
+          `${clamp(tx - left + halfWidth, 12, Math.max(12, halfWidth * 2 - 12))}px`,
+        );
+        this.tipEl.classList.add("site-plan-tip-on");
+      }
+    } else {
+      this.tipEl.classList.remove("site-plan-tip-on");
+    }
+  }
 }
 
-/** Keeps `transform` in sync with react-zoom-pan-pinch's own state —
- *  renders nothing, just a hook carrier that has to live inside
- *  <TransformWrapper> to call useTransformEffect at all. */
-function TransformSync({ onChange }: { onChange: (t: Transform) => void }) {
-  useTransformEffect(({ state }) => {
-    onChange({ scale: state.scale, positionX: state.positionX, positionY: state.positionY });
-  });
-  return null;
+// ── Small presentational pieces ─────────────────────────────────────────
+
+/** Counts up from 0 on mount — purely decorative, so it's skipped outright
+ *  under prefers-reduced-motion rather than jumping straight to the final
+ *  value with no animation to reduce. */
+function useCountUp(target: number, reduced: boolean): number {
+  const [value, setValue] = useState(reduced ? target : 0);
+  useEffect(() => {
+    if (reduced) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const duration = 850;
+    const step = () => {
+      const p = clamp((performance.now() - t0) / duration, 0, 1);
+      setValue(Math.round(target * easeOutCubic(p)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, reduced]);
+  return value;
 }
 
-/** +/- / reset / fullscreen — a child of TransformWrapper since useControls()
- *  needs the pinch-zoom context it provides. */
+function toolButtonClass(extra = ""): string {
+  return `flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5 ${extra}`;
+}
+
 function ZoomControls({
   labels,
+  onZoomIn,
+  onZoomOut,
+  onReset,
   onFullscreen,
+  isFullscreen,
+  layout,
 }: {
   labels: Labels;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onReset: () => void;
   onFullscreen: () => void;
+  isFullscreen: boolean;
+  /** "floating" over the map's bottom-right corner (≥560px), or a plain
+   *  toolbar row (<560px, and always while fullscreen) — see the file
+   *  header's breakpoint table. */
+  layout: "floating" | "row";
 }) {
-  const { zoomIn, zoomOut, resetTransform } = useControls();
+  const buttons: { label: string; icon: React.ReactNode; onClick: () => void; pressed?: boolean }[] = [
+    { label: labels.zoomIn, icon: <Plus size={16} aria-hidden />, onClick: onZoomIn },
+    { label: labels.zoomOut, icon: <Minus size={16} aria-hidden />, onClick: onZoomOut },
+    { label: labels.resetView, icon: <RotateCcw size={15} aria-hidden />, onClick: onReset },
+    {
+      label: labels.fullscreen,
+      icon: <Maximize size={15} aria-hidden />,
+      onClick: onFullscreen,
+      pressed: isFullscreen,
+    },
+  ];
 
-  const buttonClass =
-    "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
+  if (layout === "row") {
+    return (
+      <div className="flex shrink-0 overflow-hidden rounded-xs border border-primary/10">
+        {buttons.map((b) => (
+          <button
+            key={b.label}
+            type="button"
+            aria-label={b.label}
+            aria-pressed={b.pressed}
+            onClick={b.onClick}
+            className="flex h-8 w-9 items-center justify-center border-r border-primary/10 bg-white text-primary transition-colors last:border-r-0 hover:bg-primary/5"
+          >
+            {b.icon}
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
-      <button
-        type="button"
-        aria-label={labels.zoomIn}
-        onClick={() => zoomIn()}
-        className={buttonClass}
-      >
-        <Plus size={16} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label={labels.zoomOut}
-        onClick={() => zoomOut()}
-        className={buttonClass}
-      >
-        <Minus size={16} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label={labels.resetView}
-        onClick={() => resetTransform()}
-        className={buttonClass}
-      >
-        <RotateCcw size={15} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label={labels.fullscreen}
-        onClick={onFullscreen}
-        className={buttonClass}
-      >
-        <Maximize size={15} aria-hidden />
-      </button>
+    <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-2">
+      {buttons.map((b) => (
+        <button
+          key={b.label}
+          type="button"
+          aria-label={b.label}
+          aria-pressed={b.pressed}
+          onClick={b.onClick}
+          className={toolButtonClass()}
+        >
+          {b.icon}
+        </button>
+      ))}
     </div>
   );
 }
 
-/**
- * Available / Reserved / Sold + the WhatsApp CTA — the map's replacement
- * for the old unit-chip list. Renders on its own (no map, no tabs, no
- * pills) when the project has no master plan photo yet, and underneath
- * the map otherwise; either way its counts come from whichever units the
- * caller hands it, already narrowed to the selected phase.
- */
-function SummaryBar({
+function Legend({
+  labels,
+  layout,
+}: {
+  labels: Labels;
+  layout: "floating" | "row";
+}) {
+  const items: { status: UnitStatus; label: string }[] = [
+    { status: "AVAILABLE", label: labels.available },
+    { status: "RESERVED", label: labels.reserved },
+    { status: "SOLD", label: labels.sold },
+  ];
+
+  return (
+    <div
+      className={
+        layout === "floating"
+          ? "absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-64px)] flex-wrap gap-x-3 gap-y-1 rounded-xs border border-primary/10 bg-white/90 px-2.5 py-2 text-[11px] text-ink/70 backdrop-blur-sm"
+          : "flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-0.5 text-[10.5px] text-ink/70"
+      }
+    >
+      {items.map(({ status, label }) => (
+        <span key={status} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_TONE[status].dot }} aria-hidden />
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function StatusChips({
+  labels,
+  filter,
+  onChange,
+  counts,
+}: {
+  labels: Labels;
+  filter: FilterValue;
+  onChange: (value: FilterValue) => void;
+  counts: Record<FilterValue, number>;
+}) {
+  const items: { value: FilterValue; label: string }[] = [
+    { value: "ALL", label: labels.all },
+    { value: "AVAILABLE", label: labels.available },
+    { value: "RESERVED", label: labels.reserved },
+    { value: "SOLD", label: labels.sold },
+  ];
+
+  return (
+    <div className="flex min-w-0 flex-wrap gap-2 @max-[560px]:flex-nowrap @max-[560px]:overflow-x-auto @max-[560px]:pb-1">
+      {items.map(({ value, label }) => {
+        const active = filter === value;
+        const dotColor = value === "ALL" ? undefined : STATUS_TONE[value].dot;
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(value)}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xs border px-3.5 py-2 text-xs font-medium transition-colors ${
+              active
+                ? "border-primary bg-primary text-white"
+                : "border-primary/15 bg-white text-ink/70 hover:border-primary/35 hover:text-primary"
+            }`}
+          >
+            {dotColor && (
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ background: active ? "#fff" : dotColor }}
+                aria-hidden
+              />
+            )}
+            {label}
+            <span className={active ? "text-white/70" : "text-ink/40"}>{counts[value]}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The selected plot's own detail block — its own component (rather than
+ *  inline JSX in SummaryColumn) purely so it can be keyed by unit id at the
+ *  call site: remounting on every new selection is what makes useRevealed
+ *  replay its fade-up on each swap, the same way React's own key-remount
+ *  idiom drives any other "restart this animation on change" case. */
+function DetailPanel({
+  unit,
+  labels,
+  t,
+  reduced,
+}: {
+  unit: ProjectUnitSummary;
+  labels: Labels;
+  t: ReturnType<typeof useTranslations>;
+  reduced: boolean;
+}) {
+  const revealed = useRevealed(reduced);
+
+  return (
+    <div className={`mt-1.5 transition-all duration-300 ease-out ${revealed ? "opacity-100" : "translate-y-2 opacity-0"}`}>
+      <div className="mt-1 flex items-start justify-between gap-3">
+        <span className="font-sans text-[28px] font-extralight leading-none text-primary">{unit.unitNumber}</span>
+        <span
+          className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium"
+          style={{ background: STATUS_TONE[unit.status].soft, color: STATUS_TONE[unit.status].text }}
+        >
+          {unit.status === "AVAILABLE" ? labels.available : unit.status === "RESERVED" ? labels.reserved : labels.sold}
+        </span>
+      </div>
+
+      {unit.unitTypeName && (
+        <>
+          <p className="mt-3 text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailType}</p>
+          <p className="mt-1 text-[13.5px] text-ink">
+            {[
+              unit.unitTypeName,
+              unit.unitTypeBedrooms ? t("sitePlanBedroomsCount", { count: unit.unitTypeBedrooms }) : null,
+              unit.unitTypeBathrooms ? t("sitePlanBathroomsCount", { count: unit.unitTypeBathrooms }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </>
+      )}
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLand}</p>
+          <p className="mt-1 text-[13.5px] text-ink">
+            {unit.landAreaSqm !== null ? `${unit.landAreaSqm} ${t("units.sqm")}` : "—"}
+          </p>
+        </div>
+        {unit.unitTypeLivingAreaSqm !== null && (
+          <div>
+            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLiving}</p>
+            <p className="mt-1 text-[13.5px] text-ink">
+              {unit.unitTypeLivingAreaSqm} {t("units.sqm")}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-3 border-t border-primary/10 pt-3 text-[12px] leading-relaxed text-ink/60">{labels.detailNote}</p>
+    </div>
+  );
+}
+
+/** The 4-block column beside (or, narrow, below) the map: the status
+ *  breakdown, the total-units bar, the selected-plot detail, and the CTAs.
+ *  `units` here is always the *unfiltered* set — see the file header's note
+ *  on why these totals don't react to the status chips. */
+function SummaryColumn({
   units,
+  selected,
   labels,
   whatsappUrl,
-  attached,
+  reduced,
+  t,
 }: {
   units: ProjectUnitSummary[];
+  selected: EngineUnit | null;
   labels: Labels;
   whatsappUrl: string;
-  /** True when rendered directly under the map frame — drops its own top
-   *  corners/border so the two read as one continuous card. */
-  attached: boolean;
+  reduced: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
-  const t = useTranslations("projects");
-
   const total = units.length;
   const counts = units.reduce(
     (acc, u) => {
@@ -366,466 +964,413 @@ function SummaryBar({
     },
     { AVAILABLE: 0, RESERVED: 0, SOLD: 0 } as Record<UnitStatus, number>,
   );
+  const takenPercent = total > 0 ? Math.round(((counts.SOLD + counts.RESERVED) / total) * 100) : 0;
 
-  const cells: { status: UnitStatus; label: string }[] = [
-    { status: "AVAILABLE", label: labels.available },
-    { status: "RESERVED", label: labels.reserved },
-    { status: "SOLD", label: labels.sold },
-  ];
+  const animatedTotal = useCountUp(total, reduced);
+  const animatedCounts: Record<UnitStatus, number> = {
+    AVAILABLE: useCountUp(counts.AVAILABLE, reduced),
+    RESERVED: useCountUp(counts.RESERVED, reduced),
+    SOLD: useCountUp(counts.SOLD, reduced),
+  };
+
+  // The selected unit's own full record, for its land size / unit type —
+  // EngineUnit only carries what the canvas needs to draw.
+  const selectedFull = selected ? (units.find((u) => u.id === selected.id) ?? null) : null;
 
   return (
-    <div
-      className={`grid grid-cols-1 border border-primary/10 bg-white sm:grid-cols-4 ${
-        attached ? "rounded-b-xs border-t-0" : "rounded-xs shadow-card"
-      }`}
-    >
-      {cells.map(({ status, label }) => {
-        const count = counts[status];
-        const share = total > 0 ? Math.round((count / total) * 100) : 0;
-
-        return (
-          <div
-            key={status}
-            className="border-b border-primary/10 p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
-          >
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/60">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[status]}`} aria-hidden />
-              {label}
-            </span>
-            <p className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-2xl font-light text-primary">{count}</span>
-              <span className="text-xs text-ink/50">
-                / {total} {labels.unitsSuffix}
+    <aside className="flex flex-col border border-primary/10 bg-white @min-[1000px]:border-t @min-[1000px]:border-l-0">
+      {/* 1 — status breakdown */}
+      <div className="border-b border-primary/10 p-4 @min-[1000px]:p-5">
+        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/50">{labels.statusTitle}</p>
+        <div className="mt-1">
+          {STATUS_ORDER.map((status) => (
+            <div key={status} className="flex items-center justify-between gap-3 border-b border-primary/10 py-2.5 last:border-b-0 last:pb-0.5">
+              <span className="flex items-center gap-2.5 text-[13.5px] text-ink">
+                <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: STATUS_TONE[status].dot }} aria-hidden />
+                {status === "AVAILABLE" ? labels.available : status === "RESERVED" ? labels.reserved : labels.sold}
               </span>
-            </p>
-            <span className="mt-2.5 block h-1 w-full overflow-hidden rounded-full bg-primary/8">
-              <span
-                className={`block h-full rounded-full ${STATUS_BAR_FILL[status]}`}
-                style={{ width: `${share}%` }}
-              />
-            </span>
-          </div>
-        );
-      })}
+              <b className="font-sans text-2xl font-extralight leading-none" style={{ color: STATUS_TONE[status].text }}>
+                {animatedCounts[status]}
+              </b>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <div className="flex flex-col justify-center gap-3 bg-primary p-4 text-white">
-        <p className="text-sm leading-snug">
-          {t("sitePlanRemaining", { count: counts.AVAILABLE })}
-        </p>
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-xs bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1DA851]"
-        >
-          <WhatsAppGlyph size={15} />
+      {/* 2 — total + proportion bar */}
+      <div className="border-b border-primary/10 p-4 @min-[1000px]:p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13.5px] text-ink/60">{labels.totalUnitsLabel}</span>
+          <b className="inline-flex items-baseline gap-1.5 font-sans text-xl font-light leading-none text-primary">
+            {animatedTotal}
+            <em className="font-sans text-[13px] font-normal not-italic text-ink/60">{labels.unitsSuffix}</em>
+          </b>
+        </div>
+        <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-primary/8">
+          {[...STATUS_ORDER].reverse().map((status) => (
+            <span
+              key={status}
+              className="block h-full transition-[width] duration-1000 ease-out"
+              style={{ background: STATUS_TONE[status].dot, width: total ? `${(counts[status] / total) * 100}%` : "0%" }}
+            />
+          ))}
+        </div>
+        <p className="mt-2.5 text-[11.5px] text-ink/60">{t("sitePlanTakenPercent", { percent: takenPercent })}</p>
+      </div>
+
+      {/* 3 — selected plot's own details, empty until something is picked */}
+      <div className="flex-1 border-b border-primary/10 p-4 @min-[1000px]:p-5">
+        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink/50">{labels.detailTitle}</p>
+        {!selectedFull ? (
+          <p className="mt-2 text-[13px] font-light leading-relaxed text-ink/60">{labels.detailEmpty}</p>
+        ) : (
+          <DetailPanel key={selectedFull.id} unit={selectedFull} labels={labels} t={t} reduced={reduced} />
+        )}
+      </div>
+
+      {/* 4 — CTAs */}
+      <div className="flex flex-col gap-2.5 p-4 @min-[1000px]:p-5">
+        <a href="#enquire" className="btn-primary w-full">
+          {labels.bookViewing}
+        </a>
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-outline w-full">
+          <WhatsAppGlyph size={14} />
           {labels.askDetails}
         </a>
+      </div>
+    </aside>
+  );
+}
+
+/** Reveals its children over a `transitionDelay` set by the caller, rather
+ *  than flashing everything in at once — see ListView's own use below.
+ *  Renders already-revealed under prefers-reduced-motion, matching the
+ *  mockup's own reduced-motion rule of skipping straight to the end state. */
+function useRevealed(reduced: boolean): boolean {
+  const [revealed, setRevealed] = useState(reduced);
+  useEffect(() => {
+    if (reduced) return;
+    // One frame late, so the browser paints the "not revealed" state first
+    // — flipping the class in the same tick it mounts would skip straight
+    // to "revealed" with no transition to see.
+    const raf = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(raf);
+  }, [reduced]);
+  return revealed;
+}
+
+function ListView({
+  units,
+  onPick,
+  t,
+  reduced,
+}: {
+  units: ProjectUnitSummary[];
+  onPick: (unit: ProjectUnitSummary) => void;
+  t: ReturnType<typeof useTranslations>;
+  reduced: boolean;
+}) {
+  const revealed = useRevealed(reduced);
+
+  return (
+    <div className="border border-primary/10 bg-white">
+      <div className="border-b border-primary/10 px-4 py-3 text-xs text-ink/60">
+        {t("sitePlanListCount", { count: units.length })}
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2 p-3.5">
+        {units.map((unit, index) => (
+          <button
+            key={unit.id}
+            type="button"
+            onClick={() => onPick(unit)}
+            style={{
+              background: STATUS_TONE[unit.status].soft,
+              transitionDelay: reduced ? "0ms" : `${Math.min(index * 11, 600)}ms`,
+            }}
+            className={`rounded-xs border border-transparent p-2.5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card ${
+              revealed ? "opacity-100" : "translate-y-2 opacity-0"
+            }`}
+          >
+            <div className="font-sans text-base text-primary">{unit.unitNumber}</div>
+            <div className="mt-1 flex items-center gap-1.5 text-[10.5px] text-ink/60">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_TONE[unit.status].dot }} aria-hidden />
+              {unit.status === "AVAILABLE" ? t("unitStatus.AVAILABLE") : unit.status === "RESERVED" ? t("unitStatus.RESERVED") : t("unitStatus.SOLD")}
+            </div>
+            {unit.landAreaSqm !== null && (
+              <div className="mt-1.5 font-sans text-[11.5px] text-ink/60">
+                {unit.landAreaSqm} {t("units.sqm")}
+              </div>
+            )}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
-export default function SitePlanMap({
-  projectName,
-  masterPlanImageUrl,
-  units,
-  labels,
-  phases,
-  updated,
-  whatsappUrl,
-}: Props) {
-  const [statusFilter, setStatusFilter] = useState<FilterValue>("ALL");
-  const [phaseFilter, setPhaseFilter] = useState<PhaseValue>("ALL");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [transform, setTransform] = useState<Transform>({ scale: 1, positionX: 0, positionY: 0 });
-  const [size, setSize] = useState({ width: 0, height: 0 });
+export default function SitePlanMap({ projectName, masterPlanImageUrl, units, labels, whatsappUrl }: Props) {
+  const t = useTranslations("projects");
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mapboxRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  const engineRef = useRef<PlanMapEngine | null>(null);
 
-  // Lazy initializer so this only ever reads window.innerWidth once, at
-  // mount — it feeds TransformWrapper's `initialScale`, which is itself a
-  // one-time starting value, so there's nothing to keep in sync on resize
-  // (a phone rotated mid-session keeps its original zoom, same as any
-  // other "initial" prop would).
-  const [initialScale] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT_PX
-      ? MOBILE_INITIAL_SCALE
-      : 1,
+  const [view, setView] = useState<View>("map");
+  const [statusFilter, setStatusFilter] = useState<FilterValue>("ALL");
+  const [selected, setSelected] = useState<EngineUnit | null>(null);
+  const [tooltipUnit, setTooltipUnit] = useState<EngineUnit | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [hintVisible, setHintVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const reduced =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Only a unit with a plotted position can appear on the canvas or be
+  // "flown to" from the list — see the file header for why the summary
+  // column's own totals (block 1/2) still count every released unit
+  // regardless, while this narrower set backs the map, the list and the
+  // filter chips' counts.
+  const plottable = useMemo(
+    () => units.filter((u) => u.positionXPercent !== null && u.positionYPercent !== null),
+    [units],
   );
 
-  // The container's own rendered box never moves/scales (react-zoom-pan-
-  // pinch only ever transforms its *content*), so this is a stable base
-  // for converting viewBox percentages into real on-screen pixels.
+  const chipCounts = useMemo(() => {
+    const counts: Record<FilterValue, number> = { ALL: plottable.length, AVAILABLE: 0, RESERVED: 0, SOLD: 0 };
+    for (const u of plottable) counts[u.status] += 1;
+    return counts;
+  }, [plottable]);
+
+  const listUnits = useMemo(
+    () => plottable.filter((u) => statusFilter === "ALL" || u.status === statusFilter),
+    [plottable, statusFilter],
+  );
+
+  // ── Engine lifecycle ─────────────────────────────────────────────────
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => setSize({ width: el.clientWidth, height: el.clientHeight });
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
+    if (!masterPlanImageUrl || !canvasRef.current || !mapboxRef.current || !tipRef.current) return;
+
+    const engine = new PlanMapEngine(
+      canvasRef.current,
+      mapboxRef.current,
+      tipRef.current,
+      masterPlanImageUrl,
+      plottable,
+      reduced,
+    );
+    engine.onSelect = setSelected;
+    engine.onTooltipChange = setTooltipUnit;
+    engine.onFirstInteract = () => setHintVisible(false);
+    engine.onDragStateChange = setDragging;
+    engineRef.current = engine;
+
+    return () => {
+      engine.destroy();
+      engineRef.current = null;
+    };
+    // plottable is derived from the `units` prop, which the page never
+    // changes after mount for a given project — re-keying the engine on a
+    // change here would tear down mid-interaction state for no benefit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterPlanImageUrl]);
+
+  useEffect(() => {
+    engineRef.current?.setFilter(statusFilter);
+  }, [statusFilter]);
+
+  // Pauses the draw loop while the section is off-screen — nothing needs
+  // 60fps ripple/bounce math running behind a page a visitor has scrolled
+  // past or hasn't reached yet.
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node || !masterPlanImageUrl) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) engineRef.current?.start();
+        else engineRef.current?.pause();
+      },
+      { threshold: 0.05 },
+    );
+    observer.observe(node);
     return () => observer.disconnect();
+  }, [masterPlanImageUrl]);
+
+  useEffect(() => {
+    const onHintTimeout = setTimeout(() => setHintVisible(false), 4200);
+    return () => clearTimeout(onHintTimeout);
   }, []);
 
-  // Phase always narrows first — the summary bar's counts, the map's
-  // dimming, and the status pills' own counts all read from this rather
-  // than the raw `units` prop, so "5 available" and the map's dimmed-out
-  // units can never disagree about which phase they're describing.
-  const phaseUnits = useMemo(
-    () => (phaseFilter === "ALL" ? units : units.filter((u) => u.phase === phaseFilter)),
-    [units, phaseFilter],
-  );
+  useEffect(() => {
+    const onFsChange = () => {
+      const active = document.fullscreenElement === cardRef.current;
+      setIsFullscreen(active);
+      const engine = engineRef.current;
+      if (!engine) return;
+      // The card's own dimensions change size the instant fullscreen
+      // toggles — force a fresh "fit" once the browser has actually
+      // resized the element, not the frame this event fires on.
+      setTimeout(() => {
+        (engine as unknown as { fitted: boolean }).fitted = false;
+        engine.resize();
+      }, 70);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
 
-  const counts = phaseUnits.reduce(
-    (acc, u) => {
-      acc[u.status] += 1;
-      return acc;
-    },
-    { AVAILABLE: 0, RESERVED: 0, SOLD: 0 } as Record<UnitStatus, number>,
-  );
+  const handleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else cardRef.current?.requestFullscreen?.();
+  }, []);
 
-  const statusPills: { value: FilterValue; label: string; count: number }[] = [
-    { value: "ALL", label: labels.all, count: phaseUnits.length },
-    { value: "AVAILABLE", label: labels.available, count: counts.AVAILABLE },
-    { value: "RESERVED", label: labels.reserved, count: counts.RESERVED },
-    { value: "SOLD", label: labels.sold, count: counts.SOLD },
-  ];
+  const handleListPick = useCallback((unit: ProjectUnitSummary) => {
+    setView("map");
+    engineRef.current?.select(unit.id);
+    setTimeout(() => {
+      const engineUnit = engineRef.current?.byId(unit.id);
+      if (engineUnit) engineRef.current?.flyTo(engineUnit, mapboxRef.current && mapboxRef.current.clientWidth < NARROW_BOX_PX ? 4.4 : 3.2);
+    }, 60);
+  }, []);
 
-  const handleFullscreen = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      el.requestFullscreen?.();
-    }
-  };
+  const toolLayout: "floating" | "row" = "floating"; // narrowed to "row" below @560px via CSS, see .maptools
 
-  // Per-unit label geometry — on-screen anchor position, plus the flat
-  // font size adjusted only for local crowding. Recomputed whenever the
-  // shapes, the container size, or the zoom scale change.
-  const labelGeometry = useMemo(() => {
-    const geo = new Map<
-      string,
-      { fontPx: number; anchorXPx: number; anchorYPx: number; chars: number }
-    >();
-
-    // Not measured yet (first paint, before the ResizeObserver fires) —
-    // default to "show everything at max size" rather than flashing
-    // every label hidden for a frame.
-    if (size.width === 0 || size.height === 0) return geo;
-
-    const pxPerUnitX = (size.width / 100) * transform.scale;
-    const pxPerUnitY = (size.height / 100) * transform.scale;
-
-    for (const unit of units) {
-      const shapePoints = unit.shapePoints;
-      if (!shapePoints || shapePoints.length < 3) continue;
-
-      const anchorX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
-      const anchorY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
-
-      // Every label starts at the same flat size (FLAT_FONT_PX) — see the
-      // constant's comment for why this replaced the old per-plot,
-      // box-size-proportional formula. Only the crowd-collision pass
-      // below shrinks a label from here.
-      geo.set(unit.id, {
-        fontPx: FLAT_FONT_PX,
-        anchorXPx: anchorX * pxPerUnitX,
-        anchorYPx: anchorY * pxPerUnitY,
-        chars: unit.unitNumber.length,
-      });
-    }
-
-    // Collision fallback: each badge's on-screen half-width is estimated
-    // from its *current* fontPx (see CHAR_WIDTH_EM/PAD_X_EM above, mirroring
-    // the real badge CSS), and two labels whose anchors are closer together
-    // than their combined half-widths both drop a step. Run in several
-    // rounds rather than one pass — as a badge shrinks its estimated half-
-    // width shrinks too, which can resolve a pair the first round's larger
-    // estimate still flagged, and a unit sitting between two crowded
-    // neighbours needs more than one round to settle. This is what a mobile-
-    // width map needs that a single flat-distance pass didn't give: dense
-    // rows of small units (adjacent townhomes) sit close enough on a narrow
-    // screen that solid-background badges — unlike the old plain outlined
-    // text — will otherwise fully paint over one another rather than just
-    // visually blend, which is what made numbers look like they'd vanished.
-    const ids = [...geo.keys()];
-    for (let round = 0; round < CROWD_SHRINK_ROUNDS; round += 1) {
-      let shrankAny = false;
-
-      for (let i = 0; i < ids.length; i += 1) {
-        for (let j = i + 1; j < ids.length; j += 1) {
-          const a = geo.get(ids[i])!;
-          const b = geo.get(ids[j])!;
-
-          const dx = a.anchorXPx - b.anchorXPx;
-          const dy = a.anchorYPx - b.anchorYPx;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          const halfWidth = (g: typeof a) =>
-            (g.fontPx * CHAR_WIDTH_EM * g.chars) / 2 + g.fontPx * PAD_X_EM;
-          const safeDistance = halfWidth(a) + halfWidth(b);
-
-          if (distance < safeDistance && (a.fontPx > MIN_FONT_PX || b.fontPx > MIN_FONT_PX)) {
-            a.fontPx = Math.max(MIN_FONT_PX, a.fontPx - CROWD_SHRINK_STEP_PX);
-            b.fontPx = Math.max(MIN_FONT_PX, b.fontPx - CROWD_SHRINK_STEP_PX);
-            shrankAny = true;
-          }
-        }
-      }
-
-      if (!shrankAny) break;
-    }
-
-    return geo;
-  }, [units, size, transform.scale]);
-
-  // No photo yet: the map, its zoom controls and the "updated" chip all
-  // have nothing to sit on top of, and phase/status filtering would be
-  // controls with no visual to act on — so none of it renders, just the
-  // plain counts. See the file header's "Full-width layout" section.
+  // No photo yet: nothing for a map, filter chips or view toggle to act on
+  // — see the file header's "!masterPlanImageUrl" note.
   if (!masterPlanImageUrl) {
-    return <SummaryBar units={units} labels={labels} whatsappUrl={whatsappUrl} attached={false} />;
+    return <SummaryColumn units={units} selected={null} labels={labels} whatsappUrl={whatsappUrl} reduced={reduced} t={t} />;
   }
 
   return (
-    <div>
-      {/* ── Phase tabs ──────────────────────────────────────────────── */}
-      {phases.length > 1 && (
-        <div
-          role="tablist"
-          aria-label={labels.allPhases}
-          className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
-        >
-          {[{ value: "ALL" as PhaseValue, label: labels.allPhases }, ...phases].map((tab) => {
-            const active = phaseFilter === tab.value;
-            const count =
-              tab.value === "ALL" ? units.length : units.filter((u) => u.phase === tab.value).length;
-
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setPhaseFilter(tab.value)}
-                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
-                  active
-                    ? "border-primary bg-primary text-white"
-                    : "border-primary/15 text-ink/70 hover:border-primary/40 hover:text-primary"
-                }`}
-              >
-                {tab.label} ({count})
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Status filter pills ─────────────────────────────────────── */}
-      {/* Same solid-navy-when-active chip language as ProjectFilterBar's
-          chip() on /projects, rather than the old colour-coded-border
-          treatment — a status dot inside each pill still carries the
-          colour meaning, so nothing is lost switching to the shared
-          convention. */}
-      <div className="mb-5 flex flex-wrap gap-2.5">
-        {statusPills.map((pill) => {
-          const active = statusFilter === pill.value;
-          return (
+    // .site-plan-fullscreen-card:fullscreen lives in app/globals.css —
+    // fullscreen is requested on this whole card (handleFullscreen), not
+    // just the map frame, so the toolbar strip below it stays reachable.
+    <div ref={cardRef} className="@container site-plan-fullscreen-card">
+      {/* ── View toggle + status filter chips ───────────────────────── */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-xs bg-surface-muted p-1">
+          {(
+            [
+              { value: "map" as View, label: labels.viewMap, icon: MapIcon },
+              { value: "list" as View, label: labels.viewList, icon: LayoutGrid },
+            ] as const
+          ).map(({ value, label, icon: Icon }) => (
             <button
-              key={pill.value}
+              key={value}
               type="button"
-              onClick={() => setStatusFilter(pill.value)}
-              aria-pressed={active}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
-                active
-                  ? "border-primary bg-primary text-white"
-                  : "border-primary/15 text-ink/70 hover:border-primary/40 hover:text-primary"
+              aria-pressed={view === value}
+              onClick={() => setView(value)}
+              className={`inline-flex items-center gap-1.5 rounded-xs px-3.5 py-2 text-xs font-medium transition-colors ${
+                view === value ? "bg-white text-primary shadow-card" : "text-ink/60 hover:text-primary"
               }`}
             >
-              <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-white" : STATUS_DOT[pill.value]}`}
-                aria-hidden
-              />
-              {pill.label} ({pill.count})
+              <Icon size={13} aria-hidden />
+              {label}
             </button>
-          );
-        })}
+          ))}
+        </div>
+
+        <StatusChips labels={labels} filter={statusFilter} onChange={setStatusFilter} counts={chipCounts} />
       </div>
 
-      {/* ── Map + summary bar, one continuous card ───────────────────── */}
-      <div className="overflow-hidden rounded-xs border border-primary/10 shadow-card">
-        <div
-          ref={containerRef}
-          className="relative aspect-1754/1241 w-full overflow-hidden bg-white"
-        >
-          <TransformWrapper minScale={1} maxScale={6} initialScale={initialScale} centerOnInit>
-            <TransformSync onChange={setTransform} />
-            <ZoomControls labels={labels} onFullscreen={handleFullscreen} />
+      {/* ── Map / list + summary column ─────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-0 @min-[1000px]:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="relative">
+          {/* Map view — kept mounted (never unmounted) even while the list
+              view is showing, so the canvas engine's pan/zoom/selection
+              state survives switching back and forth. */}
+          <div
+            className={`transition-[opacity,transform] duration-300 ${
+              view === "map" ? "opacity-100" : "pointer-events-none absolute inset-0 scale-[.985] opacity-0"
+            }`}
+          >
+            <div className="relative">
+              <div
+                ref={mapboxRef}
+                className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-square ${
+                  dragging ? "cursor-grabbing" : "cursor-grab"
+                } site-plan-fullscreen-mapbox`}
+              >
+                <canvas ref={canvasRef} aria-label={labels.canvasLabel} className="block h-full w-full" />
 
-            <TransformComponent wrapperClass="w-full! h-full!" contentClass="w-full! h-full!">
-              <div className="relative h-full w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element -- inside
-                    a react-zoom-pan-pinch transform target; next/image's fill
-                    layout fights the library's own width/height measuring. */}
-                <img
-                  src={masterPlanImageUrl}
-                  alt={`${projectName} — site plan`}
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
+                {hintVisible && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-3.5 z-[3] -translate-x-1/2 whitespace-nowrap rounded-full bg-primary/85 px-3.5 py-1.5 text-[11.5px] text-white backdrop-blur-sm transition-opacity"
+                  >
+                    {labels.hint}
+                  </div>
+                )}
 
-                <svg
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  className="absolute inset-0 h-full w-full"
+                {/* .site-plan-tip{,-on,-below} live in app/globals.css —
+                    the engine toggles them directly on this node every
+                    frame (see PlanMapEngine.draw()), which a Tailwind
+                    className (re-rendered by React) can't do without
+                    costing a re-render per frame. Content below is
+                    ordinary React, driven by tooltipUnit state instead. */}
+                <div
+                  ref={tipRef}
+                  role="status"
+                  className="site-plan-tip pointer-events-none absolute z-[6] whitespace-nowrap rounded-xs bg-primary-900 px-3 py-2.5 text-xs leading-relaxed text-white shadow-lg"
                 >
-                  {units.map((unit) => {
-                    const dimmed =
-                      (statusFilter !== "ALL" && unit.status !== statusFilter) ||
-                      (phaseFilter !== "ALL" && unit.phase !== phaseFilter);
-                    const opacity = dimmed ? 0.15 : 1;
-                    // Assigned to a local so TS narrows it inside the .reduce
-                    // callbacks below — narrowing a property access like
-                    // `unit.shapePoints` doesn't carry into a nested function
-                    // scope the way narrowing a plain variable does.
-                    const shapePoints = unit.shapePoints;
+                  {tooltipUnit && (
+                    <>
+                      <b className="text-sm font-medium">{tooltipUnit.code}</b>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/75">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_TONE[tooltipUnit.status].dot }} aria-hidden />
+                        {tooltipUnit.status === "AVAILABLE" ? labels.available : tooltipUnit.status === "RESERVED" ? labels.reserved : labels.sold}
+                        {tooltipUnit.land !== null && ` · ${labels.detailLand} ${tooltipUnit.land} ${t("units.sqm")}`}
+                      </div>
+                    </>
+                  )}
+                </div>
 
-                    if (shapePoints && shapePoints.length >= 3) {
-                      // The unit-number label itself is rendered in the HTML
-                      // layer below, not here — see that layer's header
-                      // comment for why an SVG <text> can't carry a literal
-                      // pixel font-size inside a viewBox="0 0 100 100".
-                      return (
-                        <polygon
-                          key={unit.id}
-                          points={pointsToAttr(shapePoints)}
-                          style={{ opacity }}
-                          className={`${POLYGON_FILL[unit.status]} ${POLYGON_STROKE[unit.status]}`}
-                          /* vector-effect keeps this a literal on-screen
-                             pixel border at any zoom level, per spec,
-                             rather than N viewBox units (which would look
-                             wildly thick — the box is only 100 units
-                             wide). */
-                          strokeWidth={POLYGON_STROKE_WIDTH[unit.status]}
-                          vectorEffect="non-scaling-stroke"
-                        />
-                      );
-                    }
-
-                    if (unit.positionXPercent !== null && unit.positionYPercent !== null) {
-                      return (
-                        <g key={unit.id} style={{ opacity }}>
-                          <circle
-                            cx={unit.positionXPercent}
-                            cy={unit.positionYPercent}
-                            r={2}
-                            className={PIN_FILL[unit.status]}
-                            stroke="white"
-                            strokeWidth={0.4}
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          <text
-                            x={unit.positionXPercent}
-                            y={unit.positionYPercent - 3}
-                            textAnchor="middle"
-                            className="fill-white font-sans text-[2.5px] font-bold"
-                            style={{
-                              paintOrder: "stroke",
-                              stroke: "rgba(15,23,42,0.85)",
-                              strokeWidth: 0.4,
-                            }}
-                          >
-                            {unit.unitNumber}
-                          </text>
-                        </g>
-                      );
-                    }
-
-                    return null;
-                  })}
-                </svg>
-
-                {/* Unit-number labels — plain HTML, not SVG <text>. Root
-                    cause of the earlier oversized-label bug: an SVG
-                    <text>'s `font-size` presentation attribute, when given a
-                    bare number (no unit), is resolved in the SVG's own user/
-                    viewBox coordinate space — 1 "unit" here is 1/100th of
-                    the whole image, so a "14" meant to be 14px rendered as
-                    14% of the image width instead, tens of times too big.
-                    A plain HTML element has no such ambiguity: `fontSize`
-                    set in real CSS px is real CSS px, full stop.
-                    This layer is positioned with the same left/top-percent
-                    scheme as the polygons above and sits inside the very
-                    same <TransformComponent>, so react-zoom-pan-pinch's
-                    pan/zoom transform moves both layers together for free —
-                    no separate position math needed here. Only the already-
-                    computed `fontPx` (which itself already reacts to the
-                    current zoom scale, see labelGeometry above) needs an
-                    inverse `scale(1/zoom)` on each label so the ancestor's
-                    own zoom transform doesn't apply on top of it a second
-                    time.
-
-                    Rendered as a small white badge rather than bare
-                    coloured-outline text — the badge reads the same crisp
-                    size against every fill colour (emerald, gold, or ink)
-                    instead of relying on a text-shadow outline that looked
-                    fine on the old saturated red but washed out against the
-                    new, more muted palette. */}
-                <div className="pointer-events-none absolute inset-0">
-                  {units.map((unit) => {
-                    const shapePoints = unit.shapePoints;
-                    if (!shapePoints || shapePoints.length < 3) return null;
-
-                    const geo = labelGeometry.get(unit.id);
-                    const labelX = unit.positionXPercent ?? average(shapePoints.map((p) => p.x));
-                    const labelY = unit.positionYPercent ?? average(shapePoints.map((p) => p.y));
-                    const fontPx = geo?.fontPx ?? FLAT_FONT_PX;
-                    const dimmed =
-                      (statusFilter !== "ALL" && unit.status !== statusFilter) ||
-                      (phaseFilter !== "ALL" && unit.phase !== phaseFilter);
-
-                    return (
-                      <span
-                        key={unit.id}
-                        className="absolute whitespace-nowrap rounded-xs border border-primary/10 bg-white/95 font-sans font-semibold leading-none text-primary shadow-xs"
-                        style={{
-                          left: `${labelX}%`,
-                          top: `${labelY}%`,
-                          // translate centres the label on its anchor;
-                          // scale is the inverse-zoom compensation from the
-                          // comment above — combined in one transform so
-                          // they apply as a single, predictable operation.
-                          transform: `translate(-50%, -50%) scale(${1 / transform.scale})`,
-                          fontSize: `${fontPx}px`,
-                          padding: `${fontPx * 0.15}px ${fontPx * 0.35}px`,
-                          opacity: dimmed ? 0.15 : 1,
-                        }}
-                      >
-                        {unit.unitNumber}
-                      </span>
-                    );
-                  })}
+                {/* ≥560px: legend + zoom tools float over the map's bottom
+                    corners. <560px: both move to a toolbar strip below the
+                    frame instead (rendered separately, next) — see the file
+                    header's breakpoint table for why: on a phone the plan
+                    is already a third the size, and four floating buttons
+                    plus a legend cover most of what's left of it. */}
+                <div className="hidden @min-[560px]:contents">
+                  <Legend labels={labels} layout="floating" />
+                  <ZoomControls
+                    labels={labels}
+                    onZoomIn={() => engineRef.current?.zoomCenter(1.5)}
+                    onZoomOut={() => engineRef.current?.zoomCenter(1 / 1.5)}
+                    onReset={() => engineRef.current?.resetView()}
+                    onFullscreen={handleFullscreen}
+                    isFullscreen={isFullscreen}
+                    layout={toolLayout}
+                  />
                 </div>
               </div>
-            </TransformComponent>
-          </TransformWrapper>
 
-          {/* ── "Updated" chip ──────────────────────────────────────── */}
-          {/* Outside <TransformComponent> — it has to sit still while the
-              plan zooms and pans underneath it, not travel with it — but
-              still inside this `relative` frame, so it stays pinned to the
-              frame's own corner rather than the viewport's. bottom-right
-              is where the zoom controls live, hence top-right here. */}
-          {updated && (
-            <div className="absolute right-3 top-3 z-10 flex items-center gap-2 border border-primary/10 bg-white/90 px-3 py-2 text-xs text-ink/70 shadow-sm backdrop-blur-sm sm:px-2.5 sm:py-1.5 sm:text-[11px]">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-              <span className="hidden sm:inline">{updated.full}</span>
-              <span className="font-medium text-primary sm:hidden">{updated.date}</span>
+              <div className="flex items-center justify-between gap-3 border border-t-0 border-primary/10 bg-white px-3 py-2 @min-[560px]:hidden">
+                <Legend labels={labels} layout="row" />
+                <ZoomControls
+                  labels={labels}
+                  onZoomIn={() => engineRef.current?.zoomCenter(1.5)}
+                  onZoomOut={() => engineRef.current?.zoomCenter(1 / 1.5)}
+                  onReset={() => engineRef.current?.resetView()}
+                  onFullscreen={handleFullscreen}
+                  isFullscreen={isFullscreen}
+                  layout="row"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* List view — a plain, always-legible fallback for canvas
+              content too, per the file header's accessibility note. */}
+          {view === "list" && (
+            <div>
+              <ListView units={listUnits} onPick={handleListPick} t={t} reduced={reduced} />
             </div>
           )}
         </div>
 
-        <SummaryBar units={phaseUnits} labels={labels} whatsappUrl={whatsappUrl} attached />
+        <SummaryColumn units={units} selected={selected} labels={labels} whatsappUrl={whatsappUrl} reduced={reduced} t={t} />
       </div>
     </div>
   );

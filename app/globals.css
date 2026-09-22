@@ -483,6 +483,70 @@
     background-size: 200% 100%;
     animation: skeleton-shimmer-sweep 1.6s ease-in-out infinite;
   }
+
+  /* Site plan tooltip (components/SitePlanMap.tsx) — its position is
+   written imperatively by PlanMapEngine.draw() every frame, since it has
+   to track its marker through pan/zoom/fly-to; show/hide and the
+   "flipped below the marker" state are therefore plain classes the
+   engine toggles directly, not React state re-rendering 60 times a
+   second. Content is still ordinary React children. Ported from Claude
+   outputs/siteplan-canvas-mockup.html's .tip. */
+  .site-plan-tip {
+    left: 0;
+    top: 0;
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(2px) scale(0.96);
+    transition:
+      opacity 0.16s,
+      transform 0.16s;
+  }
+  .site-plan-tip::after {
+    content: "";
+    position: absolute;
+    left: var(--tip-arrow-left, 50%);
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: var(--color-primary-900);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .site-plan-tip-on {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(-11px) scale(1);
+  }
+  /* Flips below the marker when there's no room above it — otherwise the
+   frame's own overflow:hidden clips the tooltip away entirely. */
+  .site-plan-tip-below {
+    transform: translate(-50%, 0) translateY(2px) scale(0.96);
+  }
+  .site-plan-tip-below.site-plan-tip-on {
+    transform: translate(-50%, 0) translateY(11px) scale(1);
+  }
+  .site-plan-tip-below::after {
+    top: -5px;
+    bottom: auto;
+  }
+
+  /* Site plan fullscreen (components/SitePlanMap.tsx) — fullscreen is
+   requested on the whole card, not just the map frame: the toolbar strip
+   sits outside the map frame, so asking fullscreen on the frame alone
+   would leave the toolbar behind the fullscreen layer, unreachable.
+   Tailwind v4 has no `fullscreen:` variant (confirmed empirically — it
+   compiles to no rule at all), hence plain CSS here. */
+  .site-plan-fullscreen-card:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    overflow: auto;
+  }
+  .site-plan-fullscreen-card:fullscreen .site-plan-fullscreen-mapbox {
+    aspect-ratio: auto;
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 @layer base {
