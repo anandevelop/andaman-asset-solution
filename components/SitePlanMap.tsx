@@ -1288,7 +1288,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
             <div className="relative">
               <div
                 ref={mapboxRef}
-                className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-square ${
+                className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
                   dragging ? "cursor-grabbing" : "cursor-grab"
                 } site-plan-fullscreen-mapbox`}
               >
