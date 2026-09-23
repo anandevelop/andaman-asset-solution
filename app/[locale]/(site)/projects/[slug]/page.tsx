@@ -461,7 +461,12 @@ export default async function ProjectPage(props: Props) {
                     className="btn-hero flex-1 sm:flex-none"
                   >
                     <Compass size={16} aria-hidden />
-                    {t("virtualTour")}
+                    {/* Same split as the brochure button above — the full
+                        label wraps onto two lines at mobile's half-width
+                        (most noticeably in Thai's longer "ทัวร์เสมือน 360°"),
+                        which read as squeezed rather than deliberate. */}
+                    <span className="sm:hidden">{t("virtualTourShort")}</span>
+                    <span className="hidden sm:inline">{t("virtualTour")}</span>
                   </a>
                 )}
               </div>

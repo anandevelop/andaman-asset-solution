@@ -335,6 +335,7 @@
     "brochureShort": "宣传册",
     "arrangeViewing": "预约看房",
     "virtualTour": "360° 全景导览",
+    "virtualTourShort": "360° 导览",
     "heroDistanceLine": "距 {beachName} {beachDistance} 公里，距机场 {airportDistance} 公里",
     "registerInterest": "登记意向",
     "signal": {

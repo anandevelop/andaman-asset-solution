@@ -335,6 +335,7 @@
     "brochureShort": "Брошюра",
     "arrangeViewing": "Записаться на просмотр",
     "virtualTour": "Тур 360°",
+    "virtualTourShort": "Тур 360°",
     "heroDistanceLine": "{beachDistance} км до {beachName}, {airportDistance} км до аэропорта",
     "registerInterest": "Оставить заявку",
     "signal": {

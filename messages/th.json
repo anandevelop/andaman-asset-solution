@@ -335,6 +335,7 @@
     "brochureShort": "โบรชัวร์",
     "arrangeViewing": "นัดชมโครงการ",
     "virtualTour": "ทัวร์เสมือน 360°",
+    "virtualTourShort": "ทัวร์ 360°",
     "heroDistanceLine": "ห่างจาก {beachName} {beachDistance} กม. และห่างจากสนามบิน {airportDistance} กม.",
     "registerInterest": "ลงทะเบียนรับข้อมูล",
     "signal": {

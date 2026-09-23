@@ -335,6 +335,7 @@
     "brochureShort": "Brochure",
     "arrangeViewing": "Arrange a viewing",
     "virtualTour": "360° Tour",
+    "virtualTourShort": "360° Tour",
     "heroDistanceLine": "{beachDistance} km to {beachName}, {airportDistance} km to the airport",
     "registerInterest": "Register interest",
     "signal": {
