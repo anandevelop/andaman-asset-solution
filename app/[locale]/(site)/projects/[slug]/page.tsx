@@ -412,7 +412,14 @@ export default async function ProjectPage(props: Props) {
             </p>
           </Reveal>
 
-          <Reveal delay={0.3}>
+          {/* w-full because the copy column above is `items-start`: every
+              child of it is content-sized, which is right for the badge,
+              the heading and the location line, but left this row as wide
+              as its buttons happened to be and no wider — stranding them
+              against the left edge with dead space beside them. The badge
+              and heading look deliberate at content width; a row whose
+              buttons are supposed to divide it in half does not. */}
+          <Reveal delay={0.3} className="w-full">
             {/* Stacked full-width from mobile through tablet — the primary
                 action on its own row, the two secondary ones sharing the
                 row below (each filling the space when only one of them
@@ -458,9 +465,9 @@ export default async function ProjectPage(props: Props) {
                     download
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-hero flex-1 lg:flex-none"
+                    className="btn-hero flex-1 whitespace-nowrap gap-1.5 px-2 tracking-[0.1em] lg:flex-none lg:gap-2 lg:px-7 lg:tracking-[0.2em]"
                   >
-                    <FileDown size={16} aria-hidden />
+                    <FileDown size={16} className="shrink-0" aria-hidden />
                     {/* Full label from lg: up, where the reference layout
                         gives it room; below that the row splits with the
                         tour button and "Download " stopped fitting. */}
@@ -477,9 +484,9 @@ export default async function ProjectPage(props: Props) {
                     href={project.virtualTourUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-hero flex-1 lg:flex-none"
+                    className="btn-hero flex-1 whitespace-nowrap gap-1.5 px-2 tracking-[0.1em] lg:flex-none lg:gap-2 lg:px-7 lg:tracking-[0.2em]"
                   >
-                    <Compass size={16} aria-hidden />
+                    <Compass size={16} className="shrink-0" aria-hidden />
                     {/* Same split as the brochure button above — the full
                         label wraps onto two lines at the half-width this
                         row gives it below lg: (most noticeably in Thai's
