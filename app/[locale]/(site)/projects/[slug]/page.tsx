@@ -325,7 +325,13 @@ export default async function ProjectPage(props: Props) {
           the extra bottom clearance (pb-28/36), which is what keeps this
           text block from colliding with the stat card pulled up onto the
           hero's bottom edge by that section's own negative margin below. */}
-      <section className="relative flex h-[78vh] min-h-[560px] w-full items-end overflow-hidden sm:h-[88vh]">
+      {/* h-dvh on mobile — a fixed vh fraction (the old 78vh) left the
+          overlapping stat-card section visible below the fold, reading as
+          dead space above a heading nobody could see yet. Dynamic viewport
+          height (not h-screen/100vh) so mobile Safari's collapsing address
+          bar doesn't leave a gap the moment the page settles. Desktop's
+          sm:h-[88vh] is untouched — its stat card sits well clear already. */}
+      <section className="relative flex h-dvh min-h-[560px] w-full items-end overflow-hidden sm:h-[88vh]">
         {heroIsVideo ? (
           <video
             className="absolute inset-0 h-full w-full object-cover"
@@ -382,7 +388,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.15}>
-            <div className="mt-5 h-[3px] w-16 bg-accent" />
+            <div className="mt-6 h-px w-32 bg-white/25" />
           </Reveal>
 
           <Reveal delay={0.2}>
