@@ -69,12 +69,11 @@ type Props = {
   descriptionLengthHint?: string;
 };
 
+/** Bare count, not "{length}/{limit}" — the min–max range already sits in
+ *  the hint text this renders beside, so repeating the ceiling a second
+ *  time here would be the same number twice on one row. */
 function CharCount({ length, limit }: { length: number; limit: number }) {
-  return (
-    <span className={length > limit ? "text-amber-700" : "text-ink-muted"}>
-      {length}/{limit}
-    </span>
-  );
+  return <span className={`font-semibold ${length > limit ? "text-amber-700" : "text-ink"}`}>{length}</span>;
 }
 
 /** In-range fills emerald; short-of-min or past-max fills amber — the same
@@ -154,14 +153,16 @@ export default function SeoPreviewFields({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+      {/* Stacked full-width, not a side-by-side grid — a fixed sm: split
+          only knows the viewport is wide, not that this component itself
+          might be rendered in a narrow column (the news editor's sticky
+          side panel, in particular): both fields end up too narrow to fit
+          their own label and count on one line, wrapping onto each other. */}
+      <div className="space-y-5">
         <div>
-          <div className="flex items-baseline justify-between">
-            <label className="admin-label" htmlFor="metaTitle">
-              {titleLabel}
-            </label>
-            <CharCount length={title.length} limit={SEO_LIMITS.title} />
-          </div>
+          <label className="admin-label" htmlFor="metaTitle">
+            {titleLabel}
+          </label>
           <input
             id="metaTitle"
             name="metaTitle"
@@ -170,17 +171,17 @@ export default function SeoPreviewFields({
             className="admin-input"
           />
           <CharBar length={title.length} min={SEO_LIMITS.titleMin} max={SEO_LIMITS.title} />
-          {titleLengthHint && <p className="admin-hint">{titleLengthHint}</p>}
+          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+            <p className="text-xs leading-relaxed text-ink-muted">{titleLengthHint}</p>
+            <CharCount length={title.length} limit={SEO_LIMITS.title} />
+          </div>
           {titleError && <p className="mt-1.5 text-xs text-red-700">{titleError}</p>}
         </div>
 
         <div>
-          <div className="flex items-baseline justify-between">
-            <label className="admin-label" htmlFor="metaDescription">
-              {descriptionLabel}
-            </label>
-            <CharCount length={description.length} limit={SEO_LIMITS.description} />
-          </div>
+          <label className="admin-label" htmlFor="metaDescription">
+            {descriptionLabel}
+          </label>
           <textarea
             id="metaDescription"
             name="metaDescription"
@@ -190,7 +191,10 @@ export default function SeoPreviewFields({
             className="admin-textarea"
           />
           <CharBar length={description.length} min={SEO_LIMITS.descriptionMin} max={SEO_LIMITS.description} />
-          {descriptionLengthHint && <p className="admin-hint">{descriptionLengthHint}</p>}
+          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+            <p className="text-xs leading-relaxed text-ink-muted">{descriptionLengthHint}</p>
+            <CharCount length={description.length} limit={SEO_LIMITS.description} />
+          </div>
           {descriptionError && (
             <p className="mt-1.5 text-xs text-red-700">{descriptionError}</p>
           )}
