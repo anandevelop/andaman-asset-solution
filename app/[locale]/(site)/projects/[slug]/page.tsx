@@ -413,23 +413,36 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.3}>
-            {/* Stacked full-width on mobile — the primary action on its own
-                row, the two secondary ones sharing the row below (each
-                filling the space when only one of them exists). `contents`
-                on the secondary-pair wrapper drops it out of the layout
-                from sm: up, so those two rejoin the primary button's own
-                flex-wrap row exactly as before on larger screens. */}
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* Stacked full-width from mobile through tablet — the primary
+                action on its own row, the two secondary ones sharing the
+                row below (each filling the space when only one of them
+                exists). `contents` on the secondary-pair wrapper drops it
+                out of the layout from lg: up, so those two rejoin the
+                primary button's own flex-wrap row exactly as before —
+                lg:, not sm:: at 640-1023px there's a real container (a
+                tablet, or a phone in desktop-site mode) that's wide enough
+                to leave sm:flex-none's natural-width buttons stranded on
+                the left with dead space beside them, but not wide enough
+                for that to read as deliberate the way it does once the
+                lg: hero photo itself has grown to match — confirmed
+                against the actual breakpoint sweep, not assumed. */}
+            <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
               <a
                 href="#enquire"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:bg-accent-500 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:bg-accent-500 lg:w-auto"
               >
                 {t("arrangeViewing")}
                 <ArrowRight size={16} aria-hidden />
               </a>
 
-              <div className="flex gap-3 sm:contents">
+              <div className="flex w-full gap-3 lg:contents">
                 {/*
+                  w-full is load-bearing, not decorative: this div is a flex
+                  *container* sitting as an *item* inside the flex-col row
+                  above it, and relying on implicit cross-axis stretch for a
+                  nested flex container is a known cross-browser trouble
+                  spot — explicit beats implicit here.
+
                   A brochure download is a lower-commitment action than the
                   enquiry form, so it sits beside it rather than replacing
                   it. No gate: asking for an email before a PDF costs more
@@ -445,14 +458,14 @@ export default async function ProjectPage(props: Props) {
                     download
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-hero flex-1 sm:flex-none"
+                    className="btn-hero flex-1 lg:flex-none"
                   >
                     <FileDown size={16} aria-hidden />
-                    {/* Full label from sm: up, where the reference layout
-                        gives it room; the mobile row splits with the tour
-                        button and "Download " stopped fitting. */}
-                    <span className="sm:hidden">{t("brochureShort")}</span>
-                    <span className="hidden sm:inline">{t("downloadBrochure")}</span>
+                    {/* Full label from lg: up, where the reference layout
+                        gives it room; below that the row splits with the
+                        tour button and "Download " stopped fitting. */}
+                    <span className="lg:hidden">{t("brochureShort")}</span>
+                    <span className="hidden lg:inline">{t("downloadBrochure")}</span>
                   </a>
                 )}
 
@@ -464,15 +477,16 @@ export default async function ProjectPage(props: Props) {
                     href={project.virtualTourUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-hero flex-1 sm:flex-none"
+                    className="btn-hero flex-1 lg:flex-none"
                   >
                     <Compass size={16} aria-hidden />
                     {/* Same split as the brochure button above — the full
-                        label wraps onto two lines at mobile's half-width
-                        (most noticeably in Thai's longer "ทัวร์เสมือน 360°"),
-                        which read as squeezed rather than deliberate. */}
-                    <span className="sm:hidden">{t("virtualTourShort")}</span>
-                    <span className="hidden sm:inline">{t("virtualTour")}</span>
+                        label wraps onto two lines at the half-width this
+                        row gives it below lg: (most noticeably in Thai's
+                        longer "ทัวร์เสมือน 360°"), which read as squeezed
+                        rather than deliberate. */}
+                    <span className="lg:hidden">{t("virtualTourShort")}</span>
+                    <span className="hidden lg:inline">{t("virtualTour")}</span>
                   </a>
                 )}
               </div>
