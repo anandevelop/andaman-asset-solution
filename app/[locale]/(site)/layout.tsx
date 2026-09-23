@@ -79,15 +79,17 @@ export default async function SiteLayout({ children, params }: Props) {
           nothing on the site ever triggered print media at all. Without
           this, "Download PDF"/"Print" produced the nav, the sales strip,
           the CTA band and the footer alongside the two paragraphs of legal
-          text anyone actually wanted a copy of. */}
-      <div className="print:hidden">
-        <Navbar
-          phone={settings.contact.phone}
-          phoneDisplay={settings.contact.phoneDisplay}
-          whatsapp={settings.contact.whatsapp}
-          logoUrl={settings.branding.logoUrl}
-        />
-      </div>
+          text anyone actually wanted a copy of.
+
+          Navbar carries its own print:hidden directly on its <header> now,
+          not a wrapping <div> here — see the comment on that element for
+          why a same-height wrapper silently breaks its `sticky` behaviour. */}
+      <Navbar
+        phone={settings.contact.phone}
+        phoneDisplay={settings.contact.phoneDisplay}
+        whatsapp={settings.contact.whatsapp}
+        logoUrl={settings.branding.logoUrl}
+      />
 
       {/* tabIndex={-1} so the skip link can actually move focus here.
           Without it the browser scrolls but focus stays in the header, and

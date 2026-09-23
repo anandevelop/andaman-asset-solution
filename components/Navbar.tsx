@@ -286,6 +286,21 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
   return (
     <>
       {/*
+        `print:hidden` lives on this element itself, not a wrapping <div> in
+        (site)/layout.tsx as it used to — a sticky element's "stuck" range is
+        bounded by its own parent's box, and that wrapper had no height
+        beyond the header it contained (parent height == header height, a
+        wrapper added purely to carry one utility class with no other
+        children). That collapsed the range to zero: computed style still
+        said `position: sticky`, but there was no room to ever engage it, so
+        the header scrolled away with the page like a static element from
+        the very first pixel of scroll instead of sticking to the top. Only
+        visible by actually scrolling and comparing scrollY to the header's
+        own boundingClientRect — everything else about it looked correct.
+        Now the header's parent is <body> itself, which is always taller
+        than one header, so the range is never zero.
+      */}
+      {/*
         `fixed` instead of `sticky` while the mobile menu is open. The menu
         panel below scrolls internally (overflow-y-auto, for menus taller
         than the viewport), and on mobile browsers that internal touch-
@@ -322,7 +337,7 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
       <header
         className={[
           open ? "fixed" : "sticky",
-          "inset-x-0 top-0 z-50 border-b border-white/10 bg-primary",
+          "inset-x-0 top-0 z-50 border-b border-white/10 bg-primary print:hidden",
           "transition-all duration-300 ease-in-out",
           headerHidden && !open ? "-translate-y-full" : "translate-y-0",
         ].join(" ")}
