@@ -193,6 +193,17 @@
   },
   "projects": {
     "eyebrow": "我们的开发项目",
+    "hero": {
+      "statProjects": "项目",
+      "statProjectsUnit": "个",
+      "statUnits": "别墅与单元",
+      "statUnitsUnit": "套",
+      "statLand": "总用地",
+      "shortcutsLabel": "全部项目",
+      "villasShort": "栋别墅",
+      "unitsShort": "套",
+      "imageCredit": "背景图片"
+    },
     "title": "项目",
     "subtitle": "普吉岛精选开发项目列表，每一处都因其地块条件而先于户型设计被选中。",
     "empty": "暂无已发布的项目，请稍后再来查看。",

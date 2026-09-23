@@ -29,8 +29,13 @@ import { locales } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
-import { getProjectFacets, getPublishedProjects, type ProjectSignal } from "@/lib/projects";
-import { formatMonthYear } from "@/lib/format";
+import {
+  getProjectFacets,
+  getProjectPortfolioSummary,
+  getPublishedProjects,
+  type ProjectSignal,
+} from "@/lib/projects";
+import { formatMonthYear, formatNumber } from "@/lib/format";
 import { isDatabaseOffline } from "@/lib/db";
 import {
   SORT_OPTIONS,
@@ -89,14 +94,71 @@ export default async function ProjectsPage(props: Props) {
 
   const filters = parseProjectFilters(searchParams);
 
-  const [t, tNav, projects, facets] = await Promise.all([
+  const [t, tNav, projects, facets, portfolio, allProjects] = await Promise.all([
     getTranslations("projects"),
     getTranslations("nav"),
     getPublishedProjects(locale, filters),
     getProjectFacets(),
+    getProjectPortfolioSummary(),
+    /*
+      The unfiltered list, for the hero's photograph and its shortcut bar.
+      Both have to stay independent of the chips: the bar is a table of
+      contents for the portfolio, and the photo changing as a visitor
+      filtered would be bizarre. getPublishedProjects is cache()d per
+      argument list, so this is one extra query on a filtered view and
+      zero on the canonical one, where it's the same call as above.
+    */
+    getPublishedProjects(locale),
   ]);
 
   const filtered = hasActiveFilters(filters);
+
+  // The first published project by the sortOrder the team curated — the
+  // same order getPublishedProjects returns by default — lends the hero its
+  // photograph, and the credit badge names it, so the two cannot disagree.
+  const heroProject = allProjects[0] ?? null;
+
+  const heroStats = [
+    {
+      label: t("hero.statProjects"),
+      value: formatNumber(locale, portfolio.count),
+      unit: t("hero.statProjectsUnit"),
+    },
+    {
+      label: t("hero.statUnits"),
+      value: formatNumber(locale, portfolio.totalUnits),
+      unit: t("hero.statUnitsUnit"),
+    },
+    {
+      label: t("hero.statLand"),
+      value: formatNumber(locale, portfolio.totalLandSqm),
+      unit: t("units.sqm"),
+    },
+  ];
+
+  /*
+    Two rules empty the shortcut bar, both about not sending anyone
+    somewhere useless. Under a filter the card an anchor points at may not
+    be on the page at all, and the filter bar directly below already says
+    what is showing. With a single project it is a shortcut to the one card
+    two inches further down.
+  */
+  const shortcuts =
+    filtered || allProjects.length < 2
+      ? []
+      : allProjects.map((project) => ({
+          slug: project.slug,
+          name: project.name,
+          location: project.location,
+          status: t(`status.${project.status}` as never),
+          accentDot: project.status === "UNDER_CONSTRUCTION",
+          units: formatNumber(locale, project.totalUnits),
+          unitsLabel:
+            project.propertyType === "POOL_VILLA"
+              ? t("hero.villasShort")
+              : t("hero.unitsShort"),
+          imageUrl: project.heroImageUrl,
+        }));
 
   // Pre-translate every label the client filter bar needs — see the note
   // on server/client boundaries in that component.
@@ -118,14 +180,34 @@ export default async function ProjectsPage(props: Props) {
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}
       />
-      {/* ── Header ─────────────────────────────────────────────────────
-          Staggered/animated in ProjectsHero rather than one flat Reveal —
-          see that component for why. */}
-      <section className="container-luxe pb-4 pt-28 sm:pt-36">
-        <Breadcrumb items={trail} className="mb-5" />
-
-        <ProjectsHero eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
-      </section>
+      {/* ── Hero ───────────────────────────────────────────────────────
+          Full-bleed, so no container-luxe here — ProjectsHero pads its own
+          copy and shortcut bar. The breadcrumb goes in as a prop because
+          Breadcrumb is an async server component and the hero is a client
+          one; tone="onImage" for the same reason it sits down with the
+          copy rather than at the top of the frame. */}
+      <ProjectsHero
+        breadcrumb={<Breadcrumb items={trail} tone="onImage" />}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        subtitle={t("subtitle")}
+        image={
+          heroProject?.heroImageUrl
+            ? {
+                url: heroProject.heroImageUrl,
+                alt: `${heroProject.name} — ${heroProject.location}`,
+              }
+            : null
+        }
+        credit={
+          heroProject?.heroImageUrl
+            ? { name: heroProject.name, suffix: t("hero.imageCredit") }
+            : null
+        }
+        stats={heroStats}
+        shortcuts={shortcuts}
+        shortcutsLabel={t("hero.shortcutsLabel")}
+      />
 
       {/* ── Filters ──────────────────────────────────────────────────── */}
       {/* Hidden with fewer than two projects: a filter bar over a single
@@ -179,15 +261,23 @@ export default async function ProjectsPage(props: Props) {
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project, i) => (
-              <Reveal key={project.id} delay={i * 0.08}>
+              <Reveal
+                key={project.id}
+                delay={i * 0.08}
+                // Target for the hero's shortcut bar. scroll-mt clears the
+                // sticky navbar, which would otherwise sit over the top of
+                // the card the anchor just jumped to.
+                id={`project-${project.slug}`}
+                className="scroll-mt-24"
+              >
                 <FeaturedProjectCard
                   project={project}
                   locale={locale}
-                  // Only the first card. `priority` preloads at high
-                  // fetchpriority, so marking a whole row of them makes
-                  // three images compete for bandwidth and pushes the real
-                  // LCP element later than tagging none at all.
-                  priority={i === 0}
+                  // No priority on any card now. The hero photograph above
+                  // is the LCP element and carries it; `priority` preloads
+                  // at high fetchpriority, so tagging the first card too
+                  // puts two images in a race for the same bandwidth and
+                  // lands the real LCP later than tagging neither.
                   labels={{
                     status: t(`status.${project.status}` as never),
                     cta: t(ctaKey(project.status) as never),

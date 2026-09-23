@@ -193,6 +193,17 @@
   },
   "projects": {
     "eyebrow": "Our Developments",
+    "hero": {
+      "statProjects": "Projects",
+      "statProjectsUnit": "dev.",
+      "statUnits": "Villas & units",
+      "statUnitsUnit": "units",
+      "statLand": "Total land",
+      "shortcutsLabel": "All developments",
+      "villasShort": "villas",
+      "unitsShort": "units",
+      "imageCredit": "background image"
+    },
     "title": "Projects",
     "subtitle": "A short list of Phuket developments, each chosen for its land before its layout.",
     "empty": "No projects have been published yet. Please check back soon.",

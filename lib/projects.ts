@@ -574,6 +574,50 @@ export async function getProjectFacets(): Promise<{
   };
 }
 
+/**
+ * Portfolio totals for the /projects hero: how many developments, how many
+ * villas and units across them, how much land between them.
+ *
+ * Deliberately not derived from getPublishedProjects(locale, filters).
+ * That call returns the *filtered* list, and these three numbers are a
+ * claim about the portfolio, not about the current search — wiring them to
+ * the filtered result would make them change every time a visitor taps a
+ * chip, which says something quite different. How many projects a search
+ * matched already has its own home in the filter bar (`filters.results`).
+ *
+ * An aggregate rather than findMany + reduce: Postgres answers all three in
+ * one pass and none of the rows themselves are wanted here.
+ */
+export async function getProjectPortfolioSummary(): Promise<{
+  count: number;
+  totalUnits: number;
+  totalLandSqm: number;
+}> {
+  return safeQuery(
+    "project.aggregate(portfolio)",
+    async () => {
+      const result = await prisma.project.aggregate({
+        where: { isPublished: true, deletedAt: null },
+        _count: { _all: true },
+        _sum: { totalUnits: true, landAreaSqm: true },
+      });
+
+      return {
+        count: result._count._all,
+        totalUnits: result._sum.totalUnits ?? 0,
+        // landAreaSqm is a nullable Decimal, so the sum can be null when
+        // nothing has one set. Rounded because "92,353.17 sq.m" is a
+        // surveyor's number, not a hero's — the same call
+        // FeaturedProjectCard already makes about its own land figure.
+        totalLandSqm: Math.round(toNumber(result._sum.landAreaSqm) ?? 0),
+      };
+    },
+    // The listing page renders DbOfflineNotice for the real problem; the
+    // hero above it must not be what takes the page down.
+    { count: 0, totalUnits: 0, totalLandSqm: 0 },
+  );
+}
+
 /** Slugs for generateStaticParams(). Empty array if the DB is unreachable
  *  at build time — dynamicParams then renders on demand. */
 export async function getPublishedProjectSlugs(): Promise<string[]> {

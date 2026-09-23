@@ -193,6 +193,17 @@
   },
   "projects": {
     "eyebrow": "โครงการของเรา",
+    "hero": {
+      "statProjects": "โครงการ",
+      "statProjectsUnit": "แห่ง",
+      "statUnits": "วิลล่าและยูนิต",
+      "statUnitsUnit": "ยูนิต",
+      "statLand": "พื้นที่รวม",
+      "shortcutsLabel": "โครงการทั้งหมด",
+      "villasShort": "วิลล่า",
+      "unitsShort": "ยูนิต",
+      "imageCredit": "ภาพพื้นหลัง"
+    },
     "title": "โครงการ",
     "subtitle": "โครงการคัดสรรในภูเก็ต ที่เราเลือกจากทำเลก่อนแบบบ้าน",
     "empty": "ยังไม่มีโครงการที่เผยแพร่ในขณะนี้ กรุณากลับมาใหม่อีกครั้ง",

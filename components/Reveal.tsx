@@ -7,6 +7,9 @@ type RevealProps = {
   delay?: number;
   y?: number;
   className?: string;
+  /** For when this wrapper is also an in-page anchor target — the projects
+   *  grid pairs it with scroll-mt so the navbar doesn't cover the landing. */
+  id?: string;
 };
 
 const variants: Variants = {
@@ -37,9 +40,10 @@ const variants: Variants = {
  * print media's layout pass happens independently of any JS timing, so
  * only a CSS rule is guaranteed to apply before the page is captured.
  */
-export default function Reveal({ children, delay = 0, className }: RevealProps) {
+export default function Reveal({ children, delay = 0, className, id }: RevealProps) {
   return (
     <motion.div
+      id={id}
       className={["reveal", className].filter(Boolean).join(" ")}
       initial="hidden"
       whileInView="visible"

@@ -222,6 +222,83 @@
   );
 }
 
+@utility projects-hero-scrim {
+  /* The /projects hero — components/ProjectsHero.tsx. Its own utility
+     rather than a reuse of .hero-scrim / .hero-scrim-side above: those are
+     tuned for the home page carousel's photo set and its much shorter copy
+     block, and this hero carries a breadcrumb, an eyebrow, an h1, a lede,
+     three stat figures and a shortcut bar over a brighter photograph. The
+     stops below are the ones measured against that, and lifting the home
+     page's would leave this copy short of AA.
+
+     Not `bg-linear-to-t from-primary-900/90` the way /projects/[slug]'s
+     hero does it either: a straight full-width ramp that heavy dulls the
+     villa on the right of frame, which is the one thing a visitor came to
+     this page to look at.
+
+     Measured on the real photo, worst single pixel under each text box:
+     breadcrumb 4.8 · eyebrow 5.5 · h1 6.8 · lede 8.3 · stat labels 5.3
+     (h1 is large text, so its floor is 3:1; everything else clears 4.5:1).
+     Re-measure before retuning, and re-measure if the hero photo changes —
+     these are shaped for a bright one. */
+
+  /* Phone: the copy runs the full width along the bottom, so there is no
+     corner to aim at — a ramp from below, plus a thin one from above for
+     the breadcrumb, which floats over open sky. */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(4, 29, 44, 0.3) 0%,
+      rgba(4, 29, 44, 0.14) 6%,
+      rgba(4, 29, 44, 0) 15%
+    ),
+    linear-gradient(
+      to top,
+      rgba(4, 29, 44, 0.94) 0%,
+      rgba(4, 29, 44, 0.92) 14%,
+      rgba(4, 29, 44, 0.88) 28%,
+      rgba(4, 29, 44, 0.82) 42%,
+      rgba(4, 29, 44, 0.74) 52%,
+      rgba(4, 29, 44, 0.48) 64%,
+      rgba(4, 29, 44, 0.16) 76%,
+      rgba(4, 29, 44, 0) 88%
+    );
+
+  @media (min-width: 640px) {
+    /* From here up the copy moves into the bottom-left corner, so the
+       darkening becomes an ellipse anchored there and the right of frame
+       — the villa — stays bright.
+
+       The ellipse is 162% of the height because this copy column is tall
+       (the stat row is part of it); anything shorter and the h1 climbs out
+       of the darkened area. The bottom ramp is kept underneath it at full
+       width because the ellipse never reaches the bottom-right corner,
+       which is where the third shortcut card sits. */
+    background:
+      radial-gradient(
+        ellipse 130% 162% at 0% 100%,
+        rgba(4, 29, 44, 0.94) 0%,
+        rgba(4, 29, 44, 0.88) 24%,
+        rgba(4, 29, 44, 0.7) 44%,
+        rgba(4, 29, 44, 0.36) 64%,
+        rgba(4, 29, 44, 0) 84%
+      ),
+      linear-gradient(
+        to bottom,
+        rgba(4, 29, 44, 0.3) 0%,
+        rgba(4, 29, 44, 0.14) 7%,
+        rgba(4, 29, 44, 0) 17%
+      ),
+      linear-gradient(
+        to top,
+        rgba(4, 29, 44, 0.56) 0%,
+        rgba(4, 29, 44, 0.36) 11%,
+        rgba(4, 29, 44, 0.14) 24%,
+        rgba(4, 29, 44, 0) 40%
+      );
+  }
+}
+
 @utility company-intro-scrim {
   /* The "Who we are" photo mosaic — components/CompanyIntroGallery.tsx.
      Multi-stop rather than a two-stop Tailwind gradient: the label sits
