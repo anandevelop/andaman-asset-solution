@@ -61,9 +61,13 @@ function readUtm(): Utm {
 /** Border colour excluded — the email field's own border varies with its
  *  inline check's verdict (see emailBorderClass below), so every other
  *  field appends the shared default itself via INPUT, and email builds
- *  its own class string from this instead. */
+ *  its own class string from this instead.
+ *
+ *  Font size is 16px below sm: — iOS Safari auto-zooms the page on focus
+ *  for any text input under 16px, which read as the whole page "zooming
+ *  in" when tapping into a field on a phone. */
 const INPUT_BASE =
-  "w-full rounded-xs border bg-white px-4 py-3 text-sm text-ink outline-hidden transition-colors focus:border-accent aria-invalid:border-red-500";
+  "w-full rounded-xs border bg-white px-4 py-3 text-base sm:text-sm text-ink outline-hidden transition-colors focus:border-accent aria-invalid:border-red-500";
 const INPUT = `${INPUT_BASE} border-primary/15`;
 
 /** E.164 regex straight out of leadInquirySchema — used here only to decide

@@ -251,7 +251,9 @@ export default function CountrySelect({
               aria-controls={listboxId}
               aria-activedescendant={activeOptionId}
               autoComplete="off"
-              className="w-full rounded-xs border border-primary/15 px-2 py-1.5 text-sm text-ink outline-hidden focus:border-accent"
+              // text-base below sm: — iOS Safari zooms the page in on
+              // focus for any text input under 16px.
+              className="w-full rounded-xs border border-primary/15 px-2 py-1.5 text-base sm:text-sm text-ink outline-hidden focus:border-accent"
             />
           </div>
 
