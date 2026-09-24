@@ -14,7 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
+import { RICH_TEXT_TAGS, renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
 import { markdownToText, readingMinutes, truncate } from "@/lib/markdown-text";
 
 const SAFE_URI = /^(?:https?:|mailto:|tel:|#|\/)/i;
@@ -269,5 +269,68 @@ describe("truncate", () => {
 
     expect(result.endsWith("…")).toBe(true);
     expect(result.length).toBeGreaterThan(10);
+  });
+});
+
+/*
+  Every tag the rich-text editor can produce has to survive the sanitizer.
+
+  This is the check that would have caught the underline/strike data loss:
+  StarterKit enabled both regardless of the toolbar, so ⌘U and ⌘⇧X wrote
+  <u> and <s> into the document, and sanitizeArticleHtml — whose allowlist
+  had neither — quietly removed them on save. No error, no warning; the
+  author simply watched their formatting evaporate and blamed the editor.
+
+  Driven off lib/markdown.ts's own RICH_TEXT_TAGS rather than a list
+  written out again here, because a second copy is precisely what drifts:
+  the allowlist is built from that same export, so adding an extension to
+  the editor without adding its tag fails here instead of in production.
+*/
+describe("every tag the rich-text editor emits survives sanitising", () => {
+  /** Minimal, valid markup for one tag — enough to assert it is not
+   *  stripped, without asserting anything about the rest of the document. */
+  const SAMPLES: Record<(typeof RICH_TEXT_TAGS)[number], string> = {
+    p: "<p>x</p>",
+    br: "<p>a<br>b</p>",
+    hr: "<p>a</p><hr><p>b</p>",
+    h1: "<h1>x</h1>",
+    h2: "<h2>x</h2>",
+    h3: "<h3>x</h3>",
+    h4: "<h4>x</h4>",
+    h5: "<h5>x</h5>",
+    h6: "<h6>x</h6>",
+    strong: "<p><strong>x</strong></p>",
+    em: "<p><em>x</em></p>",
+    s: "<p><s>x</s></p>",
+    ul: "<ul><li>x</li></ul>",
+    ol: "<ol><li>x</li></ol>",
+    li: "<ul><li>x</li></ul>",
+    blockquote: "<blockquote><p>x</p></blockquote>",
+    a: '<p><a href="/projects">x</a></p>',
+    img: '<figure><img src="/a.jpg" alt="x"></figure>',
+    figure: '<figure><img src="/a.jpg" alt="x"></figure>',
+    figcaption: '<figure><img src="/a.jpg" alt="x"><figcaption>c</figcaption></figure>',
+    code: "<p><code>x</code></p>",
+    pre: "<pre><code>x</code></pre>",
+  };
+
+  it("covers every tag in RICH_TEXT_TAGS, with no sample left behind", () => {
+    // A tag added to the export but not sampled here would otherwise pass
+    // this suite by simply never being tested.
+    expect(Object.keys(SAMPLES).sort()).toEqual([...RICH_TEXT_TAGS].sort());
+  });
+
+  for (const tag of RICH_TEXT_TAGS) {
+    it(`keeps <${tag}>`, () => {
+      const out = sanitizeArticleHtml(SAMPLES[tag]);
+      expect(out).toContain(`<${tag}`);
+    });
+  }
+
+  it("still keeps <del>, which older Markdown articles are written with", () => {
+    // marked renders ~~x~~ as <del>, not <s>. Dropping it while adding <s>
+    // would have strikethrough vanish from every pre-editor article.
+    expect(sanitizeArticleHtml("<p><del>x</del></p>")).toContain("<del>");
+    expect(renderMarkdown("~~x~~")).toContain("<del>");
   });
 });

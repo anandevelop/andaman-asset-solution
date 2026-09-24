@@ -376,6 +376,14 @@
     @apply font-medium text-primary;
   }
 
+  /* Both tags, because both reach a reader: the rich-text editor's strike
+     button emits <s>, while `marked` renders `~~x~~` as <del> — so every
+     article written before that editor existed carries the other one. */
+  & s,
+  & del {
+    @apply text-ink/60 line-through decoration-ink/40;
+  }
+
   & ul {
     @apply list-disc space-y-2 pl-5 marker:text-accent;
   }

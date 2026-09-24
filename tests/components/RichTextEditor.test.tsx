@@ -32,6 +32,10 @@ const LABELS = {
   heading: (level: number) => `Heading ${level}`,
   bold: "Bold",
   italic: "Italic",
+  strike: "Strikethrough",
+  code: "Inline code",
+  codeBlock: "Code block",
+  horizontalRule: "Divider",
   bulletList: "Bullet list",
   orderedList: "Numbered list",
   quote: "Quote",
@@ -288,6 +292,52 @@ describe("RichTextEditor — figure controls", () => {
       expect(out).toContain('data-align="right"');
       // The image itself survived the change rather than being re-inserted.
       expect(out).toContain('src="https://example.test/d.jpg"');
+    });
+  });
+});
+
+/*
+  Underline is gone from the schema, not merely from the toolbar.
+
+  StarterKit enables it whether or not a button exists, so ⌘U used to
+  produce a <u> that lib/markdown.ts's sanitizer then dropped on save —
+  the author watched their formatting disappear with no error to explain
+  it. A missing button would not have fixed that; the mark itself has to
+  be absent.
+*/
+describe("RichTextEditor — marks the sanitizer would drop", () => {
+  it("has no underline mark in the schema", async () => {
+    render(<Harness initialContent="<p>Intro</p>" />);
+
+    await waitFor(() => {
+      expect(getEditor()).toBeInTheDocument();
+    });
+
+    // The mark is registered on the ProseMirror schema, which the editor
+    // exposes through the DOM node it manages.
+    const marks = await waitFor(() => {
+      const view = (getEditor() as unknown as { pmViewDesc?: { node?: unknown } }).pmViewDesc;
+      if (!view) throw new Error("editor view not ready");
+      return Object.keys(
+        ((view as { node: { type: { schema: { marks: Record<string, unknown> } } } }).node.type.schema
+          .marks),
+      );
+    });
+
+    expect(marks).not.toContain("underline");
+    // …while the one that was kept deliberately is still there.
+    expect(marks).toContain("strike");
+  });
+
+  it("round-trips a strike through the editor", async () => {
+    const user = userEvent.setup();
+    render(<Harness initialContent="<p><s>struck</s></p>" />);
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-html").textContent).toContain("<s>");
     });
   });
 });

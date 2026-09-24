@@ -34,16 +34,49 @@ import "server-only";
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
 
-const ALLOWED_TAGS = [
+/**
+ * Every tag the rich-text editor can put into an article.
+ *
+ * Exported, and the allowlist below is built from it rather than repeating
+ * it, because the two drifting apart is not a cosmetic problem: an editor
+ * that can *produce* a tag the sanitizer then *drops* loses the author's
+ * work on save, silently — no error, no warning, the formatting simply is
+ * not there when the page reloads. That is exactly how `<u>` and `<s>`
+ * came to be lost for anyone who pressed ⌘U or ⌘⇧X, since TipTap's
+ * StarterKit enables underline and strike whether or not a button exists
+ * for them.
+ *
+ * tests/markdown.test.ts asserts every entry here survives
+ * sanitizeArticleHtml(), so adding an extension to the editor without
+ * adding its tag here fails the suite rather than a reader's page.
+ *
+ * Keep it in step with components/admin/RichTextEditor.tsx's
+ * StarterKit.configure(): anything disabled there does not need to be
+ * here, and anything enabled there does.
+ */
+export const RICH_TEXT_TAGS = [
   "p", "br", "hr",
   "h1", "h2", "h3", "h4", "h5", "h6",
-  "strong", "em", "del", "sub", "sup",
+  "strong", "em", "s",
   "ul", "ol", "li",
   "blockquote",
   "a", "img", "figure", "figcaption",
   "code", "pre",
+] as const;
+
+/**
+ * `del`, `sub`, `sup` and the table tags are not in RICH_TEXT_TAGS: the
+ * rich-text editor has no extension that emits them. They stay allowed for
+ * the MARKDOWN articles written before that editor existed — `marked`
+ * renders `~~x~~` as `<del>`, not `<s>`, so dropping it would strip the
+ * strikethrough out of every one of those older articles.
+ */
+const MARKDOWN_ONLY_TAGS = [
+  "del", "sub", "sup",
   "table", "thead", "tbody", "tr", "th", "td",
 ];
+
+const ALLOWED_TAGS = [...new Set([...RICH_TEXT_TAGS, ...MARKDOWN_ONLY_TAGS])];
 
 const ALLOWED_ATTR = [
   "id", "href", "title", "target", "rel", "src", "alt", "loading",

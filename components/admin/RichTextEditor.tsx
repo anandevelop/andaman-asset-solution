@@ -48,6 +48,10 @@ import FigureNodeView, {
 import { Extension, Node } from "@tiptap/core";
 import {
   Bold,
+  Code,
+  Minus,
+  SquareCode,
+  Strikethrough,
   Heading2,
   Heading3,
   Heading4,
@@ -238,6 +242,10 @@ type Props = {
     heading: (level: HeadingLevel) => string;
     bold: string;
     italic: string;
+    strike: string;
+    code: string;
+    codeBlock: string;
+    horizontalRule: string;
     bulletList: string;
     orderedList: string;
     quote: string;
@@ -283,7 +291,21 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       // itself now (unlike v2); left enabled, it registers a second `link`
       // mark alongside InternalAwareLink below and TipTap warns about the
       // duplicate name and picks one arbitrarily.
-      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] }, link: false }),
+      /*
+        `underline: false` — StarterKit enables it whether or not a button
+        exists, so ⌘U produced a <u> the sanitizer then dropped on save:
+        the author saw underlined text, pressed save, and it came back
+        plain, with nothing to explain why. Disabled at the source rather
+        than widened into the allowlist, because prose-article already
+        underlines links (`& a { @apply underline }`) — underlined body
+        text would read as a link that cannot be clicked, which is worse
+        for a reader using it as a cue than for one who never sees it.
+      */
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3, 4, 5, 6] },
+        link: false,
+        underline: false,
+      }),
       InternalAwareLink.configure({ openOnClick: false, autolink: false }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       Figure.configure({ labels: figureLabels, locale }),
@@ -469,6 +491,57 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           className={toolbarButtonClass(editor.isActive("italic"))}
         >
           <Italic size={15} aria-hidden />
+        </button>
+        {/*
+          Strike, inline code, code block and the horizontal rule all had
+          working keyboard shortcuts and no way to discover them: StarterKit
+          binds them regardless of the toolbar. Strike is the one that was
+          also being dropped on save — see lib/markdown.ts's RICH_TEXT_TAGS
+          — the other three round-tripped fine and were merely unreachable
+          with a mouse.
+        */}
+        <button
+          type="button"
+          title={toolbarLabels.strike}
+          aria-label={toolbarLabels.strike}
+          aria-pressed={editor.isActive("strike")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={toolbarButtonClass(editor.isActive("strike"))}
+        >
+          <Strikethrough size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.code}
+          aria-label={toolbarLabels.code}
+          aria-pressed={editor.isActive("code")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          className={toolbarButtonClass(editor.isActive("code"))}
+        >
+          <Code size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.codeBlock}
+          aria-label={toolbarLabels.codeBlock}
+          aria-pressed={editor.isActive("codeBlock")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={toolbarButtonClass(editor.isActive("codeBlock"))}
+        >
+          <SquareCode size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.horizontalRule}
+          aria-label={toolbarLabels.horizontalRule}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Minus size={15} aria-hidden />
         </button>
         <button
           type="button"
