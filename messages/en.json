@@ -141,7 +141,9 @@
     }
   },
   "salesTeam": {
+    "eyebrow": "Talk to a specialist",
     "title": "Our Sales",
+    "subtitle": "Speak directly with the people who know every project.",
     "chat": "Chat"
   },
   "awards": {

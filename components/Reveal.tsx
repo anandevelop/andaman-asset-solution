@@ -10,6 +10,14 @@ type RevealProps = {
   /** For when this wrapper is also an in-page anchor target — the projects
    *  grid pairs it with scroll-mt so the navbar doesn't cover the landing. */
   id?: string;
+  /** whileInView's rootMargin. Defaults to "-80px" (shrink every edge, so a
+   *  section barely peeking over the fold doesn't fire early) — override
+   *  when that horizontal shrink is wrong for the layout, e.g.
+   *  SalesTeamSection's mobile row, where a card sitting mostly off-screen
+   *  to the right is deliberately peeking a little as a "swipe for more"
+   *  hint; the default margin reads that sliver as still outside the root
+   *  and leaves it stuck at opacity 0 until the visitor swipes further. */
+  margin?: `${number}px` | `${number}px ${number}px` | `${number}px ${number}px ${number}px ${number}px`;
 };
 
 const variants: Variants = {
@@ -40,14 +48,14 @@ const variants: Variants = {
  * print media's layout pass happens independently of any JS timing, so
  * only a CSS rule is guaranteed to apply before the page is captured.
  */
-export default function Reveal({ children, delay = 0, className, id }: RevealProps) {
+export default function Reveal({ children, delay = 0, className, id, margin = "-80px" }: RevealProps) {
   return (
     <motion.div
       id={id}
       className={["reveal", className].filter(Boolean).join(" ")}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, margin }}
       variants={variants}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
     >

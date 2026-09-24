@@ -141,7 +141,9 @@
     }
   },
   "salesTeam": {
+    "eyebrow": "咨询专业顾问",
     "title": "销售团队",
+    "subtitle": "直接与深谙每个项目细节的团队沟通。",
     "chat": "聊天"
   },
   "awards": {
