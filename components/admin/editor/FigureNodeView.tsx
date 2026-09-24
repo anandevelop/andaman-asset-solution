@@ -64,6 +64,8 @@ export default function FigureNodeView({
   deleteNode,
   selected,
   extension,
+  editor,
+  getPos,
 }: NodeViewProps) {
   const { labels, locale } = extension.options as FigureOptions;
 
@@ -141,7 +143,24 @@ export default function FigureNodeView({
         editable image wrapper gives the caret somewhere to land that has no
         corresponding position in the node.
       */}
-      <div className="relative" contentEditable={false}>
+      <div
+        className="relative"
+        contentEditable={false}
+        /*
+          Clicking the image has to select the node explicitly.
+
+          While this was `atom: true` ProseMirror made a NodeSelection out
+          of a click for free. A node with content gets no such treatment:
+          a click inside its contentEditable={false} half resolves to no
+          selection at all, `selected` stays false, and the control bar
+          never appears — which is the exact "clicking an image does
+          nothing" this component exists to fix, reintroduced one layer up.
+        */
+        onClick={() => {
+          const pos = typeof getPos === "function" ? getPos() : undefined;
+          if (typeof pos === "number") editor.commands.setNodeSelection(pos);
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element -- the editor
             renders whatever URL the article carries, including hosts
             next/image is not configured for; this is admin-only preview
@@ -150,7 +169,7 @@ export default function FigureNodeView({
           src={(node.attrs.src as string | null) ?? ""}
           alt={alt}
           loading="lazy"
-          className={missingAlt ? "outline-2 outline-offset-2 outline-amber-500" : undefined}
+          className={`cursor-pointer ${missingAlt ? "outline-2 outline-offset-2 outline-amber-500" : ""}`}
         />
 
         {/* An image with no alt fails lib/article-seo.ts's own check (weight

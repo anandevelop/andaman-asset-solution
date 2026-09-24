@@ -23,7 +23,7 @@ vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({
   fetchMediaLibrary: vi.fn(async () => ({ items: [] })),
   updateMediaMeta: vi.fn(async () => ({ ok: true })),
 }));
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RichTextEditor, { type RichTextEditorHandle } from "@/components/admin/RichTextEditor";
 
@@ -223,6 +223,71 @@ describe("RichTextEditor — figure captions round-trip", () => {
       expect(out).toContain('alt="No caption"');
       // Empty caption, not a caption containing the image.
       expect(out).not.toContain("<figcaption><img");
+    });
+  });
+});
+
+/*
+  Clicking an image has to reveal its controls.
+
+  This is the regression CI caught: once `figure` stopped being an atom,
+  ProseMirror no longer turned a click into a NodeSelection by itself, so
+  `selected` stayed false and the bar never appeared — the exact "clicking
+  an image does nothing" the NodeView exists to fix, one layer up. jsdom
+  cannot place a caret, but it can dispatch a click at the element, which
+  is all the NodeView's own handler needs.
+
+  fireEvent.click rather than user.click: the latter also fires mousedown,
+  which sends ProseMirror into posAtCoords -> document.elementFromPoint —
+  one of the layout APIs jsdom does not implement, per this file's header.
+  It throws there as an unhandled error that Vitest reports even while the
+  assertions pass. Only the click matters to the handler under test.
+*/
+describe("RichTextEditor — figure controls", () => {
+  it("reveals the control bar when the image is clicked", async () => {
+    const html =
+      "<p>Intro</p>" +
+      '<figure><img src="https://example.test/c.jpg" alt="A villa" loading="lazy"></figure>';
+
+    render(<Harness initialContent={html} />);
+
+    // Nothing on screen until the node is actually selected.
+    expect(screen.queryByRole("button", { name: FIGURE_LABELS.alignRight })).toBeNull();
+
+    // The NodeView is a React tree ProseMirror mounts itself, so the image
+    // appears a tick after the editor does.
+    const image = await waitFor(() => {
+      const found = getEditor().querySelector("figure img");
+      if (!found) throw new Error("figure image not rendered yet");
+      return found;
+    });
+    fireEvent.click(image);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: FIGURE_LABELS.alignRight })).toBeInTheDocument();
+    });
+  });
+
+  it("aligns through updateAttributes rather than replacing the node", async () => {
+    const html =
+      "<p>Intro</p>" +
+      '<figure><img src="https://example.test/d.jpg" alt="A villa" loading="lazy"></figure>';
+
+    render(<Harness initialContent={html} />);
+
+    const image = await waitFor(() => {
+      const found = getEditor().querySelector("figure img");
+      if (!found) throw new Error("figure image not rendered yet");
+      return found;
+    });
+    fireEvent.click(image);
+    fireEvent.click(await screen.findByRole("button", { name: FIGURE_LABELS.alignRight }));
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-align="right"');
+      // The image itself survived the change rather than being re-inserted.
+      expect(out).toContain('src="https://example.test/d.jpg"');
     });
   });
 });
