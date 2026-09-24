@@ -123,7 +123,19 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
   );
 
   const weekdays = useMemo(() => {
-    const fmt = new Intl.DateTimeFormat(loc, { weekday: "short" });
+    /*
+      "narrow", not "short". Thai's short weekday is not a stable width
+      across ICU builds — Node 24 here abbreviates it to "อา.", while the
+      CI runner and Chromium both spell it "อาทิตย์", which is six
+      characters trying to fit a seventh of a 19rem panel. Narrow is
+      "อา จ อ พ พฤ ศ ส", which is what Chromium's own Thai picker showed,
+      and "S M T W T F S" in English.
+
+      Narrow repeats letters in English, but this row is aria-hidden and
+      every day button carries a full written date as its accessible
+      name, so nothing is resolved by these glyphs alone.
+    */
+    const fmt = new Intl.DateTimeFormat(loc, { weekday: "narrow" });
     // 2024-01-07 was a Sunday; any known Sunday works as the anchor.
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 7 + i)));
   }, [loc]);

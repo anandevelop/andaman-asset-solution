@@ -57,9 +57,22 @@ describe("DateTimeField", () => {
 
     await user.click(screen.getByRole("button", { name: /2569/ }));
 
+    /*
+      Derived from Intl rather than written out. Thai weekday names are not
+      byte-identical across ICU builds — an earlier version of this test
+      hardcoded Node 24's "อา." and failed on CI, whose ICU spells the same
+      day "อาทิตย์". What matters is that the headings come from the admin's
+      locale, which the th/en comparison below is what actually proves.
+    */
+    const thai = new Intl.DateTimeFormat("th-TH", { weekday: "narrow" });
+    const sunday = thai.format(new Date(2024, 0, 7));
+    const thursday = thai.format(new Date(2024, 0, 11));
+
     const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveTextContent("อา.");
-    expect(dialog).toHaveTextContent("พฤ.");
+    expect(dialog).toHaveTextContent(sunday);
+    expect(dialog).toHaveTextContent(thursday);
+    // …and that they are not the English ones.
+    expect(sunday).not.toBe(new Intl.DateTimeFormat("en-US", { weekday: "narrow" }).format(new Date(2024, 0, 7)));
   });
 
   it("submits the value under the same name and format the native input used", () => {
