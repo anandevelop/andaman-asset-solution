@@ -36,8 +36,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
+// TipTap 3 moved the menus into a subpath of the same package — no extra
+// dependency, verified against @tiptap/react's own exports map.
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapLink from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -49,6 +52,12 @@ import { Extension, Node } from "@tiptap/core";
 import {
   Bold,
   Code,
+  ExternalLink,
+  Pencil,
+  RemoveFormatting,
+  Redo2,
+  Undo2,
+  Unlink,
   Minus,
   SquareCode,
   Strikethrough,
@@ -105,6 +114,23 @@ const InternalAwareLink = TiptapLink.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
+      /*
+        Overridden to default to null, and this is not cosmetic. TipTap's
+        Link ships HTMLAttributes defaults of target="_blank" and
+        rel="noopener noreferrer nofollow", and its own target/rel
+        attributes fall back to them — so a link parsed out of an existing
+        article, which carries neither, picked both up and was written back
+        with them. Merely opening an old article and saving it turned every
+        plain internal link into a new-tab nofollow link: nofollow on our
+        own pages, in the editor built to do this site's SEO.
+
+        Set here rather than through configure({ HTMLAttributes: {} }),
+        which deep-merges and so leaves the defaults exactly where they
+        were. insertLink still sets both explicitly, so an author's actual
+        choice is unaffected.
+      */
+      target: { default: null },
+      rel: { default: null },
       internal: {
         default: null,
         parseHTML: (element: HTMLElement) => element.getAttribute("data-internal"),
@@ -264,6 +290,12 @@ type Props = {
     link: string;
     image: string;
     textStyle: string;
+    undo: string;
+    redo: string;
+    clearFormat: string;
+    editLink: string;
+    openLink: string;
+    removeLink: string;
   };
   /** Passed through to the figure NodeView, which cannot read
    *  useTranslations itself — see FigureNodeView's header. */
@@ -271,6 +303,9 @@ type Props = {
   /** Which locale's alt text an edit writes back to in the media library. */
   locale: string;
   onRequestLink: () => void;
+  /** Opens the same link modal, prefilled, for a link that already exists
+   *  — see the link bubble menu below. */
+  onRequestEditLink: (current: { href: string; newTab: boolean; nofollow: boolean }) => void;
   onRequestImage: () => void;
 };
 
@@ -291,11 +326,31 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     figureLabels,
     locale,
     onRequestLink,
+    onRequestEditLink,
     onRequestImage,
   },
   ref,
 ) {
   const [activeHeading, setActiveHeading] = useState<HeadingLevel | 0>(0);
+
+  /*
+    ⌘ on a Mac, Ctrl everywhere else. Resolved in an effect rather than
+    during render: the server has no navigator, and baking one guess into
+    the HTML makes the first client render disagree with it.
+  */
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent));
+  }, []);
+
+  /** "Bold" -> "Bold (⌘B)". The shortcut is TipTap's, not ours, so it is
+   *  appended here rather than written into forty translation strings. */
+  const withKeys = useMemo(() => {
+    const mod = isMac ? "⌘" : "Ctrl+";
+    const alt = isMac ? "⌥" : "Alt+";
+    return (label: string, keys?: string) =>
+      keys ? `${label} (${keys.replace(/Mod/g, mod).replace(/Alt/g, alt)})` : label;
+  }, [isMac]);
 
   const extensions = useMemo(
     () => [
@@ -447,7 +502,16 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 
   return (
     <div>
-      <div role="toolbar" aria-label={toolbarLabels.textStyle} className="mb-2 flex flex-wrap gap-1">
+      {/* sticky, because the SEO checklist this editor sits next to asks for
+          600+ words and the toolbar used to scroll away above all of them.
+          lg:top-14 clears AdminTopbar, which is h-14 and only rendered from
+          lg: up (it is `hidden … lg:flex`); z-20 sits under its z-30 rather
+          than fighting it. */}
+      <div
+        role="toolbar"
+        aria-label={toolbarLabels.textStyle}
+        className="sticky top-0 z-20 -mx-1 mb-2 flex flex-wrap gap-1 border-b border-primary/10 bg-surface-raised px-1 py-1.5 lg:top-14"
+      >
         <select
           aria-label={toolbarLabels.textStyle}
           value={activeHeading}
@@ -485,8 +549,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 
         <button
           type="button"
-          title={toolbarLabels.bold}
-          aria-label={toolbarLabels.bold}
+          title={withKeys(toolbarLabels.bold, "ModB")}
+          aria-label={withKeys(toolbarLabels.bold, "ModB")}
           aria-pressed={editor.isActive("bold")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -496,8 +560,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
-          title={toolbarLabels.italic}
-          aria-label={toolbarLabels.italic}
+          title={withKeys(toolbarLabels.italic, "ModI")}
+          aria-label={withKeys(toolbarLabels.italic, "ModI")}
           aria-pressed={editor.isActive("italic")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -515,8 +579,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         */}
         <button
           type="button"
-          title={toolbarLabels.strike}
-          aria-label={toolbarLabels.strike}
+          title={withKeys(toolbarLabels.strike, "ModShift+X")}
+          aria-label={withKeys(toolbarLabels.strike, "ModShift+X")}
           aria-pressed={editor.isActive("strike")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -526,8 +590,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
-          title={toolbarLabels.code}
-          aria-label={toolbarLabels.code}
+          title={withKeys(toolbarLabels.code, "ModE")}
+          aria-label={withKeys(toolbarLabels.code, "ModE")}
           aria-pressed={editor.isActive("code")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleCode().run()}
@@ -556,10 +620,46 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         >
           <Minus size={15} aria-hidden />
         </button>
+        <span aria-hidden className="mx-1 h-5 w-px self-center bg-primary/15" />
+
+        {/* History was always on — StarterKit's undoRedo — with no way to
+            reach it but the keyboard. */}
         <button
           type="button"
-          title={toolbarLabels.bulletList}
-          aria-label={toolbarLabels.bulletList}
+          title={withKeys(toolbarLabels.undo, "ModZ")}
+          aria-label={withKeys(toolbarLabels.undo, "ModZ")}
+          disabled={!editor.can().undo()}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().undo().run()}
+          className={`${toolbarButtonClass(false)} disabled:cursor-not-allowed disabled:opacity-40`}
+        >
+          <Undo2 size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.redo, "ModShift+Z")}
+          aria-label={withKeys(toolbarLabels.redo, "ModShift+Z")}
+          disabled={!editor.can().redo()}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().redo().run()}
+          className={`${toolbarButtonClass(false)} disabled:cursor-not-allowed disabled:opacity-40`}
+        >
+          <Redo2 size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.clearFormat}
+          aria-label={toolbarLabels.clearFormat}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().unsetAllMarks().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <RemoveFormatting size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.bulletList, "ModShift+8")}
+          aria-label={withKeys(toolbarLabels.bulletList, "ModShift+8")}
           aria-pressed={editor.isActive("bulletList")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -569,8 +669,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
-          title={toolbarLabels.orderedList}
-          aria-label={toolbarLabels.orderedList}
+          title={withKeys(toolbarLabels.orderedList, "ModShift+7")}
+          aria-label={withKeys(toolbarLabels.orderedList, "ModShift+7")}
           aria-pressed={editor.isActive("orderedList")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -580,8 +680,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
-          title={toolbarLabels.quote}
-          aria-label={toolbarLabels.quote}
+          title={withKeys(toolbarLabels.quote, "ModShift+B")}
+          aria-label={withKeys(toolbarLabels.quote, "ModShift+B")}
           aria-pressed={editor.isActive("blockquote")}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -613,6 +713,152 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           <ImageIcon size={15} aria-hidden />
         </button>
       </div>
+
+      {/* ── Bubble menus ──────────────────────────────────────────────
+          Two, with mutually exclusive shouldShow: one for a text
+          selection, one for a caret sitting inside a link. They never
+          appear together, which is why the selection menu excludes links
+          rather than stacking a second bar on top of the first. */}
+      <BubbleMenu
+        editor={editor}
+        shouldShow={({ editor: instance, from, to }) =>
+          from !== to &&
+          !instance.isActive("link") &&
+          // A figure has its own controls (FigureNodeView) and a code
+          // block is meant to be literal — neither wants a formatting bar.
+          !instance.isActive("figure") &&
+          !instance.isActive("codeBlock")
+        }
+        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+      >
+        {([2, 3, 4] as HeadingLevel[]).map((level) => (
+          <button
+            key={level}
+            type="button"
+            title={withKeys(toolbarLabels.heading(level), `ModAlt${level}`)}
+            aria-label={toolbarLabels.heading(level)}
+            aria-pressed={editor.isActive("heading", { level })}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
+            className={toolbarButtonClass(editor.isActive("heading", { level }))}
+          >
+            <span className="text-xs font-medium">H{level}</span>
+          </button>
+        ))}
+
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.bold, "ModB")}
+          aria-label={toolbarLabels.bold}
+          aria-pressed={editor.isActive("bold")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={toolbarButtonClass(editor.isActive("bold"))}
+        >
+          <Bold size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.italic, "ModI")}
+          aria-label={toolbarLabels.italic}
+          aria-pressed={editor.isActive("italic")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={toolbarButtonClass(editor.isActive("italic"))}
+        >
+          <Italic size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.strike, "ModShift+X")}
+          aria-label={toolbarLabels.strike}
+          aria-pressed={editor.isActive("strike")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={toolbarButtonClass(editor.isActive("strike"))}
+        >
+          <Strikethrough size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.quote, "ModShift+B")}
+          aria-label={toolbarLabels.quote}
+          aria-pressed={editor.isActive("blockquote")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={toolbarButtonClass(editor.isActive("blockquote"))}
+        >
+          <Quote size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={withKeys(toolbarLabels.link, "ModK")}
+          aria-label={toolbarLabels.link}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onRequestLink}
+          className={toolbarButtonClass(false)}
+        >
+          <Link2 size={15} aria-hidden />
+        </button>
+      </BubbleMenu>
+
+      <BubbleMenu
+        editor={editor}
+        shouldShow={({ editor: instance }) => instance.isActive("link")}
+        className="flex max-w-[22rem] items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 pl-2.5 shadow-lg"
+      >
+        {/* The href, so "where does this go" needs no click to answer —
+            the thing that previously required deleting the link to find
+            out. */}
+        <span className="truncate text-xs text-ink-muted">
+          {editor.getAttributes("link").href ?? ""}
+        </span>
+
+        <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-primary/15" />
+
+        <button
+          type="button"
+          title={toolbarLabels.editLink}
+          aria-label={toolbarLabels.editLink}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            const attrs = editor.getAttributes("link");
+            // Select the whole link first, so the modal's result replaces
+            // it in place rather than nesting a second one inside it.
+            editor.chain().focus().extendMarkRange("link").run();
+            onRequestEditLink({
+              href: (attrs.href as string) ?? "",
+              newTab: attrs.target === "_blank",
+              nofollow: typeof attrs.rel === "string" && attrs.rel.includes("nofollow"),
+            });
+          }}
+          className={toolbarButtonClass(false)}
+        >
+          <Pencil size={15} aria-hidden />
+        </button>
+        <a
+          href={(editor.getAttributes("link").href as string) ?? "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={toolbarLabels.openLink}
+          aria-label={toolbarLabels.openLink}
+          className={toolbarButtonClass(false)}
+        >
+          <ExternalLink size={15} aria-hidden />
+        </a>
+        <button
+          type="button"
+          title={toolbarLabels.removeLink}
+          aria-label={toolbarLabels.removeLink}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Unlink size={15} aria-hidden />
+        </button>
+      </BubbleMenu>
 
       <EditorContent
         editor={editor}

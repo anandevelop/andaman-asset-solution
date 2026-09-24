@@ -1359,7 +1359,13 @@
         "quote": "คำพูดอ้างอิง",
         "link": "แทรกลิงก์ (⌘K)",
         "image": "แทรกรูปภาพ",
-        "textStyle": "รูปแบบข้อความ"
+        "textStyle": "รูปแบบข้อความ",
+        "undo": "เลิกทำ",
+        "redo": "ทำซ้ำ",
+        "clearFormat": "ล้างรูปแบบ",
+        "editLink": "แก้ลิงก์",
+        "openLink": "เปิดลิงก์",
+        "removeLink": "ลบลิงก์"
       },
       "figure": {
         "alignLeft": "ชิดซ้าย",

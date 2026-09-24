@@ -359,6 +359,10 @@ export default function NewsForm({
 
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalAnchorText, setLinkModalAnchorText] = useState("");
+  /** Set when the editor's link bubble menu asked to edit an existing
+   *  link rather than insert a new one — the same modal, prefilled. */
+  const [linkModalInitial, setLinkModalInitial] =
+    useState<{ href: string; newTab: boolean; nofollow: boolean } | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
   function handleTitleChange(next: string) {
@@ -386,6 +390,15 @@ export default function NewsForm({
 
   function openLinkModal() {
     setLinkModalAnchorText(richTextEditorRef.current?.getSelectedText() ?? "");
+    setLinkModalInitial(null);
+    setLinkModalOpen(true);
+  }
+
+  /** The editor has already selected the whole link by the time this runs,
+   *  so the modal's result replaces it rather than nesting inside it. */
+  function openLinkModalForEdit(current: { href: string; newTab: boolean; nofollow: boolean }) {
+    setLinkModalAnchorText(richTextEditorRef.current?.getSelectedText() ?? "");
+    setLinkModalInitial(current);
     setLinkModalOpen(true);
   }
 
@@ -637,6 +650,7 @@ export default function NewsForm({
                       remove: t("news.figure.remove"),
                     }}
                     onRequestLink={openLinkModal}
+                    onRequestEditLink={openLinkModalForEdit}
                     onRequestImage={() => setImageModalOpen(true)}
                     toolbarLabels={{
                       paragraph: t("news.richToolbar.paragraph"),
@@ -653,6 +667,12 @@ export default function NewsForm({
                       link: t("news.richToolbar.link"),
                       image: t("news.richToolbar.image"),
                       textStyle: t("news.richToolbar.textStyle"),
+                      undo: t("news.richToolbar.undo"),
+                      redo: t("news.richToolbar.redo"),
+                      clearFormat: t("news.richToolbar.clearFormat"),
+                      editLink: t("news.richToolbar.editLink"),
+                      openLink: t("news.richToolbar.openLink"),
+                      removeLink: t("news.richToolbar.removeLink"),
                     }}
                   />
                   {err("content") && (
@@ -803,6 +823,7 @@ export default function NewsForm({
             onClose={() => setLinkModalOpen(false)}
             locale={lang}
             initialAnchorText={linkModalAnchorText}
+            initialLink={linkModalInitial}
             onInsert={handleInsertLink}
           />
           <InsertImageModal

@@ -38,13 +38,24 @@ type Props = {
   /** The editor's current selection text, if any — prefilled so picking a
    *  result doesn't silently drop the words the admin had selected. */
   initialAnchorText: string;
+  /** Set when editing a link that already exists rather than inserting a
+   *  new one — the bubble menu's "edit" opens this same modal prefilled,
+   *  instead of a second modal that would drift from this one. */
+  initialLink?: { href: string; newTab: boolean; nofollow: boolean } | null;
   onInsert: (link: InsertedLink) => void;
 };
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 200;
 
-export default function InternalLinkModal({ open, onClose, locale, initialAnchorText, onInsert }: Props) {
+export default function InternalLinkModal({
+  open,
+  onClose,
+  locale,
+  initialAnchorText,
+  initialLink = null,
+  onInsert,
+}: Props) {
   const t = useTranslations("admin.news.linkModal");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ContentLinkHit[]>([]);
@@ -61,11 +72,11 @@ export default function InternalLinkModal({ open, onClose, locale, initialAnchor
     if (!open) return;
     setQuery("");
     setResults([]);
-    setManualUrl("");
+    setManualUrl(initialLink?.href ?? "");
     setAnchorText(initialAnchorText);
-    setNewTab(false);
-    setNofollow(false);
-  }, [open, initialAnchorText]);
+    setNewTab(initialLink?.newTab ?? false);
+    setNofollow(initialLink?.nofollow ?? false);
+  }, [open, initialAnchorText, initialLink]);
 
   useEffect(() => {
     if (!open || query.trim().length < MIN_QUERY_LENGTH) {

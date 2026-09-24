@@ -42,6 +42,12 @@ const LABELS = {
   link: "Insert link",
   image: "Insert image",
   textStyle: "Text style",
+  undo: "Undo",
+  redo: "Redo",
+  clearFormat: "Clear formatting",
+  editLink: "Edit link",
+  openLink: "Open link",
+  removeLink: "Remove link",
 };
 
 const FIGURE_LABELS = {
@@ -86,6 +92,7 @@ function Harness({ initialContent = "" }: { initialContent?: string }) {
         figureLabels={FIGURE_LABELS}
         locale="en"
         onRequestLink={() => {}}
+        onRequestEditLink={() => {}}
         onRequestImage={() => {}}
       />
       <output data-testid="content-html">{content}</output>
@@ -402,5 +409,50 @@ describe("RichTextEditor — figure width", () => {
     // set, so the control is shown-but-inert rather than silently ignored.
     const wide = await screen.findByRole("button", { name: FIGURE_LABELS.widthWide });
     expect(wide).toBeDisabled();
+  });
+});
+
+/*
+  Opening an article must not rewrite its links.
+
+  TipTap's Link extension ships HTMLAttributes defaults of target="_blank"
+  and rel="noopener noreferrer nofollow", and its target/rel attributes
+  fall back to them — so a link parsed out of an existing article, which
+  carries neither, picked both up and was serialized back with them.
+  Merely opening an old article and saving it put nofollow on every
+  internal link, in the editor built to do this site's SEO.
+*/
+describe("RichTextEditor — links survive a round trip unchanged", () => {
+  it("does not add target or rel to a link that had none", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness initialContent='<p>Intro</p><p><a href="/projects/x" data-internal="true">a link</a></p>' />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('href="/projects/x"');
+      expect(out).not.toContain("target=");
+      expect(out).not.toContain("rel=");
+    });
+  });
+
+  it("keeps target and rel when the link really has them", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness initialContent='<p>Intro</p><p><a href="https://x.test" target="_blank" rel="nofollow">a link</a></p>' />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('target="_blank"');
+      expect(out).toContain("nofollow");
+    });
   });
 });

@@ -1359,7 +1359,13 @@
         "quote": "Quote",
         "link": "Insert link (⌘K)",
         "image": "Insert image",
-        "textStyle": "Text style"
+        "textStyle": "Text style",
+        "undo": "Undo",
+        "redo": "Redo",
+        "clearFormat": "Clear formatting",
+        "editLink": "Edit link",
+        "openLink": "Open link",
+        "removeLink": "Remove link"
       },
       "figure": {
         "alignLeft": "Align left",
