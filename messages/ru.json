@@ -1355,6 +1355,17 @@
         "image": "Вставить изображение",
         "textStyle": "Стиль текста"
       },
+      "figure": {
+        "alignLeft": "По левому краю",
+        "alignCenter": "По центру",
+        "alignRight": "По правому краю",
+        "alignNone": "Без выравнивания",
+        "editAlt": "Изменить alt-текст",
+        "altLabel": "Alt-текст",
+        "altMissing": "Нет alt-текста",
+        "altDone": "Готово",
+        "remove": "Удалить изображение"
+      },
       "linkModal": {
         "title": "Вставить внутреннюю ссылку",
         "close": "Закрыть",

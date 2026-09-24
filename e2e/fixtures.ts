@@ -176,6 +176,27 @@ export const LEAD_PROJECT = PROJECTS[0];
   Same origin so the fetch is covered by connect-src 'self' and needs no
   CORS rule from a bucket the suite does not talk to.
 */
+/**
+ * One image in the media library.
+ *
+ * components/admin/InsertImageModal.tsx picks from the library and has no
+ * manual-URL escape hatch, so without a row here the news editor's image
+ * flow cannot be driven at all — and uploading in a test would mean a real
+ * PUT to Spaces. `/icon-192.png` is a file the app already serves, so the
+ * tile renders a real image rather than a broken one, and the alt text is
+ * pre-filled so the modal's Insert button is enabled on selection.
+ */
+export const MEDIA = {
+  url: "/icon-192.png",
+  fileName: "icon-192.png",
+  mimeType: "image/png",
+  width: 192,
+  height: 192,
+  sizeBytes: 4096,
+  altText: { en: "E2E library image", th: "", zh: "", ru: "" },
+  tags: ["e2e"],
+} as const;
+
 export const E_BROCHURE = {
   slug: "e2e-trinity-brochure",
   fileUrl: "/e2e-fixtures/trinity.pdf",

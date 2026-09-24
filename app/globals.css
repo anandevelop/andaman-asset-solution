@@ -396,6 +396,17 @@
     @apply mt-3 text-center text-xs text-ink/65;
   }
 
+  /* An image inserted without a caption still serializes an empty
+     <figcaption></figcaption>, because the caption is the figure node's
+     content hole rather than a conditional child — see RichTextEditor's
+     Figure. Empty, it would otherwise print as a blank line of caption
+     leading under the photo. The editor puts this back for its own
+     contenteditable region, where the empty line is the thing being typed
+     into. */
+  & figcaption:empty {
+    @apply hidden;
+  }
+
   /* components/admin/InsertImageModal.tsx's alignment option — carried as
      `data-align` rather than a class, since that's what lib/markdown.ts's
      sanitizer allowlist permits (see ALLOWED_ATTR's comment on it). Left

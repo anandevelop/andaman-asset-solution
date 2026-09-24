@@ -621,6 +621,18 @@ export default function NewsForm({
                       if (text !== null) setTitle(text);
                     }}
                     placeholder={t("news.bodyPlaceholder")}
+                    locale={lang}
+                    figureLabels={{
+                      alignLeft: t("news.figure.alignLeft"),
+                      alignCenter: t("news.figure.alignCenter"),
+                      alignRight: t("news.figure.alignRight"),
+                      alignNone: t("news.figure.alignNone"),
+                      editAlt: t("news.figure.editAlt"),
+                      altLabel: t("news.figure.altLabel"),
+                      altMissing: t("news.figure.altMissing"),
+                      altDone: t("news.figure.altDone"),
+                      remove: t("news.figure.remove"),
+                    }}
                     onRequestLink={openLinkModal}
                     onRequestImage={() => setImageModalOpen(true)}
                     toolbarLabels={{

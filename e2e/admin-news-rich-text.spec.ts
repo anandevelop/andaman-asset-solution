@@ -19,6 +19,7 @@
  */
 
 import { expect, test } from "./harness";
+import { MEDIA } from "./fixtures";
 import { nextAccount, signIn } from "./sign-in";
 
 const NEW_ARTICLE = "/en/admin/news/new";
@@ -96,5 +97,68 @@ test.describe("The rich-text news editor", () => {
     await expect(page.getByRole("heading", { name: "Section detail", level: 3 })).toBeVisible();
     await expect(page.getByRole("heading", { name: "A finer point", level: 4 })).toBeVisible();
     await expect(page.locator('a[href="/projects/andaman-bay"]')).toHaveCount(1);
+  });
+
+  /*
+    An inserted image used to be write-once: `figure` was an atom with no
+    NodeView, so clicking it did nothing and changing anything about it
+    meant deleting it and walking back through the modal. This is the whole
+    point of Phase 2b-1 — edit in place, and have the edit survive a save.
+
+    Browser-only by necessity. The caption is contenteditable inside a
+    ProseMirror NodeView and the controls appear on node selection, neither
+    of which jsdom can drive: selecting the node means clicking the image,
+    which needs real layout.
+  */
+  test("edits an inserted image in place — alignment and caption survive a save", async ({ page }) => {
+    const account = nextAccount();
+    const title = uniqueTitle();
+    const caption = "Poolside at dusk";
+
+    await page.goto("/en/login");
+    await signIn(page, account.email);
+
+    await page.goto(NEW_ARTICLE);
+    await page.locator('input[name="title"]').fill(title);
+    await page.locator('input[name="slug"]').fill(uniqueSlug());
+
+    const editor = page.locator('[contenteditable="true"]');
+    await editor.click();
+    await page.keyboard.type("Body copy above the image.");
+
+    // Insert from the library — the modal has no manual-URL field, so this
+    // depends on the MEDIA fixture being seeded.
+    await page.getByRole("button", { name: "Insert image" }).click();
+
+    // Scoped to the dialog: its own confirm button carries the same
+    // "Insert image" label as the toolbar button that opened it, so an
+    // unscoped lookup matches both and fails strict mode.
+    const imageModal = page.getByRole("dialog");
+    await imageModal.getByRole("button", { name: MEDIA.fileName }).click();
+    // Alt comes pre-filled from Media.altText.en, which is what enables
+    // the modal's Insert button.
+    await imageModal.getByRole("button", { name: "Insert image" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    const figure = editor.locator("figure");
+    await expect(figure).toHaveCount(1);
+
+    // Selecting the node is what reveals the controls.
+    await figure.locator("img").click();
+    await page.getByRole("button", { name: "Align right" }).click();
+    await expect(figure).toHaveAttribute("data-align", "right");
+
+    await figure.locator("figcaption").click();
+    await page.keyboard.type(caption);
+
+    await page.getByRole("button", { name: "Create", exact: true }).first().click();
+    await expect(page).toHaveURL(/\/admin\/news\/[^/]+\/edit\?created=1/);
+
+    // Reloaded from the database, through sanitizeArticleHtml() — not the
+    // editor state that produced it.
+    const saved = page.locator('[contenteditable="true"] figure');
+    await expect(saved).toHaveAttribute("data-align", "right");
+    await expect(saved.locator("figcaption")).toHaveText(caption);
+    await expect(saved.locator("img")).toHaveAttribute("alt", MEDIA.altText.en);
   });
 });

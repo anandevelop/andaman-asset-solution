@@ -26,9 +26,10 @@
  * that reports the HTML.
  *
  * The custom `figure` node (not TipTap's stock Image extension, which
- * only gives a bare `<img>`) is the one node type this phase adds beyond
- * headings/bold/italic/lists/quote/link — the other "ready-made blocks"
- * (callout, FAQ, table, project card, CTA, pull-quote) are Phase 2b.
+ * only gives a bare `<img>`) carries a React NodeView so an inserted image
+ * stays editable — alignment, caption and alt text all change in place.
+ * Its caption is editable content rather than an attribute; see the node's
+ * own comment for why that needed no data migration.
  * Alignment rides on `data-align`, not a class, because lib/markdown.ts's
  * sanitizer allowlist has no `class`/`style` — see that file's comment on
  * why `data-align` was added there for exactly this.
@@ -36,10 +37,14 @@
  */
 
 import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapLink from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import FigureNodeView, {
+  type FigureLabels,
+  type FigureOptions,
+} from "@/components/admin/editor/FigureNodeView";
 import { Extension, Node } from "@tiptap/core";
 import {
   Bold,
@@ -105,20 +110,39 @@ const InternalAwareLink = TiptapLink.extend({
   },
 });
 
-/** `<figure><img/><figcaption/></figure>` as one atomic node — see the
- *  file header for why caption is a plain attribute rather than editable
- *  rich content, and why alignment is `data-align`. */
-const Figure = Node.create({
+/**
+ * `<figure><img/><figcaption/></figure>`, with the caption as real editable
+ * content.
+ *
+ * It used to be `atom: true` with the caption as a plain attribute, which
+ * made the whole image write-once: clicking it did nothing, so any change
+ * meant deleting it and re-inserting through the modal. `content: "inline*"`
+ * plus the NodeView below is what makes it editable in place — see
+ * components/admin/editor/FigureNodeView.tsx.
+ *
+ * No data migration was needed for that change, and this is the reason:
+ * the caption only ever *existed* as an attribute inside the node's own
+ * head. On disk it has always been written as `<figcaption>text</figcaption>`
+ * by renderHTML, which is exactly what `content` parses back out of.
+ *
+ * `isolating` keeps Backspace at the start of a caption from lifting the
+ * caret out into the surrounding document and deleting the image with it.
+ */
+const Figure = Node.create<FigureOptions>({
   name: "figure",
   group: "block",
-  atom: true,
+  content: "inline*",
   draggable: true,
+  isolating: true,
+
+  addOptions() {
+    return { labels: null, locale: "en" };
+  },
 
   addAttributes() {
     return {
       src: { default: null },
       alt: { default: "" },
-      caption: { default: null as string | null },
       align: { default: null as "left" | "center" | "right" | null },
       loading: { default: "lazy" },
       mediaId: { default: null as string | null },
@@ -129,17 +153,27 @@ const Figure = Node.create({
     return [
       {
         tag: "figure",
+        /*
+          A function rather than the `"figcaption"` string form. Given a
+          selector that matches nothing — every figure saved before captions
+          became content, including ones already in the database — the string
+          form leaves ProseMirror parsing the figure's children as the
+          caption, which swallows the `<img>` into the caption text and
+          loses the image. An empty detached element parses as empty content,
+          which is what a caption-less figure should be.
+        */
+        contentElement: (element) =>
+          (element as HTMLElement).querySelector("figcaption") ??
+          document.createElement("figcaption"),
         getAttrs: (element) => {
           if (typeof element === "string") return false;
           const img = element.querySelector("img");
-          const figcaption = element.querySelector("figcaption");
           return {
             src: img?.getAttribute("src") ?? null,
             alt: img?.getAttribute("alt") ?? "",
             loading: img?.getAttribute("loading") ?? "lazy",
             mediaId: img?.getAttribute("data-media-id") ?? null,
             align: element.getAttribute("data-align") ?? null,
-            caption: figcaption?.textContent ?? null,
           };
         },
       },
@@ -147,20 +181,29 @@ const Figure = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, align, loading, mediaId } = node.attrs;
-    const img: [string, Record<string, string>] = [
-      "img",
-      {
-        src: src ?? "",
-        alt: alt ?? "",
-        loading: loading ?? "lazy",
-        ...(mediaId ? { "data-media-id": mediaId } : {}),
-      },
-    ];
-    const children: unknown[] = [img];
-    if (caption) children.push(["figcaption", {}, caption]);
+    const { src, alt, align, loading, mediaId } = node.attrs;
 
-    return ["figure", align ? { "data-align": align } : {}, ...children];
+    return [
+      "figure",
+      align ? { "data-align": align } : {},
+      [
+        "img",
+        {
+          src: src ?? "",
+          alt: alt ?? "",
+          loading: loading ?? "lazy",
+          ...(mediaId ? { "data-media-id": mediaId } : {}),
+        },
+      ],
+      // 0 is the content hole: whatever the caption holds is serialized
+      // here, and an empty one leaves `<figcaption></figcaption>`, which
+      // prose-article hides rather than rendering as a blank line.
+      ["figcaption", {}, 0],
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(FigureNodeView);
   },
 });
 
@@ -202,6 +245,11 @@ type Props = {
     image: string;
     textStyle: string;
   };
+  /** Passed through to the figure NodeView, which cannot read
+   *  useTranslations itself — see FigureNodeView's header. */
+  figureLabels: FigureLabels;
+  /** Which locale's alt text an edit writes back to in the media library. */
+  locale: string;
   onRequestLink: () => void;
   onRequestImage: () => void;
 };
@@ -214,7 +262,17 @@ function firstHeadingLevel(editor: Editor): HeadingLevel | null {
 }
 
 const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichTextEditor(
-  { content, onChange, onFirstH1TextChange, placeholder, toolbarLabels, onRequestLink, onRequestImage },
+  {
+    content,
+    onChange,
+    onFirstH1TextChange,
+    placeholder,
+    toolbarLabels,
+    figureLabels,
+    locale,
+    onRequestLink,
+    onRequestImage,
+  },
   ref,
 ) {
   const [activeHeading, setActiveHeading] = useState<HeadingLevel | 0>(0);
@@ -228,10 +286,10 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] }, link: false }),
       InternalAwareLink.configure({ openOnClick: false, autolink: false }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
-      Figure,
+      Figure.configure({ labels: figureLabels, locale }),
       HeadingShortcuts,
     ],
-    [placeholder],
+    [placeholder, figureLabels, locale],
   );
 
   const editor = useEditor({
@@ -297,11 +355,14 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         attrs: {
           src: image.src,
           alt: image.alt,
-          caption: image.caption || null,
           align: image.align,
           loading: image.loading,
           mediaId: image.mediaId,
         },
+        // The caption is the node's content now, so it is inserted as a
+        // text child rather than set as an attribute. Omitted entirely
+        // when blank: an empty text node is not a valid child.
+        ...(image.caption ? { content: [{ type: "text", text: image.caption }] } : {}),
       })
       .run();
   }
@@ -469,7 +530,12 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 
       <EditorContent
         editor={editor}
-        className="admin-textarea prose-article min-h-[320px] max-w-none [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none"
+        /* prose-article hides an empty figcaption so a caption-less image
+           does not leave a blank line on the public page. In here that same
+           rule would hide the very line an admin is trying to type a caption
+           into, so it is put back — with a minimum height, since an empty
+           inline container is zero pixels tall and impossible to click. */
+        className="admin-textarea prose-article min-h-[320px] max-w-none [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem]"
         onKeyDownCapture={(event) => {
           if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();

@@ -1355,6 +1355,17 @@
         "image": "插入图片",
         "textStyle": "文本样式"
       },
+      "figure": {
+        "alignLeft": "左对齐",
+        "alignCenter": "居中",
+        "alignRight": "右对齐",
+        "alignNone": "不对齐",
+        "editAlt": "编辑替代文本",
+        "altLabel": "替代文本",
+        "altMissing": "缺少替代文本",
+        "altDone": "完成",
+        "remove": "删除图片"
+      },
       "linkModal": {
         "title": "插入内部链接",
         "close": "关闭",

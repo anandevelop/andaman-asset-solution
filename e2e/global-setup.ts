@@ -29,6 +29,7 @@ import {
   DRAFT_BROCHURE,
   E_BROCHURE,
   PENDING_ADMIN,
+  MEDIA,
   PROJECTS,
   VIEWER,
 } from "./fixtures";
@@ -125,6 +126,18 @@ async function seed(prisma: PrismaClient) {
   const trinity = await prisma.project.findUnique({
     where: { slug: PROJECTS[0].slug },
     select: { id: true },
+  });
+
+  await prisma.media.create({
+    data: {
+      url: MEDIA.url,
+      mimeType: MEDIA.mimeType,
+      width: MEDIA.width,
+      height: MEDIA.height,
+      sizeBytes: MEDIA.sizeBytes,
+      altText: MEDIA.altText,
+      tags: [...MEDIA.tags],
+    },
   });
 
   await prisma.eBrochure.create({

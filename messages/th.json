@@ -1355,6 +1355,17 @@
         "image": "แทรกรูปภาพ",
         "textStyle": "รูปแบบข้อความ"
       },
+      "figure": {
+        "alignLeft": "ชิดซ้าย",
+        "alignCenter": "กึ่งกลาง",
+        "alignRight": "ชิดขวา",
+        "alignNone": "ไม่จัดตำแหน่ง",
+        "editAlt": "แก้ข้อความแทนภาพ",
+        "altLabel": "ข้อความแทนภาพ",
+        "altMissing": "ยังไม่มีข้อความแทนภาพ",
+        "altDone": "เสร็จสิ้น",
+        "remove": "ลบรูป"
+      },
       "linkModal": {
         "title": "แทรกลิงก์ภายใน",
         "close": "ปิด",

@@ -13,7 +13,16 @@
  */
 
 import { useRef, useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// FigureNodeView reaches for the media library to write a corrected alt
+// back to it. These are "use server" exports, which cannot be imported
+// into jsdom — the same stubbing NewsSeoPanel.test.tsx needs for the same
+// module.
+vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({
+  fetchMediaLibrary: vi.fn(async () => ({ items: [] })),
+  updateMediaMeta: vi.fn(async () => ({ ok: true })),
+}));
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RichTextEditor, { type RichTextEditorHandle } from "@/components/admin/RichTextEditor";
@@ -29,6 +38,18 @@ const LABELS = {
   link: "Insert link",
   image: "Insert image",
   textStyle: "Text style",
+};
+
+const FIGURE_LABELS = {
+  alignLeft: "Align left",
+  alignCenter: "Center",
+  alignRight: "Align right",
+  alignNone: "No alignment",
+  editAlt: "Edit alt text",
+  altLabel: "Alt text",
+  altMissing: "No alt text",
+  altDone: "Done",
+  remove: "Remove image",
 };
 
 function Harness({ initialContent = "" }: { initialContent?: string }) {
@@ -55,6 +76,8 @@ function Harness({ initialContent = "" }: { initialContent?: string }) {
           if (text !== null) setTitle(text);
         }}
         toolbarLabels={LABELS}
+        figureLabels={FIGURE_LABELS}
+        locale="en"
         onRequestLink={() => {}}
         onRequestImage={() => {}}
       />
@@ -138,5 +161,68 @@ describe("RichTextEditor — title ↔ first-H1 sync", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.getByTestId("content-html").textContent).not.toContain("A title");
     expect(screen.getByTestId("content-html").textContent).toContain("No heading yet.");
+  });
+});
+
+/*
+  The figure node's caption stopped being an attribute and became the
+  node's own content (Phase 2b-1), so the thing worth pinning is that HTML
+  in and HTML out still agree — including for the figures already sitting
+  in the database, which predate captions entirely.
+
+  Each case types one character into a leading paragraph first. Without
+  that the editor never fires onUpdate, `content` still holds the string
+  the harness was handed, and the assertions below would be comparing the
+  input to itself — green whatever the node does.
+*/
+describe("RichTextEditor — figure captions round-trip", () => {
+  it("keeps a caption through parse and serialize", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-align="right">' +
+      '<img src="https://example.test/a.jpg" alt="A villa" loading="lazy" data-media-id="m1">' +
+      "<figcaption>Poolside at dusk</figcaption>" +
+      "</figure>";
+
+    render(<Harness initialContent={html} />);
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain("<figcaption>Poolside at dusk</figcaption>");
+      // The attributes travel with it rather than being dropped on the way
+      // through the new content model.
+      expect(out).toContain('data-align="right"');
+      expect(out).toContain('alt="A villa"');
+      expect(out).toContain('data-media-id="m1"');
+    });
+  });
+
+  it("does not swallow the image when a figure has no caption", async () => {
+    // Every figure written before this change looks exactly like this, and
+    // there is one in the development database. Parsed with a plain
+    // `contentElement: "figcaption"` selector, ProseMirror falls back to
+    // the figure's children and the <img> is consumed as caption text —
+    // the image simply disappears on first open.
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure><img src="https://example.test/b.jpg" alt="No caption" loading="lazy"></figure>';
+
+    render(<Harness initialContent={html} />);
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('src="https://example.test/b.jpg"');
+      expect(out).toContain('alt="No caption"');
+      // Empty caption, not a caption containing the image.
+      expect(out).not.toContain("<figcaption><img");
+    });
   });
 });

@@ -1355,6 +1355,17 @@
         "image": "Insert image",
         "textStyle": "Text style"
       },
+      "figure": {
+        "alignLeft": "Align left",
+        "alignCenter": "Center",
+        "alignRight": "Align right",
+        "alignNone": "No alignment",
+        "editAlt": "Edit alt text",
+        "altLabel": "Alt text",
+        "altMissing": "No alt text",
+        "altDone": "Done",
+        "remove": "Remove image"
+      },
       "linkModal": {
         "title": "Insert internal link",
         "close": "Close",
