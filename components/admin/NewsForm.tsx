@@ -319,6 +319,7 @@ export default function NewsForm({
   statusPillLabel,
 }: Props) {
   const t = useTranslations("admin");
+  const tUpload = useTranslations("admin.upload");
   const [state, formAction, isPending] = useActionState(action, INITIAL);
 
   const err = (name: string) => {
@@ -364,6 +365,9 @@ export default function NewsForm({
   const [linkModalInitial, setLinkModalInitial] =
     useState<{ href: string; newTab: boolean; nofollow: boolean } | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  /** Upload trouble from a drag/paste into the body — shown once and
+   *  dismissed, rather than a field-level error on a field that has none. */
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
   function handleTitleChange(next: string) {
     setTitle(next);
@@ -651,6 +655,13 @@ export default function NewsForm({
                     }}
                     onRequestLink={openLinkModal}
                     onRequestEditLink={openLinkModalForEdit}
+                    onUploadNotice={setUploadNotice}
+                    uploadLabels={{
+                      failed: tUpload("failed"),
+                      tooLarge: tUpload("tooLarge"),
+                      pastedImage: tUpload("pastedImage"),
+                      byKey: (key) => tUpload(key as never),
+                    }}
                     onRequestImage={() => setImageModalOpen(true)}
                     toolbarLabels={{
                       paragraph: t("news.richToolbar.paragraph"),
@@ -675,6 +686,19 @@ export default function NewsForm({
                       removeLink: t("news.richToolbar.removeLink"),
                     }}
                   />
+                  {uploadNotice && (
+                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
+                      <AlertTriangle size={13} className="mt-0.5 shrink-0" aria-hidden />
+                      <span className="flex-1">{uploadNotice}</span>
+                      <button
+                        type="button"
+                        onClick={() => setUploadNotice(null)}
+                        className="shrink-0 font-medium underline"
+                      >
+                        {tUpload("dismiss")}
+                      </button>
+                    </p>
+                  )}
                   {err("content") && (
                     <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                       <AlertCircle size={13} aria-hidden />

@@ -93,6 +93,13 @@ function Harness({ initialContent = "" }: { initialContent?: string }) {
         locale="en"
         onRequestLink={() => {}}
         onRequestEditLink={() => {}}
+        onUploadNotice={() => {}}
+        uploadLabels={{
+          failed: "Upload failed",
+          tooLarge: "Too large",
+          pastedImage: "Pasted images have to be uploaded",
+          byKey: (key) => key,
+        }}
         onRequestImage={() => {}}
       />
       <output data-testid="content-html">{content}</output>

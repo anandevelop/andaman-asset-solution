@@ -90,7 +90,12 @@ export default function FigureNodeView({
   const [altOpen, setAltOpen] = useState(false);
   const [altDraft, setAltDraft] = useState(alt);
 
-  const missingAlt = alt.trim().length === 0;
+  const uploading = Boolean(node.attrs.uploading);
+  const uploadProgress = Number(node.attrs.uploadProgress ?? 0);
+
+  // An image still uploading has nothing to warn about yet — the alt badge
+  // would just be noise over a progress bar.
+  const missingAlt = !uploading && alt.trim().length === 0;
 
   /**
    * Fires once, when the popover closes — not on each keystroke. The write
@@ -202,6 +207,15 @@ export default function FigureNodeView({
           className={`cursor-pointer ${missingAlt ? "outline-2 outline-offset-2 outline-amber-500" : ""}`}
         />
 
+        {uploading && (
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-primary/10">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        )}
+
         {/* An image with no alt fails lib/article-seo.ts's own check (weight
             3, a hard fail). InsertImageModal makes alt mandatory on the way
             in; now that alt is editable afterwards, emptying it needs to be
@@ -212,7 +226,7 @@ export default function FigureNodeView({
           </p>
         )}
 
-        {selected && labels && (
+        {selected && labels && !uploading && (
           <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised/95 p-1 shadow-lg backdrop-blur-sm">
             {alignOptions.map(({ value, label, icon: Icon }) => (
               <button

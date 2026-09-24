@@ -1641,7 +1641,8 @@
       "storageDenied": "存储服务拒绝上传（403）—— 请检查访问密钥。",
       "sessionExpired": "登录状态已过期，请重新登录后再试。",
       "twoFactorRequired": "请先完成两步验证设置，然后再上传。",
-      "failedWithReason": "上传失败（{reason}）"
+      "failedWithReason": "上传失败（{reason}）",
+      "pastedImage": "粘贴的图片需要先上传 — 请拖入文件，或使用插入图片按钮。"
     },
     "placeholder": {
       "title": "后续阶段推出",

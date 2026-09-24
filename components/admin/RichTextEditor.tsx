@@ -36,7 +36,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 // TipTap 3 moved the menus into a subpath of the same package — no extra
 // dependency, verified against @tiptap/react's own exports map.
@@ -49,6 +49,8 @@ import FigureNodeView, {
   type FigureOptions,
 } from "@/components/admin/editor/FigureNodeView";
 import { Extension, Node } from "@tiptap/core";
+import { cleanPastedHtml, hasInlineImageData } from "@/lib/paste-html";
+import { IMAGE_TYPES, uploadToLibrary } from "@/lib/admin/media-upload";
 import {
   Bold,
   Code,
@@ -180,6 +182,15 @@ const Figure = Node.create<FigureOptions>({
       // figure carrying it renders exactly like one written before
       // data-width existed.
       width: { default: "normal" as "normal" | "wide" | "full" },
+      /*
+        Transient, and deliberately absent from renderHTML and parseHTML:
+        they describe an upload in flight, not the article. A figure is
+        inserted the moment a file is dropped — so the author sees it land
+        where they aimed — and these carry the progress bar until the real
+        src and mediaId arrive.
+      */
+      uploading: { default: false, rendered: false },
+      uploadProgress: { default: 0, rendered: false },
       loading: { default: "lazy" },
       mediaId: { default: null as string | null },
     };
@@ -307,6 +318,17 @@ type Props = {
    *  — see the link bubble menu below. */
   onRequestEditLink: (current: { href: string; newTab: boolean; nofollow: boolean }) => void;
   onRequestImage: () => void;
+  /** Surfaced by NewsForm as a toast — upload failures, and the "that
+   *  image has to be uploaded" notice for a pasted base64 blob. */
+  onUploadNotice: (message: string) => void;
+  /** admin.upload.* messages, resolved by the caller for the same reason
+   *  the toolbar labels are. */
+  uploadLabels: {
+    failed: string;
+    tooLarge: string;
+    pastedImage: string;
+    byKey: (key: string) => string;
+  };
 };
 
 /** The first node's level, or null if it isn't a heading. */
@@ -328,6 +350,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     onRequestLink,
     onRequestEditLink,
     onRequestImage,
+    onUploadNotice,
+    uploadLabels,
   },
   ref,
 ) {
@@ -351,6 +375,86 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     return (label: string, keys?: string) =>
       keys ? `${label} (${keys.replace(/Mod/g, mod).replace(/Alt/g, alt)})` : label;
   }, [isMac]);
+
+  /* useEditor's own config cannot see the editor it is building, and the
+     drop/paste handlers need it — so they read it back through a ref that
+     is filled in as soon as the instance exists. */
+  const editorRef = useRef<Editor | null>(null);
+
+  /*
+    Dropping or pasting an image goes through the same presign → PUT →
+    createMedia path the library's own upload button uses — see
+    lib/admin/media-upload.ts, which exists so there is exactly one of
+    them. The figure is inserted first, carrying a blob: preview and the
+    progress bar, so the image appears where it was aimed rather than
+    after the round trip; the real src and mediaId replace them when the
+    upload lands, and the whole node is removed if it does not.
+
+    alt is deliberately left empty: FigureNodeView badges an image without
+    one, and lib/article-seo.ts still refuses to publish an article that
+    has any. Forcing a modal here would put the four clicks back that this
+    exists to remove.
+  */
+  async function uploadIntoEditor(instance: Editor, files: File[], at?: number) {
+    for (const file of files) {
+      if (!IMAGE_TYPES.includes(file.type)) continue;
+
+      const preview = URL.createObjectURL(file);
+      const position = at ?? instance.state.selection.from;
+
+      instance
+        .chain()
+        .insertContentAt(position, {
+          type: "figure",
+          attrs: { src: preview, alt: "", uploading: true, uploadProgress: 0 },
+        })
+        .run();
+
+      /** Re-found each time rather than remembered: every keystroke the
+       *  author makes while the upload runs shifts the document, and a
+       *  position captured up front would update the wrong node. */
+      const withNode = (fn: (pos: number) => void) => {
+        let found: number | null = null;
+        instance.state.doc.descendants((node, pos) => {
+          if (node.type.name === "figure" && node.attrs.src === preview) found = pos;
+          return found === null;
+        });
+        if (found !== null) fn(found);
+      };
+
+      try {
+        const result = await uploadToLibrary(locale, file, (percent) =>
+          withNode((pos) =>
+            instance.view.dispatch(
+              instance.state.tr.setNodeAttribute(pos, "uploadProgress", percent),
+            ),
+          ),
+        );
+
+        if (!result.ok) {
+          withNode((pos) => instance.commands.deleteRange({ from: pos, to: pos + 1 }));
+          onUploadNotice(
+            result.messageKey ? uploadLabels.byKey(result.messageKey) : uploadLabels.failed,
+          );
+          continue;
+        }
+
+        withNode((pos) => {
+          const tr = instance.state.tr
+            .setNodeAttribute(pos, "src", result.url)
+            .setNodeAttribute(pos, "mediaId", result.id)
+            .setNodeAttribute(pos, "uploading", false)
+            .setNodeAttribute(pos, "uploadProgress", 100);
+          instance.view.dispatch(tr);
+        });
+      } catch {
+        withNode((pos) => instance.commands.deleteRange({ from: pos, to: pos + 1 }));
+        onUploadNotice(uploadLabels.failed);
+      } finally {
+        URL.revokeObjectURL(preview);
+      }
+    }
+  }
 
   const extensions = useMemo(
     () => [
@@ -392,6 +496,47 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       // safety net this component doesn't need, and `true` (meaning
       // "already handled") is what avoids it here.
       handleScrollToSelection: () => true,
+
+      handleDrop: (view, event) => {
+        const files = Array.from(event.dataTransfer?.files ?? []).filter((file) =>
+          IMAGE_TYPES.includes(file.type),
+        );
+        if (files.length === 0) return false;
+
+        event.preventDefault();
+        // Where it was actually dropped, not where the caret happened to
+        // be — the whole point of aiming at a spot in the document.
+        const at = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+        const instance = editorRef.current;
+        if (!instance) return false;
+        void uploadIntoEditor(instance, files, at);
+        return true;
+      },
+
+      handlePaste: (view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+          IMAGE_TYPES.includes(file.type),
+        );
+        if (files.length > 0) {
+          const instance = editorRef.current;
+          if (!instance) return false;
+          event.preventDefault();
+          void uploadIntoEditor(instance, files);
+          return true;
+        }
+
+        // A base64 image inside pasted HTML — Word does this with
+        // screenshots. lib/markdown.ts's sanitizer refuses data: URLs, so
+        // it used to disappear on save without a word.
+        const html = event.clipboardData?.getData("text/html");
+        if (html && hasInlineImageData(html)) onUploadNotice(uploadLabels.pastedImage);
+
+        return false;
+      },
+
+      // Word and Google Docs wrap every run in styled spans, which TipTap's
+      // schema has no rule for and therefore drops — see lib/paste-html.ts.
+      transformPastedHTML: (html) => cleanPastedHtml(html),
     },
     onUpdate: ({ editor: instance }) => {
       onChange(instance.getHTML());
@@ -459,6 +604,10 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 
   // Exposed for the parent's link/image modals to call back into once the
   // admin has made a choice — see NewsForm.tsx.
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
   useImperativeHandle(
     ref,
     () => ({

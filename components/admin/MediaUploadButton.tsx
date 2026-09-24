@@ -20,67 +20,13 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, UploadCloud } from "lucide-react";
-import { createMedia } from "@/app/[locale]/admin/(content)/media/actions";
+import {
+  ACCEPT,
+  uploadToLibrary,
+} from "@/lib/admin/media-upload";
 import type { MediaItem } from "@/components/admin/MediaLibrary";
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,application/pdf,video/mp4,video/webm";
-const MAX_BYTES = 100 * 1024 * 1024;
-
-const PRESIGN_ERROR_KEYS: Record<string, string> = {
-  S3_NOT_CONFIGURED: "notConfigured",
-  UNSUPPORTED_TYPE: "unsupportedType",
-  FILE_TOO_LARGE: "tooLarge",
-  RATE_LIMITED: "rateLimited",
-  UNAUTHORISED: "sessionExpired",
-  TWO_FACTOR_SETUP_REQUIRED: "twoFactorRequired",
-};
-
 type UploadItem = { id: string; name: string; progress: number; error?: string };
-
-function putToS3(
-  url: string,
-  file: File,
-  headers: Record<string, string>,
-  onProgress: (percent: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", url, true);
-    for (const [name, value] of Object.entries(headers)) {
-      xhr.setRequestHeader(name, value);
-    }
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    xhr.onload = () =>
-      xhr.status >= 200 && xhr.status < 300
-        ? resolve()
-        : reject(new Error(xhr.status === 403 ? "DENIED" : `HTTP_${xhr.status}`));
-    xhr.onerror = () => reject(new Error("BLOCKED"));
-    xhr.onabort = () => reject(new Error("ABORTED"));
-    xhr.send(file);
-  });
-}
-
-/** Best-effort — a file that fails to decode (e.g. a PDF) just has no
- *  recorded dimensions, which the schema already allows for. */
-function readImageDimensions(file: File): Promise<{ width?: number; height?: number }> {
-  if (!file.type.startsWith("image/")) return Promise.resolve({});
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    const cleanup = () => URL.revokeObjectURL(url);
-    img.onload = () => {
-      cleanup();
-      resolve({ width: img.naturalWidth || undefined, height: img.naturalHeight || undefined });
-    };
-    img.onerror = () => {
-      cleanup();
-      resolve({});
-    };
-    img.src = url;
-  });
-}
 
 type Props = {
   locale: string;
@@ -102,57 +48,18 @@ export default function MediaUploadButton({ locale, label, onUploaded }: Props) 
 
     for (const file of files) {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-      if (file.size > MAX_BYTES) {
-        setUploads((u) => [...u, { id, name: file.name, progress: 0, error: t("tooLarge") }]);
-        continue;
-      }
-
       setUploads((u) => [...u, { id, name: file.name, progress: 0 }]);
 
       try {
-        const response = await fetch("/api/uploads/presign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            size: file.size,
-            prefix: "library",
-            slug: "general",
-          }),
-        });
-
-        const result = await response.json().catch(() => null);
-
-        if (!response.ok || !result?.ok) {
-          const code: string | undefined = result?.error;
-          const key = code ? PRESIGN_ERROR_KEYS[code] : undefined;
-          const message = key ? t(key as never) : t("failedWithReason", { reason: code ?? `HTTP ${response.status}` });
-          setUploads((u) => u.map((item) => (item.id === id ? { ...item, error: message } : item)));
-          continue;
-        }
-
-        const dims = await readImageDimensions(file);
-
-        await putToS3(
-          result.uploadUrl,
-          file,
-          result.headers ?? { "Content-Type": result.contentType },
-          (percent) => setUploads((u) => u.map((item) => (item.id === id ? { ...item, progress: percent } : item))),
+        const result = await uploadToLibrary(locale, file, (percent) =>
+          setUploads((u) => u.map((item) => (item.id === id ? { ...item, progress: percent } : item))),
         );
 
-        const created = await createMedia(locale, {
-          url: result.publicUrl,
-          key: result.key,
-          mimeType: file.type,
-          width: dims.width,
-          height: dims.height,
-          sizeBytes: file.size,
-        });
-
-        if (!created.ok || !created.id) {
-          setUploads((u) => u.map((item) => (item.id === id ? { ...item, error: t("failed") } : item)));
+        if (!result.ok) {
+          const message = result.messageKey
+            ? t(result.messageKey as never)
+            : t("failedWithReason", { reason: result.reason ?? "" });
+          setUploads((u) => u.map((item) => (item.id === id ? { ...item, error: message } : item)));
           continue;
         }
 
@@ -161,13 +68,13 @@ export default function MediaUploadButton({ locale, label, onUploaded }: Props) 
         // echoes back the id, and a picker caller needs the full row to
         // show the new tile without a re-fetch.
         onUploaded({
-          id: created.id,
-          url: result.publicUrl,
-          key: result.key ?? null,
-          mimeType: file.type,
-          width: dims.width ?? null,
-          height: dims.height ?? null,
-          sizeBytes: file.size,
+          id: result.id,
+          url: result.url,
+          key: result.key,
+          mimeType: result.mimeType,
+          width: result.width,
+          height: result.height,
+          sizeBytes: result.sizeBytes,
           tags: [],
           altText: {},
           createdAt: new Date().toISOString(),

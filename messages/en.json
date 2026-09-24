@@ -1641,7 +1641,8 @@
       "storageDenied": "Storage denied the upload (403) — check the access key.",
       "sessionExpired": "Your session expired. Sign in again, then retry.",
       "twoFactorRequired": "Finish two-factor setup before uploading.",
-      "failedWithReason": "Upload failed ({reason})"
+      "failedWithReason": "Upload failed ({reason})",
+      "pastedImage": "Pasted images have to be uploaded — drag the file in, or use the image button."
     },
     "placeholder": {
       "title": "Coming in a later phase",
