@@ -1366,6 +1366,9 @@
         "alignCenter": "居中",
         "alignRight": "右对齐",
         "alignNone": "不对齐",
+        "widthNormal": "标准宽度",
+        "widthWide": "加宽",
+        "widthFull": "整幅宽度",
         "editAlt": "编辑替代文本",
         "altLabel": "替代文本",
         "altMissing": "缺少替代文本",
@@ -1406,6 +1409,12 @@
           "left": "居左",
           "center": "居中",
           "right": "居右"
+        },
+        "widthLabel": "宽度",
+        "width": {
+          "normal": "标准",
+          "wide": "加宽",
+          "full": "整幅宽度"
         },
         "loadingLabel": "加载方式",
         "loadingLazy": "延迟加载",

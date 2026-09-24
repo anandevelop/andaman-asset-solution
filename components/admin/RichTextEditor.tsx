@@ -90,6 +90,7 @@ export type InsertedImage = {
   alt: string;
   caption: string;
   align: "left" | "center" | "right" | null;
+  width: "normal" | "wide" | "full";
   loading: "lazy" | "eager";
   mediaId: string | null;
 };
@@ -148,6 +149,11 @@ const Figure = Node.create<FigureOptions>({
       src: { default: null },
       alt: { default: "" },
       align: { default: null as "left" | "center" | "right" | null },
+      // "normal" is the absence of a width choice, not a third size — see
+      // prose-article, where it deliberately has no rules of its own so a
+      // figure carrying it renders exactly like one written before
+      // data-width existed.
+      width: { default: "normal" as "normal" | "wide" | "full" },
       loading: { default: "lazy" },
       mediaId: { default: null as string | null },
     };
@@ -178,6 +184,7 @@ const Figure = Node.create<FigureOptions>({
             loading: img?.getAttribute("loading") ?? "lazy",
             mediaId: img?.getAttribute("data-media-id") ?? null,
             align: element.getAttribute("data-align") ?? null,
+            width: element.getAttribute("data-width") ?? "normal",
           };
         },
       },
@@ -185,11 +192,16 @@ const Figure = Node.create<FigureOptions>({
   },
 
   renderHTML({ node }) {
-    const { src, alt, align, loading, mediaId } = node.attrs;
+    const { src, alt, align, width, loading, mediaId } = node.attrs;
 
     return [
       "figure",
-      align ? { "data-align": align } : {},
+      {
+        ...(align ? { "data-align": align } : {}),
+        // Omitted when "normal", so a figure nobody resized stays
+        // byte-identical to how it was stored before this attribute.
+        ...(width && width !== "normal" ? { "data-width": width } : {}),
+      },
       [
         "img",
         {
@@ -378,6 +390,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           src: image.src,
           alt: image.alt,
           align: image.align,
+          width: image.width,
           loading: image.loading,
           mediaId: image.mediaId,
         },
@@ -608,7 +621,12 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
            rule would hide the very line an admin is trying to type a caption
            into, so it is put back — with a minimum height, since an empty
            inline container is zero pixels tall and impossible to click. */
-        className="admin-textarea prose-article min-h-[320px] max-w-none [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem]"
+        /* max-w-2xl, not max-w-none: that is the width of the article
+           column on news/[slug] (container-luxe > mx-auto max-w-2xl), and
+           a "wide" or "full" image only reads correctly against the column
+           it will actually sit in. The grid cell this lives in is wider,
+           so the leftover space is margin rather than a squeezed measure. */
+        className="admin-textarea prose-article mx-auto min-h-[320px] max-w-2xl [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem]"
         onKeyDownCapture={(event) => {
           if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();

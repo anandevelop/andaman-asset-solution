@@ -45,6 +45,9 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
   const [alt, setAlt] = useState("");
   const [caption, setCaption] = useState("");
   const [align, setAlign] = useState<Align>(null);
+  // "normal" on purpose: an image inserted without touching this control
+  // has to come out exactly as one inserted before the control existed.
+  const [width, setWidth] = useState<"normal" | "wide" | "full">("normal");
   const [loading, setLoading] = useState<"lazy" | "eager">("lazy");
   const [saving, startSaving] = useTransition();
 
@@ -55,6 +58,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
     setAlt("");
     setCaption("");
     setAlign(null);
+    setWidth("normal");
     setLoading("lazy");
   }, [open]);
 
@@ -86,6 +90,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
       alt: altText,
       caption: caption.trim(),
       align,
+      width,
       loading,
       mediaId: selected.id,
     });
@@ -158,6 +163,24 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
                 <option value="left">{t("align.left")}</option>
                 <option value="center">{t("align.center")}</option>
                 <option value="right">{t("align.right")}</option>
+              </select>
+            </div>
+            <div>
+              <label className="admin-label" htmlFor="image-width">
+                {t("widthLabel")}
+              </label>
+              <select
+                id="image-width"
+                value={width}
+                // Floated images are forced back to ~40% by prose-article,
+                // so the choice would not survive the alignment.
+                disabled={align === "left" || align === "right"}
+                onChange={(event) => setWidth(event.target.value as "normal" | "wide" | "full")}
+                className="admin-input disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="normal">{t("width.normal")}</option>
+                <option value="wide">{t("width.wide")}</option>
+                <option value="full">{t("width.full")}</option>
               </select>
             </div>
             <div>

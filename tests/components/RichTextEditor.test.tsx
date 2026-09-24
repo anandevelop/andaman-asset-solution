@@ -49,6 +49,9 @@ const FIGURE_LABELS = {
   alignCenter: "Center",
   alignRight: "Align right",
   alignNone: "No alignment",
+  widthNormal: "Normal width",
+  widthWide: "Wide",
+  widthFull: "Full width",
   editAlt: "Edit alt text",
   altLabel: "Alt text",
   altMissing: "No alt text",
@@ -339,5 +342,65 @@ describe("RichTextEditor — marks the sanitizer would drop", () => {
     await waitFor(() => {
       expect(screen.getByTestId("content-html").textContent).toContain("<s>");
     });
+  });
+});
+
+/*
+  Width is a separate decision from alignment (Phase 2b-2), and the one
+  thing that must not change is every article written before it existed.
+*/
+describe("RichTextEditor — figure width", () => {
+  it("leaves a legacy figure byte-identical, with no data-width invented", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-align="center"><img src="https://example.test/e.jpg" alt="A villa" loading="lazy"><figcaption>c</figcaption></figure>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-align="center"');
+      // "normal" is the absence of a choice — it must not be written out,
+      // or every existing article's markup changes on first save.
+      expect(out).not.toContain("data-width");
+    });
+  });
+
+  it("round-trips an explicit width", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-width="full"><img src="https://example.test/f.jpg" alt="A villa" loading="lazy"></figure>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-html").textContent).toContain('data-width="full"');
+    });
+  });
+
+  it("offers the width buttons, disabled while the image is floated", async () => {
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-align="right"><img src="https://example.test/g.jpg" alt="A villa" loading="lazy"></figure>';
+
+    render(<Harness initialContent={html} />);
+
+    const image = await waitFor(() => {
+      const found = getEditor().querySelector("figure img");
+      if (!found) throw new Error("figure image not rendered yet");
+      return found;
+    });
+    fireEvent.click(image);
+
+    // prose-article forces a floated figure back to ~40% whatever width is
+    // set, so the control is shown-but-inert rather than silently ignored.
+    const wide = await screen.findByRole("button", { name: FIGURE_LABELS.widthWide });
+    expect(wide).toBeDisabled();
   });
 });

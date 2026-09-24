@@ -1366,6 +1366,9 @@
         "alignCenter": "กึ่งกลาง",
         "alignRight": "ชิดขวา",
         "alignNone": "ไม่จัดตำแหน่ง",
+        "widthNormal": "ความกว้างปกติ",
+        "widthWide": "กว้าง",
+        "widthFull": "เต็มความกว้าง",
         "editAlt": "แก้ข้อความแทนภาพ",
         "altLabel": "ข้อความแทนภาพ",
         "altMissing": "ยังไม่มีข้อความแทนภาพ",
@@ -1406,6 +1409,12 @@
           "left": "ชิดซ้าย",
           "center": "กึ่งกลาง",
           "right": "ชิดขวา"
+        },
+        "widthLabel": "ความกว้าง",
+        "width": {
+          "normal": "ปกติ",
+          "wide": "กว้าง",
+          "full": "เต็มความกว้าง"
         },
         "loadingLabel": "การโหลด",
         "loadingLazy": "Lazy",

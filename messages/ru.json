@@ -1366,6 +1366,9 @@
         "alignCenter": "По центру",
         "alignRight": "По правому краю",
         "alignNone": "Без выравнивания",
+        "widthNormal": "Обычная ширина",
+        "widthWide": "Широкая",
+        "widthFull": "Во всю ширину",
         "editAlt": "Изменить alt-текст",
         "altLabel": "Alt-текст",
         "altMissing": "Нет alt-текста",
@@ -1406,6 +1409,12 @@
           "left": "Слева",
           "center": "По центру",
           "right": "Справа"
+        },
+        "widthLabel": "Ширина",
+        "width": {
+          "normal": "Обычная",
+          "wide": "Широкая",
+          "full": "Во всю ширину"
         },
         "loadingLabel": "Загрузка",
         "loadingLazy": "Отложенная (lazy)",

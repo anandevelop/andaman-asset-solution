@@ -1366,6 +1366,9 @@
         "alignCenter": "Center",
         "alignRight": "Align right",
         "alignNone": "No alignment",
+        "widthNormal": "Normal width",
+        "widthWide": "Wide",
+        "widthFull": "Full width",
         "editAlt": "Edit alt text",
         "altLabel": "Alt text",
         "altMissing": "No alt text",
@@ -1406,6 +1409,12 @@
           "left": "Left",
           "center": "Center",
           "right": "Right"
+        },
+        "widthLabel": "Width",
+        "width": {
+          "normal": "Normal",
+          "wide": "Wide",
+          "full": "Full width"
         },
         "loadingLabel": "Loading",
         "loadingLazy": "Lazy",

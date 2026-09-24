@@ -31,7 +31,16 @@
 
 import { useState } from "react";
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { AlignCenter, AlignLeft, AlignRight, Square, Trash2, Type } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Maximize2,
+  MoveHorizontal,
+  Square,
+  Trash2,
+  Type,
+} from "lucide-react";
 import {
   fetchMediaLibrary,
   updateMediaMeta,
@@ -42,6 +51,9 @@ export type FigureLabels = {
   alignCenter: string;
   alignRight: string;
   alignNone: string;
+  widthNormal: string;
+  widthWide: string;
+  widthFull: string;
   editAlt: string;
   altLabel: string;
   altMissing: string;
@@ -57,6 +69,7 @@ export type FigureOptions = {
 };
 
 type Align = "left" | "center" | "right" | null;
+type Width = "normal" | "wide" | "full";
 
 export default function FigureNodeView({
   node,
@@ -71,6 +84,7 @@ export default function FigureNodeView({
 
   const alt = (node.attrs.alt as string | null) ?? "";
   const align = (node.attrs.align as Align) ?? null;
+  const width = (node.attrs.width as Width) ?? "normal";
   const mediaId = (node.attrs.mediaId as string | null) ?? null;
 
   const [altOpen, setAltOpen] = useState(false);
@@ -121,6 +135,22 @@ export default function FigureNodeView({
       // something worth failing an edit over.
     }
   }
+
+  /*
+    Width is disabled while the image is floated. prose-article forces a
+    floated figure back to ~40% whatever width is set — a floated
+    full-bleed image is a contradiction — so offering the buttons there
+    would be offering three controls that visibly do nothing.
+  */
+  const floated = align === "left" || align === "right";
+
+  const widthOptions: { value: Width; label: string; icon: typeof AlignLeft }[] = labels
+    ? [
+        { value: "normal", label: labels.widthNormal, icon: Square },
+        { value: "wide", label: labels.widthWide, icon: MoveHorizontal },
+        { value: "full", label: labels.widthFull, icon: Maximize2 },
+      ]
+    : [];
 
   const alignOptions: { value: Align; label: string; icon: typeof AlignLeft }[] = labels
     ? [
@@ -198,6 +228,28 @@ export default function FigureNodeView({
                 onClick={() => updateAttributes({ align: value })}
                 className={`rounded-xs p-1.5 transition-colors ${
                   align === value
+                    ? "bg-primary text-white"
+                    : "text-ink-muted hover:bg-primary/5 hover:text-primary"
+                }`}
+              >
+                <Icon size={14} aria-hidden />
+              </button>
+            ))}
+
+            <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+
+            {widthOptions.map(({ value, label, icon: Icon }) => (
+              <button
+                key={label}
+                type="button"
+                title={label}
+                aria-label={label}
+                aria-pressed={width === value}
+                disabled={floated}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => updateAttributes({ width: value })}
+                className={`rounded-xs p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  width === value
                     ? "bg-primary text-white"
                     : "text-ink-muted hover:bg-primary/5 hover:text-primary"
                 }`}

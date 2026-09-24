@@ -415,21 +415,84 @@
     @apply hidden;
   }
 
-  /* components/admin/InsertImageModal.tsx's alignment option — carried as
-     `data-align` rather than a class, since that's what lib/markdown.ts's
-     sanitizer allowlist permits (see ALLOWED_ATTR's comment on it). Left
-     unset (the "none" choice) falls through to the full-width default
-     above. */
-  & figure[data-align="left"] {
-    @apply float-left mr-6 w-1/2 sm:w-2/5;
-  }
+  /* ── Figure placement ────────────────────────────────────────────────
+     Two independent decisions, carried as two attributes: data-align is
+     where the image sits, data-width is how wide it is. They used to be
+     one — the align rules each hard-coded a width — which made "a small
+     image on the right" and "a full-bleed image" expressible but "a
+     centred image that spans the page" not.
 
-  & figure[data-align="right"] {
-    @apply float-right ml-6 w-1/2 sm:w-2/5;
-  }
+     Both ride on data-* rather than classes because that is what
+     lib/markdown.ts's sanitizer allows through; see ALLOWED_ATTR.
+
+     Order matters here and is load-bearing. These rules have equal
+     specificity, so the cascade settles them by source order: alignment
+     first, width second (so an explicit width beats a centred figure's
+     default), and the float rule last (so a floated image stays small
+     whatever width was asked for — a floated full-bleed image is a
+     contradiction).
+
+     An article written before data-width existed has no such attribute,
+     and none of the width rules match it. That is deliberate and is this
+     change's acceptance criterion: every one of those articles renders
+     exactly as it did. "normal" is likewise defined as "whatever this
+     alignment has always meant", so it adds no rules of its own. */
 
   & figure[data-align="center"] {
     @apply mx-auto max-w-2xl;
+  }
+
+  /* wide: out past the article column by 3rem a side, but only once the
+     viewport can spare it. The column is max-w-2xl (see news/[slug]), so
+     this is stated relative to the column rather than as a chosen pixel
+     width. */
+  & figure[data-width="wide"] {
+    @apply lg:-mx-12 lg:w-[calc(100%+6rem)] lg:max-w-none;
+  }
+
+  /* full: out to the article page's container — container-luxe, i.e.
+     max-w-container inside a 1.25/2/3rem gutter. Centred on the column,
+     which is itself centred in that container, so the two centres agree
+     and the figure lands on the container's inner edges.
+
+     The gutters are the ones container-luxe actually uses; the viewport
+     term is what keeps it honest below the container's max width. */
+  & figure[data-width="full"] {
+    margin-left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 2.5rem);
+    max-width: calc(var(--container-container) - 2.5rem);
+  }
+
+  @media (min-width: 640px) {
+    & figure[data-width="full"] {
+      width: calc(100vw - 4rem);
+      max-width: calc(var(--container-container) - 4rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    & figure[data-width="full"] {
+      width: calc(100vw - 6rem);
+      max-width: calc(var(--container-container) - 6rem);
+    }
+  }
+
+  /* Last, so it wins: a floated image keeps its old size no matter what
+     width was chosen, and gives back anything the width rules moved. */
+  & figure[data-align="left"],
+  & figure[data-align="right"] {
+    @apply w-1/2 max-w-none sm:w-2/5;
+    margin-left: 0;
+    transform: none;
+  }
+
+  & figure[data-align="left"] {
+    @apply float-left mr-6;
+  }
+
+  & figure[data-align="right"] {
+    @apply float-right ml-6;
   }
 
   & code {
@@ -777,6 +840,124 @@
   /* WhatsApp glyph gives a little shake when its own button is hovered. */
   .sales-chat:hover .sales-chat-icon {
     animation: sales-nudge 0.5s ease-in-out;
+  }
+
+  /* Awards "Spotlight" — components/AwardsSpotlight.tsx. rgba() stops below
+   spell out --color-primary-900 (4,29,44) and --color-accent (232,179,132)
+   in decimal rather than referencing the variable, matching how the scrim
+   utilities above this file already write translucent gradients derived
+   from a theme color. */
+  @keyframes flicker {
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  @keyframes podium-shadow {
+    0%,
+    100% {
+      transform: scaleX(1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: scaleX(0.85);
+      opacity: 0.6;
+    }
+  }
+  @keyframes rise {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+    15% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-360px);
+    }
+  }
+  @keyframes fill {
+    to {
+      width: 100%;
+    }
+  }
+
+  .spotlight-section {
+    background: linear-gradient(180deg, var(--color-primary-900) 0%, var(--color-primary) 60%, var(--color-primary-900) 100%);
+  }
+
+  .spotlight-cone {
+    background: linear-gradient(180deg, rgba(255, 236, 210, 0.22), rgba(232, 179, 132, 0.06) 70%, transparent);
+    clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+    filter: blur(6px);
+    animation: flicker 7s ease-in-out infinite;
+  }
+
+  .spotlight-pool {
+    background: radial-gradient(closest-side, rgba(232, 179, 132, 0.38), transparent);
+  }
+
+  .spotlight-podium {
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+    animation: podium-shadow 6s ease-in-out infinite;
+  }
+
+  .spotlight-trophy-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Fades out (leaving) before the swapped-in award's image/icon and
+   caption fade back in — see AwardsSpotlight's transition timing. */
+  .spotlight-fade {
+    transition:
+      opacity 0.6s,
+      transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .spotlight-fade.spotlight-leaving {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+
+  .spotlight-caption > * {
+    transition:
+      opacity 0.5s,
+      transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .spotlight-caption.spotlight-leaving > * {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .spotlight-spark {
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+    animation: rise linear infinite;
+  }
+
+  /* Progress bar under the active row — restarts (via the fill keyframe)
+   whenever a different row becomes active, and freezes in place while the
+   pointer is anywhere over the list. */
+  .spotlight-bar {
+    background: var(--color-accent);
+  }
+  .spotlight-row-active .spotlight-bar {
+    animation: fill 5.5s linear forwards;
+  }
+  .spotlight-list-paused .spotlight-row-active .spotlight-bar {
+    animation-play-state: paused;
   }
 }
 

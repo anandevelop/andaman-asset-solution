@@ -87,6 +87,11 @@ const ALLOWED_ATTR = [
   // is allowed here, and left/center/right/full is exactly the kind of
   // presentational flag a `data-` attribute (not a class) is for.
   "data-align",
+  // Same reasoning as data-align above, for the other half of the same
+  // decision: how wide the image is, now that it is no longer welded to
+  // how it is aligned. "normal" | "wide" | "full" — see prose-article's
+  // own rules, which is where the meaning of each lives.
+  "data-width",
 ];
 
 /** The only URL schemes an article body may point at. */
