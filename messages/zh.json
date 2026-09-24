@@ -637,6 +637,17 @@
       "today": "今天",
       "yesterday": "昨天"
     },
+    "dateTime": {
+      "open": "选择日期和时间",
+      "empty": "未设置",
+      "previousMonth": "上个月",
+      "nextMonth": "下个月",
+      "time": "时间",
+      "hour": "小时",
+      "minute": "分钟",
+      "clear": "清除",
+      "now": "现在"
+    },
     "dashboard": {
       "title": "仪表盘",
       "subtitle": "今日需要关注事项一览。",

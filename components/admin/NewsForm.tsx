@@ -63,6 +63,7 @@ import InternalLinkModal from "@/components/admin/InternalLinkModal";
 import InsertImageModal from "@/components/admin/InsertImageModal";
 import SaveToast from "@/components/admin/SaveToast";
 import SlugField from "@/components/admin/SlugField";
+import DateTimeField from "@/components/admin/DateTimeField";
 import { readingMinutes } from "@/lib/markdown-text";
 import { getContentStats, type ContentFormat } from "@/lib/content-stats";
 import type { SeoScoreResult } from "@/lib/article-seo";
@@ -715,12 +716,15 @@ export default function NewsForm({
                 label={t("news.publishedAt")}
                 hint={t("news.publishedAtHint")}
               >
-                <input
+                {/* Not <input type="datetime-local">: Chromium renders that
+                    picker in the browser's language and ignores the page's
+                    — so an admin who set the back office to English still
+                    got a Thai calendar. Same submitted value, same name. */}
+                <DateTimeField
                   id="publishedAt"
                   name="publishedAt"
-                  type="datetime-local"
                   defaultValue={values.publishedAt}
-                  className="admin-input max-w-xs"
+                  className="max-w-xs"
                 />
               </Field>
             </section>

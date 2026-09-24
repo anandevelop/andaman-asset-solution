@@ -637,6 +637,17 @@
       "today": "Today",
       "yesterday": "Yesterday"
     },
+    "dateTime": {
+      "open": "Choose a date and time",
+      "empty": "Not set",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "time": "Time",
+      "hour": "Hour",
+      "minute": "Minute",
+      "clear": "Clear",
+      "now": "Now"
+    },
     "dashboard": {
       "title": "Dashboard",
       "subtitle": "A snapshot of what needs attention today.",
