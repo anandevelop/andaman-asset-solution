@@ -17,17 +17,12 @@
  */
 
 import { renderOgCard, passThroughImage, OG_SIZE } from "@/lib/og-render";
-import { getEventBySlug, getPublishedEventSlugs } from "@/lib/events";
+import { getEventBySlug } from "@/lib/events";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-
-export async function generateStaticParams() {
-  const slugs = await getPublishedEventSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export default async function Image({
   params,

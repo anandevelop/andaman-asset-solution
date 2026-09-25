@@ -25,20 +25,22 @@ import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { siteConfig } from "@/config/site";
-import { getBrochureBySlug, getPublishedBrochureSlugs } from "@/lib/brochures";
+import { getBrochureBySlug } from "@/lib/brochures";
 import { DatabaseUnavailableError, isDatabaseOffline } from "@/lib/db";
 
 export const revalidate = 3600;
 
-// Prerender published slugs; an unknown one is resolved on demand and
-// notFound()-ed if it is not published.
+// Every slug is resolved on demand (nothing is prerendered at build — see
+// app/[locale]/layout.tsx) and notFound()-ed if it is not published.
 export const dynamicParams = true;
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
-export async function generateStaticParams() {
-  const slugs = await getPublishedBrochureSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

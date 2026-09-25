@@ -51,9 +51,35 @@ const OG_LOCALE: Record<Locale, string> = {
   ru: "ru_RU",
 };
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
+/*
+  No generateStaticParams() here, on purpose — and the public pages under
+  (site)/ that read the database return an empty list from theirs, rather
+  than the locales or the published slugs.
+
+  The Docker build has no Postgres (see the DATABASE_URL placeholder in the
+  Dockerfile's builder stage), so anything prerendered at build time bakes
+  the safeQuery fallback into the image: every deploy shipped the "database
+  offline" homepage, and it stayed that way until `revalidate` expired,
+  because the cache a `revalidatePath` from /admin had cleared lived in the
+  container the deploy replaced.
+
+  A layout's params flow down to every page beneath it, so a list here would
+  prerender every route under it. The layout stays without one and each
+  page says `[]` for itself.
+
+  `[]` and "no function" are not the same thing, and the second is the
+  mistake to avoid. A route with no generateStaticParams anywhere is not
+  registered for ISR: it is served `Cache-Control: no-store`, a database
+  round trip per visitor, and its `revalidate` does nothing. Returning `[]`
+  registers it with no paths, so it renders once on its first request
+  against the live database and is cached from there — measured on a built
+  server as MISS then HIT with the page's own s-maxage.
+
+  /projects and /news have no function at all, deliberately: they read
+  `searchParams`, and a route registered for ISR that reads it fails with
+  DYNAMIC_SERVER_USAGE (a layout-level `[]` did exactly that to both). Left
+  alone they stay dynamic, as they were when they were prerendered.
+*/
 
 /**
  * Viewport is its own export in the App Router — putting these keys in
@@ -187,12 +213,16 @@ export default async function LocaleLayout(props: Props) {
     two lines down — falls back to reading the locale off the request headers,
     which is a dynamic API. On a route with `revalidate` set that is not a
     warning, it is a hard DYNAMIC_SERVER_USAGE failure the moment the page has
-    to be generated on demand rather than served from a build-time prerender.
+    to be generated on demand rather than served from the cache.
 
-    Pages already prerendered at build time hid this: they are served from
-    disk and their failing background revalidation is silent. Project detail
-    pages were not, because the Docker build has no database (see Dockerfile)
-    so generateStaticParams() returns nothing — every one of them 500'd.
+    Nothing under here is prerendered at build time any more (see the note
+    above `viewport`), so every public route is generated on demand on its
+    first request — this call is what makes that
+    work for all of them, not just the slug pages. Those were the first to
+    show it: the Docker build has no database, so generateStaticParams()
+    returned nothing for them and every project detail page 500'd, while
+    pages prerendered at build time hid the same mistake — they were served
+    from disk and their failing background revalidation was silent.
 
     Must run before any other next-intl call, and in every layout and page of
     a statically rendered route. See next-intl's static-rendering docs.

@@ -16,17 +16,12 @@
  */
 
 import { renderOgCard, passThroughImage, OG_SIZE } from "@/lib/og-render";
-import { getProjectBySlug, getPublishedProjectSlugs } from "@/lib/projects";
+import { getProjectBySlug } from "@/lib/projects";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-
-export async function generateStaticParams() {
-  const slugs = await getPublishedProjectSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export default async function Image({
   params,

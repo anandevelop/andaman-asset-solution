@@ -29,7 +29,6 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import NewsSearch from "@/components/NewsSearch";
-import { locales } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
@@ -43,10 +42,6 @@ type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ category?: string; q?: string; page?: string }>;
 };
-
-export async function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;

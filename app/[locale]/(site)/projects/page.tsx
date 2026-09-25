@@ -25,7 +25,6 @@ import ProjectsHero from "@/components/ProjectsHero";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import FeaturedProjectCard from "@/components/FeaturedProjectCard";
 import ProjectFilterBar from "@/components/ProjectFilterBar";
-import { locales } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
@@ -55,10 +54,6 @@ type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-export async function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const searchParams = await props.searchParams;

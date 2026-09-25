@@ -29,7 +29,6 @@ import PageViewBeacon from "@/components/PageViewBeacon";
 import { siteConfig } from "@/config/site";
 import {
   getArticleBySlug,
-  getPublishedArticleSlugs,
   getPublishedArticles,
 } from "@/lib/news";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
@@ -53,9 +52,11 @@ export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
-export async function generateStaticParams() {
-  const slugs = await getPublishedArticleSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

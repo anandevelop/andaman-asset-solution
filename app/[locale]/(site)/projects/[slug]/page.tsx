@@ -25,7 +25,6 @@ import { siteConfig } from "@/config/site";
 import {
   getProjectBySlug,
   getProjectProgress,
-  getPublishedProjectSlugs,
   getUnitTypesForProject,
   getProjectUnits,
   getNearbyAttractions,
@@ -36,8 +35,9 @@ import { formatNumber } from "@/lib/format";
 import { resolveMapEmbedSrc } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 
-// Prerender published slugs; unknown slugs are resolved on demand and
-// notFound()-ed if they aren't published.
+// Every slug is resolved on demand (nothing is prerendered at build — see
+// app/[locale]/layout.tsx), cached by ISR after its first request, and one
+// that isn't published is notFound()-ed.
 export const dynamicParams = true;
 
 /*
@@ -56,9 +56,11 @@ export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
-export async function generateStaticParams() {
-  const slugs = await getPublishedProjectSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

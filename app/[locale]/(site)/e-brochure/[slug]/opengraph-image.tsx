@@ -8,17 +8,12 @@
 
 import { getTranslations } from "next-intl/server";
 import { renderOgCard, OG_SIZE } from "@/lib/og-render";
-import { getBrochureBySlug, getPublishedBrochureSlugs } from "@/lib/brochures";
+import { getBrochureBySlug } from "@/lib/brochures";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-
-export async function generateStaticParams() {
-  const slugs = await getPublishedBrochureSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export default async function Image({
   params,

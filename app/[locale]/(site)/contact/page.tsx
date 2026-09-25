@@ -27,7 +27,7 @@ import LeadForm from "@/components/LeadForm";
 import MapCard from "@/components/MapCard";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
-import { locales, type Locale } from "@/i18n";
+import type { Locale } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
@@ -36,8 +36,11 @@ export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: string }> };
 
-export async function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

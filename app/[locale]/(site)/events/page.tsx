@@ -17,7 +17,6 @@ import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
-import { locales } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
@@ -30,8 +29,11 @@ export const revalidate = 120;
 
 type Props = { params: Promise<{ locale: string }> };
 
-export async function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

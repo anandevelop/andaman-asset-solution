@@ -23,7 +23,7 @@ import EventRsvpForm from "@/components/EventRsvpForm";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
-import { getEventBySlug, getPublishedEventSlugs } from "@/lib/events";
+import { getEventBySlug } from "@/lib/events";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { truncate } from "@/lib/markdown-text";
 import { intlLocale } from "@/lib/format";
@@ -33,9 +33,11 @@ export const revalidate = 120;
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
-export async function generateStaticParams() {
-  const slugs = await getPublishedEventSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

@@ -49,7 +49,7 @@ import Corporate from "@/components/Corporate";
 import VisionMission from "@/components/VisionMission";
 import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
-import { locales, type Locale } from "@/i18n";
+import type { Locale } from "@/i18n";
 import { localizedAlternates } from "@/lib/seo";
 import { getPublishedProjects, type ProjectSignal } from "@/lib/projects";
 import { getPublishedArticles } from "@/lib/news";
@@ -100,8 +100,11 @@ const WHY_US_ICONS: Record<SectionIcon, typeof Mountain> = {
   HEART_HANDSHAKE: HeartHandshake,
 };
 
-export async function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+// Nothing is prerendered at build (see app/[locale]/layout.tsx). The empty
+// array — rather than no function at all — is what keeps this route
+// ISR-cached: with none, Next renders it on every request.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
