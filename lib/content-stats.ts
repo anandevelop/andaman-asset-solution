@@ -41,6 +41,18 @@ export type HeadingOutlineItem = {
    *  instead of showing one page-wide warning. The first heading in a
    *  document never skips; there is nothing before it to skip from. */
   skipsLevel: boolean;
+  /** Inside another block rather than at the top of the document — today
+   *  that means an FAQ question, which serializes as
+   *  `<h3 data-faq="question">` and so is picked up by the same extractor
+   *  as any other heading.
+   *
+   *  It is listed in the outline on purpose: it is a heading a reader will
+   *  see, and it counts for the level-skip warning. But it is not a section
+   *  of the article, so §6.3's drag cannot move "it and everything under
+   *  it" — there is nothing under it but its own answer, and the thing it
+   *  lives in is the FAQ list. The outline uses this to leave those rows
+   *  undraggable rather than offering a move that would have to be refused. */
+  nested: boolean;
 };
 
 export type ContentStats = {
@@ -100,26 +112,41 @@ export function splitParagraphs(content: string, format: ContentFormat = "MARKDO
     .filter((block) => block.length > 0 && !/^#{1,6}\s/.test(block));
 }
 
-function extractHeadings(content: string, format: ContentFormat): { level: HeadingLevel; text: string }[] {
-  const found: { level: HeadingLevel; text: string }[] = [];
+function extractHeadings(
+  content: string,
+  format: ContentFormat,
+): { level: HeadingLevel; text: string; nested: boolean }[] {
+  const found: { level: HeadingLevel; text: string; nested: boolean }[] = [];
 
   if (format === "HTML") {
-    for (const match of content.matchAll(/<h([1-6])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/gi)) {
-      const text = stripTags(match[2]);
-      if (text) found.push({ level: Number(match[1]) as HeadingLevel, text });
+    // Group 2 is the opening tag's attributes, which is how an FAQ
+    // question is told apart from an ordinary heading of the same level.
+    for (const match of content.matchAll(/<h([1-6])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/gi)) {
+      const text = stripTags(match[3]);
+      if (text) {
+        found.push({
+          level: Number(match[1]) as HeadingLevel,
+          text,
+          nested: /data-faq\s*=\s*["']question["']/i.test(match[2]),
+        });
+      }
     }
     return found;
   }
 
+  // Markdown has no FAQ block — the editor that produces one only ever
+  // writes HTML — so every heading there is a section of its own.
   for (const match of content.matchAll(/^(#{1,6})\s+(.+)$/gm)) {
-    found.push({ level: match[1].length as HeadingLevel, text: match[2].trim() });
+    found.push({ level: match[1].length as HeadingLevel, text: match[2].trim(), nested: false });
   }
   return found;
 }
 
 /** Walks the extracted headings in document order, marking any that skip
  *  a level relative to the one immediately before it. */
-function withSkipFlags(headings: { level: HeadingLevel; text: string }[]): HeadingOutlineItem[] {
+function withSkipFlags(
+  headings: { level: HeadingLevel; text: string; nested: boolean }[],
+): HeadingOutlineItem[] {
   let previousLevel: HeadingLevel | null = null;
 
   return headings.map((heading) => {

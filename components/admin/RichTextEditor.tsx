@@ -110,6 +110,12 @@ export type RichTextEditorHandle = {
    *  outline, which knows a heading only by its position in the list
    *  (lib/content-stats.ts records no document positions). */
   focusHeading: (index: number) => void;
+  /** Move the section that starts at outline row `from` so it sits where
+   *  row `to` is now — the heading and every block under it, up to the
+   *  next heading of the same level or higher. A no-op when either row is
+   *  a nested heading, or when the destination lies inside the section
+   *  being moved. */
+  moveSection: (from: number, to: number) => void;
 };
 
 export type InsertedLink = {
@@ -657,9 +663,17 @@ type Props = {
  * heading can sit inside an FAQ item and lib/content-stats.ts's extractor
  * finds those too.
  */
-export function headingPositions(editor: Editor): number[] {
-  const positions: number[] = [];
-  editor.state.doc.descendants((node, pos) => {
+export type HeadingEntry = {
+  pos: number;
+  level: number;
+  /** A direct child of the document — so it owns the blocks that follow it
+   *  and can be moved as a section. An FAQ question is not. */
+  topLevel: boolean;
+};
+
+export function headingEntries(editor: Editor): HeadingEntry[] {
+  const entries: HeadingEntry[] = [];
+  editor.state.doc.descendants((node, pos, parent) => {
     // faqQuestion is an <h3> once serialized, so the extractor's
     // /<h([1-6])…>/ finds it and the outline lists it. It has to be counted
     // here too or every index after an FAQ block points at the wrong line.
@@ -668,9 +682,29 @@ export function headingPositions(editor: Editor): number[] {
     // (text)`). Otherwise a heading that has been started but not yet typed
     // into — which is every heading, for a moment — shifts the whole list.
     if (node.textContent.trim().length === 0) return;
-    positions.push(pos);
+    entries.push({
+      pos,
+      level: node.type.name === "faqQuestion" ? 3 : (node.attrs.level as number),
+      topLevel: parent?.type.name === "doc",
+    });
   });
-  return positions;
+  return entries;
+}
+
+/**
+ * Where the section belonging to entry `index` ends: the next top-level
+ * heading at the same level or higher, or the end of the document.
+ *
+ * "Or higher" is what makes a section include its subsections — dragging an
+ * H2 takes its H3s with it, which is the only reading of "the heading and
+ * everything under it" that does not leave orphans behind.
+ */
+function sectionEnd(editor: Editor, entries: HeadingEntry[], index: number): number {
+  for (let next = index + 1; next < entries.length; next += 1) {
+    const entry = entries[next];
+    if (entry.topLevel && entry.level <= entries[index].level) return entry.pos;
+  }
+  return editor.state.doc.content.size;
 }
 
 /** The first node's level, or null if it isn't a heading. */
@@ -1010,11 +1044,41 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       },
       focusHeading(index: number) {
         if (!editor) return;
-        const at = headingPositions(editor)[index];
+        const at = headingEntries(editor)[index]?.pos;
         if (at === undefined) return;
         // +1 to land inside the heading rather than before it, so the
         // caret is in the text the author just clicked on in the outline.
         editor.chain().focus().setTextSelection(at + 1).scrollIntoView().run();
+      },
+      moveSection(from: number, to: number) {
+        if (!editor || from === to) return;
+
+        const entries = headingEntries(editor);
+        const source = entries[from];
+        const target = entries[to];
+        // A nested heading is not a section — see HeadingOutlineItem.nested
+        // in lib/content-stats.ts. The outline already refuses to make
+        // those rows draggable; this is the same rule on the other side,
+        // because the outline's indices come from a regular expression over
+        // a string and this one from the document.
+        if (!source?.topLevel || !target?.topLevel) return;
+
+        const start = source.pos;
+        const end = sectionEnd(editor, entries, from);
+        // Dropping a section inside itself: dragging an H2 onto one of its
+        // own H3s, which is a top-level node too. The insert position would
+        // be inside the range about to be deleted.
+        if (target.pos >= start && target.pos < end) return;
+
+        // Moving down lands after the destination's whole section, moving
+        // up lands before it — which is what the drop line drawn above or
+        // below the row is promising.
+        const insertAt = from < to ? sectionEnd(editor, entries, to) : target.pos;
+
+        const slice = editor.state.doc.slice(start, end);
+        const tr = editor.state.tr.delete(start, end);
+        tr.insert(tr.mapping.map(insertAt), slice.content);
+        editor.view.dispatch(tr.scrollIntoView());
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

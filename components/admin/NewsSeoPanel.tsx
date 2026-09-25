@@ -119,6 +119,10 @@ type Props = {
    *  plain textarea and no caret to move — the outline then stays the
    *  read-only list it has always been. */
   onSelectHeading?: (index: number) => void;
+  /** §6.3's other half: dragging a row moves that heading and everything
+   *  under it. Nested rows (an FAQ question) are not draggable — see
+   *  HeadingOutlineItem.nested. */
+  onMoveSection?: (from: number, to: number) => void;
 };
 
 type Tab = "seo" | "keywords" | "links" | "settings" | "schema";
@@ -233,11 +237,20 @@ export default function NewsSeoPanel({
   linkPanel,
   addLinkAction,
   onSelectHeading,
+  onMoveSection,
 }: Props) {
   const t = useTranslations("admin");
   const tNav = useTranslations("nav");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("seo");
+  /* §6.3's outline drag. Plain HTML5 drag-and-drop: the rows are a short
+     list in a panel, not the document, so there is nothing here worth a
+     library or the drag-handle extension the editor itself uses. */
+  const [dragRow, setDragRow] = useState<number | null>(null);
+  const [dropRow, setDropRow] = useState<number | null>(null);
+  const [addLinkPending, startAddLinkTransition] = useTransition();
+  const [addLinkError, setAddLinkError] = useState<string | null>(null);
+  const canAddLink = hasRole(role, Role.ADMIN);
   const [addLinkPending, startAddLinkTransition] = useTransition();
   const [addLinkError, setAddLinkError] = useState<string | null>(null);
   const canAddLink = hasRole(role, Role.ADMIN);
@@ -587,14 +600,56 @@ export default function NewsSeoPanel({
                       </>
                     );
                     const tone = heading.skipsLevel ? "text-amber-700" : "text-ink";
+                    // An FAQ question is a heading but not a section: there
+                    // is nothing under it to take along, and what it lives
+                    // in is the FAQ list. See HeadingOutlineItem.nested.
+                    const movable = Boolean(onMoveSection) && !heading.nested;
 
                     return (
-                      <li key={index} style={{ paddingLeft: `${(heading.level - 1) * 0.65}rem` }}>
+                      <li
+                        key={index}
+                        style={{ paddingLeft: `${(heading.level - 1) * 0.65}rem` }}
+                        draggable={movable}
+                        onDragStart={movable ? () => setDragRow(index) : undefined}
+                        onDragEnd={() => {
+                          setDragRow(null);
+                          setDropRow(null);
+                        }}
+                        onDragOver={
+                          movable
+                            ? (event) => {
+                                // Without preventDefault the drop never
+                                // fires: the default is "this is not a drop
+                                // target".
+                                event.preventDefault();
+                                if (dragRow !== null && dragRow !== index) setDropRow(index);
+                              }
+                            : undefined
+                        }
+                        onDrop={
+                          movable
+                            ? (event) => {
+                                event.preventDefault();
+                                if (dragRow !== null && dragRow !== index) {
+                                  onMoveSection?.(dragRow, index);
+                                }
+                                setDragRow(null);
+                                setDropRow(null);
+                              }
+                            : undefined
+                        }
+                        className={`rounded-xs ${dropRow === index ? "bg-primary/5 ring-1 ring-primary/30" : ""} ${
+                          dragRow === index ? "opacity-50" : ""
+                        }`}
+                      >
                         {onSelectHeading ? (
                           <button
                             type="button"
                             onClick={() => onSelectHeading(index)}
-                            className={`flex w-full items-center gap-1.5 truncate rounded-xs px-1 py-0.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary ${tone}`}
+                            title={movable ? t("news.seo.outlineDragHint") : undefined}
+                            className={`flex w-full items-center gap-1.5 truncate rounded-xs px-1 py-0.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary ${tone} ${
+                              movable ? "cursor-grab active:cursor-grabbing" : ""
+                            }`}
                           >
                             {row}
                           </button>

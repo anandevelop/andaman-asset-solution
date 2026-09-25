@@ -1328,7 +1328,8 @@
           "EVENT": "活动"
         },
         "linksInboundHeading": "指向本文的链接",
-        "linksInboundEmpty": "网站上还没有其他页面链接到这篇文章。"
+        "linksInboundEmpty": "网站上还没有其他页面链接到这篇文章。",
+        "outlineDragHint": "拖动以移动整个段落"
       },
       "toolbar": {
         "toolbar": "格式工具",

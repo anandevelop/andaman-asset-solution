@@ -859,6 +859,11 @@ export default function NewsForm({
                 ? (index) => richTextEditorRef.current?.focusHeading(index)
                 : undefined
             }
+            onMoveSection={
+              contentFormat === "HTML"
+                ? (from, to) => richTextEditorRef.current?.moveSection(from, to)
+                : undefined
+            }
           />
         </div>
       </form>

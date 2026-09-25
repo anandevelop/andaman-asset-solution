@@ -1328,7 +1328,8 @@
           "EVENT": "Event"
         },
         "linksInboundHeading": "Links pointing in",
-        "linksInboundEmpty": "Nothing on the site links to this article yet."
+        "linksInboundEmpty": "Nothing on the site links to this article yet.",
+        "outlineDragHint": "Drag to move this section"
       },
       "toolbar": {
         "toolbar": "Formatting",

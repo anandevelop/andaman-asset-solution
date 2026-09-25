@@ -958,3 +958,129 @@ describe("RichTextEditor — outline click targets", () => {
     expect(await typeAtRow(1)).toContain("<h2>XThird</h2>");
   });
 });
+
+/*
+  §6.3's other half: dragging an outline row moves that heading and
+  everything under it — "under it" meaning up to the next heading of the
+  same level or higher, so an H2 takes its H3s along rather than leaving
+  them stranded beneath whatever ends up above them.
+
+  Two refusals matter as much as the move. A nested heading (an FAQ
+  question) is not a section: there is nothing under it but its own answer,
+  and what it lives in is the FAQ list. And a section cannot be dropped
+  inside itself, which is what dragging an H2 onto one of its own H3s asks
+  for — the insert position would sit inside the range about to be deleted.
+*/
+describe("RichTextEditor — moving a section from the outline", () => {
+  function MoveHarness({ content }: { content: string }) {
+    const editorRef = useRef<RichTextEditorHandle>(null);
+    const [html, setHtml] = useState(content);
+    const moves: [number, number][] = [
+      [0, 1],
+      [1, 0],
+      [0, 2],
+      [2, 0],
+      [1, 2],
+    ];
+    return (
+      <div>
+        {moves.map(([from, to]) => (
+          <button
+            key={`${from}-${to}`}
+            type="button"
+            onClick={() => editorRef.current?.moveSection(from, to)}
+          >
+            {`move ${from}->${to}`}
+          </button>
+        ))}
+        <RichTextEditor
+          ref={editorRef}
+          content={content}
+          onChange={setHtml}
+          toolbarLabels={LABELS}
+          figureLabels={FIGURE_LABELS}
+          locale="en"
+          onRequestLink={() => {}}
+          onRequestEditLink={() => {}}
+          onUploadNotice={() => {}}
+          uploadLabels={{ failed: "f", tooLarge: "t", pastedImage: "p", byKey: (key) => key }}
+          onRequestImage={() => {}}
+        />
+        <output data-testid="content-html">{html}</output>
+      </div>
+    );
+  }
+
+  const html = () => screen.getByTestId("content-html").textContent ?? "";
+
+  it("takes the blocks under a heading with it", async () => {
+    const user = userEvent.setup();
+    render(<MoveHarness content="<h2>A</h2><p>a1</p><p>a2</p><h2>B</h2><p>b1</p>" />);
+
+    await user.click(screen.getByRole("button", { name: "move 0->1" }));
+    await waitFor(() => expect(html()).toBe("<h2>B</h2><p>b1</p><h2>A</h2><p>a1</p><p>a2</p>"));
+  });
+
+  it("takes subsections along, so an H3 does not get stranded", async () => {
+    const user = userEvent.setup();
+    render(
+      <MoveHarness content="<h2>A</h2><p>a1</p><h3>A2</h3><p>a2</p><h2>B</h2><p>b1</p>" />,
+    );
+
+    // Rows: 0 = A (H2), 1 = A2 (H3), 2 = B (H2). Moving A past B must carry
+    // A2 with it rather than leaving it under B.
+    await user.click(screen.getByRole("button", { name: "move 0->2" }));
+    await waitFor(() =>
+      expect(html()).toBe("<h2>B</h2><p>b1</p><h2>A</h2><p>a1</p><h3>A2</h3><p>a2</p>"),
+    );
+  });
+
+  it("stops a subsection at the next higher-level heading instead of swallowing it", async () => {
+    // The case that tells `level <= this.level` apart from `level ===`.
+    // A2 is an H3; the heading that ends its section is an H2, which is
+    // higher, not equal. Read as "equal", A2's section runs to the end of
+    // the document and takes B with it — and moving it then changes
+    // nothing at all, which looks like the feature simply not working.
+    const user = userEvent.setup();
+    render(<MoveHarness content="<h2>A</h2><p>a1</p><h3>A2</h3><p>a2</p><h2>B</h2><p>b1</p>" />);
+
+    await user.click(screen.getByRole("button", { name: "move 1->2" }));
+    await waitFor(() =>
+      expect(html()).toBe("<h2>A</h2><p>a1</p><h2>B</h2><p>b1</p><h3>A2</h3><p>a2</p>"),
+    );
+  });
+
+  it("moves a section back up", async () => {
+    const user = userEvent.setup();
+    render(<MoveHarness content="<h2>A</h2><p>a1</p><h2>B</h2><p>b1</p>" />);
+
+    await user.click(screen.getByRole("button", { name: "move 1->0" }));
+    await waitFor(() => expect(html()).toBe("<h2>B</h2><p>b1</p><h2>A</h2><p>a1</p>"));
+  });
+
+  it("refuses to move an FAQ question, which is not a section", async () => {
+    const user = userEvent.setup();
+    const content =
+      "<h2>A</h2><p>a1</p>" +
+      '<ul data-faq="list"><li data-faq="item"><h3 data-faq="question">Q</h3><p>ans</p></li></ul>' +
+      "<h2>B</h2><p>b1</p>";
+    render(<MoveHarness content={content} />);
+
+    // Row 1 is the FAQ question.
+    await user.click(screen.getByRole("button", { name: "move 1->0" }));
+    // Nothing changed, so onChange never fired and the output is untouched.
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(html()).toBe(content);
+  });
+
+  it("refuses to drop a section inside itself", async () => {
+    const user = userEvent.setup();
+    const content = "<h2>A</h2><p>a1</p><h3>A2</h3><p>a2</p>";
+    render(<MoveHarness content={content} />);
+
+    // Row 1 (A2) lies inside row 0's (A's) section.
+    await user.click(screen.getByRole("button", { name: "move 0->1" }));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(html()).toBe(content);
+  });
+});
