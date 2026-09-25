@@ -465,6 +465,7 @@ export default async function HomePage(props: Props) {
           nextSlide: t("hero.storyBanner.nextSlide"),
         }}
         eyebrow={t("hero.eyebrow")}
+        scrollLabel={t("hero.scroll")}
       />
 
       {isDatabaseOffline() && (

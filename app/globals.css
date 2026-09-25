@@ -795,9 +795,10 @@
     @apply border-dashed;
   }
 
-  /* Drives the HeroCarousel progress-dash fill for an IMAGE slide —
-   animation-duration is set inline per slide's durationSeconds, and
-   animation-play-state toggles paused/running on hover. See
+  /* Drives the fill of an IMAGE slide's bar in the HeroCarousel rail —
+   animation-duration is set inline per slide's durationSeconds, and its
+   `animationend` is what sends the carousel on to the next slide (in normal
+   motion; reduced motion uses a timer, since this collapses to ~0ms). See
    components/HeroCarousel.tsx. */
   @keyframes story-progress {
     from {
@@ -808,19 +809,48 @@
     }
   }
 
-  /* Hero slide backdrop — a very slow push-in on the still image behind the
-   carousel copy. `animation-duration` is set inline per slide to match that
-   slide's durationSeconds, so the move finishes exactly as the slide hands
-   over. VIDEO slides don't get it: they carry their own motion already.
-   The prefers-reduced-motion block at the end of this file collapses the
-   duration to ~0, which lands the image on its end scale with no movement —
-   a slightly tighter crop, which is the correct degradation. */
-  @keyframes hero-zoom {
+  /* Hero slide backdrop — a slow zoom OUT on the still image behind the
+   carousel copy. `animation-duration` is set inline per slide to its
+   durationSeconds plus the 1.5s window transition, so the picture is still
+   moving while the next slide opens over it. VIDEO slides don't get it: they
+   carry their own motion already. The prefers-reduced-motion block at the end
+   of this file collapses the duration to ~0, which lands the image on its
+   end scale with no movement — a slightly tighter crop, which is the correct
+   degradation. */
+  @keyframes hero-zoom-out {
     from {
-      transform: scale(1.001);
+      transform: scale(1.14);
     }
     to {
-      transform: scale(1.09);
+      transform: scale(1.02);
+    }
+  }
+
+  /* HeroCarousel's sunlight glint: one skewed strip crossing the frame every
+   7s, resting off screen for the last 40% of the cycle. Moved with
+   `transform` only, on its own layer — the mockup animated
+   `background-position` under `mix-blend-mode`, which repaints the whole
+   hero every frame for as long as the page is open. The component pauses it
+   (animation-play-state) while the hero is off screen. */
+  @keyframes hero-glint {
+    0% {
+      transform: translateX(-60%) skewX(-14deg);
+    }
+    60%,
+    100% {
+      transform: translateX(260%) skewX(-14deg);
+    }
+  }
+
+  /* The bead that runs down the "Scroll" cue's line (HeroCarousel, xl and up).
+   The bead is 40% of the line's height and starts at top: -40%, so running
+   to top: 100% is a 140% trip — 350% of its own height, which is what the
+   translate below is. Written as a transform rather than animating `top`:
+   `top` is layout, and the browser reports every frame of it as a layout
+   shift (measured: seven on a 1440px page load). */
+  @keyframes hero-scroll-drip {
+    to {
+      transform: translateY(350%);
     }
   }
 
