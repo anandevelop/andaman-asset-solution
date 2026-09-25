@@ -30,6 +30,15 @@ function validEnv(): NodeJS.ProcessEnv {
     DO_SPACES_ACCESS_KEY_ID: "key",
     SMTP_HOST: "smtp.example.com",
     RECAPTCHA_SECRET_KEY: "secret",
+    // The indexing switch and the SEO integrations — all RECOMMENDED, so a
+    // "complete" environment is one that has set them.
+    SITE_INDEXABLE: "true",
+    CRON_SECRET: "cron",
+    GOOGLE_SA_EMAIL: "sa@project.iam.gserviceaccount.com",
+    GOOGLE_SA_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----",
+    GSC_SITE_URL: "https://andamanassetsolution.com",
+    GA4_PROPERTY_ID: "123456789",
+    PAGESPEED_API_KEY: "psi-key",
   } as NodeJS.ProcessEnv;
 }
 
@@ -41,6 +50,51 @@ beforeEach(() => {
 afterEach(() => {
   process.env = ORIGINAL;
   vi.restoreAllMocks();
+});
+
+/*
+  The SEO and analytics integrations, plus the indexing switch. All of them
+  are RECOMMENDED and none may become REQUIRED — the site has to boot and
+  serve with no Google account attached at all, which is the state it is in
+  today and will be in on any developer's machine.
+*/
+describe("collectEnvProblems — the SEO environment", () => {
+  const seoVars = [
+    "SITE_INDEXABLE",
+    "CRON_SECRET",
+    "GOOGLE_SA_EMAIL",
+    "GOOGLE_SA_PRIVATE_KEY",
+    "GSC_SITE_URL",
+    "GA4_PROPERTY_ID",
+    "PAGESPEED_API_KEY",
+  ];
+
+  it.each(seoVars)("warns about a missing %s without making it fatal", (name) => {
+    delete process.env[name];
+    const { fatal, warnings } = collectEnvProblems();
+
+    expect(fatal.map((problem) => problem.name)).not.toContain(name);
+    expect(warnings.map((problem) => problem.name)).toContain(name);
+  });
+
+  it("says what each one costs, rather than just naming it", () => {
+    for (const name of seoVars) delete process.env[name];
+    const { warnings } = collectEnvProblems();
+
+    for (const name of seoVars) {
+      const warning = warnings.find((problem) => problem.name === name);
+      expect(warning, `no warning for ${name}`).toBeDefined();
+      // A warning nobody can act on is noise — every one carries the
+      // consequence of leaving it unset.
+      expect(warning!.detail.length).toBeGreaterThan(20);
+    }
+  });
+
+  it("still boots with no Google credentials at all", () => {
+    for (const name of seoVars) delete process.env[name];
+    // The whole point of RECOMMENDED: nothing here can stop the server.
+    expect(collectEnvProblems().fatal).toEqual([]);
+  });
 });
 
 describe("collectEnvProblems", () => {

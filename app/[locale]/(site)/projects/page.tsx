@@ -42,6 +42,7 @@ import {
   parseProjectFilters,
 } from "@/lib/project-filters";
 import { PROPERTY_TYPES, PROJECT_STATUSES } from "@/lib/validations";
+import { robotsMetadata } from "@/lib/indexing";
 
 /*
   One hour for the unfiltered page. Filtered views read searchParams, which
@@ -73,7 +74,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // Always points at the unfiltered page, so link equity from a shared
     // filtered URL consolidates onto one canonical.
     alternates: localizedAlternates(locale, "/projects"),
-    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+    robots: robotsMetadata({ index: !filtered }),
   };
 }
 

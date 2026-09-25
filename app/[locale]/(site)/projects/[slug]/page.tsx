@@ -34,6 +34,7 @@ import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
 import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
+import { robotsMetadata } from "@/lib/indexing";
 
 // Every slug is resolved on demand (nothing is prerendered at build — see
 // app/[locale]/layout.tsx), cached by ISR after its first request, and one
@@ -90,7 +91,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     // Per-locale admin toggle (ProjectForm's SEO section) — see the
     // schema.prisma comment on ProjectTranslation.noIndex.
-    robots: project.noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    robots: robotsMetadata({ index: !project.noIndex }),
     openGraph: {
       title,
       description,

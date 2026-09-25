@@ -27,6 +27,7 @@ import { getEventBySlug } from "@/lib/events";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { truncate } from "@/lib/markdown-text";
 import { intlLocale } from "@/lib/format";
+import { robotsMetadata } from "@/lib/indexing";
 
 export const dynamicParams = true;
 export const revalidate = 120;
@@ -59,7 +60,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     alternates: localizedAlternates(locale, `/events/${event.slug}`),
     // Per-locale admin toggle (EventForm's SEO section) — see the
     // schema.prisma comment on EventTranslation.noIndex.
-    robots: event.noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    robots: robotsMetadata({ index: !event.noIndex }),
     openGraph: {
       title: event.metaTitle,
       description,

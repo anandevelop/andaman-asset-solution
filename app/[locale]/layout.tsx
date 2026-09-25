@@ -9,6 +9,7 @@ import { locales, type Locale } from "@/i18n";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
 import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates } from "@/lib/seo";
+import { isSiteIndexable } from "@/lib/indexing";
 import Analytics, { AnalyticsPageview } from "@/components/Analytics";
 import "../globals.css";
 
@@ -181,10 +182,18 @@ export async function generateMetadata(
       site: seo.twitterHandle,
       images: [absoluteAssetUrl(branding.ogImageUrl)],
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    /* Staging must not invite indexing. robots.txt already asks crawlers
+       not to fetch, but a URL linked from elsewhere can be listed without
+       being fetched — and an explicit index:true here is the opposite of
+       what that deployment wants to say. See lib/indexing.ts.
+
+       Note this is the site-wide default only: a page that sets its own
+       robots metadata overrides it (privacy-policy and terms both say
+       index:true outright). The X-Robots-Tag header in next.config.js is
+       what covers those, and every other route, unconditionally. */
+    robots: isSiteIndexable()
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
     // undefined (not "") when unset — Next omits the meta tag entirely
     // rather than rendering content="".
     verification: analytics.googleSiteVerification

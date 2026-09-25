@@ -9,6 +9,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import LegalPolicyPage from "@/components/LegalPolicyPage";
 import { getPrivacyPolicy } from "@/content/privacy-policy";
 import { intlLocale } from "@/lib/format";
+import { robotsMetadata } from "@/lib/indexing";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -29,7 +30,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: policy.title,
     description: policy.intro[0].slice(0, 160),
     alternates: localizedAlternates(locale, siteConfig.legal.privacyPolicyPath),
-    robots: { index: true, follow: true },
+    robots: robotsMetadata({ index: true }),
   };
 }
 

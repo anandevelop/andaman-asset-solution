@@ -40,6 +40,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import ArticleBody from "@/components/ArticleBody";
+import { robotsMetadata } from "@/lib/indexing";
 
 export const dynamicParams = true;
 
@@ -78,7 +79,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     alternates: article.canonicalUrl ? { ...alternates, canonical: article.canonicalUrl } : alternates,
     // Per-locale admin toggle (NewsForm's SEO section) — see the
     // schema.prisma comment on NewsArticleTranslation.noIndex.
-    robots: article.noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    robots: robotsMetadata({ index: !article.noIndex }),
     openGraph: {
       title: article.metaTitle,
       description,

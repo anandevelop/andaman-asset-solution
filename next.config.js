@@ -389,6 +389,27 @@ const nextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      /*
+        Anything that has not declared itself the canonical site gets
+        noindex on every response, not only in robots.txt — robots.txt asks
+        a crawler not to fetch, this tells one that fetched anyway not to
+        index. It is also the only mechanism that covers the pages setting
+        their own `robots: { index: true }` metadata (privacy-policy,
+        terms), which override the root layout's default.
+
+        The condition is spelled out rather than imported from
+        lib/indexing.ts because next.config.js cannot import TypeScript;
+        that file is where the reasoning lives, including why the default
+        is "not indexable".
+      */
+      ...(process.env.SITE_INDEXABLE === "true"
+        ? []
+        : [
+            {
+              source: "/:path*",
+              headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+            },
+          ]),
       {
         // The admin is per-user and must never be held by a shared cache.
         source: "/:locale/admin/:path*",

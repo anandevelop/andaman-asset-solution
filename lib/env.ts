@@ -83,6 +83,27 @@ const RECOMMENDED: Array<[name: string, consequence: string]> = [
   ["DO_SPACES_ACCESS_KEY_ID", "admin image uploads will fail"],
   ["SMTP_HOST", "lead and RSVP emails are a silent no-op"],
   ["RECAPTCHA_SECRET_KEY", "public forms accept unverified submissions"],
+
+  /*
+    The indexing switch. Unset means this deployment is not indexable, which
+    is the safe direction for staging and the wrong one for the real site —
+    so the real site gets a warning at boot rather than silently serving
+    robots.txt's blanket disallow. See lib/indexing.ts.
+  */
+  ["SITE_INDEXABLE", "robots.txt disallows everything and every response carries X-Robots-Tag: noindex"],
+
+  /*
+    The SEO and analytics integrations. Every one of them is RECOMMENDED and
+    none may become REQUIRED: the site has to run with no Google account
+    attached at all, and the admin cards for these are specified to render
+    an empty "credentials not set yet" state rather than an error.
+  */
+  ["CRON_SECRET", "the scheduled SEO and analytics jobs cannot authenticate, so no data is collected"],
+  ["GOOGLE_SA_EMAIL", "Search Console and GA4 panels stay empty — no service account to authenticate as"],
+  ["GOOGLE_SA_PRIVATE_KEY", "Search Console and GA4 panels stay empty — no service account to authenticate as"],
+  ["GSC_SITE_URL", "Search Console queries, impressions and index coverage are unavailable"],
+  ["GA4_PROPERTY_ID", "GA4 traffic and conversion reporting is unavailable"],
+  ["PAGESPEED_API_KEY", "PageSpeed Insights runs unauthenticated and is rate limited, or fails"],
 ];
 
 export type EnvProblem = { name: string; detail: string };
