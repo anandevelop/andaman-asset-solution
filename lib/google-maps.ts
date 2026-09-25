@@ -29,6 +29,8 @@
 
 import "server-only";
 
+import type { LatLng } from "@/lib/map-places";
+
 const TIMEOUT_MS = 4000;
 
 const GOOGLE_MAPS_HOSTS = /(^|\.)google\.[a-z.]+$/i;
@@ -94,15 +96,58 @@ function buildSearchEmbed(query: string): string {
   return embed.toString();
 }
 
+/** A `q=` value that is a coordinate pair rather than a place name. */
+const COORDINATE_QUERY = /^\s*(-?\d{1,3}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)\s*$/;
+
 /**
- * Returns a `https://www.google.com/maps?q=...&output=embed` URL built
- * from whatever the admin pasted, or null if `googleMapsUrl` is empty,
- * isn't a Google Maps link, the short-link redirect couldn't be resolved
- * (offline, timeout, unexpected host), or no location could be pulled out
- * of it — null means "fall back to the address-only placeholder," never a
- * broken frame.
+ * The coordinate a query centres on, or null when it is a place name.
+ *
+ * Worth recovering rather than discarding, because `?q=<lat>,<lng>` puts
+ * Google's own marker at exactly that point and centres the frame there.
+ * So a caller that draws its own marker over the middle of the embed —
+ * components/MapCard.tsx does — lands on Google's pin by construction,
+ * for a project whose only location is a pasted share link. Without this
+ * the pin, the coordinate row and "how far is it from you?" all stayed
+ * hidden on a project nobody had geocoded by hand, which is most of them.
+ *
+ * Null for a place-name query is the honest answer: the geocoder decides
+ * where that lands, and it is not necessarily the centre of the frame.
  */
-export async function resolveMapEmbedSrc(googleMapsUrl: string | null): Promise<string | null> {
+function pointOf(query: string): LatLng | null {
+  const match = COORDINATE_QUERY.exec(query);
+  if (!match) return null;
+
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+export type ResolvedMapEmbed = {
+  /** The framable `?q=…&output=embed` URL. */
+  src: string;
+  /** Where that embed is centred, when the link carried a coordinate. */
+  point: LatLng | null;
+};
+
+const asEmbed = (query: string): ResolvedMapEmbed => ({
+  src: buildSearchEmbed(query),
+  point: pointOf(query),
+});
+
+/**
+ * Turns whatever the admin pasted into a framable embed, plus the point it
+ * is centred on when the link carried one.
+ *
+ * Null if `googleMapsUrl` is empty, isn't a Google Maps link, the
+ * short-link redirect couldn't be resolved (offline, timeout, unexpected
+ * host), or no location could be pulled out of it — null means "fall back
+ * to the address-only placeholder," never a broken frame.
+ */
+export async function resolveMapEmbed(
+  googleMapsUrl: string | null,
+): Promise<ResolvedMapEmbed | null> {
   if (!googleMapsUrl) return null;
 
   let target: URL;
@@ -114,7 +159,7 @@ export async function resolveMapEmbedSrc(googleMapsUrl: string | null): Promise<
 
   if (GOOGLE_MAPS_HOSTS.test(target.hostname)) {
     const query = extractQuery(target);
-    return query ? buildSearchEmbed(query) : null;
+    return query ? asEmbed(query) : null;
   }
 
   if (!SHORT_LINK_HOSTS.test(target.hostname)) return null;
@@ -125,10 +170,10 @@ export async function resolveMapEmbedSrc(googleMapsUrl: string | null): Promise<
       redirect: "follow",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    const resolved = new URL(response.url);
-    if (!GOOGLE_MAPS_HOSTS.test(resolved.hostname)) return null;
-    const query = extractQuery(resolved);
-    return query ? buildSearchEmbed(query) : null;
+    const destination = new URL(response.url);
+    if (!GOOGLE_MAPS_HOSTS.test(destination.hostname)) return null;
+    const query = extractQuery(destination);
+    return query ? asEmbed(query) : null;
   } catch {
     return null;
   }

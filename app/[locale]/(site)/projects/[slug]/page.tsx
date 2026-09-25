@@ -32,7 +32,7 @@ import {
 } from "@/lib/projects";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
-import { resolveMapEmbedSrc } from "@/lib/google-maps";
+import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 
 // Every slug is resolved on demand (nothing is prerendered at build — see
@@ -220,7 +220,7 @@ export default async function ProjectPage(props: Props) {
   //    (Google's no-API-key `output=embed` endpoint takes a coordinate
   //    pair as-is — cheapest and most precise option when available).
   //  - googleMapsUrl otherwise — resolved to an embeddable URL by
-  //    resolveMapEmbedSrc (see lib/google-maps.ts for why a plain pasted
+  //    resolveMapEmbed (see lib/google-maps.ts for why a plain pasted
   //    share link can't just be dropped into an <iframe> src as-is).
   //
   // Two separate outbound links, not one doing double duty: mapViewUrl
@@ -230,17 +230,43 @@ export default async function ProjectPage(props: Props) {
   // was set — a visitor tapping "Get Directions" wants routing, not just
   // the same place page "View on Maps" already opens.
   const hasCoords = project.latitude !== null && project.longitude !== null;
+  const resolvedEmbed = hasCoords ? null : await resolveMapEmbed(project.googleMapsUrl);
   const mapEmbedSrc = hasCoords
     ? `https://www.google.com/maps?q=${project.latitude},${project.longitude}&z=15&output=embed`
-    : await resolveMapEmbedSrc(project.googleMapsUrl);
+    : (resolvedEmbed?.src ?? null);
+
+  /*
+    Where the map is centred, which is a different question from whether an
+    administrator typed a coordinate.
+
+    MapCard draws our own marker over the middle of the frame and hides it
+    when it cannot vouch for that spot, so this is what decides whether the
+    pin, the coordinate row and "how far is it from you?" appear at all.
+    Before it existed they were hidden on every project nobody had geocoded
+    by hand — which was most of them, because a pasted share link was
+    already enough to render the map and looked like the job was done.
+
+    A link's own pin is as good as a typed coordinate here: the embed above
+    is built FROM it, so Google's marker and ours are the same point by
+    construction. Still null for a link that only named a place, where the
+    geocoder picks the spot and we cannot say it is the centre.
+  */
+  const mapPoint =
+    project.latitude !== null && project.longitude !== null
+      ? { lat: project.latitude, lng: project.longitude }
+      : (resolvedEmbed?.point ?? null);
+
   const mapViewUrl =
     project.googleMapsUrl ||
     (hasCoords
       ? `https://www.google.com/maps?q=${project.latitude},${project.longitude}`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`);
-  const mapDirectionsUrl = hasCoords
-    ? `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location)}`;
+  // Routes to the pin when we have one from either source — a text search
+  // for "Laguna Area (Ban Don-Cherngtalay, Phuket)" is a worse destination
+  // than a coordinate whenever a coordinate exists.
+  const mapDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${
+    mapPoint ? `${mapPoint.lat},${mapPoint.lng}` : encodeURIComponent(project.location)
+  }`;
 
   /*
     The map panel's category tabs — the same Sale Kit list that used to
@@ -927,8 +953,8 @@ export default async function ProjectPage(props: Props) {
               origin={{
                 name: project.name,
                 address: project.location,
-                lat: project.latitude,
-                lng: project.longitude,
+                lat: mapPoint?.lat ?? null,
+                lng: mapPoint?.lng ?? null,
               }}
               embedSrc={mapEmbedSrc}
               title={t("mapTitle")}
