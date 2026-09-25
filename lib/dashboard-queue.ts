@@ -23,6 +23,7 @@ export const RESPONSE_SLA_HOURS = 24;
 export type UnassignedLeadQueue = { count: number; oldestCreatedAt: Date | null };
 export type OverdueResponseQueue = { count: number };
 export type TodayAppointmentQueue = { count: number; times: Date[] };
+export type MonthSummary = { newLeads: number; appointments: number; booked: number };
 
 /**
  * Unassigned, still-open leads — the same "needs an owner" definition the
@@ -75,4 +76,56 @@ export async function getOverdueResponseQueue(): Promise<OverdueResponseQueue> {
 export async function getTodayAppointmentQueue(): Promise<TodayAppointmentQueue> {
   const rows = await getTodayAppointmentsCompanyWide();
   return { count: rows.length, times: rows.map((row) => row.scheduledAt) };
+}
+
+/**
+ * This calendar month in three numbers — the strip that replaced the six
+ * charts the dashboard used to draw.
+ *
+ * Three counts instead of six report queries is the whole point: the
+ * dashboard answers "what needs doing today", and every series it used to
+ * duplicate now lives one link away at /admin/analytics. Keeping a
+ * headline figure here is not a return of the reports — it is the reason
+ * somebody would follow that link.
+ *
+ * `booked` counts leads that arrived this month and have since closed,
+ * which is exactly how lib/reports.ts's monthly chart derives its `won`
+ * series (CONVERTED). Deriving it differently here would let the two
+ * screens disagree about what a closed lead is, in a way neither screen
+ * would show its working for.
+ */
+export async function getMonthSummary(): Promise<MonthSummary> {
+  const from = new Date();
+  from.setDate(1);
+  from.setHours(0, 0, 0, 0);
+
+  // Appointments need an upper bound where leads do not: a lead's
+  // createdAt cannot be in the future, but a site visit booked for next
+  // month has a scheduledAt that is, and would otherwise be counted as
+  // this month's.
+  const until = new Date(from);
+  until.setMonth(until.getMonth() + 1);
+
+  const [newLeads, appointments, booked] = await Promise.all([
+    safeQuery(
+      "dashboard:month:newLeads",
+      () => prisma.leadInquiry.count({ where: { createdAt: { gte: from } } }),
+      0,
+    ),
+    safeQuery(
+      "dashboard:month:appointments",
+      () => prisma.appointment.count({ where: { scheduledAt: { gte: from, lt: until } } }),
+      0,
+    ),
+    safeQuery(
+      "dashboard:month:booked",
+      () =>
+        prisma.leadInquiry.count({
+          where: { createdAt: { gte: from }, status: LeadStatus.WON },
+        }),
+      0,
+    ),
+  ]);
+
+  return { newLeads, appointments, booked };
 }

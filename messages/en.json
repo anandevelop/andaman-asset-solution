@@ -684,15 +684,6 @@
     },
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "A snapshot of what needs attention today.",
-      "newLeads": "New leads",
-      "newLeadsHint": "Awaiting first contact",
-      "leadsThisWeek": "Leads this week",
-      "leadsThisWeekHint": "Last 7 days",
-      "publishedProjects": "Published projects",
-      "publishedProjectsHint": "Live on the public site",
-      "upcomingEvents": "Upcoming events",
-      "upcomingEventsHint": "Next 30 days",
       "recentLeads": "Latest enquiries",
       "viewAll": "View all",
       "greetingMorning": "Good morning, {name}",
@@ -700,25 +691,29 @@
       "greetingEvening": "Good evening, {name}",
       "overdueSubtitle": "{count} leads have passed the standard response time — start there.",
       "overdueSubtitleNone": "No leads have passed the response-time SLA today — you're all caught up.",
+      "monthSummary": {
+        "title": "This month",
+        "newLeads": "New leads",
+        "appointments": "Site visits",
+        "booked": "Closed",
+        "viewFullReports": "See the full reports"
+      },
       "rangeLabel": "Date range",
       "range7": "Last 7 days",
       "range30": "Last 30 days",
       "range90": "Last 90 days",
       "range365": "Last 365 days",
       "exportReport": "Export report",
-      "moreReports": "More reports",
       "workQueue": {
         "title": "Today's work queue",
         "unassigned": {
           "label": "New leads with no owner",
           "oldest": "Oldest: {hours}h ago",
-          "none": "Nothing waiting to be assigned",
-          "assignAll": "Assign all"
+          "none": "Nothing waiting to be assigned"
         },
         "overdue": {
           "label": "Overdue response ({hours}h)",
           "hint": "Must be contacted today",
-          "viewList": "View list",
           "none": "No leads are overdue"
         },
         "appointments": {
@@ -728,7 +723,6 @@
         },
         "review": {
           "label": "Awaiting review before publish",
-          "reviewNow": "Review now",
           "none": "Nothing awaiting review"
         }
       }
@@ -2058,9 +2052,7 @@
         "title": "Leads by month",
         "subtitle": "Last 12 months.",
         "total": "Leads",
-        "won": "Won",
-        "subtitleDetailed": "{total} leads over 12 months · {thisMonth} this month ({changeLabel})",
-        "subtitleDetailedNoChange": "{total} leads over 12 months · {thisMonth} this month"
+        "won": "Won"
       },
       "sources": {
         "title": "Where leads come from",
@@ -2078,8 +2070,6 @@
       "pipeline": {
         "title": "Pipeline",
         "subtitle": "Every lead ever recorded, by current status — where the backlog is stuck, not just what's new.",
-        "subtitleDetailed": "{openTotal} leads still open · stuck longest at “{stage}”, averaging {avgDays} days",
-        "subtitleSimple": "{openTotal} leads still open",
         "bottleneckFlag": "Bottleneck"
       },
       "rsvp": {
