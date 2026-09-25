@@ -786,9 +786,25 @@ function richContentUpdateFields(
  * `create` only, like everything else here: a slug absent from this table
  * is seeded without a pin rather than with a guessed one, and a project
  * already in the database keeps whatever /admin holds.
+ *
+ * `googleMapsUrl` is the only place this file sets one — the Sale Kits have
+ * no links either, and every other project's was pasted in through /admin.
+ * It is here for victory because the client sent the link along with the
+ * coordinate, and it is a better "Open in Google Maps" target than the
+ * `?q=<lat>,<lng>` the page falls back to: a link opens the place card,
+ * a coordinate opens a dropped pin. The embed and our own marker still
+ * come from the coordinate, so a link that disagrees cannot move them.
  */
-const PROJECT_PINS: Record<string, { latitude: string; longitude: string }> = {
+const PROJECT_PINS: Record<
+  string,
+  { latitude: string; longitude: string; googleMapsUrl?: string }
+> = {
   "residence-prime": { latitude: "8.019298", longitude: "98.324407" },
+  "victory": {
+    latitude: "8.024759",
+    longitude: "98.320845",
+    googleMapsUrl: "https://maps.app.goo.gl/wZSw5aHes3WDxRgA8",
+  },
 };
 
 function richContentCreateFields(
