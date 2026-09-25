@@ -446,15 +446,15 @@ const TRINITY_VILLAGE = {
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80",
   ],
 
-  /* From the client's own Google Maps share link
-     (https://maps.app.goo.gl/W6MZGHNxg6vdvcrW8). Was 8.019400/98.298600,
-     which is about 3.5 km west of the development — far enough that the
-     map's pin sat in the wrong sub-district. A seeded database is the
-     only place this fixes; a deployment already carrying the old numbers
-     has to be corrected in /admin, because the seed's update branch
-     deliberately never overwrites admin-owned content. */
-  latitude: "7.999230",
-  longitude: "98.322886",
+  /* Supplied by the client off the map itself. Was 8.019400/98.298600,
+     about 3.5 km west of the development — far enough that the pin sat in
+     the wrong sub-district, and visible now that the map draws a marker of
+     its own at the centre of the frame. A seeded database is the only
+     place this fixes; a deployment already carrying the old numbers has to
+     be corrected in /admin, because the seed's update branch deliberately
+     never overwrites admin-owned content. */
+  latitude: "7.999345",
+  longitude: "98.322864",
 
   metaTitleEn: "Trinity Village — 30 Pool Villas at Pasak 8, Phuket",
   metaTitleTh: "ทรินิตี้ วิลเลจ — 30 พูลวิลล่า พาซัก 8 ภูเก็ต",
@@ -773,6 +773,24 @@ function richContentUpdateFields(
  * photography review land — see the seed summary logged at the end of
  * main() for a standing reminder of this.
  */
+/**
+ * Map pins, supplied by the client off the map itself.
+ *
+ * Neither seed JSON carries a coordinate — the Sale Kits give an address
+ * and nothing more — so a freshly seeded project had none, and the map
+ * fell back to whatever a pasted share link resolved to. That is now
+ * enough for the route explorer to draw its pin (see lib/google-maps.ts),
+ * but a link is a weaker source than a coordinate and residence-prime's
+ * stored one turned out to point ~175 m from the villas.
+ *
+ * `create` only, like everything else here: a slug absent from this table
+ * is seeded without a pin rather than with a guessed one, and a project
+ * already in the database keeps whatever /admin holds.
+ */
+const PROJECT_PINS: Record<string, { latitude: string; longitude: string }> = {
+  "residence-prime": { latitude: "8.019298", longitude: "98.324407" },
+};
+
 function richContentCreateFields(
   content: ContentSeed["projects"][number],
   units: UnitsSeed["projects"][number],
@@ -783,6 +801,7 @@ function richContentCreateFields(
     nameEn: units.nameEn,
     nameTh: units.nameEn, // placeholder — see comment above
     ...richContentUpdateFields(content, units),
+    ...(PROJECT_PINS[content.slug] ?? {}),
     propertyType: PropertyType.POOL_VILLA,
     status: ProjectStatus.UPCOMING,
     isPublished: false,
