@@ -374,3 +374,22 @@ describe("table cells keep their spans", () => {
     expect(report.hasExecutableTag).toBe(false);
   });
 });
+
+describe("ready-made block markers survive sanitising", () => {
+  it("keeps data-block and data-tone on a callout", () => {
+    const out = sanitizeArticleHtml(
+      '<blockquote data-block="callout" data-tone="warning"><p>x</p></blockquote>',
+    );
+    expect(out).toContain('data-block="callout"');
+    expect(out).toContain('data-tone="warning"');
+  });
+
+  it("does not need them exempted from the URL check", () => {
+    // Unlike colspan/rowspan, data-* attributes are exempt from
+    // ALLOWED_URI_REGEXP by DOMPurify's own rules — asserted rather than
+    // assumed, since that assumption is exactly what cost the table its
+    // merged cells.
+    expect(sanitizeArticleHtml('<blockquote data-block="callout" data-tone="note"><p>x</p></blockquote>'))
+      .toContain('data-tone="note"');
+  });
+});

@@ -1374,7 +1374,13 @@
         "tableAddColumn": "เพิ่มคอลัมน์",
         "tableDeleteColumn": "ลบคอลัมน์",
         "tableHeaderRow": "สลับแถวหัวตาราง",
-        "tableDelete": "ลบตาราง"
+        "tableDelete": "ลบตาราง",
+        "callout": "กล่องสรุป",
+        "calloutTones": {
+          "note": "บันทึก",
+          "warning": "ข้อควรระวัง",
+          "success": "เรื่องน่ารู้"
+        }
       },
       "figure": {
         "alignLeft": "ชิดซ้าย",

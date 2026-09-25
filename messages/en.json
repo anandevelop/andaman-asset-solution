@@ -1374,7 +1374,13 @@
         "tableAddColumn": "Add column",
         "tableDeleteColumn": "Delete column",
         "tableHeaderRow": "Toggle header row",
-        "tableDelete": "Delete table"
+        "tableDelete": "Delete table",
+        "callout": "Callout box",
+        "calloutTones": {
+          "note": "Note",
+          "warning": "Warning",
+          "success": "Good to know"
+        }
       },
       "figure": {
         "alignLeft": "Align left",

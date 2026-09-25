@@ -100,6 +100,14 @@ const ALLOWED_ATTR = [
   // detection cannot be fooled by ordinary markup that happens to look
   // like a question.
   "data-faq",
+  // Ready-made blocks (Phase 2b-5.3 onward): data-block names which one —
+  // "callout" today, pull-quote and CTA next — and data-tone its variant.
+  // Two attributes on tags the allowlist already permits, rather than the
+  // <div class="callout"> this would obviously be otherwise: letting
+  // div/class/style back through would reopen the XSS surface for the sake
+  // of decoration, which is the one trade this allowlist exists to refuse.
+  "data-block",
+  "data-tone",
 ];
 
 /** The only URL schemes an article body may point at. */

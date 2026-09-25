@@ -1374,7 +1374,13 @@
         "tableAddColumn": "Добавить столбец",
         "tableDeleteColumn": "Удалить столбец",
         "tableHeaderRow": "Строка заголовка",
-        "tableDelete": "Удалить таблицу"
+        "tableDelete": "Удалить таблицу",
+        "callout": "Блок-заметка",
+        "calloutTones": {
+          "note": "Заметка",
+          "warning": "Внимание",
+          "success": "Важно знать"
+        }
       },
       "figure": {
         "alignLeft": "По левому краю",

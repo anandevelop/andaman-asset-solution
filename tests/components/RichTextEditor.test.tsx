@@ -42,6 +42,8 @@ const LABELS = {
   link: "Insert link",
   image: "Insert image",
   faq: "FAQ block",
+  callout: "Callout box",
+  calloutTone: (tone: string) => ({ note: "Note", warning: "Warning", success: "Good to know" })[tone] ?? tone,
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",
@@ -527,6 +529,67 @@ describe("RichTextEditor — tables", () => {
       expect(out).toContain("<th");
       expect(out).toContain("Pool villa");
       expect(out).toContain("398 sqm");
+    });
+  });
+});
+
+/*
+  The callout is a blockquote wearing data-block, because the allowlist has
+  no div/class/style to build one from. That makes the parse order the
+  whole ballgame: StarterKit's blockquote claims <blockquote> too, and
+  ProseMirror settles rules by priority rather than by how specific the
+  selector looks. The FAQ list learned this the hard way against <ul>.
+*/
+describe("RichTextEditor — callout", () => {
+  it("round-trips the marker and the tone", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<blockquote data-block="callout" data-tone="warning"><p>Foreigners cannot own land directly.</p></blockquote>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="callout"');
+      expect(out).toContain('data-tone="warning"');
+      expect(out).toContain("Foreigners cannot own land directly.");
+    });
+  });
+
+  it("leaves an ordinary blockquote an ordinary blockquote", async () => {
+    // The regression that matters: if the callout rule won on plain
+    // quotes, every pull-quote in every existing article would silently
+    // become a tinted box.
+    const user = userEvent.setup();
+    render(<Harness initialContent="<p>Intro</p><blockquote><p>Just a quote.</p></blockquote>" />);
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain("<blockquote>");
+      expect(out).not.toContain("data-block");
+      expect(out).not.toContain("data-tone");
+    });
+  });
+
+  it("defaults a callout with no tone to note rather than losing it", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness initialContent='<p>Intro</p><blockquote data-block="callout"><p>Body.</p></blockquote>' />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="callout"');
+      expect(out).toContain('data-tone="note"');
     });
   });
 });

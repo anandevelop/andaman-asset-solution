@@ -61,6 +61,7 @@ import {
   ExternalLink,
   Columns3,
   HelpCircle,
+  Info,
   Pencil,
   Rows3,
   Table as TableIcon,
@@ -288,6 +289,50 @@ const Figure = Node.create<FigureOptions>({
  * directly. So an item is a question followed by blocks, which is also
  * exactly what lib/faq-block.ts reads back out.
  */
+/**
+ * A callout: a boxed aside for the thing a reader must not miss.
+ *
+ * `<blockquote data-block="callout" data-tone="…">` rather than the
+ * `<div class="callout">` it would obviously be — see lib/markdown.ts's
+ * ALLOWED_ATTR for why the allowlist will not take div/class/style, and
+ * blockquote is the closest thing in it to "an aside" semantically.
+ *
+ * `block+`, not `paragraph+`: a summary box routinely holds two paragraphs
+ * or a short list, and block+ covers both without a second node type.
+ */
+const CALLOUT_TONES = ["note", "warning", "success"] as const;
+type CalloutTone = (typeof CALLOUT_TONES)[number];
+
+const Callout = Node.create({
+  name: "callout",
+  group: "block",
+  content: "block+",
+  defining: true,
+
+  addAttributes() {
+    return {
+      tone: {
+        default: "note" as CalloutTone,
+        parseHTML: (element: HTMLElement) => element.getAttribute("data-tone") ?? "note",
+        renderHTML: (attributes: { tone?: string }) => ({ "data-tone": attributes.tone ?? "note" }),
+      },
+    };
+  },
+
+  parseHTML() {
+    // priority, for the same reason the FAQ list needs it: StarterKit's
+    // blockquote claims <blockquote> too, and ProseMirror settles parse
+    // rules by priority rather than by how specific the selector looks.
+    // Left at the default, a callout comes back as an ordinary quote with
+    // its attributes gone.
+    return [{ tag: 'blockquote[data-block="callout"]', priority: 60 }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["blockquote", { ...HTMLAttributes, "data-block": "callout" }, 0];
+  },
+});
+
 const FaqList = Node.create({
   name: "faqList",
   group: "block",
@@ -375,6 +420,8 @@ type Props = {
     link: string;
     image: string;
     faq: string;
+    callout: string;
+    calloutTone: (tone: string) => string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -569,6 +616,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         is worse than not offering the handle at all.
       */
       TableKit.configure({ table: { resizable: false } }),
+      Callout,
       FaqList,
       FaqItem,
       FaqQuestion,
@@ -945,6 +993,23 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
+          title={toolbarLabels.callout}
+          aria-label={toolbarLabels.callout}
+          aria-pressed={editor.isActive("callout")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "callout", content: [{ type: "paragraph" }] })
+              .run()
+          }
+          className={toolbarButtonClass(editor.isActive("callout"))}
+        >
+          <Info size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
           title={toolbarLabels.table}
           aria-label={toolbarLabels.table}
           onMouseDown={(event) => event.preventDefault()}
@@ -1136,6 +1201,29 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         >
           <Unlink size={15} aria-hidden />
         </button>
+      </BubbleMenu>
+
+      {/* Tone follows the caret into the callout, like the table and link
+          controls — the choice belongs to the block you are standing in. */}
+      <BubbleMenu
+        editor={editor}
+        shouldShow={({ editor: instance }) => instance.isActive("callout")}
+        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+      >
+        {CALLOUT_TONES.map((tone) => (
+          <button
+            key={tone}
+            type="button"
+            title={toolbarLabels.calloutTone(tone)}
+            aria-label={toolbarLabels.calloutTone(tone)}
+            aria-pressed={editor.isActive("callout", { tone })}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().updateAttributes("callout", { tone }).run()}
+            className={toolbarButtonClass(editor.isActive("callout", { tone }))}
+          >
+            <span className="px-0.5 text-xs">{toolbarLabels.calloutTone(tone)}</span>
+          </button>
+        ))}
       </BubbleMenu>
 
       {/* Table controls follow the caret into the table, for the same

@@ -678,6 +678,8 @@ export default function NewsForm({
                       link: t("news.richToolbar.link"),
                       image: t("news.richToolbar.image"),
                       faq: t("news.richToolbar.faq"),
+                      callout: t("news.richToolbar.callout"),
+                      calloutTone: (tone) => t(`news.richToolbar.calloutTones.${tone}` as never),
                       table: t("news.richToolbar.table"),
                       tableAddRow: t("news.richToolbar.tableAddRow"),
                       tableDeleteRow: t("news.richToolbar.tableDeleteRow"),

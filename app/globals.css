@@ -396,6 +396,44 @@
     @apply border-l-2 border-accent pl-6 text-lg font-light italic text-ink/65;
   }
 
+  /* The callout box — a blockquote carrying data-block, because the
+     allowlist has no div/class/style to build one out of (see
+     lib/markdown.ts's ALLOWED_ATTR).
+
+     Written after the plain blockquote rule and undoing each of its
+     decisions explicitly: an aside is not a quotation, so the italic, the
+     size and the bare left rule all have to go rather than being inherited
+     into something that reads like a pull-quote with a background. A
+     blockquote without data-block matches none of this and renders exactly
+     as it always has. */
+  & blockquote[data-block="callout"] {
+    @apply my-8 rounded-xs border-l-4 px-5 py-4 text-base not-italic;
+  }
+
+  & blockquote[data-block="callout"] > :first-child {
+    @apply mt-0;
+  }
+
+  & blockquote[data-block="callout"] > :last-child {
+    @apply mb-0;
+  }
+
+  /* Tone carries meaning, so it is not colour alone: each one also states
+     itself in the label the editor shows. Defaults to note when the
+     attribute is missing, which is what an older callout would be. */
+  & blockquote[data-block="callout"],
+  & blockquote[data-block="callout"][data-tone="note"] {
+    @apply border-primary/40 bg-primary/5 text-ink/80;
+  }
+
+  & blockquote[data-block="callout"][data-tone="warning"] {
+    @apply border-accent-600 bg-accent-50 text-ink/80;
+  }
+
+  & blockquote[data-block="callout"][data-tone="success"] {
+    @apply border-emerald-600 bg-emerald-50 text-ink/80;
+  }
+
   & img {
     @apply w-full rounded-xs shadow-card;
   }
