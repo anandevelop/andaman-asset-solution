@@ -1051,7 +1051,26 @@
         "page": "页"
       },
       "hubUnits": "户型、单位与总平面图",
-      "hubLabel": "项目工作区"
+      "hubLabel": "项目工作区",
+      "readiness": {
+        "title": "项目完成度",
+        "summary": "已完成 {passed} / {total}",
+        "adviceNote": "仅作提示，不是发布条件 —— 任何一项都不会阻止发布。",
+        "countOf": "{done}/{total}",
+        "count": "{done}",
+        "check": {
+          "media": "主视觉与相册图片",
+          "localeContent": "四种语言的文案",
+          "unitTypes": "已添加户型",
+          "seo": "SEO 标题与描述",
+          "progress": "本月已记录进度"
+        },
+        "fill": {
+          "complete": "完整",
+          "partial": "部分",
+          "missing": "缺失"
+        }
+      }
     },
     "progress": {
       "title": "施工进度",

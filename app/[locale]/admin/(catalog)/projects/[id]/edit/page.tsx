@@ -19,12 +19,14 @@ import {
   pickEditingTranslation,
   translationCompleteness,
 } from "@/lib/admin/translated-form";
+import { getProjectReadiness } from "@/lib/admin/project-readiness";
 import { deleteProject, updateProject } from "../../actions";
 import ProjectForm, { type ProjectFormValues } from "@/components/admin/ProjectForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import SaveToast from "@/components/admin/SaveToast";
 import PublishingRevisionPanel from "@/components/admin/PublishingRevisionPanel";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
+import ProjectReadinessPanel from "@/components/admin/ProjectReadinessPanel";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -49,10 +51,19 @@ export default async function EditProjectPage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin" });
   const lang = parseEditingLocale(searchParams.lang);
 
-  const project: any = await prisma.project.findFirst({
-    where: { id, deletedAt: null },
-    include: { translations: true },
-  });
+  /* Two reads, in parallel. The readiness panel deliberately runs its own
+     single query rather than deriving from `project` below: it needs the
+     unit-type count and this month's progress, which this fetch does not
+     pull, and widening this one to include them would make every Overview
+     load carry them whether the panel renders or not. See
+     lib/admin/project-readiness.ts's header. */
+  const [project, readiness] = await Promise.all([
+    prisma.project.findFirst({
+      where: { id, deletedAt: null },
+      include: { translations: true },
+    }) as Promise<any>,
+    getProjectReadiness(id),
+  ]);
 
   if (!project) notFound();
 
@@ -155,24 +166,34 @@ export default async function EditProjectPage(props: Props) {
         }}
       />
 
-      <LanguageTabs
-        active={lang}
-        completeness={completeness}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
-      />
+      {/* The form, and beside it what is still outstanding across the
+          other six tabs. The panel is second in the DOM so a narrow screen
+          stacks it under the form rather than pushing the form below a
+          checklist nobody opened this page to read. */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0 space-y-8">
+          <LanguageTabs
+            active={lang}
+            completeness={completeness}
+            completeLabel={t("common.translationComplete")}
+            missingLabel={t("common.translationMissing")}
+          />
 
-      <fieldset disabled={!canWrite} className="contents">
-        <ProjectForm
-          key={lang}
-          locale={locale}
-          lang={lang}
-          action={action}
-          values={values}
-          onDelete={onDelete}
-          submitLabel={t("common.save")}
-        />
-      </fieldset>
+          <fieldset disabled={!canWrite} className="contents">
+            <ProjectForm
+              key={lang}
+              locale={locale}
+              lang={lang}
+              action={action}
+              values={values}
+              onDelete={onDelete}
+              submitLabel={t("common.save")}
+            />
+          </fieldset>
+        </div>
+
+        <ProjectReadinessPanel locale={locale} projectId={project.id} readiness={readiness} />
+      </div>
     </div>
   );
 }

@@ -1051,7 +1051,26 @@
         "page": "Page"
       },
       "hubUnits": "Homes, units & site plan",
-      "hubLabel": "Project workspace"
+      "hubLabel": "Project workspace",
+      "readiness": {
+        "title": "Project readiness",
+        "summary": "{passed} of {total} done",
+        "adviceNote": "A guide, not a gate — none of this stops you publishing.",
+        "countOf": "{done}/{total}",
+        "count": "{done}",
+        "check": {
+          "media": "Hero and gallery images",
+          "localeContent": "Copy in all four languages",
+          "unitTypes": "House types added",
+          "seo": "SEO title and description",
+          "progress": "Progress logged this month"
+        },
+        "fill": {
+          "complete": "complete",
+          "partial": "partial",
+          "missing": "missing"
+        }
+      }
     },
     "progress": {
       "title": "Construction progress",
