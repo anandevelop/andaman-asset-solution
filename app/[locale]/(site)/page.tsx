@@ -51,7 +51,7 @@ import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
 import { localizedAlternates } from "@/lib/seo";
-import { getPublishedProjects, type ProjectSignal } from "@/lib/projects";
+import { getPublishedProjects } from "@/lib/projects";
 import { getPublishedArticles } from "@/lib/news";
 import { getPublishedEvents } from "@/lib/events";
 import { getFaqs } from "@/lib/faqs";
@@ -60,7 +60,8 @@ import { getSiteSettings } from "@/lib/settings";
 import { getWhyUsPoints } from "@/lib/home-content";
 import { getOrderedVisibleSectionKeys, type HomeSectionKey } from "@/lib/home-sections";
 import { isDatabaseOffline } from "@/lib/db";
-import { intlLocale, formatMonthYear } from "@/lib/format";
+import { intlLocale } from "@/lib/format";
+import { projectCtaKey, projectSignalLabel } from "@/lib/project-card-labels";
 import type { SectionIcon } from "@prisma/client";
 
 /*
@@ -229,11 +230,11 @@ export default async function HomePage(props: Props) {
                   locale={locale}
                   labels={{
                     status: tProjects(`status.${project.status}` as never),
-                    cta: tProjects(ctaKey(project.status) as never),
+                    cta: tProjects(projectCtaKey(project.status) as never),
                     specVillas: tProjects("specs.villas"),
                     specBedrooms: tProjects("specs.bedrooms"),
                     specLand: tProjects("specs.land"),
-                    signal: signalLabel(project.signal, tProjects as never, locale),
+                    signal: projectSignalLabel(project.signal, tProjects as never, locale),
                   }}
                 />
               </Reveal>
@@ -356,7 +357,7 @@ export default async function HomePage(props: Props) {
 
     LATEST_NEWS: () =>
       articles.length > 0 && (
-        <section className="container-luxe pb-20 sm:pb-28">
+        <section className="container-luxe py-20 sm:py-28">
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
@@ -490,25 +491,6 @@ export default async function HomePage(props: Props) {
  * page's own translator once, and the card stays a component that renders
  * strings it is handed.
  */
-function signalLabel(
-  signal: ProjectSignal | null,
-  t: (key: never, values?: Record<string, unknown>) => string,
-  locale: string,
-): string | null {
-  if (!signal) return null;
-
-  if (signal.kind === "awards") {
-    return t("signal.awards" as never, { count: signal.count, year: signal.year });
-  }
-
-  return t("signal.progressPhotos" as never, {
-    count: signal.count,
-    when: formatMonthYear(locale, signal.year, signal.month),
-  });
-}
 
 /** An upcoming development has nothing to walk through yet — see the note
  *  on the CTA in components/FeaturedProjectCard.tsx. */
-function ctaKey(status: string): "registerInterest" | "viewProject" {
-  return status === "UPCOMING" ? "registerInterest" : "viewProject";
-}

@@ -5,12 +5,12 @@
  * for itself, because it takes its strings already translated (see its own
  * header for why it stays free of next-intl).
  *
- * They live here rather than beside a caller because there is now a third
- * one: the /projects listing, the home page's "Selected developments", and
- * — since Phase 2b-5.3 — a project card embedded in a news article. The
- * listing and the home page still carry their own identical copies of both
- * functions; unifying them touches pages outside that phase's scope, so it
- * is deliberately left as a follow-up rather than folded in here.
+ * They live here rather than beside a caller because there are three: the
+ * /projects listing, the home page's "Selected developments", and — since
+ * Phase 2b-5.3 — a project card embedded in a news article. All three used
+ * to carry their own copy; the listing and the home page were left alone
+ * when this file appeared, because unifying them reached outside that
+ * phase's scope, and they were folded in immediately afterwards.
  * ─────────────────────────────────────────────────────────────────────────
  */
 

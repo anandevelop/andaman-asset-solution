@@ -32,9 +32,9 @@ import {
   getProjectFacets,
   getProjectPortfolioSummary,
   getPublishedProjects,
-  type ProjectSignal,
 } from "@/lib/projects";
-import { formatMonthYear, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+import { projectCtaKey, projectSignalLabel } from "@/lib/project-card-labels";
 import { isDatabaseOffline } from "@/lib/db";
 import {
   SORT_OPTIONS,
@@ -275,11 +275,11 @@ export default async function ProjectsPage(props: Props) {
                   // lands the real LCP later than tagging neither.
                   labels={{
                     status: t(`status.${project.status}` as never),
-                    cta: t(ctaKey(project.status) as never),
+                    cta: t(projectCtaKey(project.status) as never),
                     specVillas: t("specs.villas"),
                     specBedrooms: t("specs.bedrooms"),
                     specLand: t("specs.land"),
-                    signal: signalLabel(project.signal, t as never, locale),
+                    signal: projectSignalLabel(project.signal, t as never, locale),
                   }}
                 />
               </Reveal>
@@ -298,25 +298,6 @@ export default async function ProjectsPage(props: Props) {
  * page's own translator once, and the card stays a component that renders
  * strings it is handed.
  */
-function signalLabel(
-  signal: ProjectSignal | null,
-  t: (key: never, values?: Record<string, unknown>) => string,
-  locale: string,
-): string | null {
-  if (!signal) return null;
-
-  if (signal.kind === "awards") {
-    return t("signal.awards" as never, { count: signal.count, year: signal.year });
-  }
-
-  return t("signal.progressPhotos" as never, {
-    count: signal.count,
-    when: formatMonthYear(locale, signal.year, signal.month),
-  });
-}
 
 /** An upcoming development has nothing to walk through yet — see the note
  *  on the CTA in components/FeaturedProjectCard.tsx. */
-function ctaKey(status: string): "registerInterest" | "viewProject" {
-  return status === "UPCOMING" ? "registerInterest" : "viewProject";
-}
