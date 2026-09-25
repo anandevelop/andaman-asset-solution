@@ -606,12 +606,11 @@
       "settings": "Settings",
       "activity": "Activity",
       "seo": "SEO",
-      "seoTranslations": "Translations",
       "analytics": "Analytics",
       "media": "Media",
       "appointments": "Appointments",
       "mobileView": "Mobile view",
-      "publishing": "Publishing"
+      "publishing": "Review & publish"
     },
     "pages": {
       "section": "Website content",
@@ -642,6 +641,11 @@
         "mission": "Mission & Principles",
         "awards": "Awards",
         "milestones": "Milestones"
+      },
+      "publishing": {
+        "label": "Review & publish",
+        "queue": "Review queue",
+        "translations": "Translations"
       }
     },
     "common": {
@@ -2604,7 +2608,9 @@
         "item": "Item",
         "missing": "Missing languages",
         "fixLink": "Fix"
-      }
+      },
+      "filterLabel": "Filter by content type",
+      "filterAll": "All"
     },
     "analytics": {
       "title": "Analytics & Reports",
@@ -2885,8 +2891,8 @@
       }
     },
     "publishing": {
-      "eyebrow": "System",
-      "title": "Publishing & Languages",
+      "eyebrow": "Website content",
+      "title": "Review & publish",
       "subtitle": "Every edit is a draft until it's reviewed — so the site customers see never changes mid-visit.",
       "stats": {
         "draft": "Drafts not yet submitted",

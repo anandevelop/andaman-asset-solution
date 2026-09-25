@@ -37,8 +37,9 @@
  *              getWeekOverWeekLeads(). Gated on viewAllLeads, same rule as
  *              everywhere else CRM data shows.
  *
- * Role.ADMIN — the (growth) zone's ordinary floor; unlike seo/translations,
- * nothing here needs the zone's one exception. A role that meets
+ * Role.ADMIN — the (growth) zone's floor, and since the translation report
+ * left for the publishing hub there is no longer an exception to it
+ * anywhere in the zone. A role that meets
  * viewAllLeads without meeting ADMIN (SALES) never reaches this page at
  * all, which is why the Leads tab's own capability check is a second,
  * defence-in-depth answer to a question the zone guard already settled —

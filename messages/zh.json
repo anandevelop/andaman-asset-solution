@@ -606,12 +606,11 @@
       "settings": "设置",
       "activity": "操作记录",
       "seo": "SEO",
-      "seoTranslations": "翻译",
       "analytics": "统计与报告",
       "media": "媒体库",
       "appointments": "预约看房",
       "mobileView": "移动端视图",
-      "publishing": "发布与语言"
+      "publishing": "审核与发布"
     },
     "pages": {
       "section": "网站内容",
@@ -642,6 +641,11 @@
         "mission": "工作理念",
         "awards": "荣誉奖项",
         "milestones": "里程碑"
+      },
+      "publishing": {
+        "label": "审核与发布",
+        "queue": "待审核",
+        "translations": "翻译"
       }
     },
     "common": {
@@ -2604,7 +2608,9 @@
         "item": "项目",
         "missing": "缺失语言",
         "fixLink": "修复"
-      }
+      },
+      "filterLabel": "按内容类型筛选",
+      "filterAll": "全部"
     },
     "analytics": {
       "title": "统计与报告",
@@ -2885,8 +2891,8 @@
       }
     },
     "publishing": {
-      "eyebrow": "系统",
-      "title": "发布与语言",
+      "eyebrow": "网站内容",
+      "title": "审核与发布",
       "subtitle": "每次修改都是“草稿”，需经审核才会生效——客户看到的网站不会中途改变。",
       "stats": {
         "draft": "尚未提交审核的草稿",

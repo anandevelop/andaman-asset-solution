@@ -98,7 +98,7 @@ function localesPresent(translations: TranslationRow[]): Set<string> {
   return set;
 }
 
-// ── Translation Status report (/admin/seo/translations) ─────────────────
+// ── Translation Status report (/admin/publishing/translations) ──────────
 
 /**
  * The five groups the report page and its CSV export both draw from.
