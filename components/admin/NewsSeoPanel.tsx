@@ -371,6 +371,7 @@ export default function NewsSeoPanel({
           category: null,
           tags: [],
           authorName: null,
+          content: debounced.content,
         },
         { legalName: siteConfig.legalName, siteUrl: siteConfig.url, logoUrl: null },
       ),
@@ -876,7 +877,7 @@ export default function NewsSeoPanel({
 
           <p className="text-sm text-ink">
             <span className="text-ink-muted">{t("news.seo.schemaPreviewType")}: </span>
-            <span className="font-medium">{schemaJsonLd["@type"] as string}</span>
+            <span className="font-medium">{schemaJsonLd.map((entry) => entry["@type"]).join(" + ")}</span>
           </p>
 
           <pre className="max-h-96 overflow-auto rounded-xs border border-primary/10 bg-surface-muted/40 p-3 text-xs leading-relaxed text-ink">

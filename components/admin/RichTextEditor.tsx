@@ -55,6 +55,7 @@ import {
   Bold,
   Code,
   ExternalLink,
+  HelpCircle,
   Pencil,
   RemoveFormatting,
   Redo2,
@@ -260,6 +261,71 @@ const Figure = Node.create<FigureOptions>({
   },
 });
 
+/**
+ * The FAQ block: `<ul data-faq="list">` of `<li data-faq="item">`, each
+ * holding an `<h3 data-faq="question">` and one or more answer blocks.
+ *
+ * Built out of tags the sanitizer already allows, with a single `data-faq`
+ * attribute to mark them — see lib/markdown.ts's ALLOWED_ATTR. It could
+ * have been a `<div class="faq">`, and that is exactly the trade refused:
+ * letting div/class/style back through the allowlist to make a block look
+ * right is reopening the XSS surface for decoration.
+ *
+ * The question is a real `<h3>` rather than a styled paragraph, so it
+ * appears in the article's outline and is read as a heading by a screen
+ * reader — a FAQ's questions *are* its headings.
+ *
+ * There is no separate "answer" node wrapping the answer blocks: nothing
+ * in the allowlist can serve as that wrapper, and `<li>` can hold them
+ * directly. So an item is a question followed by blocks, which is also
+ * exactly what lib/faq-block.ts reads back out.
+ */
+const FaqList = Node.create({
+  name: "faqList",
+  group: "block",
+  content: "faqItem+",
+
+  parseHTML() {
+    // Priority, because StarterKit's bulletList also claims <ul> and parse
+    // rules are settled by priority rather than by selector specificity —
+    // left at the default, the generic rule wins and a FAQ comes back as
+    // an ordinary bullet list with its markers stripped.
+    return [{ tag: 'ul[data-faq="list"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["ul", { "data-faq": "list" }, 0];
+  },
+});
+
+const FaqItem = Node.create({
+  name: "faqItem",
+  content: "faqQuestion block+",
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'li[data-faq="item"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["li", { "data-faq": "item" }, 0];
+  },
+});
+
+const FaqQuestion = Node.create({
+  name: "faqQuestion",
+  content: "inline*",
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'h3[data-faq="question"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["h3", { "data-faq": "question" }, 0];
+  },
+});
+
 /** ⌥⌘0 → paragraph, ⌥⌘1–⌥⌘6 → H1–H6 — the keyboard-shortcut half of
  *  section 2.1's "text style" requirement; the dropdown/quick buttons
  *  below are the mouse half of the same commands. */
@@ -300,6 +366,7 @@ type Props = {
     quote: string;
     link: string;
     image: string;
+    faq: string;
     textStyle: string;
     undo: string;
     redo: string;
@@ -480,6 +547,9 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       InternalAwareLink.configure({ openOnClick: false, autolink: false }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       Figure.configure({ labels: figureLabels, locale }),
+      FaqList,
+      FaqItem,
+      FaqQuestion,
       HeadingShortcuts,
     ],
     [placeholder, figureLabels, locale],
@@ -850,6 +920,31 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           className={toolbarButtonClass(false)}
         >
           <Link2 size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.faq}
+          aria-label={toolbarLabels.faq}
+          aria-pressed={editor.isActive("faqList")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: "faqList",
+                content: [
+                  {
+                    type: "faqItem",
+                    content: [{ type: "faqQuestion" }, { type: "paragraph" }],
+                  },
+                ],
+              })
+              .run()
+          }
+          className={toolbarButtonClass(editor.isActive("faqList"))}
+        >
+          <HelpCircle size={15} aria-hidden />
         </button>
         <button
           type="button"

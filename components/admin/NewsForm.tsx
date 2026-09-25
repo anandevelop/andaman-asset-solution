@@ -677,6 +677,7 @@ export default function NewsForm({
                       quote: t("news.richToolbar.quote"),
                       link: t("news.richToolbar.link"),
                       image: t("news.richToolbar.image"),
+                      faq: t("news.richToolbar.faq"),
                       textStyle: t("news.richToolbar.textStyle"),
                       undo: t("news.richToolbar.undo"),
                       redo: t("news.richToolbar.redo"),

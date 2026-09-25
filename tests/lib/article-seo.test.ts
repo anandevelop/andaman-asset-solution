@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { marked } from "marked";
 import { auditArticle, type SeoScoreInput } from "@/lib/article-seo";
 
 /** A complete, passing article — each test below mutates one field off
@@ -48,16 +49,36 @@ function statusOf(id: string, input: SeoScoreInput) {
 }
 
 describe("auditArticle — baseline", () => {
-  it("passes every check on a fully-formed article", () => {
+  it("passes every check a Markdown article can", () => {
+    // Every one but hasFaqBlock: the FAQ block only exists in the
+    // rich-text editor, so a MARKDOWN article cannot hold one. That is a
+    // real "not done" rather than a quirk of the fixture, and the way out
+    // is the convert-to-rich-text banner in NewsForm.
     const { checks, score } = auditArticle(BASE);
-    expect(checks.every((c) => c.status === "pass")).toBe(true);
+    const failed = checks.filter((c) => c.status !== "pass").map((c) => c.id);
+
+    expect(failed).toEqual(["hasFaqBlock"]);
+    expect(score).toBe(96); // round(43 / 45 * 100)
+  });
+
+  it("scores 100 once the article is rich text and carries a FAQ block", () => {
+    const { score } = auditArticle({
+      ...BASE,
+      contentFormat: "HTML",
+      content:
+        marked.parse(BASE.content, { async: false }) +
+        '<ul data-faq="list"><li data-faq="item">' +
+        '<h3 data-faq="question">Can foreigners own?</h3><p>Leasehold or company.</p>' +
+        "</li></ul>",
+    });
+
     expect(score).toBe(100);
   });
 
-  it("carries a total weight of 43 across 20 checks", () => {
+  it("carries a total weight of 45 across 21 checks", () => {
     const { checks } = auditArticle(BASE);
-    expect(checks).toHaveLength(20);
-    expect(checks.reduce((sum, c) => sum + c.weight, 0)).toBe(43);
+    expect(checks).toHaveLength(21);
+    expect(checks.reduce((sum, c) => sum + c.weight, 0)).toBe(45);
   });
 });
 
@@ -277,6 +298,6 @@ describe("auditArticle — score math", () => {
     const { score, checks } = auditArticle(empty);
     const passing = checks.filter((c) => c.status === "pass");
     expect(passing.map((c) => c.id).sort()).toEqual(["imageAltText", "sentenceLength"]);
-    expect(score).toBe(9); // round((3 + 1) / 43 * 100)
+    expect(score).toBe(9); // round((3 + 1) / 45 * 100)
   });
 });

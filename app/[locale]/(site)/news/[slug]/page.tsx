@@ -176,6 +176,7 @@ export default async function ArticlePage(props: Props) {
             category: article.category,
             tags: article.tags,
             authorName: article.authorName,
+            content: article.content,
           },
           { legalName: siteConfig.legalName, siteUrl: siteConfig.url, logoUrl: settings.branding.ogImageUrl },
         )}

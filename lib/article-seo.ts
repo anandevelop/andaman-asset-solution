@@ -34,6 +34,7 @@
 
 import { getContentStats, splitParagraphs, type ContentFormat } from "@/lib/content-stats";
 import { SEO_LIMITS } from "@/lib/seo-limits";
+import { hasFaqBlock } from "@/lib/faq-block";
 
 export type SeoCheckId =
   | "keywordInTitle"
@@ -55,8 +56,8 @@ export type SeoCheckId =
   | "excerptLength"
   | "sentenceLength"
   | "languageComplete"
-  | "hasShareImages";
-// "hasFaqBlock" is deliberately not a member here — see the TODO below.
+  | "hasShareImages"
+  | "hasFaqBlock";
 
 export type SeoCheckStatus = "pass" | "warn" | "fail";
 
@@ -145,16 +146,6 @@ function check(id: SeoCheckId, weight: 1 | 2 | 3, passed: boolean): SeoCheck {
   return { id, weight, status: statusFor(weight, id, passed), messageKey: `news.seo.checks.${id}` };
 }
 
-/**
- * TODO(Phase 2b): "has an FAQ block" (weight 2 in the approved checklist)
- * needs a real FAQ TipTap block to detect content authored as structured
- * Q&A — that block doesn't exist yet (deferred as a separate phase). Do
- * not add heuristic detection (sniffing for "FAQ" headings or <dl>
- * markup) ahead of it landing — that would let a check pass on content
- * that was never actually authored as a real FAQ block. Revisit this file,
- * and lib/article-schema.ts's matching TODO, once Phase 2b ships.
- */
-
 export function auditArticle(input: SeoScoreInput): SeoScoreResult {
   const keyword = input.focusKeyword.trim();
   const stats = getContentStats(input.content, input.contentFormat);
@@ -203,6 +194,9 @@ export function auditArticle(input: SeoScoreInput): SeoScoreResult {
     // Both a cover image AND an OG image, not either/or — a deliberate
     // change from this check's predecessor (shareImageSet), which passed
     // on a cover image alone.
+    // Detected from the block's own data-faq marker, never from a heading
+    // that happens to say "FAQ" — see lib/faq-block.ts.
+    check("hasFaqBlock", 2, hasFaqBlock(input.content, input.contentFormat)),
     check("hasShareImages", 2, Boolean(input.coverImageUrl) && Boolean(input.ogImageUrl)),
   ];
 

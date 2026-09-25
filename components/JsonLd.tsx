@@ -16,7 +16,10 @@
 type Props = {
   /** Unique per page, used as the DOM id. */
   id: string;
-  data: Record<string, unknown>;
+  /** One block, or several — an article that carries a FAQ emits its
+   *  Article and a sibling FAQPage, and they belong in one script rather
+   *  than two competing ones. */
+  data: Record<string, unknown> | Record<string, unknown>[];
 };
 
 /** Recursively drop null/undefined and empty arrays. */

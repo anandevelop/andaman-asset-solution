@@ -92,6 +92,13 @@ const ALLOWED_ATTR = [
   // how it is aligned. "normal" | "wide" | "full" — see prose-article's
   // own rules, which is where the meaning of each lives.
   "data-width",
+  // The FAQ block's only marker: data-faq="list" | "item" | "question" on
+  // tags the allowlist already permits (ul / li / h3). One attribute rather
+  // than three, and no new tags — lib/faq-block.ts reads it back out for
+  // the SEO check and the FAQPage JSON-LD, and nothing else writes it, so
+  // detection cannot be fooled by ordinary markup that happens to look
+  // like a question.
+  "data-faq",
 ];
 
 /** The only URL schemes an article body may point at. */

@@ -1282,7 +1282,8 @@
           "sentenceLength": "平均句长不超过 28 个词",
           "hasShareImages": "封面图与分享 (OG) 图片均已设置",
           "languageComplete": "所有语言的标题和正文均已完成",
-          "singleH1": "正文最多包含一个 H1（与标题保持同步）"
+          "singleH1": "正文最多包含一个 H1（与标题保持同步）",
+          "hasFaqBlock": "包含常见问题模块"
         },
         "tabSeo": "SEO",
         "tabLinks": "链接",
@@ -1365,7 +1366,8 @@
         "clearFormat": "清除格式",
         "editLink": "编辑链接",
         "openLink": "打开链接",
-        "removeLink": "移除链接"
+        "removeLink": "移除链接",
+        "faq": "常见问题模块"
       },
       "figure": {
         "alignLeft": "左对齐",

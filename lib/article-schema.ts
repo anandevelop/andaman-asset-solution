@@ -19,6 +19,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { extractFaqItems } from "@/lib/faq-block";
 import { absoluteAssetUrl } from "@/lib/seo";
 import { truncate } from "@/lib/markdown-text";
 
@@ -36,6 +37,9 @@ export type ArticleSchemaInput = {
   category: string | null;
   tags: string[];
   authorName: string | null;
+  /** The article body, as stored. Only read to find a FAQ block — see
+   *  lib/faq-block.ts — so a caller with nothing to declare can pass "". */
+  content: string;
 };
 
 export type ArticleSchemaBranding = {
@@ -48,17 +52,20 @@ export type ArticleSchemaBranding = {
 };
 
 /**
- * TODO(Phase 2b): once an article can carry a real FAQ block, this
- * function should detect it and return an array of two JSON-LD objects
- * (this one plus a sibling FAQPage) instead of a single object — see
- * lib/article-seo.ts's matching TODO for why that block doesn't exist
- * yet. Do not add heuristic FAQ detection ahead of it landing.
+ * The article's JSON-LD, plus a sibling FAQPage when it carries a real FAQ
+ * block — the thing this file's TODO was waiting for. Detection is the
+ * block's own `data-faq` marker and nothing else (lib/faq-block.ts): a
+ * FAQPage assembled from guesswork is worse than none, because it claims
+ * to Google that questions were answered which nobody wrote as answers.
+ *
+ * Always an array, even when there is one object in it, so callers have a
+ * single shape to render rather than branching on the count.
  */
 export function buildArticleJsonLd(
   input: ArticleSchemaInput,
   branding: ArticleSchemaBranding,
-): Record<string, unknown> {
-  return {
+): Record<string, unknown>[] {
+  const article: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": input.schemaType ?? "NewsArticle",
     "@id": input.url,
@@ -97,4 +104,20 @@ export function buildArticleJsonLd(
       },
     },
   };
+
+  const faq = extractFaqItems(input.content);
+  if (faq.length === 0) return [article];
+
+  return [
+    article,
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    },
+  ];
 }

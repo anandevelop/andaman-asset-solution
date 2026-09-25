@@ -1282,7 +1282,8 @@
           "sentenceLength": "Average sentence is 28 words or fewer",
           "hasShareImages": "Cover image and OG/share image are both set",
           "languageComplete": "Every language has a complete title and body",
-          "singleH1": "Body has at most one H1 (kept in sync with the title)"
+          "singleH1": "Body has at most one H1 (kept in sync with the title)",
+          "hasFaqBlock": "Has an FAQ block"
         },
         "tabSeo": "SEO",
         "tabLinks": "Links",
@@ -1365,7 +1366,8 @@
         "clearFormat": "Clear formatting",
         "editLink": "Edit link",
         "openLink": "Open link",
-        "removeLink": "Remove link"
+        "removeLink": "Remove link",
+        "faq": "FAQ block"
       },
       "figure": {
         "alignLeft": "Align left",

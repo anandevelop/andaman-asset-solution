@@ -41,6 +41,7 @@ const LABELS = {
   quote: "Quote",
   link: "Insert link",
   image: "Insert image",
+  faq: "FAQ block",
   textStyle: "Text style",
   undo: "Undo",
   redo: "Redo",
@@ -460,6 +461,37 @@ describe("RichTextEditor — links survive a round trip unchanged", () => {
       const out = screen.getByTestId("content-html").textContent ?? "";
       expect(out).toContain('target="_blank"');
       expect(out).toContain("nofollow");
+    });
+  });
+});
+
+/*
+  The FAQ block has to survive the trip to the database and back, because
+  two other things read it from there: the SEO checklist's "has an FAQ
+  block" and the FAQPage JSON-LD. Both key on the data-faq markers, so if
+  the editor stops emitting them the score and the structured data go
+  quietly wrong rather than loudly.
+*/
+describe("RichTextEditor — FAQ block", () => {
+  it("round-trips questions and answers with their markers intact", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<ul data-faq="list">' +
+      '<li data-faq="item"><h3 data-faq="question">Can foreigners own?</h3><p>Leasehold or company.</p></li>' +
+      "</ul>";
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-faq="list"');
+      expect(out).toContain('data-faq="item"');
+      expect(out).toContain('data-faq="question"');
+      expect(out).toContain("Can foreigners own?");
+      expect(out).toContain("Leasehold or company.");
     });
   });
 });
