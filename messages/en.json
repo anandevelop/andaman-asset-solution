@@ -1295,7 +1295,6 @@
         "keywordDifficulty": "difficulty {value}",
         "keywordCurrentRank": "currently #{rank}",
         "keywordStatsCaveat": "From the last rank-tracking import — not a live check.",
-        "idealLengthHint": "Ideal length: {min}–{max} characters",
         "densityTarget": "Target 0.8–2.5%",
         "densityKeywordHeader": "Keyword",
         "densityCountHeader": "Occurrences",
@@ -2609,7 +2608,8 @@
         "externalStatusEmpty": "No checked external link is currently broken.",
         "externalStatusUnreachable": "Unreachable"
       },
-      "hubSubtitle": "Everything that applies to the whole site: what search engines find, what they are told, and where the old addresses point."
+      "hubSubtitle": "Everything that applies to the whole site: what search engines find, what they are told, and where the old addresses point.",
+      "idealLength": "Ideal length: {min}–{max} characters"
     },
     "seoTranslations": {
       "title": "Translation Status",
@@ -3073,7 +3073,6 @@
       "noIndex": "Let Google index this page",
       "noIndexHint": "Turning this off removes this language's page from search results",
       "saved": "Saved",
-      "charCount": "{count}/{limit} characters",
       "serpTitle": "Search result preview",
       "serpEmpty": "(not filled in)",
       "shareTitle": "Share card preview",

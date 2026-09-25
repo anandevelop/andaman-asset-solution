@@ -1295,7 +1295,6 @@
         "keywordDifficulty": "ความยาก {value}",
         "keywordCurrentRank": "อันดับปัจจุบัน #{rank}",
         "keywordStatsCaveat": "ข้อมูลจากการนำเข้าล่าสุด ไม่ใช่การตรวจสดแบบเรียลไทม์",
-        "idealLengthHint": "ความยาวเหมาะสม {min}–{max} ตัวอักษร",
         "densityTarget": "เป้าหมาย 0.8–2.5%",
         "densityKeywordHeader": "คีย์เวิร์ด",
         "densityCountHeader": "พบ",
@@ -2609,7 +2608,8 @@
         "externalStatusEmpty": "ไม่มีลิงก์ภายนอกที่ตรวจแล้วเสียในขณะนี้",
         "externalStatusUnreachable": "เข้าถึงไม่ได้"
       },
-      "hubSubtitle": "ทุกอย่างที่มีผลกับทั้งเว็บ — สิ่งที่เสิร์ชเอนจินเจอ สิ่งที่เราบอกมันไป และ URL เดิมถูกส่งไปที่ไหน"
+      "hubSubtitle": "ทุกอย่างที่มีผลกับทั้งเว็บ — สิ่งที่เสิร์ชเอนจินเจอ สิ่งที่เราบอกมันไป และ URL เดิมถูกส่งไปที่ไหน",
+      "idealLength": "ความยาวเหมาะสม {min}–{max} ตัวอักษร"
     },
     "seoTranslations": {
       "title": "สถานะคำแปล",
@@ -3073,7 +3073,6 @@
       "noIndex": "ให้ Google เก็บหน้านี้",
       "noIndexHint": "ปิดแล้วหน้านี้จะหายจากผลค้นหาในภาษานี้",
       "saved": "บันทึกแล้ว",
-      "charCount": "{count}/{limit} ตัวอักษร",
       "serpTitle": "ตัวอย่างผลค้นหา",
       "serpEmpty": "(ยังไม่ได้กรอก)",
       "shareTitle": "ตัวอย่างการ์ดตอนแชร์",

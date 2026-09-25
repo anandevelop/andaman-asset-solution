@@ -1295,7 +1295,6 @@
         "keywordDifficulty": "难度 {value}",
         "keywordCurrentRank": "当前排名 #{rank}",
         "keywordStatsCaveat": "来自最近一次排名数据导入，非实时数据。",
-        "idealLengthHint": "建议长度 {min}–{max} 字符",
         "densityTarget": "目标 0.8–2.5%",
         "densityKeywordHeader": "关键词",
         "densityCountHeader": "出现次数",
@@ -2609,7 +2608,8 @@
         "externalStatusEmpty": "目前没有已检查且失效的外部链接。",
         "externalStatusUnreachable": "无法访问"
       },
-      "hubSubtitle": "适用于整站的设置：搜索引擎能找到什么、我们告诉它什么，以及旧网址指向哪里。"
+      "hubSubtitle": "适用于整站的设置：搜索引擎能找到什么、我们告诉它什么，以及旧网址指向哪里。",
+      "idealLength": "建议长度 {min}–{max} 字符"
     },
     "seoTranslations": {
       "title": "翻译状态",
@@ -3073,7 +3073,6 @@
       "noIndex": "允许 Google 收录本页",
       "noIndexHint": "关闭后，该语言的页面将从搜索结果中消失",
       "saved": "已保存",
-      "charCount": "{count}/{limit} 字符",
       "serpTitle": "搜索结果预览",
       "serpEmpty": "（尚未填写）",
       "shareTitle": "分享卡片预览",

@@ -11,7 +11,18 @@
  * they move as you type; the search-result preview shows *both* the
  * language being edited and the site's other filled-in languages, because
  * the mistake this screen catches most often is a Thai title that reads
- * well and an English one nobody ever wrote.
+ * well and an English one nobody ever wrote. That all-four-at-once view is
+ * why this screen is not a LanguageTabs form like its siblings — one
+ * language at a time is exactly the thing it exists to look past.
+ *
+ * The length meter and the result card are seo/SeoLengthMeter.tsx and
+ * seo/SerpPreview.tsx, the same two the news and event forms draw through
+ * SeoPreviewFields. This screen used to draw its own: a "23/60" counter
+ * that went red past SEO_LIMITS' maximum and knew nothing about its
+ * minimum, so a title this screen called fine was flagged as too short one
+ * tab away. The fields themselves stay local — they are controlled state
+ * saved through saveLocaleSeo, not FormData inputs, which is what
+ * SeoPreviewFields is built around.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -25,6 +36,8 @@ import {
 } from "@/app/[locale]/admin/(catalog)/projects/[id]/seo/actions";
 import { SEO_LIMITS } from "@/lib/seo-limits";
 import ImageUploader from "@/components/admin/ImageUploader";
+import SeoLengthMeter from "@/components/admin/seo/SeoLengthMeter";
+import SerpPreview from "@/components/admin/seo/SerpPreview";
 
 export type LocaleSeo = {
   locale: string;
@@ -188,17 +201,6 @@ export default function PageSeoEditor({
 
   const shareImage = ogImageUrl.trim() || heroImageUrl || "";
 
-  const Counter = ({ value, limit }: { value: string; limit: number }) => (
-    <p
-      className={`mt-1 text-right text-xs tabular-nums ${
-        value.length > limit ? "font-semibold text-red-700" : "text-ink-muted"
-      }`}
-    >
-      {t("pageSeo.charCount", { count: value.length, limit })}
-      {value.length > limit && ` · ${labels.tooLong}`}
-    </p>
-  );
-
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
       {/* ── Settings ─────────────────────────────────────────────────── */}
@@ -281,7 +283,13 @@ export default function PageSeoEditor({
             onChange={(event) => patch({ title: event.target.value })}
             className="admin-input"
           />
-          <Counter value={current.title} limit={SEO_LIMITS.title} />
+          <SeoLengthMeter
+            length={current.title.length}
+            min={SEO_LIMITS.titleMin}
+            max={SEO_LIMITS.title}
+            hint={t("seo.idealLength", { min: SEO_LIMITS.titleMin, max: SEO_LIMITS.title })}
+            overLabel={labels.tooLong}
+          />
         </div>
 
         <div>
@@ -295,7 +303,16 @@ export default function PageSeoEditor({
             onChange={(event) => patch({ description: event.target.value })}
             className="admin-textarea min-h-0!"
           />
-          <Counter value={current.description} limit={SEO_LIMITS.description} />
+          <SeoLengthMeter
+            length={current.description.length}
+            min={SEO_LIMITS.descriptionMin}
+            max={SEO_LIMITS.description}
+            hint={t("seo.idealLength", {
+              min: SEO_LIMITS.descriptionMin,
+              max: SEO_LIMITS.description,
+            })}
+            overLabel={labels.tooLong}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -438,20 +455,14 @@ export default function PageSeoEditor({
           <h2 className="text-sm font-semibold text-primary">{labels.serpTitle}</h2>
 
           {serpRows.map((row) => (
-            <div key={row.locale} className="rounded-xs border border-primary/10 p-3.5">
-              <p className="text-xs text-ink-muted">
-                {siteOrigin.replace(/^https?:\/\//, "")} › {row.locale} › projects
-              </p>
-              <p className="mt-1 truncate text-lg text-[#1a0dab]">
-                {row.title.trim() || labels.serpEmpty}
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">
-                {row.description.trim() || labels.serpEmpty}
-              </p>
-              {row.noIndex && (
-                <p className="mt-1.5 text-xs font-medium text-red-700">{labels.noIndex} — off</p>
-              )}
-            </div>
+            <SerpPreview
+              key={row.locale}
+              className="rounded-xs border border-primary/10 p-3.5"
+              displayPath={`${siteOrigin.replace(/^https?:\/\//, "")} › ${row.locale} › projects`}
+              title={row.title.trim() || labels.serpEmpty}
+              description={row.description.trim() || labels.serpEmpty}
+              note={row.noIndex ? `${labels.noIndex} — off` : undefined}
+            />
           ))}
         </section>
 

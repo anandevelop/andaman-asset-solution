@@ -500,8 +500,8 @@ export default function NewsSeoPanel({
               previewLabel={t("projects.seoPreviewLabel")}
               previewHint={t("projects.seoPreviewHint")}
               focusKeyword={values.focusKeyword}
-              titleLengthHint={t("news.seo.idealLengthHint", { min: SEO_LIMITS.titleMin, max: SEO_LIMITS.title })}
-              descriptionLengthHint={t("news.seo.idealLengthHint", {
+              titleLengthHint={t("seo.idealLength", { min: SEO_LIMITS.titleMin, max: SEO_LIMITS.title })}
+              descriptionLengthHint={t("seo.idealLength", {
                 min: SEO_LIMITS.descriptionMin,
                 max: SEO_LIMITS.description,
               })}

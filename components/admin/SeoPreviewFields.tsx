@@ -16,12 +16,11 @@
  * reads these by `name` at submit time, the same as every uncontrolled
  * field beside them.
  *
- * The character figures (lib/seo-limits.ts's SEO_LIMITS — the same numbers
- * lib/article-seo.ts's News checklist and PageSeoEditor.tsx's counter
- * already score against) are Google's rough, pixel-based truncation
- * points, not a hard limit — going under wastes the snippet space Google
- * gives a result, going over risks it being cut off, which is why this is
- * a bar with a warning colour rather than a maxLength on the input.
+ * The length meter and the result card are seo/SeoLengthMeter.tsx and
+ * seo/SerpPreview.tsx, shared with PageSeoEditor — which used to draw both
+ * itself, to different rules: its counter knew SEO_LIMITS' maximum and not
+ * its minimum, so a 23-character title was fine on the project SEO tab and
+ * flagged as too short here. See those two files for the full note.
  *
  * title/onTitleChange and description/onDescriptionChange are an optional
  * escape hatch into the state above: pass them and this component stops
@@ -38,8 +37,9 @@
  */
 
 import { useState } from "react";
-import type { ReactNode } from "react";
 import { SEO_LIMITS } from "@/lib/seo-limits";
+import SeoLengthMeter from "@/components/admin/seo/SeoLengthMeter";
+import SerpPreview from "@/components/admin/seo/SerpPreview";
 
 type Props = {
   titleLabel: string;
@@ -68,52 +68,6 @@ type Props = {
   /** Same, under the description's bar. */
   descriptionLengthHint?: string;
 };
-
-/** Bare count, not "{length}/{limit}" — the min–max range already sits in
- *  the hint text this renders beside, so repeating the ceiling a second
- *  time here would be the same number twice on one row. */
-function CharCount({ length, limit }: { length: number; limit: number }) {
-  return <span className={`font-semibold ${length > limit ? "text-amber-700" : "text-ink"}`}>{length}</span>;
-}
-
-/** In-range fills emerald; short-of-min or past-max fills amber — the same
- *  pass/fail lib/article-seo.ts's metaTitleLength/metaDescriptionLength
- *  checks already compute, so this bar never disagrees with the checklist
- *  below it. */
-function CharBar({ length, min, max }: { length: number; min: number; max: number }) {
-  const inRange = length >= min && length <= max;
-  const fillPercent = Math.min(100, Math.round((length / max) * 100));
-
-  return (
-    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-primary/10">
-      <div
-        className={`h-full rounded-full transition-[width] ${inRange ? "bg-emerald-600" : "bg-amber-500"}`}
-        style={{ width: `${fillPercent}%` }}
-      />
-    </div>
-  );
-}
-
-/** Wraps every case-insensitive match of `keyword` in `text` with <mark>.
- *  Returns `text` unchanged when `keyword` is blank or matches nothing. */
-function highlightKeyword(text: string, keyword: string | undefined): ReactNode {
-  const trimmed = keyword?.trim();
-  if (!trimmed) return text;
-
-  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
-  if (parts.length === 1) return text;
-
-  return parts.map((part, index) =>
-    part.toLowerCase() === trimmed.toLowerCase() ? (
-      <mark key={index} className="rounded-xs bg-accent/25 text-inherit">
-        {part}
-      </mark>
-    ) : (
-      part
-    ),
-  );
-}
 
 export default function SeoPreviewFields({
   titleLabel,
@@ -170,11 +124,12 @@ export default function SeoPreviewFields({
             onChange={(event) => setTitle(event.target.value)}
             className="admin-input"
           />
-          <CharBar length={title.length} min={SEO_LIMITS.titleMin} max={SEO_LIMITS.title} />
-          <div className="mt-1.5 flex items-baseline justify-between gap-3">
-            <p className="text-xs leading-relaxed text-ink-muted">{titleLengthHint}</p>
-            <CharCount length={title.length} limit={SEO_LIMITS.title} />
-          </div>
+          <SeoLengthMeter
+            length={title.length}
+            min={SEO_LIMITS.titleMin}
+            max={SEO_LIMITS.title}
+            hint={titleLengthHint}
+          />
           {titleError && <p className="mt-1.5 text-xs text-red-700">{titleError}</p>}
         </div>
 
@@ -190,11 +145,12 @@ export default function SeoPreviewFields({
             rows={3}
             className="admin-textarea"
           />
-          <CharBar length={description.length} min={SEO_LIMITS.descriptionMin} max={SEO_LIMITS.description} />
-          <div className="mt-1.5 flex items-baseline justify-between gap-3">
-            <p className="text-xs leading-relaxed text-ink-muted">{descriptionLengthHint}</p>
-            <CharCount length={description.length} limit={SEO_LIMITS.description} />
-          </div>
+          <SeoLengthMeter
+            length={description.length}
+            min={SEO_LIMITS.descriptionMin}
+            max={SEO_LIMITS.description}
+            hint={descriptionLengthHint}
+          />
           {descriptionError && (
             <p className="mt-1.5 text-xs text-red-700">{descriptionError}</p>
           )}
@@ -206,15 +162,13 @@ export default function SeoPreviewFields({
           {previewLabel}
         </p>
 
-        <div className="mt-3 max-w-xl rounded-xs bg-white p-4">
-          <p className="truncate text-[13px] text-ink/60">{displayPath}</p>
-          <p className="mt-0.5 truncate text-lg text-[#1a0dab]">
-            {highlightKeyword(title.trim() || fallbackTitle, focusKeyword)}
-          </p>
-          <p className="mt-1 line-clamp-2 text-sm leading-snug text-ink/70">
-            {highlightKeyword(description.trim() || fallbackDescription, focusKeyword)}
-          </p>
-        </div>
+        <SerpPreview
+          className="mt-3 max-w-xl rounded-xs bg-white p-4"
+          displayPath={displayPath}
+          title={title.trim() || fallbackTitle}
+          description={description.trim() || fallbackDescription}
+          keyword={focusKeyword}
+        />
 
         <p className="mt-3 text-xs text-ink-muted">{previewHint}</p>
       </div>
