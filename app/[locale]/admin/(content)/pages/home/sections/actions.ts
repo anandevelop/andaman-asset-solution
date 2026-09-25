@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * app/[locale]/admin/pages/home/sections/actions.ts
+ * app/[locale]/admin/(content)/pages/home/sections/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Homepage section order/visibility — see HomeSection in schema.prisma
  * and lib/home-sections.ts for the 9 manageable keys and why the hero
@@ -20,7 +20,10 @@ import { requireAdminAction } from "@/lib/admin/guard";
 import { getAllSectionRows } from "@/lib/home-sections";
 
 function revalidateHome(locale: string) {
-  revalidatePath(`/${locale}/admin/pages/home/sections`);
+  // The screen that renders the order list is /admin/pages/home itself now
+  // — this path only redirects there, so purging it purged nothing the
+  // operator was looking at.
+  revalidatePath(`/${locale}/admin/pages/home`);
   for (const target of locales) {
     revalidatePath(`/${target}`);
   }

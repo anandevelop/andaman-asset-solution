@@ -179,12 +179,10 @@ describe("the Pages hub", () => {
       "/contact",
       "/faq",
     ]);
-    expect(visibleTabs(Role.EDITOR, "pagesHome").map((tab) => tab.segment)).toEqual([
-      "/sections",
-      "/hero",
-      "/gallery",
-      "/cta",
-    ]);
+    /* Home has no strip: it drew an order list and three editors as peers,
+       which is what kept the order list from being a picture of the page.
+       /admin/pages/home is that picture now — see lib/home-outline.ts. */
+    expect(visibleTabs(Role.EDITOR, "pagesHome")).toEqual([]);
     expect(visibleTabs(Role.EDITOR, "pagesAbout").map((tab) => tab.segment)).toEqual([
       "/story",
       "/corporate",

@@ -278,8 +278,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        /* Straight to the Home tab, not via /pages/home/sections — that
+           address now redirects here itself, and a two-hop chain is a
+           wasted round trip plus the thing lib/redirects.ts exists to
+           flag on the public side. */
         source: "/:locale/admin/home-builder",
-        destination: "/:locale/admin/pages/home/sections",
+        destination: "/:locale/admin/pages/home",
         permanent: true,
       },
       {
@@ -357,6 +361,14 @@ const nextConfig = {
       {
         source: "/:locale/admin/settings/contact",
         destination: "/:locale/admin/pages/contact",
+        permanent: true,
+      },
+
+      /* The home page's order list is the Home tab itself, not a tab beside
+         the three editors it could not show alongside itself. */
+      {
+        source: "/:locale/admin/pages/home/sections",
+        destination: "/:locale/admin/pages/home",
         permanent: true,
       },
 

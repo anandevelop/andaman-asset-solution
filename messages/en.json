@@ -626,13 +626,6 @@
         "contact": "Contact",
         "faq": "FAQ"
       },
-      "pagesHome": {
-        "label": "Home page section",
-        "sections": "Sections",
-        "hero": "Hero Banner",
-        "gallery": "Gallery",
-        "cta": "Closing CTA"
-      },
       "pagesAbout": {
         "label": "About page section",
         "story": "Our story",
@@ -1871,10 +1864,9 @@
     },
     "homeBuilder": {
       "title": "Home Builder",
-      "subtitle": "Reorder or hide the sections that appear on the homepage below the hero banner. Hero slides themselves are managed separately.",
-      "manageHeroBanner": "Manage hero banner",
+      "subtitle": "The home page from top to bottom. Move or hide a section, and follow a row to whichever page owns its content — most of it belongs to another page and is shown here.",
       "orderTitle": "Section order",
-      "orderHint": "Move a section up or down, or hide it — changes apply to the live homepage in every language immediately.",
+      "orderHint": "Order and visibility apply to the live site in every language immediately. The banner is always first and the closing block always last.",
       "moveUp": "Move up",
       "moveDown": "Move down",
       "visible": "Visible",
@@ -1892,7 +1884,27 @@
         "whyUs": "Why us",
         "upcomingEvent": "Upcoming event",
         "latestNews": "Latest news",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "hero": "Hero banner",
+        "cta": "Closing call to action"
+      },
+      "fixedPosition": "Always in this position",
+      "always": "Always shown",
+      "editor": {
+        "heroSlides": "Edit slides",
+        "aboutStory": "Text: About → Our story",
+        "homeGallery": "Photos: Home gallery",
+        "aboutMission": "Edit in About → Mission",
+        "aboutCorporate": "Edit in About → Corporate services",
+        "aboutAwards": "Edit in About → Awards",
+        "aboutWhyUs": "Edit in About → Why us",
+        "faq": "Edit in FAQ",
+        "closingCta": "Edit the closing block"
+      },
+      "auto": {
+        "featuredProjects": "Filled automatically from published projects",
+        "upcomingEvent": "Filled automatically from the next published event",
+        "latestNews": "Filled automatically from the latest articles"
       }
     },
     "awards": {

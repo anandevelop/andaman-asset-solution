@@ -626,13 +626,6 @@
         "contact": "联系我们",
         "faq": "常见问题"
       },
-      "pagesHome": {
-        "label": "首页板块",
-        "sections": "板块",
-        "hero": "首页横幅",
-        "gallery": "图库",
-        "cta": "结尾 CTA"
-      },
       "pagesAbout": {
         "label": "关于我们板块",
         "story": "公司故事",
@@ -1871,10 +1864,9 @@
     },
     "homeBuilder": {
       "title": "首页版块管理",
-      "subtitle": "调整首页在主横幅下方各版块的顺序，或将其隐藏。横幅幻灯片本身在别处单独管理。",
-      "manageHeroBanner": "管理主横幅",
+      "subtitle": "从上到下的首页结构。可调整顺序或隐藏某一段，点击行即可前往真正拥有该内容的页面 —— 大部分内容属于其他页面，只是在此展示。",
       "orderTitle": "版块顺序",
-      "orderHint": "上移、下移或隐藏某个版块——保存后立即应用到所有语言的正式首页。",
+      "orderHint": "顺序与显示状态会立即作用于所有语言的线上站点。横幅永远在最上，结尾区块永远在最下。",
       "moveUp": "上移",
       "moveDown": "下移",
       "visible": "显示中",
@@ -1892,7 +1884,27 @@
         "whyUs": "为什么选择我们",
         "upcomingEvent": "近期活动",
         "latestNews": "最新消息",
-        "faq": "常见问题"
+        "faq": "常见问题",
+        "hero": "主视觉横幅",
+        "cta": "结尾行动号召"
+      },
+      "fixedPosition": "位置固定",
+      "always": "始终显示",
+      "editor": {
+        "heroSlides": "编辑幻灯片",
+        "aboutStory": "文案：关于我们 → 公司故事",
+        "homeGallery": "图片：首页相册",
+        "aboutMission": "在 关于我们 → 使命 中编辑",
+        "aboutCorporate": "在 关于我们 → 企业服务 中编辑",
+        "aboutAwards": "在 关于我们 → 奖项 中编辑",
+        "aboutWhyUs": "在 关于我们 → 为何选择我们 中编辑",
+        "faq": "在 常见问题 中编辑",
+        "closingCta": "编辑结尾区块"
+      },
+      "auto": {
+        "featuredProjects": "自动取自已发布的项目",
+        "upcomingEvent": "自动取自下一场已发布的活动",
+        "latestNews": "自动取自最新文章"
       }
     },
     "awards": {

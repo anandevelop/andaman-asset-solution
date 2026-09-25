@@ -264,7 +264,7 @@ app/[locale]/admin/
 
 | จาก | ไป |
 |---|---|
-| `/:locale/admin/home-builder` | `/:locale/admin/pages/home/sections` |
+| `/:locale/admin/home-builder` | `/:locale/admin/pages/home` |
 | `/:locale/admin/hero-banner` | `/:locale/admin/pages/home/hero` |
 | `/:locale/admin/home-gallery` | `/:locale/admin/pages/home/gallery` |
 | `/:locale/admin/cta` | `/:locale/admin/pages/home/cta` |

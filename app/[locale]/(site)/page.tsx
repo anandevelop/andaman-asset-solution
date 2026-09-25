@@ -14,7 +14,7 @@
  * fallback only appears on a fresh database.
  *
  * Section order/visibility below the hero is admin-editable — see
- * /admin/pages/home/sections and lib/home-sections.ts. Every section still hides
+ * /admin/pages/home and lib/home-sections.ts. Every section still hides
  * itself on empty data exactly as before; the admin only controls WHICH
  * of the always-safe-to-render sections appear and in what order. The
  * hero carousel and the closing CTA are not part of that list — see the
@@ -475,7 +475,7 @@ export default async function HomePage(props: Props) {
         </div>
       )}
 
-      {/* ── Admin-ordered sections (see /admin/pages/home/sections) ─────────── */}
+      {/* ── Admin-ordered sections (see /admin/pages/home) ──────────────────── */}
       {sectionKeys.map((key) => (
         <Fragment key={key}>{SECTION_RENDERERS[key]()}</Fragment>
       ))}

@@ -35,13 +35,13 @@ export default function PageTabs({
 }: {
   locale: string;
   role: Role;
-  /** A sidebar item key ("pages") or a NAV_TAB_GROUPS key ("pagesHome"). */
+  /** A sidebar item key ("pages") or a NAV_TAB_GROUPS key ("pagesAbout"). */
   groupKey: string;
   /**
    * The workspace's own path under /admin, e.g. "/pages/home".
    *
-   * Only needed for a strip that is not a sidebar item's own — pagesHome
-   * and pagesAbout, which live inside a page that knows its own path.
+   * Only needed for a strip that is not a sidebar item's own — pagesAbout,
+   * which lives inside a page that knows its own path.
    * For everything else the config answers it (NavItem.tabsBase), so this
    * component and visibleTabRows cannot point one tab at two addresses,
    * which they did: the palette offered /admin/leads/appointments.

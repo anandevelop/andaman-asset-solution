@@ -9,6 +9,12 @@
  * reorderable content block), and the closing CTA is structural chrome —
  * a page always ends with a call to action — so neither is in this list.
  *
+ * Both are still *shown* in the admin's outline of the page, as fixed rows
+ * that can be opened but not moved or hidden — see lib/home-outline.ts.
+ * Being absent from this list is why they used to be absent from that
+ * screen too, which made it a list of nine sections rather than a picture
+ * of the page.
+ *
  * Every key an admin can reorder/hide is exactly one of these 9. Adding a
  * new homepage section later means: add its key here, add its case to
  * SECTION_RENDERERS in page.tsx, done.
@@ -48,7 +54,7 @@ function isHomeSectionKey(value: string): value is HomeSectionKey {
  * `revalidate`.
  *
  * A table with zero rows at all (nobody has ever opened
- * /admin/pages/home/sections, including on a fresh database) is treated as "not
+ * /admin/pages/home, including on a fresh database) is treated as "not
  * yet configured" and falls back to the full default order — not as "the
  * admin hid every section". A table that HAS rows but none visible really
  * does mean every section is hidden, and this returns an empty list.
@@ -72,7 +78,7 @@ export async function getOrderedVisibleSectionKeys(): Promise<HomeSectionKey[]> 
 /**
  * Seeds any of the 9 keys the table is missing, appended to the end of
  * the current order, visible by default — so a first-ever visit to
- * /admin/pages/home/sections (or a newly added 10th section key, someday) always
+ * /admin/pages/home (or a newly added 10th section key, someday) always
  * has a complete row to show, without ever resetting an admin's existing
  * order.
  */

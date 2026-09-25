@@ -144,11 +144,17 @@ export type NavTab = Gated & {
 /**
  * Tab strips that are not a sidebar item's own.
  *
- * The Pages hub is two levels deep — Home | About | FAQ across the top,
- * then Sections | Hero | Gallery | CTA inside Home — and only the first
- * level belongs to a nav item. The second level is keyed by the i18n group
- * that labels it (admin.tabs.pagesHome.*), which is also what PageTabs is
+ * The Pages hub is two levels deep — Home | About | Contact | FAQ across
+ * the top, then the sections of About inside it — and only the first level
+ * belongs to a nav item. The second level is keyed by the i18n group that
+ * labels it (admin.tabs.pagesAbout.*), which is also what PageTabs is
  * handed, so one name identifies the strip, its labels and its config.
+ *
+ * Home had such a strip and no longer does. It drew Sections | Hero
+ * Banner | Gallery | Closing CTA — an order list and three editors as
+ * peers, which is exactly why the order list was not a picture of the
+ * page. /admin/pages/home is that picture now and the three editors are
+ * reached from the rows they belong to; see lib/home-outline.ts.
  */
 export const NAV_TAB_GROUPS = {
   pages: [
@@ -160,12 +166,6 @@ export const NAV_TAB_GROUPS = {
        to ADMIN with a disabled fieldset, exactly as settings did. */
     { key: "contact", segment: "/contact", roles: ROLE_SETS.CONTENT },
     { key: "faq", segment: "/faq", roles: ROLE_SETS.CONTENT },
-  ],
-  pagesHome: [
-    { key: "sections", segment: "/sections", roles: ROLE_SETS.CONTENT },
-    { key: "hero", segment: "/hero", roles: ROLE_SETS.CONTENT },
-    { key: "gallery", segment: "/gallery", roles: ROLE_SETS.CONTENT },
-    { key: "cta", segment: "/cta", roles: ROLE_SETS.CONTENT },
   ],
   pagesAbout: [
     /* First, because it is the top of the public page and the thing
@@ -406,7 +406,7 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     items: [
       {
         /* One hub instead of eight links to the pieces of two pages.
-           /admin/pages/home/sections already knew about the home page's
+           /admin/pages/home already knew about the home page's
            sections (lib/home-sections.ts); the links that edit them used
            to live in the sidebar, so ordering a section and writing it
            were two different places. `alias` keeps the old paths
@@ -567,7 +567,7 @@ export function visibleNav(
  * The tabs this role sees on one page.
  *
  * `key` is either a sidebar item ("pages") or one of the standalone strips
- * in NAV_TAB_GROUPS ("pagesHome"). Both are looked up here so PageTabs
+ * in NAV_TAB_GROUPS ("pagesAbout"). Both are looked up here so PageTabs
  * takes one prop and does not need to know which kind it was handed.
  */
 export function visibleTabs(role: Role | null | undefined, key: string): NavTab[] {
@@ -579,9 +579,9 @@ export function visibleTabs(role: Role | null | undefined, key: string): NavTab[
 /**
  * What a named strip's segments hang off, under `/{locale}/admin`.
  *
- * null for a strip that is not a sidebar item's own (pagesHome,
- * pagesAbout) — those live inside a page that knows its own path, so the
- * caller supplies it. Everything else is answered from the config, so
+ * null for a strip that is not a sidebar item's own (pagesAbout) — that
+ * one lives inside a page that knows its own path, so the caller supplies
+ * it. Everything else is answered from the config, so
  * PageTabs and visibleTabRows cannot disagree about where a tab points.
  */
 export function tabBase(key: string): string | null {
@@ -612,10 +612,10 @@ export type NavTabRow = {
  * the palette already lists, and two rows pointing at one page is the kind
  * of duplicate the tabs exist to remove.
  *
- * Only tabs an item owns. The second-level strips in NAV_TAB_GROUPS
- * (pagesHome, pagesAbout) are deliberately absent — they carry no base
- * path of their own, so there is nothing here to build an href from
- * without hardcoding one beside the config it would have to agree with.
+ * Only tabs an item owns. The second-level strip in NAV_TAB_GROUPS
+ * (pagesAbout) is deliberately absent — it carries no base path of its
+ * own, so there is nothing here to build an href from without hardcoding
+ * one beside the config it would have to agree with.
  */
 export function visibleTabRows(role: Role | null | undefined): NavTabRow[] {
   const rows: NavTabRow[] = [];

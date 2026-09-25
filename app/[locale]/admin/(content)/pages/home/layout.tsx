@@ -1,34 +1,25 @@
 /**
- * app/[locale]/admin/pages/home/layout.tsx
+ * app/[locale]/admin/(content)/pages/home/layout.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The sections of one public page, as tabs. See the hub layout one level
- * up for why this is a second strip rather than more entries in the first.
+ * No tab strip any more.
  *
- * Role.VIEWER, not the requireAdmin() default of EDITOR — same reasoning
- * as the hub layout one level up: this is a convenience read for the tab
- * strip's role filter, not the security boundary, and its minimum should
- * be the loosest any tab beneath it needs. Left at the default, it turned
- * VIEWER away from every Home tab before that tab's own (already-opened)
- * guard ever ran.
+ * It drew Sections | Hero Banner | Gallery | Closing CTA — an order list
+ * and three editors as peers, which is what made the order list stop being
+ * a picture of the page: the banner and the CTA were tabs *beside* the list
+ * rather than rows *in* it. ./page.tsx is the whole page in render order
+ * now, and the three editors are reached from the row they belong to.
+ *
+ * The layout stays, rather than folding into the page, because the routes
+ * beneath it still exist and share this guard — and because a wrapper that
+ * has to come back the moment Home grows a second screen is cheaper kept
+ * than re-derived.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import type { ReactNode } from "react";
-import { Role } from "@prisma/client";
-import { requireAdmin } from "@/lib/admin/guard";
-import PageTabs from "@/components/admin/PageTabs";
 
-type Props = { children: ReactNode; params: Promise<{ locale: string }> };
+type Props = { children: ReactNode };
 
-export default async function AdminPagesHomeLayout({ children, params }: Props) {
-  const { locale } = await params;
-  const session = await requireAdmin(locale, Role.VIEWER);
-
-  return (
-    <div className="space-y-6">
-      <PageTabs locale={locale} role={session.role} groupKey="pagesHome" baseHref="/pages/home" />
-
-      {children}
-    </div>
-  );
+export default function AdminPagesHomeLayout({ children }: Props) {
+  return <div className="space-y-6">{children}</div>;
 }
