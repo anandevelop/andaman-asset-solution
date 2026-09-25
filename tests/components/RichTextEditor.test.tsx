@@ -46,6 +46,7 @@ const LABELS = {
   calloutTone: (tone: string) => ({ note: "Note", warning: "Warning", success: "Good to know" })[tone] ?? tone,
   pullQuote: "Pull quote",
   cta: "Call to action",
+  projectCard: "Project card",
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",
@@ -720,6 +721,50 @@ describe("RichTextEditor — call to action", () => {
       expect(out).toContain("Book a private viewing");
       // The tell that Figure took it instead: an <img> where none was.
       expect(out).not.toContain("<img");
+    });
+  });
+
+  it("round-trips a project card as a figure holding one link", async () => {
+    // The stored form is the reference lib/article-embeds.ts reads: the
+    // slug lives in the href, so the markup says which project it points
+    // at without a database to resolve it.
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-block="project-card"><p><a href="/projects/residence-prime">Residence Prime</a></p></figure>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="project-card"');
+      expect(out).toContain('href="/projects/residence-prime"');
+      expect(out).not.toContain("<img");
+    });
+  });
+
+  it("keeps a project card and a CTA apart", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        initialContent={
+          "<p>Intro</p>" +
+          '<figure data-block="cta"><p>A</p><p data-block="cta-action"><a href="/contact">B</a></p></figure>' +
+          '<figure data-block="project-card"><p><a href="/projects/x">C</a></p></figure>'
+        }
+      />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="cta"');
+      expect(out).toContain('data-block="cta-action"');
+      expect(out).toContain('data-block="project-card"');
     });
   });
 

@@ -41,6 +41,7 @@ import { intlLocale } from "@/lib/format";
 import { getSiteSettings } from "@/lib/settings";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
+import ArticleBody from "@/components/ArticleBody";
 
 export const dynamicParams = true;
 
@@ -252,8 +253,11 @@ export default async function ArticlePage(props: Props) {
               </p>
             )}
 
-            {/* Sanitized in lib/markdown before it ever reaches this point. */}
-            <div className="prose-article" dangerouslySetInnerHTML={{ __html: html }} />
+            {/* Sanitized in lib/markdown before it ever reaches this point.
+                ArticleBody renders it as-is unless the body embeds a
+                project card, which it resolves against the database — see
+                lib/article-embeds.ts. */}
+            <ArticleBody html={html} locale={locale} />
 
             {article.tags.length > 0 && (
               <ul className="mt-12 flex flex-wrap gap-2 border-t border-primary/10 pt-8">

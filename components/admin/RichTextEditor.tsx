@@ -75,6 +75,7 @@ import {
   Strikethrough,
   TextQuote,
   MousePointerClick,
+  Building2,
   Heading2,
   Heading3,
   Heading4,
@@ -444,6 +445,39 @@ const CtaAction = Node.create({
   },
 });
 
+/**
+ * The project card: a link to a project that the public page swaps for the
+ * real card at render time.
+ *
+ * `<figure data-block="project-card">` holding one paragraph with one
+ * link — so it is inserted and pointed at a project with the internal-link
+ * tool that already exists, exactly like the CTA's button, rather than
+ * with a project-id attribute of its own and a second picker to maintain.
+ *
+ * The reference is the slug in that href, not an id, because §5.3 asks for
+ * it and because a slug is legible in the stored HTML: an article's markup
+ * says which project it points at without a database to resolve it. It
+ * also means the block degrades to an ordinary link to that project if the
+ * substitution never happens — which is what lib/article-embeds.ts does
+ * deliberately when the slug no longer names a published project.
+ */
+const ProjectCardBlock = Node.create({
+  name: "projectCard",
+  group: "block",
+  content: "paragraph",
+  defining: true,
+
+  parseHTML() {
+    // Priority plus Figure's data-block guard, for the reason CtaBlock's
+    // parseHTML sets out at length.
+    return [{ tag: 'figure[data-block="project-card"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["figure", { "data-block": "project-card" }, 0];
+  },
+});
+
 const FaqList = Node.create({
   name: "faqList",
   group: "block",
@@ -535,6 +569,7 @@ type Props = {
     calloutTone: (tone: string) => string;
     pullQuote: string;
     cta: string;
+    projectCard: string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -734,6 +769,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       PullQuoteAttribution,
       CtaBlock,
       CtaAction,
+      ProjectCardBlock,
       FaqList,
       FaqItem,
       FaqQuestion,
@@ -1175,6 +1211,23 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           className={toolbarButtonClass(editor.isActive("cta"))}
         >
           <MousePointerClick size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.projectCard}
+          aria-label={toolbarLabels.projectCard}
+          aria-pressed={editor.isActive("projectCard")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "projectCard", content: [{ type: "paragraph" }] })
+              .run()
+          }
+          className={toolbarButtonClass(editor.isActive("projectCard"))}
+        >
+          <Building2 size={15} aria-hidden />
         </button>
         <button
           type="button"

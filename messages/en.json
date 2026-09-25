@@ -1378,6 +1378,7 @@
         "callout": "Callout box",
         "pullQuote": "Pull quote",
         "cta": "Call to action",
+        "projectCard": "Project card",
         "calloutTones": {
           "note": "Note",
           "warning": "Warning",

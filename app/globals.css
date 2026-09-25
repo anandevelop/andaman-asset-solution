@@ -508,6 +508,19 @@
     @apply hidden;
   }
 
+  /* A project card that reached the page still wearing its marker is one
+     components/ArticleBody.tsx could not resolve — the slug no longer
+     names a published project. It renders as the link it already is, so
+     all this does is stop the <figure> contributing margins of its own on
+     top of the paragraph's. See lib/article-embeds.ts. */
+  & figure[data-block="project-card"] {
+    @apply my-0;
+  }
+
+  & figure[data-block="project-card"] > p {
+    @apply my-0;
+  }
+
   & img {
     @apply w-full rounded-xs shadow-card;
   }
@@ -761,6 +774,25 @@
   */
   .ProseMirror p[data-block="cta-action"]:not(:has(a)) {
     @apply mx-auto min-h-[3rem] w-56 content-center rounded-xs border border-dashed border-primary/30;
+  }
+
+  /*
+    The project card is the one block whose editor appearance cannot match
+    the page: the real card is built from the project's row at render time
+    (see components/ArticleBody.tsx), and the editor holds only a link. So
+    it is drawn as a card-shaped frame around that link — enough to say
+    "a card goes here, pointing there" — and dashed until it points
+    anywhere at all, the same tell the CTA's button uses.
+
+    A live preview would mean a NodeView fetching the project on every
+    insert; worth doing, but not as part of the block itself.
+  */
+  .ProseMirror figure[data-block="project-card"] {
+    @apply my-6 rounded-xs border border-primary/20 bg-primary/5 px-5 py-8 text-center;
+  }
+
+  .ProseMirror figure[data-block="project-card"]:not(:has(a)) {
+    @apply border-dashed;
   }
 
   /* Drives the HeroCarousel progress-dash fill for an IMAGE slide —

@@ -682,6 +682,7 @@ export default function NewsForm({
                       calloutTone: (tone) => t(`news.richToolbar.calloutTones.${tone}` as never),
                       pullQuote: t("news.richToolbar.pullQuote"),
                       cta: t("news.richToolbar.cta"),
+                      projectCard: t("news.richToolbar.projectCard"),
                       table: t("news.richToolbar.table"),
                       tableAddRow: t("news.richToolbar.tableAddRow"),
                       tableDeleteRow: t("news.richToolbar.tableDeleteRow"),

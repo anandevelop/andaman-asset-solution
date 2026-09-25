@@ -1378,6 +1378,7 @@
         "callout": "提示框",
         "pullQuote": "引述块",
         "cta": "行动号召框",
+        "projectCard": "项目卡片",
         "calloutTones": {
           "note": "备注",
           "warning": "注意",
