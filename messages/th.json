@@ -646,6 +646,14 @@
         "label": "ตรวจและเผยแพร่",
         "queue": "คิวรอตรวจ",
         "translations": "คำแปล"
+      },
+      "seo": {
+        "label": "SEO",
+        "overview": "ภาพรวม",
+        "keywords": "คีย์เวิร์ด",
+        "links": "ลิงก์ภายใน",
+        "urls": "URL และการเปลี่ยนเส้นทาง",
+        "defaults": "ค่าเริ่มต้นทั้งเว็บ"
       }
     },
     "common": {
@@ -2112,7 +2120,6 @@
         "metaDescription": "Meta description",
         "company": "ข้อมูลบริษัท",
         "contactChannels": "ช่องทางติดต่อที่แสดงบนเว็บ",
-        "brandSeo": "แบรนด์และ SEO",
         "notifications": "การแจ้งเตือน",
         "integrations": "การเชื่อมต่อภายนอก",
         "privacy": "ความเป็นส่วนตัวและ PDPA",
@@ -2588,7 +2595,8 @@
         "externalStatusTitle": "สถานะลิงก์ภายนอก",
         "externalStatusEmpty": "ไม่มีลิงก์ภายนอกที่ตรวจแล้วเสียในขณะนี้",
         "externalStatusUnreachable": "เข้าถึงไม่ได้"
-      }
+      },
+      "hubSubtitle": "ทุกอย่างที่มีผลกับทั้งเว็บ — สิ่งที่เสิร์ชเอนจินเจอ สิ่งที่เราบอกมันไป และ URL เดิมถูกส่งไปที่ไหน"
     },
     "seoTranslations": {
       "title": "สถานะคำแปล",

@@ -162,9 +162,16 @@ export async function updateSettings(
   */
   revalidatePath("/", "layout");
 
-  // "layout", so the purge covers /admin/settings/seo as well — a
+  // "layout", so the purge covers every group under settings — a
   // page-type purge would stop at this route's own segment.
   revalidatePath(`/${locale}/admin/settings`, "layout");
+
+  // And the SEO hub, because /admin/seo/defaults binds this same action
+  // for the branding and search-result keys. It used to be
+  // /admin/settings/seo and was covered by the line above; the move out of
+  // settings took it out of that purge's reach, so a saved title template
+  // would have re-rendered stale on its own screen.
+  revalidatePath(`/${locale}/admin/seo`, "layout");
 
   // The manifest reads branding.faviconUrl (app/manifest.ts). It should be
   // covered by the root purge above, but manifest generation is a

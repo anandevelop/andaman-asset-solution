@@ -359,10 +359,12 @@ export async function getSeoAudit(): Promise<SeoAudit> {
         issues.push({ id: "desc-events", severity: "warning", key: "missingDescriptionEvents", count: eventRows.missingDescription, href: "/admin/events" });
       }
       if (!searchConsoleVerified) {
-        issues.push({ id: "search-console", severity: "warning", key: "searchConsoleNotVerified", href: "/admin/settings/seo" });
+        issues.push({ id: "search-console", severity: "warning", key: "searchConsoleNotVerified", href: "/admin/seo/defaults" });
       }
       if (languageIncompleteCount > 0) {
-        issues.push({ id: "language-gaps", severity: "warning", key: "languageIncomplete", count: languageIncompleteCount });
+        // The translation-status report lists exactly these items, one
+        // row per missing locale, with a link to each one's editor.
+        issues.push({ id: "language-gaps", severity: "warning", key: "languageIncomplete", count: languageIncompleteCount, href: "/admin/publishing/translations" });
       }
       if (titleTooLongCount > 0) {
         issues.push({ id: "title-length", severity: "minor", key: "titleTooLong", count: titleTooLongCount });

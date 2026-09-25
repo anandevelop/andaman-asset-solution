@@ -1,12 +1,14 @@
 /**
- * app/[locale]/admin/seo/urls/page.tsx
+ * app/[locale]/admin/(growth)/seo/urls/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * "URL และการเปลี่ยนเส้นทาง" (Urls.dc.html).
  *
  * Under /admin/seo rather than /admin/settings, where it used to live: a
  * redirect is not a setting anybody changes once, it is the other half of
  * the SEO work on the tab next door, and the breadcrumb in the design says
- * so. /admin/settings still links here.
+ * so. For a while after that move nothing linked here at all — settings
+ * had dropped its link and the SEO overview never gained one — which is
+ * what the hub's tab strip, one folder up, now fixes.
  *
  * ADMIN and above — a wrong redirect sends a section of the site
  * somewhere else for search engines as well as people, quietly, for as
@@ -14,9 +16,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -35,21 +36,11 @@ export default async function AdminUrlsPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      {/* See the keywords tab for why this is an h2 with no back link. */}
       <div>
-        <Link
-          href={`/${locale}/admin/seo`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
-        >
-          <ArrowLeft size={15} aria-hidden />
-          {t("seo.title")}
-        </Link>
+        <h2 className="text-lg font-semibold text-primary">{t("urls.title")}</h2>
+        <p className="mt-1 max-w-3xl text-sm text-ink-muted">{t("urls.subtitle")}</p>
       </div>
-
-      <header>
-        <p className="admin-section-title">{t("brand")} · SEO</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("urls.title")}</h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-muted">{t("urls.subtitle")}</p>
-      </header>
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

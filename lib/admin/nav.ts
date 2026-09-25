@@ -186,6 +186,28 @@ export const NAV_TAB_GROUPS = {
     { key: "queue", segment: "", roles: ROLE_SETS.CONTENT },
     { key: "translations", segment: "/translations", roles: ROLE_SETS.EDITOR_UP },
   ],
+  /**
+   * Sitewide SEO.
+   *
+   * Four of these five screens existed and three of them had no reliable
+   * way in: keywords and links were reachable only from two buttons in the
+   * overview's header, and /seo/urls from nowhere at all — it was linked
+   * from the settings page it used to live on, and that link went when it
+   * moved. `defaults` is the old /admin/settings/seo, which put the title
+   * template and the default OG image in the settings drawer while every
+   * other SEO control lived here.
+   *
+   * ADMIN_UP throughout, which is the zone's floor anyway — declared per
+   * tab rather than inherited so the strip filters by the same rule
+   * everything else does.
+   */
+  seo: [
+    { key: "overview", segment: "", roles: ROLE_SETS.ADMIN_UP },
+    { key: "keywords", segment: "/keywords", roles: ROLE_SETS.ADMIN_UP },
+    { key: "links", segment: "/links", roles: ROLE_SETS.ADMIN_UP },
+    { key: "urls", segment: "/urls", roles: ROLE_SETS.ADMIN_UP },
+    { key: "defaults", segment: "/defaults", roles: ROLE_SETS.ADMIN_UP },
+  ],
 } as const satisfies Record<string, readonly NavTab[]>;
 
 export type NavItem = Gated & {
@@ -335,7 +357,14 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     key: "administration",
     labelKey: "administration",
     items: [
-      { key: "seo", href: "/seo", icon: Search, roles: ROLE_SETS.ADMIN_UP },
+      {
+        key: "seo",
+        href: "/seo",
+        icon: Search,
+        roles: ROLE_SETS.ADMIN_UP,
+        alias: ["/settings/seo"],
+        tabs: NAV_TAB_GROUPS.seo,
+      },
       {
         // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
         // floor, no exception needed here (see that layout's header).

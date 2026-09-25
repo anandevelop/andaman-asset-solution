@@ -646,6 +646,14 @@
         "label": "审核与发布",
         "queue": "待审核",
         "translations": "翻译"
+      },
+      "seo": {
+        "label": "SEO",
+        "overview": "概览",
+        "keywords": "关键词",
+        "links": "内部链接",
+        "urls": "网址与重定向",
+        "defaults": "全站默认值"
       }
     },
     "common": {
@@ -2112,7 +2120,6 @@
         "metaDescription": "Meta 描述",
         "company": "公司信息",
         "contactChannels": "网站上显示的联系方式",
-        "brandSeo": "品牌与 SEO",
         "notifications": "通知",
         "integrations": "外部连接",
         "privacy": "隐私与 PDPA",
@@ -2588,7 +2595,8 @@
         "externalStatusTitle": "外部链接状态",
         "externalStatusEmpty": "目前没有已检查且失效的外部链接。",
         "externalStatusUnreachable": "无法访问"
-      }
+      },
+      "hubSubtitle": "适用于整站的设置：搜索引擎能找到什么、我们告诉它什么，以及旧网址指向哪里。"
     },
     "seoTranslations": {
       "title": "翻译状态",

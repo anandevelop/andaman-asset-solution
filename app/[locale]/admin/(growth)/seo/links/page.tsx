@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, ArrowLeft, Link2, Sparkles, Unlink } from "lucide-react";
+import { AlertTriangle, Link2, Sparkles, Unlink } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -68,20 +68,14 @@ export default async function LinkHealthPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      {/* See the keywords tab for why this is an h2 with no back link. */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Link
-            href={`/${locale}/admin/seo`}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-          >
-            <ArrowLeft size={14} aria-hidden />
-            {t("seo.title")}
-          </Link>
-          <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
-            <Link2 size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold text-primary">
+            <Link2 size={18} strokeWidth={1.75} className="text-accent-700" aria-hidden />
             {t("seo.links.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
             {health.lastScan
               ? t("seo.links.lastScanHint", { date: lastScanLabel ?? "" })
               : t("seo.links.neverScanned")}
@@ -102,7 +96,7 @@ export default async function LinkHealthPage(props: Props) {
             errorLabel={t("seo.links.checkExternalError")}
           />
         </div>
-      </header>
+      </div>
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

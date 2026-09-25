@@ -64,7 +64,6 @@ export default async function AdminSettingsLayout({ children, params }: Props) {
           labels={{
             company: t("settings.groups.company"),
             contact: t("settings.groups.contact"),
-            seo: t("settings.groups.brandSeo"),
             notifications: t("settings.groups.notifications"),
             integrations: t("settings.groups.integrations"),
             privacy: t("settings.groups.privacy"),

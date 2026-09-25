@@ -646,6 +646,14 @@
         "label": "Review & publish",
         "queue": "Review queue",
         "translations": "Translations"
+      },
+      "seo": {
+        "label": "SEO",
+        "overview": "Overview",
+        "keywords": "Keywords",
+        "links": "Internal links",
+        "urls": "URLs & redirects",
+        "defaults": "Sitewide defaults"
       }
     },
     "common": {
@@ -2112,7 +2120,6 @@
         "metaDescription": "Meta description",
         "company": "Company",
         "contactChannels": "Contact details shown on the site",
-        "brandSeo": "Brand and SEO",
         "notifications": "Notifications",
         "integrations": "External connections",
         "privacy": "Privacy and PDPA",
@@ -2588,7 +2595,8 @@
         "externalStatusTitle": "External link status",
         "externalStatusEmpty": "No checked external link is currently broken.",
         "externalStatusUnreachable": "Unreachable"
-      }
+      },
+      "hubSubtitle": "Everything that applies to the whole site: what search engines find, what they are told, and where the old addresses point."
     },
     "seoTranslations": {
       "title": "Translation Status",

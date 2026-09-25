@@ -17,14 +17,12 @@ import {
   Database,
   Link2,
   Phone,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 
 type Key =
   | "company"
   | "contact"
-  | "seo"
   | "notifications"
   | "integrations"
   | "privacy"
@@ -33,7 +31,9 @@ type Key =
 const ENTRIES: { key: Key; segment: string; icon: typeof Bell }[] = [
   { key: "company", segment: "company", icon: Building2 },
   { key: "contact", segment: "contact", icon: Phone },
-  { key: "seo", segment: "seo", icon: Search },
+  /* No "seo" row: the sitewide title template, default OG image and
+     Search Console token moved to /admin/seo/defaults, beside the rest of
+     the SEO work. next.config.js redirects the old path. */
   { key: "notifications", segment: "notifications", icon: Bell },
   { key: "integrations", segment: "integrations", icon: Link2 },
   { key: "privacy", segment: "privacy", icon: ShieldCheck },

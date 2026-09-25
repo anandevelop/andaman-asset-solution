@@ -242,6 +242,33 @@ describe("the publishing hub", () => {
   });
 });
 
+describe("the SEO hub", () => {
+  it("offers all five screens as tabs", () => {
+    /* Three of these had no reliable way in: keywords and links were only
+       reachable from two buttons in the overview's header, and /seo/urls
+       from nowhere at all once settings stopped linking to it. */
+    expect(visibleTabs(Role.ADMIN, "seo").map((tab) => tab.segment)).toEqual([
+      "",
+      "/keywords",
+      "/links",
+      "/urls",
+      "/defaults",
+    ]);
+  });
+
+  it("keeps the settings path highlighting this row", () => {
+    expect(activeItemKey("/th/admin/settings/seo", "/th/admin")).toBe("seo");
+
+    // Without the alias being longest-match, "/settings" would win it.
+    expect(activeItemKey("/th/admin/settings/privacy", "/th/admin")).toBe("settings");
+  });
+
+  it("is invisible below ADMIN, tabs included", () => {
+    expect(canSeeItem(Role.EDITOR, "seo")).toBe(false);
+    expect(visibleTabs(Role.EDITOR, "seo")).toEqual([]);
+  });
+});
+
 describe("visibleTabRows", () => {
   it("gives ⌘K a destination for every tab but the index", () => {
     /* The palette reads sidebar rows, and rows keep becoming tabs. Each

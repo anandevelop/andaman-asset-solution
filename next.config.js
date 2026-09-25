@@ -337,6 +337,14 @@ const nextConfig = {
         destination: "/:locale/admin/publishing/translations",
         permanent: true,
       },
+
+      /* The sitewide SEO defaults left the settings drawer for the SEO hub,
+         where the rest of the SEO controls already were. */
+      {
+        source: "/:locale/admin/settings/seo",
+        destination: "/:locale/admin/seo/defaults",
+        permanent: true,
+      },
     ];
   },
 

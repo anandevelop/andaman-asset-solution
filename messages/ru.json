@@ -646,6 +646,14 @@
         "label": "Проверка и публикация",
         "queue": "Очередь проверки",
         "translations": "Переводы"
+      },
+      "seo": {
+        "label": "SEO",
+        "overview": "Обзор",
+        "keywords": "Ключевые слова",
+        "links": "Внутренние ссылки",
+        "urls": "URL и редиректы",
+        "defaults": "Общие значения"
       }
     },
     "common": {
@@ -2112,7 +2120,6 @@
         "metaDescription": "Meta description",
         "company": "О компании",
         "contactChannels": "Контакты, показываемые на сайте",
-        "brandSeo": "Бренд и SEO",
         "notifications": "Уведомления",
         "integrations": "Внешние подключения",
         "privacy": "Приватность и PDPA",
@@ -2588,7 +2595,8 @@
         "externalStatusTitle": "Статус внешних ссылок",
         "externalStatusEmpty": "Среди проверенных внешних ссылок нет неработающих.",
         "externalStatusUnreachable": "Недоступна"
-      }
+      },
+      "hubSubtitle": "Всё, что относится ко всему сайту: что находят поисковые системы, что им сообщают и куда ведут старые адреса."
     },
     "seoTranslations": {
       "title": "Статус переводов",

@@ -5,15 +5,14 @@
  * cannibalization, and topic clusters. A sibling to /admin/seo (technical
  * SEO), not an extension of it — see lib/admin/keyword-library.ts's header.
  *
- * ADMIN and above, the (growth) zone's default floor — matching the
- * sibling /seo and /seo/urls screens, neither of which is in this zone's
- * ROUTE_EXCEPTIONS.
+ * ADMIN and above, the (growth) zone's floor — which every screen in the
+ * zone now shares; its one per-route exception left with the translation
+ * report (see that zone layout's header).
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -50,20 +49,16 @@ export default async function KeywordLibraryPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      {/* An h2 and no back link: the hub layout carries the h1 and the
+          tab strip, and a "back to SEO" link above a tab bar that already
+          shows where you are is one control too many. */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Link
-            href={`/${locale}/admin/seo`}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-          >
-            <ArrowLeft size={14} aria-hidden />
-            {t("seo.title")}
-          </Link>
-          <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
-            <KeyRound size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold text-primary">
+            <KeyRound size={18} strokeWidth={1.75} className="text-accent-700" aria-hidden />
             {t("seo.keywords.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
             {library.lastScan
               ? t("seo.keywords.lastScanHint", { pages: library.lastScan.pagesScanned, date: lastScanLabel ?? "" })
               : t("seo.keywords.neverScanned")}
@@ -76,7 +71,7 @@ export default async function KeywordLibraryPage(props: Props) {
           label={t("seo.keywords.rescanButton")}
           errorLabel={t("seo.keywords.rescanError")}
         />
-      </header>
+      </div>
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

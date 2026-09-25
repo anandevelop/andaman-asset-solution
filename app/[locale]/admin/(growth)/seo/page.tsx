@@ -1,11 +1,16 @@
 /**
- * app/[locale]/admin/seo/page.tsx
+ * app/[locale]/admin/(growth)/seo/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * SEO overview — the one screen that answers "is the site's SEO actually
- * okay" without opening Search Console. Everything on it is computed live
- * by lib/seo-audit.ts from the same rows the public pages render from;
- * see that file's header for which parts are a live query vs. a recorded
- * fact about the code.
+ * okay" without opening Search Console, and the index tab of the hub.
+ * Everything on it is computed live by lib/seo-audit.ts from the same rows
+ * the public pages render from; see that file's header for which parts are
+ * a live query vs. a recorded fact about the code.
+ *
+ * The header and the strip of tabs are ./layout.tsx's. This page used to
+ * carry two buttons up there — Keywords and Links — which were the only
+ * way into either screen; they are tabs now, beside the two that had no
+ * way in at all.
  *
  * ADMIN and above, matching /admin/settings — a wrong noindex toggle from
  * here is a content decision, not an account-security one.
@@ -14,16 +19,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  CheckCircle2,
-  Info,
-  KeyRound,
-  Link2,
-  Search,
-  XCircle,
-} from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, Info, XCircle } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -87,30 +83,11 @@ export default async function AdminSeoOverviewPage(props: Props) {
   }).format(audit.generatedAt);
 
   return (
+    /* No header and no keywords/links buttons: the hub layout draws the
+       title, and those two buttons were the only way into two of its tabs
+       — which is exactly the problem the tab strip solves. */
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("nav.seo")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
-            <Search size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
-            {t("seo.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            {t("seo.subtitle", { date: generatedAtLabel })}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/${locale}/admin/seo/keywords`} className="admin-btn-ghost">
-            <KeyRound size={14} aria-hidden />
-            {t("seo.keywords.title")}
-          </Link>
-          <Link href={`/${locale}/admin/seo/links`} className="admin-btn-ghost">
-            <Link2 size={14} aria-hidden />
-            {t("seo.links.title")}
-          </Link>
-        </div>
-      </header>
+      <p className="text-sm text-ink-muted">{t("seo.subtitle", { date: generatedAtLabel })}</p>
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
