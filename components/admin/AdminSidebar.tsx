@@ -101,12 +101,18 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
     );
   };
 
-  const renderNav = (isCollapsed: boolean) => {
+  const renderNav = (isCollapsed: boolean, surface: "rail" | "drawer") => {
     /* Structure and filtering both live in lib/admin/nav.ts now: a role
        never sees a link that only lands it on a denied redirect, and a
        group left with no visible items drops its heading too. This
-       component draws what it is handed. */
-    const groups = visibleNav(user.role);
+       component draws what it is handed.
+
+       `surface` is the one thing the two copies of this nav disagree
+       about: "Mobile view" is a phone layout, so the drawer shows it
+       first and the desktop rail does not show it at all. Deciding that
+       in nav.ts rather than here keeps ⌘K — which wants the whole menu —
+       from having to know about the distinction. */
+    const groups = visibleNav(user.role, surface);
 
     return (
       <nav aria-label={t("brand")} className="flex flex-col">
@@ -221,7 +227,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
       {open && (
         <div className="flex flex-col gap-6 bg-primary px-5 pb-6 lg:hidden">
           {renderSearchTrigger()}
-          {renderNav(false)}
+          {renderNav(false, "drawer")}
           {renderIdentity(false)}
         </div>
       )}
@@ -283,7 +289,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
               The mobile drawer below still renders one, because the topbar
               is lg-only and there would otherwise be no way in but ⌘K —
               which a phone has no keyboard for. */}
-          <div className="mt-5">{renderNav(collapsed)}</div>
+          <div className="mt-5">{renderNav(collapsed, "rail")}</div>
         </div>
 
         {renderIdentity(collapsed)}

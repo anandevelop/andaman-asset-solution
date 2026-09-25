@@ -233,6 +233,27 @@ export const NAV_TAB_GROUPS = {
     { key: "progress", segment: "/progress", roles: ROLE_SETS.CONTENT },
     { key: "brochures", segment: "/e-brochures", roles: ROLE_SETS.CONTENT },
   ],
+  /**
+   * One customer, two views of them.
+   *
+   * An appointment is a lead's next step — LeadActivityComposer already
+   * books one from inside a lead — so "Leads" and "Appointments" were two
+   * menu rows for two ways of looking at the same pipeline, and a rep
+   * switching between them lost whatever they had filtered to.
+   *
+   * Absolute segments, as with `projects`: /admin/appointments kept its
+   * address, so both pages render PageTabs with baseHref="". They also
+   * pass carryParams so `project` and `assignedTo` survive the switch.
+   */
+  leads: [
+    { key: "pipeline", segment: "/leads", roles: ROLE_SETS.CRM, capability: "viewAllLeads" },
+    {
+      key: "appointments",
+      segment: "/appointments",
+      roles: ROLE_SETS.CRM,
+      capability: "viewAllLeads",
+    },
+  ],
 } as const satisfies Record<string, readonly NavTab[]>;
 
 export type NavItem = Gated & {
@@ -247,6 +268,21 @@ export type NavItem = Gated & {
   /** Extra prefixes that still count as this item being active. Used when
    *  a path moves and the old one has to keep highlighting. */
   alias?: readonly string[];
+  /**
+   * Drawn in the mobile drawer, never in the desktop rail.
+   *
+   * For /admin/m, which is a phone layout for reps in the car between
+   * viewings. It sat in the desktop rail offering a worse version of the
+   * screens directly above it to somebody sitting at a monitor — a row
+   * that is never the right answer where it is shown.
+   *
+   * Hidden, not removed: the route stays, ⌘K still finds it (it reads
+   * visibleNav, which does not filter on this), and a phone gets it at the
+   * top of the group. Auto-redirecting by viewport was the other option
+   * and is deliberately not done — a rep who opens the full leads table on
+   * a phone on purpose should get the full leads table.
+   */
+  mobileOnly?: boolean;
   /**
    * The prefix this item's tabs hang off, when it is not its own href.
    *
@@ -294,20 +330,20 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     labelKey: "sales",
     items: [
       {
+        /* Leads and their appointments, one row. The badge is still the
+           unassigned-lead count and not the two backlogs added together:
+           today's viewings are a real number but not one anybody acts on
+           from the sidebar, and it rides the appointments *tab* instead
+           (see leads/page.tsx). */
         key: "leads",
         href: "/leads",
         icon: Users,
         roles: ROLE_SETS.CRM,
         capability: "viewAllLeads",
         countKey: "newLeads",
-      },
-      {
-        key: "appointments",
-        href: "/appointments",
-        icon: CalendarClock,
-        roles: ROLE_SETS.CRM,
-        capability: "viewAllLeads",
-        countKey: "appointmentsToday",
+        alias: ["/appointments"],
+        tabs: NAV_TAB_GROUPS.leads,
+        tabsBase: "",
       },
       {
         // A rep must be able to see the roster of the team they are on;
@@ -325,6 +361,7 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: Smartphone,
         roles: ROLE_SETS.CRM,
         capability: "viewAllLeads",
+        mobileOnly: true,
       },
     ],
   },
@@ -474,13 +511,31 @@ export function canSeeItem(role: Role | null | undefined, key: string): boolean 
   return item ? canSee(role, item) : false;
 }
 
-/** Groups and items left after filtering. An emptied group takes its
- *  heading with it. */
-export function visibleNav(role: Role | null | undefined): NavGroup[] {
-  return ADMIN_NAV.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => canSee(role, item)),
-  })).filter((group) => group.items.length > 0);
+/**
+ * Groups and items left after filtering. An emptied group takes its
+ * heading with it.
+ *
+ * `surface` is where the result will be drawn. The rail drops `mobileOnly`
+ * rows; the drawer keeps them and floats them to the top of their group,
+ * because on a phone the phone layout is the first thing a rep wants and
+ * the last thing they should have to scroll for. Everything else — ⌘K, any
+ * future consumer — asks for "all" and gets the whole menu, which is why
+ * the parameter defaults to that rather than to either surface.
+ */
+export function visibleNav(
+  role: Role | null | undefined,
+  surface: "all" | "rail" | "drawer" = "all",
+): NavGroup[] {
+  return ADMIN_NAV.map((group) => {
+    let items = group.items.filter((item) => canSee(role, item));
+
+    if (surface === "rail") items = items.filter((item) => !item.mobileOnly);
+    if (surface === "drawer") {
+      items = [...items].sort((a, b) => Number(!!b.mobileOnly) - Number(!!a.mobileOnly));
+    }
+
+    return { ...group, items };
+  }).filter((group) => group.items.length > 0);
 }
 
 /**

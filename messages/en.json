@@ -597,7 +597,7 @@
       "projects": "Projects",
       "news": "News",
       "eBrochures": "E-Brochures",
-      "leads": "Leads",
+      "leads": "Leads & appointments",
       "events": "Events",
       "users": "Users",
       "salesTeam": "Sales Team",
@@ -607,7 +607,6 @@
       "seo": "SEO",
       "analytics": "Analytics",
       "media": "Media",
-      "appointments": "Appointments",
       "mobileView": "Mobile view",
       "publishing": "Review & publish"
     },
@@ -661,6 +660,11 @@
         "all": "Projects",
         "progress": "Monthly progress",
         "brochures": "All e-brochures"
+      },
+      "leads": {
+        "label": "Leads & appointments",
+        "pipeline": "Pipeline",
+        "appointments": "Appointment calendar"
       }
     },
     "common": {
@@ -2829,7 +2833,9 @@
         "duration": "Duration (minutes)",
         "location": "Location",
         "notes": "Notes"
-      }
+      },
+      "filteredNotice": "Showing {shown} of {total} appointments this week — a filter from the leads table is applied.",
+      "clearFilter": "Show all"
     },
     "appointmentStatus": {
       "REQUESTED": "Requested",

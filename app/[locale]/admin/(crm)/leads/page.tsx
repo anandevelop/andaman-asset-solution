@@ -16,6 +16,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { getMyAppointmentsToday } from "@/lib/appointments";
 import { LeadSource, LeadStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -34,6 +35,7 @@ import {
 import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
 import LeadAssignSelect from "@/components/admin/LeadAssignSelect";
 import LeadFollowUpInput from "@/components/admin/LeadFollowUpInput";
+import PageTabs from "@/components/admin/PageTabs";
 import LeadFilters from "@/components/admin/LeadFilters";
 import LeadExportButton from "@/components/admin/LeadExportButton";
 import LeadViewToggle from "@/components/admin/LeadViewToggle";
@@ -111,6 +113,13 @@ export default async function AdminLeadsPage(props: Props) {
   const session = await requireCapability(locale, "viewAllLeads");
 
   const t = await getTranslations({ locale, namespace: "admin" });
+
+  /* Today's viewings, for the appointments tab's badge. The same figure
+     lib/admin-nav-counts.ts computes for the sidebar — "mine, plus
+     anything still unassigned" — but the layout's copy cannot reach a
+     page, and one extra scoped query is cheaper than lifting the whole
+     counts object through a context. */
+  const appointmentsToday = (await getMyAppointmentsToday(session.id)).length;
 
   const view = searchParams.view === "table" ? "table" : "board";
   const status = parseStatus(searchParams.status);
@@ -241,6 +250,20 @@ export default async function AdminLeadsPage(props: Props) {
     </header>
   );
 
+  /* The same strip the appointments calendar draws — see
+     NAV_TAB_GROUPS.leads for why an appointment is a view of this page
+     rather than a menu row beside it. The badge is today's viewings,
+     which used to be a sidebar badge on the row that has gone. */
+  const tabs = (
+    <PageTabs
+      locale={locale}
+      role={session.role}
+      groupKey="leads"
+      badges={{ appointments: appointmentsToday }}
+      carryParams={["project", "assignedTo"]}
+    />
+  );
+
   const offlineNotice = offline && (
     <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
       {t("common.offline")}
@@ -345,6 +368,7 @@ export default async function AdminLeadsPage(props: Props) {
     return (
       <div className="space-y-6">
         {header}
+        {tabs}
         {unassignedBanner}
         {filtersUi}
         {offlineNotice}
@@ -416,6 +440,7 @@ export default async function AdminLeadsPage(props: Props) {
   return (
     <div className="space-y-8">
       {header}
+      {tabs}
       {unassignedBanner}
       {filtersUi}
       {offlineNotice}

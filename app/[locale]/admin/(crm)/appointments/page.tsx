@@ -1,10 +1,22 @@
 /**
- * app/[locale]/admin/appointments/page.tsx
+ * app/[locale]/admin/(crm)/appointments/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The appointments calendar — a week-by-week agenda (see lib/appointments.ts
  * for why this is a day-by-day list rather than an absolute-time grid),
  * an unassigned queue that is never allowed to hide, today's rundown, and
  * this week's per-rep workload.
+ *
+ * A tab of Leads rather than a menu row of its own: an appointment is a
+ * lead's next step, and LeadActivityComposer already books one from inside
+ * a lead. The URL has not changed — see NAV_TAB_GROUPS.leads.
+ *
+ * `?project=` and `?assignedTo=` are the leads table's own filter
+ * parameters, honoured here so that narrowing to one project and then
+ * switching tab does not quietly widen back out to the whole company.
+ * They filter the week grid and today's rundown, and deliberately NOT the
+ * unassigned queue or the team workload: the queue exists to be the one
+ * thing on this page a filter cannot hide, and a per-rep workload chart
+ * filtered to one rep is a chart of one bar.
  *
  * SALES and above — the same floor as the leads pipeline, since booking a
  * viewing is the next step after a lead, and the whole team needs to see
@@ -36,10 +48,11 @@ import AppointmentAssignSelect from "@/components/admin/AppointmentAssignSelect"
 import AppointmentStatusSelect from "@/components/admin/AppointmentStatusSelect";
 import AppointmentRescheduleInput from "@/components/admin/AppointmentRescheduleInput";
 import AppointmentCreateForm from "@/components/admin/AppointmentCreateForm";
+import PageTabs from "@/components/admin/PageTabs";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; project?: string; assignedTo?: string }>;
 };
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -103,8 +116,24 @@ export default async function AdminAppointmentsPage(props: Props) {
 
   const offline = isDatabaseOffline();
 
+  /* Filtered in memory, not in the query: getWeekAppointments already
+     fetched exactly one week, which is tens of rows, and pushing these
+     two into lib/appointments.ts would give that module a second, nearly
+     identical fetch for one caller. "unassigned" means the same thing it
+     means on the leads table — assignedToId is null. */
+  const filterProject = searchParams.project?.trim() || null;
+  const filterAssignee = searchParams.assignedTo?.trim() || null;
+
+  const matchesFilters = (a: AppointmentCard) =>
+    (!filterProject || a.projectId === filterProject) &&
+    (!filterAssignee ||
+      (filterAssignee === "unassigned" ? a.assignedToId === null : a.assignedToId === filterAssignee));
+
+  const visibleAppointments = weekAppointments.filter(matchesFilters);
+  const filtered = visibleAppointments.length !== weekAppointments.length;
+
   const byDay = new Map<string, AppointmentCard[]>();
-  for (const a of weekAppointments) {
+  for (const a of visibleAppointments) {
     const key = dayKey(a.scheduledAt);
     byDay.set(key, [...(byDay.get(key) ?? []), a]);
   }
@@ -193,6 +222,30 @@ export default async function AdminAppointmentsPage(props: Props) {
           }}
         />
       </header>
+
+      <PageTabs
+        locale={locale}
+        role={session.role}
+        groupKey="leads"
+        carryParams={["project", "assignedTo"]}
+      />
+
+      {/* A filter carried in from the leads table narrows this page
+          silently otherwise — the week just looks emptier than it is. */}
+      {filtered && (
+        <p className="flex flex-wrap items-center gap-2 rounded-xs border border-primary/10 bg-surface-muted/60 px-4 py-2.5 text-sm text-ink-muted">
+          {t("filteredNotice", {
+            shown: visibleAppointments.length,
+            total: weekAppointments.length,
+          })}
+          <Link
+            href={`/${locale}/admin/appointments?week=${toWeekParam(weekStart)}`}
+            className="font-medium text-accent-700 hover:text-accent-800"
+          >
+            {t("clearFilter")}
+          </Link>
+        </p>
+      )}
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

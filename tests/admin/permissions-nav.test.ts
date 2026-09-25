@@ -217,7 +217,13 @@ describe("permission capabilities", () => {
 
 describe("admin sidebar", () => {
   it("finds the nav items it is supposed to be checking", () => {
-    expect(items.length).toBeGreaterThan(15);
+    /* A floor, not a count. The point is that the checks below are running
+       against a real menu rather than an empty array — they would all pass
+       vacuously otherwise. The exact number is deliberately not asserted
+       here: the menu is shrinking on purpose as rows become tabs, and
+       tests/admin/nav.test.ts owns the per-role table that says what it
+       should be today. */
+    expect(items.length).toBeGreaterThan(10);
     expect(items.map((item) => item.key)).toContain("mobileView");
   });
 

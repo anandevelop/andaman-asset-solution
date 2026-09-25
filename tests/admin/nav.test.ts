@@ -250,6 +250,66 @@ describe("the publishing hub", () => {
   });
 });
 
+describe("leads and appointments", () => {
+  it("are one sidebar row with two tabs", () => {
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+
+    expect(keys).not.toContain("appointments");
+    expect(visibleTabs(Role.SALES, "leads").map((tab) => tab.segment)).toEqual([
+      "/leads",
+      "/appointments",
+    ]);
+  });
+
+  it("highlight the same row from either", () => {
+    expect(activeItemKey("/th/admin/leads", "/th/admin")).toBe("leads");
+    expect(activeItemKey("/th/admin/appointments", "/th/admin")).toBe("leads");
+    expect(activeItemKey("/th/admin/leads/abc123", "/th/admin")).toBe("leads");
+  });
+
+  it("are hidden from a role the pages would refuse", () => {
+    // Both screens guard on viewAllLeads, which EDITOR does not hold —
+    // see lib/permissions.ts and the "Mobile view" note in nav.ts.
+    expect(canSeeItem(Role.EDITOR, "leads")).toBe(false);
+    expect(visibleTabs(Role.EDITOR, "leads")).toEqual([]);
+  });
+});
+
+describe("mobileOnly", () => {
+  it("keeps the phone layout out of the desktop rail", () => {
+    /* /admin/m is a phone layout for reps between viewings. In the rail it
+       offered a worse version of the two rows directly above it to
+       somebody at a monitor. */
+    const rail = visibleNav(Role.SALES, "rail").flatMap((g) => g.items.map((i) => i.key));
+
+    expect(rail).not.toContain("mobileView");
+    expect(rail).toContain("leads");
+    expect(rail).toContain("salesTeam");
+  });
+
+  it("puts it first in its group in the drawer", () => {
+    const sales = visibleNav(Role.SALES, "drawer").find((g) => g.key === "sales");
+
+    expect(sales?.items[0]?.key).toBe("mobileView");
+  });
+
+  it("leaves it in the unfiltered menu, which is what ⌘K reads", () => {
+    // Hidden from one surface, not removed from the product: the route
+    // stays and the palette still finds it.
+    const all = visibleNav(Role.SALES).flatMap((g) => g.items.map((i) => i.key));
+
+    expect(all).toContain("mobileView");
+  });
+
+  it("reorders without dropping or duplicating anything", () => {
+    const rail = visibleNav(Role.SUPER_ADMIN, "rail").flatMap((g) => g.items.map((i) => i.key));
+    const drawer = visibleNav(Role.SUPER_ADMIN, "drawer").flatMap((g) => g.items.map((i) => i.key));
+
+    expect([...drawer].sort()).toEqual([...rail, "mobileView"].sort());
+    expect(new Set(drawer).size).toBe(drawer.length);
+  });
+});
+
 describe("the project workspace", () => {
   it("is one sidebar row, not three", () => {
     /* "Progress" and "E-brochures" were rows of their own for screens that

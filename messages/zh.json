@@ -597,7 +597,7 @@
       "projects": "项目",
       "news": "新闻",
       "eBrochures": "电子手册",
-      "leads": "客资",
+      "leads": "客户与预约",
       "events": "活动",
       "users": "用户",
       "salesTeam": "销售团队",
@@ -607,7 +607,6 @@
       "seo": "SEO",
       "analytics": "统计与报告",
       "media": "媒体库",
-      "appointments": "预约看房",
       "mobileView": "移动端视图",
       "publishing": "审核与发布"
     },
@@ -661,6 +660,11 @@
         "all": "项目",
         "progress": "每月进度",
         "brochures": "全部电子手册"
+      },
+      "leads": {
+        "label": "客户与预约",
+        "pipeline": "客户管道",
+        "appointments": "预约日历"
       }
     },
     "common": {
@@ -2829,7 +2833,9 @@
         "duration": "时长（分钟）",
         "location": "地点",
         "notes": "备注"
-      }
+      },
+      "filteredNotice": "本周显示 {shown} / {total} 个预约 —— 已套用来自客户列表的筛选条件。",
+      "clearFilter": "显示全部"
     },
     "appointmentStatus": {
       "REQUESTED": "待确认",

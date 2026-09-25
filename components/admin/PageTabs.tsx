@@ -20,7 +20,7 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { Role } from "@prisma/client";
 import { tabBase, visibleTabs } from "@/lib/admin/nav";
@@ -30,6 +30,8 @@ export default function PageTabs({
   role,
   groupKey,
   baseHref,
+  badges,
+  carryParams,
 }: {
   locale: string;
   role: Role;
@@ -45,9 +47,26 @@ export default function PageTabs({
    * which they did: the palette offered /admin/leads/appointments.
    */
   baseHref?: string;
+  /** Live counts by tab key. Zero and undefined both render nothing: an
+   *  empty queue is not news, same rule as the sidebar's own badges. */
+  badges?: Partial<Record<string, number>>;
+  /**
+   * Query parameters to carry across when switching tab.
+   *
+   * For strips whose tabs are two views of one filtered set — Leads and
+   * its appointment calendar share `project` and `assignedTo` — so that
+   * narrowing to one project and then changing tab does not silently drop
+   * the filter and show the whole company's week. Deliberately an
+   * allow-list rather than "keep the whole query string": `?week=` means
+   * nothing on the leads table and `?view=board` means nothing on the
+   * calendar, and carrying them over would leave junk in the URL that the
+   * next reader cannot account for.
+   */
+  carryParams?: readonly string[];
 }) {
   const t = useTranslations("admin.tabs");
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const tabs = visibleTabs(role, groupKey);
   const base = baseHref ?? tabBase(groupKey) ?? "";
@@ -55,6 +74,13 @@ export default function PageTabs({
   // One tab is not a choice, and a strip that offers no alternative is
   // furniture. Nothing to draw.
   if (tabs.length < 2) return null;
+
+  const carried = new URLSearchParams();
+  for (const key of carryParams ?? []) {
+    const value = searchParams.get(key);
+    if (value) carried.set(key, value);
+  }
+  const query = carried.toString();
 
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-ink/10" aria-label={t(`${groupKey}.label` as never)}>
@@ -67,19 +93,26 @@ export default function PageTabs({
         const active =
           segment === "" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
+        const count = badges?.[key] ?? 0;
+
         return (
           <Link
             key={key}
-            href={href}
+            href={query ? `${href}?${query}` : href}
             aria-current={active ? "page" : undefined}
             className={[
-              "-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors",
+              "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors",
               active
                 ? "border-primary font-semibold text-primary"
                 : "border-transparent text-ink-muted hover:text-primary",
             ].join(" ")}
           >
             {t(`${groupKey}.${key}` as never)}
+            {count > 0 && (
+              <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary">
+                {count > 99 ? "99+" : count}
+              </span>
+            )}
           </Link>
         );
       })}
