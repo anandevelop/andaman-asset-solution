@@ -449,3 +449,228 @@ describe("no Suspense boundary above a notFound()", () => {
     },
   );
 });
+
+describe("public pages prerender nothing at build", () => {
+  /*
+    The Docker build has no database, so a page prerendered at build time
+    bakes its safeQuery fallback into the image: every deploy shipped the
+    "database offline" homepage and kept it until `revalidate` expired.
+    Nothing may prerender data-backed content at build — but that is not the
+    same as having no generateStaticParams, and the difference is invisible
+    in review. Measured on a built server:
+
+      returns the locales or the slugs   prerendered at build → the stale
+                                         fallback above
+      deleted outright                   not registered for ISR: served
+                                         `Cache-Control: no-store`, no
+                                         x-nextjs-cache header, a database
+                                         query per visitor, `revalidate`
+                                         ignored
+      returns []                         renders on the first request
+                                         against the live database, then
+                                         MISS → HIT with the page's own
+                                         s-maxage
+
+    So a cacheable page has to keep the function and it has to return [].
+
+    Two kinds of file are the exception, in opposite directions:
+
+      • A page that reads searchParams (or cookies()/headers()) must NOT
+        have one. Registered for ISR it fails with DYNAMIC_SERVER_USAGE —
+        /projects and /news returned 500 when a layout-level [] registered
+        them. Left alone they stay dynamic.
+      • The root layout must not have one either. Its params flow down to
+        every page beneath it: a list prerenders all of them, and [] does to
+        the searchParams pages what is described above.
+
+    privacy-policy and terms read no data, so prerendering them is the
+    point, and they are exempt.
+
+    The checks read source, as the neighbouring blocks do: nothing else sees
+    this, because every one of these states builds and renders green
+    against a database that is reachable.
+  */
+  const LOCALE_DIR = join(process.cwd(), "app", "[locale]");
+  const STATIC_PAGES = ["privacy-policy", "terms"];
+
+  /** Source with comments removed, so prose that mentions
+   *  generateStaticParams or searchParams is not read as code.
+   *
+   *  Line comments go first. A glob such as `public/gallery/**` inside one
+   *  contains `/*`, which the block-comment pass would take as an opening
+   *  and follow to the next `*` + `/` — swallowing real code on the way.
+   *  achievements/page.tsx does exactly that, and the first version of this
+   *  helper reported its function as missing. */
+  const code = (source: string) =>
+    source.replace(/(^|\s)\/\/.*$/gm, "$1").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  const definesStaticParams = (source: string) =>
+    /\bgenerateStaticParams\b/.test(code(source));
+
+  /** The body of `generateStaticParams`, whitespace collapsed — or null when
+   *  it is not a plain function declaration. Braces are counted rather than
+   *  matched non-greedily, so `({ locale })` inside a body cannot end it
+   *  early. */
+  const staticParamsBody = (source: string): string | null => {
+    const text = code(source);
+    const head = text.match(
+      /export\s+(?:async\s+)?function\s+generateStaticParams\s*\([^)]*\)[^{]*\{/,
+    );
+
+    if (!head || head.index === undefined) return null;
+
+    const bodyStart = head.index + head[0].length;
+    let depth = 1;
+    let end = bodyStart;
+
+    for (; end < text.length && depth > 0; end++) {
+      if (text[end] === "{") depth++;
+      else if (text[end] === "}") depth--;
+    }
+
+    return text.slice(bodyStart, end - 1).replace(/\s+/g, " ").trim();
+  };
+
+  const readsRequestData = (source: string) =>
+    /\bsearchParams\b|\bcookies\(\)|\bheaders\(\)/.test(code(source));
+
+  const EMPTY_LIST = /^return \[\];?$/;
+
+  const relative = (path: string) => path.replace(`${process.cwd()}/`, "");
+  const isStaticPage = (path: string) =>
+    STATIC_PAGES.some((dir) => path.includes(`/${dir}/`));
+
+  const sourceFiles: string[] = [];
+
+  const collect = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+
+      if (entry.isDirectory()) collect(path);
+      else if (/\.tsx?$/.test(entry.name)) sourceFiles.push(path);
+    }
+  };
+
+  collect(LOCALE_DIR);
+
+  const pages = sourceFiles.filter(
+    (path) => path.startsWith(SITE_DIR) && path.endsWith("/page.tsx") && !isStaticPage(path),
+  );
+  const read = (path: string) => readFileSync(path, "utf8");
+  const cacheablePages = pages.filter((path) => !readsRequestData(read(path)));
+  const requestDataPages = pages.filter((path) => readsRequestData(read(path)));
+
+  it("finds the pages it is guarding", () => {
+    // Guards the guard: an empty list would pass every assertion below
+    // while checking nothing. Ten public pages are cacheable today
+    // (home, about, achievements, contact, progress, and the events and
+    // e-brochure lists plus the four [slug] pages), and /projects and
+    // /news are the two that read searchParams.
+    expect(cacheablePages.length).toBeGreaterThanOrEqual(10);
+    expect(requestDataPages.length).toBeGreaterThanOrEqual(2);
+
+    // A typo in the exemption list would exempt nothing and quietly start
+    // demanding a function of pages that should keep prerendering.
+    for (const dir of STATIC_PAGES) {
+      expect(existsSync(join(SITE_DIR, dir, "page.tsx")), dir).toBe(true);
+    }
+  });
+
+  it.each(
+    sourceFiles
+      .filter((path) => !isStaticPage(path) && definesStaticParams(read(path)))
+      .map((path) => [relative(path)]),
+  )("%s returns [] from generateStaticParams, so nothing prerenders at build", (path) => {
+    expect(staticParamsBody(read(join(process.cwd(), path))) ?? "(not a plain function)").toMatch(
+      EMPTY_LIST,
+    );
+  });
+
+  it.each(cacheablePages.map((path) => [relative(path)]))(
+    "%s keeps generateStaticParams — deleting it turns ISR off",
+    (path) => {
+      const source = read(join(process.cwd(), path));
+
+      expect(definesStaticParams(source)).toBe(true);
+      expect(staticParamsBody(source)).toMatch(EMPTY_LIST);
+    },
+  );
+
+  it.each(requestDataPages.map((path) => [relative(path)]))(
+    "%s reads request data, so it must not define generateStaticParams",
+    (path) => {
+      expect(definesStaticParams(read(join(process.cwd(), path)))).toBe(false);
+    },
+  );
+
+  it("keeps generateStaticParams out of the root layout", () => {
+    expect(definesStaticParams(read(join(LOCALE_DIR, "layout.tsx")))).toBe(false);
+  });
+
+  describe("the checks themselves", () => {
+    // What the checks are asked to tell apart, on inline sources — so a
+    // regression in a regex is caught here rather than by a real page
+    // happening to keep passing.
+    it("reads an empty list as prerendering nothing", () => {
+      const source = `export function generateStaticParams() {\n  return [];\n}`;
+
+      expect(staticParamsBody(source)).toMatch(EMPTY_LIST);
+    });
+
+    it("rejects the locale list and the slug list", () => {
+      const locales = `export async function generateStaticParams() {\n  return locales.map((locale) => ({ locale }));\n}`;
+      const slugs = `export async function generateStaticParams() {\n  const slugs = await getPublishedProjectSlugs();\n  return slugs.map((slug) => ({ slug }));\n}`;
+
+      // The nested `{ locale }` must not end the body early and leave a
+      // fragment that happens to look harmless.
+      expect(staticParamsBody(locales)).toBe("return locales.map((locale) => ({ locale }));");
+      expect(staticParamsBody(locales)).not.toMatch(EMPTY_LIST);
+      expect(staticParamsBody(slugs)).not.toMatch(EMPTY_LIST);
+    });
+
+    it("sees a deleted function as not defined", () => {
+      expect(definesStaticParams(`export const revalidate = 3600;`)).toBe(false);
+      expect(staticParamsBody(`export const revalidate = 3600;`)).toBeNull();
+    });
+
+    it("does not mistake a comment for a definition", () => {
+      const source = [
+        "/* generateStaticParams() used to live here */",
+        "// return [] from generateStaticParams",
+        "export const revalidate = 3600;",
+      ].join("\n");
+
+      expect(definesStaticParams(source)).toBe(false);
+    });
+
+    it("is not fooled by a glob inside a line comment", () => {
+      // The shape that broke the first version: `/*` inside a `//` comment
+      // must not open a block comment that eats the function below it.
+      const source = [
+        "// Real development photography (public/gallery/**), not stock imagery",
+        "export const revalidate = 3600;",
+        "export function generateStaticParams() {",
+        "  return [];",
+        "}",
+        "/* a genuine block comment */",
+      ].join("\n");
+
+      expect(definesStaticParams(source)).toBe(true);
+      expect(staticParamsBody(source)).toMatch(EMPTY_LIST);
+    });
+
+    it("flags a definition that is not a plain function", () => {
+      const source = `export const generateStaticParams = () => [];`;
+
+      expect(definesStaticParams(source)).toBe(true);
+      expect(staticParamsBody(source)).toBeNull();
+    });
+
+    it("spots a page that reads request data, and ignores prose about it", () => {
+      expect(readsRequestData(`const sp = await props.searchParams;`)).toBe(true);
+      expect(readsRequestData(`const jar = await cookies();`)).toBe(true);
+      expect(readsRequestData(`const h = await headers();`)).toBe(true);
+      expect(readsRequestData(`/* reads searchParams */\nexport const revalidate = 1;`)).toBe(false);
+    });
+  });
+});
