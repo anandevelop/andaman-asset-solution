@@ -1379,6 +1379,7 @@
         "pullQuote": "Pull quote",
         "cta": "Call to action",
         "projectCard": "Project card",
+        "dragHandle": "Drag to move",
         "calloutTones": {
           "note": "Note",
           "warning": "Warning",

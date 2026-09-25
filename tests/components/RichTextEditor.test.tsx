@@ -25,7 +25,10 @@ vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({
 }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import RichTextEditor, { type RichTextEditorHandle } from "@/components/admin/RichTextEditor";
+import RichTextEditor, {
+  isDragTargetParent,
+  type RichTextEditorHandle,
+} from "@/components/admin/RichTextEditor";
 
 const LABELS = {
   paragraph: "Paragraph",
@@ -47,6 +50,7 @@ const LABELS = {
   pullQuote: "Pull quote",
   cta: "Call to action",
   projectCard: "Project card",
+  dragHandle: "Drag to move",
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",
@@ -182,6 +186,49 @@ describe("RichTextEditor — the editor's typography is the page's", () => {
     expect(wrapper?.className).toContain("admin-textarea");
     // The two must not meet: on one element, admin-textarea's text-sm wins.
     expect(wrapper?.className).not.toContain("prose-article");
+  });
+});
+
+/*
+  §6.1's drag handle. What is draggable is "every top-level block, plus the
+  list item" — and expressing that took three tries, each of which fails
+  silently rather than loudly:
+
+    nested: false                  no handle on a list item at all
+    nested: true                   a handle on the paragraph *inside* a
+                                   callout or a pull quote, so dragging it
+                                   takes the block apart from the inside
+    allowedContainers: [lists]     no handle on any top-level block, since
+                                   the check walks ancestors and a
+                                   top-level block's only ancestor is doc
+                                   — and adding "doc" lets everything back
+                                   in, doc being an ancestor of everything
+
+  Verified in a browser for each of paragraph, heading, image, list item,
+  callout, pull quote, CTA and FAQ: each moves as a whole and its markup
+  survives the move. This pins the predicate those runs agreed with.
+*/
+describe("RichTextEditor — what the drag handle may pick up", () => {
+  it("offers top-level blocks and list items", () => {
+    for (const parent of ["doc", "bulletList", "orderedList"]) {
+      expect(isDragTargetParent(parent)).toBe(true);
+    }
+  });
+
+  it("refuses the insides of a block that would come apart", () => {
+    for (const parent of ["callout", "pullQuote", "cta", "projectCard", "faqItem", "faqList"]) {
+      expect(isDragTargetParent(parent)).toBe(false);
+    }
+  });
+
+  it("refuses a list item's own paragraph, so the item moves and not its text", () => {
+    expect(isDragTargetParent("listItem")).toBe(false);
+  });
+
+  it("refuses a table cell's contents", () => {
+    for (const parent of ["tableCell", "tableHeader", "tableRow", "table"]) {
+      expect(isDragTargetParent(parent)).toBe(false);
+    }
   });
 });
 

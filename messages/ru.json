@@ -1379,6 +1379,7 @@
         "pullQuote": "Цитата-врезка",
         "cta": "Блок с призывом",
         "projectCard": "Карточка проекта",
+        "dragHandle": "Перетащить",
         "calloutTones": {
           "note": "Заметка",
           "warning": "Внимание",

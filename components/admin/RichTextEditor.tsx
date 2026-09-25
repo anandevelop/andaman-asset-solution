@@ -48,6 +48,12 @@ import Placeholder from "@tiptap/extension-placeholder";
 // ships them. MIT, from tiptap's own repo, pinned to the same 3.31.3 as
 // every other @tiptap package here.
 import { TableKit } from "@tiptap/extension-table";
+// MIT and 3.31.3, from tiptap's own repo like TableKit — checked before
+// installing, because §6.1 says to stop and report rather than install if
+// this one turned out to be Pro. It is not: the Pro extensions lived under
+// @tiptap-pro/* on a private registry, and v3 opened these up. Its only
+// dependency, @floating-ui/dom, is already here for BubbleMenu.
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import FigureNodeView, {
   type FigureLabels,
   type FigureOptions,
@@ -76,6 +82,7 @@ import {
   TextQuote,
   MousePointerClick,
   Building2,
+  GripVertical,
   Heading2,
   Heading3,
   Heading4,
@@ -120,6 +127,25 @@ export type InsertedImage = {
 };
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+/** A node may be picked up by the drag handle when its parent is one of
+ *  these: the document itself (every top-level block) or a list (its
+ *  items). See the rule on <DragHandle> for why this is a rule rather
+ *  than the extension's own `allowedContainers`. */
+const DRAG_TARGET_PARENTS = new Set(["doc", "bulletList", "orderedList"]);
+
+/**
+ * Whether the drag handle may pick up a node sitting inside `parentType`.
+ *
+ * Exported for its test: this is two lines that were wrong twice, and
+ * getting it wrong is not visibly a bug — it is a handle that quietly
+ * stops appearing, or one that appears where it will take a block apart.
+ */
+export function isDragTargetParent(parentType: string | null | undefined): boolean {
+  // No parent means the document root, which is not itself draggable but
+  // is never offered as a candidate either.
+  return !parentType || DRAG_TARGET_PARENTS.has(parentType);
+}
 
 /** The internal-link mark, extended with one attribute TipTap's stock
  *  Link doesn't have: `data-internal`, so the render path and a future
@@ -570,6 +596,7 @@ type Props = {
     pullQuote: string;
     cta: string;
     projectCard: string;
+    dragHandle: string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -1572,6 +1599,58 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           }
         }}
       />
+
+      {/*
+        §6.1's drag handle. `nested` is the half of it that matters: without
+        it the handle only ever targets a top-level block, and a list item
+        — which §6.1 names explicitly — could not be moved at all.
+
+        It renders through a portal positioned against the hovered block, so
+        it sits outside the editable region and cannot be typed into. The
+        column it appears in is the leftover space beside the measure: the
+        body is max-w-2xl inside a wider grid cell, so it has somewhere to
+        go without overlapping the text.
+      */}
+      <DragHandle
+        editor={editor}
+        /*
+          What should be draggable is every top-level block, plus the list
+          item — which §6.1 names, and which plain `nested: false` cannot
+          reach because a list item is not top-level.
+
+          Plain `nested: true` reaches it but also reaches every other
+          nested block, including the paragraph inside a callout, a CTA or
+          a pull quote. Dragging one of those takes the block apart from
+          the inside: watched a pull quote and its attribution come out as
+          two separate blocks, and an FAQ item leave its list.
+
+          `allowedContainers` looks like the answer and is not. It is
+          checked with hasAncestorOfType, so listing the two list types
+          also excludes every top-level block (whose only ancestor is the
+          document) and the handle stops appearing at all — and adding
+          "doc" to the list lets everything back in, since doc is an
+          ancestor of every node in the document. Verified against the
+          extension's own source, and against a browser both ways round.
+
+          A rule says it directly instead: a node is a drag target when its
+          parent is the document or a list. That is top-level blocks and
+          list items, and nothing inside a block that would be broken by
+          having its insides pulled out.
+        */
+        nested={{
+          rules: [
+            {
+              id: "topLevelBlocksAndListItemsOnly",
+              evaluate: ({ parent }) => (isDragTargetParent(parent?.type.name) ? 0 : 1000),
+            },
+          ],
+        }}
+        className="flex h-6 w-5 cursor-grab items-center justify-center rounded-xs text-ink-muted/60 transition-colors hover:bg-primary/5 hover:text-primary active:cursor-grabbing"
+      >
+        <span title={toolbarLabels.dragHandle} aria-label={toolbarLabels.dragHandle} role="button">
+          <GripVertical size={14} aria-hidden />
+        </span>
+      </DragHandle>
     </div>
   );
 });

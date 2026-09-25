@@ -683,6 +683,7 @@ export default function NewsForm({
                       pullQuote: t("news.richToolbar.pullQuote"),
                       cta: t("news.richToolbar.cta"),
                       projectCard: t("news.richToolbar.projectCard"),
+                      dragHandle: t("news.richToolbar.dragHandle"),
                       table: t("news.richToolbar.table"),
                       tableAddRow: t("news.richToolbar.tableAddRow"),
                       tableDeleteRow: t("news.richToolbar.tableDeleteRow"),

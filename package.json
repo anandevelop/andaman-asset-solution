@@ -60,6 +60,7 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@sentry/nextjs": "^10.73.0",
+    "@tiptap/extension-drag-handle-react": "^3.31.3",
     "@tiptap/extension-link": "^3.31.3",
     "@tiptap/extension-placeholder": "^3.31.3",
     "@tiptap/extension-table": "^3.31.3",
