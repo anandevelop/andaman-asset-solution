@@ -312,6 +312,16 @@ const nextConfig = {
         destination: "/:locale/admin/pages/faq",
         permanent: true,
       },
+
+      /* Translation status stopped being an SEO screen: it is a tab of the
+         publishing hub, which is where the same person is already deciding
+         what goes live. `alias` on the publishing nav item keeps the rail
+         lit while a stale bookmark makes this hop. */
+      {
+        source: "/:locale/admin/seo/translations",
+        destination: "/:locale/admin/publishing/translations",
+        permanent: true,
+      },
     ];
   },
 

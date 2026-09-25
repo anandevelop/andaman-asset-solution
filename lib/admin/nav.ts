@@ -44,7 +44,6 @@ import {
   Files,
   HardHat,
   History,
-  Languages,
   LayoutDashboard,
   LibraryBig,
   Newspaper,
@@ -103,10 +102,15 @@ export const ROLE_SETS = {
   ADMIN_UP: [Role.SUPER_ADMIN, Role.ADMIN],
   OWNER_ONLY: [Role.SUPER_ADMIN],
 
-  /** Below the (growth) zone's ADMIN floor, for the one route the zone's
-   *  own ROUTE_EXCEPTIONS loosens: seo/translations. Not CONTENT — VIEWER
-   *  belongs on a read-only page, and this one calls
-   *  requireAdmin(locale, Role.EDITOR), no read floor beneath it. */
+  /** Not CONTENT: the translation-status tab calls requireAdmin(locale,
+   *  Role.EDITOR) with no read floor beneath it, so VIEWER — who the
+   *  (content) zone does admit — must not be offered the tab.
+   *
+   *  This set used to exist for the (growth) zone's one ROUTE_EXCEPTIONS
+   *  entry, back when the same screen lived at /seo/translations under an
+   *  ADMIN floor it had to be exempted from. The screen moved into the
+   *  publishing hub, where EDITOR is unremarkable, and the exception went
+   *  with it — see (growth)/layout.tsx. */
   EDITOR_UP: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR],
 } as const satisfies Record<string, readonly Role[]>;
 
@@ -161,6 +165,26 @@ export const NAV_TAB_GROUPS = {
     { key: "mission", segment: "/mission", roles: ROLE_SETS.CONTENT },
     { key: "awards", segment: "/awards", roles: ROLE_SETS.CONTENT },
     { key: "milestones", segment: "/milestones", roles: ROLE_SETS.CONTENT },
+  ],
+  /**
+   * Review & publish.
+   *
+   * The translation-status report used to be its own sidebar row under
+   * SEO, which put "which locales are missing" and "what is waiting to go
+   * live" in two different parts of the menu although they are the same
+   * person's next action on the same record — and forced the (growth)
+   * zone to carry a per-route exception for a screen that was never a
+   * growth screen. It is a tab here instead.
+   *
+   * No `history` tab: the revision panel is not a page. It renders beside
+   * the queue and is scoped to whichever row the queue is pointed at
+   * (`?item=`), so a sibling route would either arrive with nothing
+   * selected or need the selection carried across a navigation — and it
+   * would take the history away from the queue it exists to annotate.
+   */
+  publishing: [
+    { key: "queue", segment: "", roles: ROLE_SETS.CONTENT },
+    { key: "translations", segment: "/translations", roles: ROLE_SETS.EDITOR_UP },
   ],
 } as const satisfies Record<string, readonly NavTab[]>;
 
@@ -297,7 +321,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         href: "/publishing",
         icon: FileCheck2,
         roles: ROLE_SETS.CONTENT,
+        /* Still the review queue alone. Rolling the translation gaps into
+           this number would make one badge mean two unrelated backlogs,
+           and the one that needs a person today is the review queue. */
         countKey: "reviewQueue",
+        alias: ["/seo/translations"],
+        tabs: NAV_TAB_GROUPS.publishing,
       },
     ],
   },
@@ -307,16 +336,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     labelKey: "administration",
     items: [
       { key: "seo", href: "/seo", icon: Search, roles: ROLE_SETS.ADMIN_UP },
-      {
-        // The (growth) zone floors at ADMIN; this route is the one
-        // exception, loosened to EDITOR in app/[locale]/admin/(growth)/
-        // layout.tsx's ROUTE_EXCEPTIONS — content people are the ones who
-        // know which language is missing what, per that layout's header.
-        key: "seoTranslations",
-        href: "/seo/translations",
-        icon: Languages,
-        roles: ROLE_SETS.EDITOR_UP,
-      },
       {
         // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
         // floor, no exception needed here (see that layout's header).
@@ -370,6 +389,22 @@ export function canSeeItem(role: Role | null | undefined, key: string): boolean 
   return item ? canSee(role, item) : false;
 }
 
+/**
+ * May this role see one named sidebar item?
+ *
+ * For the case where a page wants to offer a shortcut into another part of
+ * the back office — the dashboard's "see the full reports" link into
+ * /admin/analytics — and must not draw it for a role the destination
+ * refuses. Asking canSee() about the real item is what keeps that answer
+ * from drifting: the alternative is a second hand-written role list beside
+ * the link, which is exactly the shape of the "Mobile view" defect this
+ * file's header describes.
+ */
+export function canSeeItem(role: Role | null | undefined, key: string): boolean {
+  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+  return item ? canSee(role, item) : false;
+}
+
 /** Groups and items left after filtering. An emptied group takes its
  *  heading with it. */
 export function visibleNav(role: Role | null | undefined): NavGroup[] {
@@ -390,6 +425,50 @@ export function visibleTabs(role: Role | null | undefined, key: string): NavTab[
   const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
   const tabs = item?.tabs ?? NAV_TAB_GROUPS[key as keyof typeof NAV_TAB_GROUPS];
   return tabs?.filter((tab) => canSee(role, tab)) ?? [];
+}
+
+export type NavTabRow = {
+  /** The sidebar item the tab belongs to — labels the row's parent. */
+  itemKey: string;
+  tabKey: string;
+  /** Appended to `/${locale}/admin`, like NavItem.href. */
+  href: string;
+};
+
+/**
+ * Every in-page tab this role can open, flattened.
+ *
+ * ⌘K reads the sidebar's items, which stopped being the whole menu the
+ * moment rows started becoming tabs: "Translations" was a row anyone could
+ * search for and is now a tab inside Review & publish, and the palette
+ * would simply have stopped finding it — a search box that quietly covers
+ * less of the product than it used to is worse than one that never covered
+ * it, because people stop trusting the answer "no results".
+ *
+ * The index tab (segment "") is skipped: its href is the item's own, which
+ * the palette already lists, and two rows pointing at one page is the kind
+ * of duplicate the tabs exist to remove.
+ *
+ * Only tabs an item owns. The second-level strips in NAV_TAB_GROUPS
+ * (pagesHome, pagesAbout) are deliberately absent — they live inside a
+ * page that knows its own path, so there is nothing here to build an href
+ * from.
+ */
+export function visibleTabRows(role: Role | null | undefined): NavTabRow[] {
+  const rows: NavTabRow[] = [];
+
+  for (const group of ADMIN_NAV) {
+    for (const item of group.items) {
+      if (!item.tabs || !canSee(role, item)) continue;
+
+      for (const tab of item.tabs) {
+        if (tab.segment === "" || !canSee(role, tab)) continue;
+        rows.push({ itemKey: item.key, tabKey: tab.key, href: `${item.href}${tab.segment}` });
+      }
+    }
+  }
+
+  return rows;
 }
 
 /**

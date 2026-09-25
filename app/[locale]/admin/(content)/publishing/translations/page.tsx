@@ -1,5 +1,5 @@
 /**
- * app/[locale]/admin/(growth)/seo/translations/page.tsx
+ * app/[locale]/admin/(content)/publishing/translations/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Translation Status — which language is missing what, one row per gap.
  *
@@ -8,21 +8,34 @@
  * ru row, that declaration is a promise the site cannot keep: Google
  * follows the hreflang, finds nothing to show, and indexes the gap rather
  * than the content. Nothing before this page said which items those were
- * — the dashboard's locale-completeness card (lib/locale-completeness.ts)
- * gives a percentage per locale, which answers "how much" but not "which
- * one, and where do I fix it." This page is that list.
+ * — lib/locale-completeness.ts's summary gives a percentage per locale,
+ * which answers "how much" but not "which one, and where do I fix it."
+ * This page is that list.
  *
- * Role.EDITOR, not ADMIN — the (growth) zone's floor everywhere else.
- * lib/admin/nav.ts's EDITOR_UP set and this page's own guard exist for
- * exactly this route; see the ROUTE_EXCEPTIONS entry in this zone's
- * layout.tsx and its header comment for why it can only ever loosen, and
- * only for this one path.
+ * WHY IT IS HERE AND NOT UNDER SEO
+ *
+ * It was /admin/seo/translations, which cost the (growth) zone a per-route
+ * exception — that zone floors at ADMIN, and this screen is for the people
+ * who write the copy. The exception existed because the screen was filed
+ * in the wrong place, not because the zone needed one: "a project is
+ * missing its Russian" is the same question as "is this ready to go live",
+ * asked about the same record, by the same person. It is a tab of the
+ * publishing hub now, and the exception is gone with it.
+ *
+ * Role.EDITOR — the (content) zone floors at VIEWER, so this page has to
+ * refuse them itself, and lib/admin/nav.ts's EDITOR_UP set on the tab is
+ * what stops a VIEWER being shown a tab that would then turn them away.
+ *
+ * `?group=` narrows the list to one content type. Without it there is no
+ * way to link somebody at "the projects that are missing a language" —
+ * only at the whole report, where the projects section may be several
+ * screens down.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Download, Languages } from "lucide-react";
+import { Download } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -33,7 +46,10 @@ import {
   type TranslationGroupKey,
 } from "@/lib/locale-completeness";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ group?: string }>;
+};
 
 const GROUP_ORDER: readonly TranslationGroupKey[] = [
   "projects",
@@ -43,14 +59,18 @@ const GROUP_ORDER: readonly TranslationGroupKey[] = [
   "staticPages",
 ];
 
+function isGroupKey(value: string | undefined): value is TranslationGroupKey {
+  return !!value && (GROUP_ORDER as readonly string[]).includes(value);
+}
+
 function barColor(share: number): string {
   if (share === 0) return "bg-emerald-600";
   if (share < 20) return "bg-accent-700";
   return "bg-red-600";
 }
 
-export default async function AdminSeoTranslationsPage(props: Props) {
-  const { locale } = await props.params;
+export default async function AdminPublishingTranslationsPage(props: Props) {
+  const [{ locale }, searchParams] = await Promise.all([props.params, props.searchParams]);
 
   await requireAdmin(locale, Role.EDITOR);
 
@@ -59,27 +79,39 @@ export default async function AdminSeoTranslationsPage(props: Props) {
     getTranslationStatusReport(),
   ]);
 
+  const activeGroup = isGroupKey(searchParams.group) ? searchParams.group : null;
+
   const localeTotals = translationLocaleTotals(report);
   const offline = isDatabaseOffline();
   const totalGaps = report.groups.reduce((sum, group) => sum + group.items.length, 0);
 
+  /* The per-locale cards above stay unfiltered on purpose: they are the
+     answer to "how far behind is Russian overall", which a filter to one
+     content type would silently change the meaning of without changing
+     its labels. Only the list below narrows. */
+  const shownGroups = activeGroup ? GROUP_ORDER.filter((key) => key === activeGroup) : GROUP_ORDER;
+
+  const base = `/${locale}/admin/publishing/translations`;
+
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="admin-section-title">{t("nav.seo")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
-            <Languages size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
-            {t("seoTranslations.title")}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("seoTranslations.subtitle")}</p>
+          <h2 className="text-lg font-semibold text-primary">{t("seoTranslations.title")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("seoTranslations.subtitle")}</p>
         </div>
 
-        <a href={`/api/admin/seo/translations/export`} className="admin-btn">
+        {/* A plain <a>, not next/link: the target is a route handler that
+            answers with a Content-Disposition attachment, and a client-side
+            navigation to a download is a navigation the router cannot
+            complete. The export endpoint itself did not move with this
+            page — only the button that points at it. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/api/admin/seo/translations/export" className="admin-btn" download>
           <Download size={16} aria-hidden />
           {t("seoTranslations.exportCsv")}
         </a>
-      </header>
+      </div>
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -113,22 +145,42 @@ export default async function AdminSeoTranslationsPage(props: Props) {
         })}
       </div>
 
+      {/* ── Filter by content type ───────────────────────────────────── */}
+      {totalGaps > 0 && (
+        <nav className="flex flex-wrap gap-1.5" aria-label={t("seoTranslations.filterLabel")}>
+          <GroupChip href={base} active={activeGroup === null} label={t("seoTranslations.filterAll")} />
+          {GROUP_ORDER.map((key) => {
+            const count = report.groups.find((g) => g.group === key)?.items.length ?? 0;
+            if (count === 0) return null;
+
+            return (
+              <GroupChip
+                key={key}
+                href={`${base}?group=${key}`}
+                active={activeGroup === key}
+                label={`${t(`seoTranslations.group.${key}`)} · ${count}`}
+              />
+            );
+          })}
+        </nav>
+      )}
+
       {/* ── Gaps by content type ─────────────────────────────────────── */}
       {totalGaps === 0 ? (
         <div className="admin-card py-10 text-center text-sm text-ink-muted">
           {t("seoTranslations.allComplete")}
         </div>
       ) : (
-        GROUP_ORDER.map((key) => {
+        shownGroups.map((key) => {
           const group = report.groups.find((g) => g.group === key);
           if (!group || group.items.length === 0) return null;
 
           return (
             <section key={key} className="admin-card overflow-hidden p-0!">
               <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-                <h2 className="text-sm font-semibold text-primary">
+                <h3 className="text-sm font-semibold text-primary">
                   {t(`seoTranslations.group.${key}`)}
-                </h2>
+                </h3>
                 <span className="ml-auto text-xs text-ink-muted">
                   {t("seoTranslations.groupCount", { count: group.items.length })}
                 </span>
@@ -180,5 +232,24 @@ export default async function AdminSeoTranslationsPage(props: Props) {
         })
       )}
     </div>
+  );
+}
+
+/** One content-type filter chip. A real link, so the filtered view can be
+ *  bookmarked and sent to the person who has to fix it. */
+function GroupChip({ href, active, label }: { href: string; active: boolean; label: string }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={[
+        "rounded-xs border px-3 py-1.5 text-xs font-medium transition-colors",
+        active
+          ? "border-primary bg-primary text-white"
+          : "border-primary/15 text-ink-muted hover:border-primary/40 hover:text-primary",
+      ].join(" ")}
+    >
+      {label}
+    </Link>
   );
 }

@@ -12,9 +12,19 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Role } from "@prisma/client";
-import { ADMIN_NAV, activeItemKey, canSee, visibleNav, visibleTabs } from "@/lib/admin/nav";
+import {
+  ADMIN_NAV,
+  activeItemKey,
+  canSee,
+  canSeeItem,
+  visibleNav,
+  visibleTabRows,
+  visibleTabs,
+} from "@/lib/admin/nav";
 
 const ALL_ROLES = Object.values(Role);
 const items = ADMIN_NAV.flatMap((group) => group.items);
@@ -198,5 +208,111 @@ describe("the Pages hub", () => {
         "/why-us",
       ].sort(),
     );
+  });
+});
+
+describe("the publishing hub", () => {
+  it("offers the review queue and the translation report as tabs", () => {
+    expect(visibleTabs(Role.EDITOR, "publishing").map((tab) => tab.segment)).toEqual([
+      "",
+      "/translations",
+    ]);
+  });
+
+  it("hides the translations tab from VIEWER, who the page would refuse", () => {
+    /* The queue is a read and VIEWER may have it; the translation report
+       calls requireAdmin(locale, Role.EDITOR) with no read floor under it.
+       Offering the tab anyway is the "Mobile view" defect in miniature. */
+    expect(visibleTabs(Role.VIEWER, "publishing").map((tab) => tab.key)).toEqual(["queue"]);
+    expect(canSeeItem(Role.VIEWER, "publishing")).toBe(true);
+  });
+
+  it("no longer has a sidebar row of its own for translations", () => {
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+
+    expect(keys).not.toContain("seoTranslations");
+  });
+
+  it("keeps the old SEO path highlighting this row", () => {
+    expect(activeItemKey("/th/admin/seo/translations", "/th/admin")).toBe("publishing");
+
+    // And has not swallowed the SEO hub it used to live under.
+    expect(activeItemKey("/th/admin/seo", "/th/admin")).toBe("seo");
+    expect(activeItemKey("/th/admin/seo/keywords", "/th/admin")).toBe("seo");
+  });
+});
+
+describe("visibleTabRows", () => {
+  it("gives ⌘K a destination for every tab but the index", () => {
+    /* The palette reads sidebar rows, and rows keep becoming tabs. Each
+       move would otherwise take a destination out of the search box
+       without anybody noticing — "no results" reads the same whether the
+       thing is gone or was never there. */
+    const hrefs = visibleTabRows(Role.EDITOR).map((row) => row.href);
+
+    expect(hrefs).toContain("/publishing/translations");
+    expect(hrefs).toContain("/pages/home");
+
+    // The index tab is the item's own href, which the palette already has.
+    expect(hrefs).not.toContain("/publishing");
+  });
+
+  it("drops a tab the role would be refused at", () => {
+    const viewer = visibleTabRows(Role.VIEWER).map((row) => row.href);
+
+    expect(viewer).not.toContain("/publishing/translations");
+    expect(viewer).toContain("/pages/home");
+  });
+
+  it("gives every row a label key in both namespaces", () => {
+    // The palette renders "admin.nav.<itemKey> · admin.tabs.<itemKey>.
+    // <tabKey>". A row whose two halves do not both resolve renders a raw
+    // key in the one place people look when they are lost.
+    const messages = JSON.parse(readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"));
+
+    for (const row of visibleTabRows(Role.SUPER_ADMIN)) {
+      expect(messages.admin.nav[row.itemKey], `nav.${row.itemKey}`).toBeTruthy();
+      expect(
+        messages.admin.tabs[row.itemKey]?.[row.tabKey],
+        `tabs.${row.itemKey}.${row.tabKey}`,
+      ).toBeTruthy();
+    }
+  });
+});
+
+describe("every admin redirect", () => {
+  /*
+    The rule the whole restructure runs on: a path that moves keeps
+    working, and keeps lighting the row it moved into. next.config.js
+    moves the browser; `alias` lights the rail. A redirect added without
+    its alias leaves somebody mid-hop looking at a sidebar that has gone
+    blank, and — more usefully — leaves every stale link elsewhere in the
+    back office pointing at something that looks wrong on arrival.
+
+    Read as source text rather than imported: next.config.js pulls in
+    next-intl's and Sentry's plugins at module scope, which is a lot of
+    machinery to boot for a list of strings, and the file is CommonJS.
+    Same reasoning as tests/admin/permissions-nav.test.ts.
+  */
+  const config = readFileSync(join(process.cwd(), "next.config.js"), "utf8");
+
+  const adminRedirectSources = [...config.matchAll(/source:\s*"\/:locale\/admin([^"]*)"/g)]
+    .map((match) => match[1])
+    // Dynamic segments cannot appear in an alias, which is a plain
+    // prefix — "/progress/:projectId" is aliased as "/progress".
+    .map((path) => path.split("/:")[0]);
+
+  it("was found in next.config.js at all", () => {
+    // If the regex above goes blind — the file is reformatted, the
+    // redirects move — the check below would pass on an empty list.
+    expect(adminRedirectSources.length).toBeGreaterThan(9);
+  });
+
+  it("still lights a sidebar row", () => {
+    const dark = adminRedirectSources.filter(
+      (path) => activeItemKey(`/th/admin${path}`, "/th/admin") === null,
+    );
+
+    expect(dark, "redirected from, but no nav item claims it").toEqual([]);
   });
 });

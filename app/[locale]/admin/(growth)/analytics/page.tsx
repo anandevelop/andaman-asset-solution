@@ -23,6 +23,25 @@
  * across with them — they lived only on the dashboard, so dropping them
  * would have removed them from the back office entirely.
  *
+ * THE ONE PLACE REPORTS LIVE
+ *
+ *              new query this page needed), whether GA4/Meta Pixel/Search
+ *              Console are configured (lib/settings.ts), and the
+ *              cookie-consent rate that decides how much of the first two
+ *              ever fire.
+ * funnel and conversion-by-project from the same lib/reports.ts functions
+ *              article, lib/reports.ts's conversion-by-project and event
+ *              RSVP fill rates, and lib/company-stats.ts's four public-site
+ *              headline figures.
+ *   Leads    — lib/reports.ts's monthly/source/pipeline reports plus
+ *              getWeekOverWeekLeads(). Gated on viewAllLeads, same rule as
+ *              everywhere else CRM data shows.
+ * moved rather than rewritten, and `?range=` now means the same thing here
+ * Role.ADMIN — the (growth) zone's floor, and since the translation report
+ * left for the publishing hub there is no longer an exception to it
+ * anywhere in the zone. A role that meets
+ * would have removed them from the back office entirely.
+ *
  * Three tabs, reusing rather than re-deriving every number:
  *   Traffic  — lib/admin/analytics.ts's page-view trend (the one genuinely
  *              new query this page needed), whether GA4/Meta Pixel/Search
@@ -43,48 +62,30 @@
  * all, which is why the Leads tab's own capability check is a second,
  * defence-in-depth answer to a question the zone guard already settled —
  * see lib/admin/guard.ts's header for why that repetition is deliberate.
+  getEventRsvpSummary,
  * ─────────────────────────────────────────────────────────────────────────
  */
+import { getCookieConsentStats } from "@/lib/cookie-consent-stats";
 
+import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import { getTranslations } from "next-intl/server";
 import { BarChart3 } from "lucide-react";
+import DashboardControls from "@/components/admin/DashboardControls";
 import { Role } from "@prisma/client";
-import { requireAdmin } from "@/lib/admin/guard";
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ range?: string }>;
+};
 import { can } from "@/lib/permissions";
 import { isDatabaseOffline } from "@/lib/db";
 import { getPageViewTrend } from "@/lib/admin/analytics";
+  const searchParams = await props.searchParams;
 import { getSiteSettings } from "@/lib/settings";
 import { getNewsList, parseFilters } from "@/lib/admin/news-list";
 import {
   getMonthlyLeads,
   getLeadsBySource,
   getProjectConversions,
-  getLeadPipeline,
-  getWeekOverWeekLeads,
-  getEventRsvpSummary,
-  FUNNEL_STAGES,
-} from "@/lib/reports";
-import { getCookieConsentStats } from "@/lib/cookie-consent-stats";
-import { getCompanyStats } from "@/lib/company-stats";
-import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
-import { intlLocale } from "@/lib/format";
-import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
-import DashboardControls from "@/components/admin/DashboardControls";
-
-type Props = {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ range?: string }>;
-};
-
-export default async function AdminAnalyticsPage(props: Props) {
-  const { locale } = await props.params;
-  const searchParams = await props.searchParams;
-
-  const session = await requireAdmin(locale, Role.ADMIN);
-  const canViewLeads = can(session.role, "viewAllLeads");
-
-  const t = await getTranslations({ locale, namespace: "admin" });
-
   const rangeDays: RangeDays = isRangeDays(searchParams.range) ? searchParams.range : "30";
   // Same rounding the dashboard used when it owned this control: the source
   // and conversion reports bucket by month, so a day count becomes the
@@ -110,10 +111,80 @@ export default async function AdminAnalyticsPage(props: Props) {
           ])
         : Promise.resolve(null),
     ]);
+import DashboardControls from "@/components/admin/DashboardControls";
+
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ range?: string }>;
+  const rsvpDateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+export default async function AdminAnalyticsPage(props: Props) {
+  const { locale } = await props.params;
+  const searchParams = await props.searchParams;
+
+  const session = await requireAdmin(locale, Role.ADMIN);
+  const canViewLeads = can(session.role, "viewAllLeads");
+
+  const t = await getTranslations({ locale, namespace: "admin" });
+
+  const rangeDays: RangeDays = isRangeDays(searchParams.range) ? searchParams.range : "30";
+  // Same rounding the dashboard used when it owned this control: the source
+  // and conversion reports bucket by month, so a day count becomes the
+  // number of months it reaches back into — "7" and "30" both mean this
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="admin-section-title">{t("nav.analytics")}</p>
+          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
+            <BarChart3 size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
+            {t("analytics.title")}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("analytics.subtitle")}</p>
+        </div>
+
+        {/* The dashboard's own header control, moved here with the reports
+            it scopes. The CSV export travels with the range picker because
+            it downloads exactly the selected window — see the component's
+            header for why the two are one control and not two. */}
+        <DashboardControls
+          currentRange={rangeDays}
+          labels={{
+            rangeLabel: t("dashboard.rangeLabel"),
+            range7: t("dashboard.range7"),
+            range30: t("dashboard.range30"),
+            range90: t("dashboard.range90"),
+            range365: t("dashboard.range365"),
+            exportReport: t("dashboard.exportReport"),
+          }}
+        />
+      getNewsList({ ...parseFilters({}), sort: "views", perPage: 10 }),
+      getProjectConversions(locale, rangeMonths),
+      getCompanyStats(),
+      getEventRsvpSummary(locale, 6),
+      getCookieConsentStats(),
+      canViewLeads
+        ? Promise.all([
+            getMonthlyLeads(12),
+            getLeadsBySource(rangeMonths),
+            getLeadPipeline(),
+            getWeekOverWeekLeads(),
+          ])
+        : Promise.resolve(null),
+    ]);
 
   const offline = isDatabaseOffline();
 
   const dayFormat = new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short" });
+          cookieConsent: {
+            total: cookieStats.total,
+            analyticsRate: cookieStats.analyticsRate,
+            marketingRate: cookieStats.marketingRate,
+          },
   const monthFormat = new Intl.DateTimeFormat(intlLocale(locale), { month: "short", year: "2-digit" });
   const rsvpDateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
@@ -130,6 +201,24 @@ export default async function AdminAnalyticsPage(props: Props) {
   const [monthly, bySource, pipeline, weekOverWeek] = leadsData ?? [[], [], null, null];
 
   const funnelStages = pipeline
+          /* Pre-formatted here rather than in the client component: the
+             seat count is an ICU plural pair and the date is locale-aware,
+             and AnalyticsTabs deliberately does no arithmetic and no
+             localisation of its own. */
+          eventRsvp: eventRsvp.map((event) => ({
+            eventId: event.eventId,
+            title: event.title,
+            startsAt: event.startsAt.toISOString(),
+            dateLabel: rsvpDateFormat.format(event.startsAt),
+            fillRate: event.fillRate,
+            seatsLabel:
+              event.capacity !== null
+                ? t("reports.rsvp.filled", {
+                    registered: event.registered,
+                    capacity: event.capacity,
+                  })
+                : t("reports.rsvp.registeredOnly", { registered: event.registered }),
+          })),
     ? pipeline.stages.filter((stage) => (FUNNEL_STAGES as string[]).includes(stage.status))
     : [];
   const maxFunnelCount = Math.max(...funnelStages.map((stage) => stage.count), 1);
@@ -175,6 +264,7 @@ export default async function AdminAnalyticsPage(props: Props) {
         traffic={{
           trend: trendPoints,
           totalViews: trend.totalViews,
+          conversionSubtitle: t("reports.conversion.subtitle"),
           countingSince: trend.countingSince,
           gaConfigured: settings.analytics.gaMeasurementId.trim().length > 0,
           metaPixelConfigured: settings.analytics.metaPixelId.trim().length > 0,
@@ -184,9 +274,18 @@ export default async function AdminAnalyticsPage(props: Props) {
             analyticsRate: cookieStats.analyticsRate,
             marketingRate: cookieStats.marketingRate,
           },
+          monthlySubtitle: t("reports.monthly.subtitle"),
         }}
+          sourcesSubtitle: t("reports.sources.subtitle"),
         content={{
+          pipelineSubtitle: t("reports.pipeline.subtitle"),
           topArticles: topArticlesView.rows.map((row) => ({
+          rsvpTitle: t("reports.rsvp.title"),
+          rsvpSubtitle: t("reports.rsvp.subtitle"),
+          cookieConsentTitle: t("reports.cookieConsent.title"),
+          cookieConsentSubtitle: t("reports.cookieConsent.subtitle", { total: cookieStats.total }),
+          cookieConsentAnalytics: t("reports.cookieConsent.analytics"),
+          cookieConsentMarketing: t("reports.cookieConsent.marketing"),
             id: row.id,
             title: row.title,
             views30: row.views30,
