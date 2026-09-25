@@ -42,13 +42,23 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { marked } from "marked";
 import { Role } from "@prisma/client";
-import { AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Trash2,
+} from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import MarkdownToolbar from "@/components/admin/MarkdownToolbar";
 import NewsSeoPanel from "@/components/admin/NewsSeoPanel";
@@ -103,6 +113,11 @@ export type NewsFormValues = {
   /** Comma-separated, same convention as `tags` — NewsArticle-level. */
   secondaryKeywords: string;
 };
+
+/** Where §7.2's focus mode is remembered. One key for the whole editor,
+ *  not one per article: it is how this person likes to write, not a fact
+ *  about any particular draft. */
+const FOCUS_MODE_KEY = "andaman.news.focusMode";
 
 export const EMPTY_ARTICLE: NewsFormValues = {
   slug: "",
@@ -330,6 +345,7 @@ export default function NewsForm({
 
   const minutesLabel = (minutes: number) => t("news.readingTime", { minutes });
 
+
   // Mirrored so NewsSeoPanel can recompute its score/checklist/density on
   // every keystroke — see the file header for why excerpt is not among
   // these.
@@ -344,7 +360,6 @@ export default function NewsForm({
   const [schemaType, setSchemaType] = useState(values.schemaType);
   const [canonicalUrl, setCanonicalUrl] = useState(values.canonicalUrl);
   const [secondaryKeywords, setSecondaryKeywords] = useState(values.secondaryKeywords);
-
   // Fed by NewsSeoPanel on its own 300ms debounce — see that file. Drives
   // the publish-gate UI below; the real enforcement is server-side in
   // actions.ts's applySeoPublishGate() regardless of what this shows.
@@ -354,6 +369,48 @@ export default function NewsForm({
   // — never automatically. See the file header for the title↔H1 sync this
   // unlocks once it's HTML.
   const [contentFormat, setContentFormat] = useState<ContentFormat>(values.contentFormat);
+
+  /*
+    §7.2's focus mode. Remembered in localStorage rather than in the URL or
+    on the server: it is a preference about this browser window, not about
+    the article, and an editor who works in it wants it on again tomorrow.
+
+    Read in an effect rather than in useState's initializer, because the
+    server renders this component too and localStorage does not exist
+    there — reading it during render makes the first client render disagree
+    with the server's and React replaces the whole tree.
+  */
+  const [focusMode, setFocusMode] = useState(false);
+
+  useEffect(() => {
+    try {
+      setFocusMode(window.localStorage.getItem(FOCUS_MODE_KEY) === "1");
+    } catch {
+      // Private mode, or storage disabled. The default is off, which is
+      // what it already is.
+    }
+  }, []);
+
+  function toggleFocusMode() {
+    setFocusMode((on) => {
+      const next = !on;
+      try {
+        window.localStorage.setItem(FOCUS_MODE_KEY, next ? "1" : "0");
+      } catch {
+        // Not being able to remember it is not a reason not to do it.
+      }
+      return next;
+    });
+  }
+
+  /* §7.3's counter. Recomputed on every keystroke rather than debounced
+     like NewsSeoPanel's panel-wide recompute: this is one cheap pass over
+     the body, and a word count that lags a third of a second behind the
+     words reads as broken. */
+  const richTextStats = useMemo(
+    () => getContentStats(content, contentFormat),
+    [content, contentFormat],
+  );
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const richTextEditorRef = useRef<RichTextEditorHandle>(null);
@@ -447,6 +504,25 @@ export default function NewsForm({
                 {statusPillLabel}
               </span>
             )}
+            {/* §7.2. In the header rather than beside the body field,
+                because what it changes is the whole page's layout and not
+                anything about the article. */}
+            <button
+              type="button"
+              onClick={toggleFocusMode}
+              aria-pressed={focusMode}
+              title={focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-xs border transition-colors ${
+                focusMode
+                  ? "border-primary/40 bg-primary/5 text-primary"
+                  : "border-primary/15 text-ink-muted hover:border-primary/30 hover:text-primary"
+              }`}
+            >
+              {focusMode ? <Minimize2 size={15} aria-hidden /> : <Maximize2 size={15} aria-hidden />}
+              <span className="sr-only">
+                {focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
+              </span>
+            </button>
             <SubmitButton label={submitLabel} pending={isPending} form="news-form" />
           </div>
         </div>
@@ -480,7 +556,11 @@ export default function NewsForm({
           </SaveToast>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div
+          className={`grid gap-6 ${
+            focusMode ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,1fr)_320px]"
+          }`}
+        >
           <div className="space-y-8">
             {/* ── Identity ────────────────────────────────────────────── */}
             <section className="admin-card space-y-5">
@@ -626,9 +706,22 @@ export default function NewsForm({
                 />
               ) : (
                 <div>
-                  <label htmlFor="rich-text-body" className="admin-label">
-                    {lang.toUpperCase()}
-                  </label>
+                  {/* §7.3: the Markdown field has carried a count beside its
+                      label since it existed; rich text had none, so the only
+                      way to see how long a draft was running was to glance at
+                      the SEO panel. Same getContentStats() the panel calls —
+                      Thai word counting has its own rules in there and a
+                      second implementation would disagree with the one the
+                      publish gate reads. */}
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                    <label htmlFor="rich-text-body" className="admin-label mb-0">
+                      {lang.toUpperCase()}
+                    </label>
+                    <span className="text-xs tabular-nums text-ink-muted">
+                      {t("news.seo.statsWordsCount", { count: richTextStats.wordCount })} ·{" "}
+                      {minutesLabel(richTextStats.readingMinutes)}
+                    </span>
+                  </div>
                   <input type="hidden" name="content" value={content} />
                   <RichTextEditor
                     ref={richTextEditorRef}
@@ -817,7 +910,15 @@ export default function NewsForm({
             </div>
           </div>
 
-          {/* ── SEO inspector ───────────────────────────────────────────── */}
+          {/* ── SEO inspector ─────────────────────────────────────────────
+              `hidden`, not unmounted, and §7.2 is explicit about why: the
+              publish gate (§3.5) reads the score this panel computes and
+              reports through onSeoResultChange. Unmounting it would stop
+              that arriving, and the gate would quietly go back to whatever
+              the last value was — or to nothing at all on a fresh load,
+              which is the state that lets an article through. Focus mode
+              turns off the display, not the work. */}
+          <div className={focusMode ? "hidden" : undefined}>
           <NewsSeoPanel
             lang={lang}
             languageComplete={languageComplete}
@@ -865,6 +966,7 @@ export default function NewsForm({
                 : undefined
             }
           />
+          </div>
         </div>
       </form>
 

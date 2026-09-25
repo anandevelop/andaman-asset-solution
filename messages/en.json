@@ -1471,6 +1471,10 @@
         "publish": "Publish",
         "updateArticle": "Update article",
         "transitionFailed": "Saved, but the status could not be updated. Try again in a moment."
+      },
+      "focusMode": {
+        "enter": "Focus mode",
+        "exit": "Exit focus mode"
       }
     },
     "eBrochures": {
