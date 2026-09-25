@@ -593,7 +593,7 @@
       "VIEWER": "只读"
     },
     "nav": {
-      "dashboard": "仪表盘",
+      "dashboard": "今日工作",
       "projects": "项目",
       "news": "新闻",
       "eBrochures": "电子手册",
@@ -605,7 +605,7 @@
       "settings": "设置",
       "activity": "操作记录",
       "seo": "SEO",
-      "analytics": "统计与报告",
+      "analytics": "报告与统计",
       "media": "媒体库",
       "mobileView": "移动端视图",
       "publishing": "审核与发布"
@@ -2458,10 +2458,11 @@
       }
     },
     "navGroups": {
-      "projects": "项目与进度",
+      "sales": "销售",
+      "properties": "项目",
       "content": "网站内容",
-      "sales": "销售与客资",
-      "administration": "系统管理"
+      "growth": "市场推广",
+      "system": "系统"
     },
     "collapseSidebar": "收起侧边栏",
     "expandSidebar": "展开侧边栏",

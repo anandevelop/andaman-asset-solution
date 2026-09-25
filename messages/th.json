@@ -593,7 +593,7 @@
       "VIEWER": "ผู้ดูอย่างเดียว"
     },
     "nav": {
-      "dashboard": "ภาพรวม",
+      "dashboard": "งานวันนี้",
       "projects": "โครงการ",
       "news": "ข่าวสาร",
       "eBrochures": "อีโบรชัวร์",
@@ -605,7 +605,7 @@
       "settings": "ตั้งค่า",
       "activity": "ประวัติการใช้งาน",
       "seo": "SEO",
-      "analytics": "สถิติและรายงาน",
+      "analytics": "รายงานและสถิติ",
       "media": "คลังสื่อ",
       "mobileView": "โหมดมือถือ",
       "publishing": "ตรวจและเผยแพร่"
@@ -2458,10 +2458,11 @@
       }
     },
     "navGroups": {
-      "projects": "โครงการและความคืบหน้า",
+      "sales": "งานขาย",
+      "properties": "โครงการ",
       "content": "เนื้อหาเว็บไซต์",
-      "sales": "งานขายและลูกค้า",
-      "administration": "ผู้ดูแลระบบ"
+      "growth": "การตลาด",
+      "system": "ระบบ"
     },
     "collapseSidebar": "ย่อแถบเมนู",
     "expandSidebar": "ขยายแถบเมนู",

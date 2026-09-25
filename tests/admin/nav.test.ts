@@ -250,6 +250,96 @@ describe("the publishing hub", () => {
   });
 });
 
+describe("the sidebar each role gets", () => {
+  /**
+   * The whole point of the restructure, written down.
+   *
+   * Nineteen rows became fourteen by turning rows that were really views
+   * of something else into tabs of that something — a change that is easy
+   * to undo one row at a time, each time for a locally reasonable reason,
+   * which is how it got to nineteen. An exact list rather than a count:
+   * a count passes when a row is added and another removed in the same
+   * change, which is exactly when somebody should be made to look.
+   *
+   * The desktop rail, so `mobileOnly` is excluded — see that field's note.
+   */
+  const EXPECTED: Record<Role, string[]> = {
+    SUPER_ADMIN: [
+      "dashboard",
+      "leads",
+      "salesTeam",
+      "projects",
+      "pages",
+      "news",
+      "events",
+      "media",
+      "publishing",
+      "seo",
+      "analytics",
+      "settings",
+      "users",
+      "activity",
+    ],
+    // No users or activity: both are OWNER_ONLY.
+    ADMIN: [
+      "dashboard",
+      "leads",
+      "salesTeam",
+      "projects",
+      "pages",
+      "news",
+      "events",
+      "media",
+      "publishing",
+      "seo",
+      "analytics",
+      "settings",
+    ],
+    // Content only. No CRM (viewAllLeads is false for EDITOR — the PDPA
+    // fix), no SEO, no analytics, no settings.
+    EDITOR: ["dashboard", "salesTeam", "projects", "pages", "news", "events", "media", "publishing"],
+    // CRM plus the roster they are on. salesTeam is in CONTENT_AND_CRM.
+    SALES: ["dashboard", "leads", "salesTeam"],
+    // Read-only: everything the (catalog) and (content) zones admit them
+    // to, and nothing else. Not salesTeam — CONTENT_AND_CRM leaves VIEWER
+    // out because that page's own guard is a Role.SALES rank they do not
+    // meet; see the note on that set in lib/admin/nav.ts.
+    VIEWER: ["dashboard", "projects", "pages", "news", "events", "media", "publishing"],
+  };
+
+  for (const [role, expected] of Object.entries(EXPECTED) as [Role, string[]][]) {
+    it(`${role} sees ${expected.length} rows`, () => {
+      const seen = visibleNav(role, "rail").flatMap((group) => group.items.map((i) => i.key));
+
+      expect(seen).toEqual(expected);
+    });
+  }
+
+  it("is fourteen rows for the owner", () => {
+    // The number the restructure was aiming at, stated once so a diff that
+    // changes it has to change this line too.
+    expect(EXPECTED.SUPER_ADMIN).toHaveLength(14);
+  });
+
+  it("groups them by job, not by department", () => {
+    const groups = visibleNav(Role.SUPER_ADMIN, "rail").map((group) => group.key);
+
+    expect(groups).toEqual(["overview", "sales", "properties", "content", "growth", "system"]);
+  });
+
+  it("labels every group it draws", () => {
+    // A heading key that does not resolve renders the raw key at the top
+    // of a menu section. next-intl throws for a missing one, so this is
+    // the cheaper failure.
+    const messages = JSON.parse(readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"));
+
+    for (const group of visibleNav(Role.SUPER_ADMIN, "rail")) {
+      if (!group.labelKey) continue;
+      expect(messages.admin.navGroups[group.labelKey], group.labelKey).toBeTruthy();
+    }
+  });
+});
+
 describe("leads and appointments", () => {
   it("are one sidebar row with two tabs", () => {
     const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);

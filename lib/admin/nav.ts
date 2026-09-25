@@ -19,16 +19,26 @@
  * Role allow-lists rather than a minimum rank, capability AND-ed on top,
  * tabs and aliases declared per item — the blueprint's §4.2.
  *
- * The sidebar now holds entities and pages only. Eight of the old rows
- * edited one section of one public page and have become tabs inside the
- * Pages hub: the ordering of those sections already lived at
- * /admin/pages/home/sections (lib/home-sections.ts), so ordering a section
- * and writing it used to be two unrelated places in the menu. Nineteen
- * rows, five groups.
+ * The sidebar holds entities and pages only. Nineteen rows became
+ * fourteen over two passes, and every removal is the same move: a row that
+ * was really a view of something else became a tab of that something.
  *
- * Group keys are still the old ones because they are also i18n keys; the
- * renames (projects → properties, administration → system) come with the
- * zone layouts in Phase 4.
+ *   · eight section editors  → tabs of the Pages hub, whose ordering
+ *                              screen already knew about them
+ *   · Translations           → a tab of Review & publish
+ *   · Brand & SEO settings   → a tab of the SEO hub
+ *   · Company / Contact      → tabs of the Pages hub; both edited a public
+ *                              page from inside the settings drawer
+ *   · Progress / E-brochures → tabs of the project workspace, plus a
+ *                              cross-project strip on the projects list
+ *   · Appointments           → a tab of Leads
+ *   · Mobile view            → still a row, but `mobileOnly`: the drawer
+ *                              draws it, the desktop rail does not
+ *
+ * Six groups, named after the job rather than the department: the SEO and
+ * analytics rows used to sit under "Administration" beside user accounts
+ * and the audit log, which put "how is the site doing" and "who deleted
+ * that" in one list.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -299,13 +309,14 @@ export type NavItem = Gated & {
   tabsBase?: string;
 };
 
-/**
- * Group keys as they are today, because they are also the i18n keys under
- * `admin.navGroups.*`. Phase 3 renames them (projects → properties,
- * administration → system, and adds growth) together with the message
- * files; renaming here first would just blank the four headings.
- */
-export type NavGroupKey = "overview" | "sales" | "projects" | "content" | "administration";
+/** Also the i18n keys under `admin.navGroups.*`. */
+export type NavGroupKey =
+  | "overview"
+  | "sales"
+  | "properties"
+  | "content"
+  | "growth"
+  | "system";
 
 export type NavGroup = {
   key: NavGroupKey;
@@ -367,8 +378,8 @@ export const ADMIN_NAV: readonly NavGroup[] = [
   },
 
   {
-    key: "projects",
-    labelKey: "projects",
+    key: "properties",
+    labelKey: "properties",
     items: [
       {
         /* One row for everything about a property. "Progress" and
@@ -447,8 +458,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
   },
 
   {
-    key: "administration",
-    labelKey: "administration",
+    /* Growth is not administration. SEO and the analytics reports used to
+       sit in one list with user accounts and the audit log, which put
+       "how is the site doing" beside "who deleted that" — two jobs, two
+       people, one heading. */
+    key: "growth",
+    labelKey: "growth",
     items: [
       {
         key: "seo",
@@ -466,6 +481,16 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: BarChart3,
         roles: ROLE_SETS.ADMIN_UP,
       },
+    ],
+  },
+
+  {
+    /* What the word actually covers: how the system behaves, not what the
+       website says. Three groups left this one for a hub of their own
+       (see the file header) and two more moved to `growth`. */
+    key: "system",
+    labelKey: "system",
+    items: [
       { key: "settings", href: "/settings", icon: Settings, roles: ROLE_SETS.ADMIN_UP },
       {
         key: "users",

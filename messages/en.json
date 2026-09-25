@@ -593,7 +593,7 @@
       "VIEWER": "Viewer"
     },
     "nav": {
-      "dashboard": "Dashboard",
+      "dashboard": "Today's work",
       "projects": "Projects",
       "news": "News",
       "eBrochures": "E-Brochures",
@@ -605,7 +605,7 @@
       "settings": "Settings",
       "activity": "Activity",
       "seo": "SEO",
-      "analytics": "Analytics",
+      "analytics": "Reports & analytics",
       "media": "Media",
       "mobileView": "Mobile view",
       "publishing": "Review & publish"
@@ -2458,10 +2458,11 @@
       }
     },
     "navGroups": {
-      "projects": "Projects & Progress",
-      "content": "Website Content",
-      "sales": "Sales & Leads",
-      "administration": "Administration"
+      "sales": "Sales",
+      "properties": "Properties",
+      "content": "Website content",
+      "growth": "Marketing",
+      "system": "System"
     },
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
