@@ -107,6 +107,16 @@ export type ProjectListCard = ProjectCard & {
    *  already locale-picked. The card shows the first few. */
   facilityNames: string[];
   signal: ProjectSignal | null;
+  /**
+   * The development's pin, null until an administrator sets one.
+   *
+   * On ProjectListCard rather than ProjectCard: /contact's map panel lists
+   * every published project as a place you can route to, and needs the
+   * coordinate to measure the straight-line distance from the office.
+   * ProjectDetail declares its own — a detail page reads the full record.
+   */
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export type FloorPlanSummary = {
@@ -494,6 +504,8 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
           pickLocale(locale, facility.nameTh, facility.nameEn),
       ),
       signal: signalFor(project, awards),
+      latitude: toNumber(project.latitude),
+      longitude: toNumber(project.longitude),
     };
   });
 });

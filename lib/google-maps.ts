@@ -34,9 +34,28 @@ const TIMEOUT_MS = 4000;
 const GOOGLE_MAPS_HOSTS = /(^|\.)google\.[a-z.]+$/i;
 const SHORT_LINK_HOSTS = /^(goo\.gl|maps\.app\.goo\.gl|g\.co)$/i;
 
+/**
+ * The pin itself, from the `!3d<lat>!4d<lng>` pair inside the `data=`
+ * blob of a resolved /maps/place/ URL.
+ *
+ * Tried before @lat,lng below, and that ordering is the point. `@` is
+ * where the *camera* was — the centre of whoever's screen produced the
+ * link — and the place is only at the centre if they happened to have it
+ * centred. For the share link the client sent for The Residence Prime the
+ * two differ by about 200 metres, which is the difference between a pin on
+ * the development and a pin on the road outside it. The map draws its own
+ * marker at the centre of the embed, so that error is visible rather than
+ * academic.
+ *
+ * Absent from a short link until it is resolved, and absent entirely from
+ * a plain search URL — hence the fallback rather than a replacement.
+ */
+const PIN_COORDS = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/;
+
 /** "@13.736717,100.523186,17z" segment on /maps/place/.../@lat,lng,zoom/
  *  URLs — present on almost every link copied out of Maps once you've
- *  actually opened the pin, share link or not. */
+ *  actually opened the pin, share link or not. The viewport, not the pin:
+ *  see PIN_COORDS above for why it is the second choice. */
 const AT_COORDS = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/;
 
 /** "/maps/place/<name>/" segment — the fallback for links that don't
@@ -48,6 +67,12 @@ const PLACE_SEGMENT = /\/maps\/place\/([^/@]+)/;
  *  when the URL doesn't look like a page with an actual location on it
  *  (e.g. plain google.com/maps with no query at all). */
 function extractQuery(url: URL): string | null {
+  /* The whole URL, not just the pathname: Maps puts the data blob in the
+     path on a /maps/place/ link but hands it over as a `data=` query
+     parameter on some others, and both spell the pin the same way. */
+  const pinMatch = url.href.match(PIN_COORDS);
+  if (pinMatch) return `${pinMatch[1]},${pinMatch[2]}`;
+
   const atMatch = url.pathname.match(AT_COORDS);
   if (atMatch) return `${atMatch[1]},${atMatch[2]}`;
 

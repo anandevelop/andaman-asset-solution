@@ -8,9 +8,20 @@
  *
  * The map is a plain iframe against Google's `/maps?output=embed` endpoint.
  * The Maps JavaScript API would give us a styled map and cost an API key,
- * a billing account and a per-load charge — for a pin on a sales office
- * that nobody interacts with beyond tapping "directions", the iframe is the
- * right trade. It is lazy-loaded so it costs nothing until scrolled to.
+ * a billing account and a per-load charge — for a sales office, the iframe
+ * is the right trade. It is lazy-loaded so it costs nothing until scrolled
+ * to. MapCard's own header covers how it draws routes inside that frame
+ * without the Directions API.
+ *
+ * The map panel lists the airport and every published development, with
+ * the straight-line distance from the office worked out here rather than
+ * in the browser — this page is ISR-cached, so it is computed once per
+ * revalidation for everyone instead of once per visitor.
+ *
+ * The contact details beside the form are deliberately not folded into
+ * that panel. A phone number, an email address and the opening hours are
+ * what someone came to this page for; putting them inside a map widget
+ * would hide them behind a map.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -24,9 +35,11 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import LeadForm from "@/components/LeadForm";
-import MapCard from "@/components/MapCard";
+import MapCard, { type MapListGroup } from "@/components/MapCard";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
+import { getPublishedProjects } from "@/lib/projects";
+import { haversineKm, placeEmbedUrl, type LatLng } from "@/lib/map-places";
 import type { Locale } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -68,12 +81,17 @@ export default async function ContactPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, tChat, tNav, settings] = await Promise.all([
+  const [t, tChat, tNav, tMap, settings, projects] = await Promise.all([
     getTranslations("contact"),
     getTranslations("chatButtons"),
     getTranslations("nav"),
-    // Live values — edited at /admin/settings, no deploy needed.
+    // The map panel's strings — shared with the project page, so they live
+    // in their own namespace rather than under `contact`.
+    getTranslations("map"),
+    // Live values — edited at /admin/pages/contact, no deploy needed.
     getSiteSettings(),
+    // "Visit our projects" in the map panel.
+    getPublishedProjects(locale),
   ]);
 
   const localeKey = locale as Locale;
@@ -85,19 +103,94 @@ export default async function ContactPage(props: Props) {
   const waGreeting = encodeURIComponent(tChat("whatsappGreeting"));
   const whatsappUrl = `https://wa.me/${waNumber}?text=${waGreeting}`;
 
-  // Same query the "view" link uses, rendered as an embed. Encoding the
-  // address rather than reusing mapUrl means the pin matches the address
-  // printed above it.
-  const mapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
-    address,
-  )}&output=embed&hl=${locale}`;
-  // Turn-by-turn, as opposed to settings.contact.mapUrl below (a "view
-  // this place" link, admin-edited at /admin/settings) — the two open
-  // different things in Google Maps, hence two separate buttons on the
-  // card below.
-  const mapDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-    address,
-  )}`;
+  /*
+    The office pin, and everything built from it.
+
+    The embed used to be a search for the printed address. That put
+    Google's marker wherever its geocoder landed — for this address, a
+    couple of hundred metres from the building — and MapCard draws its own
+    marker at the centre of the frame, so the two would not have agreed.
+    A coordinate embed centres on the coordinate, exactly.
+
+    Falls back to the old address search when no coordinate is set. The
+    map still works; MapCard just draws no pin of its own, which is the
+    honest outcome when we cannot say where the centre is.
+  */
+  const office: LatLng | null =
+    settings.contact.latitude !== null && settings.contact.longitude !== null
+      ? { lat: settings.contact.latitude, lng: settings.contact.longitude }
+      : null;
+
+  const mapEmbedUrl = office
+    ? placeEmbedUrl(office, locale)
+    : `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed&hl=${locale}`;
+
+  /* Turn-by-turn, as opposed to settings.contact.mapUrl below (a "view
+     this place" link, admin-edited at /admin/pages/contact) — the two open
+     different things in Google Maps, hence two separate buttons on the
+     card below. No `origin`: Google routes from wherever the visitor is,
+     which is what "Get Directions" means on a page about one place. */
+  const mapDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${
+    office ? `${office.lat},${office.lng}` : encodeURIComponent(address)
+  }`;
+
+  /*
+    The two groups in the map panel.
+
+    Straight-line distances, measured here so no browser has to: this page
+    is ISR-cached, so it is one calculation per revalidation rather than
+    one per visitor. They are labelled as straight-line everywhere they
+    appear (map.noteStraight below, and the route card's own caption) —
+    turning a crow-flies kilometre into a plausible-sounding drive time
+    would be inventing a number.
+
+    A project with no coordinate yet keeps its row: the distance cell says
+    "Route ↗" instead of a number, and the route is looked up by name.
+  */
+  const airport = siteConfig.airport;
+  const mapGroups: MapListGroup[] = [
+    {
+      id: "getting-here",
+      label: tMap("gettingHere"),
+      items: [
+        {
+          id: "airport",
+          name: airport.name,
+          distanceKm: office
+            ? haversineKm(office, { lat: airport.latitude, lng: airport.longitude })
+            : null,
+          durationMin: null,
+          distanceKind: "straight",
+          target: { lat: airport.latitude, lng: airport.longitude },
+          // The one row read in the other direction: a visitor tapping it
+          // is arriving, so the route runs airport → office.
+          towardOrigin: true,
+          icon: "plane",
+        },
+      ],
+    },
+    {
+      id: "projects",
+      label: tMap("visitProjects"),
+      items: projects.map((project) => {
+        const pin =
+          project.latitude !== null && project.longitude !== null
+            ? { lat: project.latitude, lng: project.longitude }
+            : null;
+
+        return {
+          id: project.id,
+          name: project.name,
+          meta: project.location,
+          distanceKm: office && pin ? haversineKm(office, pin) : null,
+          durationMin: null,
+          distanceKind: "straight" as const,
+          target: pin ?? { query: `${project.name}, Phuket` },
+          icon: "home" as const,
+        };
+      }),
+    },
+  ];
 
   const details = [
     {
@@ -256,14 +349,21 @@ export default async function ContactPage(props: Props) {
 
           <Reveal delay={0.1} className="mt-6">
             <MapCard
+              origin={{
+                name: siteConfig.name,
+                address,
+                lat: settings.contact.latitude,
+                lng: settings.contact.longitude,
+              }}
               embedSrc={mapEmbedUrl}
               title={t("mapLabel")}
-              name={siteConfig.name}
-              address={address}
               viewUrl={settings.contact.mapUrl}
               directionsUrl={mapDirectionsUrl}
+              groups={mapGroups}
+              groupLayout="stacked"
+              openingHours={siteConfig.contact.openingWindow}
+              note={tMap("noteStraight")}
               labels={{ viewOnMaps: t("directions"), getDirections: t("mapGetDirections") }}
-              className="aspect-16/10 h-auto sm:aspect-21/9"
             />
           </Reveal>
         </div>

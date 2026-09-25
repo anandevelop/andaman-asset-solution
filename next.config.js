@@ -191,8 +191,23 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
+    /*
+      geolocation=(self), not ().
+
+      An empty allowlist does not merely gate the permission — it removes
+      the capability, so `getCurrentPosition` invokes its error callback
+      immediately and the browser never asks the visitor anything. The
+      map's "How far is it from you?" button therefore reported
+      "permission was declined" to everyone, with no prompt and nothing in
+      the console to explain it. `self` restores the ordinary behaviour:
+      our own pages may ask, the visitor decides, and a third-party frame
+      still cannot.
+
+      The coordinate is used in the browser to draw one line and is never
+      sent to us — see components/MapCard.tsx.
+    */
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    value: "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
   },
   {
     key: "Strict-Transport-Security",

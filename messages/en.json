@@ -183,6 +183,35 @@
     "mapLabel": "Map showing the Andaman Asset Solution sales office in Cherngtalay, Phuket",
     "preferWhatsApp": "Drop us a message on WhatsApp — our team typically replies within a few hours during office hours."
   },
+  "map": {
+    "howFar": "How far is it from you?",
+    "useLocation": "Use my location — nothing is stored",
+    "locating": "Locating…",
+    "fromYou": "{km} km from you",
+    "straightTapRoute": "Straight-line distance · tap for the driving route",
+    "declined": "Location permission was declined",
+    "unavailable": "Location is not available in this browser",
+    "yourLocation": "Your location",
+    "copy": "Copy",
+    "copied": "Copied ✓",
+    "copyFailed": "Copy failed",
+    "openRoute": "Open route",
+    "back": "Back to the map",
+    "categories": "Categories",
+    "min": "min",
+    "km": "km",
+    "byCar": "{km} km by car",
+    "straightLine": "straight line",
+    "seeRoute": "see route",
+    "route": "Route",
+    "openNow": "Open now · closes {time}",
+    "closedToday": "Closed · opens today {time}",
+    "closedTomorrow": "Closed · opens tomorrow {time}",
+    "gettingHere": "Getting here",
+    "visitProjects": "Visit our projects",
+    "noteDrive": "Drive times from the project. Tap a place to see the route.",
+    "noteStraight": "Distances are straight-line from the office. Tap for the driving route."
+  },
   "progress": {
     "eyebrow": "Construction Progress",
     "title": "See the work as it happens",
@@ -587,7 +616,10 @@
     "pages": {
       "section": "Website content",
       "title": "Pages",
-      "subtitle": "The standing pages of the public site, section by section · a section's order lives on the Home tab, its words on the section's own"
+      "subtitle": "The standing pages of the public site, section by section · a section's order lives on the Home tab, its words on the section's own",
+      "contact": {
+        "addressGroup": "Address & opening hours · {lang}"
+      }
     },
     "tabs": {
       "pages": {
@@ -2102,6 +2134,9 @@
         "email": "General email",
         "salesEmail": "Sales email",
         "mapUrl": "Google Maps link",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "coordinatesHint": "Right-click the office on Google Maps and click the coordinates at the top to copy them, then paste the first number here and the second below. Decimal degrees, e.g. 7.999478.",
         "addressTh": "Address (Thai)",
         "addressEn": "Address (English)",
         "addressZh": "Address (Chinese)",

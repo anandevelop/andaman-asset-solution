@@ -1541,6 +1541,17 @@ const imageSetting = (extensions: RegExp, message: string) =>
 const RASTER_EXT = /\.(png|jpe?g|webp|avif)(\?.*)?$/i;
 const ICON_EXT = /\.(png|ico)(\?.*)?$/i;
 
+/** Decimal degrees within ±`limit`. Stored as a string, like every other
+ *  setting — the value is parsed back to a number in lib/settings.ts. */
+const coordinateSetting = (limit: number, name: string) =>
+  z
+    .string()
+    .refine(
+      (value) => /^-?\d{1,3}(\.\d+)?$/.test(value.trim()),
+      `Enter decimal degrees, e.g. 7.999478 (a full stop, not a comma)`,
+    )
+    .refine((value) => Math.abs(Number(value)) <= limit, `A ${name} is between -${limit} and ${limit}`);
+
 /**
  * Meta title and description are capped, but nowhere near Google's
  * display limits.
@@ -1565,6 +1576,20 @@ export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> 
   "contact.email": z.string().email("Enter a valid email address"),
   "contact.salesEmail": z.string().email("Enter a valid email address"),
   "contact.mapUrl": z.string().url("Enter a full https:// URL"),
+
+  /*
+    The office pin.
+
+    Decimal degrees only, and rejected rather than coerced: Google Maps
+    also hands out "7°59'58.1"N" if you copy the wrong line out of the
+    place card, and Number() turns that into NaN, which would store a
+    coordinate the map then silently cannot use. A comma decimal separator
+    ("7,999478" — the default on a Thai or Russian keyboard layout) fails
+    the same way, hence the explicit mention.
+  */
+  "contact.latitude": coordinateSetting(90, "latitude"),
+  "contact.longitude": coordinateSetting(180, "longitude"),
+
   "social.facebook": z.string().url("Enter a full https:// URL"),
   "social.instagram": z.string().url("Enter a full https:// URL"),
   "social.youtube": z.string().url("Enter a full https:// URL"),

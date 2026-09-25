@@ -48,6 +48,11 @@ export const SETTING_KEYS = [
   "contact.officeHoursZh",
   "contact.officeHoursRu",
   "contact.mapUrl",
+  /* The sales office pin. Editable because the office can move and the map
+     should not need a deploy to follow it — and because the pin the map
+     draws sits exactly on this coordinate, so "close enough" is visible. */
+  "contact.latitude",
+  "contact.longitude",
   "social.facebook",
   "social.instagram",
   "social.youtube",
@@ -101,6 +106,11 @@ export type SiteSettings = {
     address: { th: string; en: string; zh: string; ru: string };
     officeHours: { th: string; en: string; zh: string; ru: string };
     mapUrl: string;
+    /** Numbers, not the strings the table stores — every consumer wants a
+     *  coordinate. null only if a row holds something unparseable, which
+     *  the validator does not allow through the admin form. */
+    latitude: number | null;
+    longitude: number | null;
   };
   social: {
     facebook: string;
@@ -162,6 +172,8 @@ export function defaultSettings(): Record<SettingKey, string> {
     "contact.officeHoursZh": siteConfig.contact.officeHours.zh,
     "contact.officeHoursRu": siteConfig.contact.officeHours.ru,
     "contact.mapUrl": siteConfig.contact.mapUrl,
+    "contact.latitude": String(siteConfig.contact.latitude),
+    "contact.longitude": String(siteConfig.contact.longitude),
     "social.facebook": siteConfig.social.facebook,
     "social.instagram": siteConfig.social.instagram,
     "social.youtube": siteConfig.social.youtube,
@@ -255,9 +267,41 @@ const readCached = unstable_cache(readMergedSettings, ["site-settings"], {
   revalidate: 3600,
 });
 
+/**
+ * A stored coordinate as a number, or null.
+ *
+ * `Number("")` is 0, which is a real place in the Gulf of Guinea — so an
+ * empty or malformed row has to resolve to null rather than to a pin four
+ * thousand kilometres off the coast of Africa. The caller treats null as
+ * "no coordinate", which hides the pin rather than misplacing it.
+ *
+ * Takes `undefined` too, for the same reason the merge below exists.
+ */
+function toCoordinate(raw: string | undefined): number | null {
+  if (!raw || raw.trim().length === 0) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
 /** The structured settings every consumer reads. */
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const values = await readCached();
+  /*
+    Defaults underneath the cached record, not just inside it.
+
+    readMergedSettings() already starts from defaultSettings(), so in the
+    steady state this spread changes nothing. It matters for the one frame
+    where it does not: a cache entry written before a new key existed has
+    no property for it, and `values["contact.latitude"]` is then undefined
+    rather than a string. Adding contact.latitude/longitude took every
+    page down with "Cannot read properties of undefined (reading 'trim')"
+    until the entry rolled over — on a running production instance that
+    would have been a sitewide 500 from a deploy that touched no page.
+
+    This file's contract is that config/site.ts is always the fallback.
+    That has to hold against a stale cache, not only against a stale
+    database.
+  */
+  const values = { ...defaultSettings(), ...(await readCached()) };
 
   return {
     contact: {
@@ -279,6 +323,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         ru: values["contact.officeHoursRu"],
       },
       mapUrl: values["contact.mapUrl"],
+      latitude: toCoordinate(values["contact.latitude"]),
+      longitude: toCoordinate(values["contact.longitude"]),
     },
     social: {
       facebook: values["social.facebook"],

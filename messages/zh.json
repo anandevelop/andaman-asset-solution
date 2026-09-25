@@ -183,6 +183,35 @@
     "mapLabel": "显示Andaman Asset Solution位于普吉岛Cherngtalay销售中心位置的地图",
     "preferWhatsApp": "通过WhatsApp给我们留言——在办公时间内，我们通常会在几小时内回复。"
   },
+  "map": {
+    "howFar": "距离您有多远？",
+    "useLocation": "使用我的位置 — 不会保存任何数据",
+    "locating": "正在定位…",
+    "fromYou": "距您 {km} 公里",
+    "straightTapRoute": "直线距离 · 点按查看驾车路线",
+    "declined": "已拒绝位置权限",
+    "unavailable": "此浏览器不支持定位",
+    "yourLocation": "您的位置",
+    "copy": "复制",
+    "copied": "已复制 ✓",
+    "copyFailed": "复制失败",
+    "openRoute": "打开路线",
+    "back": "返回地图",
+    "categories": "分类",
+    "min": "分钟",
+    "km": "公里",
+    "byCar": "驾车 {km} 公里",
+    "straightLine": "直线距离",
+    "seeRoute": "查看路线",
+    "route": "路线",
+    "openNow": "营业中 · {time} 关闭",
+    "closedToday": "已打烊 · 今天 {time} 开门",
+    "closedTomorrow": "已打烊 · 明天 {time} 开门",
+    "gettingHere": "如何前往",
+    "visitProjects": "参观我们的项目",
+    "noteDrive": "从项目出发的驾车时间。点按地点查看路线。",
+    "noteStraight": "距离为从办公室出发的直线距离。点按查看驾车路线。"
+  },
   "progress": {
     "eyebrow": "施工进度",
     "title": "实时查看施工进展",
@@ -587,7 +616,10 @@
     "pages": {
       "section": "网站内容",
       "title": "网站页面",
-      "subtitle": "公开网站的固定页面，按板块管理 · 板块顺序在「首页」标签下，文案在各板块自己的标签下"
+      "subtitle": "公开网站的固定页面，按板块管理 · 板块顺序在「首页」标签下，文案在各板块自己的标签下",
+      "contact": {
+        "addressGroup": "地址与营业时间 · {lang}"
+      }
     },
     "tabs": {
       "pages": {
@@ -2102,6 +2134,9 @@
         "email": "通用邮箱",
         "salesEmail": "销售邮箱",
         "mapUrl": "谷歌地图链接",
+        "latitude": "纬度",
+        "longitude": "经度",
+        "coordinatesHint": "在谷歌地图上右键点击办公室位置，点击顶部的坐标即可复制，然后把第一个数字填在此处、第二个填在下方。使用十进制度数，例如 7.999478。",
         "addressTh": "地址（泰文）",
         "addressEn": "地址（英文）",
         "addressZh": "地址（中文）",

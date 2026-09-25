@@ -446,8 +446,15 @@ const TRINITY_VILLAGE = {
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80",
   ],
 
-  latitude: "8.019400",
-  longitude: "98.298600",
+  /* From the client's own Google Maps share link
+     (https://maps.app.goo.gl/W6MZGHNxg6vdvcrW8). Was 8.019400/98.298600,
+     which is about 3.5 km west of the development — far enough that the
+     map's pin sat in the wrong sub-district. A seeded database is the
+     only place this fixes; a deployment already carrying the old numbers
+     has to be corrected in /admin, because the seed's update branch
+     deliberately never overwrites admin-owned content. */
+  latitude: "7.999230",
+  longitude: "98.322886",
 
   metaTitleEn: "Trinity Village — 30 Pool Villas at Pasak 8, Phuket",
   metaTitleTh: "ทรินิตี้ วิลเลจ — 30 พูลวิลล่า พาซัก 8 ภูเก็ต",

@@ -36,13 +36,57 @@ export const siteConfig = {
       zh: "泰国普吉府他朗县冲塔莱区 Bandon-Cherngtalay 路 141/4 号，邮编 83110",
       ru: "141/4 Bandon-Cherngtalay Rd, Чернгтале, район Таланг, Пхукет 83110, Таиланд",
     },
+    /**
+     * The opening hours a visitor reads, in four languages.
+     *
+     * THESE ARE TWO PLACES, NOT ONE. `openingWindow` below is the same
+     * hours as machine-readable numbers, and the map's "Open now · closes
+     * 18:00" badge is computed from it. Change the office's hours and you
+     * must change both — this block is prose (it carries the GMT+7 note,
+     * the Thai "น.", a "Daily" the window has no concept of) and parsing
+     * it back into numbers across four locales to avoid the duplication
+     * would be a worse trade than the duplication.
+     */
     officeHours: {
       en: "Daily 09:00–18:00 (GMT+7)",
       th: "ทุกวัน 09:00–18:00 น.",
       zh: "每日 09:00–18:00（GMT+7）",
       ru: "Ежедневно 09:00–18:00 (GMT+7)",
     },
-    mapUrl: "https://maps.google.com/?q=Cherngtalay+Phuket",
+    /** See officeHours above: the same hours, kept in sync by hand. */
+    openingWindow: { open: "09:00", close: "18:00", timeZone: "Asia/Bangkok" },
+
+    /**
+     * The sales office pin, from the share link below.
+     *
+     * The map embed is built from these rather than from the address,
+     * because MapCard draws its own marker at the centre of the frame and
+     * Google's geocoder does not put an address's pin there — searching
+     * this address landed a couple of hundred metres off the building, and
+     * our pin would have sat on empty road. Overridable at
+     * /admin/pages/contact (settings keys contact.latitude/longitude).
+     */
+    latitude: 7.999478,
+    longitude: 98.3101671,
+    /* The place itself. Was ?q=Cherngtalay+Phuket, which pointed at the
+       sub-district rather than at us. */
+    mapUrl: "https://maps.app.goo.gl/QovJtwCdaqWeSTk49",
+  },
+
+  /**
+   * Phuket International Airport — the "getting here" row in /contact's
+   * map panel, and nothing else.
+   *
+   * Here rather than in the database because it is not ours and will not
+   * move. It is also in content/nearby-attractions.ts with a drive time
+   * from the projects; that list answers "what is near this villa", this
+   * entry answers "how do I reach your office from my flight", and the two
+   * are measured from different places.
+   */
+  airport: {
+    name: "Phuket International Airport",
+    latitude: 8.1132,
+    longitude: 98.3169,
   },
 
   // No `line` entry here on purpose — the site's only public-facing LINE

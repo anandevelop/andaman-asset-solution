@@ -3,11 +3,11 @@ import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { notFound, redirect } from "next/navigation";
 import { redirectIfMoved } from "@/lib/redirects";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ArrowRight, ChevronDown, Compass, FileDown, MapPin } from "lucide-react";
+import { ArrowRight, Compass, FileDown, MapPin } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
 import SitePlanMap from "@/components/SitePlanMap";
-import MapCard from "@/components/MapCard";
+import MapCard, { type MapListGroup } from "@/components/MapCard";
 import ProgressGallery from "@/components/ProgressGallery";
 import LeadForm from "@/components/LeadForm";
 import JsonLd from "@/components/JsonLd";
@@ -127,6 +127,7 @@ export default async function ProjectPage(props: Props) {
   const [
     t,
     tNav,
+    tMap,
     progress,
     faqs,
     settings,
@@ -138,6 +139,9 @@ export default async function ProjectPage(props: Props) {
   ] = await Promise.all([
       getTranslations("projects"),
       getTranslations("nav"),
+      // The map panel's own strings — shared with /contact, so they live
+      // in their own namespace rather than under `projects`.
+      getTranslations("map"),
       getProjectProgress(project.id, locale),
       // The questions a buyer asks while looking at one development, rather
       // than the whole FAQ — the rest lives on the home page.
@@ -237,6 +241,39 @@ export default async function ProjectPage(props: Props) {
   const mapDirectionsUrl = hasCoords
     ? `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`
     : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location)}`;
+
+  /*
+    The map panel's category tabs — the same Sale Kit list that used to
+    have a section of its own further down this page.
+
+    It moved rather than being copied: showing the identical five columns
+    twice on one page made the second instance read as a different dataset
+    that happened to agree. Here each place is also tappable, which the
+    static list never was.
+
+    Sorted by drive time rather than by the order in the Sale Kit, because
+    the panel draws a bar per row scaled to that time and an unsorted set
+    of bars looks like noise. Routed by name (`query`) rather than by
+    coordinate: these are third-party places and we hold no pin for any of
+    them, so Google's own search is more accurate than anything we could
+    store. ", Phuket" narrows it — there is a Surin Beach in three
+    countries.
+  */
+  const mapGroups: MapListGroup[] = attractionCategories.map((category) => ({
+    id: category.id,
+    label: category.categoryName,
+    items: [...category.items]
+      .sort((a, b) => a.durationMin - b.durationMin)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        meta: `${formatNumber(locale, item.distanceKm)} ${t("units.km")}`,
+        distanceKm: item.distanceKm,
+        durationMin: item.durationMin,
+        distanceKind: "drive" as const,
+        target: { query: `${item.name}, Phuket` },
+      })),
+  }));
 
   // One array for the trail a visitor reads and the one Google reads.
   const trail = trailFor(locale, [
@@ -861,87 +898,13 @@ export default async function ProjectPage(props: Props) {
         </section>
       )}
 
-      {/* ── Nearby Attractions ───────────────────────────────────────── */}
-      {/* 5-column layout desktop, per-category accordion on mobile — same
-          list on every project page, code-owned content rather than a
-          database query (see content/nearby-attractions.ts). */}
-      {attractionCategories.length > 0 && (
-        <section className="bg-primary-900/3 py-20 sm:py-28">
-          <div className="container-luxe">
-            <Reveal>
-              <p className="eyebrow">{t("nearbyEyebrow")}</p>
-              <h2 className="mt-3 max-w-lg text-3xl font-light text-primary sm:text-4xl">
-                {t("nearbyTitle")}
-              </h2>
-            </Reveal>
-
-            <div className="mt-10 hidden gap-8 md:grid md:grid-cols-5">
-              {attractionCategories.map((cat) => (
-                <div key={cat.id}>
-                  <h3 className="border-b border-primary/10 pb-3 text-sm font-medium text-primary">
-                    {cat.categoryName}
-                  </h3>
-                  <ul className="mt-4 space-y-3 text-sm text-ink/70">
-                    {cat.items.map((item) => (
-                      <li key={item.id} className="flex items-baseline justify-between gap-3">
-                        <span>{item.name}</span>
-                        {/* ink/65, not ink/40: 40% lands on #96a0a8 over this
-                            section's background, 2.38:1 — axe flagged it on
-                            every project page. Same fix, same target ratio,
-                            as the Navbar.tsx and Footer.tsx contrast bugs. */}
-                        <span className="shrink-0 text-xs text-ink/65">
-                          {formatNumber(locale, item.distanceKm)} {t("units.km")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 space-y-3 md:hidden">
-              {attractionCategories.map((cat, index) => (
-                // `group` + native `open:`/`group-open:` variants drive the
-                // collapsed/expanded styling straight off the <details>
-                // element's own `open` attribute — no client JS needed.
-                // `open` here is just the initial/default state (React
-                // treats it as an uncontrolled boolean attribute), which is
-                // exactly what "first category open, rest collapsed" needs.
-                <details
-                  key={cat.id}
-                  open={index === 0}
-                  className="group border border-primary/10 bg-surface-muted transition-colors open:bg-white"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium text-primary transition-colors active:bg-primary/5">
-                    {cat.categoryName}
-                    <ChevronDown
-                      size={16}
-                      aria-hidden
-                      className="shrink-0 text-accent-700 transition-transform duration-200 group-open:rotate-180"
-                    />
-                  </summary>
-                  <ul className="mt-4 space-y-3 px-4 pb-4 text-sm text-ink/70">
-                    {cat.items.map((item) => (
-                      <li key={item.id} className="flex items-baseline justify-between gap-3">
-                        <span>{item.name}</span>
-                        {/* ink/65, not ink/40: 40% lands on #96a0a8 over this
-                            section's background, 2.38:1 — axe flagged it on
-                            every project page. Same fix, same target ratio,
-                            as the Navbar.tsx and Footer.tsx contrast bugs. */}
-                        <span className="shrink-0 text-xs text-ink/65">
-                          {formatNumber(locale, item.distanceKm)} {t("units.km")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── Location & Map ──────────────────────────────────────────── */}
+      {/* The "Nearby Attractions" section used to sit here, above the map:
+          the same five Sale Kit categories as a static 5-column grid (an
+          accordion on mobile). It is gone because the map panel below now
+          lists exactly that data, tappable — two copies of one list on one
+          page invited the reader to look for a difference between them.
+          The data itself is untouched: content/nearby-attractions.ts. */}
       {/* Embedded preview needs coordinates (Google's no-key embed
           endpoint takes a lat/lng pair, not an arbitrary share link);
           mapViewUrl/mapDirectionsUrl always resolve to something once
@@ -961,12 +924,19 @@ export default async function ProjectPage(props: Props) {
 
           <Reveal delay={0.1} className="mt-10">
             <MapCard
+              origin={{
+                name: project.name,
+                address: project.location,
+                lat: project.latitude,
+                lng: project.longitude,
+              }}
               embedSrc={mapEmbedSrc}
               title={t("mapTitle")}
-              name={project.name}
-              address={project.location}
               viewUrl={mapViewUrl}
               directionsUrl={mapDirectionsUrl}
+              groups={mapGroups}
+              groupLayout="tabs"
+              note={tMap("noteDrive")}
               labels={{ viewOnMaps: t("mapViewOnMaps"), getDirections: t("mapGetDirections") }}
             />
           </Reveal>
