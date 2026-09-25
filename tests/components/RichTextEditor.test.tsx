@@ -44,6 +44,7 @@ const LABELS = {
   faq: "FAQ block",
   callout: "Callout box",
   calloutTone: (tone: string) => ({ note: "Note", warning: "Warning", success: "Good to know" })[tone] ?? tone,
+  pullQuote: "Pull quote",
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",
@@ -590,6 +591,102 @@ describe("RichTextEditor — callout", () => {
       const out = screen.getByTestId("content-html").textContent ?? "";
       expect(out).toContain('data-block="callout"');
       expect(out).toContain('data-tone="note"');
+    });
+  });
+});
+
+/*
+  The pull quote shares the callout's problem — another <blockquote> that
+  StarterKit also claims — and adds one of its own: its attribution is a
+  <p data-block="quote-attribution">, which StarterKit's paragraph claims
+  just as hard. Both need the priority, and both lose their marker without
+  it, which on the attribution means the line stops being an attribution
+  and becomes an ordinary paragraph inside the quote.
+*/
+describe("RichTextEditor — pull quote", () => {
+  it("round-trips the quote and its attribution", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<blockquote data-block="pull-quote"><p>Phuket has run out of beachfront.</p>' +
+      '<p data-block="quote-attribution">Somchai P., managing director</p></blockquote>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="pull-quote"');
+      expect(out).toContain('data-block="quote-attribution"');
+      expect(out).toContain("Phuket has run out of beachfront.");
+      expect(out).toContain("Somchai P., managing director");
+    });
+  });
+
+  it("keeps a pull quote and a callout apart", async () => {
+    // Both are <blockquote data-block>. If either parse rule were written
+    // loosely enough to match the other, one of the two blocks would take
+    // on the other's styling everywhere it appears.
+    const user = userEvent.setup();
+    render(
+      <Harness
+        initialContent={
+          // Opens on a paragraph so the caret does not land inside the
+          // callout and mount its tone menu — jsdom has no layout for
+          // BubbleMenu to position against.
+          "<p>Intro</p>" +
+          '<blockquote data-block="callout" data-tone="success"><p>A.</p></blockquote>' +
+          '<blockquote data-block="pull-quote"><p>B.</p><p data-block="quote-attribution"></p></blockquote>'
+        }
+      />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="callout"');
+      expect(out).toContain('data-tone="success"');
+      expect(out).toContain('data-block="pull-quote"');
+      // The pull quote has no tone of its own and must not inherit one.
+      expect(out).not.toContain('data-block="pull-quote" data-tone');
+    });
+  });
+
+  it("supplies the attribution for a quote saved without one", async () => {
+    // A required child, so ProseMirror fills it in rather than rejecting
+    // the document — which is what keeps an older pull quote openable.
+    const user = userEvent.setup();
+    render(
+      <Harness initialContent='<blockquote data-block="pull-quote"><p>No name attached.</p></blockquote>' />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="pull-quote"');
+      expect(out).toContain('data-block="quote-attribution"');
+      expect(out).toContain("No name attached.");
+    });
+  });
+
+  it("lifts the highlighted line into the quote", async () => {
+    const user = userEvent.setup();
+    render(<Harness initialContent="<p>The market turned in 2024.</p>" />);
+
+    getEditor().focus();
+    // Select the paragraph, then press the toolbar button.
+    await user.keyboard("{Control>}a{/Control}");
+    await user.click(screen.getByRole("button", { name: "Pull quote" }));
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="pull-quote"');
+      expect(out).toContain("The market turned in 2024.");
     });
   });
 });

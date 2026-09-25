@@ -1376,6 +1376,7 @@
         "tableHeaderRow": "สลับแถวหัวตาราง",
         "tableDelete": "ลบตาราง",
         "callout": "กล่องสรุป",
+        "pullQuote": "ยกคำพูดเด่น",
         "calloutTones": {
           "note": "บันทึก",
           "warning": "ข้อควรระวัง",

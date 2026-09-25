@@ -1376,6 +1376,7 @@
         "tableHeaderRow": "Toggle header row",
         "tableDelete": "Delete table",
         "callout": "Callout box",
+        "pullQuote": "Pull quote",
         "calloutTones": {
           "note": "Note",
           "warning": "Warning",

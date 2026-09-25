@@ -1376,6 +1376,7 @@
         "tableHeaderRow": "切换表头行",
         "tableDelete": "删除表格",
         "callout": "提示框",
+        "pullQuote": "引述块",
         "calloutTones": {
           "note": "备注",
           "warning": "注意",

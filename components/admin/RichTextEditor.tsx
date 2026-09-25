@@ -73,6 +73,7 @@ import {
   Minus,
   SquareCode,
   Strikethrough,
+  TextQuote,
   Heading2,
   Heading3,
   Heading4,
@@ -333,6 +334,54 @@ const Callout = Node.create({
   },
 });
 
+/**
+ * A pull quote: a line lifted out of the article and set large.
+ *
+ * `<blockquote>` again, but unlike the callout this one genuinely is a
+ * quotation, so the tag is honest and `data-block` only separates it from
+ * the ordinary quote StarterKit already gives us.
+ *
+ * The attribution is a second node rather than the `<cite>` or `<footer>`
+ * it would be in ordinary HTML: both of those mean a new entry in
+ * ALLOWED_TAGS, and `<p data-block="quote-attribution">` needs neither a
+ * new tag nor a new attribute. It is a *required* child so the document
+ * cannot end up in a state where half of it was deleted; left empty it
+ * renders as an empty `<p>` that prose-article hides, the same trick an
+ * empty figcaption already uses.
+ */
+const PullQuote = Node.create({
+  name: "pullQuote",
+  group: "block",
+  content: "paragraph+ pullQuoteAttribution",
+  defining: true,
+
+  parseHTML() {
+    // priority, for the third time in this file and the same reason each
+    // time: StarterKit's blockquote claims <blockquote>, and ProseMirror
+    // settles parse rules by priority rather than selector specificity.
+    return [{ tag: 'blockquote[data-block="pull-quote"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["blockquote", { "data-block": "pull-quote" }, 0];
+  },
+});
+
+const PullQuoteAttribution = Node.create({
+  name: "pullQuoteAttribution",
+  content: "inline*",
+  defining: true,
+
+  parseHTML() {
+    // Over StarterKit's paragraph, which claims every <p>.
+    return [{ tag: 'p[data-block="quote-attribution"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["p", { "data-block": "quote-attribution" }, 0];
+  },
+});
+
 const FaqList = Node.create({
   name: "faqList",
   group: "block",
@@ -422,6 +471,7 @@ type Props = {
     faq: string;
     callout: string;
     calloutTone: (tone: string) => string;
+    pullQuote: string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -617,6 +667,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       */
       TableKit.configure({ table: { resizable: false } }),
       Callout,
+      PullQuote,
+      PullQuoteAttribution,
       FaqList,
       FaqItem,
       FaqQuestion,
@@ -1010,6 +1062,37 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
+          title={toolbarLabels.pullQuote}
+          aria-label={toolbarLabels.pullQuote}
+          aria-pressed={editor.isActive("pullQuote")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            // A pull quote is a line lifted out of the article, so if one is
+            // highlighted, lift it — rather than making the admin type it a
+            // second time and leaving two copies to drift apart.
+            const { from, to } = editor.state.selection;
+            const lifted = editor.state.doc.textBetween(from, to, " ").trim();
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: "pullQuote",
+                content: [
+                  {
+                    type: "paragraph",
+                    ...(lifted ? { content: [{ type: "text", text: lifted }] } : {}),
+                  },
+                  { type: "pullQuoteAttribution" },
+                ],
+              })
+              .run();
+          }}
+          className={toolbarButtonClass(editor.isActive("pullQuote"))}
+        >
+          <TextQuote size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
           title={toolbarLabels.table}
           aria-label={toolbarLabels.table}
           onMouseDown={(event) => event.preventDefault()}
@@ -1318,7 +1401,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
            a "wide" or "full" image only reads correctly against the column
            it will actually sit in. The grid cell this lives in is wider,
            so the leftover space is margin rather than a squeezed measure. */
-        className="admin-textarea prose-article mx-auto min-h-[320px] max-w-2xl [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem]"
+        className="admin-textarea prose-article mx-auto min-h-[320px] max-w-2xl [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem] [&_.ProseMirror_p[data-block='quote-attribution']:empty]:block [&_.ProseMirror_p[data-block='quote-attribution']]:min-h-[1.25rem]"
         onKeyDownCapture={(event) => {
           if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();

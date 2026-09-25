@@ -1376,6 +1376,7 @@
         "tableHeaderRow": "Строка заголовка",
         "tableDelete": "Удалить таблицу",
         "callout": "Блок-заметка",
+        "pullQuote": "Цитата-врезка",
         "calloutTones": {
           "note": "Заметка",
           "warning": "Внимание",

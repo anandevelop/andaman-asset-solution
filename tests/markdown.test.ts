@@ -392,4 +392,27 @@ describe("ready-made block markers survive sanitising", () => {
     expect(sanitizeArticleHtml('<blockquote data-block="callout" data-tone="note"><p>x</p></blockquote>'))
       .toContain('data-tone="note"');
   });
+
+  it("keeps a pull quote whole, attribution included", () => {
+    // The attribution is a <p data-block="quote-attribution"> rather than
+    // the <cite> or <footer> it would be in ordinary HTML, precisely so
+    // that neither ALLOWED_TAGS nor ALLOWED_ATTR has to grow for it.
+    const out = sanitizeArticleHtml(
+      '<blockquote data-block="pull-quote"><p>Quoted.</p>' +
+        '<p data-block="quote-attribution">Someone</p></blockquote>',
+    );
+    expect(out).toContain('data-block="pull-quote"');
+    expect(out).toContain('data-block="quote-attribution"');
+    expect(out).toContain("Someone");
+  });
+
+  it("still refuses the div the blocks would otherwise have been", () => {
+    // The whole reason these blocks are blockquotes and paragraphs. If
+    // this ever passes, the allowlist has been widened and the blocks
+    // should have been rewritten, not the sanitizer.
+    const out = sanitizeArticleHtml('<div class="callout" style="color:red">x</div>');
+    expect(out).not.toContain("<div");
+    expect(out).not.toContain("class=");
+    expect(out).not.toContain("style=");
+  });
 });

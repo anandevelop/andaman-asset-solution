@@ -434,6 +434,46 @@
     @apply border-emerald-600 bg-emerald-50 text-ink/80;
   }
 
+  /* The pull quote — a line lifted out of the article and set large.
+     Also written after the plain blockquote rule and also undoing it: the
+     left rule goes, because a pull quote is not indented off the margin,
+     it interrupts the column. Wider than the measure it sits in on a wide
+     screen (-mx-* at lg) so it reads as a break in the text rather than as
+     an ordinary paragraph that happens to be bigger. */
+  & blockquote[data-block="pull-quote"] {
+    @apply my-10 border-l-0 border-t border-b border-accent/30 px-0 py-6 text-center
+           text-2xl font-light not-italic leading-snug text-ink/85 lg:text-3xl;
+  }
+
+  & blockquote[data-block="pull-quote"] > :first-child {
+    @apply mt-0;
+  }
+
+  /* :not(), because `blockquote[…] p` outranks the attribution rule below
+     on specificity and was setting the attribution at quote size — the
+     attribution is a <p> inside the quote like any other. */
+  & blockquote[data-block="pull-quote"] > p:not([data-block="quote-attribution"]) {
+    @apply text-2xl font-light lg:text-3xl;
+  }
+
+  /* The attribution: the em-dash is the convention and it is CSS rather
+     than typed text, so an author cannot half-type it and no locale has to
+     translate a punctuation mark. */
+  & p[data-block="quote-attribution"] {
+    @apply mt-4 mb-0 text-sm font-normal tracking-widest text-ink/55 uppercase;
+  }
+
+  & p[data-block="quote-attribution"]::before {
+    content: "— ";
+  }
+
+  /* Empty, it is hidden on the page for the same reason an empty
+     figcaption is — the node is always present in the document, whether or
+     not the author named anybody. The editor puts it back below. */
+  & p[data-block="quote-attribution"]:empty {
+    @apply hidden;
+  }
+
   & img {
     @apply w-full rounded-xs shadow-card;
   }
