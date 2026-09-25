@@ -251,9 +251,6 @@ export default function NewsSeoPanel({
   const [addLinkPending, startAddLinkTransition] = useTransition();
   const [addLinkError, setAddLinkError] = useState<string | null>(null);
   const canAddLink = hasRole(role, Role.ADMIN);
-  const [addLinkPending, startAddLinkTransition] = useTransition();
-  const [addLinkError, setAddLinkError] = useState<string | null>(null);
-  const canAddLink = hasRole(role, Role.ADMIN);
 
   function onAddLink(opportunity: ArticleLinkPanel["opportunities"][number]) {
     setAddLinkError(null);
