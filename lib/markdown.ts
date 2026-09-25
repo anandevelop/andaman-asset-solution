@@ -79,7 +79,22 @@ const MARKDOWN_ONLY_TAGS = ["del", "sub", "sup"];
 
 const ALLOWED_TAGS = [...new Set([...RICH_TEXT_TAGS, ...MARKDOWN_ONLY_TAGS])];
 
-const ALLOWED_ATTR = [
+/**
+ * Every attribute an article body may carry.
+ *
+ * Exported for the same reason RICH_TEXT_TAGS is, and with a sharper edge:
+ * an attribute can sit in this list and still be stripped. DOMPurify runs
+ * ALLOWED_URI_REGEXP over every attribute that is neither data-* nor on its
+ * own URI-safe list, so `colspan="2"` was tested as a URL, failed, and
+ * vanished — while looking allowed here the whole time. A merged table cell
+ * silently unmerged on save, and nothing in the type system or the tag test
+ * could see it.
+ *
+ * tests/markdown.test.ts asserts every entry here actually survives a round
+ * trip, so the next attribute added to this list is checked against the
+ * sanitizer's real behaviour rather than its apparent one.
+ */
+export const ALLOWED_ATTR = [
   "id", "href", "title", "target", "rel", "src", "alt", "loading",
   "colspan", "rowspan", "data-internal", "data-media-id",
   // Not in the original request list — added because the image modal's
@@ -176,8 +191,15 @@ function sanitizeHtml(raw: string): string {
       produced tables, since marked never emits a merged cell. The editor
       does, and a merged cell that silently unmerges on save is the same
       class of quiet damage as the <u> that used to disappear.
+
+      `loading` was the same bug, and outlived the discovery of it: the
+      figure node has written loading="lazy" since it existed, and the
+      sanitizer had been removing it on every save the whole time, so every
+      image in every rich-text article shipped without it. Found by the
+      test that now drives off ALLOWED_ATTR — reading this list was never
+      going to show it, because the list said `loading` was allowed.
     */
-    ADD_URI_SAFE_ATTR: ["colspan", "rowspan"],
+    ADD_URI_SAFE_ATTR: ["colspan", "rowspan", "loading"],
   });
 
   // Any link that survived sanitizing and points off-site gets the usual

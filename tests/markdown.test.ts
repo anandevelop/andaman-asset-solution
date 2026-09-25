@@ -14,7 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { RICH_TEXT_TAGS, renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
+import { ALLOWED_ATTR, RICH_TEXT_TAGS, renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
 import { markdownToText, readingMinutes, truncate } from "@/lib/markdown-text";
 
 const SAFE_URI = /^(?:https?:|mailto:|tel:|#|\/)/i;
@@ -436,5 +436,52 @@ describe("ready-made block markers survive sanitising", () => {
     expect(out).not.toContain("<div");
     expect(out).not.toContain("class=");
     expect(out).not.toContain("style=");
+  });
+});
+
+/*
+  The attribute half of the 2b-0 guarantee, driven off lib/markdown.ts's own
+  ALLOWED_ATTR rather than a list repeated here.
+
+  The tag test above cannot catch this class of bug, and neither can
+  reading the allowlist: an attribute can be in ALLOWED_ATTR and still be
+  stripped, because DOMPurify runs ALLOWED_URI_REGEXP over everything that
+  is neither data-* nor on its own URI-safe list. That is exactly how
+  `colspan` was lost — merged table cells silently unmerged on save while
+  the allowlist said they were permitted. This asserts the sanitizer's real
+  behaviour, so the next attribute added is checked rather than assumed.
+*/
+describe("every attribute the allowlist permits actually survives", () => {
+  /** A minimal document carrying one attribute on a tag it belongs on. */
+  const SAMPLES: Record<string, string> = {
+    id: '<h2 id="section">x</h2>',
+    href: '<p><a href="/contact">x</a></p>',
+    title: '<p><a href="/contact" title="Contact">x</a></p>',
+    target: '<p><a href="https://example.com" target="_blank">x</a></p>',
+    rel: '<p><a href="https://example.com" rel="noopener">x</a></p>',
+    src: '<figure><img src="/a.jpg" alt="a"></figure>',
+    alt: '<figure><img src="/a.jpg" alt="a villa"></figure>',
+    loading: '<figure><img src="/a.jpg" alt="a" loading="lazy"></figure>',
+    colspan: "<table><tbody><tr><td colspan=\"2\">x</td></tr></tbody></table>",
+    rowspan: "<table><tbody><tr><td rowspan=\"2\">x</td></tr></tbody></table>",
+    "data-internal": '<p><a href="/contact" data-internal="1">x</a></p>',
+    "data-media-id": '<figure><img src="/a.jpg" alt="a" data-media-id="m1"></figure>',
+    "data-align": '<figure data-align="center"><img src="/a.jpg" alt="a"></figure>',
+    "data-width": '<figure data-width="wide"><img src="/a.jpg" alt="a"></figure>',
+    "data-faq": '<ul data-faq="list"><li data-faq="item"><h3 data-faq="question">q</h3><p>a</p></li></ul>',
+    "data-block": '<blockquote data-block="callout"><p>x</p></blockquote>',
+    "data-tone": '<blockquote data-block="callout" data-tone="warning"><p>x</p></blockquote>',
+  };
+
+  it("has a sample for every attribute in the allowlist", () => {
+    // Fails when an attribute is added to lib/markdown.ts without one here,
+    // which is what keeps this test from quietly covering less over time.
+    expect(Object.keys(SAMPLES).sort()).toEqual([...ALLOWED_ATTR].sort());
+  });
+
+  it.each(ALLOWED_ATTR)("keeps %s", (attribute) => {
+    const html = SAMPLES[attribute];
+    expect(html, `no sample for ${attribute}`).toBeDefined();
+    expect(sanitizeArticleHtml(html)).toContain(`${attribute}="`);
   });
 });
