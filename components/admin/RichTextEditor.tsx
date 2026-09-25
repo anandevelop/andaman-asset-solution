@@ -54,6 +54,7 @@ import { TableKit } from "@tiptap/extension-table";
 // @tiptap-pro/* on a private registry, and v3 opened these up. Its only
 // dependency, @floating-ui/dom, is already here for BubbleMenu.
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
+import SlashMenu, { type SlashItem } from "@/components/admin/editor/SlashMenu";
 import FigureNodeView, {
   type FigureLabels,
   type FigureOptions,
@@ -597,6 +598,11 @@ type Props = {
     cta: string;
     projectCard: string;
     dragHandle: string;
+    /** §6.2's slash menu: the empty-state line, and the translated search
+     *  words per block — labels are reused from the entries above, so a
+     *  block is called the same thing in the toolbar and in the menu. */
+    slashEmpty: string;
+    slashKeywords: (id: string) => string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -976,6 +982,149 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
   );
 
   if (!editor) return null;
+
+  /*
+    §6.2's slash-menu entries. Every block reachable from the toolbar is
+    reachable here too, which is the second of §5.4's three ways in — and
+    each `run` is the same chain its toolbar button uses, so the two cannot
+    drift into inserting different things under one name.
+  */
+  const slashItems: SlashItem[] = [
+    ...([2, 3, 4] as const).map((level) => ({
+      id: `heading${level}`,
+      label: toolbarLabels.heading(level),
+      keywords: toolbarLabels.slashKeywords(`heading${level}`),
+      icon: level === 2 ? Heading2 : level === 3 ? Heading3 : Heading4,
+      run: (instance: Editor) => instance.chain().focus().toggleHeading({ level }).run(),
+    })),
+    {
+      id: "bulletList",
+      label: toolbarLabels.bulletList,
+      keywords: toolbarLabels.slashKeywords("bulletList"),
+      icon: List,
+      run: (instance) => instance.chain().focus().toggleBulletList().run(),
+    },
+    {
+      id: "orderedList",
+      label: toolbarLabels.orderedList,
+      keywords: toolbarLabels.slashKeywords("orderedList"),
+      icon: ListOrdered,
+      run: (instance) => instance.chain().focus().toggleOrderedList().run(),
+    },
+    {
+      id: "quote",
+      label: toolbarLabels.quote,
+      keywords: toolbarLabels.slashKeywords("quote"),
+      icon: Quote,
+      run: (instance) => instance.chain().focus().toggleBlockquote().run(),
+    },
+    {
+      id: "horizontalRule",
+      label: toolbarLabels.horizontalRule,
+      keywords: toolbarLabels.slashKeywords("horizontalRule"),
+      icon: Minus,
+      run: (instance) => instance.chain().focus().setHorizontalRule().run(),
+    },
+    {
+      id: "codeBlock",
+      label: toolbarLabels.codeBlock,
+      keywords: toolbarLabels.slashKeywords("codeBlock"),
+      icon: SquareCode,
+      run: (instance) => instance.chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      id: "image",
+      label: toolbarLabels.image,
+      keywords: toolbarLabels.slashKeywords("image"),
+      icon: ImageIcon,
+      // Opens the media-library modal, the same as the toolbar button —
+      // there is no "insert image" that does not first ask which one.
+      run: () => onRequestImage(),
+    },
+    {
+      id: "link",
+      label: toolbarLabels.link,
+      keywords: toolbarLabels.slashKeywords("link"),
+      icon: Link2,
+      run: () => onRequestLink(),
+    },
+    {
+      id: "table",
+      label: toolbarLabels.table,
+      keywords: toolbarLabels.slashKeywords("table"),
+      icon: TableIcon,
+      run: (instance) =>
+        instance.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+    },
+    {
+      id: "faq",
+      label: toolbarLabels.faq,
+      keywords: toolbarLabels.slashKeywords("faq"),
+      icon: HelpCircle,
+      run: (instance) =>
+        instance
+          .chain()
+          .focus()
+          .insertContent({
+            type: "faqList",
+            content: [
+              { type: "faqItem", content: [{ type: "faqQuestion" }, { type: "paragraph" }] },
+            ],
+          })
+          .run(),
+    },
+    {
+      id: "callout",
+      label: toolbarLabels.callout,
+      keywords: toolbarLabels.slashKeywords("callout"),
+      icon: Info,
+      run: (instance) =>
+        instance
+          .chain()
+          .focus()
+          .insertContent({ type: "callout", content: [{ type: "paragraph" }] })
+          .run(),
+    },
+    {
+      id: "pullQuote",
+      label: toolbarLabels.pullQuote,
+      keywords: toolbarLabels.slashKeywords("pullQuote"),
+      icon: TextQuote,
+      run: (instance) =>
+        instance
+          .chain()
+          .focus()
+          .insertContent({
+            type: "pullQuote",
+            content: [{ type: "paragraph" }, { type: "pullQuoteAttribution" }],
+          })
+          .run(),
+    },
+    {
+      id: "cta",
+      label: toolbarLabels.cta,
+      keywords: toolbarLabels.slashKeywords("cta"),
+      icon: MousePointerClick,
+      run: (instance) =>
+        instance
+          .chain()
+          .focus()
+          .insertContent({ type: "cta", content: [{ type: "paragraph" }, { type: "ctaAction" }] })
+          .run(),
+    },
+    {
+      id: "projectCard",
+      label: toolbarLabels.projectCard,
+      keywords: toolbarLabels.slashKeywords("projectCard"),
+      icon: Building2,
+      run: (instance) =>
+        instance
+          .chain()
+          .focus()
+          .insertContent({ type: "projectCard", content: [{ type: "paragraph" }] })
+          .run(),
+    },
+  ];
 
   const headingButton = (level: 2 | 3 | 4, Icon: typeof Heading2) => (
     <button
@@ -1611,6 +1760,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         body is max-w-2xl inside a wider grid cell, so it has somewhere to
         go without overlapping the text.
       */}
+      <SlashMenu editor={editor} items={slashItems} emptyLabel={toolbarLabels.slashEmpty} />
+
       <DragHandle
         editor={editor}
         /*

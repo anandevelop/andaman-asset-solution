@@ -51,6 +51,8 @@ const LABELS = {
   cta: "Call to action",
   projectCard: "Project card",
   dragHandle: "Drag to move",
+  slashEmpty: "No blocks match",
+  slashKeywords: (id: string) => ({ callout: "note warning box", table: "grid rows" })[id] ?? "",
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",

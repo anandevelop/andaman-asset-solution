@@ -1384,6 +1384,25 @@
           "note": "备注",
           "warning": "注意",
           "success": "要点"
+        },
+        "slashEmpty": "没有匹配的区块",
+        "slashKeywords": {
+          "heading2": "标题 二级标题 h2",
+          "heading3": "小标题 三级标题 h3",
+          "heading4": "小标题 四级标题 h4",
+          "bulletList": "项目符号 无序列表 列表",
+          "orderedList": "编号列表 有序列表 步骤",
+          "quote": "引用 引言",
+          "horizontalRule": "分隔线 横线 分割",
+          "codeBlock": "代码 代码块",
+          "image": "图片 照片 图像 媒体",
+          "link": "链接 网址",
+          "table": "表格 行 列",
+          "faq": "常见问题 问答",
+          "callout": "提示框 提示 注意 备注",
+          "pullQuote": "引述 摘录 重点引用",
+          "cta": "行动号召 按钮 联系",
+          "projectCard": "项目卡片 项目 楼盘"
         }
       },
       "figure": {

@@ -1384,6 +1384,25 @@
           "note": "Note",
           "warning": "Warning",
           "success": "Good to know"
+        },
+        "slashEmpty": "No blocks match",
+        "slashKeywords": {
+          "heading2": "h2 heading title section",
+          "heading3": "h3 heading subheading",
+          "heading4": "h4 heading subheading",
+          "bulletList": "ul bullets unordered list points",
+          "orderedList": "ol numbered list steps",
+          "quote": "blockquote citation",
+          "horizontalRule": "hr divider separator line break",
+          "codeBlock": "code pre snippet",
+          "image": "photo picture media figure",
+          "link": "url anchor href",
+          "table": "grid rows columns",
+          "faq": "questions answers accordion",
+          "callout": "note warning box aside tip",
+          "pullQuote": "quote highlight excerpt",
+          "cta": "call to action button contact",
+          "projectCard": "project development villa card"
         }
       },
       "figure": {

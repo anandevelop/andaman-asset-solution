@@ -684,6 +684,8 @@ export default function NewsForm({
                       cta: t("news.richToolbar.cta"),
                       projectCard: t("news.richToolbar.projectCard"),
                       dragHandle: t("news.richToolbar.dragHandle"),
+                      slashEmpty: t("news.richToolbar.slashEmpty"),
+                      slashKeywords: (id) => t(`news.richToolbar.slashKeywords.${id}` as never),
                       table: t("news.richToolbar.table"),
                       tableAddRow: t("news.richToolbar.tableAddRow"),
                       tableDeleteRow: t("news.richToolbar.tableDeleteRow"),
