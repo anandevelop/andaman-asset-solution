@@ -15,7 +15,7 @@ import {
   translationCompletenessPercent,
 } from "@/lib/admin/translated-form";
 import { NEWS_COMPLETENESS_FIELDS } from "@/lib/admin/news-list";
-import { deleteArticle, updateArticleAndTransition } from "../../actions";
+import { autosaveArticleDraft, deleteArticle, updateArticleAndTransition } from "../../actions";
 import NewsForm, { type NewsFormValues } from "@/components/admin/NewsForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import SaveToast from "@/components/admin/SaveToast";
@@ -177,6 +177,7 @@ export default async function EditArticlePage(props: Props) {
           statusPillLabel={statusPillLabel}
           articleId={article.id}
           serverUpdatedAt={article.updatedAt.toISOString()}
+          autosaveAction={canWrite ? autosaveArticleDraft : undefined}
         />
       </fieldset>
     </div>

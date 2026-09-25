@@ -28,6 +28,11 @@ import { auditArticle } from "@/lib/article-seo";
 import { recordSeoOverride } from "@/lib/audit/events";
 import { submitForReview, approveAndPublish } from "@/app/[locale]/admin/(content)/publishing/actions";
 
+/** ContentRevision.source for §7.1's autosave — distinct from the human
+ *  and automated writers so the rows can be told apart, replaced, and
+ *  eventually filtered out of the history list. */
+const AUTOSAVE_SOURCE = "autosave";
+
 export type NewsFormState = {
   ok: boolean;
   message?: string;
@@ -573,5 +578,86 @@ export async function bulkDeleteArticles(locale: string, ids: string[]): Promise
   } catch (error) {
     console.error("[bulkDeleteArticles]", error);
     return { ok: false, changed: 0, blocked: 0 };
+  }
+}
+
+/**
+ * §7.1's server half: park the editor's current text as a ContentRevision,
+ * without saving the article.
+ *
+ * The distinction is the whole point and §7.1 states it as a prohibition:
+ * this must not touch the article's status or publishedAt. It does not
+ * touch the article at all. Nothing about what is live, what is in review,
+ * or when something was published changes because someone left a tab open
+ * and kept typing — the revision is a recovery point, not a save.
+ *
+ * It is also why this cannot reuse lib/content-revisions.ts's
+ * saveRevision(): that snapshots the row as it stands in the database,
+ * which is exactly the text autosave exists to be a copy *of the
+ * alternative to*. The snapshot here is built from what the client sent,
+ * in the same `{ translations: [...] }` shape restoreContent() reads, so a
+ * future revert can put it back through the existing path.
+ *
+ * ONE ROW PER ARTICLE, NOT ONE PER MINUTE
+ *
+ * A two-hour writing session at one revision a minute is 120 rows, and the
+ * publishing dashboard's history would be nothing else. Only the newest
+ * autosave is worth keeping — older ones are strictly staler copies of the
+ * same unsaved work — so each one replaces the last. The delete is scoped
+ * to source: "autosave" and to this article, so no human-made revision is
+ * ever in range of it.
+ *
+ * The body is sanitized here as everywhere else. This is a client-supplied
+ * string reaching the database, and "it is only a draft" is not a reason to
+ * store markup the renderer would later have to be trusted to clean.
+ */
+export async function autosaveArticleDraft(
+  id: string,
+  lang: string,
+  fields: { title: string; content: string; metaTitle: string; metaDescription: string; focusKeyword: string },
+): Promise<{ ok: boolean }> {
+  const author = await requireAdminAction(Role.EDITOR);
+
+  if (!locales.includes(lang as (typeof locales)[number])) return { ok: false };
+
+  const article = await prisma.newsArticle.findFirst({
+    where: { id, deletedAt: null },
+    select: { id: true, contentFormat: true },
+  });
+  if (!article) return { ok: false };
+
+  const snapshot = {
+    translations: [
+      {
+        locale: lang,
+        title: fields.title,
+        content:
+          article.contentFormat === "HTML" ? sanitizeArticleHtml(fields.content) : fields.content,
+        metaTitle: fields.metaTitle,
+        metaDescription: fields.metaDescription,
+        focusKeyword: fields.focusKeyword,
+      },
+    ],
+  };
+
+  try {
+    await prisma.$transaction([
+      prisma.contentRevision.deleteMany({
+        where: { contentType: "NEWS_ARTICLE", contentId: id, source: AUTOSAVE_SOURCE },
+      }),
+      prisma.contentRevision.create({
+        data: {
+          contentType: "NEWS_ARTICLE",
+          contentId: id,
+          snapshot: snapshot as unknown as Prisma.InputJsonValue,
+          createdById: author.id,
+          source: AUTOSAVE_SOURCE,
+        },
+      }),
+    ]);
+    return { ok: true };
+  } catch (error) {
+    console.error("[autosaveArticleDraft]", error);
+    return { ok: false };
   }
 }

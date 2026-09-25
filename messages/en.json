@@ -577,11 +577,12 @@
       "settings": "Settings",
       "activity": "Activity",
       "seo": "SEO",
+      "seoTranslations": "Translations",
       "analytics": "Analytics",
       "media": "Media",
       "appointments": "Appointments",
       "mobileView": "Mobile view",
-      "publishing": "Review & publish"
+      "publishing": "Publishing"
     },
     "pages": {
       "section": "Website content",
@@ -609,11 +610,6 @@
         "mission": "Mission & Principles",
         "awards": "Awards",
         "milestones": "Milestones"
-      },
-      "publishing": {
-        "label": "Review & publish",
-        "queue": "Review queue",
-        "translations": "Translations"
       }
     },
     "common": {
@@ -656,6 +652,15 @@
     },
     "dashboard": {
       "title": "Dashboard",
+      "subtitle": "A snapshot of what needs attention today.",
+      "newLeads": "New leads",
+      "newLeadsHint": "Awaiting first contact",
+      "leadsThisWeek": "Leads this week",
+      "leadsThisWeekHint": "Last 7 days",
+      "publishedProjects": "Published projects",
+      "publishedProjectsHint": "Live on the public site",
+      "upcomingEvents": "Upcoming events",
+      "upcomingEventsHint": "Next 30 days",
       "recentLeads": "Latest enquiries",
       "viewAll": "View all",
       "greetingMorning": "Good morning, {name}",
@@ -663,29 +668,25 @@
       "greetingEvening": "Good evening, {name}",
       "overdueSubtitle": "{count} leads have passed the standard response time — start there.",
       "overdueSubtitleNone": "No leads have passed the response-time SLA today — you're all caught up.",
-      "monthSummary": {
-        "title": "This month",
-        "newLeads": "New leads",
-        "appointments": "Site visits",
-        "booked": "Closed",
-        "viewFullReports": "See the full reports"
-      },
       "rangeLabel": "Date range",
       "range7": "Last 7 days",
       "range30": "Last 30 days",
       "range90": "Last 90 days",
       "range365": "Last 365 days",
       "exportReport": "Export report",
+      "moreReports": "More reports",
       "workQueue": {
         "title": "Today's work queue",
         "unassigned": {
           "label": "New leads with no owner",
           "oldest": "Oldest: {hours}h ago",
-          "none": "Nothing waiting to be assigned"
+          "none": "Nothing waiting to be assigned",
+          "assignAll": "Assign all"
         },
         "overdue": {
           "label": "Overdue response ({hours}h)",
           "hint": "Must be contacted today",
+          "viewList": "View list",
           "none": "No leads are overdue"
         },
         "appointments": {
@@ -695,6 +696,7 @@
         },
         "review": {
           "label": "Awaiting review before publish",
+          "reviewNow": "Review now",
           "none": "Nothing awaiting review"
         }
       }
@@ -2024,7 +2026,9 @@
         "title": "Leads by month",
         "subtitle": "Last 12 months.",
         "total": "Leads",
-        "won": "Won"
+        "won": "Won",
+        "subtitleDetailed": "{total} leads over 12 months · {thisMonth} this month ({changeLabel})",
+        "subtitleDetailedNoChange": "{total} leads over 12 months · {thisMonth} this month"
       },
       "sources": {
         "title": "Where leads come from",
@@ -2042,6 +2046,8 @@
       "pipeline": {
         "title": "Pipeline",
         "subtitle": "Every lead ever recorded, by current status — where the backlog is stuck, not just what's new.",
+        "subtitleDetailed": "{openTotal} leads still open · stuck longest at “{stage}”, averaging {avgDays} days",
+        "subtitleSimple": "{openTotal} leads still open",
         "bottleneckFlag": "Bottleneck"
       },
       "rsvp": {
@@ -2573,9 +2579,7 @@
         "item": "Item",
         "missing": "Missing languages",
         "fixLink": "Fix"
-      },
-      "filterLabel": "Filter by content type",
-      "filterAll": "All"
+      }
     },
     "analytics": {
       "title": "Analytics & Reports",
@@ -2856,8 +2860,8 @@
       }
     },
     "publishing": {
-      "eyebrow": "Website content",
-      "title": "Review & publish",
+      "eyebrow": "System",
+      "title": "Publishing & Languages",
       "subtitle": "Every edit is a draft until it's reviewed — so the site customers see never changes mid-visit.",
       "stats": {
         "draft": "Drafts not yet submitted",

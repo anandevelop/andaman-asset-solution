@@ -196,6 +196,14 @@ type Props = {
    *  saved once. */
   articleId?: string | null;
   serverUpdatedAt?: string | null;
+  /** §7.1's server half. Absent on the new-article page, and absent for a
+   *  viewer who cannot write — the action re-checks the role regardless,
+   *  but there is no reason to make a call that will be refused. */
+  autosaveAction?: (
+    id: string,
+    lang: string,
+    fields: Omit<NewsDraftValues, "slug">,
+  ) => Promise<{ ok: boolean }>;
 };
 
 const INITIAL: NewsFormState = { ok: false };
@@ -349,6 +357,7 @@ export default function NewsForm({
   statusPillLabel,
   articleId,
   serverUpdatedAt,
+  autosaveAction,
 }: Props) {
   const t = useTranslations("admin");
   const tUpload = useTranslations("admin.upload");
@@ -466,6 +475,54 @@ export default function NewsForm({
     const timer = setTimeout(() => writeDraft(articleId, lang, draftValues), 5000);
     return () => clearTimeout(timer);
   }, [articleId, lang, dirty, draftValues]);
+
+  /*
+    §7.1's server half, on its own minute-long clock rather than the
+    five-second one above: a revision is a database row, and one a minute
+    while someone writes is already the upper bound of what is useful.
+
+    `sent` is what was last written, so a minute in which nothing changed
+    costs nothing — §7.1 asks for "when there is a real change", and an
+    editor who leaves a tab open overnight should not accumulate a revision
+    an hour for a document nobody touched.
+  */
+  const lastAutosaved = useRef<string | null>(null);
+
+  // Read by the interval below, which must not restart on every keystroke.
+  // Written in an effect rather than during render: the lint rule that
+  // forbids touching a ref while rendering is right, and this is not a
+  // render-time read.
+  const draftValuesRef = useRef(draftValues);
+  useEffect(() => {
+    draftValuesRef.current = draftValues;
+  }, [draftValues]);
+
+  useEffect(() => {
+    if (!articleId || !autosaveAction) return;
+
+    const timer = setInterval(() => {
+      const fingerprint = JSON.stringify(draftValuesRef.current);
+      if (fingerprint === lastAutosaved.current) return;
+      lastAutosaved.current = fingerprint;
+
+      const { title: t0, content: c0, metaTitle: m0, metaDescription: d0, focusKeyword: k0 } =
+        draftValuesRef.current;
+      void autosaveAction(articleId, lang, {
+        title: t0,
+        content: c0,
+        metaTitle: m0,
+        metaDescription: d0,
+        focusKeyword: k0,
+      }).catch(() => {
+        // A failed autosave is not worth interrupting anyone over — the
+        // localStorage copy above is the layer that has to be reliable.
+        // Allow the next tick to try again.
+        lastAutosaved.current = null;
+      });
+    }, 60_000);
+
+    return () => clearInterval(timer);
+  }, [articleId, lang, autosaveAction]);
 
   /* The browser's own "leave site?" prompt. Only while there is something
      to lose — an unconditional handler trains people to click through it. */

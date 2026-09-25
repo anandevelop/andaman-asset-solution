@@ -1,10 +1,9 @@
 /**
- * app/[locale]/admin/(content)/publishing/page.tsx
+ * app/[locale]/admin/publishing/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Publishing.dc.html — the draft → review → publish dashboard, and the
- * index tab of the hub. See lib/publishing.ts for the read side,
- * ./actions.ts for the state machine, and ./layout.tsx for the header and
- * the tab strip this page no longer draws for itself.
+ * Publishing.dc.html — the draft → review → publish dashboard. See
+ * lib/publishing.ts for the read side and app/[locale]/admin/publishing/
+ * actions.ts for the state machine.
  *
  * VIEWER and above can open this page — the queue itself is a read, and an
  * auditor asking "what is waiting on review right now" is exactly what
@@ -141,9 +140,13 @@ export default async function AdminPublishingPage(props: Props) {
   };
 
   return (
-    /* No header here: the hub layout draws it above the tab strip, so
-       this page starts at its own content. */
     <div className="space-y-8">
+      <header>
+        <p className="admin-section-title">{t("eyebrow")}</p>
+        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("title")}</h1>
+        <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("subtitle")}</p>
+      </header>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="admin-card space-y-1">
           <span className="flex items-center gap-2 text-xs text-ink-muted"><Circle size={8} className="fill-current text-ink-muted" aria-hidden />{t("stats.draft")}</span>

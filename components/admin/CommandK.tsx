@@ -19,11 +19,6 @@
  * EDITOR while projects/new guards at ADMIN, so the palette sent them
  * somewhere that turned them away. Reading one list makes that class of
  * bug impossible rather than fixed.
- *
- * Tabs are in that list too (visibleTabRows). The menu is being trimmed by
- * turning rows into tabs of a hub, and a palette that only read rows would
- * lose one destination per move — silently, since "no results" looks the
- * same whether the thing is missing or absent.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -42,7 +37,7 @@ import {
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { hasRole } from "@/lib/role-rank";
-import { visibleNav, visibleTabRows } from "@/lib/admin/nav";
+import { visibleNav } from "@/lib/admin/nav";
 import { commandSearch, type SearchHit } from "@/app/[locale]/admin/command-search-actions";
 
 type Props = { locale: string; role: Role };
@@ -77,7 +72,6 @@ export default function CommandK({ locale, role }: Props) {
   const router = useRouter();
   const t = useTranslations("admin.commandK");
   const tNav = useTranslations("admin.nav");
-  const tTabs = useTranslations("admin.tabs");
   const tLeadStatus = useTranslations("admin.leadStatus");
   const tUnitStatus = useTranslations("admin.units.statusOptions");
 
@@ -100,35 +94,22 @@ export default function CommandK({ locale, role }: Props) {
     return quickActions.filter((a) => t(`actions.${a.key}` as never).toLowerCase().includes(q));
   }, [quickActions, query, t]);
 
-  /* Every page this role may open: the sidebar's rows, plus the tabs
-     inside them. The tabs matter because rows keep becoming tabs —
-     "Translations" was a searchable row and is now a tab of Review &
-     publish — and a palette that only reads rows would quietly stop
-     finding each one as it moved. canSee() has already run inside both
-     helpers, so a row that appears here is a row that opens.
-
-     A tab row is labelled "<parent> · <tab>": "Translations" on its own
-     told you nothing about where you would land, and there is more than
-     one thing in this menu a person might call "defaults". */
-  const navTargets = useMemo(() => {
-    const items = visibleNav(role)
-      .flatMap((group) => group.items)
-      .map((item) => ({ key: item.key, href: item.href, label: tNav(`${item.key}` as never) }));
-
-    const tabs = visibleTabRows(role).map((row) => ({
-      key: `${row.itemKey}:${row.tabKey}`,
-      href: row.href,
-      label: `${tNav(`${row.itemKey}` as never)} · ${tTabs(`${row.itemKey}.${row.tabKey}` as never)}`,
-    }));
-
-    return [...items, ...tabs];
-  }, [role, tNav, tTabs]);
+  /* Every page this role may open, flattened out of the sidebar's groups.
+     canSee() has already run inside visibleNav, so a row that appears here
+     is a row that opens. */
+  const navTargets = useMemo(
+    () =>
+      visibleNav(role)
+        .flatMap((group) => group.items)
+        .map((item) => ({ key: item.key, href: item.href })),
+    [role],
+  );
 
   const filteredNavTargets = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return navTargets;
-    return navTargets.filter((item) => item.label.toLowerCase().includes(q));
-  }, [navTargets, query]);
+    return navTargets.filter((item) => tNav(`${item.key}` as never).toLowerCase().includes(q));
+  }, [navTargets, query, tNav]);
 
   // Flat list across quick actions + every result group, in render order —
   // this is what ArrowUp/ArrowDown/Enter walk, so the visual order and the
@@ -311,7 +292,7 @@ export default function CommandK({ locale, role }: Props) {
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xs bg-surface-muted text-ink-muted">
                       <LayoutGrid size={12} aria-hidden />
                     </span>
-                    <span className="flex-1 text-ink">{item.label}</span>
+                    <span className="flex-1 text-ink">{tNav(`${item.key}` as never)}</span>
                   </button>
                 );
               })}

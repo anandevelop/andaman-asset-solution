@@ -29,18 +29,6 @@ export type ContentConversionRow = {
 };
 export type FunnelStage = { status: string; label: string; count: number; isBottleneck: boolean };
 
-/** One event's RSVP fill, already formatted — see the page's comment on
- *  why the seat count and the date arrive as strings. */
-export type EventRsvpRow = {
-  eventId: string;
-  title: string;
-  /** ISO, for <time dateTime>; `dateLabel` is what gets rendered. */
-  startsAt: string;
-  dateLabel: string;
-  fillRate: number | null;
-  seatsLabel: string;
-};
-
 type Props = {
   locale: string;
   canViewLeads: boolean;
@@ -52,17 +40,11 @@ type Props = {
     gaConfigured: boolean;
     metaPixelConfigured: boolean;
     searchConsoleConfigured: boolean;
-    /* Consent sits on the Traffic tab because it is the ceiling on
-       everything else on it: the GA4 and Meta Pixel tiles above say the
-       tags are configured, and this says what share of visitors let them
-       fire at all. */
-    cookieConsent: { total: number; analyticsRate: number | null; marketingRate: number | null };
   };
 
   content: {
     topArticles: TopArticle[];
     conversions: ContentConversionRow[];
-    eventRsvp: EventRsvpRow[];
     companyStats: {
       foundedYear: number | null;
       projectsDelivered: number;
@@ -150,20 +132,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
             <p className="mb-5 mt-1 text-sm text-ink-muted">{labels.trendSubtitle}</p>
             <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
           </section>
-
-          <section className="admin-card">
-            <h2 className="text-base font-semibold text-primary">{labels.cookieConsentTitle}</h2>
-            <p className="mb-5 mt-1 text-sm text-ink-muted">{labels.cookieConsentSubtitle}</p>
-
-            {traffic.cookieConsent.total === 0 ? (
-              <p className="py-6 text-center text-sm text-ink-muted">{labels.empty}</p>
-            ) : (
-              <div className="space-y-5">
-                <RateRow label={labels.cookieConsentAnalytics} rate={traffic.cookieConsent.analyticsRate} />
-                <RateRow label={labels.cookieConsentMarketing} rate={traffic.cookieConsent.marketingRate} />
-              </div>
-            )}
-          </section>
         </div>
       )}
 
@@ -219,7 +187,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
           <section className="admin-card overflow-hidden p-0!">
             <div className="border-b border-primary/10 px-5 py-3.5">
               <h2 className="text-sm font-semibold text-primary">{labels.conversionTitle}</h2>
-              <p className="mt-1 text-xs text-ink-muted">{labels.conversionSubtitle}</p>
             </div>
             {content.conversions.length === 0 ? (
               <p className="py-10 text-center text-sm text-ink-muted">{labels.empty}</p>
@@ -256,41 +223,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
               </div>
             )}
           </section>
-
-          <section className="admin-card">
-            <h2 className="text-base font-semibold text-primary">{labels.rsvpTitle}</h2>
-            <p className="mb-5 mt-1 text-sm text-ink-muted">{labels.rsvpSubtitle}</p>
-
-            {content.eventRsvp.length === 0 ? (
-              <p className="py-6 text-center text-sm text-ink-muted">{labels.empty}</p>
-            ) : (
-              <ul className="divide-y divide-primary/5">
-                {content.eventRsvp.map((event) => (
-                  <li key={event.eventId} className="py-3.5 first:pt-0 last:pb-0">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                      <p className="truncate text-sm font-medium text-ink">{event.title}</p>
-                      <time dateTime={event.startsAt} className="shrink-0 text-xs text-ink-muted">
-                        {event.dateLabel}
-                      </time>
-                    </div>
-                    <div className="mt-2 flex items-center gap-3">
-                      <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-primary/5">
-                        {event.fillRate !== null && (
-                          <span
-                            className="absolute inset-y-0 left-0 rounded-full bg-accent-700"
-                            style={{ width: `${Math.min(100, event.fillRate)}%` }}
-                          />
-                        )}
-                      </span>
-                      <span className="shrink-0 text-xs font-medium tabular-nums text-ink-muted">
-                        {event.seatsLabel}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       )}
 
@@ -323,7 +255,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
           <div className="grid gap-6 xl:grid-cols-[1.85fr_1fr]">
             <section className="admin-card">
               <h2 className="text-base font-semibold text-primary">{labels.monthlyTitle}</h2>
-              <p className="mt-1 text-sm text-ink-muted">{labels.monthlySubtitle}</p>
               <div className="mt-5">
                 <MonthlyLeadsChart
                   data={leads.monthly}
@@ -334,7 +265,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
 
             <section className="admin-card">
               <h2 className="text-base font-semibold text-primary">{labels.sourcesTitle}</h2>
-              <p className="mt-1 text-sm text-ink-muted">{labels.sourcesSubtitle}</p>
               <div className="mt-5">
                 <LeadSourceChart data={leads.bySource} emptyLabel={labels.empty} />
               </div>
@@ -343,7 +273,6 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
 
           <section className="admin-card">
             <h2 className="text-base font-semibold text-primary">{labels.pipelineTitle}</h2>
-            <p className="mt-1 text-sm text-ink-muted">{labels.pipelineSubtitle}</p>
             {leads.funnel.every((stage) => stage.count === 0) ? (
               <p className="py-6 text-center text-sm text-ink-muted">{labels.empty}</p>
             ) : (
@@ -383,29 +312,6 @@ function StatTile({ label, value }: { label: string; value: number | string }) {
     <div className="admin-card">
       <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</p>
       <p className="mt-4 text-3xl font-semibold tabular-nums text-primary">{value}</p>
-    </div>
-  );
-}
-
-/**
- * A labelled percentage with a proportional bar — the cookie-consent
- * card's two rows.
- *
- * `rate` is only null when there are no decisions on record at all, which
- * the caller already handles by not rendering this component in that case
- * (getCookieConsentStats() guards the divide). `?? 0` is keeping
- * TypeScript happy, not a real fallback path.
- */
-function RateRow({ label, rate }: { label: string; rate: number | null }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-ink-muted">{label}</span>
-        <span className="font-medium tabular-nums text-primary">{rate ?? 0}%</span>
-      </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-primary/5">
-        <div className="h-full rounded-full bg-accent-700" style={{ width: `${rate ?? 0}%` }} />
-      </div>
     </div>
   );
 }

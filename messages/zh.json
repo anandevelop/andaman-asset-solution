@@ -577,11 +577,12 @@
       "settings": "设置",
       "activity": "操作记录",
       "seo": "SEO",
+      "seoTranslations": "翻译",
       "analytics": "统计与报告",
       "media": "媒体库",
       "appointments": "预约看房",
       "mobileView": "移动端视图",
-      "publishing": "审核与发布"
+      "publishing": "发布与语言"
     },
     "pages": {
       "section": "网站内容",
@@ -609,11 +610,6 @@
         "mission": "工作理念",
         "awards": "荣誉奖项",
         "milestones": "里程碑"
-      },
-      "publishing": {
-        "label": "审核与发布",
-        "queue": "待审核",
-        "translations": "翻译"
       }
     },
     "common": {
@@ -656,6 +652,15 @@
     },
     "dashboard": {
       "title": "仪表盘",
+      "subtitle": "今日需要关注事项一览。",
+      "newLeads": "新客资",
+      "newLeadsHint": "待首次联系",
+      "leadsThisWeek": "本周客资",
+      "leadsThisWeekHint": "过去7天",
+      "publishedProjects": "已发布项目",
+      "publishedProjectsHint": "公开网站上线中",
+      "upcomingEvents": "近期活动",
+      "upcomingEventsHint": "未来30天",
       "recentLeads": "最新咨询",
       "viewAll": "查看全部",
       "greetingMorning": "早上好，{name}",
@@ -663,29 +668,25 @@
       "greetingEvening": "晚上好，{name}",
       "overdueSubtitle": "有 {count} 条销售线索超出标准回复时间——建议先处理这些。",
       "overdueSubtitleNone": "今天没有超时未回复的销售线索——一切正常。",
-      "monthSummary": {
-        "title": "本月概况",
-        "newLeads": "新客户线索",
-        "appointments": "看房预约",
-        "booked": "成交",
-        "viewFullReports": "查看完整报告"
-      },
       "rangeLabel": "时间范围",
       "range7": "最近7天",
       "range30": "最近30天",
       "range90": "最近90天",
       "range365": "最近365天",
       "exportReport": "导出报告",
+      "moreReports": "更多报表",
       "workQueue": {
         "title": "今日待办队列",
         "unassigned": {
           "label": "尚未分配的新销售线索",
           "oldest": "最早：{hours} 小时前",
-          "none": "没有待分配的线索"
+          "none": "没有待分配的线索",
+          "assignAll": "全部分配"
         },
         "overdue": {
           "label": "回复超时（{hours} 小时）",
           "hint": "今天必须联系",
+          "viewList": "查看列表",
           "none": "没有超时未回复的线索"
         },
         "appointments": {
@@ -695,6 +696,7 @@
         },
         "review": {
           "label": "发布前待审核",
+          "reviewNow": "立即审核",
           "none": "没有待审核的内容"
         }
       }
@@ -2024,7 +2026,9 @@
         "title": "按月客资统计",
         "subtitle": "最近12个月。",
         "total": "客资数",
-        "won": "已成交"
+        "won": "已成交",
+        "subtitleDetailed": "12个月共 {total} 条线索 · 本月 {thisMonth}（{changeLabel}）",
+        "subtitleDetailedNoChange": "12个月共 {total} 条线索 · 本月 {thisMonth}"
       },
       "sources": {
         "title": "客资来源分布",
@@ -2042,6 +2046,8 @@
       "pipeline": {
         "title": "客资阶段分布",
         "subtitle": "所有曾记录的客资，按当前状态划分——用于查看积压最多的环节，而不仅是新增数量",
+        "subtitleDetailed": "共有 {openTotal} 条线索仍未结束 · 停留最久的阶段是“{stage}”，平均 {avgDays} 天",
+        "subtitleSimple": "共有 {openTotal} 条线索仍未结束",
         "bottleneckFlag": "瓶颈"
       },
       "rsvp": {
@@ -2573,9 +2579,7 @@
         "item": "项目",
         "missing": "缺失语言",
         "fixLink": "修复"
-      },
-      "filterLabel": "按内容类型筛选",
-      "filterAll": "全部"
+      }
     },
     "analytics": {
       "title": "统计与报告",
@@ -2856,8 +2860,8 @@
       }
     },
     "publishing": {
-      "eyebrow": "网站内容",
-      "title": "审核与发布",
+      "eyebrow": "系统",
+      "title": "发布与语言",
       "subtitle": "每次修改都是“草稿”，需经审核才会生效——客户看到的网站不会中途改变。",
       "stats": {
         "draft": "尚未提交审核的草稿",

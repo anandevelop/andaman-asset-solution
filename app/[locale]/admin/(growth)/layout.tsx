@@ -9,30 +9,21 @@
  * kind of change that is bad rather than catastrophic to get wrong, but
  * still not a thing to hand to every content editor by default.
  *
- * THE EXCEPTION SLOT, CURRENTLY EMPTY
+ * THE ONE EXCEPTION SLOT
  *
  * Every other admin zone answers "which zone is this?" and stops there —
- * one guard, one minimum, for everything inside it. This zone could not,
- * for exactly one route: /seo/translations was aimed at content editors —
- * they are the people who know which language is missing what — while
- * everything else here (redirects, structured data, the URL health
- * report) genuinely wants ADMIN. Widening the whole zone to EDITOR to fit
- * one screen would have handed every editor the redirect table too.
+ * one guard, one minimum, for everything inside it. This zone cannot: the
+ * SEO translations screen (lib/locale-completeness.ts, arriving in a later
+ * phase) is aimed at content editors — they are the people who know which
+ * language is missing what — while everything else here (redirects,
+ * structured data, the URL health report) genuinely wants ADMIN. Widening
+ * the whole zone to EDITOR to fit one screen would hand every editor the
+ * redirect table too, which is the exact shape of mistake this
+ * restructuring exists to stop making.
  *
- * That screen has since moved to /admin/publishing/translations, where
- * EDITOR is the unremarkable floor and no exception is needed, and the
- * entry went with it. Which is the outcome the exception was always a
- * stand-in for: it was loosening a zone around a screen filed in the
- * wrong zone, and the real fix was to file it correctly.
- *
- * ROUTE_EXCEPTIONS stays, empty. Not because something is expected to
- * need it — it is deliberately hard to earn a place in it — but because
- * deleting the mechanism would delete the rules around it: that an entry
- * may only ever loosen, that the match is segment-aware, and that a
- * missing header fails closed. The next route that genuinely needs an
- * exception would otherwise get a fresh, unreviewed version of all three.
- * tests/admin/growth-route-exceptions.test.ts drives those rules against
- * a fixture rather than against whatever happens to be in the array.
+ * ROUTE_EXCEPTIONS is that one screen's escape hatch, and nothing else's.
+ * seo/translations (Phase 5) is its first and, so far, only entry — a
+ * three-line addition that changed nothing else about this layout's shape.
  *
  * HOW THE MATCH WORKS, AND WHY IT CAN ONLY EVER LOOSEN
  *
@@ -57,41 +48,21 @@ import { headers } from "next/headers";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 
-export type RouteException = {
-  /** Locale-relative, under this zone's own base — "/seo/keywords",
-   *  never the full "/en/admin/seo/keywords". */
+type RouteException = {
+  /** Locale-relative, under this zone's own base — "/seo/translations",
+   *  never the full "/en/admin/seo/translations". */
   prefix: string;
   /** Must be looser than Role.ADMIN — this slot exists to loosen the
    *  zone's floor for one route, never to tighten it. */
   minimum: Role;
 };
 
-/** Empty, and see the header for why the mechanism around it stays. */
-export const ROUTE_EXCEPTIONS: readonly RouteException[] = [];
-
-/**
- * Pick the exception covering `relative`, or undefined.
- *
- * Exported so its rules can be tested with a fixture: the array above is
- * empty today, and a test that could only drive it through the live array
- * would silently stop checking anything the moment it emptied — leaving
- * the next entry added to it completely unexercised.
- *
- * Segment-aware, not a bare startsWith: "/seo/keywords-export" is a
- * different route from "/seo/keywords" and must not inherit its exception
- * just because the two strings share a prefix.
- */
-export function exceptionFor(
-  relative: string | null,
-  exceptions: readonly RouteException[] = ROUTE_EXCEPTIONS,
-): RouteException | undefined {
-  return exceptions.find(
-    (candidate) => relative === candidate.prefix || relative?.startsWith(`${candidate.prefix}/`),
-  );
-}
+const ROUTE_EXCEPTIONS: readonly RouteException[] = [
+  { prefix: "/seo/translations", minimum: Role.EDITOR },
+];
 
 /** The part of x-admin-pathname after `/{locale}/admin` — "" for the zone
- *  index, "/seo/keywords" for that page. */
+ *  index, "/seo/translations" for that page once it exists. */
 function zoneRelativePath(pathname: string | null, locale: string): string | null {
   if (!pathname) return null;
 
@@ -109,7 +80,13 @@ export default async function AdminGrowthLayout({ children, params }: Props) {
   const requestHeaders = await headers();
   const relative = zoneRelativePath(requestHeaders.get("x-admin-pathname"), locale);
 
-  const exception = exceptionFor(relative);
+  // Segment-aware, not a bare startsWith: "/seo/translations-export" is a
+  // different route from "/seo/translations" and must not inherit its
+  // exception just because the two strings share a prefix.
+  const exception = ROUTE_EXCEPTIONS.find(
+    (candidate) =>
+      relative === candidate.prefix || relative?.startsWith(`${candidate.prefix}/`),
+  );
 
   await requireAdmin(locale, exception?.minimum ?? Role.ADMIN);
 
