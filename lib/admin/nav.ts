@@ -354,6 +354,22 @@ export function canSee(role: Role | null | undefined, node: Gated): boolean {
   return true;
 }
 
+/**
+ * May this role see one named sidebar item?
+ *
+ * For the case where a page wants to offer a shortcut into another part of
+ * the back office — the dashboard's "see the full reports" link into
+ * /admin/analytics — and must not draw it for a role the destination
+ * refuses. Asking canSee() about the real item is what keeps that answer
+ * from drifting: the alternative is a second hand-written role list beside
+ * the link, which is exactly the shape of the "Mobile view" defect this
+ * file's header describes.
+ */
+export function canSeeItem(role: Role | null | undefined, key: string): boolean {
+  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+  return item ? canSee(role, item) : false;
+}
+
 /** Groups and items left after filtering. An emptied group takes its
  *  heading with it. */
 export function visibleNav(role: Role | null | undefined): NavGroup[] {

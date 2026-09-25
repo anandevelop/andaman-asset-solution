@@ -652,15 +652,6 @@
     },
     "dashboard": {
       "title": "ภาพรวม",
-      "subtitle": "สรุปสิ่งที่ต้องดำเนินการวันนี้",
-      "newLeads": "ผู้สนใจรายใหม่",
-      "newLeadsHint": "รอการติดต่อกลับ",
-      "leadsThisWeek": "ผู้สนใจสัปดาห์นี้",
-      "leadsThisWeekHint": "7 วันล่าสุด",
-      "publishedProjects": "โครงการที่เผยแพร่",
-      "publishedProjectsHint": "แสดงบนเว็บไซต์แล้ว",
-      "upcomingEvents": "กิจกรรมที่ใกล้ถึง",
-      "upcomingEventsHint": "ภายใน 30 วัน",
       "recentLeads": "รายการล่าสุด",
       "viewAll": "ดูทั้งหมด",
       "greetingMorning": "สวัสดีตอนเช้า {name}",
@@ -668,25 +659,29 @@
       "greetingEvening": "สวัสดีตอนเย็น {name}",
       "overdueSubtitle": "มี {count} ลีดที่เกินเวลาตอบกลับมาตรฐาน — เริ่มจากตรงนั้นก่อนนะครับ",
       "overdueSubtitleNone": "วันนี้ยังไม่มีลีดที่เกินเวลาตอบกลับ — ทำงานต่อได้ตามปกติ",
+      "monthSummary": {
+        "title": "สรุปเดือนนี้",
+        "newLeads": "ลีดใหม่",
+        "appointments": "นัดชมโครงการ",
+        "booked": "ปิดการขาย",
+        "viewFullReports": "ดูรายงานเต็ม"
+      },
       "rangeLabel": "ช่วงเวลา",
       "range7": "7 วันล่าสุด",
       "range30": "30 วันล่าสุด",
       "range90": "90 วันล่าสุด",
       "range365": "365 วันล่าสุด",
       "exportReport": "ส่งออกรายงาน",
-      "moreReports": "รายงานเพิ่มเติม",
       "workQueue": {
         "title": "คิวงานวันนี้",
         "unassigned": {
           "label": "ลีดใหม่ที่ยังไม่มีผู้รับผิดชอบ",
           "oldest": "เก่าสุด {hours} ชม. ที่แล้ว",
-          "none": "ไม่มีลีดที่ค้างมอบหมาย",
-          "assignAll": "มอบหมายทั้งหมด"
+          "none": "ไม่มีลีดที่ค้างมอบหมาย"
         },
         "overdue": {
           "label": "เกินเวลาตอบกลับ {hours} ชม.",
           "hint": "ต้องติดต่อภายในวันนี้",
-          "viewList": "ดูรายการ",
           "none": "ไม่มีลีดที่เกินเวลาตอบกลับ"
         },
         "appointments": {
@@ -696,7 +691,6 @@
         },
         "review": {
           "label": "รอตรวจก่อนเผยแพร่",
-          "reviewNow": "ตรวจเลย",
           "none": "ไม่มีเนื้อหารอตรวจ"
         }
       }
@@ -2026,9 +2020,7 @@
         "title": "ลีดที่เข้ามารายเดือน",
         "subtitle": "ย้อนหลัง 12 เดือน",
         "total": "ผู้สนใจ",
-        "won": "ปิดการขาย",
-        "subtitleDetailed": "รวม {total} ลีดใน 12 เดือน · เดือนนี้ {thisMonth} ({changeLabel})",
-        "subtitleDetailedNoChange": "รวม {total} ลีดใน 12 เดือน · เดือนนี้ {thisMonth}"
+        "won": "ปิดการขาย"
       },
       "sources": {
         "title": "ลีดมาจากช่องทางไหน",
@@ -2046,8 +2038,6 @@
       "pipeline": {
         "title": "ไปป์ไลน์งานขาย",
         "subtitle": "ผู้สนใจทั้งหมดที่เคยบันทึกไว้ แยกตามสถานะปัจจุบัน — ดูว่าค้างอยู่ตรงไหนมากที่สุด ไม่ใช่แค่รายที่เพิ่งเข้ามา",
-        "subtitleDetailed": "คงค้างทั้งหมด {openTotal} ลีด · ค้างที่ “{stage}” นานสุด เฉลี่ย {avgDays} วัน",
-        "subtitleSimple": "คงค้างทั้งหมด {openTotal} ลีด",
         "bottleneckFlag": "คอขวด"
       },
       "rsvp": {
