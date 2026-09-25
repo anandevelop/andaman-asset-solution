@@ -32,9 +32,7 @@ import {
   getPublishedArticles,
 } from "@/lib/news";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
-import { renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
-import { stripLeadingH1 } from "@/lib/heading-policy";
-import { addHeadingAnchors } from "@/lib/heading-anchors";
+import { renderArticleBody } from "@/lib/article-render";
 import { truncate } from "@/lib/markdown-text";
 import { buildArticleJsonLd } from "@/lib/article-schema";
 import { intlLocale } from "@/lib/format";
@@ -129,11 +127,10 @@ export default async function ArticlePage(props: Props) {
     getSiteSettings(),
   ]);
 
-  const renderedBody =
-    article.contentFormat === "HTML"
-      ? sanitizeArticleHtml(article.content)
-      : renderMarkdown(article.content);
-  const html = addHeadingAnchors(stripLeadingH1(renderedBody));
+  // Sanitize, drop the title-duplicating H1, add anchors — see
+  // lib/article-render.ts for why the order matters and why it is a
+  // function rather than three calls written out here.
+  const html = renderArticleBody(article.content, article.contentFormat);
   // Already computed in a format-aware way by lib/news.ts — recomputing
   // it here from article.content directly would call the Markdown-only
   // formula on HTML content for a rich-text article.
