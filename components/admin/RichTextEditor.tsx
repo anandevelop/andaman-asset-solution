@@ -44,6 +44,10 @@ import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapLink from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+// TableKit bundles Table/TableRow/TableCell/TableHeader, which is how v3
+// ships them. MIT, from tiptap's own repo, pinned to the same 3.31.3 as
+// every other @tiptap package here.
+import { TableKit } from "@tiptap/extension-table";
 import FigureNodeView, {
   type FigureLabels,
   type FigureOptions,
@@ -55,8 +59,12 @@ import {
   Bold,
   Code,
   ExternalLink,
+  Columns3,
   HelpCircle,
   Pencil,
+  Rows3,
+  Table as TableIcon,
+  Trash2,
   RemoveFormatting,
   Redo2,
   Undo2,
@@ -367,6 +375,13 @@ type Props = {
     link: string;
     image: string;
     faq: string;
+    table: string;
+    tableAddRow: string;
+    tableDeleteRow: string;
+    tableAddColumn: string;
+    tableDeleteColumn: string;
+    tableHeaderRow: string;
+    tableDelete: string;
     textStyle: string;
     undo: string;
     redo: string;
@@ -547,6 +562,13 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       InternalAwareLink.configure({ openOnClick: false, autolink: false }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       Figure.configure({ labels: figureLabels, locale }),
+      /*
+        resizable: false. Column widths ride on a `colwidth` attribute and
+        an inline style, and lib/markdown.ts allows neither — so a width
+        set here would be stripped on save and silently spring back, which
+        is worse than not offering the handle at all.
+      */
+      TableKit.configure({ table: { resizable: false } }),
       FaqList,
       FaqItem,
       FaqQuestion,
@@ -923,6 +945,18 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         </button>
         <button
           type="button"
+          title={toolbarLabels.table}
+          aria-label={toolbarLabels.table}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+          }
+          className={toolbarButtonClass(false)}
+        >
+          <TableIcon size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
           title={toolbarLabels.faq}
           aria-label={toolbarLabels.faq}
           aria-pressed={editor.isActive("faqList")}
@@ -1101,6 +1135,86 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           className={toolbarButtonClass(false)}
         >
           <Unlink size={15} aria-hidden />
+        </button>
+      </BubbleMenu>
+
+      {/* Table controls follow the caret into the table, for the same
+          reason the link menu does: reaching a fixed toolbar to add a row
+          means losing the cell you were in. */}
+      <BubbleMenu
+        editor={editor}
+        shouldShow={({ editor: instance }) => instance.isActive("table")}
+        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+      >
+        <button
+          type="button"
+          title={toolbarLabels.tableAddRow}
+          aria-label={toolbarLabels.tableAddRow}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Rows3 size={15} aria-hidden />
+          <span className="ml-0.5 text-xs">+</span>
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.tableDeleteRow}
+          aria-label={toolbarLabels.tableDeleteRow}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Rows3 size={15} aria-hidden />
+          <span className="ml-0.5 text-xs">−</span>
+        </button>
+
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+
+        <button
+          type="button"
+          title={toolbarLabels.tableAddColumn}
+          aria-label={toolbarLabels.tableAddColumn}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().addColumnAfter().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Columns3 size={15} aria-hidden />
+          <span className="ml-0.5 text-xs">+</span>
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.tableDeleteColumn}
+          aria-label={toolbarLabels.tableDeleteColumn}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().deleteColumn().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <Columns3 size={15} aria-hidden />
+          <span className="ml-0.5 text-xs">−</span>
+        </button>
+
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+
+        <button
+          type="button"
+          title={toolbarLabels.tableHeaderRow}
+          aria-label={toolbarLabels.tableHeaderRow}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().toggleHeaderRow().run()}
+          className={toolbarButtonClass(false)}
+        >
+          <span className="px-0.5 text-xs font-medium">TH</span>
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.tableDelete}
+          aria-label={toolbarLabels.tableDelete}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => editor.chain().focus().deleteTable().run()}
+          className={`${toolbarButtonClass(false)} text-red-700`}
+        >
+          <Trash2 size={15} aria-hidden />
         </button>
       </BubbleMenu>
 

@@ -1367,7 +1367,14 @@
         "editLink": "แก้ลิงก์",
         "openLink": "เปิดลิงก์",
         "removeLink": "ลบลิงก์",
-        "faq": "บล็อกคำถามที่พบบ่อย"
+        "faq": "บล็อกคำถามที่พบบ่อย",
+        "table": "แทรกตาราง",
+        "tableAddRow": "เพิ่มแถว",
+        "tableDeleteRow": "ลบแถว",
+        "tableAddColumn": "เพิ่มคอลัมน์",
+        "tableDeleteColumn": "ลบคอลัมน์",
+        "tableHeaderRow": "สลับแถวหัวตาราง",
+        "tableDelete": "ลบตาราง"
       },
       "figure": {
         "alignLeft": "ชิดซ้าย",

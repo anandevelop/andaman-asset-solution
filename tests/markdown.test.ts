@@ -312,6 +312,12 @@ describe("every tag the rich-text editor emits survives sanitising", () => {
     figcaption: '<figure><img src="/a.jpg" alt="x"><figcaption>c</figcaption></figure>',
     code: "<p><code>x</code></p>",
     pre: "<pre><code>x</code></pre>",
+    table: "<table><tbody><tr><td>x</td></tr></tbody></table>",
+    thead: "<table><thead><tr><th>h</th></tr></thead></table>",
+    tbody: "<table><tbody><tr><td>x</td></tr></tbody></table>",
+    tr: "<table><tbody><tr><td>x</td></tr></tbody></table>",
+    th: "<table><thead><tr><th>h</th></tr></thead></table>",
+    td: "<table><tbody><tr><td>x</td></tr></tbody></table>",
   };
 
   it("covers every tag in RICH_TEXT_TAGS, with no sample left behind", () => {
@@ -332,5 +338,39 @@ describe("every tag the rich-text editor emits survives sanitising", () => {
     // would have strikethrough vanish from every pre-editor article.
     expect(sanitizeArticleHtml("<p><del>x</del></p>")).toContain("<del>");
     expect(renderMarkdown("~~x~~")).toContain("<del>");
+  });
+});
+
+/*
+  Merged table cells.
+
+  colspan and rowspan sat in ALLOWED_ATTR for a long time doing nothing:
+  DOMPurify runs ALLOWED_URI_REGEXP against every attribute that is neither
+  data-* nor on its own URI-safe list, so `colspan="2"` was tested as a URL,
+  failed, and was removed. Invisible while only Markdown made tables —
+  marked never emits a merged cell — and a silent unmerge the moment the
+  editor could.
+*/
+describe("table cells keep their spans", () => {
+  it("keeps colspan and rowspan", () => {
+    const out = sanitizeArticleHtml(
+      '<table><tbody><tr><td colspan="2" rowspan="3">merged</td></tr></tbody></table>',
+    );
+    expect(out).toContain('colspan="2"');
+    expect(out).toContain('rowspan="3"');
+  });
+
+  it("does not turn them into an execution route", () => {
+    // They are exempt from the URL check because they are not URLs. A
+    // browser parses colspan as a number and ignores anything else, so a
+    // junk value is inert rather than dangerous — but the audit has to
+    // agree, not just the reasoning.
+    const out = sanitizeArticleHtml(
+      '<table><tbody><tr><td colspan="javascript:alert(1)" onclick="alert(1)">x</td></tr></tbody></table>',
+    );
+    const report = audit(out);
+    expect(report.hasHandler).toBe(false);
+    expect(report.unsafeUrls).toEqual([]);
+    expect(report.hasExecutableTag).toBe(false);
   });
 });

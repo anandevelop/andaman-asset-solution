@@ -495,6 +495,28 @@
     @apply float-right ml-6;
   }
 
+  /* Tables had no styling at all until the editor could make one — the
+     allowlist accepted the tags, but nothing produced them, so a pasted
+     table rendered as unspaced text in both the editor and the article.
+     Scrollable rather than squeezed: a four-column table has no honest way
+     to fit a phone, and shrinking the type until it does is worse than
+     letting the reader swipe it. */
+  & table {
+    @apply my-8 block w-full overflow-x-auto border-collapse text-sm;
+  }
+
+  & thead {
+    @apply border-b border-primary/20;
+  }
+
+  & th {
+    @apply px-3 py-2.5 text-left align-top font-medium text-primary;
+  }
+
+  & td {
+    @apply border-t border-primary/10 px-3 py-2.5 align-top text-ink/80;
+  }
+
   & code {
     @apply rounded-xs bg-primary/5 px-1.5 py-0.5 font-mono text-[0.85em] text-primary;
   }

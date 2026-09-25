@@ -62,19 +62,20 @@ export const RICH_TEXT_TAGS = [
   "blockquote",
   "a", "img", "figure", "figcaption",
   "code", "pre",
+  // The rich-text editor gained a table in Phase 2b-5.2, so these moved up
+  // out of MARKDOWN_ONLY_TAGS — the split below is about what the editor
+  // can produce, and it can now produce these.
+  "table", "thead", "tbody", "tr", "th", "td",
 ] as const;
 
 /**
- * `del`, `sub`, `sup` and the table tags are not in RICH_TEXT_TAGS: the
- * rich-text editor has no extension that emits them. They stay allowed for
- * the MARKDOWN articles written before that editor existed — `marked`
- * renders `~~x~~` as `<del>`, not `<s>`, so dropping it would strip the
- * strikethrough out of every one of those older articles.
+ * `del`, `sub`, `sup` are not in RICH_TEXT_TAGS: the rich-text editor has
+ * no extension that emits them. They stay allowed for the MARKDOWN
+ * articles written before that editor existed — `marked` renders `~~x~~`
+ * as `<del>`, not `<s>`, so dropping it would strip the strikethrough out
+ * of every one of those older articles.
  */
-const MARKDOWN_ONLY_TAGS = [
-  "del", "sub", "sup",
-  "table", "thead", "tbody", "tr", "th", "td",
-];
+const MARKDOWN_ONLY_TAGS = ["del", "sub", "sup"];
 
 const ALLOWED_TAGS = [...new Set([...RICH_TEXT_TAGS, ...MARKDOWN_ONLY_TAGS])];
 
@@ -156,6 +157,19 @@ function sanitizeHtml(raw: string): string {
     // First line of defence; the afterSanitizeAttributes hook above closes
     // the data:-on-media gap this option leaves open.
     ALLOWED_URI_REGEXP: SAFE_URI,
+    /*
+      colspan and rowspan are not URLs, and without this they are treated
+      as if they were.
+
+      DOMPurify runs ALLOWED_URI_REGEXP against every attribute that is
+      neither data-* nor on its own URI-safe list — so `colspan="2"` was
+      tested as a URL, failed, and was stripped, despite sitting in
+      ALLOWED_ATTR the whole time. That was invisible while only Markdown
+      produced tables, since marked never emits a merged cell. The editor
+      does, and a merged cell that silently unmerges on save is the same
+      class of quiet damage as the <u> that used to disappear.
+    */
+    ADD_URI_SAFE_ATTR: ["colspan", "rowspan"],
   });
 
   // Any link that survived sanitizing and points off-site gets the usual

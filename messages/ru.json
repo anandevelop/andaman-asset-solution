@@ -1367,7 +1367,14 @@
         "editLink": "Изменить ссылку",
         "openLink": "Открыть ссылку",
         "removeLink": "Убрать ссылку",
-        "faq": "Блок вопросов и ответов"
+        "faq": "Блок вопросов и ответов",
+        "table": "Вставить таблицу",
+        "tableAddRow": "Добавить строку",
+        "tableDeleteRow": "Удалить строку",
+        "tableAddColumn": "Добавить столбец",
+        "tableDeleteColumn": "Удалить столбец",
+        "tableHeaderRow": "Строка заголовка",
+        "tableDelete": "Удалить таблицу"
       },
       "figure": {
         "alignLeft": "По левому краю",

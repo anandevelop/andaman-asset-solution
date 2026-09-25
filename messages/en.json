@@ -1367,7 +1367,14 @@
         "editLink": "Edit link",
         "openLink": "Open link",
         "removeLink": "Remove link",
-        "faq": "FAQ block"
+        "faq": "FAQ block",
+        "table": "Insert table",
+        "tableAddRow": "Add row",
+        "tableDeleteRow": "Delete row",
+        "tableAddColumn": "Add column",
+        "tableDeleteColumn": "Delete column",
+        "tableHeaderRow": "Toggle header row",
+        "tableDelete": "Delete table"
       },
       "figure": {
         "alignLeft": "Align left",

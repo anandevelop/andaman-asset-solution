@@ -42,6 +42,13 @@ const LABELS = {
   link: "Insert link",
   image: "Insert image",
   faq: "FAQ block",
+  table: "Insert table",
+  tableAddRow: "Add row",
+  tableDeleteRow: "Delete row",
+  tableAddColumn: "Add column",
+  tableDeleteColumn: "Delete column",
+  tableHeaderRow: "Toggle header row",
+  tableDelete: "Delete table",
   textStyle: "Text style",
   undo: "Undo",
   redo: "Redo",
@@ -492,6 +499,34 @@ describe("RichTextEditor — FAQ block", () => {
       expect(out).toContain('data-faq="question"');
       expect(out).toContain("Can foreigners own?");
       expect(out).toContain("Leasehold or company.");
+    });
+  });
+});
+
+/*
+  A table has to survive the sanitizer, which is stricter than TipTap.
+  TipTap emits <colgroup> and a colwidth attribute for column sizing, and
+  lib/markdown.ts allows neither — so the question is whether what comes
+  back is still a table, or debris.
+*/
+describe("RichTextEditor — tables", () => {
+  it("round-trips the parts the sanitizer actually keeps", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      "<table><thead><tr><th>Type</th><th>Size</th></tr></thead>" +
+      "<tbody><tr><td>Pool villa</td><td>398 sqm</td></tr></tbody></table>";
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain("<table");
+      expect(out).toContain("<th");
+      expect(out).toContain("Pool villa");
+      expect(out).toContain("398 sqm");
     });
   });
 });
