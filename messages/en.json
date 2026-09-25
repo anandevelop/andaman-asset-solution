@@ -625,6 +625,7 @@
         "label": "Page",
         "home": "Home",
         "about": "About us",
+        "contact": "Contact",
         "faq": "FAQ"
       },
       "pagesHome": {
@@ -636,6 +637,7 @@
       },
       "pagesAbout": {
         "label": "About page section",
+        "story": "Our story",
         "corporate": "Corporate Services",
         "whyUs": "Why Us",
         "mission": "Mission & Principles",
@@ -2111,14 +2113,12 @@
       "resetHint": "Clear a field and save to restore its default.",
       "groups": {
         "contact": "Contact channels",
-        "address": "Address & hours",
         "social": "Social Media",
         "analytics": "Analytics & verification",
         "branding": "Branding",
         "searchResults": "Search results",
         "metaTitle": "Meta title",
         "metaDescription": "Meta description",
-        "company": "Company",
         "contactChannels": "Contact details shown on the site",
         "notifications": "Notifications",
         "integrations": "External connections",

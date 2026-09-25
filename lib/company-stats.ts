@@ -8,7 +8,7 @@ import "server-only";
  * THREE OF THEM ARE COUNTED, AND THAT IS THE POINT
  *
  * They used to be four free-text fields an admin typed at
- * /admin/settings/company — "10+ awards", "30+ projects" — and
+ * /admin/pages/about/story — "10+ awards", "30+ projects" — and
  * components/VisionMission.tsx carried a warning about it: the awards
  * figure was independent of the awards actually recorded, so a visitor
  * could read "10+" here and count six in the awards strip further down the

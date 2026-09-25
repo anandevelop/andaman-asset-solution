@@ -146,11 +146,11 @@ export const NAV_TAB_GROUPS = {
   pages: [
     { key: "home", segment: "/home", roles: ROLE_SETS.CONTENT },
     { key: "about", segment: "/about", roles: ROLE_SETS.CONTENT },
-    /* No `contact` tab yet. The blueprint puts one here, but the page it
-       points at does not exist — it is a new screen that lifts the content
-       half out of settings/contact, and building new screens is Phase 4.
-       A tab to a 404 is exactly the kind of dead control this whole
-       restructure is removing. */
+    /* The blueprint always put `contact` here; the screen it points at
+       finally exists, lifted out of settings/contact. ROLE_SETS.CONTENT
+       like its siblings: the page admits VIEWER to read and gates saving
+       to ADMIN with a disabled fieldset, exactly as settings did. */
+    { key: "contact", segment: "/contact", roles: ROLE_SETS.CONTENT },
     { key: "faq", segment: "/faq", roles: ROLE_SETS.CONTENT },
   ],
   pagesHome: [
@@ -160,6 +160,10 @@ export const NAV_TAB_GROUPS = {
     { key: "cta", segment: "/cta", roles: ROLE_SETS.CONTENT },
   ],
   pagesAbout: [
+    /* First, because it is the top of the public page and the thing
+       somebody opens the About hub to change. It was /admin/settings/company
+       — a whole other zone — until Phase 4. */
+    { key: "story", segment: "/story", roles: ROLE_SETS.CONTENT },
     { key: "corporate", segment: "/corporate", roles: ROLE_SETS.CONTENT },
     { key: "whyUs", segment: "/why-us", roles: ROLE_SETS.CONTENT },
     { key: "mission", segment: "/mission", roles: ROLE_SETS.CONTENT },
@@ -327,6 +331,10 @@ export const ADMIN_NAV: readonly NavGroup[] = [
           "/awards",
           "/milestones",
           "/faqs",
+          /* Phase 4: two settings groups that were editing this hub's
+             pages all along — the About story and the contact details. */
+          "/settings/company",
+          "/settings/contact",
         ],
         tabs: NAV_TAB_GROUPS.pages,
       },

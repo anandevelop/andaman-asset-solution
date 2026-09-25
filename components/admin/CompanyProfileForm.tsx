@@ -26,7 +26,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
 import type { Locale } from "@/i18n";
-import type { CompanyProfileFormState } from "@/app/[locale]/admin/(system)/settings/company/actions";
+import type { CompanyProfileFormState } from "@/app/[locale]/admin/(content)/pages/about/story/actions";
 
 const INITIAL: CompanyProfileFormState = { ok: false };
 

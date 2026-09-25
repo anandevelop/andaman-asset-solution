@@ -4,7 +4,8 @@
  * components/admin/PageTabs.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The horizontal tab strip inside a workspace — the Pages hub's Home |
- * About | FAQ, and Home's own Sections | Hero | Gallery | Closing CTA.
+ * About | Contact | FAQ, the SEO hub's five screens, Review & publish's
+ * two, and Home's own Sections | Hero | Gallery | Closing CTA.
  *
  * Same idea as SettingsNav.tsx next door: every tab is a real route, so the
  * highlighted one is read from the path rather than held in state. Nothing

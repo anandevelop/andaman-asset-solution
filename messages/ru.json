@@ -625,6 +625,7 @@
         "label": "Страница",
         "home": "Главная",
         "about": "О нас",
+        "contact": "Контакты",
         "faq": "Вопросы и ответы"
       },
       "pagesHome": {
@@ -636,6 +637,7 @@
       },
       "pagesAbout": {
         "label": "Блок страницы «О нас»",
+        "story": "О компании",
         "corporate": "Услуги компании",
         "whyUs": "Почему мы",
         "mission": "Принципы работы",
@@ -2111,14 +2113,12 @@
       "resetHint": "Очистите поле и сохраните, чтобы восстановить значение по умолчанию.",
       "groups": {
         "contact": "Контакты",
-        "address": "Адрес и часы работы",
         "social": "Социальные сети",
         "analytics": "Аналитика и подтверждение сайта",
         "branding": "Фирменный стиль",
         "searchResults": "Результаты поиска",
         "metaTitle": "Meta title",
         "metaDescription": "Meta description",
-        "company": "О компании",
         "contactChannels": "Контакты, показываемые на сайте",
         "notifications": "Уведомления",
         "integrations": "Внешние подключения",

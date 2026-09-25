@@ -1,12 +1,17 @@
 "use server";
 
 /**
- * app/[locale]/admin/settings/company/actions.ts
+ * app/[locale]/admin/(content)/pages/about/story/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Save the CompanyProfile singleton — "About Andaman Asset Solution", read
  * by /about and reused anywhere a project page wants a company blurb. One
  * row (id: "default"), so this is an upsert against a fixed id rather than
  * a create/update pair keyed off a route param.
+ *
+ * Role.ADMIN, unchanged by the move out of /admin/settings/company. The
+ * other tabs in this hub admit EDITOR; widening this one to match them
+ * would be a decision about who may rewrite the company's own description,
+ * not a consequence of the route it lives at.
  */
 
 import { revalidatePath } from "next/cache";
@@ -100,7 +105,7 @@ export async function updateCompanyProfile(
   // page; the four stat figures appear on the home page's Vision & Mission
   // section — purged as a locale subtree so both surfaces pick up an edit
   // immediately rather than waiting out the page's own revalidate window.
-  revalidatePath(`/${locale}/admin/settings/company`);
+  revalidatePath(`/${locale}/admin/pages/about/story`);
   for (const target of locales) {
     revalidatePath(`/${target}`, "layout");
   }

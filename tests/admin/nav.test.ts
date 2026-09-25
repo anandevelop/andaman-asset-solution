@@ -94,7 +94,7 @@ describe("activeItemKey", () => {
 
   it("matches a child route to its item", () => {
     expect(activeItemKey("/th/admin/projects/abc123/units", base)).toBe("projects");
-    expect(activeItemKey("/th/admin/settings/company", base)).toBe("settings");
+    expect(activeItemKey("/th/admin/settings/notifications", base)).toBe("settings");
   });
 
   it("gives the dashboard only its own path", () => {
@@ -169,11 +169,16 @@ describe("the Pages hub", () => {
   it("offers a tab for every section route that exists", () => {
     /* Each tab's segment has to resolve to a real folder under
        app/[locale]/admin/pages. A tab pointing at a 404 is the same defect
-       as a menu row pointing at a denied page — which is why `contact` is
-       not in this strip yet: its screen is Phase 4's. */
+       as a menu row pointing at a denied page — which is what kept
+       `contact` out of this strip until its screen was built. */
     const hub = ADMIN_NAV.flatMap((group) => group.items).find((item) => item.key === "pages");
 
-    expect(hub?.tabs?.map((tab) => tab.segment)).toEqual(["/home", "/about", "/faq"]);
+    expect(hub?.tabs?.map((tab) => tab.segment)).toEqual([
+      "/home",
+      "/about",
+      "/contact",
+      "/faq",
+    ]);
     expect(visibleTabs(Role.EDITOR, "pagesHome").map((tab) => tab.segment)).toEqual([
       "/sections",
       "/hero",
@@ -181,6 +186,7 @@ describe("the Pages hub", () => {
       "/cta",
     ]);
     expect(visibleTabs(Role.EDITOR, "pagesAbout").map((tab) => tab.segment)).toEqual([
+      "/story",
       "/corporate",
       "/why-us",
       "/mission",
@@ -189,7 +195,7 @@ describe("the Pages hub", () => {
     ]);
   });
 
-  it("aliases exactly the paths next.config.js redirects", () => {
+  it("aliases every path next.config.js redirects into it", () => {
     // Two lists that have to agree: one lights the menu, the other moves
     // the browser. A path in only one of them is a half-finished move.
     const hub = ADMIN_NAV.flatMap((group) => group.items).find((item) => item.key === "pages");
@@ -205,6 +211,8 @@ describe("the Pages hub", () => {
         "/home-gallery",
         "/milestones",
         "/mission",
+        "/settings/company",
+        "/settings/contact",
         "/why-us",
       ].sort(),
     );

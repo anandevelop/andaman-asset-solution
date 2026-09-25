@@ -11,29 +11,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  Building2,
-  Database,
-  Link2,
-  Phone,
-  ShieldCheck,
-} from "lucide-react";
+import { Bell, Database, Link2, ShieldCheck } from "lucide-react";
 
-type Key =
-  | "company"
-  | "contact"
-  | "notifications"
-  | "integrations"
-  | "privacy"
-  | "system";
+type Key = "notifications" | "integrations" | "privacy" | "system";
 
+/*
+  Three rows left this rail and none of them were settings.
+
+  "company" edited the About page's copy and "contact" edited the contact
+  page's — both are tabs of /admin/pages now, beside the other sections of
+  the pages they belong to. "seo" held the sitewide title template, the
+  default OG image and the Search Console token, which are tabs of
+  /admin/seo, beside the rest of the SEO work. next.config.js redirects all
+  three old paths.
+
+  What is left is what the word actually covers: how the system behaves,
+  not what the website says.
+*/
 const ENTRIES: { key: Key; segment: string; icon: typeof Bell }[] = [
-  { key: "company", segment: "company", icon: Building2 },
-  { key: "contact", segment: "contact", icon: Phone },
-  /* No "seo" row: the sitewide title template, default OG image and
-     Search Console token moved to /admin/seo/defaults, beside the rest of
-     the SEO work. next.config.js redirects the old path. */
   { key: "notifications", segment: "notifications", icon: Bell },
   { key: "integrations", segment: "integrations", icon: Link2 },
   { key: "privacy", segment: "privacy", icon: ShieldCheck },
@@ -50,7 +45,7 @@ export default function SettingsNav({
   const pathname = usePathname();
 
   return (
-    <nav className="admin-card p-2!" aria-label={labels.company}>
+    <nav className="admin-card p-2!" aria-label={labels.notifications}>
       <ul className="space-y-1">
         {ENTRIES.map(({ key, segment, icon: Icon }) => {
           const href = `/${locale}/admin/settings/${segment}`;

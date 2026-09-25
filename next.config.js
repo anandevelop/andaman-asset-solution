@@ -345,6 +345,20 @@ const nextConfig = {
         destination: "/:locale/admin/seo/defaults",
         permanent: true,
       },
+
+      /* Two more settings groups that were editing a public page all along:
+         "company" was the About page's story, "contact" the contact page's
+         details. Both are tabs of the Pages hub now. */
+      {
+        source: "/:locale/admin/settings/company",
+        destination: "/:locale/admin/pages/about/story",
+        permanent: true,
+      },
+      {
+        source: "/:locale/admin/settings/contact",
+        destination: "/:locale/admin/pages/contact",
+        permanent: true,
+      },
     ];
   },
 

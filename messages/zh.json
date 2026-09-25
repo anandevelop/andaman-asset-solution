@@ -625,6 +625,7 @@
         "label": "页面",
         "home": "首页",
         "about": "关于我们",
+        "contact": "联系我们",
         "faq": "常见问题"
       },
       "pagesHome": {
@@ -636,6 +637,7 @@
       },
       "pagesAbout": {
         "label": "关于我们板块",
+        "story": "公司故事",
         "corporate": "企业服务",
         "whyUs": "为什么选择我们",
         "mission": "工作理念",
@@ -2111,14 +2113,12 @@
       "resetHint": "清空字段并保存即可恢复默认值。",
       "groups": {
         "contact": "联系方式",
-        "address": "地址与营业时间",
         "social": "社交媒体",
         "analytics": "分析与站点验证",
         "branding": "品牌",
         "searchResults": "搜索结果",
         "metaTitle": "Meta 标题",
         "metaDescription": "Meta 描述",
-        "company": "公司信息",
         "contactChannels": "网站上显示的联系方式",
         "notifications": "通知",
         "integrations": "外部连接",

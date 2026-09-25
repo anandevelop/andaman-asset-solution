@@ -17,9 +17,13 @@
  * It is also partial-update safe by construction: the loop skips any key
  * the submitted form did not carry (`raw === null`), so two different pages
  * can each edit their own subset of SETTING_KEYS through this one action
- * without wiping each other's values. /admin/settings and
- * /admin/settings/seo both rely on that — do not "tidy" the null check into
- * treating a missing field as a clear.
+ * without wiping each other's values. The settings groups, /admin/seo/
+ * defaults and /admin/pages/contact — two different route trees, importing
+ * this action rather than copying it — all rely on that. The contact page
+ * leans on it hardest: it shows one language's address at a time, so a
+ * save from the TH tab carries contact.addressTh and none of the other
+ * three. Do not "tidy" the null check into treating a missing field as a
+ * clear; it would blank three locales' addresses on every save.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -154,7 +158,7 @@ export async function updateSettings(
 
     revalidatePath("/", "layout") is already the widest purge there is:
     every cached route derives the root layout first, so this invalidates
-    all of them. The narrower per-locale loop in settings/company/actions.ts
+    all of them. The narrower per-locale loop in pages/about/story/actions.ts
     covers a strict subset of the same thing — copying it here would be a
     downgrade wearing the costume of thoroughness.
 
@@ -166,12 +170,14 @@ export async function updateSettings(
   // page-type purge would stop at this route's own segment.
   revalidatePath(`/${locale}/admin/settings`, "layout");
 
-  // And the SEO hub, because /admin/seo/defaults binds this same action
-  // for the branding and search-result keys. It used to be
-  // /admin/settings/seo and was covered by the line above; the move out of
-  // settings took it out of that purge's reach, so a saved title template
-  // would have re-rendered stale on its own screen.
+  /* And the two hubs that took the screens which used to be settings
+     groups: /admin/seo/defaults binds this action for the branding and
+     search-result keys, /admin/pages/contact for the contact ones. Both
+     were under /admin/settings and covered by the line above until Phase
+     3 and 4 moved them out of its reach — leaving each one re-rendering
+     the values it had just replaced. */
   revalidatePath(`/${locale}/admin/seo`, "layout");
+  revalidatePath(`/${locale}/admin/pages`, "layout");
 
   // The manifest reads branding.faviconUrl (app/manifest.ts). It should be
   // covered by the root purge above, but manifest generation is a

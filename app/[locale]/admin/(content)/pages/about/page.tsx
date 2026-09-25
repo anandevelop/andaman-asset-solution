@@ -1,5 +1,5 @@
 /**
- * app/[locale]/admin/pages/about/page.tsx
+ * app/[locale]/admin/(content)/pages/about/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * No content of its own; the first tab is the landing place.
  * ─────────────────────────────────────────────────────────────────────────
@@ -11,5 +11,5 @@ type Props = { params: Promise<{ locale: string }> };
 
 export default async function AdminPagesAboutIndex(props: Props) {
   const { locale } = await props.params;
-  redirect(`/${locale}/admin/pages/about/corporate`);
+  redirect(`/${locale}/admin/pages/about/story`);
 }

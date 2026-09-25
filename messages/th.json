@@ -625,6 +625,7 @@
         "label": "หน้า",
         "home": "หน้าแรก",
         "about": "เกี่ยวกับเรา",
+        "contact": "ติดต่อเรา",
         "faq": "คำถามที่พบบ่อย"
       },
       "pagesHome": {
@@ -636,6 +637,7 @@
       },
       "pagesAbout": {
         "label": "ส่วนของหน้าเกี่ยวกับเรา",
+        "story": "เรื่องราวบริษัท",
         "corporate": "บริการของบริษัท",
         "whyUs": "ทำไมต้องเรา",
         "mission": "หลักการทำงาน",
@@ -2111,14 +2113,12 @@
       "resetHint": "ล้างช่องให้ว่างแล้วบันทึก เพื่อกลับไปใช้ค่าเริ่มต้น",
       "groups": {
         "contact": "ช่องทางติดต่อ",
-        "address": "ที่อยู่และเวลาทำการ",
         "social": "โซเชียลมีเดีย",
         "analytics": "Analytics และการยืนยันเว็บไซต์",
         "branding": "แบรนด์",
         "searchResults": "ผลการค้นหา",
         "metaTitle": "Meta title",
         "metaDescription": "Meta description",
-        "company": "ข้อมูลบริษัท",
         "contactChannels": "ช่องทางติดต่อที่แสดงบนเว็บ",
         "notifications": "การแจ้งเตือน",
         "integrations": "การเชื่อมต่อภายนอก",

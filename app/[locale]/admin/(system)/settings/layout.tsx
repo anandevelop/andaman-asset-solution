@@ -62,8 +62,6 @@ export default async function AdminSettingsLayout({ children, params }: Props) {
         <SettingsNav
           locale={locale}
           labels={{
-            company: t("settings.groups.company"),
-            contact: t("settings.groups.contact"),
             notifications: t("settings.groups.notifications"),
             integrations: t("settings.groups.integrations"),
             privacy: t("settings.groups.privacy"),

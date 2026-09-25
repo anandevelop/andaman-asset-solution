@@ -166,7 +166,7 @@ export default async function AboutPage(props: Props) {
           tone="onImage", which exists for exactly this) — About did not
           have one before; it was the plain white header every listing
           page still uses. CompanyProfile.aboutHeroImageUrl
-          (/admin/settings/company) is the source, alongside the existing
+          (/admin/pages/about/story) is the source, alongside the existing
           storyImageUrl below — deliberately a different photo, since a
           fresh install showing the same picture twice one screen apart
           would look like a bug. */}
@@ -243,7 +243,7 @@ export default async function AboutPage(props: Props) {
 
         <Reveal delay={0.15}>
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
-            {/* CompanyProfile.storyImageUrl (/admin/settings/company),
+            {/* CompanyProfile.storyImageUrl (/admin/pages/about/story),
                 defaulted to the Residence Prime facade this was hardcoded
                 to before that field existed — never blank, unlike the
                 homepage fallback, so every visitor to /about sees this
