@@ -17,6 +17,7 @@ import SiteCta from "@/components/SiteCta";
 import RouteGate from "@/components/RouteGate";
 import { getSiteSettings } from "@/lib/settings";
 import { getCtaMounts } from "@/lib/site-cta";
+import PageViewBeacon from "@/components/PageViewBeacon";
 
 type Props = {
   children: React.ReactNode;
@@ -53,6 +54,22 @@ export default async function SiteLayout({ children, params }: Props) {
 
   return (
     <>
+      {/*
+        Counts the read and keeps the visit alive, on every public page.
+
+        It used to be mounted on the article page alone, because the only
+        number anybody needed was the view count beside an article's lead
+        count. Phase 3 asks "who is on the site right now", and a beacon
+        that only fires on /news/ can only ever answer "the people reading
+        articles" — so it moves up here, where every page under (site)
+        gets it and nothing under /admin does.
+
+        See app/api/page-view/route.ts for what is stored, and
+        lib/public-paths.ts's isCountablePublicPath for which of these
+        paths are actually recorded.
+      */}
+      <PageViewBeacon />
+
       {/*
         Skip link. Seven nav items plus a language switch and a phone CTA
         sit ahead of the content on every page, so a keyboard user had to

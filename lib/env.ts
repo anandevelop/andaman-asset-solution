@@ -104,6 +104,16 @@ const RECOMMENDED: Array<[name: string, consequence: string]> = [
   ["GSC_SITE_URL", "Search Console queries, impressions and index coverage are unavailable"],
   ["GA4_PROPERTY_ID", "GA4 traffic and conversion reporting is unavailable"],
   ["PAGESPEED_API_KEY", "PageSpeed Insights runs unauthenticated and is rate limited, or fails"],
+
+  /*
+    The salt the realtime counter hashes a visit with — see
+    lib/analytics/live-visit.ts. Unset, it falls back to a value generated
+    once per process, so the consequence is that visits stop being
+    recognised across a restart rather than that the hash becomes
+    guessable. Worth a warning precisely because the symptom is mild and
+    silent: a slightly inflated count after every deploy.
+  */
+  ["ANALYTICS_SALT", "live visitor counts reset on every restart instead of following a visit across one"],
 ];
 
 export type EnvProblem = { name: string; detail: string };

@@ -39,6 +39,7 @@ function validEnv(): NodeJS.ProcessEnv {
     GSC_SITE_URL: "https://andamanassetsolution.com",
     GA4_PROPERTY_ID: "123456789",
     PAGESPEED_API_KEY: "psi-key",
+    ANALYTICS_SALT: "salt",
   } as NodeJS.ProcessEnv;
 }
 
@@ -67,6 +68,7 @@ describe("collectEnvProblems — the SEO environment", () => {
     "GSC_SITE_URL",
     "GA4_PROPERTY_ID",
     "PAGESPEED_API_KEY",
+    "ANALYTICS_SALT",
   ];
 
   it.each(seoVars)("warns about a missing %s without making it fatal", (name) => {

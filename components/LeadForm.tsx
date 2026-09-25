@@ -20,6 +20,7 @@ import { emailDomain } from "@/lib/email-quality";
 import RecaptchaProvider, { useRecaptchaToken } from "@/components/RecaptchaProvider";
 import { trackLead } from "@/lib/analytics";
 import { siteConfig } from "@/config/site";
+import { readLanding } from "@/lib/analytics/landing";
 import type { Locale } from "@/i18n";
 
 type Props = {
@@ -395,6 +396,10 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
       // Minted at submit time: v3 tokens are single-use and expire after
       // two minutes, so one taken on mount would often be stale by now.
       const recaptchaToken = await getRecaptchaToken("lead_form");
+      // Read at submit rather than on mount: a visit that begins on this
+      // very page has PageViewBeacon writing the landing row during the
+      // same commit, and a value captured on mount could miss it.
+      const landing = readLanding();
 
       const response = await fetch("/api/leads", {
         method: "POST",
@@ -410,6 +415,11 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
           // LeadInquiry.commsLanguage/sourcePath in schema.prisma.
           commsLanguage: locale,
           sourcePath: pathname,
+          // Where this visit started, recorded by PageViewBeacon on its
+          // first page — see lib/analytics/landing.ts for why the form
+          // cannot work this out for itself by the time it renders.
+          landingPath: landing.path,
+          landingReferrer: landing.referrer,
         }),
       });
 

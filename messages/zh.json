@@ -2668,6 +2668,7 @@
       "title": "统计与报告",
       "subtitle": "流量、内容表现和销售管道汇总于一屏 — 数据来自本系统自身记录，无需另外登录 GA4",
       "tabs": {
+        "realtime": "实时",
         "traffic": "流量",
         "content": "内容",
         "leads": "销售线索"
@@ -2691,7 +2692,28 @@
       "views30": "浏览量（30天）",
       "leadsFromArticle": "销售线索",
       "weekOverWeek": "本周销售线索",
-      "weekOverWeekHint": "上周 {lastWeek} 条"
+      "weekOverWeekHint": "上周 {lastWeek} 条",
+      "realtime": {
+        "title": "当前在线",
+        "subtitle": "每 20 秒刷新一次，统计最近 15 分钟内的访问。",
+        "activeNow": "当前访客",
+        "empty": "目前没有人在浏览网站。",
+        "emptyHint": "非营业时间属正常现象 — 有访客进入时此面板会更新。",
+        "failed": "无法连接服务器，将在 20 秒后重试。",
+        "stale": "显示的是上一次读取的数据 — 本次刷新未能到达服务器。",
+        "pagesTitle": "正在被浏览的页面",
+        "pageHeader": "页面",
+        "readersHeader": "访客数",
+        "medianDwellHeader": "停留中位数",
+        "feedTitle": "动态",
+        "feedArrived": "进入",
+        "feedMoved": "切换页面",
+        "feedLeft": "离开",
+        "localeTitle": "按语言",
+        "refresh": "立即刷新",
+        "duration": "{minutes} 分 {seconds} 秒",
+        "ago": "{minutes} 分 {seconds} 秒前"
+      }
     },
     "urls": {
       "title": "URL 与重定向",

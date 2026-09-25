@@ -15,8 +15,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { MonthlyLeadsChart, LeadSourceChart, TrendChart, type MonthlyPoint, type SourcePoint, type TrendPoint } from "./DashboardCharts";
+import RealtimePanel, { type RealtimeLabels } from "./RealtimePanel";
+import type { LiveSnapshotDto } from "@/lib/analytics/live-visit";
 
-type Tab = "traffic" | "content" | "leads";
+type Tab = "traffic" | "content" | "leads" | "realtime";
 
 export type TopArticle = { id: string; title: string; views30: number; leads: number };
 export type ContentConversionRow = {
@@ -80,12 +82,21 @@ type Props = {
   };
 
   labels: Record<string, string>;
+
+  /* §3's realtime tab. Passed in rather than imported so this component
+     keeps doing no data-fetching of its own — the action is a server
+     action and this file is "use client". */
+  realtime: { labels: RealtimeLabels; fetchSnapshot: () => Promise<LiveSnapshotDto> };
 };
 
-export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, leads, labels }: Props) {
+export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, leads, labels, realtime }: Props) {
   const [tab, setTab] = useState<Tab>("traffic");
 
-  const TABS: Tab[] = canViewLeads ? ["traffic", "content", "leads"] : ["traffic", "content"];
+  /* Realtime first: it is the only tab that answers a question about right
+     now, and the one somebody opens this screen to glance at. */
+  const TABS: Tab[] = canViewLeads
+    ? ["realtime", "traffic", "content", "leads"]
+    : ["realtime", "traffic", "content"];
 
   return (
     <div className="space-y-6">
@@ -105,6 +116,10 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
           </button>
         ))}
       </div>
+
+      {tab === "realtime" && (
+        <RealtimePanel labels={realtime.labels} fetchSnapshot={realtime.fetchSnapshot} />
+      )}
 
       {tab === "traffic" && (
         <div className="space-y-6">

@@ -174,6 +174,12 @@ export async function POST(request: Request) {
         // the visitor. See LeadInquiry.commsLanguage/sourcePath.
         commsLanguage: data.commsLanguage ?? null,
         sourcePath: nullify(data.sourcePath, 300),
+
+        // Where the visit began, as opposed to where the form was — see
+        // LeadInquiry.landingPath in schema.prisma. Null for every lead
+        // created before this shipped, and not backfillable.
+        landingPath: nullify(data.landingPath, 500),
+        landingReferrer: nullify(data.landingReferrer, 255),
       },
       select: { id: true },
     });

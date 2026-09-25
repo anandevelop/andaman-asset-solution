@@ -25,7 +25,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CalendarDays, Clock, User } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
-import PageViewBeacon from "@/components/PageViewBeacon";
 import { siteConfig } from "@/config/site";
 import {
   getArticleBySlug,
@@ -153,10 +152,6 @@ export default async function ArticlePage(props: Props) {
 
   return (
     <>
-      {/* Counts this read for /admin/news's "views in 30 days" column,
-          which sits beside its lead count. Renders nothing. */}
-      <PageViewBeacon />
-
       <JsonLd
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}

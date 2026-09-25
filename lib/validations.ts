@@ -228,6 +228,18 @@ export const leadInquiryServerSchema = leadInquirySchema.extend({
   // sourcePath in schema.prisma for what these feed on the admin side.
   commsLanguage: z.enum(locales).optional(),
   sourcePath: z.string().trim().max(300).optional().or(z.literal("")),
+  /*
+    Where the visit STARTED, which sourcePath above cannot tell you:
+    sourcePath is the page the form was submitted on, so someone who
+    arrives from Google on an article and fills the form in at /contact is
+    recorded as /contact. Recorded on the first page of the visit by
+    components/PageViewBeacon.tsx and carried in sessionStorage.
+
+    landingReferrer is a HOST ("www.google.co.th"), never a full URL — 255
+    to fit the longest realistic hostname and nothing like a path.
+  */
+  landingPath: z.string().trim().max(500).optional().or(z.literal("")),
+  landingReferrer: z.string().trim().max(255).optional().or(z.literal("")),
   // Honeypot — must stay empty. Bots fill every field they can see.
   /*
     Honeypot — hidden from real visitors, so only a script fills it in.

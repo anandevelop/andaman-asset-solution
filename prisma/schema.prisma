@@ -2010,8 +2010,29 @@ model LeadInquiry {
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
-  ipAddress   String?
-  userAgent   String?
+
+  /// Where this person FIRST arrived, and where from — recorded by
+  /// components/PageViewBeacon.tsx into sessionStorage on the first page of
+  /// the visit and sent with the form, the same way utm already is.
+  ///
+  /// Not the same thing as sourcePath, and the difference is the reason
+  /// these exist: sourcePath is the page the form was submitted on, so
+  /// somebody who arrives from Google on an article and then fills in the
+  /// form at /contact is recorded as /contact. Attributing that lead to
+  /// search needs the page they landed on, which nothing else stores.
+  ///
+  /// landingReferrer holds the HOST only ("www.google.co.th"), never the
+  /// full referring URL — enough to tell search from social from direct,
+  /// and not a record of what somebody was reading beforehand.
+  ///
+  /// Both are null for every lead created before this shipped. There is no
+  /// way to backfill them, so any report counting "leads from Google" has
+  /// to say which date it counts from.
+  landingPath     String?
+  landingReferrer String?
+
+  ipAddress String?
+  userAgent String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2241,6 +2262,47 @@ enum PathHitKind {
 /// `day` is a DATE, not a timestamp: the grain is deliberate, one upsert
 /// per path per day rather than a row per visit, so a bot crawling a dead
 /// URL ten thousand times costs ten thousand increments of one row.
+/// Who is on the site right now — one row per visit, replaced as it moves.
+///
+/// PathHitDay next door counts reads per day and is the historical record;
+/// this is the opposite, and deliberately not a log: a row is updated in
+/// place as a visit moves between pages, and anything not seen for fifteen
+/// minutes is deleted by the next write. Nothing here accumulates, which is
+/// why it needs no cron and why it cannot become a browsing history.
+///
+/// visitHash is a one-way hash of (IP + user agent + a salt) — see
+/// lib/analytics/live-visit.ts. The IP is never stored and never leaves the
+/// request, and without the salt the hash cannot be worked back to one. The
+/// salt is ANALYTICS_SALT, or a value generated per process when unset, so
+/// forgetting to set it produces hashes that stop being comparable across a
+/// restart rather than hashes that are guessable.
+///
+/// GA4 was the obvious alternative and cannot answer this: its Realtime API
+/// reports a screen name rather than a path, looks back thirty minutes, and
+/// has no time-on-page metric at all.
+model LiveVisit {
+  id String @id @default(cuid())
+
+  /// One-way. Not an identifier of a person — see above.
+  visitHash String @unique
+
+  /// Locale-relative, as stripLocale() produces: "/projects/victory".
+  path   String
+  locale String
+
+  startedAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  /// Milliseconds the browser reports having spent on the CURRENT path,
+  /// reset when the visit moves. The browser is the only thing that can
+  /// measure this; the server sees requests, not attention.
+  dwellMs Int @default(0)
+
+  /// Sweeping expired rows is a range scan over this on every write.
+  @@index([lastSeenAt])
+  @@map("live_visits")
+}
+
 model PathHitDay {
   id   String      @id @default(cuid())
   kind PathHitKind

@@ -2668,6 +2668,7 @@
       "title": "Analytics & Reports",
       "subtitle": "Traffic, content performance and the sales pipeline in one screen — counted from this application's own records, not a separate GA4 login.",
       "tabs": {
+        "realtime": "Live",
         "traffic": "Traffic",
         "content": "Content",
         "leads": "Leads"
@@ -2691,7 +2692,28 @@
       "views30": "Views (30d)",
       "leadsFromArticle": "Leads",
       "weekOverWeek": "Leads this week",
-      "weekOverWeekHint": "{lastWeek} last week"
+      "weekOverWeekHint": "{lastWeek} last week",
+      "realtime": {
+        "title": "On the site right now",
+        "subtitle": "Refreshes every 20 seconds. Counts visits seen in the last 15 minutes.",
+        "activeNow": "Visitors right now",
+        "empty": "Nobody is on the site right now.",
+        "emptyHint": "This is normal outside business hours — the panel fills as visits arrive.",
+        "failed": "Could not reach the server. Retrying in 20 seconds.",
+        "stale": "Showing the last reading — the latest refresh did not reach the server.",
+        "pagesTitle": "Pages being read",
+        "pageHeader": "Page",
+        "readersHeader": "Readers",
+        "medianDwellHeader": "Median time",
+        "feedTitle": "Activity",
+        "feedArrived": "arrived",
+        "feedMoved": "moved",
+        "feedLeft": "left",
+        "localeTitle": "By language",
+        "refresh": "Refresh now",
+        "duration": "{minutes}m {seconds}s",
+        "ago": "{minutes}m {seconds}s ago"
+      }
     },
     "urls": {
       "title": "URLs and redirects",

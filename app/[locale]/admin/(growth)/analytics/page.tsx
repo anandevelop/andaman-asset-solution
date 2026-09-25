@@ -70,12 +70,19 @@ import { getCompanyStats } from "@/lib/company-stats";
 import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import { intlLocale } from "@/lib/format";
 import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
+import { fetchLiveSnapshot } from "./live-actions";
 import DashboardControls from "@/components/admin/DashboardControls";
 
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ range?: string }>;
 };
+
+/** Whole minutes and seconds, so the message file owns the units. */
+function durationParts(ms: number): { minutes: number; seconds: number } {
+  const total = Math.max(0, Math.round(ms / 1000));
+  return { minutes: Math.floor(total / 60), seconds: total % 60 };
+}
 
 export default async function AdminAnalyticsPage(props: Props) {
   const { locale } = await props.params;
@@ -173,6 +180,33 @@ export default async function AdminAnalyticsPage(props: Props) {
       <AnalyticsTabs
         locale={locale}
         canViewLeads={canViewLeads}
+        realtime={{
+          fetchSnapshot: fetchLiveSnapshot,
+          labels: {
+            title: t("analytics.realtime.title"),
+            subtitle: t("analytics.realtime.subtitle"),
+            activeNow: t("analytics.realtime.activeNow"),
+            empty: t("analytics.realtime.empty"),
+            emptyHint: t("analytics.realtime.emptyHint"),
+            failed: t("analytics.realtime.failed"),
+            stale: t("analytics.realtime.stale"),
+            pagesTitle: t("analytics.realtime.pagesTitle"),
+            pageHeader: t("analytics.realtime.pageHeader"),
+            readersHeader: t("analytics.realtime.readersHeader"),
+            medianDwellHeader: t("analytics.realtime.medianDwellHeader"),
+            feedTitle: t("analytics.realtime.feedTitle"),
+            feedArrived: t("analytics.realtime.feedArrived"),
+            feedMoved: t("analytics.realtime.feedMoved"),
+            feedLeft: t("analytics.realtime.feedLeft"),
+            localeTitle: t("analytics.realtime.localeTitle"),
+            refresh: t("analytics.realtime.refresh"),
+            /* Formatted here so the units stay translated — the panel is a
+               client component and does no arithmetic of its own, matching
+               how every other number on this screen arrives. */
+            duration: (ms: number) => t("analytics.realtime.duration", durationParts(ms)),
+            ago: (ms: number) => t("analytics.realtime.ago", durationParts(ms)),
+          },
+        }}
         traffic={{
           trend: trendPoints,
           totalViews: trend.totalViews,
@@ -241,6 +275,7 @@ export default async function AdminAnalyticsPage(props: Props) {
           weekOverWeek: weekOverWeek ?? { thisWeek: 0, lastWeek: 0, changePercent: null },
         }}
         labels={{
+          tab_realtime: t("analytics.tabs.realtime"),
           tab_traffic: t("analytics.tabs.traffic"),
           tab_content: t("analytics.tabs.content"),
           tab_leads: t("analytics.tabs.leads"),

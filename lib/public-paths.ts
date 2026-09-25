@@ -99,6 +99,26 @@ export function routeMatches(pathname: string, target: string): boolean {
   return path === target || path.startsWith(`${target}/`);
 }
 
+/**
+ * Would a visitor get a page here?
+ *
+ * The rule /api/page-view counts by. It used to count only "/news/", which
+ * kept the table small by the crude method of ignoring most of the site;
+ * phase 3 needs every public page, and "every public page" has to mean
+ * something narrower than "every path a crawler can invent" or one row per
+ * day per invented URL lands in path_hit_days forever.
+ *
+ * So it is the two lists this file already maintains: a static page, or a
+ * slug under one of the four content prefixes. /admin, /login, /api and
+ * anything a bot made up are none of those and are ignored — quietly, as
+ * the endpoint has always done, because a counter is never worth an error
+ * in a reader's console.
+ */
+export function isCountablePublicPath(path: string): boolean {
+  if ((STATIC_PATHS as readonly string[]).includes(path)) return true;
+  return slugPrefixOf(path) !== null;
+}
+
 /** The slug prefix this path sits under, or null. */
 export function slugPrefixOf(path: string): SlugPrefix | null {
   for (const prefix of Object.keys(SLUG_PREFIXES) as SlugPrefix[]) {
