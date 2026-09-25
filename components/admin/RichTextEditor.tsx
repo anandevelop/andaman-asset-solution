@@ -783,6 +783,28 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     content,
     immediatelyRender: false,
     editorProps: {
+      /*
+        prose-article goes on the contenteditable element itself, not on
+        the wrapper around it, and both halves of that matter (§2b-5.4,
+        "the editor has to show roughly what a reader will see").
+
+        On the wrapper it lost: the wrapper also carries `admin-textarea`,
+        whose `text-sm text-ink` is declared later in globals.css and so
+        beat prose-article's own base at equal specificity. The body was
+        rendering at 14px in full-strength ink against the page's 16px at
+        ink/75. Here the two are on different elements, and a declaration
+        on the element always beats one inherited from its parent, so the
+        chrome stays on the wrapper and the typography lands on the text.
+
+        It also fixes the vertical rhythm, which is the reason this is one
+        change and not two. prose-article spaces its children with
+        `& > * + *`; on the wrapper its only child was the ProseMirror
+        element, so the rule matched that and nothing inside it — every
+        paragraph in the editor sat flush against the next. On the
+        contenteditable itself the blocks *are* its children.
+      */
+      attributes: { class: "prose-article" },
+
       // The browser's own contenteditable caret-follows-focus behavior
       // already keeps the cursor in view for an editor this size;
       // ProseMirror's own scroll-into-view pass is a supplementary
@@ -1539,7 +1561,10 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
            a "wide" or "full" image only reads correctly against the column
            it will actually sit in. The grid cell this lives in is wider,
            so the leftover space is margin rather than a squeezed measure. */
-        className="admin-textarea prose-article mx-auto min-h-[320px] max-w-2xl [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem] [&_.ProseMirror_p[data-block='quote-attribution']:empty]:block [&_.ProseMirror_p[data-block='quote-attribution']]:min-h-[1.25rem]"
+        /* prose-article is NOT here — it is set on the contenteditable
+           element itself through editorProps.attributes above, and this
+           wrapper keeps only the field chrome. See that comment. */
+        className="admin-textarea mx-auto min-h-[320px] max-w-2xl [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none [&_.ProseMirror_figcaption:empty]:block [&_.ProseMirror_figcaption]:min-h-[1.25rem] [&_.ProseMirror_p[data-block='quote-attribution']:empty]:block [&_.ProseMirror_p[data-block='quote-attribution']]:min-h-[1.25rem]"
         onKeyDownCapture={(event) => {
           if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();

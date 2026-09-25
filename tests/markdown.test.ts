@@ -422,7 +422,6 @@ describe("ready-made block markers survive sanitising", () => {
     // link" is exactly the assumption worth pinning down.
     const out = sanitizeArticleHtml(
       '<figure data-block="cta"><p>x</p>' +
-        // eslint-disable-next-line no-script-url
         '<p data-block="cta-action"><a href="javascript:alert(1)">Tap</a></p></figure>',
     );
     expect(out).not.toContain("javascript:");

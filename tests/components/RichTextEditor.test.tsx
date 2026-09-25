@@ -154,6 +154,37 @@ describe("RichTextEditor — mounts and edits", () => {
   });
 });
 
+/*
+  §2b-5.4 asks that the editor show roughly what a reader will see, and the
+  whole of that rests on which element carries prose-article.
+
+  On the wrapper it lost twice over. The wrapper also carries
+  `admin-textarea`, declared later in globals.css, so `text-sm text-ink`
+  beat prose-article's base at equal specificity and the body rendered at
+  14px in full-strength ink against the page's 16px at ink/75. And
+  prose-article spaces its children with `& > * + *`, which on the wrapper
+  matched the single ProseMirror element rather than anything inside it, so
+  no paragraph in the editor got its top margin.
+
+  Measured in a real browser, all 21 block types now compute identically in
+  the editor and on the page. jsdom cannot check that — it has no cascade
+  worth the name — so what is pinned here is the arrangement that produces
+  it, which is the part a later edit would undo by accident.
+*/
+describe("RichTextEditor — the editor's typography is the page's", () => {
+  it("puts prose-article on the contenteditable element, not its wrapper", () => {
+    render(<Harness initialContent="<p>Body.</p>" />);
+
+    const editable = getEditor();
+    expect(editable.className).toContain("prose-article");
+
+    const wrapper = editable.parentElement;
+    expect(wrapper?.className).toContain("admin-textarea");
+    // The two must not meet: on one element, admin-textarea's text-sm wins.
+    expect(wrapper?.className).not.toContain("prose-article");
+  });
+});
+
 describe("RichTextEditor — title ↔ first-H1 sync", () => {
   it("updates the title when the first H1's text changes", async () => {
     const user = userEvent.setup();
