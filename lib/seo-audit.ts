@@ -29,11 +29,15 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { getOverriddenKeys } from "@/lib/settings";
 import { locales } from "@/i18n";
+import { TITLE_MAX_LENGTH } from "@/lib/seo/rules/title-length";
 
 const LOCALE_COUNT = locales.length;
 
-/** Google truncates a rendered title around here for most queries. */
-const TITLE_BUDGET = 60;
+/* Google truncates a rendered title around here for most queries. Imported
+   from the rule that owns it rather than restated: this dashboard and the
+   per-URL audit disagreeing about where "too long" begins is exactly the
+   drift lib/seo/rules exists to end. */
+const TITLE_BUDGET = TITLE_MAX_LENGTH;
 
 /**
  * The 15 statically-rendered pages (home, about, contact, the six list
