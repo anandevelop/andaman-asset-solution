@@ -149,7 +149,12 @@ export default function FeaturedProjectCard({
           <MapPin size={12} aria-hidden /> {project.location}
         </p>
 
-        <h3 className="mt-2 text-xl font-semibold text-primary">{project.name}</h3>
+        {/* Light, like every display heading on the public site — at
+            semibold the name shouted over the photograph above it and read
+            as a different brand from the section titles around the grid. */}
+        <h3 className="mt-2 text-[22px] font-light leading-snug tracking-[0.01em] text-primary">
+          {project.name}
+        </h3>
 
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/70">{project.tagline}</p>
 
@@ -158,7 +163,7 @@ export default function FeaturedProjectCard({
             {specs.map((spec) => (
               <div key={spec.key}>
                 <dt className="text-xs text-ink/60">{spec.label}</dt>
-                <dd className="mt-1 text-sm font-medium text-primary">{spec.value}</dd>
+                <dd className="mt-1 text-base font-light text-primary">{spec.value}</dd>
               </div>
             ))}
           </dl>
