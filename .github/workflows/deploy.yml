@@ -37,3 +37,25 @@ jobs:
             cd /opt/app
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
+
+            # Wait for the app to answer (up to ~60s) — the purge below is a
+            # request to the container that was just started.
+            for i in $(seq 1 30); do
+              curl -fsS http://127.0.0.1/api/health >/dev/null && break
+              sleep 2
+            done
+
+            # Belt and braces on top of not prerendering at build time: purge
+            # the ISR cache of every public page in every locale, plus the
+            # site-settings tag. Any failure here only warns — a good deploy
+            # must never turn red because the purge did.
+            SECRET=$(grep -E '^REVALIDATE_SECRET=' .env | cut -d= -f2- | tr -d '"')
+            if [ -n "$SECRET" ]; then
+              curl -fsS -X POST http://127.0.0.1/api/revalidate \
+                -H "Content-Type: application/json" \
+                -H "x-revalidate-secret: $SECRET" \
+                -d '{"paths":["/","/projects","/news","/events","/about","/achievements","/e-brochure","/contact","/progress"],"tags":["site-settings"]}' \
+                || echo "::warning::post-deploy revalidate failed"
+            else
+              echo "::warning::REVALIDATE_SECRET not set on server — skipped cache purge"
+            fi
