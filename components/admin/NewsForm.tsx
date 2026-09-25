@@ -852,6 +852,13 @@ export default function NewsForm({
             uiLocale={locale}
             linkPanel={linkPanel}
             addLinkAction={addLinkAction}
+            /* Only in rich-text mode: a MARKDOWN article is a textarea, and
+               there is no caret for the outline to move. */
+            onSelectHeading={
+              contentFormat === "HTML"
+                ? (index) => richTextEditorRef.current?.focusHeading(index)
+                : undefined
+            }
           />
         </div>
       </form>

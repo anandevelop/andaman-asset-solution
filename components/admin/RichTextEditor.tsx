@@ -106,6 +106,10 @@ export type RichTextEditorHandle = {
    *  before opening InternalLinkModal, to prefill anchor text with
    *  whatever was highlighted when the admin asked for a link. */
   getSelectedText: () => string;
+  /** Put the caret in the nth heading and scroll it into view — §6.3's
+   *  outline, which knows a heading only by its position in the list
+   *  (lib/content-stats.ts records no document positions). */
+  focusHeading: (index: number) => void;
 };
 
 export type InsertedLink = {
@@ -641,6 +645,34 @@ type Props = {
   };
 };
 
+/**
+ * Every heading's position in the document, in document order.
+ *
+ * Exported and tested, because it is half of a correspondence that nothing
+ * else checks: §6.3's outline identifies a heading by its index in
+ * `getContentStats().headings`, which is extracted from the HTML string and
+ * carries no document positions at all. The two lists line up only while
+ * both walk the document in the same order and count the same things — so
+ * this uses `descendants` rather than the doc's direct children, since a
+ * heading can sit inside an FAQ item and lib/content-stats.ts's extractor
+ * finds those too.
+ */
+export function headingPositions(editor: Editor): number[] {
+  const positions: number[] = [];
+  editor.state.doc.descendants((node, pos) => {
+    // faqQuestion is an <h3> once serialized, so the extractor's
+    // /<h([1-6])…>/ finds it and the outline lists it. It has to be counted
+    // here too or every index after an FAQ block points at the wrong line.
+    if (node.type.name !== "heading" && node.type.name !== "faqQuestion") return;
+    // And an empty one is skipped, because the extractor skips it (`if
+    // (text)`). Otherwise a heading that has been started but not yet typed
+    // into — which is every heading, for a moment — shifts the whole list.
+    if (node.textContent.trim().length === 0) return;
+    positions.push(pos);
+  });
+  return positions;
+}
+
 /** The first node's level, or null if it isn't a heading. */
 function firstHeadingLevel(editor: Editor): HeadingLevel | null {
   const first = editor.state.doc.firstChild;
@@ -975,6 +1007,14 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         if (!editor) return "";
         const { from, to } = editor.state.selection;
         return editor.state.doc.textBetween(from, to, " ");
+      },
+      focusHeading(index: number) {
+        if (!editor) return;
+        const at = headingPositions(editor)[index];
+        if (at === undefined) return;
+        // +1 to land inside the heading rather than before it, so the
+        // caret is in the text the author just clicked on in the outline.
+        editor.chain().focus().setTextSelection(at + 1).scrollIntoView().run();
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

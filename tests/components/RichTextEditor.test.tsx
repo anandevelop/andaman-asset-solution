@@ -870,3 +870,91 @@ describe("RichTextEditor — call to action", () => {
     });
   });
 });
+
+/*
+  §6.3's outline. NewsSeoPanel lists headings by their index in
+  getContentStats().headings, which is extracted from the HTML string with a
+  regular expression and carries no document positions — so clicking row N
+  has to find the Nth heading in the editor by counting, and the two counts
+  have to agree about what a heading is.
+
+  Two ways they can disagree, both of which put the caret in the wrong place
+  rather than failing outright:
+    - the FAQ question is an <h3> once serialized, so the extractor lists it
+    - an empty heading is skipped by the extractor (`if (text)`), and every
+      heading is empty for a moment after it is created
+
+  Asserted by typing rather than by reading the selection: jsdom's
+  window.getSelection() does not follow ProseMirror's, but where a typed
+  character ends up in the emitted HTML is unambiguous.
+*/
+describe("RichTextEditor — outline click targets", () => {
+  function OutlineHarness({ content }: { content: string }) {
+    const editorRef = useRef<RichTextEditorHandle>(null);
+    const [html, setHtml] = useState(content);
+    return (
+      <div>
+        {[0, 1, 2].map((index) => (
+          <button key={index} type="button" onClick={() => editorRef.current?.focusHeading(index)}>
+            {`go ${index}`}
+          </button>
+        ))}
+        <RichTextEditor
+          ref={editorRef}
+          content={content}
+          onChange={setHtml}
+          toolbarLabels={LABELS}
+          figureLabels={FIGURE_LABELS}
+          locale="en"
+          onRequestLink={() => {}}
+          onRequestEditLink={() => {}}
+          onUploadNotice={() => {}}
+          uploadLabels={{ failed: "f", tooLarge: "t", pastedImage: "p", byKey: (key) => key }}
+          onRequestImage={() => {}}
+        />
+        <output data-testid="content-html">{html}</output>
+      </div>
+    );
+  }
+
+  /** Click outline row `index`, type a marker, and report the HTML. */
+  async function typeAtRow(index: number): Promise<string> {
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: `go ${index}` }));
+    // The click moved DOM focus to the button; ProseMirror's own selection
+    // is already where focusHeading put it, so this only hands the keyboard
+    // back to the editable element.
+    getEditor().focus();
+    await user.type(getEditor(), "X", { skipClick: true });
+    await waitFor(() => expect(screen.getByTestId("content-html").textContent).toContain("X"));
+    return screen.getByTestId("content-html").textContent ?? "";
+  }
+
+  it("puts the caret in the heading the row stands for", async () => {
+    render(<OutlineHarness content="<h2>First</h2><p>a</p><h3>Second</h3><p>b</p><h2>Third</h2>" />);
+    expect(await typeAtRow(1)).toContain("<h3>XSecond</h3>");
+  });
+
+  it("counts an FAQ question, because the outline lists it", async () => {
+    render(
+      <OutlineHarness
+        content={
+          "<h2>First</h2>" +
+          '<ul data-faq="list"><li data-faq="item"><h3 data-faq="question">Counted?</h3><p>yes</p></li></ul>' +
+          "<h2>Last</h2>"
+        }
+      />,
+    );
+
+    // Row 1 is the FAQ question, not "Last" — which is row 2.
+    const html = await typeAtRow(1);
+    expect(html).toContain("XCounted?");
+    expect(html).toContain("<h2>Last</h2>");
+  });
+
+  it("skips an empty heading, because the extractor skips it", async () => {
+    render(<OutlineHarness content="<h2>First</h2><h2></h2><h2>Third</h2>" />);
+    // The outline shows two rows, so row 1 is "Third" and not the blank one.
+    expect(await typeAtRow(1)).toContain("<h2>XThird</h2>");
+  });
+});

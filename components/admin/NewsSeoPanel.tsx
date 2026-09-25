@@ -114,6 +114,11 @@ type Props = {
    *  in as a plain snapshot, current as of the last save-and-rescan. */
   linkPanel: ArticleLinkPanel;
   addLinkAction: typeof addLinkOpportunity;
+  /** §6.3: clicking an outline row puts the caret in that heading and
+   *  scrolls the editor to it. Omitted for a MARKDOWN article, which has a
+   *  plain textarea and no caret to move — the outline then stays the
+   *  read-only list it has always been. */
+  onSelectHeading?: (index: number) => void;
 };
 
 type Tab = "seo" | "keywords" | "links" | "settings" | "schema";
@@ -227,6 +232,7 @@ export default function NewsSeoPanel({
   uiLocale,
   linkPanel,
   addLinkAction,
+  onSelectHeading,
 }: Props) {
   const t = useTranslations("admin");
   const tNav = useTranslations("nav");
@@ -566,19 +572,40 @@ export default function NewsSeoPanel({
                 <p className="admin-hint">{t("news.seo.outlineEmpty")}</p>
               ) : (
                 <ul className="mt-1 space-y-1">
-                  {stats.headings.map((heading, index) => (
-                    <li
-                      key={index}
-                      style={{ paddingLeft: `${(heading.level - 1) * 0.65}rem` }}
-                      className={`flex items-center gap-1.5 truncate text-sm ${
-                        heading.skipsLevel ? "text-amber-700" : "text-ink"
-                      }`}
-                    >
-                      <span className="shrink-0 text-xs text-ink-muted">H{heading.level}</span>
-                      <span className="truncate">{heading.text}</span>
-                      {heading.skipsLevel && <AlertTriangle size={12} className="shrink-0 text-amber-600" aria-hidden />}
-                    </li>
-                  ))}
+                  {stats.headings.map((heading, index) => {
+                    /* The row's contents are the same whether or not it can
+                       be clicked — a level-skipping heading still shows its
+                       amber text and its warning icon either way, which
+                       §6.3 asks for explicitly. Only the wrapper changes. */
+                    const row = (
+                      <>
+                        <span className="shrink-0 text-xs text-ink-muted">H{heading.level}</span>
+                        <span className="truncate">{heading.text}</span>
+                        {heading.skipsLevel && (
+                          <AlertTriangle size={12} className="shrink-0 text-amber-600" aria-hidden />
+                        )}
+                      </>
+                    );
+                    const tone = heading.skipsLevel ? "text-amber-700" : "text-ink";
+
+                    return (
+                      <li key={index} style={{ paddingLeft: `${(heading.level - 1) * 0.65}rem` }}>
+                        {onSelectHeading ? (
+                          <button
+                            type="button"
+                            onClick={() => onSelectHeading(index)}
+                            className={`flex w-full items-center gap-1.5 truncate rounded-xs px-1 py-0.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary ${tone}`}
+                          >
+                            {row}
+                          </button>
+                        ) : (
+                          <span className={`flex items-center gap-1.5 truncate text-sm ${tone}`}>
+                            {row}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
               {stats.headings.some((heading) => heading.skipsLevel) && (
