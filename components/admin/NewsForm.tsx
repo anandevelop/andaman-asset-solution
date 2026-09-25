@@ -78,6 +78,15 @@ import { readingMinutes } from "@/lib/markdown-text";
 import { getContentStats, type ContentFormat } from "@/lib/content-stats";
 import type { SeoScoreResult } from "@/lib/article-seo";
 import { hasRole } from "@/lib/role-rank";
+import {
+  clearDraft,
+  draftDiffers,
+  isRecoverable,
+  readDraft,
+  writeDraft,
+  type NewsDraft,
+  type NewsDraftValues,
+} from "@/lib/admin/news-draft";
 import type { Locale } from "@/i18n";
 import type { NewsFormState } from "@/app/[locale]/admin/(content)/news/actions";
 
@@ -181,6 +190,12 @@ type Props = {
    *  actions.ts's updateArticleAndTransition for why the button itself
    *  still always saves regardless. */
   statusPillLabel?: string | null;
+  /** §7.1's draft recovery needs both: which article's storage key to look
+   *  under, and what the server's copy was last written. Absent on the
+   *  new-article page — there is no id to key a draft by until it is
+   *  saved once. */
+  articleId?: string | null;
+  serverUpdatedAt?: string | null;
 };
 
 const INITIAL: NewsFormState = { ok: false };
@@ -332,6 +347,8 @@ export default function NewsForm({
   backLabel,
   live,
   statusPillLabel,
+  articleId,
+  serverUpdatedAt,
 }: Props) {
   const t = useTranslations("admin");
   const tUpload = useTranslations("admin.upload");
@@ -401,6 +418,82 @@ export default function NewsForm({
       }
       return next;
     });
+  }
+
+  /*
+    §7.1's browser half. The fields that make up a recoverable draft, and
+    whether what is on screen has drifted from what the server handed us —
+    which is both what gets stored and what arms the leave-page warning.
+  */
+  const draftValues: NewsDraftValues = useMemo(
+    () => ({ title, slug, content, metaTitle, metaDescription, focusKeyword }),
+    [title, slug, content, metaTitle, metaDescription, focusKeyword],
+  );
+
+  const serverValues: NewsDraftValues = useMemo(
+    () => ({
+      title: values.title,
+      slug: values.slug,
+      content: values.content,
+      metaTitle: values.metaTitle,
+      metaDescription: values.metaDescription,
+      focusKeyword: values.focusKeyword,
+    }),
+    [values],
+  );
+
+  const dirty = draftDiffers(draftValues, serverValues);
+
+  const [recoverable, setRecoverable] = useState<NewsDraft | null>(null);
+
+  // On open, once. Never applied on its own — §7.1 forbids it, and the
+  // banner below is the whole of the interface for it.
+  useEffect(() => {
+    if (!articleId) return;
+    const stored = readDraft(articleId, lang);
+    if (isRecoverable(stored, serverUpdatedAt, serverValues)) setRecoverable(stored);
+    // Deliberately runs for this article/locale only, not on every edit:
+    // re-reading storage as the author types would offer back the draft
+    // they are in the middle of replacing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articleId, lang]);
+
+  /* Five seconds after the typing stops, per §7.1. Long enough that it is
+     not writing on every keystroke, short enough that what is lost to a
+     crash is a sentence rather than a section. */
+  useEffect(() => {
+    if (!articleId || !dirty) return;
+    const timer = setTimeout(() => writeDraft(articleId, lang, draftValues), 5000);
+    return () => clearTimeout(timer);
+  }, [articleId, lang, dirty, draftValues]);
+
+  /* The browser's own "leave site?" prompt. Only while there is something
+     to lose — an unconditional handler trains people to click through it. */
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  function recoverDraft() {
+    if (!recoverable) return;
+    const draft = recoverable.values;
+    setTitle(draft.title);
+    setSlug(draft.slug);
+    setContent(draft.content);
+    setMetaTitle(draft.metaTitle);
+    setMetaDescription(draft.metaDescription);
+    setFocusKeyword(draft.focusKeyword);
+    // The rich-text editor holds its own document; `content` alone does not
+    // reach it after mount.
+    richTextEditorRef.current?.setContent(draft.content);
+    setRecoverable(null);
+  }
+
+  function discardDraft() {
+    if (articleId) clearDraft(articleId, lang);
+    setRecoverable(null);
   }
 
   /* §7.3's counter. Recomputed on every keystroke rather than debounced
@@ -554,6 +647,28 @@ export default function NewsForm({
             <AlertCircle size={16} aria-hidden />
             {t("common.error")}
           </SaveToast>
+        )}
+
+        {/* §7.1: offered, never applied on its own. See lib/admin/news-draft.ts. */}
+        {recoverable && (
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xs border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <AlertTriangle size={16} className="shrink-0" aria-hidden />
+            <span className="flex-1">{t("news.draft.found")}</span>
+            <button
+              type="button"
+              onClick={recoverDraft}
+              className="rounded-xs bg-amber-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-900"
+            >
+              {t("news.draft.recover")}
+            </button>
+            <button
+              type="button"
+              onClick={discardDraft}
+              className="text-xs font-medium underline"
+            >
+              {t("news.draft.discard")}
+            </button>
+          </div>
         )}
 
         <div

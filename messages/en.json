@@ -1475,6 +1475,11 @@
       "focusMode": {
         "enter": "Focus mode",
         "exit": "Exit focus mode"
+      },
+      "draft": {
+        "found": "An unsaved draft of this article is stored in this browser, newer than the saved version.",
+        "recover": "Recover",
+        "discard": "Discard"
       }
     },
     "eBrochures": {

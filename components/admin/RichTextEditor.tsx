@@ -110,6 +110,10 @@ export type RichTextEditorHandle = {
    *  outline, which knows a heading only by its position in the list
    *  (lib/content-stats.ts records no document positions). */
   focusHeading: (index: number) => void;
+  /** Replace the whole document — §7.1's draft recovery. `content` is only
+   *  the initial value: after mount the editor owns its own document, so
+   *  setting the prop again would not reach it. */
+  setContent: (html: string) => void;
   /** Move the section that starts at outline row `from` so it sits where
    *  row `to` is now — the heading and every block under it, up to the
    *  next heading of the same level or higher. A no-op when either row is
@@ -1041,6 +1045,12 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         if (!editor) return "";
         const { from, to } = editor.state.selection;
         return editor.state.doc.textBetween(from, to, " ");
+      },
+      setContent(html: string) {
+        if (!editor) return;
+        // emitUpdate so NewsForm's own `content` state and the SEO panel
+        // follow the recovered text rather than the text it replaced.
+        editor.commands.setContent(html, { emitUpdate: true });
       },
       focusHeading(index: number) {
         if (!editor) return;

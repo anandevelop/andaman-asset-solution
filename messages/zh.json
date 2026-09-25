@@ -1475,6 +1475,11 @@
       "focusMode": {
         "enter": "专注模式",
         "exit": "退出专注模式"
+      },
+      "draft": {
+        "found": "此浏览器中存有未保存的草稿，比已保存的版本更新。",
+        "recover": "恢复",
+        "discard": "丢弃"
       }
     },
     "eBrochures": {

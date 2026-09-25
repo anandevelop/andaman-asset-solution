@@ -175,6 +175,8 @@ export default async function EditArticlePage(props: Props) {
           backLabel={t("news.title")}
           live={live ? { href: `/${locale}/news/${article.slug}`, path: `/news/${article.slug}` } : null}
           statusPillLabel={statusPillLabel}
+          articleId={article.id}
+          serverUpdatedAt={article.updatedAt.toISOString()}
         />
       </fieldset>
     </div>

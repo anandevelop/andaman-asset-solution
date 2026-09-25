@@ -26,6 +26,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Role } from "@prisma/client";
 import NewsForm, { EMPTY_ARTICLE } from "@/components/admin/NewsForm";
 import type { ArticleLinkPanel } from "@/lib/admin/link-opportunities";
+import { draftKey } from "@/lib/admin/news-draft";
 import { render, screen, userEvent, waitFor } from "./render";
 
 const { getKeywordForPhrase, upsertLsiTerms, addLinkOpportunity } = vi.hoisted(() => ({
@@ -78,7 +79,10 @@ const EMPTY_LINK_PANEL: ArticleLinkPanel = {
   externalStatuses: {},
 };
 
-function renderForm(content = "<p>One two three four five.</p>") {
+function renderForm(
+  content = "<p>One two three four five.</p>",
+  extra: { articleId?: string; serverUpdatedAt?: string } = {},
+) {
   return render(
     <NewsForm
       locale="en"
@@ -94,6 +98,7 @@ function renderForm(content = "<p>One two three four five.</p>") {
       headerTitle="Edit article"
       backHref="/en/admin/news"
       backLabel="Back"
+      {...extra}
     />,
   );
 }
@@ -170,5 +175,95 @@ describe("NewsForm — rich-text word count (§7.3)", () => {
   it("counts the text and not the markup", () => {
     renderForm('<p>One <strong>two</strong> <a href="/x">three</a></p>');
     expect(bodyCounterText()).toMatch(/3 words/i);
+  });
+});
+
+/*
+  §7.1's draft recovery. The rule it enforces is that nothing is ever put
+  back without being asked for — a draft that reinstates itself can
+  overwrite an edit made elsewhere in between, or bring back text its
+  author deleted on purpose and saved.
+*/
+describe("NewsForm — recovering an unsaved draft", () => {
+  const SERVER_SAVED_AT = "2026-01-01T00:00:00.000Z";
+
+  function storeDraft(content: string, savedAt = "2026-01-02T00:00:00.000Z") {
+    window.localStorage.setItem(
+      draftKey("article-1", "en"),
+      JSON.stringify({
+        savedAt,
+        values: {
+          title: "A title",
+          slug: "a-title",
+          content,
+          metaTitle: "",
+          metaDescription: "",
+          focusKeyword: "",
+        },
+      }),
+    );
+  }
+
+  it("offers a newer draft rather than applying it", async () => {
+    storeDraft("<p>Work that was never saved.</p>");
+    renderForm("<p>One two three four five.</p>", {
+      articleId: "article-1",
+      serverUpdatedAt: SERVER_SAVED_AT,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Recover" })).toBeInTheDocument(),
+    );
+    // The body still holds the server's text, not the draft's.
+    expect(document.querySelector(".ProseMirror")?.textContent ?? "").toContain("One two three");
+    expect(document.querySelector(".ProseMirror")?.textContent ?? "").not.toContain("never saved");
+  });
+
+  it("puts the draft back when asked", async () => {
+    const user = userEvent.setup();
+    storeDraft("<p>Work that was never saved.</p>");
+    renderForm("<p>One two three four five.</p>", {
+      articleId: "article-1",
+      serverUpdatedAt: SERVER_SAVED_AT,
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Recover" }));
+
+    await waitFor(() =>
+      expect(document.querySelector(".ProseMirror")?.textContent ?? "").toContain("never saved"),
+    );
+    expect(screen.queryByRole("button", { name: "Recover" })).not.toBeInTheDocument();
+  });
+
+  it("forgets the draft when discarded", async () => {
+    const user = userEvent.setup();
+    storeDraft("<p>Work that was never saved.</p>");
+    renderForm("<p>One two three four five.</p>", {
+      articleId: "article-1",
+      serverUpdatedAt: SERVER_SAVED_AT,
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Discard" }));
+
+    expect(screen.queryByRole("button", { name: "Recover" })).not.toBeInTheDocument();
+    expect(window.localStorage.getItem(draftKey("article-1", "en"))).toBeNull();
+  });
+
+  it("says nothing when the stored draft is what was saved", async () => {
+    storeDraft("<p>One two three four five.</p>");
+    renderForm("<p>One two three four five.</p>", {
+      articleId: "article-1",
+      serverUpdatedAt: SERVER_SAVED_AT,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(screen.queryByRole("button", { name: "Recover" })).not.toBeInTheDocument();
+  });
+
+  it("says nothing on a new article, which has no id to key a draft by", async () => {
+    storeDraft("<p>Work that was never saved.</p>");
+    renderForm();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(screen.queryByRole("button", { name: "Recover" })).not.toBeInTheDocument();
   });
 });
