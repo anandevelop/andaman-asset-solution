@@ -245,8 +245,18 @@ export default function HeroCarousel({ slides, fallback, eyebrow, scrollLabel }:
     return <StaticFallbackHero {...fallback} />;
   }
 
-  return <Carousel slides={slides} eyebrow={eyebrow} scrollLabel={scrollLabel} />;
+  return (
+    <Carousel
+      slides={slides}
+      eyebrow={eyebrow}
+      scrollLabel={scrollLabel}
+      viewing={{ label: fallback.ctaSecondaryLabel, href: fallback.ctaSecondaryHref }}
+    />
+  );
 }
+
+/** "Book a viewing" — the site's own standing action, beside every slide's. */
+type ViewingLink = { label: string; href: string };
 
 type Transition = { from: number; to: number };
 type CopyPhase = "hidden" | "in" | "out";
@@ -256,10 +266,12 @@ function Carousel({
   slides,
   eyebrow,
   scrollLabel,
+  viewing,
 }: {
   slides: HeroStorySlide[];
   eyebrow: string;
   scrollLabel: string;
+  viewing: ViewingLink;
 }) {
   const count = slides.length;
 
@@ -510,10 +522,11 @@ function Carousel({
   return (
     <section
       ref={sectionRef}
-      // Shorter on mobile — a long stretch of bare picture between the copy
-      // and the controls read as empty. The copy is grouped near the bottom
-      // now, so the section needs less height to hold it. sm: and up unchanged.
-      className="relative h-[72vh] min-h-[520px] w-full overflow-hidden bg-primary-900 sm:h-[88vh] sm:min-h-[560px]"
+      // A phone gets the whole first screen: the viewport less the 64px
+      // header, so the hero ends exactly at the fold. `svh`, not `vh` —
+      // mobile `vh` is the height with the browser's toolbar hidden, which
+      // put the rail under the toolbar on first load. sm: and up unchanged.
+      className="relative h-[calc(100svh-4rem-1px)] min-h-[520px] w-full overflow-hidden bg-primary-900 sm:h-[88vh] sm:min-h-[560px]"
     >
       {/* ── Media ─────────────────────────────────────────────────────── */}
       {slides.map((s, i) => {
@@ -599,7 +612,7 @@ function Carousel({
       )}
 
       {/* ── Copy ───────────────────────────────────────────────────────── */}
-      <HeroCopy slide={copySlide} eyebrow={eyebrow} phase={copyPhase} />
+      <HeroCopy slide={copySlide} eyebrow={eyebrow} phase={copyPhase} viewing={viewing} />
 
       {/* ── Scroll cue ─────────────────────────────────────────────────
           xl and up, and only while the rail leaves the middle free: four
@@ -851,10 +864,12 @@ function HeroCopy({
   slide,
   eyebrow,
   phase,
+  viewing,
 }: {
   slide: HeroStorySlide;
   eyebrow: string;
   phase: CopyPhase;
+  viewing: ViewingLink;
 }) {
   const lines = (slide.caption ?? "")
     .split("\n")
@@ -883,14 +898,14 @@ function HeroCopy({
         }`}
       >
         <p
-          className={`mb-[22px] flex items-center gap-[14px] text-xs font-medium uppercase tracking-widest2 text-accent ${TEXT_SHADOW}`}
+          className={`mb-[22px] flex items-center gap-[14px] text-xs font-medium uppercase tracking-widest2 text-accent max-sm:mb-4 max-sm:gap-2.5 max-sm:text-[10px] max-sm:tracking-[0.22em] ${TEXT_SHADOW}`}
         >
           {/* Grows with scaleX from a rule that already has its 48px box.
               Animating `width` instead pushes the eyebrow text along beside
               it, one layout shift per frame. */}
           <i
             aria-hidden
-            className="block h-px w-12 origin-left scale-x-0 bg-accent transition-transform delay-200 duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:scale-x-100"
+            className="block h-px w-12 shrink-0 origin-left max-sm:w-8 scale-x-0 bg-accent transition-transform delay-200 duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:scale-x-100"
           />
           <span className="opacity-0 transition-opacity duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:opacity-100">
             {eyebrow}
@@ -927,17 +942,21 @@ function HeroCopy({
 
         {slide.tagline && (
           <p
-            className={`mt-[26px] max-w-[440px] translate-y-4 text-[17px] leading-[1.65] text-white/[0.86] opacity-0 transition-all delay-[350ms] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100 ${TEXT_SHADOW}`}
+            className={`mt-[26px] max-w-[440px] translate-y-4 text-[17px] leading-[1.65] max-sm:mt-4 max-sm:text-sm max-sm:leading-[1.6] text-white/[0.86] opacity-0 transition-all delay-[350ms] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100 ${TEXT_SHADOW}`}
           >
             {slide.tagline}
           </p>
         )}
 
-        {slide.ctaLabel && slide.ctaUrl && (
-          <div className="pointer-events-auto mt-[34px] flex translate-y-4 flex-wrap items-center gap-x-[22px] gap-y-[14px] opacity-0 transition-all delay-500 duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100">
-            <HeroCarouselCta slide={slide} />
-          </div>
-        )}
+        <div className="pointer-events-auto mt-[34px] flex translate-y-4 flex-wrap items-center gap-x-[22px] gap-y-[14px] opacity-0 transition-all delay-500 duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100 max-sm:mt-6 max-sm:gap-x-5">
+          <HeroCarouselCta slide={slide} />
+          <Link
+            href={viewing.href}
+            className={`border-b border-white/40 pb-1 text-xs font-medium uppercase tracking-[0.2em] text-white transition-colors hover:border-accent hover:text-accent max-sm:text-[10px] max-sm:tracking-[0.18em] ${TEXT_SHADOW}`}
+          >
+            {viewing.label}
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -1105,17 +1124,17 @@ function HeroDust({ active }: { active: boolean }) {
 /**
  * The slide's own call to action.
  *
- * Exactly one button, and it is entirely the admin's: label and link both
- * come from the row an editor fills in at /admin/pages/home/hero, and a slide
- * that leaves them blank renders no button at all — which is what the
- * field's own hint there ("Leave both blank for no button") has always
- * promised. This used to render a second, always-on button whose label
- * came from home.hero.ctaSecondary in messages/*.json, so the homepage
- * showed a button that appeared nowhere in the admin, and a slide with no
- * CTA configured still showed one. That mismatch is what this shape
- * fixes; a slide that wants to point at /contact says so in its own
- * Button link field. (The mockup has a second, ghost button; it is a
- * placeholder there and must not come back for the same reason.)
+ * Label and link both come from the row an editor fills in at
+ * /admin/pages/home/hero, and a slide that leaves them blank renders no
+ * button — what the field's own hint there ("Leave both blank for no
+ * button") promises.
+ *
+ * Beside it, HeroCopy always renders a quiet "book a viewing" text link
+ * (home.hero.ctaSecondary → /contact). That link was taken out on
+ * 2026-08-31 because it appeared nowhere in the admin, and put back on
+ * 2026-09-25 at the client's request: booking a viewing is the site's one
+ * standing action, and the hero without it lost it. It is styled as a link,
+ * not a second button, so it never competes with the slide's own.
  *
  * Built on the site's own .btn-hero (rounded-sm, px-7 py-3.5) — a glass
  * outline rather than a flat accent fill, since a solid saturated block
@@ -1128,10 +1147,15 @@ function HeroCarouselCta({ slide }: { slide: HeroStorySlide }) {
   return (
     <Link
       href={slide.ctaUrl}
-      className="btn-hero group"
+      // Slimmer on a phone, where the full-size glass slab took a fifth of
+      // the width and read heavier than the headline above it.
+      className="btn-hero group max-sm:gap-1.5 max-sm:px-4 max-sm:py-2.5 max-sm:text-[10px] max-sm:tracking-[0.18em]"
     >
       {slide.ctaLabel}
-      <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
+      <ArrowRight
+        aria-hidden
+        className="size-4 transition-transform group-hover:translate-x-1 max-sm:size-3"
+      />
     </Link>
   );
 }

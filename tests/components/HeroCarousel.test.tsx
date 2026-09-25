@@ -313,24 +313,27 @@ describe("HeroCarousel", () => {
   });
 
   describe("the call to action", () => {
-    it("is the admin's own button and nothing else", () => {
+    it("is the admin's button, then the standing book-a-viewing link", () => {
       setup();
 
       const links = screen.getAllByRole("link");
-      expect(links).toHaveLength(1);
+      expect(links).toHaveLength(2);
       expect(links[0]).toHaveTextContent("View project");
       expect(links[0]).toHaveAttribute("href", "/projects/trinity-village");
       expect(links[0]).toHaveClass("btn-hero");
+      expect(links[1]).toHaveTextContent("Fallback secondary");
+      expect(links[1]).toHaveAttribute("href", "/contact");
+      expect(links[1]).not.toHaveClass("btn-hero");
     });
 
-    it("is absent when the slide has a label but no link", () => {
+    it("leaves out the admin's button when the slide has a label but no link", () => {
       setup([slide(1, { ctaLabel: "Go", ctaUrl: null }), slide(2)]);
-      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+      expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual(["Fallback secondary"]);
     });
 
-    it("is absent when the slide has a link but no label", () => {
+    it("leaves out the admin's button when the slide has a link but no label", () => {
       setup([slide(1, { ctaLabel: null, ctaUrl: "/somewhere" }), slide(2)]);
-      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+      expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual(["Fallback secondary"]);
     });
   });
 
