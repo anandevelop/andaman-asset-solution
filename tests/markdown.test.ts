@@ -406,6 +406,29 @@ describe("ready-made block markers survive sanitising", () => {
     expect(out).toContain("Someone");
   });
 
+  it("keeps a CTA panel and the link that is its button", () => {
+    const out = sanitizeArticleHtml(
+      '<figure data-block="cta"><p>Ready to see it?</p>' +
+        '<p data-block="cta-action"><a href="/contact">Book a viewing</a></p></figure>',
+    );
+    expect(out).toContain('data-block="cta"');
+    expect(out).toContain('data-block="cta-action"');
+    expect(out).toContain('href="/contact"');
+  });
+
+  it("does not let a CTA button smuggle in a javascript: URL", () => {
+    // The button is an ordinary <a>, so it is covered by the same scheme
+    // allowlist as every other link — asserted here because "it's just a
+    // link" is exactly the assumption worth pinning down.
+    const out = sanitizeArticleHtml(
+      '<figure data-block="cta"><p>x</p>' +
+        // eslint-disable-next-line no-script-url
+        '<p data-block="cta-action"><a href="javascript:alert(1)">Tap</a></p></figure>',
+    );
+    expect(out).not.toContain("javascript:");
+    expect(out).toContain("Tap");
+  });
+
   it("still refuses the div the blocks would otherwise have been", () => {
     // The whole reason these blocks are blockquotes and paragraphs. If
     // this ever passes, the allowlist has been widened and the blocks

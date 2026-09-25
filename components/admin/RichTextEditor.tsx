@@ -74,6 +74,7 @@ import {
   SquareCode,
   Strikethrough,
   TextQuote,
+  MousePointerClick,
   Heading2,
   Heading3,
   Heading4,
@@ -225,6 +226,16 @@ const Figure = Node.create<FigureOptions>({
           document.createElement("figcaption"),
         getAttrs: (element) => {
           if (typeof element === "string") return false;
+          /*
+            A <figure data-block="…"> belongs to one of the ready-made
+            blocks (the CTA today), not here. Their own parse rules already
+            outrank this one, so in the normal path this line is never
+            reached — but this getAttrs answers for *any* figure it is
+            offered, image or not, so without it a priority change anywhere
+            turns those blocks into image figures with a null src rather
+            than into a visible error. See CtaBlock's parseHTML.
+          */
+          if (element.hasAttribute("data-block")) return false;
           const img = element.querySelector("img");
           return {
             src: img?.getAttribute("src") ?? null,
@@ -382,6 +393,57 @@ const PullQuoteAttribution = Node.create({
   },
 });
 
+/**
+ * The call to action: a pitch line and a button, boxed.
+ *
+ * `<figure>`, which is the only generic grouping element the allowlist
+ * has and, unusually for these blocks, also the semantically right one —
+ * a CTA panel is exactly the "self-contained content referenced from the
+ * main flow" a figure is for. Neither blockquote (this is not a quote)
+ * nor div (not in the allowlist, and not going to be) fits.
+ *
+ * The button is an ordinary link inside `<p data-block="cta-action">`, so
+ * it is set with the link modal and the link bubble menu that already
+ * exist rather than with an href attribute of its own — one fewer place
+ * for an unvalidated URL to enter the document.
+ */
+const CtaBlock = Node.create({
+  name: "cta",
+  group: "block",
+  content: "paragraph ctaAction",
+  defining: true,
+
+  parseHTML() {
+    /*
+      Figure claims every `<figure>`, so this block is protected twice: by
+      this priority, and by Figure's getAttrs declining anything carrying
+      data-block. Either alone is enough — removing just one of them keeps
+      every test passing, removing both turns a CTA into an image figure
+      with a null src. Both are kept because the pair is what makes the
+      next `<figure>`-based block safe to add without rediscovering this.
+    */
+    return [{ tag: 'figure[data-block="cta"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["figure", { "data-block": "cta" }, 0];
+  },
+});
+
+const CtaAction = Node.create({
+  name: "ctaAction",
+  content: "inline*",
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'p[data-block="cta-action"]', priority: 60 }];
+  },
+
+  renderHTML() {
+    return ["p", { "data-block": "cta-action" }, 0];
+  },
+});
+
 const FaqList = Node.create({
   name: "faqList",
   group: "block",
@@ -472,6 +534,7 @@ type Props = {
     callout: string;
     calloutTone: (tone: string) => string;
     pullQuote: string;
+    cta: string;
     table: string;
     tableAddRow: string;
     tableDeleteRow: string;
@@ -669,6 +732,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       Callout,
       PullQuote,
       PullQuoteAttribution,
+      CtaBlock,
+      CtaAction,
       FaqList,
       FaqItem,
       FaqQuestion,
@@ -1090,6 +1155,26 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           className={toolbarButtonClass(editor.isActive("pullQuote"))}
         >
           <TextQuote size={15} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={toolbarLabels.cta}
+          aria-label={toolbarLabels.cta}
+          aria-pressed={editor.isActive("cta")}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: "cta",
+                content: [{ type: "paragraph" }, { type: "ctaAction" }],
+              })
+              .run()
+          }
+          className={toolbarButtonClass(editor.isActive("cta"))}
+        >
+          <MousePointerClick size={15} aria-hidden />
         </button>
         <button
           type="button"

@@ -1377,6 +1377,7 @@
         "tableDelete": "删除表格",
         "callout": "提示框",
         "pullQuote": "引述块",
+        "cta": "行动号召框",
         "calloutTones": {
           "note": "备注",
           "warning": "注意",

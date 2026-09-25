@@ -45,6 +45,7 @@ const LABELS = {
   callout: "Callout box",
   calloutTone: (tone: string) => ({ note: "Note", warning: "Warning", success: "Good to know" })[tone] ?? tone,
   pullQuote: "Pull quote",
+  cta: "Call to action",
   table: "Insert table",
   tableAddRow: "Add row",
   tableDeleteRow: "Delete row",
@@ -687,6 +688,60 @@ describe("RichTextEditor — pull quote", () => {
       const out = screen.getByTestId("content-html").textContent ?? "";
       expect(out).toContain('data-block="pull-quote"');
       expect(out).toContain("The market turned in 2024.");
+    });
+  });
+});
+
+/*
+  The CTA is a <figure>, which is the one block here that collides with an
+  existing node rather than with StarterKit: Figure claims every <figure>
+  and its getAttrs answers for all of them, image or not. So the CTA needs
+  the priority *and* Figure needs to decline a data-block figure, and the
+  test that matters is that a CTA survives a round trip with its link
+  intact rather than coming back as an image with no src.
+*/
+describe("RichTextEditor — call to action", () => {
+  it("round-trips the panel, its pitch and its button link", async () => {
+    const user = userEvent.setup();
+    const html =
+      "<p>Intro</p>" +
+      '<figure data-block="cta"><p>Ready to see it in person?</p>' +
+      '<p data-block="cta-action"><a href="/contact">Book a private viewing</a></p></figure>';
+
+    render(<Harness initialContent={html} />);
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('data-block="cta"');
+      expect(out).toContain('data-block="cta-action"');
+      expect(out).toContain('href="/contact"');
+      expect(out).toContain("Book a private viewing");
+      // The tell that Figure took it instead: an <img> where none was.
+      expect(out).not.toContain("<img");
+    });
+  });
+
+  it("leaves an image figure an image figure", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        initialContent={
+          "<p>Intro</p>" +
+          '<figure><img src="/a.jpg" alt="Villa"><figcaption>A villa</figcaption></figure>'
+        }
+      />,
+    );
+
+    getEditor().focus();
+    await user.type(getEditor(), "x", { skipClick: true });
+
+    await waitFor(() => {
+      const out = screen.getByTestId("content-html").textContent ?? "";
+      expect(out).toContain('src="/a.jpg"');
+      expect(out).toContain("A villa");
+      expect(out).not.toContain("data-block");
     });
   });
 });

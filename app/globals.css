@@ -474,6 +474,40 @@
     @apply hidden;
   }
 
+  /* The call-to-action panel. <figure> because it is the only generic
+     grouping element in lib/markdown.ts's allowlist and, for once, also
+     the semantically right one — this is self-contained content beside
+     the article, which is what a figure is. None of the figure rules
+     further down apply to it: every one of them is scoped to data-align
+     or data-width, which an image figure has and this does not. */
+  & figure[data-block="cta"] {
+    @apply my-10 rounded-xs border border-primary/15 bg-primary/5 px-6 py-8 text-center;
+  }
+
+  & figure[data-block="cta"] > p:first-child {
+    @apply my-0 text-lg font-light text-ink/85;
+  }
+
+  & p[data-block="cta-action"] {
+    @apply mt-5 mb-0;
+  }
+
+  /* The button is an ordinary link, so it is set through the link modal
+     the editor already has rather than through an href attribute of this
+     block's own — and it reuses .btn-primary rather than restating it, so
+     a CTA in an article and a CTA on a landing page cannot drift apart.
+     no-underline because the prose link rule above underlines every <a>. */
+  & p[data-block="cta-action"] a {
+    @apply btn-primary no-underline;
+  }
+
+  /* No button yet — hidden rather than left as a blank line, same as an
+     empty figcaption or an empty quote attribution. The editor draws it
+     as a dashed outline instead; see the .ProseMirror rules. */
+  & p[data-block="cta-action"]:empty {
+    @apply hidden;
+  }
+
   & img {
     @apply w-full rounded-xs shadow-card;
   }
@@ -710,6 +744,23 @@
 
   .ProseMirror figure[data-align="left"] {
     margin-right: auto;
+  }
+
+  /*
+    A freshly inserted CTA is two empty lines inside a tinted box, and
+    nothing about the box says which of them becomes the button — or that
+    the line only *is* a button once it holds a link. So in the editor the
+    action line is drawn as a button-shaped dashed outline until it has
+    one, and takes .btn-primary's real appearance the moment it does.
+
+    :not(:has(a)) rather than :empty, because inside a contenteditable
+    ProseMirror puts a trailing <br> in every empty textblock and :empty
+    therefore never matches — which is why the figcaption rules above lean
+    on min-height instead. On the public page there is no such <br>, so
+    :empty is the right test there and is what prose-article uses.
+  */
+  .ProseMirror p[data-block="cta-action"]:not(:has(a)) {
+    @apply mx-auto min-h-[3rem] w-56 content-center rounded-xs border border-dashed border-primary/30;
   }
 
   /* Drives the HeroCarousel progress-dash fill for an IMAGE slide —

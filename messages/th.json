@@ -1377,6 +1377,7 @@
         "tableDelete": "ลบตาราง",
         "callout": "กล่องสรุป",
         "pullQuote": "ยกคำพูดเด่น",
+        "cta": "กล่องชวนติดต่อ",
         "calloutTones": {
           "note": "บันทึก",
           "warning": "ข้อควรระวัง",

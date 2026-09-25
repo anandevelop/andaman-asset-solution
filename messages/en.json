@@ -1377,6 +1377,7 @@
         "tableDelete": "Delete table",
         "callout": "Callout box",
         "pullQuote": "Pull quote",
+        "cta": "Call to action",
         "calloutTones": {
           "note": "Note",
           "warning": "Warning",
