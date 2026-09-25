@@ -18,6 +18,12 @@ type RevealProps = {
    *  hint; the default margin reads that sliver as still outside the root
    *  and leaves it stuck at opacity 0 until the visitor swipes further. */
   margin?: `${number}px` | `${number}px ${number}px` | `${number}px ${number}px ${number}px ${number}px`;
+  /** Fires the moment this wrapper's own whileInView trigger fires — the
+   *  same visibility check that starts its fade-up, exposed so a count-up
+   *  or similar one-shot effect inside it can start on that exact frame
+   *  instead of running its own separate IntersectionObserver that could
+   *  fire at a different scroll position. */
+  onEnter?: () => void;
 };
 
 const variants: Variants = {
@@ -48,7 +54,14 @@ const variants: Variants = {
  * print media's layout pass happens independently of any JS timing, so
  * only a CSS rule is guaranteed to apply before the page is captured.
  */
-export default function Reveal({ children, delay = 0, className, id, margin = "-80px" }: RevealProps) {
+export default function Reveal({
+  children,
+  delay = 0,
+  className,
+  id,
+  margin = "-80px",
+  onEnter,
+}: RevealProps) {
   return (
     <motion.div
       id={id}
@@ -58,6 +71,7 @@ export default function Reveal({ children, delay = 0, className, id, margin = "-
       viewport={{ once: true, margin }}
       variants={variants}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      onViewportEnter={onEnter}
     >
       {children}
     </motion.div>

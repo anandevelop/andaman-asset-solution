@@ -4,13 +4,14 @@
  * components/MilestonesScroller.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The scrollable row for the About page's "How we got here" timeline —
- * same split as AwardsScroller/AwardsSection and the same reason: the page
- * that renders it is an async Server Component, and a "use client"
- * directive can't live in the same file as one. The grid of cards is
- * built server-side in about/page.tsx and passed in as `children`.
+ * same split AwardsSection.tsx once used for its own scroller, and the
+ * same reason: the page that renders it is an async Server Component, and
+ * a "use client" directive can't live in the same file as one. The grid of
+ * cards is built server-side in about/page.tsx and passed in as `children`.
  *
- * Unlike AwardsScroller, there is no lg: breakpoint where this becomes a
- * static grid, and this component has no opinion on what's inside it — the
+ * Unlike that former Awards scroller, there is no lg: breakpoint where
+ * this becomes a static grid, and this component has no opinion on what's
+ * inside it — the
  * card row and the year-group underlines below it are one CSS grid built
  * by the caller (about/page.tsx), so that a group's underline can span
  * exactly the width of its cards via `grid-column`. This file only owns
