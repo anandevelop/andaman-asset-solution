@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * app/[locale]/admin/progress/actions.ts
+ * app/[locale]/admin/(catalog)/progress/actions.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Monthly construction updates. Images are URL references, not uploads —
  * the site already serves imagery from a CDN, so storing a URL list keeps
@@ -59,7 +59,7 @@ function isStalePublishedBy(error: unknown): boolean {
 }
 
 async function revalidateProgress(locale: string, projectId: string) {
-  revalidatePath(`/${locale}/admin/progress/${projectId}`);
+  revalidatePath(`/${locale}/admin/projects/${projectId}/progress`);
 
   // The public gallery is keyed by slug, so resolve it before revalidating.
   const project = await prisma.project

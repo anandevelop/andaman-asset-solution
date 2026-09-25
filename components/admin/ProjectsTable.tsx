@@ -659,7 +659,7 @@ export default function ProjectsTable({
                       <td className="admin-td whitespace-nowrap text-right">
                         <span className="flex justify-end gap-3">
                           <Link
-                            href={`/${locale}/admin/progress/${row.id}`}
+                            href={`/${locale}/admin/projects/${row.id}/progress`}
                             aria-label={`${labels.progress}: ${row.name}`}
                             className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
                           >

@@ -2,7 +2,7 @@
  * lib/youtube.ts
  * ─────────────────────────────────────────────────────────────────────────
  * Turns an admin-pasted YouTube link (ProjectProgress.videoUrl, filled in
- * at /admin/progress/[projectId] — drone footage or a site walkthrough for
+ * at /admin/projects/[id]/progress — drone footage or a site walkthrough for
  * that month) into a URL an <iframe> can actually render, on the project
  * detail page's Construction Progress section
  * (components/ProgressGallery.tsx).

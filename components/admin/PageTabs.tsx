@@ -23,7 +23,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { Role } from "@prisma/client";
-import { visibleTabs } from "@/lib/admin/nav";
+import { tabBase, visibleTabs } from "@/lib/admin/nav";
 
 export default function PageTabs({
   locale,
@@ -35,13 +35,22 @@ export default function PageTabs({
   role: Role;
   /** A sidebar item key ("pages") or a NAV_TAB_GROUPS key ("pagesHome"). */
   groupKey: string;
-  /** The workspace's own path under /admin, e.g. "/pages/home". */
-  baseHref: string;
+  /**
+   * The workspace's own path under /admin, e.g. "/pages/home".
+   *
+   * Only needed for a strip that is not a sidebar item's own — pagesHome
+   * and pagesAbout, which live inside a page that knows its own path.
+   * For everything else the config answers it (NavItem.tabsBase), so this
+   * component and visibleTabRows cannot point one tab at two addresses,
+   * which they did: the palette offered /admin/leads/appointments.
+   */
+  baseHref?: string;
 }) {
   const t = useTranslations("admin.tabs");
   const pathname = usePathname();
 
   const tabs = visibleTabs(role, groupKey);
+  const base = baseHref ?? tabBase(groupKey) ?? "";
 
   // One tab is not a choice, and a strip that offers no alternative is
   // furniture. Nothing to draw.
@@ -50,7 +59,7 @@ export default function PageTabs({
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-ink/10" aria-label={t(`${groupKey}.label` as never)}>
       {tabs.map(({ key, segment }) => {
-        const href = `/${locale}/admin${baseHref}${segment}`;
+        const href = `/${locale}/admin${base}${segment}`;
 
         /* Prefix match so a child route keeps its tab lit — the segment ""
            case is exact for the same reason the dashboard is in

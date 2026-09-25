@@ -35,6 +35,7 @@ import {
   type UnitRow,
 } from "@/lib/admin/project-units";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
+import ProjectUnitsSubnav from "@/components/admin/ProjectUnitsSubnav";
 import UnitSitePlan from "@/components/admin/UnitSitePlan";
 import UnitDetailPanel from "@/components/admin/UnitDetailPanel";
 import UnitsPanel, { type UnitTableRow } from "@/components/admin/UnitsPanel";
@@ -313,16 +314,9 @@ export default async function AdminUnitsPage(props: Props) {
         locale={locale}
         projectId={project.id}
         active="units"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
       />
+
+      <ProjectUnitsSubnav locale={locale} projectId={project.id} active="units" />
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

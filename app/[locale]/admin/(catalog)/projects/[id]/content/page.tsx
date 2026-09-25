@@ -157,15 +157,6 @@ export default async function AdminProjectContentPage(props: Props) {
         locale={locale}
         projectId={project.id}
         active="content"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
       />
 
       {isDatabaseOffline() && (

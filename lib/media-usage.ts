@@ -195,7 +195,7 @@ const SOURCES: Source[] = [
     find: (args) => prisma.projectProgress.findMany(args),
     select: { id: true, month: true, year: true, projectId: true },
     label: (p) => `${p.month}/${p.year}`,
-    href: (p) => `/admin/progress?project=${p.projectId}`,
+    href: (p) => `/admin/projects/${p.projectId}/progress`,
   }),
   column({
     kind: "heroSlide",

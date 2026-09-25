@@ -5,12 +5,17 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { getBrochureProjectOptions } from "@/lib/brochures";
 import { parseEditingLocale } from "@/lib/admin/translated-form";
 import { createBrochure } from "../actions";
-import EBrochureForm from "@/components/admin/EBrochureForm";
+import EBrochureForm, { EMPTY_BROCHURE } from "@/components/admin/EBrochureForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  /** `projectId` prefills the project select — the project workspace's
+   *  brochures tab links here with it set, so "add a brochure for this
+   *  project" does not ask you to find the project again in a dropdown.
+   *  An id that matches no option simply leaves the select on its
+   *  placeholder; the action validates it either way. */
+  searchParams: Promise<{ lang?: string; projectId?: string }>;
 };
 
 export default async function NewEBrochurePage(props: Props) {
@@ -25,6 +30,10 @@ export default async function NewEBrochurePage(props: Props) {
     getBrochureProjectOptions(),
   ]);
   const lang = parseEditingLocale(searchParams.lang);
+
+  const presetProjectId = projects.some((project) => project.id === searchParams.projectId)
+    ? searchParams.projectId!
+    : "";
 
   return (
     <div className="space-y-8">
@@ -50,10 +59,11 @@ export default async function NewEBrochurePage(props: Props) {
       />
 
       <EBrochureForm
-        key={lang}
+        key={`${lang}:${presetProjectId}`}
         lang={lang}
         action={createBrochure.bind(null, locale)}
         projects={projects}
+        values={{ ...EMPTY_BROCHURE, projectId: presetProjectId }}
         submitLabel={t("common.create")}
       />
     </div>

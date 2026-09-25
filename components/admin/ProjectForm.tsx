@@ -10,8 +10,8 @@
  * is plain FormData, validation is authoritative on the server, and this
  * way the form still submits with JavaScript disabled.
  *
- * name/tagline/description/conceptDesign/aboutThisProject/metaTitle/
- * metaDescription are translated — see ProjectTranslation in
+ * name/tagline/description/conceptDesign/aboutThisProject are translated
+ * — see ProjectTranslation in
  * schema.prisma. `lang` selects which locale this instance shows/saves;
  * the edit/new pages own the language selector — see AwardForm's file
  * comment for the fuller version of this note.
@@ -68,9 +68,6 @@ export type ProjectFormValues = {
   /** External Matterport/Kuula/YouTube-360 link — shown as a hero CTA on
    *  the public page when set. */
   virtualTourUrl: string;
-  metaTitle: string;
-  metaDescription: string;
-  noIndex: boolean;
   isPublished: boolean;
   sortOrder: string;
 };
@@ -102,9 +99,6 @@ export const EMPTY_PROJECT: ProjectFormValues = {
   longitude: "",
   googleMapsUrl: "",
   virtualTourUrl: "",
-  metaTitle: "",
-  metaDescription: "",
-  noIndex: false,
   isPublished: false,
   sortOrder: "0",
 };
@@ -581,18 +575,23 @@ export default function ProjectForm({
         />
       </section>
 
-      {/* Meta title/description and "hide from search engines" are edited
+      {/* No SEO fields, hidden or otherwise.
+
+          Meta title/description and "hide from search engines" are edited
           on this project's dedicated SEO tab (PageSeoEditor,
           ProjectHubTabs' "seo" route) — that screen shows every language
-          at once, which this one-locale-at-a-time Overview form can't. No
-          section here for them any more; these hidden inputs just carry
-          whatever a project already has through unchanged on every
-          Overview save, same pattern as the latitude/longitude fields
-          above, so an Overview edit can't silently blank out what the SEO
-          tab already set. */}
-      <input type="hidden" name="metaTitle" defaultValue={values.metaTitle} />
-      <input type="hidden" name="metaDescription" defaultValue={values.metaDescription} />
-      <input type="hidden" name="noIndex" defaultValue={values.noIndex ? "on" : ""} />
+          at once, which this one-locale-at-a-time form cannot. This form
+          used to carry three hidden inputs holding whatever those fields
+          were when the page rendered, so that saving Overview would write
+          them back unchanged.
+
+          Unchanged from *when the page loaded*, which is the problem: open
+          Overview, switch to the SEO tab in another window or come back to
+          a tab left open from before lunch, save Overview, and the SEO tab's
+          work is gone with no error and nothing on screen that mentioned
+          SEO. The form does not send these fields at all now, and
+          updateProject leaves a field the form did not send alone — see the
+          `seoSubmitted` check there. */}
 
       {/* ── Publication ─────────────────────────────────────────────── */}
       <section className="admin-card space-y-5">

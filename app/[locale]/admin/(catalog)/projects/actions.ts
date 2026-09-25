@@ -241,6 +241,22 @@ export async function updateProject(
   const { name, tagline, description, conceptDesign, aboutThisProject, metaTitle, metaDescription, noIndex } =
     translatedFields(parsed.data);
 
+  /*
+    Whether this submission is from a form that owns the SEO fields.
+
+    The Overview form does not: meta title, meta description and noIndex
+    are the SEO tab's, and ProjectForm used to carry them as hidden inputs
+    holding whatever they were when the page rendered. Saving Overview then
+    wrote that snapshot back, so an Overview save made from a page opened
+    before an SEO edit silently reverted it.
+
+    `formData.has`, not "is the value empty": a form that does own these
+    fields must still be able to clear one, and an empty box on the SEO tab
+    is a real edit. Absent and empty are different answers.
+  */
+  const seoSubmitted =
+    formData.has("metaTitle") || formData.has("metaDescription") || formData.has("noIndex");
+
   // See lib/publishing-gate.ts: isPublished can only become true while
   // contentStatus is PUBLISHED — every other edited field still saves
   // either way.
@@ -270,8 +286,9 @@ export async function updateProject(
               descriptionEn: description,
               conceptDesignEn: conceptDesign,
               aboutThisProjectEn: aboutThisProject,
-              metaTitleEn: metaTitle,
-              metaDescriptionEn: metaDescription,
+              ...(seoSubmitted
+                ? { metaTitleEn: metaTitle, metaDescriptionEn: metaDescription }
+                : {}),
             }
           : {}),
         ...(editingLocale === "th"
@@ -281,8 +298,9 @@ export async function updateProject(
               descriptionTh: description,
               conceptDesignTh: conceptDesign,
               aboutThisProjectTh: aboutThisProject,
-              metaTitleTh: metaTitle,
-              metaDescriptionTh: metaDescription,
+              ...(seoSubmitted
+                ? { metaTitleTh: metaTitle, metaDescriptionTh: metaDescription }
+                : {}),
             }
           : {}),
         translations: {
@@ -294,9 +312,7 @@ export async function updateProject(
               description,
               conceptDesign,
               aboutThisProject,
-              metaTitle,
-              metaDescription,
-              noIndex,
+              ...(seoSubmitted ? { metaTitle, metaDescription, noIndex } : {}),
             },
             create: {
               locale: editingLocale,

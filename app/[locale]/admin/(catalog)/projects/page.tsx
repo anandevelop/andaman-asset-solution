@@ -32,6 +32,7 @@ import {
   getAdminProjectList,
   type ProjectListSort,
 } from "@/lib/admin/project-list";
+import PageTabs from "@/components/admin/PageTabs";
 import ProjectFilters from "@/components/admin/ProjectFilters";
 import ProjectsTable, { type ProjectTableRow } from "@/components/admin/ProjectsTable";
 import TablePagination from "@/components/admin/TablePagination";
@@ -186,6 +187,13 @@ export default async function AdminProjectsPage(props: Props) {
           </Link>
         )}
       </header>
+
+      {/* The three cross-project lists. Progress and E-brochures used to be
+          sidebar rows of their own; their per-project halves are tabs of
+          the project workspace now, and this is where the "across every
+          project" view they also held still lives. The base comes from the
+          config (NavItem.tabsBase), not from here — see PageTabs. */}
+      <PageTabs locale={locale} role={session.role} groupKey="projects" />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

@@ -1,5 +1,5 @@
 /**
- * app/[locale]/admin/progress/[projectId]/page.tsx
+ * app/[locale]/admin/(catalog)/projects/[id]/progress/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Monthly progress manager for one project. Every existing month renders
  * its own independent form, so an editor can correct August without the
@@ -7,6 +7,19 @@
  *
  * The "add" form defaults to the month after the newest entry — the common
  * case is appending this month's site photos, not backfilling.
+ *
+ * WHY IT IS UNDER /projects/[id] NOW
+ *
+ * It was /admin/progress/[projectId] — a tab of the project workspace that
+ * navigated out of the project workspace. The sidebar highlight jumped from
+ * "Projects" to "Progress" on the way in, the tab bar stayed but the URL
+ * said you were somewhere else, and going "back" from here landed on the
+ * cross-project progress list rather than the project you were editing.
+ * The cross-project list is still at /admin/progress; only the per-project
+ * screen moved, and next.config.js redirects the old address.
+ *
+ * The write side stays at (catalog)/progress/actions.ts, shared with that
+ * list — imported rather than copied, since it is the same mutation.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -20,13 +33,17 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
 import { formatMonthYear, intlLocale } from "@/lib/format";
-import { createProgress, deleteProgress, updateProgress } from "../actions";
+import {
+  createProgress,
+  deleteProgress,
+  updateProgress,
+} from "@/app/[locale]/admin/(catalog)/progress/actions";
 import ProgressForm, { type ProgressValues } from "@/components/admin/ProgressForm";
 import ProgressPhaseTimeline from "@/components/admin/ProgressPhaseTimeline";
 import ProgressWorkspace, { type ProgressCard } from "@/components/admin/ProgressWorkspace";
 import { getProgressOverview } from "@/lib/admin/project-progress";
 
-type Props = { params: Promise<{ locale: string; projectId: string }> };
+type Props = { params: Promise<{ locale: string; id: string }> };
 
 /** Localised month names for the <select>, in calendar order. */
 function monthNames(locale: string): string[] {
@@ -38,7 +55,10 @@ function monthNames(locale: string): string[] {
 
 export default async function AdminProgressPage(props: Props) {
   const params = await props.params;
-  const { locale, projectId } = params;
+  // `id` is the segment name this route tree already uses for a project;
+  // the rest of this file still calls it projectId, which is what the
+  // progress actions and ProjectHubTabs expect.
+  const { locale, id: projectId } = params;
   /* VIEWER may open this workspace to see a project's own progress log;
      logging a new month or editing an existing one stays behind a
      disabled fieldset for anyone below EDITOR, unchanged from before this
@@ -151,15 +171,6 @@ export default async function AdminProgressPage(props: Props) {
         locale={locale}
         projectId={project.id}
         active="progress"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
       />
 
       <ProgressPhaseTimeline

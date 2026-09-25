@@ -359,6 +359,15 @@ const nextConfig = {
         destination: "/:locale/admin/pages/contact",
         permanent: true,
       },
+
+      /* One project's progress log is part of that project's workspace now.
+         The cross-project list keeps /admin/progress, which is why this
+         redirect names the dynamic segment rather than the bare path. */
+      {
+        source: "/:locale/admin/progress/:projectId",
+        destination: "/:locale/admin/projects/:projectId/progress",
+        permanent: true,
+      },
     ];
   },
 

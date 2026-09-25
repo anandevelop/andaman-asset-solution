@@ -7,6 +7,7 @@ import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
 import { translationCompleteness } from "@/lib/admin/translated-form";
+import PageTabs from "@/components/admin/PageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -71,6 +72,13 @@ export default async function AdminEBrochuresPage(props: Props) {
           </Link>
         )}
       </header>
+
+      {/* The three cross-project lists. Progress and E-brochures used to be
+          sidebar rows of their own; their per-project halves are tabs of
+          the project workspace now, and this is where the "across every
+          project" view they also held still lives. The base comes from the
+          config (NavItem.tabsBase), not from here — see PageTabs. */}
+      <PageTabs locale={locale} role={session.role} groupKey="projects" />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

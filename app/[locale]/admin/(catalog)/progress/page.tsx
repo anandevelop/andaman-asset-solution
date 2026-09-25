@@ -1,8 +1,15 @@
 /**
- * app/[locale]/admin/progress/page.tsx
+ * app/[locale]/admin/(catalog)/progress/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Project picker for the progress manager. Progress is always scoped to a
- * project, so the sidebar link needs somewhere to land.
+ * Every project's progress log, side by side — which one was updated last
+ * and how long ago, across the whole catalogue.
+ *
+ * It began as a picker for the per-project editor, because that editor
+ * lived under this path and the sidebar link needed somewhere to land.
+ * The editor moved into the project workspace
+ * (/admin/projects/[id]/progress) and the sidebar row went with it, so
+ * what is left here is the cross-project view — reached as a tab of the
+ * projects list rather than a menu row of its own.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -14,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { formatMonthYear } from "@/lib/format";
+import PageTabs from "@/components/admin/PageTabs";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -24,9 +32,9 @@ export default async function AdminProgressIndexPage(props: Props) {
     locale
   } = params;
 
-  // A picker with nothing to write — every row is a Link to the per-project
+  // A list with nothing to write — every row is a Link to the per-project
   // editor, which carries its own guard.
-  await requireAdmin(locale, Role.VIEWER);
+  const session = await requireAdmin(locale, Role.VIEWER);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -69,6 +77,13 @@ export default async function AdminProgressIndexPage(props: Props) {
         </h1>
       </header>
 
+      {/* The three cross-project lists. Progress and E-brochures used to be
+          sidebar rows of their own; their per-project halves are tabs of
+          the project workspace now, and this is where the "across every
+          project" view they also held still lives. The base comes from the
+          config (NavItem.tabsBase), not from here — see PageTabs. */}
+      <PageTabs locale={locale} role={session.role} groupKey="projects" />
+
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
@@ -87,7 +102,7 @@ export default async function AdminProgressIndexPage(props: Props) {
             return (
               <li key={project.id}>
                 <Link
-                  href={`/${locale}/admin/progress/${project.id}`}
+                  href={`/${locale}/admin/projects/${project.id}/progress`}
                   className="admin-card flex items-center justify-between gap-4 transition-shadow hover:shadow-cardHover"
                 >
                   <div className="min-w-0">

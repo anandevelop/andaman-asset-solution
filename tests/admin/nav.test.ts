@@ -250,6 +250,44 @@ describe("the publishing hub", () => {
   });
 });
 
+describe("the project workspace", () => {
+  it("is one sidebar row, not three", () => {
+    /* "Progress" and "E-brochures" were rows of their own for screens that
+       belong to a project. Their per-project halves are tabs of the
+       workspace; the cross-project lists are tabs of this row's list. */
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+
+    expect(keys).not.toContain("progress");
+    expect(keys).not.toContain("eBrochures");
+    expect(keys).toContain("projects");
+  });
+
+  it("keeps both old addresses highlighting it", () => {
+    for (const path of [
+      "/th/admin/progress",
+      "/th/admin/e-brochures",
+      "/th/admin/e-brochures/abc123/edit",
+      "/th/admin/projects/abc123/progress",
+      "/th/admin/projects/abc123/brochures",
+      "/th/admin/projects/abc123/site-plan",
+    ]) {
+      expect(activeItemKey(path, "/th/admin"), path).toBe("projects");
+    }
+  });
+
+  it("offers the three cross-project lists as absolute segments", () => {
+    /* The only strip whose segments are not under its parent's href —
+       /admin/progress and /admin/e-brochures kept their addresses, so the
+       three pages render PageTabs with baseHref="". A segment that lost
+       its leading path here would resolve to /admin<segment> and 404. */
+    expect(visibleTabs(Role.EDITOR, "projects").map((tab) => tab.segment)).toEqual([
+      "/projects",
+      "/progress",
+      "/e-brochures",
+    ]);
+  });
+});
+
 describe("the SEO hub", () => {
   it("offers all five screens as tabs", () => {
     /* Three of these had no reliable way in: keywords and links were only
@@ -297,6 +335,36 @@ describe("visibleTabRows", () => {
 
     expect(viewer).not.toContain("/publishing/translations");
     expect(viewer).toContain("/pages/home");
+  });
+
+  it("points every row at a route that exists", () => {
+    /*
+      The one that caught the bug this check was written for. `segment` is
+      relative to its parent's href for most strips and already absolute
+      for two of them (projects, leads — their tabs point at paths that did
+      not move when the rows above them were folded away). PageTabs was
+      told which by a `baseHref` prop at each call site; visibleTabRows,
+      the other reader of the same config, was not, so it concatenated
+      anyway and offered ⌘K five destinations like
+      /admin/leads/appointments. Every one a 404, and nothing rendered them
+      — the palette is the only place those rows appear.
+
+      NavItem.tabsBase is where that answer lives now, and this asserts the
+      result rather than the mechanism: a real page.tsx behind every href.
+    */
+    const adminDir = join(process.cwd(), "app", "[locale]", "admin");
+    const zones = readdirSync(adminDir).filter(
+      (entry) => /^\(.+\)$/.test(entry) && statSync(join(adminDir, entry)).isDirectory(),
+    );
+
+    const missing = visibleTabRows(Role.SUPER_ADMIN).filter((row) => {
+      const relative = row.href.replace(/^\//, "");
+      const zone = zones.find((z) => existsSync(join(adminDir, z, relative.split("/")[0])));
+      const dir = zone ? join(adminDir, zone, relative) : join(adminDir, relative);
+      return !existsSync(join(dir, "page.tsx"));
+    });
+
+    expect(missing.map((row) => row.href)).toEqual([]);
   });
 
   it("gives every row a label key in both namespaces", () => {

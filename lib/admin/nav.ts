@@ -35,14 +35,12 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
-  BookOpen,
   Building2,
   CalendarClock,
   CalendarDays,
   Contact,
   FileCheck2,
   Files,
-  HardHat,
   History,
   LayoutDashboard,
   LibraryBig,
@@ -212,6 +210,29 @@ export const NAV_TAB_GROUPS = {
     { key: "urls", segment: "/urls", roles: ROLE_SETS.ADMIN_UP },
     { key: "defaults", segment: "/defaults", roles: ROLE_SETS.ADMIN_UP },
   ],
+  /**
+   * The three cross-project lists, which is the only thing "Progress" and
+   * "E-brochures" ever were as sidebar rows.
+   *
+   * Everything those two rows led to about *one* project now lives under
+   * /admin/projects/[id] (see components/ProjectHubTabs.tsx), so the rows
+   * were down to a monthly log across every project and a brochure list
+   * across every project — real screens, but not two of the fourteen
+   * things the whole back office is organised around.
+   *
+   * SEGMENTS ARE ABSOLUTE HERE
+   *
+   * Unlike every other strip, these are not under their parent's href:
+   * /admin/progress and /admin/e-brochures kept their addresses, because
+   * nothing about them is per-project and moving them would be a rename
+   * for its own sake. PageTabs is given baseHref="" on these three pages
+   * so each segment is the whole path.
+   */
+  projects: [
+    { key: "all", segment: "/projects", roles: ROLE_SETS.CONTENT },
+    { key: "progress", segment: "/progress", roles: ROLE_SETS.CONTENT },
+    { key: "brochures", segment: "/e-brochures", roles: ROLE_SETS.CONTENT },
+  ],
 } as const satisfies Record<string, readonly NavTab[]>;
 
 export type NavItem = Gated & {
@@ -226,6 +247,20 @@ export type NavItem = Gated & {
   /** Extra prefixes that still count as this item being active. Used when
    *  a path moves and the old one has to keep highlighting. */
   alias?: readonly string[];
+  /**
+   * The prefix this item's tabs hang off, when it is not its own href.
+   *
+   * "" for a strip whose segments are already whole paths under /admin —
+   * NAV_TAB_GROUPS.projects and .leads, whose tabs point at addresses that
+   * did not move when the menu rows above them were folded away.
+   *
+   * It lives here rather than being passed to PageTabs per call site
+   * because it was passed per call site, and the other reader of the same
+   * config — visibleTabRows, which feeds ⌘K — had no way to know. The
+   * palette built "/leads" + "/appointments" and offered
+   * /admin/leads/appointments, a 404, for five of its rows.
+   */
+  tabsBase?: string;
 };
 
 /**
@@ -298,9 +333,22 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     key: "projects",
     labelKey: "projects",
     items: [
-      { key: "projects", href: "/projects", icon: Building2, roles: ROLE_SETS.CONTENT },
-      { key: "progress", href: "/progress", icon: HardHat, roles: ROLE_SETS.CONTENT },
-      { key: "eBrochures", href: "/e-brochures", icon: BookOpen, roles: ROLE_SETS.CONTENT },
+      {
+        /* One row for everything about a property. "Progress" and
+           "E-brochures" were separate rows for two screens that belong to
+           a project — the per-project halves of both are tabs of the
+           project workspace now, and the cross-project lists they also
+           held are the strip below this item's own list page. The aliases
+           keep this row lit at both of those addresses, which have not
+           moved. */
+        key: "projects",
+        href: "/projects",
+        icon: Building2,
+        roles: ROLE_SETS.CONTENT,
+        alias: ["/progress", "/e-brochures"],
+        tabs: NAV_TAB_GROUPS.projects,
+        tabsBase: "",
+      },
     ],
   },
 
@@ -448,6 +496,20 @@ export function visibleTabs(role: Role | null | undefined, key: string): NavTab[
   return tabs?.filter((tab) => canSee(role, tab)) ?? [];
 }
 
+/**
+ * What a named strip's segments hang off, under `/{locale}/admin`.
+ *
+ * null for a strip that is not a sidebar item's own (pagesHome,
+ * pagesAbout) — those live inside a page that knows its own path, so the
+ * caller supplies it. Everything else is answered from the config, so
+ * PageTabs and visibleTabRows cannot disagree about where a tab points.
+ */
+export function tabBase(key: string): string | null {
+  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+  if (!item) return null;
+  return item.tabsBase ?? item.href;
+}
+
 export type NavTabRow = {
   /** The sidebar item the tab belongs to — labels the row's parent. */
   itemKey: string;
@@ -471,9 +533,9 @@ export type NavTabRow = {
  * of duplicate the tabs exist to remove.
  *
  * Only tabs an item owns. The second-level strips in NAV_TAB_GROUPS
- * (pagesHome, pagesAbout) are deliberately absent — they live inside a
- * page that knows its own path, so there is nothing here to build an href
- * from.
+ * (pagesHome, pagesAbout) are deliberately absent — they carry no base
+ * path of their own, so there is nothing here to build an href from
+ * without hardcoding one beside the config it would have to agree with.
  */
 export function visibleTabRows(role: Role | null | undefined): NavTabRow[] {
   const rows: NavTabRow[] = [];
@@ -484,7 +546,11 @@ export function visibleTabRows(role: Role | null | undefined): NavTabRow[] {
 
       for (const tab of item.tabs) {
         if (tab.segment === "" || !canSee(role, tab)) continue;
-        rows.push({ itemKey: item.key, tabKey: tab.key, href: `${item.href}${tab.segment}` });
+        rows.push({
+          itemKey: item.key,
+          tabKey: tab.key,
+          href: `${tabBase(item.key) ?? item.href}${tab.segment}`,
+        });
       }
     }
   }

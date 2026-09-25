@@ -87,9 +87,6 @@ export default async function EditProjectPage(props: Props) {
     longitude: str(project.longitude),
     googleMapsUrl: str(project.googleMapsUrl),
     virtualTourUrl: str(project.virtualTourUrl),
-    metaTitle: editing?.metaTitle ?? "",
-    metaDescription: editing?.metaDescription ?? "",
-    noIndex: editing?.noIndex ?? false,
     isPublished: project.isPublished,
     sortOrder: String(project.sortOrder),
   };
@@ -130,15 +127,6 @@ export default async function EditProjectPage(props: Props) {
         locale={locale}
         projectId={project.id}
         active="overview"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
       />
 
       {searchParams.created && (

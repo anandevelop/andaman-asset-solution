@@ -1,10 +1,14 @@
 /**
- * app/[locale]/admin/projects/[id]/site-plan/page.tsx
+ * app/[locale]/admin/(catalog)/projects/[id]/site-plan/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * Polygon drawing tool — trace each unit's boundary on the master plan
  * image so components/SitePlanMap.tsx has something to render on the
- * public project page. Linked from ../units (per-row "Draw Shape") and
- * from the project edit page header.
+ * public project page.
+ *
+ * It used to be reachable only from a per-row "Draw Shape" button on the
+ * units table: no tab, no menu row, and grepping the back office found no
+ * other link to it. It is now where the workspace's units tab lands, with
+ * ProjectUnitsSubnav offering the unit list and the house types beside it.
  */
 
 import Link from "next/link";
@@ -15,6 +19,8 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
+import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
+import ProjectUnitsSubnav from "@/components/admin/ProjectUnitsSubnav";
 import SitePlanDrawer from "@/components/admin/SitePlanDrawer";
 import { saveUnitShape } from "./actions";
 
@@ -57,17 +63,21 @@ export default async function AdminSitePlanPage(props: Props) {
     <div className="space-y-8">
       <header>
         <Link
-          href={`/${locale}/admin/projects/${project.id}/units`}
+          href={`/${locale}/admin/projects`}
           className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
         >
           <ArrowLeft size={14} aria-hidden />
-          {t("units.title")}
+          {t("projects.title")}
         </Link>
 
         <p className="admin-section-title mt-4">{t("sitePlan.title")}</p>
         <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("sitePlan.hint")}</p>
       </header>
+
+      <ProjectHubTabs locale={locale} projectId={project.id} active="units" />
+
+      <ProjectUnitsSubnav locale={locale} projectId={project.id} active="sitePlan" />
 
       {!project.masterPlanImageUrl ? (
         <div className="admin-card text-center text-sm text-ink-muted">

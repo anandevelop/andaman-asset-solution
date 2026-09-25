@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
+import ProjectUnitsSubnav from "@/components/admin/ProjectUnitsSubnav";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -83,17 +84,10 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
-        active="unitTypes"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
+        active="units"
       />
+
+      <ProjectUnitsSubnav locale={locale} projectId={project.id} active="unitTypes" />
 
       {/* One language selection drives every unit type's description field
           on this page — see the file comment on LanguageTabs. Hardcoded

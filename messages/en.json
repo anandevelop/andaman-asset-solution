@@ -595,7 +595,6 @@
     "nav": {
       "dashboard": "Dashboard",
       "projects": "Projects",
-      "progress": "Progress",
       "news": "News",
       "eBrochures": "E-Brochures",
       "leads": "Leads",
@@ -656,6 +655,12 @@
         "links": "Internal links",
         "urls": "URLs & redirects",
         "defaults": "Sitewide defaults"
+      },
+      "projects": {
+        "label": "Properties",
+        "all": "Projects",
+        "progress": "Monthly progress",
+        "brochures": "All e-brochures"
       }
     },
     "common": {
@@ -1040,7 +1045,9 @@
         "previous": "Previous page",
         "next": "Next page",
         "page": "Page"
-      }
+      },
+      "hubUnits": "Homes, units & site plan",
+      "hubLabel": "Project workspace"
     },
     "progress": {
       "title": "Construction progress",
@@ -1543,7 +1550,8 @@
       "projectNone": "No project",
       "sortOrder": "Sort order",
       "slugTaken": "Another brochure already uses that URL slug.",
-      "viewLive": "View on the site"
+      "viewLive": "View on the site",
+      "emptyForProject": "No e-brochure for this project yet."
     },
     "events": {
       "title": "Events",

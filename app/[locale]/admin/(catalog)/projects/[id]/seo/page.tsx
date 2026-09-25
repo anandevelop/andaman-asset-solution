@@ -123,15 +123,6 @@ export default async function AdminProjectSeoPage(props: Props) {
         locale={locale}
         projectId={project.id}
         active="seo"
-        labels={{
-          overview: t("projects.hubOverview"),
-          content: t("projectContent.tab"),
-          seo: t("pageSeo.tab"),
-          unitTypes: t("unitTypes.title"),
-          units: t("units.title"),
-          facilities: t("facilities.title"),
-          progress: t("progress.title"),
-        }}
       />
 
       {isDatabaseOffline() && (
