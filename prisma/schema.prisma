@@ -2372,6 +2372,86 @@ model SeoRuleWaiver {
   @@map("seo_rule_waivers")
 }
 
+/// Which Core Web Vital a sample measures.
+///
+/// TTFB is here from the start although no Core Web Vitals *score* uses
+/// it: phase 5 puts a bot-logging middleware in front of every request,
+/// and without a baseline collected beforehand there is no way to answer
+/// "did that make the site slower". Collecting it later would mean
+/// comparing against nothing.
+enum VitalMetric {
+  LCP
+  INP
+  CLS
+  TTFB
+}
+
+/// One measurement from one real visit — not a lab number.
+///
+/// PageSpeed Insights measures a datacentre in Singapore on simulated 4G.
+/// This is what actually happened on a customer's phone in Phuket, which
+/// is the only version of the number worth acting on.
+///
+/// Raw rows are deleted after 30 days by /api/cron/vitals-rollup, which
+/// first writes the daily p75 into VitalDailyRollup. Nothing reads a
+/// percentile off this table at page load: it grows by thousands of rows a
+/// day, and a percentile over it would make the admin slower every week in
+/// a way nobody notices until it is far too late.
+///
+/// Collected only from visitors who accepted the analytics cookie, so it
+/// is a sample of consenting traffic rather than of all of it — the tab
+/// says what share that is rather than implying the number covers
+/// everyone.
+model WebVital {
+  id String @id @default(cuid())
+
+  metric VitalMetric
+  /// Milliseconds, except CLS which is a unitless score stored x1000 so
+  /// one integer column serves every metric. The UI divides it back.
+  value  Int
+
+  /// Locale-relative, as stripLocale() produces: "/projects/victory".
+  path String
+
+  /// "mobile" | "desktop", from the user agent. The whole point of field
+  /// data is that these two differ, so an average across them is the one
+  /// number nobody wants.
+  device String
+
+  /// The build this was measured on, so a regression can be pinned to a
+  /// deploy rather than guessed at. Null for a build with no sha.
+  commitSha String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([metric, path, createdAt])
+  @@map("web_vitals")
+}
+
+/// The daily p75 per metric, path and device — what the dashboard reads.
+///
+/// Written by the rollup, never at page load. `sampleCount` travels with
+/// it because a p75 over a handful of visits swings wildly, and the screen
+/// refuses to show a number below the threshold rather than showing one
+/// that will have moved by tomorrow.
+model VitalDailyRollup {
+  id String @id @default(cuid())
+
+  day    DateTime    @db.Date
+  metric VitalMetric
+  path   String
+  device String
+
+  /// Same units as WebVital.value.
+  p75         Int
+  sampleCount Int
+
+  @@unique([day, metric, path, device])
+  @@index([day])
+  @@map("vital_daily_rollups")
+}
+
 model LiveVisit {
   id String @id @default(cuid())
 

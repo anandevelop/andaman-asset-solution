@@ -2739,6 +2739,7 @@
       "subtitle": "流量、内容表现和销售管道汇总于一屏 — 数据来自本系统自身记录，无需另外登录 GA4",
       "tabs": {
         "realtime": "实时",
+        "vitals": "网页指标",
         "traffic": "流量",
         "content": "内容",
         "leads": "销售线索"
@@ -2783,6 +2784,30 @@
         "refresh": "立即刷新",
         "duration": "{minutes} 分 {seconds} 秒",
         "ago": "{minutes} 分 {seconds} 秒前"
+      },
+      "vitals": {
+        "title": "核心网页指标",
+        "subtitle": "来自真实访客设备的测量，而非实验室数据。采用第 75 百分位 — 四分之三的访问至少达到此水平。",
+        "empty": "尚无汇总数据。",
+        "emptyHint": "访问会即时记录，每日数值由 POST /api/cron/vitals-rollup 写入。在它首次运行之前没有内容可显示。",
+        "coverage": "覆盖 {percent}% 的访问，仅限接受 analytics cookie 的访客，并非全部流量。",
+        "coverageUnknown": "来自接受 analytics cookie 的访客。浏览量尚不足以计算所占比例。",
+        "ratingGood": "良好",
+        "ratingNeedsImprovement": "需改进",
+        "ratingPoor": "较差",
+        "notEnough": "样本不足",
+        "samples": "{count} 个样本",
+        "mobile": "移动端",
+        "desktop": "桌面端",
+        "routesTitle": "按页面",
+        "routesHint": "加载最慢的排在前面。短横线表示样本太少，无法判断。",
+        "pageHeader": "页面",
+        "deploysTitle": "此期间的构建",
+        "deploysHint": "测量这些数值时正在提供服务的构建 — 某次构建之后出现跳变值得关注。",
+        "hintLcp": "主要内容出现需要多久。",
+        "hintInp": "页面响应点按的速度。",
+        "hintCls": "加载过程中布局跳动的程度。",
+        "hintTtfb": "服务器开始响应需要多久。"
       }
     },
     "urls": {

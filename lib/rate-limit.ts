@@ -146,6 +146,16 @@ export const RATE_LIMITS = {
   /** Presigned uploads, keyed per admin user: a gallery is many files. */
   presign: { limit: 60, windowMs: 10 * 60_000 },
 
+  /*
+    Web Vitals beacons. Four metrics per page load and a visitor reads
+    several pages, so this has to be roomy — it is here to stop one client
+    filling the table, not to police normal browsing. Generous enough that
+    a person clicking through twenty pages in ten minutes never notices,
+    which is the bar for a limit on something a visitor cannot opt out of
+    hitting.
+  */
+  vitals: { limit: 120, windowMs: 10 * 60_000 },
+
   /**
    * Failed sign-in attempts per email. Ten is well above a human
    * mistyping and far below anything useful for guessing a 12-character

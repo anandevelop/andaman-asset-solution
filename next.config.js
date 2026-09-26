@@ -226,6 +226,33 @@ const nextConfig = {
   reactStrictMode: true,
 
   /*
+    Development only, and it is what makes the local e2e suite able to
+    test anything interactive at all.
+
+    Next 16 refuses to serve /_next/* dev resources to a request whose host
+    is not listed here. Playwright's base URL is 127.0.0.1:3100 while the
+    dev server considers itself localhost, so every run was refused the HMR
+    endpoint:
+
+      ⚠ Blocked cross-origin request to Next.js dev resource /_next/hmr
+      WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE
+
+    The page still renders — correct HTML, 200, all 28 scripts fetched —
+    but React never hydrates. No console error beyond the socket, no failed
+    request, nothing red. A spec then fills the login form and clicks, the
+    click lands on a page with no handlers, and the browser submits the
+    form the way HTML does:
+
+      GET /en/login?email=…&password=…
+
+    which signs nobody in. Diagnosed by checking for React's own fiber keys
+    on a hydrated node: absent on 127.0.0.1, present on localhost, same
+    server and same commit. Ignored entirely by `next build`, so production
+    is unaffected.
+  */
+  allowedDevOrigins: ["127.0.0.1"],
+
+  /*
     jsdom (via isomorphic-dompurify) is a CommonJS package that reads from
     the filesystem at require time — bundling it into the server output
     breaks it, so it is loaded from node_modules instead.

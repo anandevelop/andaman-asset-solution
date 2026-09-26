@@ -2739,6 +2739,7 @@
       "subtitle": "Traffic, content performance and the sales pipeline in one screen — counted from this application's own records, not a separate GA4 login.",
       "tabs": {
         "realtime": "Live",
+        "vitals": "Web Vitals",
         "traffic": "Traffic",
         "content": "Content",
         "leads": "Leads"
@@ -2783,6 +2784,30 @@
         "refresh": "Refresh now",
         "duration": "{minutes}m {seconds}s",
         "ago": "{minutes}m {seconds}s ago"
+      },
+      "vitals": {
+        "title": "Core Web Vitals",
+        "subtitle": "Measured on real visitors' devices, not in a lab. The 75th percentile — three quarters of visits were at least this good.",
+        "empty": "No measurements rolled up yet.",
+        "emptyHint": "Visits are recorded as they happen; the daily figures are written by POST /api/cron/vitals-rollup. Until that has run once, there is nothing to show.",
+        "coverage": "Covers the {percent}% of visits from people who accepted the analytics cookie — not all traffic.",
+        "coverageUnknown": "From visitors who accepted the analytics cookie. Not enough page views yet to say what share that is.",
+        "ratingGood": "good",
+        "ratingNeedsImprovement": "needs work",
+        "ratingPoor": "poor",
+        "notEnough": "Not enough data yet",
+        "samples": "{count} samples",
+        "mobile": "Mobile",
+        "desktop": "Desktop",
+        "routesTitle": "By page",
+        "routesHint": "Slowest loading first. A dash means too few samples to say anything.",
+        "pageHeader": "Page",
+        "deploysTitle": "Builds in this period",
+        "deploysHint": "Which builds were serving while these numbers were measured — a jump right after one of them is worth a look.",
+        "hintLcp": "How long until the main content appears.",
+        "hintInp": "How quickly the page answers a tap.",
+        "hintCls": "How much the layout jumps while loading.",
+        "hintTtfb": "How long the server takes to answer at all."
       }
     },
     "urls": {

@@ -16,9 +16,14 @@ import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { MonthlyLeadsChart, LeadSourceChart, TrendChart, type MonthlyPoint, type SourcePoint, type TrendPoint } from "./DashboardCharts";
 import RealtimePanel, { type RealtimeLabels } from "./RealtimePanel";
+import VitalsPanel, {
+  type VitalsLabels,
+  type VitalFigureView,
+  type VitalsRouteView,
+} from "./VitalsPanel";
 import type { LiveSnapshotDto } from "@/lib/analytics/live-visit";
 
-type Tab = "traffic" | "content" | "leads" | "realtime";
+type Tab = "traffic" | "content" | "leads" | "realtime" | "vitals";
 
 export type TopArticle = { id: string; title: string; views30: number; leads: number };
 export type ContentConversionRow = {
@@ -87,16 +92,26 @@ type Props = {
      keeps doing no data-fetching of its own — the action is a server
      action and this file is "use client". */
   realtime: { labels: RealtimeLabels; fetchSnapshot: () => Promise<LiveSnapshotDto> };
+
+  /* §2's Core Web Vitals. Every figure arrives computed — this component
+     does no arithmetic, and a p75 is never calculated at page load. */
+  vitals: {
+    labels: VitalsLabels;
+    overall: { device: string; figures: VitalFigureView[] }[];
+    routes: VitalsRouteView[];
+    deploys: { day: string; commitSha: string }[];
+    empty: boolean;
+  };
 };
 
-export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, leads, labels, realtime }: Props) {
+export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, leads, labels, realtime, vitals }: Props) {
   const [tab, setTab] = useState<Tab>("traffic");
 
   /* Realtime first: it is the only tab that answers a question about right
      now, and the one somebody opens this screen to glance at. */
   const TABS: Tab[] = canViewLeads
-    ? ["realtime", "traffic", "content", "leads"]
-    : ["realtime", "traffic", "content"];
+    ? ["realtime", "vitals", "traffic", "content", "leads"]
+    : ["realtime", "vitals", "traffic", "content"];
 
   return (
     <div className="space-y-6">
@@ -119,6 +134,16 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
 
       {tab === "realtime" && (
         <RealtimePanel labels={realtime.labels} fetchSnapshot={realtime.fetchSnapshot} />
+      )}
+
+      {tab === "vitals" && (
+        <VitalsPanel
+          labels={vitals.labels}
+          overall={vitals.overall}
+          routes={vitals.routes}
+          deploys={vitals.deploys}
+          empty={vitals.empty}
+        />
       )}
 
       {tab === "traffic" && (

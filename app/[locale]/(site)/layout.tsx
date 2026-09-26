@@ -18,6 +18,7 @@ import RouteGate from "@/components/RouteGate";
 import { getSiteSettings } from "@/lib/settings";
 import { getCtaMounts } from "@/lib/site-cta";
 import PageViewBeacon from "@/components/PageViewBeacon";
+import WebVitalsBeacon from "@/components/WebVitalsBeacon";
 
 type Props = {
   children: React.ReactNode;
@@ -69,6 +70,18 @@ export default async function SiteLayout({ children, params }: Props) {
         paths are actually recorded.
       */}
       <PageViewBeacon />
+
+      {/*
+        Core Web Vitals from real visits. Sends nothing without the
+        analytics cookie — see the component, which holds what fired before
+        the banner was answered rather than losing LCP, which happens once.
+
+        The commit sha comes from the server because this is where it is
+        readable: GIT_COMMIT_SHA is an ordinary runtime variable, and making
+        a NEXT_PUBLIC_ twin of it would bake the sha into the bundle at
+        build time for no gain.
+      */}
+      <WebVitalsBeacon commitSha={process.env.GIT_COMMIT_SHA ?? null} />
 
       {/*
         Skip link. Seven nav items plus a language switch and a phone CTA

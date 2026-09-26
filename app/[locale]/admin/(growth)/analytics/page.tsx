@@ -71,6 +71,8 @@ import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import { intlLocale } from "@/lib/format";
 import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
 import { fetchLiveSnapshot } from "./live-actions";
+import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
+import { displayValue, type VitalKey } from "@/lib/analytics/vitals";
 import DashboardControls from "@/components/admin/DashboardControls";
 
 type Props = {
@@ -78,10 +80,43 @@ type Props = {
   searchParams: Promise<{ range?: string }>;
 };
 
-/** Whole minutes and seconds, so the message file owns the units. */
-function durationParts(ms: number): { minutes: number; seconds: number } {
-  const total = Math.max(0, Math.round(ms / 1000));
-  return { minutes: Math.floor(total / 60), seconds: total % 60 };
+/**
+ * A stored figure as the panel shows it.
+ *
+ * Each metric in the unit its own threshold is quoted in, which is not the
+ * same unit for all four. LCP is talked about in seconds ("2.5 s"), INP and
+ * TTFB in milliseconds ("200 ms", "800 ms"), and CLS is unitless once it
+ * comes back from its x1000 storage. Showing INP as "0.26 s" is arithmetic
+ * nobody has to do against a 200 ms line, and it reads as four times better
+ * than it is at a glance.
+ *
+ * "s" and "ms" stay in code rather than in the message files: they are SI
+ * symbols, written the same way in all four locales, and Google's own Core
+ * Web Vitals documentation uses them verbatim in every language it ships.
+ *
+ * The sample count arrives already worded rather than as a number with a
+ * formatter beside it: VitalsPanel is a Client Component, and a function in
+ * its props is not a serialisation warning but a render-time crash
+ * ("Functions cannot be passed directly to Client Components"). Every
+ * count-dependent string is therefore built here, where next-intl's
+ * translator lives.
+ */
+function formatVital(metric: VitalKey, value: number): string {
+  if (metric === "CLS") return value.toFixed(2);
+  if (metric === "LCP") return `${(value / 1000).toFixed(2)} s`;
+  return `${Math.round(value)} ms`;
+}
+
+function toFigureView(figure: VitalFigure, samplesLabel: (count: number) => string) {
+  const value = displayValue(figure.metric as VitalKey, figure.value);
+
+  return {
+    metric: figure.metric,
+    display: formatVital(figure.metric as VitalKey, value),
+    rating: figure.rating,
+    samples: samplesLabel(figure.sampleCount),
+    enoughSamples: figure.enoughSamples,
+  };
 }
 
 export default async function AdminAnalyticsPage(props: Props) {
@@ -93,6 +128,9 @@ export default async function AdminAnalyticsPage(props: Props) {
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
+  /** Stays on the server — only its output crosses into VitalsPanel. */
+  const vitalsSamples = (count: number) => t("analytics.vitals.samples", { count });
+
   const rangeDays: RangeDays = isRangeDays(searchParams.range) ? searchParams.range : "30";
   // Same rounding the dashboard used when it owned this control: the source
   // and conversion reports bucket by month, so a day count becomes the
@@ -100,7 +138,7 @@ export default async function AdminAnalyticsPage(props: Props) {
   // month, "365" the full 12-month window.
   const rangeMonths = Math.max(1, Math.ceil(Number(rangeDays) / 30));
 
-  const [trend, settings, topArticlesView, conversions, companyStats, eventRsvp, cookieStats, leadsData] =
+  const [trend, settings, topArticlesView, conversions, companyStats, eventRsvp, cookieStats, leadsData, vitals, vitalsCoverage] =
     await Promise.all([
       getPageViewTrend(),
       getSiteSettings(),
@@ -117,6 +155,8 @@ export default async function AdminAnalyticsPage(props: Props) {
             getWeekOverWeekLeads(),
           ])
         : Promise.resolve(null),
+      getVitalsOverview(Number(rangeDays)),
+      getConsentCoverage(Number(rangeDays)),
     ]);
 
   const offline = isDatabaseOffline();
@@ -180,6 +220,52 @@ export default async function AdminAnalyticsPage(props: Props) {
       <AnalyticsTabs
         locale={locale}
         canViewLeads={canViewLeads}
+        vitals={{
+          overall: vitals.overall.map((group) => ({
+            device: group.device,
+            figures: group.figures.map((figure) => toFigureView(figure, vitalsSamples)),
+          })),
+          routes: vitals.routes.map((route) => ({
+            path: route.path,
+            device: route.device,
+            figures: route.figures.map((figure) => toFigureView(figure, vitalsSamples)),
+          })),
+          deploys: vitals.deploys,
+          empty: vitals.empty,
+          labels: {
+            title: t("analytics.vitals.title"),
+            subtitle: t("analytics.vitals.subtitle"),
+            empty: t("analytics.vitals.empty"),
+            emptyHint: t("analytics.vitals.emptyHint"),
+            // Worded here, where the percentage is known, rather than passed
+            // as a number and a formatter — see toFigureView above.
+            coverage:
+              vitalsCoverage === null
+                ? t("analytics.vitals.coverageUnknown")
+                : t("analytics.vitals.coverage", { percent: vitalsCoverage }),
+            ratings: {
+              good: t("analytics.vitals.ratingGood"),
+              needsImprovement: t("analytics.vitals.ratingNeedsImprovement"),
+              poor: t("analytics.vitals.ratingPoor"),
+            },
+            notEnough: t("analytics.vitals.notEnough"),
+            devices: {
+              mobile: t("analytics.vitals.mobile"),
+              desktop: t("analytics.vitals.desktop"),
+            },
+            routesTitle: t("analytics.vitals.routesTitle"),
+            routesHint: t("analytics.vitals.routesHint"),
+            pageHeader: t("analytics.vitals.pageHeader"),
+            deploysTitle: t("analytics.vitals.deploysTitle"),
+            deploysHint: t("analytics.vitals.deploysHint"),
+            metricHints: {
+              LCP: t("analytics.vitals.hintLcp"),
+              INP: t("analytics.vitals.hintInp"),
+              CLS: t("analytics.vitals.hintCls"),
+              TTFB: t("analytics.vitals.hintTtfb"),
+            },
+          },
+        }}
         realtime={{
           fetchSnapshot: fetchLiveSnapshot,
           labels: {
@@ -203,8 +289,6 @@ export default async function AdminAnalyticsPage(props: Props) {
             /* Formatted here so the units stay translated — the panel is a
                client component and does no arithmetic of its own, matching
                how every other number on this screen arrives. */
-            duration: (ms: number) => t("analytics.realtime.duration", durationParts(ms)),
-            ago: (ms: number) => t("analytics.realtime.ago", durationParts(ms)),
           },
         }}
         traffic={{
@@ -276,6 +360,7 @@ export default async function AdminAnalyticsPage(props: Props) {
         }}
         labels={{
           tab_realtime: t("analytics.tabs.realtime"),
+          tab_vitals: t("analytics.tabs.vitals"),
           tab_traffic: t("analytics.tabs.traffic"),
           tab_content: t("analytics.tabs.content"),
           tab_leads: t("analytics.tabs.leads"),

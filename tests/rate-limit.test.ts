@@ -147,6 +147,8 @@ describe("RATE_LIMITS policies", () => {
         "presign",
         "rsvp",
         "twoFactor",
+        // app/api/vitals/route.ts — Core Web Vitals from real visits.
+        "vitals",
         "webhook",
       ].sort(),
     );

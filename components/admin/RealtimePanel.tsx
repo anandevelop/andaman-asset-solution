@@ -32,6 +32,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, RefreshCw, Users, WifiOff } from "lucide-react";
 import type { LiveSnapshotDto } from "@/lib/analytics/live-visit";
 
@@ -55,10 +56,29 @@ export type RealtimeLabels = {
   feedLeft: string;
   localeTitle: string;
   refresh: string;
-  /** "3m 20s" — the caller formats, so units stay translated. */
-  duration: (ms: number) => string;
-  ago: (ms: number) => string;
 };
+
+/*
+  "3m 20s" and "3m 20s ago" are formatted here rather than handed down as
+  props, and that is not a style choice.
+
+  They were props of the shape `(ms: number) => string`, which is a function
+  in a Client Component's props — something a Server Component cannot pass.
+  React does not warn about it; it throws "Functions cannot be passed
+  directly to Client Components", the whole page hits its error boundary,
+  and /admin/analytics showed "something went wrong" instead of any tab.
+
+  Pre-formatting on the server is what VitalsPanel does, but it cannot work
+  for these two: a dwell time changes on every poll and "ago" is measured
+  against a clock that ticks after the server has finished rendering. So
+  this component translates them itself — messages reach the browser through
+  the NextIntlClientProvider in app/[locale]/layout.tsx — and the units stay
+  in the message file, which was the point of passing a formatter.
+*/
+function durationParts(ms: number): { minutes: number; seconds: number } {
+  const total = Math.max(0, Math.round(ms / 1000));
+  return { minutes: Math.floor(total / 60), seconds: total % 60 };
+}
 
 type FeedEvent = {
   id: number;
@@ -73,6 +93,7 @@ type Props = {
 };
 
 export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
+  const t = useTranslations("admin.analytics.realtime");
   const [snapshot, setSnapshot] = useState<LiveSnapshotDto | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "failed">("loading");
   const [feed, setFeed] = useState<FeedEvent[]>([]);
@@ -204,7 +225,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
                     <td className="py-2 font-mono text-xs text-ink">{page.path}</td>
                     <td className="py-2 text-right tabular-nums">{page.count}</td>
                     <td className="py-2 text-right tabular-nums text-ink-muted">
-                      {labels.duration(page.medianDwellMs)}
+                      {t("duration", durationParts(page.medianDwellMs))}
                     </td>
                   </tr>
                 ))}
@@ -247,7 +268,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
                     </span>
                     <span className="flex-1 truncate font-mono text-xs text-ink">{event.path}</span>
                     <span className="shrink-0 text-xs text-ink-muted">
-                      {labels.ago(Math.max(0, now - event.at))}
+                      {t("ago", durationParts(Math.max(0, now - event.at)))}
                     </span>
                   </li>
                 ))}
