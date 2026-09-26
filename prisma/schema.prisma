@@ -186,8 +186,9 @@ model User {
   notifications        AdminNotification[]
   reservedUnits        ProjectUnit[]       @relation("UnitReservedBy")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  seoRuleWaivers SeoRuleWaiver[]
 
   @@map("users")
 }
@@ -2280,6 +2281,97 @@ enum PathHitKind {
 /// GA4 was the obvious alternative and cannot answer this: its Realtime API
 /// reports a screen name rather than a path, looks back thirty minutes, and
 /// has no time-on-page metric at all.
+/// The latest on-page audit result for one URL — see lib/seo/rules.
+///
+/// Overwritten every run, on purpose: this table answers "what is wrong
+/// with this page right now", and a history of every score a URL has ever
+/// had would be a large table nobody queries. The history that IS wanted —
+/// "is the site getting better" — is SeoAuditRun below, one row per run.
+/// That split is why the run table exists at all; without it the trend
+/// graph and the "up 4 since last time" figure have nothing to read.
+model SeoUrlState {
+  id String @id @default(cuid())
+
+  /// Locale-prefixed, as a visitor sees it: "/th/projects/victory".
+  url    String @unique
+  locale String
+
+  /// Which record this URL belongs to, so the audit table can link
+  /// straight to its editor. Null for a static page, which has no record.
+  entityType String?
+  entityId   String?
+
+  /// 0-100, out of the weight that could actually be judged.
+  auditScore    Int
+  /// Total weight of the rules that returned a verdict. 0 means the page
+  /// could not be fetched and the score above says nothing — the screen
+  /// shows "not checked" rather than a number. See lib/seo/score.ts.
+  checkedWeight Int @default(0)
+
+  /// Rule keys that failed and are not waived, heaviest first.
+  failedRules Json
+  /// Rule keys that failed but are covered by a SeoRuleWaiver — kept so a
+  /// row reads as "clean, with 2 waived" rather than silently clean.
+  waivedRules Json
+
+  checkedAt DateTime @default(now())
+
+  @@index([auditScore])
+  @@index([checkedAt])
+  @@map("seo_url_states")
+}
+
+/// One row per audit run — the only place the trend comes from.
+///
+/// SeoUrlState is overwritten each time, so nothing there can answer "was
+/// last week better". These rows are small and never deleted.
+model SeoAuditRun {
+  id String @id @default(cuid())
+
+  runAt        DateTime @default(now())
+  urlCount     Int
+  avgScore     Int
+  /// URLs with no unwaived failure at all.
+  passAllCount Int
+
+  /// { "meta-description": 37, "hreflang": 22, … } — what the rule list
+  /// on the audit tab counts, and what the sparkline per rule reads.
+  failCountByRule Json
+
+  @@index([runAt])
+  @@map("seo_audit_runs")
+}
+
+/// "This page is meant to fail this rule."
+///
+/// A privacy policy is short because it should be; a landing page has one
+/// H1 by design. Without this, those pages are red forever and people stop
+/// reading the list — which costs more than the rule was ever worth.
+///
+/// A reason is required, and creating one is written to the activity log:
+/// a waiver is a judgement somebody made, and six months later the only
+/// question that matters is who decided and why.
+///
+/// Scoring treats a waived rule as unasked rather than as passed — see
+/// lib/seo/score.ts. Waiving cannot raise a score, only stop a question.
+model SeoRuleWaiver {
+  id String @id @default(cuid())
+
+  url     String
+  /// Matches a key in lib/seo/rules — a rename there is a migration here.
+  ruleKey String
+
+  reason String @db.Text
+
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([url, ruleKey])
+  @@index([url])
+  @@map("seo_rule_waivers")
+}
+
 model LiveVisit {
   id String @id @default(cuid())
 
