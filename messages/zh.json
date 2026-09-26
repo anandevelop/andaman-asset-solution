@@ -2221,7 +2221,7 @@
         "sending": "发送中…",
         "sentOk": "已发送。",
         "draftWarning": "本月的\"该做什么\"还没有人修改。若按现状发送，将带上\"系统草稿\"标记，而不会伪装成人工撰写。",
-        "noScheduler": "应用本身不会定时触发 — 需要外部调度器调用 POST /api/cron/monthly-report。"
+        "noScheduler": "由 docker-compose.prod.yml 中的 `cron` 服务在每月 1 日 08:00 发送。若该服务未运行，或采用其他部署方式，则没有任何东西会调用 POST /api/cron/monthly-report，报告也不会发出。"
       },
       "alerts": {
         "title": "告警规则",

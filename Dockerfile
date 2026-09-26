@@ -177,6 +177,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/create-admin.mjs ./scripts/create-admin.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
+# The scheduler that calls /api/cron/*. Runs as its own compose service
+# from this same image — see the `cron` service in docker-compose.prod.yml
+# and the script's own header for why it is not a separate cron container.
+# Node built-ins only, so nothing is copied alongside it.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/cron.mjs ./scripts/cron.mjs
+
 USER nextjs
 
 EXPOSE 3000

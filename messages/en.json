@@ -2221,7 +2221,7 @@
         "sending": "Sending…",
         "sentOk": "Sent.",
         "draftWarning": "Nobody has edited this month's note. If it is sent as it stands, it goes out labelled \"automatic draft\" rather than as though a person wrote it.",
-        "noScheduler": "Nothing in the application triggers this — POST /api/cron/monthly-report has to be called by a scheduler outside it."
+        "noScheduler": "Sent by the `cron` service in docker-compose.prod.yml, on the 1st at 08:00. If that service is not running — or you deploy another way — nothing calls POST /api/cron/monthly-report and no report is sent."
       },
       "alerts": {
         "title": "Alert rules",

@@ -189,6 +189,40 @@ curl -fsS http://localhost:3000/api/health | jq
 `200` with `"status":"ok"` means the database is reachable. `503` with
 `"status":"degraded"` means it is not — check `checks.database.error`.
 
+### The scheduled jobs
+
+Three things in this application only happen when something calls them:
+
+| Endpoint | When | What stops working without it |
+|---|---|---|
+| `POST /api/cron/seo-audit` | 03:15 daily | The audit tab's figures freeze at the last manual run |
+| `POST /api/cron/vitals-rollup` | 03:45 daily | Core Web Vitals never roll up, and raw rows are never deleted |
+| `POST /api/cron/monthly-report` | 08:00 on the 1st | The monthly report is never sent |
+
+The `cron` service in `docker-compose.prod.yml` calls them. It runs
+`scripts/cron.mjs` from the same image as the app, so there is no second
+image to keep patched and no package installed at container start.
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f cron
+```
+
+Each line says what ran and when the next one is due. Three things to know:
+
+- **It needs `CRON_SECRET`.** Without it every request is refused, so the
+  script exits rather than run — under `restart: always` that is a visible
+  crash loop with the reason in the logs, which is the point. The same
+  secret is what the endpoints check.
+- **Exactly one replica.** There is no lock. A second would run every job
+  twice, including emailing the monthly report to the executives twice.
+- **Deploying another way?** Anything that can POST with a bearer token
+  will do — a host crontab, a platform scheduler, an external ping service.
+  The reports screen says which mechanism is expected, so update that copy
+  (`admin.reports.schedule.noScheduler`) if you change it.
+
+Alerts are checked at the end of the audit and the rollup rather than on a
+schedule of their own, because the rules read what those jobs just wrote.
+
 ---
 
 ## 5. Reverse proxy

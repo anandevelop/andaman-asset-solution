@@ -109,6 +109,39 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # ── The scheduler ───────────────────────────────────────────────────
+  #
+  # Nothing in the application triggers its own scheduled jobs: the SEO
+  # audit, the Core Web Vitals rollup and the monthly report are three
+  # endpoints that sit there until something calls them. This is what
+  # calls them.
+  #
+  # Same image as the app, so there is no second thing to keep patched and
+  # no package installed at container start. It reaches the app over the
+  # compose network by service name and never leaves it.
+  #
+  # Exactly one of these. There is no lock in the scheduler, so a second
+  # replica would run every job twice — including emailing the monthly
+  # report to the executives twice.
+  cron:
+    image: ghcr.io/anandevelop/andaman-asset-solution:latest
+    container_name: andaman_prod_cron
+    pull_policy: always
+    restart: always
+    init: true
+    command: ["scripts/cron.mjs"]
+    env_file:
+      - .env
+    environment:
+      # The jobs run at local times — 03:15, 03:45, 08:00 on the 1st — and
+      # a container left on UTC would run the monthly report at three in
+      # the afternoon.
+      TZ: Asia/Bangkok
+      CRON_TARGET_URL: http://app:3000
+    depends_on:
+      app:
+        condition: service_started
+
 volumes:
   andaman_pg_data:
     driver: local
