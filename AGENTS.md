@@ -42,6 +42,13 @@ npm run db:up         # local Postgres via docker compose
 
 `npm run verify` is the gate. Do not report work as done until it passes.
 
+It runs what CI's fast jobs run, in the same order: `prisma validate` and
+`prisma format --check`, then lint, typecheck and the unit suite. The
+schema check is there because it was not, and four commits went to `main`
+with a red pipeline over field alignment nothing else looks at — `verify`
+was green every time. If you add a check to CI, add it here too, or this
+line stops being true.
+
 `npm run test:e2e` needs a database and a browser: `npm run db:up`, then
 `npm run test:e2e:install` once, then `npm run test:e2e`. It builds the app
 in CI mode, so it is slow — but it is the only thing that catches routing,

@@ -20,7 +20,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:e2e:report": "playwright show-report",
-    "verify": "npm run lint && npm run typecheck && npm test",
+    "verify": "npm run schema:check && npm run lint && npm run typecheck && npm test",
     "check": "npm run verify",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -42,7 +42,8 @@
     "setup:docker": "bash scripts/setup-db.sh docker",
     "setup:native": "bash scripts/setup-db.sh native",
     "docker:build": "docker build -t andaman-asset-solution .",
-    "docker:run": "docker run --rm -p 3000:3000 --env-file .env andaman-asset-solution"
+    "docker:run": "docker run --rm -p 3000:3000 --env-file .env andaman-asset-solution",
+    "schema:check": "prisma validate && prisma format --check"
   },
   "overrides": {
     "next-auth": {

@@ -2303,7 +2303,7 @@ model SeoUrlState {
   entityId   String?
 
   /// 0-100, out of the weight that could actually be judged.
-  auditScore    Int
+  auditScore Int
 
   /// What URL Inspection last said about this page — phase 4.
   ///
@@ -2325,7 +2325,7 @@ model SeoUrlState {
   /// Total weight of the rules that returned a verdict. 0 means the page
   /// could not be fetched and the score above says nothing — the screen
   /// shows "not checked" rather than a number. See lib/seo/score.ts.
-  checkedWeight Int @default(0)
+  checkedWeight   Int       @default(0)
 
   /// Rule keys that failed and are not waived, heaviest first.
   failedRules Json
@@ -3080,14 +3080,14 @@ model ReportSend {
   audience String
   locale   String
 
-  sentAt DateTime @default(now())
-  ok     Boolean
+  sentAt         DateTime @default(now())
+  ok             Boolean
   /// The transport's own message when ok is false — an administrator can
   /// act on "Invalid login" or "ECONNREFUSED".
-  error  String?
+  error          String?
   /// How many addresses it went to, so "delivered" is not ambiguous when
   /// the recipient list is empty.
-  recipientCount Int @default(0)
+  recipientCount Int      @default(0)
 
   @@index([sentAt])
   @@map("report_sends")
@@ -3181,7 +3181,7 @@ model CrawlHit {
   id String @id @default(cuid())
 
   /// Lowercase name from lib/seo/bots.ts — "googlebot", "bingbot", "other".
-  bot String
+  bot  String
   /// Locale-stripped, like every other path this application counts.
   path String
   /// Start of the UTC hour.
@@ -3235,9 +3235,9 @@ model SeoQueryStat {
   impressions Int
   /// 0–1, stored unrounded. A helper that rounded on the way in would turn
   /// a real 0.04% into "0.0%" with no way back.
-  ctr      Float
+  ctr         Float
   /// Average position; 1 is the top of the page.
-  position Float
+  position    Float
 
   @@id([date, query, page, device])
   @@index([date])
