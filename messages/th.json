@@ -644,6 +644,7 @@
       "seo": {
         "overview": "ภาพรวม",
         "audit": "ตรวจหน้าเว็บ",
+        "indexing": "การเก็บ Index",
         "label": "SEO",
         "keywords": "คีย์เวิร์ด",
         "links": "ลิงก์ภายใน",
@@ -2823,6 +2824,34 @@
         "alertsHint": "7 วันล่าสุด เช็กหลัง cron แต่ละรอบ",
         "alertsEmpty": "7 วันที่ผ่านมาไม่มีการแจ้งเตือน",
         "alertsSettings": "ตั้งกฎ"
+      },
+      "indexing": {
+        "title": "การเก็บ Index",
+        "subtitle": "บอทมาดึงอะไรบ้างใน {days} วันล่าสุด จาก log ของเว็บเราเอง",
+        "empty": "ยังไม่มีบันทึกการเข้าของบอท",
+        "emptyHint": "เริ่มเก็บตั้งแต่ตอน deploy และย้อนหลังไม่ได้ ปกติ Googlebot จะกลับมาภายในหนึ่งถึงสองวัน",
+        "funnelTitle": "จากเผยแพร่ ถึงถูกค้นเจอ",
+        "funnelHint": "สองขั้นแรกมาจาก log ของเว็บเรา สองขั้นหลังต้องใช้ข้อมูลจาก Google",
+        "stepKnown": "หน้าที่เผยแพร่",
+        "stepCrawled": "บอทค้นหาดึงไปแล้ว",
+        "stepIndexed": "ถูกเก็บ index",
+        "stepEarning": "มีการแสดงผล",
+        "notConnected": "ยังไม่เชื่อม Google",
+        "botsTitle": "บอท",
+        "botsHint": "เรียงจากที่มาบ่อยที่สุด",
+        "columnBot": "บอท",
+        "columnHits": "จำนวนครั้ง",
+        "columnPaths": "จำนวนหน้า",
+        "column404": "404",
+        "columnLastSeen": "มาล่าสุด",
+        "columnPath": "path",
+        "columnFoundBy": "บอทที่เจอ",
+        "claimsToBe": "อ่านจาก user agent ซึ่งใครก็ตั้งเองได้ — นี่คือบอทที่ \"อ้างว่า\" เป็นตัวนั้น การตรวจจริงต้อง reverse DNS ทุก request และระบบนี้ไม่ได้ใช้ค่านี้ปิดกั้นอะไรเลย",
+        "notFoundTitle": "ทางตันที่บอทเจอ",
+        "notFoundHint": "คนละรายการกับ URL & redirect — อันนั้นเขียนจากเบราว์เซอร์ ส่วนบอทไม่รัน JavaScript รายการพวกนี้จึงไม่เคยโผล่ที่นั่นเลย",
+        "addRedirect": "ตั้ง redirect",
+        "uncrawledTitle": "เผยแพร่แล้ว แต่ไม่มีบอทมาดึง",
+        "uncrawledHint": "ยังไม่มีบอทค้นหาตัวไหนขอหน้าพวกนี้ หน้าที่ Google ไม่เคยดึงไปย่อมไม่ถูกเก็บ index — ควรเช็กว่ามีลิงก์ไปถึงและ robots.txt ไม่ได้ห้ามไว้"
       }
     },
     "seoTranslations": {

@@ -644,6 +644,7 @@
       "seo": {
         "overview": "Overview",
         "audit": "Audit",
+        "indexing": "Indexing",
         "label": "SEO",
         "keywords": "Keywords",
         "links": "Internal links",
@@ -2823,6 +2824,34 @@
         "alertsHint": "Last seven days. Checked after each scheduled job.",
         "alertsEmpty": "Nothing has been raised in the last seven days.",
         "alertsSettings": "Rule settings"
+      },
+      "indexing": {
+        "title": "Crawling & indexing",
+        "subtitle": "What crawlers fetched in the last {days} days, from this site's own logs.",
+        "empty": "No crawler visit has been logged yet.",
+        "emptyHint": "Logging starts the moment this is deployed and cannot be filled in backwards. Googlebot usually reappears within a day or two.",
+        "funnelTitle": "From published to found",
+        "funnelHint": "The first two steps come from this site's logs. The last two need Google.",
+        "stepKnown": "Pages published",
+        "stepCrawled": "Fetched by a search crawler",
+        "stepIndexed": "Indexed",
+        "stepEarning": "Earning impressions",
+        "notConnected": "Not connected to Google yet",
+        "botsTitle": "Crawlers",
+        "botsHint": "Busiest first.",
+        "columnBot": "Crawler",
+        "columnHits": "Requests",
+        "columnPaths": "Pages",
+        "column404": "404s",
+        "columnLastSeen": "Last seen",
+        "columnPath": "Path",
+        "columnFoundBy": "Found by",
+        "claimsToBe": "Taken from the user agent, which any client can set — these are crawlers that claim to be who they say. Verifying properly needs a reverse DNS lookup on every request, and nothing here is denied on the strength of it.",
+        "notFoundTitle": "Dead ends a crawler found",
+        "notFoundHint": "Not the same list as URLs & redirects: that one is written from the browser, and a crawler runs no JavaScript, so these never appeared there.",
+        "addRedirect": "Add a redirect",
+        "uncrawledTitle": "Published, never fetched",
+        "uncrawledHint": "No search crawler has asked for these. A page Google has never fetched cannot be indexed — worth checking they are linked from somewhere and allowed in robots.txt."
       }
     },
     "seoTranslations": {

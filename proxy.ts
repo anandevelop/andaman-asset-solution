@@ -18,11 +18,14 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { getToken } from "next-auth/jwt";
 import { locales, defaultLocale, adminLocales } from "./i18n";
 import { roleRequiresTwoFactor } from "./lib/two-factor-policy";
+import { identifyBot } from "./lib/seo/bots";
+import { recordCrawlHit } from "./lib/seo/crawl-log";
+import { stripLocale } from "./lib/public-paths";
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -38,8 +41,35 @@ const SECURITY_PATH = new RegExp(
   `^/(${locales.join("|")})/admin/account/security(?:/|$)`,
 );
 
-export default async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname, search } = request.nextUrl;
+
+  /*
+    Crawl logging — phase 5.
+
+    Placed first because it must observe every request that reaches the
+    proxy, including the ones the auth gate is about to redirect: a crawler
+    asking for /th/admin is worth seeing, and it never reaches a page.
+
+    Nothing here is awaited. recordCrawlHit returns a promise only when its
+    buffer is due to be written, and that promise is handed to
+    waitUntil(), which Next keeps alive *after* the response has been sent.
+    The visitor's request pays for a Map insert and nothing else — which is
+    the whole reason phase 2 measured TTFB before this landed.
+
+    Admin traffic is excluded from the *path* recorded rather than from the
+    log: a crawler that reached an admin URL is interesting, but the back
+    office's URL structure is not something to accumulate in a table that a
+    report reads from.
+  */
+  const bot = identifyBot(request.headers.get("user-agent"));
+  if (bot) {
+    const due = recordCrawlHit({
+      bot,
+      path: pathname.startsWith("/api") ? pathname : stripLocale(pathname),
+    });
+    if (due) event.waitUntil(due);
+  }
 
   const adminMatch = pathname.match(ADMIN_PATH);
   const loginMatch = pathname.match(LOGIN_PATH);

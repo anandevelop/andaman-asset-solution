@@ -121,6 +121,10 @@ type Props = {
   brokenLinks: BrokenLink[];
   externalLinkCount: number;
   csv: string;
+  /** A path arriving from elsewhere in the admin — the indexing tab's
+   *  "add a redirect" shortcut. Opens the form with it already filled in
+   *  rather than making somebody retype a path they were just looking at. */
+  prefillFrom?: string;
   labels: Labels;
 };
 
@@ -154,6 +158,7 @@ export default function UrlRedirectManager({
   externalLinkCount,
   csv,
   labels,
+  prefillFrom,
 }: Props) {
   const router = useRouter();
   /* The two labels whose numbers are not known until an import has run.
@@ -178,7 +183,17 @@ export default function UrlRedirectManager({
   useEffect(() => setNow(Date.now()), []);
 
   const [tab, setTab] = useState<Tab>("redirects");
-  const [form, setForm] = useState<FormState | null>(null);
+  /*
+    Opened already filled in when a path arrived in the URL.
+
+    The indexing tab lists dead ends a crawler found and offers to redirect
+    one; retyping a path that was on screen a moment ago is both tedious
+    and a way to introduce a typo into the one field that has to match
+    exactly.
+  */
+  const [form, setForm] = useState<FormState | null>(
+    prefillFrom ? { ...BLANK, fromPath: prefillFrom } : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

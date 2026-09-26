@@ -230,6 +230,10 @@ export const NAV_TAB_GROUPS = {
        overview's numbers link into — "70 pages missing a description" is
        only useful next to the list of which seventy. */
     { key: "audit", segment: "/audit", roles: ROLE_SETS.ADMIN_UP },
+    /* Crawling and indexing (phase 5). Beside the audit because the two
+       answer halves of one question: the audit says whether a page is
+       worth indexing, this says whether a crawler has even fetched it. */
+    { key: "indexing", segment: "/indexing", roles: ROLE_SETS.ADMIN_UP },
     { key: "keywords", segment: "/keywords", roles: ROLE_SETS.ADMIN_UP },
     { key: "links", segment: "/links", roles: ROLE_SETS.ADMIN_UP },
     { key: "urls", segment: "/urls", roles: ROLE_SETS.ADMIN_UP },

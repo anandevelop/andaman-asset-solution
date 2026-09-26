@@ -510,17 +510,22 @@ describe("the project workspace", () => {
 });
 
 describe("the SEO hub", () => {
-  it("offers all six screens as tabs", () => {
+  it("offers all seven screens as tabs", () => {
     /* Three of these had no reliable way in: keywords and links were only
        reachable from two buttons in the overview's header, and /seo/urls
        from nowhere at all once settings stopped linking to it.
 
        /audit joined them with the on-page audit, second because it is
        where the overview's numbers link into — "70 pages missing a
-       description" is only useful beside the list of which seventy. */
+       description" is only useful beside the list of which seventy.
+
+       /indexing sits beside it because the two answer halves of one
+       question: the audit says whether a page deserves indexing, indexing
+       says whether a crawler has fetched it at all. */
     expect(visibleTabs(Role.ADMIN, "seo").map((tab) => tab.segment)).toEqual([
       "",
       "/audit",
+      "/indexing",
       "/keywords",
       "/links",
       "/urls",

@@ -3124,3 +3124,59 @@ model SeoAlert {
   @@index([createdAt])
   @@map("seo_alerts")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Crawl logging (SEO phase 5)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One crawler's visits to one path, in one hour.
+///
+/// Bucketed on write rather than stored per request: Googlebot alone can
+/// fetch a page a hundred times in an afternoon, and nothing on the
+/// indexing screen asks a question that needs the individual timestamps.
+/// An hour is the smallest bucket "is Google crawling us more or less than
+/// last week" can be answered from, and it keeps the table small enough to
+/// leave alone.
+///
+/// `bot` is what the user agent *claimed*, never verified — see
+/// lib/seo/bots.ts. Nothing is ever denied on the strength of it.
+///
+/// TWO WRITERS, AND THE SECOND IS A SUBSET OF THE FIRST
+///
+/// proxy.ts records every request a crawler makes — it runs before routing
+/// and therefore cannot know what status the request will end in, so its
+/// rows are always notFound = false. The catch-all route
+/// (app/[locale]/[...rest]/page.tsx) records a second row, notFound = true,
+/// for the ones that turn out to be dead ends: it is the only point in the
+/// request that knows both the path and that it is about to 404.
+///
+/// So a single 404 produces one row of each kind, and the two must never be
+/// added together — "requests" is the notFound = false total and "404s" is
+/// the notFound = true total *within* it. lib/seo/crawl-report.ts counts
+/// them that way; summing both would report one request as two.
+///
+/// This is the only way bot 404s are recorded at all: NotFoundHit is
+/// written by a fetch from the 404 boundary in the browser, and a crawler
+/// runs no JavaScript, so every broken link a crawler found has been
+/// invisible in the admin until now.
+model CrawlHit {
+  id String @id @default(cuid())
+
+  /// Lowercase name from lib/seo/bots.ts — "googlebot", "bingbot", "other".
+  bot String
+  /// Locale-stripped, like every other path this application counts.
+  path String
+  /// Start of the UTC hour.
+  hour DateTime
+
+  hits Int @default(1)
+
+  /// True when the path 404'd. A path can have both kinds of row in the
+  /// same hour if a redirect was added midway through it.
+  notFound Boolean @default(false)
+
+  @@unique([bot, path, hour, notFound])
+  @@index([hour])
+  @@index([path])
+  @@map("crawl_hits")
+}

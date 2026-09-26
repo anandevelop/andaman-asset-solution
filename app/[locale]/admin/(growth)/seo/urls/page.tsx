@@ -24,10 +24,22 @@ import { isDatabaseOffline } from "@/lib/db";
 import { getUrlHealth, redirectsToCsv, HIT_WINDOW_DAYS } from "@/lib/admin/url-health";
 import UrlRedirectManager from "@/components/admin/UrlRedirectManager";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  /** `?from=` carries a path in from the indexing tab's "add a redirect"
+   *  shortcut, so the form opens already filled in. */
+  searchParams: Promise<{ from?: string }>;
+};
 
 export default async function AdminUrlsPage(props: Props) {
   const { locale } = await props.params;
+  const { from } = await props.searchParams;
+
+  /* Only a path, and only a plausible one. The value arrives in a URL
+     anybody can edit, and it is about to be put into a form field that
+     writes a redirect — a bare "/..." is the whole shape that makes sense
+     here, so anything else is simply ignored rather than corrected. */
+  const prefillFrom = from && from.startsWith("/") && from.length <= 500 ? from : undefined;
 
   await requireAdmin(locale, Role.ADMIN);
 
@@ -57,6 +69,7 @@ export default async function AdminUrlsPage(props: Props) {
         brokenLinks={health.brokenLinks}
         externalLinkCount={health.externalLinkCount}
         csv={redirectsToCsv(health.redirects)}
+        prefillFrom={prefillFrom}
         labels={{
           tabs: {
             redirects: t("urls.tabs.redirects"),

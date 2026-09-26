@@ -25,9 +25,12 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { redirectIfMoved } from "@/lib/redirects";
 import { locales } from "@/i18n";
+import { identifyBot } from "@/lib/seo/bots";
+import { flushCrawlHits, recordCrawlHit } from "@/lib/seo/crawl-log";
 
 // Every request is a lookup against a table an admin edits, so there is
 // nothing here worth caching — and caching it would mean a redirect
@@ -53,6 +56,28 @@ export default async function CatchAllPage(props: Props) {
   const path = `/${rest.map(encodeURIComponent).join("/")}`;
 
   await redirectIfMoved(locale, path);
+
+  /*
+    A crawler reached a dead end. Recorded here and nowhere else.
+
+    NotFoundHit — the admin's "what should become a redirect" worklist — is
+    written by a fetch from the 404 boundary in the browser (see
+    app/api/not-found/route.ts for why it lives there). A crawler runs no
+    JavaScript, so every broken link Googlebot has ever found on this site
+    has been invisible in the admin. That is the gap phase 5 exists to
+    close, and this is the only point in the request that knows both the
+    path and that it is about to 404.
+
+    Flushed immediately rather than buffered: a 404 is rare compared to a
+    crawl of a real page, and the buffer's whole purpose is to absorb
+    bursts of the latter. This is already past every redirect lookup, so
+    nothing is waiting on it but the 404 page's own render.
+  */
+  const bot = identifyBot((await headers()).get("user-agent"));
+  if (bot) {
+    recordCrawlHit({ bot, path, notFound: true });
+    await flushCrawlHits();
+  }
 
   notFound();
 }

@@ -644,6 +644,7 @@
       "seo": {
         "overview": "概览",
         "audit": "页面检查",
+        "indexing": "抓取与收录",
         "label": "SEO",
         "keywords": "关键词",
         "links": "内部链接",
@@ -2823,6 +2824,34 @@
         "alertsHint": "最近 7 天。每次定时任务后检查。",
         "alertsEmpty": "最近 7 天没有任何告警。",
         "alertsSettings": "规则设置"
+      },
+      "indexing": {
+        "title": "抓取与收录",
+        "subtitle": "最近 {days} 天爬虫抓取了什么，来自本站自己的日志。",
+        "empty": "尚未记录到任何爬虫访问。",
+        "emptyHint": "记录自部署起开始，无法回溯补齐。Googlebot 通常一两天内会再次出现。",
+        "funnelTitle": "从发布到被找到",
+        "funnelHint": "前两步来自本站日志，后两步需要 Google 的数据。",
+        "stepKnown": "已发布页面",
+        "stepCrawled": "搜索爬虫已抓取",
+        "stepIndexed": "已收录",
+        "stepEarning": "已产生展现",
+        "notConnected": "尚未连接 Google",
+        "botsTitle": "爬虫",
+        "botsHint": "按请求量排序。",
+        "columnBot": "爬虫",
+        "columnHits": "请求数",
+        "columnPaths": "页面数",
+        "column404": "404",
+        "columnLastSeen": "最近一次",
+        "columnPath": "路径",
+        "columnFoundBy": "发现者",
+        "claimsToBe": "取自 user agent，任何客户端都可自行设置 —— 这些是\"自称\"的爬虫。严格验证需要对每个请求做反向 DNS，且本系统不会据此拒绝任何请求。",
+        "notFoundTitle": "爬虫遇到的死链",
+        "notFoundHint": "与 URL 和重定向 不是同一份列表：那份由浏览器写入，而爬虫不执行 JavaScript，因此这些从未出现在那里。",
+        "addRedirect": "添加重定向",
+        "uncrawledTitle": "已发布，但从未被抓取",
+        "uncrawledHint": "还没有搜索爬虫请求过这些页面。Google 从未抓取的页面不可能被收录 —— 建议检查是否有链接指向它们，以及 robots.txt 是否放行。"
       }
     },
     "seoTranslations": {
