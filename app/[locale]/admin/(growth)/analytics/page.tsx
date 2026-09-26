@@ -392,7 +392,22 @@ export default async function AdminAnalyticsPage(props: Props) {
           rate: t("reports.conversion.rate"),
           notWorked: t("reports.conversion.notWorked"),
           weekOverWeek: t("analytics.weekOverWeek"),
-          weekOverWeekHint: t("analytics.weekOverWeekHint"),
+          /*
+            Formatted here, with the number, rather than handed down as a
+            template for the client to patch.
+
+            AnalyticsTabs used to do the substitution itself with
+            .replace("{lastWeek}", …), which cannot work: next-intl formats
+            the message at t() time, and a call with no values for a
+            placeholder it carries logs a FORMATTING_ERROR and falls back
+            to the key path. The client then ran .replace() over the
+            literal string "admin.analytics.weekOverWeekHint", found no
+            placeholder, and printed it — which is what the Leads tab
+            showed in all four languages from 2026-09-18.
+          */
+          weekOverWeekHint: t("analytics.weekOverWeekHint", {
+            lastWeek: weekOverWeek?.lastWeek ?? 0,
+          }),
           monthlyTitle: t("reports.monthly.title"),
           monthlySubtitle: t("reports.monthly.subtitle"),
           sourcesTitle: t("reports.sources.title"),

@@ -259,4 +259,107 @@ describe("keys referenced from source", () => {
 
     expect(missing).toEqual([]);
   });
+
+  /**
+   * A message with a placeholder must be called with something to put in
+   * it.
+   *
+   * next-intl formats at t() time. Call t("x") on a message reading
+   * "{lastWeek} last week" and it does not hand back the template for
+   * somebody to patch later — it logs a FORMATTING_ERROR and falls back to
+   * the key path, so the screen prints "admin.analytics.weekOverWeekHint".
+   * That shipped on the Leads tab in all four languages and went unnoticed
+   * from 2026-09-18: nothing throws, nothing turns red, and the page still
+   * renders.
+   *
+   * The scan is the one above with one extra character captured — the
+   * token after the closing quote. A `)` means no values were passed.
+   */
+  it("pass values to every message that has a placeholder", () => {
+    const flat = new Map<string, string>();
+    const walk = (messages: Messages, prefix = "") => {
+      for (const [key, value] of Object.entries(messages)) {
+        if (typeof value === "object" && value !== null) {
+          walk(value as Messages, `${prefix}${key}.`);
+        } else {
+          flat.set(`${prefix}${key}`, String(value));
+        }
+      }
+    };
+    walk(en as Messages);
+
+    /* A placeholder, not ICU's escape for a literal brace: "'{'" is a
+       brace the reader should see and needs no argument. */
+    const hasPlaceholder = (message: string) => /(?<!')\{\s*\w+/.test(message);
+
+    const unfilled: string[] = [];
+
+    for (const file of sourceFiles(process.cwd())) {
+      const source = readFileSync(file, "utf8");
+
+      const namespaces = new Map<string, Set<string>>();
+      const bind = (name: string, namespace: string) => {
+        const set = namespaces.get(name) ?? new Set<string>();
+        set.add(namespace);
+        namespaces.set(name, set);
+      };
+
+      for (const m of source.matchAll(/(\w+)\s*=\s*useTranslations\("([^"]+)"\)/g)) {
+        bind(m[1], m[2]);
+      }
+      for (const m of source.matchAll(
+        /(\w+)\s*=\s*await\s+getTranslations\(\{[^}]*namespace:\s*"([^"]+)"/g,
+      )) {
+        bind(m[1], m[2]);
+      }
+      for (const m of source.matchAll(
+        /const\s*\[\s*([\w,\s]+?)\s*\]\s*=\s*await\s+Promise\.all\(\[([\s\S]*?)\]\)/g,
+      )) {
+        const names = m[1].split(",").map((n) => n.trim());
+        for (const call of m[2].matchAll(
+          /getTranslations\((?:"([^"]+)"|\{[^}]*namespace:\s*"([^"]+)")/g,
+        )) {
+          for (const name of names) bind(name, call[1] ?? call[2]);
+        }
+      }
+
+      for (const [name, spaces] of namespaces) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        for (const m of source.matchAll(
+          new RegExp(`(?<![\\w.])${escaped}\\("([^"\`{}]+)"\\s*([,)])`, "g"),
+        )) {
+          if (m[2] !== ")") continue;
+
+          /*
+            Only when the binding is unambiguous.
+
+            The scan above deliberately binds every name in a destructured
+            Promise.all to every namespace in it, which answers "does this
+            key exist somewhere" but not "which message is this call
+            formatting". components/SiteCta.tsx awaits four translators at
+            once, so its t("title") also resolves against
+            projects.cta.title — a plural message its *other* translator
+            calls correctly with a count.
+
+            Reporting that would mean a false failure, or teaching somebody
+            to pass an argument a message does not take. Ambiguous call
+            sites are skipped, so this under-reports rather than lies.
+          */
+          const resolved = [...spaces]
+            .map((ns) => ({ ns, message: flat.get(`${ns}.${m[1]}`) }))
+            .filter((entry) => entry.message !== undefined);
+
+          if (resolved.length !== 1) continue;
+
+          const { ns, message } = resolved[0];
+          if (message && hasPlaceholder(message)) {
+            unfilled.push(`${file}: ${ns}.${m[1]} — "${message.slice(0, 60)}"`);
+          }
+        }
+      }
+    }
+
+    expect(unfilled).toEqual([]);
+  });
 });

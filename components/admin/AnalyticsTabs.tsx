@@ -356,7 +356,7 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
               )}
             </p>
             <p className="mt-1 text-xs text-ink-muted">
-              {labels.weekOverWeekHint.replace("{lastWeek}", String(leads.weekOverWeek.lastWeek))}
+              {labels.weekOverWeekHint}
             </p>
           </div>
 
