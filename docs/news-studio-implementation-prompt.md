@@ -181,6 +181,394 @@ Markdown WYSIWYG ซึ่งเป็น failure mode ที่ doc-comment เ
 
 ---
 
+## §2b — Phase 2b: จัดบทความและรูปภาพให้ใช้งานได้จริง
+
+> ที่มาของ Phase นี้: Phase 2 ทำ editor ขึ้นมาใช้ได้ แต่ "จัดบทความ/จัดรูป" ยังยาก
+> เพราะ 3 เรื่องเชิงโครงสร้าง — รูปที่แทรกแล้วแก้ไม่ได้ (`Figure` เป็น `atom: true`
+> ไม่มี NodeView), ความกว้างรูปถูกล็อกไว้ใน CSS, และทุกคำสั่งต้องเอื้อมไป toolbar
+> ด้านบนที่ไม่ sticky — บวกบั๊กเงียบ 1 ตัวที่ทำให้เนื้อหาหายตอนบันทึก
+>
+> ส่ง §0 ก่อนเสมอ แล้วส่งทีละ step (2b-0 → 2b-7) **อย่าส่งทั้ง Phase รวดเดียว**
+> ลำดับสำคัญ: 2b-0 ต้องมาก่อนทุกอย่าง เพราะเป็นบั๊กที่ทำข้อมูลหาย
+
+---
+
+### 2b-0 — แก้บั๊กเงียบก่อน: underline / strike หายตอนบันทึก
+
+```text
+Phase 2b-0 — ปิดช่องที่เนื้อหาหายเงียบ ๆ ระหว่าง editor กับ sanitizer
+
+อาการ (ยืนยันจากโค้ดแล้ว ไม่ต้องไปหาซ้ำ):
+  @tiptap/starter-kit 3.31 bundle ทั้ง extension-underline และ extension-strike
+  มาให้โดยอัตโนมัติ — RichTextEditor.tsx ไม่ได้ปิดไว้ ดังนั้น ⌘U และ ⌘⇧X
+  ใช้ได้จริงในหน้าจอ และ render ออกมาเป็น <u> กับ <s>
+  แต่ ALLOWED_TAGS ใน lib/markdown.ts (บรรทัด ~37) มีแค่ "del" ไม่มี "s" ไม่มี "u"
+  ผลคือ admin เห็นตัวขีดเส้นใต้/ขีดฆ่าบนจอ กดบันทึก แล้วมันหายไปเงียบ ๆ
+  ไม่มี error ไม่มี warning — เป็น data loss ที่ผู้ใช้โทษ editor ว่า "พัง"
+
+การตัดสินใจที่ล็อกไว้แล้ว อย่าเปลี่ยนเอง:
+  - ขีดฆ่า (strike) = เก็บไว้ ให้ใช้งานได้จริง
+      เพิ่ม "s" เข้า ALLOWED_TAGS (ห้ามลบ "del" ออก — marked แปลง ~~x~~
+      เป็น <del> ดังนั้นบทความ MARKDOWN เดิมยังต้องผ่าน)
+      เพิ่มปุ่มขีดฆ่าใน toolbar ของ RichTextEditor + i18n key
+      เพิ่ม style ของ s/del ใน @utility prose-article (app/globals.css ~321)
+  - ขีดเส้นใต้ (underline) = ปิดทิ้ง
+      StarterKit.configure({ ..., underline: false })
+      เหตุผล: prose-article ใช้ underline เป็นสัญญะของ "ลิงก์" อยู่แล้ว
+      (& a { @apply underline ... }) ขีดเส้นใต้ข้อความธรรมดาจะอ่านเป็นลิงก์
+      ที่กดไม่ได้ ทั้งเสีย UX และเสีย accessibility — ปิดที่ต้นทางถูกกว่า
+      ขยาย allowlist
+
+ตรวจ marks/nodes ตัวอื่นที่ StarterKit เปิดให้แต่ไม่มีปุ่ม แล้วสรุปเป็นตาราง
+ก่อนแก้: code, codeBlock, horizontalRule, hardBreak, listKeymap
+  - ตัวที่ ALLOWED_TAGS รับอยู่แล้ว (code, pre, hr, br) → เพิ่มปุ่มใน toolbar
+  - ตัวที่ไม่รับ → ปิดใน StarterKit.configure ไปเลย ห้ามปล่อยให้พิมพ์ได้แต่หาย
+
+สิ่งที่ต้องส่งมอบ
+  - tests/markdown.test.ts: เคสใหม่ที่ยืนยันว่า tag ทุกตัวที่ editor
+    "สร้างได้" รอด sanitizeArticleHtml() — เขียนเป็น list เดียวที่ทั้งสองฝั่ง
+    อ้างถึงได้ ไม่ใช่ literal สองชุดที่หลุดกันทีหลัง
+  - tests/components/RichTextEditor.test.tsx: ยืนยันว่า underline command
+    ไม่มีอยู่ใน schema แล้ว
+  - i18n key ครบ 4 ไฟล์ (messages/en|th|zh|ru.json)
+
+ห้ามแตะ Figure node ใน step นี้ — นั่นคือ 2b-1
+```
+
+---
+
+### 2b-1 — Figure NodeView: แก้รูปในที่ได้ ไม่ต้องลบแล้วแทรกใหม่
+
+```text
+Phase 2b-1 — ทำให้รูปที่แทรกแล้วยังแก้ได้ (ต้นตออันดับ 1 ของ "จัดรูปยาก")
+
+ปัญหาปัจจุบัน:
+  Figure ใน RichTextEditor.tsx เป็น atom: true และไม่มี NodeView
+  คลิกรูปแล้วไม่มีอะไรเกิดขึ้น — จะเปลี่ยน alignment, แก้ caption, แก้ alt
+  ต้องลบรูปแล้วเปิด InsertImageModal แทรกใหม่ทั้งรอบ ทุกครั้ง
+
+1.1 caption ต้องเป็นเนื้อหาที่แก้ในที่ได้ ไม่ใช่ attribute
+  เปลี่ยน Figure เป็น:
+    atom: false, content: "inline*", draggable: true, isolating: true
+    renderHTML → ["figure", attrs, ["img", {...}], ["figcaption", {}, 0]]
+    parseHTML → คง getAttrs เดิมไว้ แต่เพิ่ม contentElement: "figcaption"
+    แล้ว *ลบ* attribute `caption` ออก
+  ไม่ต้องทำ data migration: HTML ที่เก็บใน DB เป็น
+  <figure><img><figcaption>ข้อความ</figcaption></figure> อยู่แล้ว
+  (caption เคยเป็น attribute แค่ในหัวความคิดของ node ไม่เคยลงดิสก์)
+  → ยืนยันข้อนี้ด้วยการเปิดบทความ seed ที่มีรูปแล้วดูว่า caption เดิมยังอยู่
+
+  ผลข้างเคียงที่ต้องปิด: node ที่ content ว่างจะ render <figcaption></figcaption>
+  เปล่า ๆ ออกหน้า public → เพิ่ม `& figcaption:empty { @apply hidden; }`
+  ใน @utility prose-article
+
+1.2 NodeView พร้อมแถบควบคุมติดรูป
+  ใช้ ReactNodeViewRenderer จาก @tiptap/react (มีในโปรเจกต์แล้ว ไม่ต้องลง dep ใหม่)
+  ไฟล์ใหม่: components/admin/editor/FigureNodeView.tsx
+  ใช้ NodeViewWrapper + NodeViewContent (NodeViewContent = figcaption)
+  แสดงแถบควบคุมเมื่อ props.selected เท่านั้น (ไม่ใช่ hover — hover
+  ทำให้แถบกระพริบตอนเลื่อนอ่าน) มีปุ่ม:
+    ตำแหน่ง: ซ้าย / กลาง / ขวา / ไม่จัด
+    ความกว้าง: ปกติ / กว้าง / เต็มคอลัมน์   ← ดู 2b-2
+    แก้ alt  (popover ช่องเดียว)
+    ลบรูป
+  ทุกปุ่มเรียก updateAttributes() ไม่ใช่ลบ-แทรกใหม่ เพื่อไม่ให้ history พัง
+
+1.3 alt ต้องเขียนกลับเข้าคลังสื่อ
+  ถ้า node มี mediaId ให้เขียน alt ที่แก้ใหม่กลับไปที่ Media.altText[locale]
+  ผ่าน updateMediaMeta() ตัวเดิมที่ InsertImageModal.tsx ใช้อยู่
+  (ห้ามเขียน server action ใหม่) — debounce แล้วยิงครั้งเดียวตอน popover ปิด
+  ไม่ใช่ทุก keystroke
+
+1.4 รูปที่ alt ว่างต้องมองเห็น
+  ใส่กรอบ/ป้ายเตือนบน NodeView เมื่อ alt เป็นค่าว่าง และให้ข้อ "รูปทุกใบมี alt"
+  (น้ำหนัก 3, fail) ใน lib/article-seo.ts จับได้เหมือนเดิม
+  — ตอนนี้ InsertImageModal บังคับ alt ตอนแทรก แต่พอแก้ในที่ได้แล้ว
+  ต้องมีทางกันไม่ให้ลบ alt ทิ้งภายหลัง
+
+ข้อควรระวัง
+  - NodeView เป็น client component ใน tree ของ NewsForm ที่เป็น "use client" แล้ว
+  - ห้ามให้ NodeView อ่าน useTranslations เองถ้าทำให้ต้อง provider ใหม่ —
+    รับ label ผ่าน props แบบเดียวกับ toolbarLabels ที่ RichTextEditor ทำอยู่
+  - immediatelyRender: false ต้องคงไว้ (SSR hydration)
+
+สิ่งที่ต้องส่งมอบ
+  - tests/components/RichTextEditor.test.tsx: round-trip figure ที่มี caption
+    → setContent(html) แล้ว getHTML() ต้องได้ caption กลับมาเหมือนเดิม
+  - e2e/admin-news-rich-text.spec.ts: แทรกรูป → คลิกรูป → เปลี่ยนเป็นจัดขวา
+    → พิมพ์ caption → บันทึก → เปิดกลับมาแก้ ค่ายังอยู่ครบ
+```
+
+---
+
+### 2b-2 — ความกว้างรูป: แยก `data-width` ออกจาก `data-align`
+
+```text
+Phase 2b-2 — ปลดล็อกความกว้างรูปที่ตอนนี้ฟิกซ์อยู่ใน CSS
+
+ปัญหาปัจจุบัน:
+  app/globals.css (~404) ฟิกซ์ figure[data-align="left"|"right"] ไว้ที่
+  w-1/2 sm:w-2/5 และ "center" ที่ max-w-2xl — ความกว้างจึงผูกติดกับตำแหน่ง
+  ทำ "รูปเล็กชิดขวา" หรือ "รูปเต็มความกว้างคอลัมน์" แยกกันไม่ได้
+
+2.1 attribute ใหม่: width  ค่าที่รับ: "normal" | "wide" | "full"  (default "normal")
+  carry เป็น data-width บน <figure> ตามเหตุผลเดียวกับที่ data-align ใช้
+  → เพิ่ม "data-width" เข้า ALLOWED_ATTR ใน lib/markdown.ts (~48)
+    พร้อม comment อธิบายเหมือนที่ data-align มีอยู่
+
+2.2 CSS ใน @utility prose-article
+  data-align คุมแค่การลอย/จัดกลาง — เอา w-* ออกจาก selector ของ align ทั้งหมด
+  data-width คุมความกว้าง:
+    normal → ความกว้างเต็มคอลัมน์ (พฤติกรรมเดิมของ figure ที่ไม่มี align)
+    wide   → ล้นออกนอกคอลัมน์ข้างละ ~3rem บนจอ lg ขึ้นไป (ใช้ค่าจากความกว้าง
+             ของ container หน้าบทความจริง ห้าม hard-code px สุ่ม)
+    full   → เต็มความกว้าง container ของหน้าบทความ
+  ถ้า align เป็น left/right ให้ width บังคับเป็น ~40% เหมือนเดิม
+  (ลอยแล้วเต็มความกว้างไม่มีความหมาย) — เขียนกฎนี้เป็น CSS ไม่ใช่ logic ใน JS
+
+2.3 UI
+  ปุ่มความกว้าง 3 ตัวใน FigureNodeView (2b-1) + ตัวเลือกใน InsertImageModal
+  ให้ค่า default ตอนแทรกเป็น "normal" + align null = พฤติกรรมเดิมทุกประการ
+  บทความเก่าที่ไม่มี data-width ต้องแสดงผลไม่เปลี่ยนเลยแม้แต่พิกเซลเดียว
+  ← ข้อนี้คือเกณฑ์ตรวจรับหลักของ step นี้
+
+2.4 ความกว้างคอลัมน์ editor ต้องเท่าหน้าจริง
+  EditorContent ใส่ prose-article ไว้แล้ว (ดีอยู่) แต่ NewsForm.tsx วางมันใน
+  grid lg:grid-cols-[minmax(0,1fr)_320px] ซึ่งแคบกว่า container ของหน้า
+  news/[slug] จริง → รูป wide/full และรูปลอย 40% จะดูไม่ตรงกับหน้าจริง
+  ให้ตั้ง max-width ของพื้นที่เขียนให้เท่ากับ container ของหน้าบทความ public
+  (อ่านค่าจาก app/[locale]/(site)/news/[slug]/page.tsx อย่าเดา)
+  ถ้าพื้นที่ไม่พอ ให้ทำเป็นโหมดโฟกัสใน 2b-7 แทนการบีบตัวหนังสือ
+```
+
+---
+
+### 2b-3 — BubbleMenu, toolbar ที่ไม่หนีหาย, และแก้ลิงก์เดิมได้
+
+```text
+Phase 2b-3 — เลิกบังคับให้เอื้อมไป toolbar ด้านบน
+
+ปัญหาปัจจุบัน:
+  toolbar อยู่บนสุดของ editor และไม่ sticky — checklist SEO ของเราเองบังคับ
+  บทความ >= 600 คำ แปลว่าคนเขียนต้องเลื่อนขึ้น-ลงหา toolbar ตลอด
+  และ "คลิกลิงก์ที่แทรกไว้แล้วเพื่อแก้หรือลบ" ทำไม่ได้เลย ต้องลากคลุมแล้วแทรกทับ
+
+3.1 BubbleMenu ตอนเลือกข้อความ
+  import { BubbleMenu } from "@tiptap/react/menus"
+  (TipTap 3 ย้าย menus ออกมาเป็น subpath export — มีใน @tiptap/react
+   ที่ลงไว้แล้ว ไม่ต้อง npm install เพิ่ม ยืนยันก่อนลงมือด้วย
+   node_modules/@tiptap/react/package.json → exports["./menus"])
+  ปุ่ม: ระดับหัวข้อ (H2/H3/H4) · ตัวหนา · ตัวเอน · ขีดฆ่า · ลิงก์ · คำพูดอ้างอิง
+  ซ่อนเมื่อ selection อยู่ใน figure หรือ codeBlock
+
+3.2 BubbleMenu เฉพาะตอนเคอร์เซอร์อยู่บนลิงก์
+  shouldShow: เมื่อ editor.isActive("link")
+  แสดง href ที่ลิงก์ชี้ไป + ปุ่ม แก้ (เปิด InternalLinkModal ที่มีอยู่ พร้อม
+  prefill ค่าเดิมทั้ง href/anchor/newTab/nofollow) · เปิดดู · ลบลิงก์
+  → InternalLinkModal.tsx ต้องรับ initial values ได้ ตอนนี้รับไม่ได้
+    เพิ่ม prop เข้าไป ห้ามสร้าง modal ตัวที่สอง
+
+3.3 toolbar หลัก sticky
+  ให้ toolbar ติดขอบบนของพื้นที่เขียนตอนเลื่อน โดยไม่ทับ AdminTopbar
+  (เช็กความสูง/ z-index ของ AdminTopbar.tsx ก่อน อย่าเดาค่า)
+
+3.4 เติมปุ่มที่ขาด
+  ตอนนี้ toolbar มีแค่ ¶ H2 H3 H4 + dropdown H1–H6, หนา, เอน, bullet,
+  ordered, quote, ลิงก์, รูป
+  เพิ่ม: undo/redo (มี history อยู่แล้วแต่ไม่มีปุ่ม), ขีดฆ่า (จาก 2b-0),
+  เส้นคั่น (hr), code inline, ล้างรูปแบบ (unsetAllMarks)
+  จัดกลุ่มด้วยเส้นคั่นแบบที่ไฟล์ทำอยู่ ไม่ต้องเพิ่ม token ใหม่
+
+3.5 แสดงคีย์ลัดให้คนเห็น
+  title/aria-label ของทุกปุ่มต่อท้ายด้วยคีย์ลัด (เช่น "ตัวหนา (⌘B)")
+  ตรวจ platform แล้วสลับ ⌘/Ctrl — ห้าม hard-code ⌘ ตัวเดียว
+
+i18n key ครบ 4 ไฟล์ทุกปุ่มที่เพิ่ม
+```
+
+---
+
+### 2b-4 — ลากไฟล์มาวาง, วางรูปจาก clipboard, ล้าง paste จาก Word
+
+```text
+Phase 2b-4 — ทางเข้ารูปที่สั้นกว่า 4 คลิก และ paste ที่ไม่พารูปแบบขยะเข้ามา
+
+ปัญหาปัจจุบัน:
+  แทรกรูป 1 ใบ = กดปุ่มรูป → รอโหลดคลังสื่อ → เลือกไฟล์ → กรอก alt → แทรก
+  ทุกใบ ทุกครั้ง แม้เป็นรูปที่เพิ่ง screenshot มาสด ๆ
+
+4.1 ลากไฟล์รูปมาวางในพื้นที่เขียน + ⌘V วางรูปจาก clipboard
+  ใช้ editorProps.handleDrop / handlePaste
+  เส้นทาง upload ต้องเป็นเส้นเดิมเป๊ะ: presign (app/api/uploads/presign) →
+  PUT → createMedia() — ยกฟังก์ชัน putToS3 + การแม็ป PRESIGN_ERROR_KEYS
+  ออกจาก components/admin/MediaUploadButton.tsx ไปเป็น hook/โมดูลที่ทั้งสอง
+  ที่ import ได้ ห้าม copy-paste โค้ด upload ชุดที่สอง และห้ามเขียน
+  route ใหม่
+  ระหว่าง upload ให้แทรก figure placeholder ที่มี progress แล้วค่อย
+  updateAttributes ใส่ src/mediaId จริงเมื่อเสร็จ — ถ้า upload ล้มให้ลบ
+  placeholder ทิ้งพร้อมข้อความจาก admin.upload.* ชุดเดิม
+  ข้อจำกัดเดิมต้องบังคับเหมือนกัน: ACCEPT list และ MAX_BYTES ของ
+  MediaUploadButton (อ่านค่าจากไฟล์ อย่าพิมพ์ซ้ำ)
+  alt: แทรกได้โดยยังไม่มี alt แต่ figure ต้องขึ้นป้ายเตือน (2b-1 ข้อ 1.4)
+  และ checklist "รูปทุกใบมี alt" ยังบล็อกการเผยแพร่เหมือนเดิม
+
+4.2 ล้าง HTML ที่ paste มาจาก Word / Google Docs / เว็บอื่น
+  editorProps.transformPastedHTML — ตัด <span>/style/class/comment ของ Office
+  แปลง "ย่อหน้าที่เป็นตัวหนาทั้งบรรทัด" เป็นหัวข้อไม่ได้โดยอัตโนมัติ
+  (เดาผิดแล้วน่ารำคาญกว่า) ให้ทำแค่ล้างให้สะอาดพอที่ schema ของ TipTap
+  จะไม่ทิ้งทั้งย่อหน้า
+  logic การล้างอยู่ใน lib/ ที่ทดสอบได้ (เช่น lib/paste-html.ts) + unit test
+  ที่มี fixture จริงจาก Word และ Google Docs อย่างน้อย 1 ชุดต่อแหล่ง
+  ห้ามวาง regex ยาว ๆ ไว้ใน component
+
+4.3 เตือนเมื่อ paste รูปแบบ base64 ก้อนใหญ่
+  <img src="data:..."> จาก Word จะถูก sanitizer ตัดทิ้งอยู่แล้ว (SAFE_URI)
+  แต่ตอนนี้ตัดแบบเงียบ — ให้บอกผู้ใช้ว่ารูปที่ paste มาต้อง upload
+  แล้วเสนอ upload ให้เลยถ้าทำได้
+```
+
+---
+
+### 2b-5 — บล็อกสำเร็จรูปที่ค้างจาก §2.5
+
+```text
+Phase 2b-5 — custom node ที่ §2.5 ระบุไว้แต่ยังไม่ได้ทำ
+
+ลำดับความสำคัญ (ทำตามนี้ ทีละตัว ตัวละ 1 รอบรีวิว):
+  1. FAQ    ← มีคะแนน SEO ผูกอยู่จริง ทำก่อน
+  2. ตาราง
+  3. กล่องสรุป (callout)
+  4. quote เด่น (pull-quote)
+  5. การ์ดโครงการ + CTA
+
+5.1 FAQ block
+  lib/article-seo.ts (~149) และ lib/article-schema.ts (~51) มี TODO(Phase 2b)
+  ค้างอยู่ทั้งคู่: ข้อ "มีบล็อก FAQ" (น้ำหนัก 2) คืนค่าไม่ผ่านตลอด และ
+  FAQPage JSON-LD ยัง generate ไม่ได้ → ทุกบทความเสียคะแนนข้อนี้ฟรี
+  โครง node: faqList > faqItem { question: heading-ish, answer: block+ }
+  ต้อง parse กลับจาก HTML ได้ (round-trip) ด้วย tag ที่อยู่ใน ALLOWED_TAGS
+  แล้วเท่านั้น — ถ้าต้องเพิ่ม attribute ให้เพิ่มแบบ data-* พร้อมเหตุผล
+  แล้วเก็บ TODO ทั้งสองจุดออกในคอมมิตเดียวกับที่ node นี้เข้า
+  ตามที่ doc-comment ในสองไฟล์นั้นสั่งไว้
+
+5.2 ตาราง
+  ALLOWED_TAGS รับ table/thead/tbody/tr/th/td + colspan/rowspan ไว้แล้ว
+  แต่ editor ไม่มี table node → paste ตารางเข้ามาถูก TipTap ทิ้งก่อนถึง
+  sanitizer ด้วยซ้ำ
+  ต้อง npm install @tiptap/extension-table (+ row/cell/header ตามที่ package
+  นั้นกำหนดใน version 3) — ตรวจว่าเป็น MIT/open source ก่อนลง
+  ถ้าเป็น paid extension ให้หยุดแล้วรายงาน อย่าลงเอง
+  ต้องมี: เพิ่ม/ลบแถว-คอลัมน์, แถวหัวตาราง, และ CSS ตารางใน prose-article
+  (ตอนนี้ยังไม่มี style ของ table เลย — ตารางจะโล้นทั้งใน editor และหน้าจริง)
+
+5.3 กล่องสรุป / pull-quote / การ์ดโครงการ / CTA
+  ทั้งสี่ตัวต้องแทนด้วย tag ที่ allowlist รับได้อยู่แล้ว + data-* เท่านั้น
+  (ห้ามขยาย allowlist ให้รับ div/class/style — นั่นคือการเปิดช่อง XSS
+   กลับมาเพื่อความสวยงาม)
+  ถ้าตัวไหนแทนไม่ได้ในข้อจำกัดนี้ ให้หยุดแล้วเสนอทางเลือกก่อนเขียนโค้ด
+  การ์ดโครงการ: อ้างโครงการด้วย slug ไม่ใช่ id (id เปลี่ยน slug ไม่เปลี่ยน
+  ในทางปฏิบัติ และ slug อ่านออกใน HTML) แล้ว render ค่าจริงตอน render หน้า
+
+5.4 แต่ละ node ต้องมีทางเข้าใน UI ครบสามทาง
+  ปุ่ม/เมนูใน toolbar · slash command (2b-6) · keyboard ถ้าเหมาะ
+  และต้องแสดงผลใน editor ใกล้เคียงหน้าจริง (prose-article ครอบอยู่แล้ว
+  ถ้า style ไหนอยู่นอก prose-article ต้องย้ายเข้า ไม่ใช่เขียนซ้ำ)
+```
+
+---
+
+### 2b-6 — ย้ายบล็อก: drag handle + slash command + สารบัญที่ลากได้
+
+```text
+Phase 2b-6 — จัดลำดับเนื้อหาโดยไม่ต้อง cut/paste
+
+6.1 drag handle
+  ลองใช้ @tiptap/extension-drag-handle-react ก่อน — ถ้าเป็น paid/Pro
+  หรือขัดกับ version 3.31 ที่ใช้อยู่ ให้หยุดแล้วรายงาน แล้วทำเองแบบเล็ก:
+  ปุ่มจับลอยซ้ายบล็อกที่เคอร์เซอร์อยู่ ใช้ ProseMirror view.dragging เดิม
+  (Figure มี draggable: true อยู่แล้วแต่ไม่มี handle ให้จับ)
+  ต้องลากได้ทั้ง ย่อหน้า / หัวข้อ / รูป / list item / บล็อกจาก 2b-5
+
+6.2 slash command
+  พิมพ์ "/" ที่ต้นบรรทัดว่าง → เมนูค้นหาได้ (ทั้งไทยและอังกฤษ) สำหรับ
+  หัวข้อ H2–H4 · bullet · ordered · quote · เส้นคั่น · รูป · ลิงก์ ·
+  ตาราง · FAQ · กล่องสรุป · pull-quote
+  ใช้ Suggestion utility ของ @tiptap/core (มีอยู่แล้ว) หรือ FloatingMenu
+  จาก @tiptap/react/menus ห้ามลง dependency ใหม่ถ้าไม่จำเป็น
+  คำค้นไทยต้องใช้ i18n key ไม่ใช่ literal ในโค้ด
+
+6.3 สารบัญในแผงขวาลากสลับได้
+  NewsSeoPanel.tsx มีสารบัญ (outlineTitle ~563) แบบอ่านอย่างเดียว
+  ให้คลิกหัวข้อ = เลื่อน editor ไปที่หัวข้อนั้น (อันนี้ทำก่อน คุ้มสุด)
+  และลากสลับ = ย้ายทั้ง section (หัวข้อ + เนื้อหาใต้มันจนถึงหัวข้อระดับ
+  เดียวกันตัวถัดไป) ถ้าข้อหลังทำให้ scope บาน ให้แยกเป็น step ย่อยแล้วบอกก่อน
+  หัวข้อที่ skipsLevel อยู่แล้วต้องยังไฮไลต์ได้เหมือนเดิม
+```
+
+---
+
+### 2b-7 — กันงานหาย และพื้นที่เขียน
+
+```text
+Phase 2b-7 — autosave, โหมดโฟกัส, ตัวนับคำในโหมด rich text
+
+7.1 autosave ฉบับร่าง
+  ตอนนี้บันทึกผ่าน form action เท่านั้น — เขียนบทความ 1,500 คำแล้วปิดแท็บ
+  หรือ session หมดอายุ = หายทั้งหมด ทั้งที่มี ContentRevision +
+  lib/content-revisions.ts พร้อมใช้อยู่แล้ว
+  ทำสองชั้น:
+    - ชั้นเบราว์เซอร์: เก็บ draft ลง localStorage key ที่ผูกกับ
+      articleId + locale ทุก ~5 วินาทีหลังหยุดพิมพ์ เปิดหน้าเดิมแล้วถ้า
+      draft ใหม่กว่าค่าจาก server ให้ขึ้น banner "มีฉบับร่างที่ยังไม่บันทึก
+      — กู้คืน / ทิ้ง" ห้ามกู้คืนอัตโนมัติ
+    - ชั้น server: autosave เป็น ContentRevision ทุก ~60 วินาทีเมื่อมีการ
+      เปลี่ยนแปลงจริง และ *ห้าม* แตะสถานะ/publishedAt ของบทความ
+      ต้องเช็กสิทธิ์ใน server action เหมือนทุก action ตาม AGENTS.md
+  เตือนก่อนออกจากหน้าเมื่อมีการแก้ที่ยังไม่บันทึก (beforeunload)
+
+7.2 โหมดโฟกัส
+  ปุ่มสลับที่ซ่อนแผง SEO 320px และขยายพื้นที่เขียนเป็นความกว้างเท่าหน้า
+  บทความจริง (ต่อจาก 2b-2 ข้อ 2.4) จำสถานะไว้ใน localStorage
+  แผงขวาต้องยังคำนวณอยู่เบื้องหลัง — ปิดการแสดงผล ไม่ใช่ปิดการคำนวณ
+  เพราะการบล็อกการเผยแพร่ (§3.5) อ้างผลนั้น
+
+7.3 ตัวนับคำในโหมด rich text
+  BodyField (โหมด MARKDOWN) แสดงจำนวนตัวอักษร + เวลาอ่านไว้ข้างช่อง
+  แต่โหมด HTML ไม่มีเลย ต้องเหลือบไปดูแผงขวา
+  ให้แสดง จำนวนคำ / เวลาอ่าน ใต้ editor โดยเรียก getContentStats() จาก
+  lib/content-stats.ts ตัวเดียวกับที่แผงขวาใช้ (ห้ามนับเองซ้ำ — การนับคำไทย
+  มีสูตรเฉพาะอยู่ในไฟล์นั้นแล้ว)
+```
+
+---
+
+### เกณฑ์ตรวจรับ Phase 2b
+
+```text
+ก่อนปิด Phase 2b ตรวจให้ครบ:
+
+  [ ] npm run verify ผ่าน
+  [ ] npm run test:e2e ผ่าน (หยุด npm run dev ก่อนรัน)
+  [ ] messages/en|th|zh|ru.json key ครบเท่ากันทุกไฟล์
+  [ ] ทุก mark/node ที่ editor สร้างได้ รอด sanitizeArticleHtml() — ไม่มีตัวไหน
+      ที่กดได้บนจอแล้วหายตอนบันทึก (นี่คือ 2b-0 ต้องมี test คุมไว้ถาวร)
+  [ ] เปิดบทความเก่าที่มีรูป + caption → caption เดิมยังอยู่ แก้ในที่ได้
+      บันทึกแล้วหน้า public แสดงเหมือนเดิม
+  [ ] บทความเก่าที่ไม่มี data-width แสดงผลหน้า public เหมือนเดิมทุกพิกเซล
+  [ ] บทความ MARKDOWN เดิมยังเปิดแก้และแสดงผลได้ (ห้ามพังไปกับ node ใหม่)
+  [ ] ลากรูปมาวาง → ขึ้น placeholder → upload เสร็จ → เป็น figure ที่มี mediaId
+      และรูปนั้นโผล่ในคลังสื่อ /admin/media ด้วย
+  [ ] paste จาก Word แล้วหัวข้อ/ย่อหน้า/list ไม่หาย และไม่มี style/class
+      หลุดเข้า DB
+  [ ] บทความที่มี FAQ block → JSON-LD หน้า public มี FAQPage และข้อ
+      "มีบล็อก FAQ" ในแผง SEO ขึ้นผ่าน
+  [ ] คะแนน SEO ที่คำนวณฝั่ง client ยังตรงกับฝั่ง server เป๊ะ
+  [ ] Lighthouse หน้าบทความ public ยังได้ SEO 100
+  [ ] CLS ของหน้าบทความไม่แย่ลงจากรูป wide/full (วัดก่อน-หลัง)
+```
+
+---
+
 ## §3 — Phase 3: SEO engine + inspector panel
 
 ```text
@@ -360,3 +748,8 @@ Phase 6 — เวิร์กโฟลว์และการแปล
 | ลิงก์ภายใน | เก็บเป็น path ไม่มี locale prefix | หนึ่งลิงก์ครอบ 4 ภาษา เหมือน Redirect.fromPath |
 | อันดับคีย์เวิร์ด | import CSV ก่อน ค่อยต่อ GSC API | ไม่ต้องรอ OAuth setup ก็ใช้งานได้จริงตั้งแต่วันแรก |
 | คะแนน SEO | เก็บ cache ใน DB + คำนวณสดใน editor | ตาราง list ต้องเรียงตามคะแนนโดยไม่คำนวณ 142 แถว |
+| ขีดเส้นใต้ในเนื้อหา | ปิดทิ้ง (`underline: false`) | prose-article ใช้ underline เป็นสัญญะของลิงก์อยู่แล้ว ขีดเส้นใต้ข้อความธรรมดาจะอ่านเป็นลิงก์ที่กดไม่ได้ |
+| ขีดฆ่า | เก็บไว้ + เพิ่ม `s` ใน ALLOWED_TAGS (คง `del` ไว้ด้วย) | `del` คือสิ่งที่ marked แปลง `~~x~~` ออกมา บทความ MARKDOWN เดิมต้องไม่พัง |
+| caption ของรูป | เนื้อหาของ node (`content: "inline*"`) ไม่ใช่ attribute | แก้ caption ในที่ได้ และ HTML ที่เก็บใน DB เป็น `<figcaption>` อยู่แล้ว จึงไม่ต้อง migrate |
+| ความกว้างรูป | `data-width` แยกจาก `data-align` | ความกว้างกับตำแหน่งเป็นสองเรื่อง ล็อกรวมกันแล้วจัดรูปแบบที่ต้องการไม่ได้ |
+| บล็อกสำเร็จรูป | แทนด้วย tag ที่ allowlist รับอยู่แล้ว + `data-*` เท่านั้น | ขยาย allowlist ให้รับ `div`/`class`/`style` คือเปิดช่อง XSS กลับมาเพื่อความสวยงาม |
