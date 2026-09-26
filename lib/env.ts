@@ -29,7 +29,12 @@
 function isLoopback(value: string): boolean {
   try {
     const { hostname } = new URL(value);
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname === "::1"
+    );
   } catch {
     return false;
   }
@@ -90,7 +95,10 @@ const RECOMMENDED: Array<[name: string, consequence: string]> = [
     so the real site gets a warning at boot rather than silently serving
     robots.txt's blanket disallow. See lib/indexing.ts.
   */
-  ["SITE_INDEXABLE", "robots.txt disallows everything and every response carries X-Robots-Tag: noindex"],
+  [
+    "SITE_INDEXABLE",
+    "robots.txt disallows everything and every response carries X-Robots-Tag: noindex",
+  ],
 
   /*
     The SEO and analytics integrations. Every one of them is RECOMMENDED and
@@ -98,12 +106,39 @@ const RECOMMENDED: Array<[name: string, consequence: string]> = [
     attached at all, and the admin cards for these are specified to render
     an empty "credentials not set yet" state rather than an error.
   */
-  ["CRON_SECRET", "the scheduled SEO and analytics jobs cannot authenticate, so no data is collected"],
-  ["GOOGLE_SA_EMAIL", "Search Console and GA4 panels stay empty — no service account to authenticate as"],
-  ["GOOGLE_SA_PRIVATE_KEY", "Search Console and GA4 panels stay empty — no service account to authenticate as"],
-  ["GSC_SITE_URL", "Search Console queries, impressions and index coverage are unavailable"],
+  [
+    "CRON_SECRET",
+    "the scheduled SEO and analytics jobs cannot authenticate, so no data is collected",
+  ],
+  [
+    "GOOGLE_SA_EMAIL",
+    "Search Console and GA4 panels stay empty — no service account to authenticate as",
+  ],
+  [
+    "GOOGLE_SA_PRIVATE_KEY",
+    "Search Console and GA4 panels stay empty — no service account to authenticate as",
+  ],
+  [
+    "GSC_SITE_URL",
+    "Search Console queries, impressions and index coverage are unavailable",
+  ],
   ["GA4_PROPERTY_ID", "GA4 traffic and conversion reporting is unavailable"],
-  ["PAGESPEED_API_KEY", "PageSpeed Insights runs unauthenticated and is rate limited, or fails"],
+  [
+    "PAGESPEED_API_KEY",
+    "PageSpeed Insights runs unauthenticated and is rate limited, or fails",
+  ],
+
+  /*
+    Who the monthly report and the SEO alerts are emailed to, comma
+    separated. Unset is a legitimate state, not a broken one: the reports
+    screen says nobody is configured, the scheduled send records a failure
+    an administrator can see, and nothing else about the site changes. Never
+    REQUIRED — the site has to run without any of this.
+  */
+  [
+    "REPORT_RECIPIENTS",
+    "the monthly report and SEO alerts have nowhere to go, so nothing is emailed",
+  ],
 
   /*
     The salt the realtime counter hashes a visit with — see
@@ -113,7 +148,10 @@ const RECOMMENDED: Array<[name: string, consequence: string]> = [
     guessable. Worth a warning precisely because the symptom is mild and
     silent: a slightly inflated count after every deploy.
   */
-  ["ANALYTICS_SALT", "live visitor counts reset on every restart instead of following a visit across one"],
+  [
+    "ANALYTICS_SALT",
+    "live visitor counts reset on every restart instead of following a visit across one",
+  ],
 ];
 
 export type EnvProblem = { name: string; detail: string };
@@ -154,7 +192,10 @@ export function collectEnvProblems(): {
     // http://127.0.0.1:3100, and refusing that would make the check fail
     // CI rather than a bad deploy.
     if (!/^https:\/\//.test(value) && !isLoopback(value)) {
-      fatal.push({ name, detail: `must be an https:// origin, got "${value}"` });
+      fatal.push({
+        name,
+        detail: `must be an https:// origin, got "${value}"`,
+      });
     }
   }
 
@@ -188,10 +229,14 @@ export function assertEnv(): void {
 
   if (fatal.length === 0) return;
 
-  const report = fatal.map(({ name, detail }) => `  • ${name} ${detail}`).join("\n");
+  const report = fatal
+    .map(({ name, detail }) => `  • ${name} ${detail}`)
+    .join("\n");
 
   if (process.env.NODE_ENV !== "production") {
-    console.warn(`[env] configuration problems (fatal in production):\n${report}`);
+    console.warn(
+      `[env] configuration problems (fatal in production):\n${report}`,
+    );
     return;
   }
 

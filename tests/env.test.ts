@@ -35,11 +35,13 @@ function validEnv(): NodeJS.ProcessEnv {
     SITE_INDEXABLE: "true",
     CRON_SECRET: "cron",
     GOOGLE_SA_EMAIL: "sa@project.iam.gserviceaccount.com",
-    GOOGLE_SA_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----",
+    GOOGLE_SA_PRIVATE_KEY:
+      "-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----",
     GSC_SITE_URL: "https://andamanassetsolution.com",
     GA4_PROPERTY_ID: "123456789",
     PAGESPEED_API_KEY: "psi-key",
     ANALYTICS_SALT: "salt",
+    REPORT_RECIPIENTS: "ceo@example.com",
   } as NodeJS.ProcessEnv;
 }
 
@@ -69,15 +71,19 @@ describe("collectEnvProblems — the SEO environment", () => {
     "GA4_PROPERTY_ID",
     "PAGESPEED_API_KEY",
     "ANALYTICS_SALT",
+    "REPORT_RECIPIENTS",
   ];
 
-  it.each(seoVars)("warns about a missing %s without making it fatal", (name) => {
-    delete process.env[name];
-    const { fatal, warnings } = collectEnvProblems();
+  it.each(seoVars)(
+    "warns about a missing %s without making it fatal",
+    (name) => {
+      delete process.env[name];
+      const { fatal, warnings } = collectEnvProblems();
 
-    expect(fatal.map((problem) => problem.name)).not.toContain(name);
-    expect(warnings.map((problem) => problem.name)).toContain(name);
-  });
+      expect(fatal.map((problem) => problem.name)).not.toContain(name);
+      expect(warnings.map((problem) => problem.name)).toContain(name);
+    },
+  );
 
   it("says what each one costs, rather than just naming it", () => {
     for (const name of seoVars) delete process.env[name];
@@ -106,22 +112,28 @@ describe("collectEnvProblems", () => {
     expect(warnings).toEqual([]);
   });
 
-  it.each(["DATABASE_URL", "NEXTAUTH_SECRET", "NEXTAUTH_URL", "NEXT_PUBLIC_SITE_URL"])(
-    "treats a missing %s as fatal",
-    (name) => {
-      delete process.env[name];
-      expect(collectEnvProblems().fatal.map((p) => p.name)).toContain(name);
-    },
-  );
+  it.each([
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "NEXT_PUBLIC_SITE_URL",
+  ])("treats a missing %s as fatal", (name) => {
+    delete process.env[name];
+    expect(collectEnvProblems().fatal.map((p) => p.name)).toContain(name);
+  });
 
   it("treats a whitespace-only value as missing", () => {
     process.env.NEXTAUTH_SECRET = "   ";
-    expect(collectEnvProblems().fatal.map((p) => p.name)).toContain("NEXTAUTH_SECRET");
+    expect(collectEnvProblems().fatal.map((p) => p.name)).toContain(
+      "NEXTAUTH_SECRET",
+    );
   });
 
   it("rejects a NEXTAUTH_SECRET short enough to brute-force", () => {
     process.env.NEXTAUTH_SECRET = "too-short";
-    const problem = collectEnvProblems().fatal.find((p) => p.name === "NEXTAUTH_SECRET");
+    const problem = collectEnvProblems().fatal.find(
+      (p) => p.name === "NEXTAUTH_SECRET",
+    );
     expect(problem?.detail).toMatch(/at least 32/);
   });
 
@@ -134,11 +146,14 @@ describe("collectEnvProblems", () => {
     },
   );
 
-  it.each(["NEXTAUTH_URL", "NEXT_PUBLIC_SITE_URL"])("rejects plain http on %s", (name) => {
-    process.env[name] = "http://andamanassetsolution.com";
-    const problem = collectEnvProblems().fatal.find((p) => p.name === name);
-    expect(problem?.detail).toMatch(/https/);
-  });
+  it.each(["NEXTAUTH_URL", "NEXT_PUBLIC_SITE_URL"])(
+    "rejects plain http on %s",
+    (name) => {
+      process.env[name] = "http://andamanassetsolution.com";
+      const problem = collectEnvProblems().fatal.find((p) => p.name === name);
+      expect(problem?.detail).toMatch(/https/);
+    },
+  );
 
   /*
     The e2e suite runs `next start` — so NODE_ENV=production — against
@@ -177,7 +192,10 @@ describe("assertEnv", () => {
   it("only warns outside production, so `next dev` still starts", () => {
     // NODE_ENV is typed as a readonly literal union; the whole object is
     // already a test-owned copy, so replacing it is the honest way in.
-    process.env = { ...process.env, NODE_ENV: "development" } as NodeJS.ProcessEnv;
+    process.env = {
+      ...process.env,
+      NODE_ENV: "development",
+    } as NodeJS.ProcessEnv;
     delete process.env.NEXTAUTH_SECRET;
     expect(() => assertEnv()).not.toThrow();
     expect(console.warn).toHaveBeenCalled();

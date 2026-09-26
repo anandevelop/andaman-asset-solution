@@ -19,12 +19,23 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, ArrowUpRight, CheckCircle2, Info, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Info,
+  XCircle,
+} from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
-import { getSeoAudit, type ContentTypeKey, type SeoIssue } from "@/lib/seo-audit";
+import {
+  getSeoAudit,
+  type ContentTypeKey,
+  type SeoIssue,
+} from "@/lib/seo-audit";
 import { getAuditOverview } from "@/lib/seo/audit-report";
+import { getRecentAlerts } from "@/lib/seo/alerts";
 import { TrendChart } from "@/components/admin/DashboardCharts";
 import { intlLocale } from "@/lib/format";
 
@@ -38,7 +49,10 @@ const CONTENT_ADMIN_HREF: Record<ContentTypeKey, string | null> = {
   static: null,
 };
 
-const SEVERITY_STYLE: Record<SeoIssue["severity"], { badge: string; icon: typeof AlertTriangle }> = {
+const SEVERITY_STYLE: Record<
+  SeoIssue["severity"],
+  { badge: string; icon: typeof AlertTriangle }
+> = {
   critical: { badge: "bg-red-50 text-red-700", icon: XCircle },
   warning: { badge: "bg-amber-50 text-amber-800", icon: AlertTriangle },
   minor: { badge: "bg-surface-muted text-ink-muted", icon: Info },
@@ -61,10 +75,11 @@ export default async function AdminSeoOverviewPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, audit, overview] = await Promise.all([
+  const [t, audit, overview, alerts] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSeoAudit(),
     getAuditOverview(),
+    getRecentAlerts(),
   ]);
 
   /* "71" alone says nothing; "71, up 4 since Tuesday" is the form anybody
@@ -82,7 +97,16 @@ export default async function AdminSeoOverviewPage(props: Props) {
     minor: audit.issues.filter((i) => i.severity === "minor").length,
   };
 
-  const structuredMissing = audit.structuredData.filter((s) => !s.implemented).length;
+  const structuredMissing = audit.structuredData.filter(
+    (s) => !s.implemented,
+  ).length;
+
+  const alertDayFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const generatedAtLabel = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
@@ -97,7 +121,9 @@ export default async function AdminSeoOverviewPage(props: Props) {
        title, and those two buttons were the only way into two of its tabs
        — which is exactly the problem the tab strip solves. */
     <div className="space-y-8">
-      <p className="text-sm text-ink-muted">{t("seo.subtitle", { date: generatedAtLabel })}</p>
+      <p className="text-sm text-ink-muted">
+        {t("seo.subtitle", { date: generatedAtLabel })}
+      </p>
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -125,7 +151,11 @@ export default async function AdminSeoOverviewPage(props: Props) {
                 {delta !== null && (
                   <span
                     className={`ml-1 text-xs tabular-nums ${
-                      delta > 0 ? "text-emerald-700" : delta < 0 ? "text-red-700" : "text-ink-muted"
+                      delta > 0
+                        ? "text-emerald-700"
+                        : delta < 0
+                          ? "text-red-700"
+                          : "text-ink-muted"
                     }`}
                   >
                     {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta)}
@@ -133,13 +163,17 @@ export default async function AdminSeoOverviewPage(props: Props) {
                 )}
               </p>
               <p className="mt-1 text-xs text-ink-muted">
-                {t("seo.overview.auditScoreHint", { urls: overview.latest.urlCount })}
+                {t("seo.overview.auditScoreHint", {
+                  urls: overview.latest.urlCount,
+                })}
               </p>
             </>
           ) : (
             <>
               <p className="mt-4 text-3xl font-semibold text-ink-muted">—</p>
-              <p className="mt-1 text-xs text-ink-muted">{t("seo.overview.neverRun")}</p>
+              <p className="mt-1 text-xs text-ink-muted">
+                {t("seo.overview.neverRun")}
+              </p>
             </>
           )}
         </div>
@@ -152,16 +186,22 @@ export default async function AdminSeoOverviewPage(props: Props) {
             <span className="text-3xl font-semibold tabular-nums text-primary">
               {audit.totals.indexableLocalePages}
             </span>
-            <span className="text-sm text-ink-muted">/{audit.totals.totalLocalePages}</span>
+            <span className="text-sm text-ink-muted">
+              /{audit.totals.totalLocalePages}
+            </span>
           </p>
           <p className="mt-1 text-xs text-ink-muted">
             {audit.totals.noIndexCount > 0
-              ? t("seo.indexablePagesHint", { count: audit.totals.noIndexCount })
+              ? t("seo.indexablePagesHint", {
+                  count: audit.totals.noIndexCount,
+                })
               : t("seo.indexablePagesHintNone")}
           </p>
         </div>
 
-        <div className={`admin-card ${audit.issues.length > 0 ? "border-red-200" : ""}`}>
+        <div
+          className={`admin-card ${audit.issues.length > 0 ? "border-red-200" : ""}`}
+        >
           <p
             className={`text-xs font-medium uppercase tracking-wide ${
               audit.issues.length > 0 ? "text-red-700" : "text-ink-muted"
@@ -179,13 +219,21 @@ export default async function AdminSeoOverviewPage(props: Props) {
             </span>
           </p>
           <p className="mt-1 text-xs text-ink-muted">
-            {t("seo.issuesBreakdown", { critical: counts.critical, warning: counts.warning, minor: counts.minor })}
+            {t("seo.issuesBreakdown", {
+              critical: counts.critical,
+              warning: counts.warning,
+              minor: counts.minor,
+            })}
           </p>
           {overview.latest && (
             <p className="mt-2 text-xs">
-              <Link href={`/${locale}/admin/seo/audit`} className="text-ink-muted underline hover:text-primary">
+              <Link
+                href={`/${locale}/admin/seo/audit`}
+                className="text-ink-muted underline hover:text-primary"
+              >
                 {t("seo.overview.urlsFailing", {
-                  count: overview.latest.urlCount - overview.latest.passAllCount,
+                  count:
+                    overview.latest.urlCount - overview.latest.passAllCount,
                 })}
               </Link>
             </p>
@@ -200,7 +248,9 @@ export default async function AdminSeoOverviewPage(props: Props) {
             <span className="text-3xl font-semibold tabular-nums text-primary">
               {audit.structuredData.length - structuredMissing}
             </span>
-            <span className="text-sm text-ink-muted">/{audit.structuredData.length}</span>
+            <span className="text-sm text-ink-muted">
+              /{audit.structuredData.length}
+            </span>
           </p>
           <p className="mt-1 text-xs text-ink-muted">
             {structuredMissing > 0
@@ -233,6 +283,67 @@ export default async function AdminSeoOverviewPage(props: Props) {
         </section>
       )}
 
+      {/*
+        What the alert rules have said lately.
+
+        Seven days, newest first, and never hidden when empty: "nothing has
+        fired" and "alerting is not running" look identical on a card that
+        disappears, and the second is the state somebody needs to notice.
+        The rules themselves are switched on the reports screen, which is
+        where the thresholds are explained.
+      */}
+      <section className="admin-card">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="admin-label mb-0">{t("seo.overview.alertsTitle")}</h2>
+          <Link
+            href={`/${locale}/admin/reports`}
+            className="text-xs text-primary underline"
+          >
+            {t("seo.overview.alertsSettings")}
+          </Link>
+        </div>
+        <p className="admin-hint">{t("seo.overview.alertsHint")}</p>
+
+        {alerts.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-muted">
+            {t("seo.overview.alertsEmpty")}
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-1.5">
+            {alerts.map((alert) => (
+              <li
+                key={alert.id}
+                className="flex items-start gap-2 rounded-xs border border-primary/10 px-3 py-2"
+              >
+                <AlertTriangle
+                  size={14}
+                  className="mt-0.5 shrink-0 text-amber-700"
+                  aria-hidden
+                />
+                <div>
+                  {/*
+                    The rule's name in the reader's language, then the
+                    stored message underneath. The message is written in
+                    English at the moment it fires and kept verbatim — it
+                    carries the path and the count, and an alert read six
+                    months from now should say what happened rather than
+                    depend on a message file that has moved on. The
+                    translated label is what makes it legible here.
+                  */}
+                  <p className="text-sm text-ink">
+                    {t(`reports.alerts.${alert.kind}.label` as never)}
+                  </p>
+                  <p className="text-xs text-ink-muted">{alert.message}</p>
+                  <p className="text-xs text-ink-muted">
+                    {alertDayFormat.format(alert.createdAt)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* Rule 8's "credentials not set yet" state. Everything Google knows
           — clicks, positions, index coverage — arrives in phase 4, and an
           empty card that says why is not the same as a broken one. */}
@@ -245,13 +356,21 @@ export default async function AdminSeoOverviewPage(props: Props) {
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <section className="admin-card overflow-hidden p-0!">
           <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-            <h2 className="text-sm font-semibold text-primary">{t("seo.issuesTitle")}</h2>
-            <span className="ml-auto text-xs text-ink-muted">{t("seo.issuesActionHint")}</span>
+            <h2 className="text-sm font-semibold text-primary">
+              {t("seo.issuesTitle")}
+            </h2>
+            <span className="ml-auto text-xs text-ink-muted">
+              {t("seo.issuesActionHint")}
+            </span>
           </div>
 
           {audit.issues.length === 0 ? (
             <p className="flex items-center gap-2.5 px-5 py-6 text-sm text-ink-muted">
-              <CheckCircle2 size={16} className="shrink-0 text-emerald-600" aria-hidden />
+              <CheckCircle2
+                size={16}
+                className="shrink-0 text-emerald-600"
+                aria-hidden
+              />
               {t("seo.issuesEmpty")}
             </p>
           ) : (
@@ -261,7 +380,11 @@ export default async function AdminSeoOverviewPage(props: Props) {
                 const Icon = style.icon;
                 const body = (
                   <div className="flex items-start gap-3 border-b border-primary/5 px-5 py-3.5 last:border-b-0">
-                    <Icon size={15} className="mt-0.5 shrink-0 text-ink-muted" aria-hidden />
+                    <Icon
+                      size={15}
+                      className="mt-0.5 shrink-0 text-ink-muted"
+                      aria-hidden
+                    />
                     <span
                       className={`mt-0.5 shrink-0 rounded-xs px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${style.badge}`}
                     >
@@ -269,7 +392,12 @@ export default async function AdminSeoOverviewPage(props: Props) {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-primary">
-                        {t(`seo.issues.${issue.key}`, issue.count !== undefined ? { count: issue.count } : undefined)}
+                        {t(
+                          `seo.issues.${issue.key}`,
+                          issue.count !== undefined
+                            ? { count: issue.count }
+                            : undefined,
+                        )}
                       </p>
                     </div>
                     {issue.href && (
@@ -299,7 +427,9 @@ export default async function AdminSeoOverviewPage(props: Props) {
 
         <section className="admin-card p-0!">
           <div className="border-b border-primary/10 px-5 py-3.5">
-            <h2 className="text-sm font-semibold text-primary">{t("seo.technicalTitle")}</h2>
+            <h2 className="text-sm font-semibold text-primary">
+              {t("seo.technicalTitle")}
+            </h2>
           </div>
           <div className="px-5 py-3">
             {audit.technical.map((item) => (
@@ -308,11 +438,21 @@ export default async function AdminSeoOverviewPage(props: Props) {
                 className="flex items-center gap-2.5 border-b border-primary/5 py-2 text-sm last:border-b-0"
               >
                 {item.implemented ? (
-                  <CheckCircle2 size={15} className="shrink-0 text-emerald-600" aria-hidden />
+                  <CheckCircle2
+                    size={15}
+                    className="shrink-0 text-emerald-600"
+                    aria-hidden
+                  />
                 ) : (
-                  <XCircle size={15} className="shrink-0 text-red-600" aria-hidden />
+                  <XCircle
+                    size={15}
+                    className="shrink-0 text-red-600"
+                    aria-hidden
+                  />
                 )}
-                <span className={`flex-1 ${item.implemented ? "text-ink" : "text-red-700"}`}>
+                <span
+                  className={`flex-1 ${item.implemented ? "text-ink" : "text-red-700"}`}
+                >
                   {t(`seo.technical.${item.key}`)}
                 </span>
               </div>
@@ -326,7 +466,9 @@ export default async function AdminSeoOverviewPage(props: Props) {
                 <span
                   key={s.type}
                   className={`rounded-xs px-2 py-1 text-[10.5px] font-semibold ${
-                    s.implemented ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                    s.implemented
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-red-50 text-red-700"
                   }`}
                 >
                   {s.type}
@@ -341,7 +483,9 @@ export default async function AdminSeoOverviewPage(props: Props) {
       {/* ── Completeness by content type ────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
         <div className="border-b border-primary/10 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-primary">{t("seo.completenessTitle")}</h2>
+          <h2 className="text-sm font-semibold text-primary">
+            {t("seo.completenessTitle")}
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse">
@@ -365,7 +509,10 @@ export default async function AdminSeoOverviewPage(props: Props) {
                   return (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="inline-block h-[5px] w-14 overflow-hidden rounded-full bg-surface-muted">
-                        <span className={`block h-full rounded-full ${barColor(share)}`} style={{ width: `${share}%` }} />
+                        <span
+                          className={`block h-full rounded-full ${barColor(share)}`}
+                          style={{ width: `${share}%` }}
+                        />
                       </span>
                       <span className="tabular-nums text-ink-muted">
                         {n}/{row.total}
@@ -374,20 +521,37 @@ export default async function AdminSeoOverviewPage(props: Props) {
                   );
                 };
                 return (
-                  <tr key={row.key} className="border-b border-primary/5 text-sm last:border-b-0">
-                    <td className="admin-td font-medium text-ink">{t(`seo.contentType.${row.key}`)}</td>
+                  <tr
+                    key={row.key}
+                    className="border-b border-primary/5 text-sm last:border-b-0"
+                  >
+                    <td className="admin-td font-medium text-ink">
+                      {t(`seo.contentType.${row.key}`)}
+                    </td>
                     <td className="admin-td tabular-nums">{row.total}</td>
-                    <td className="admin-td">{row.total > 0 ? frac(row.titleComplete) : "—"}</td>
-                    <td className="admin-td">{row.total > 0 ? frac(row.descriptionComplete) : "—"}</td>
-                    <td className="admin-td">{row.total > 0 ? frac(row.ogImageComplete) : "—"}</td>
+                    <td className="admin-td">
+                      {row.total > 0 ? frac(row.titleComplete) : "—"}
+                    </td>
+                    <td className="admin-td">
+                      {row.total > 0 ? frac(row.descriptionComplete) : "—"}
+                    </td>
+                    <td className="admin-td">
+                      {row.total > 0 ? frac(row.ogImageComplete) : "—"}
+                    </td>
                     <td className="admin-td">
                       {row.schemaType ? (
-                        <span className="font-medium text-emerald-700">{row.schemaType}</span>
+                        <span className="font-medium text-emerald-700">
+                          {row.schemaType}
+                        </span>
                       ) : (
-                        <span className="text-ink-muted">{t("seo.table.noSchema")}</span>
+                        <span className="text-ink-muted">
+                          {t("seo.table.noSchema")}
+                        </span>
                       )}
                     </td>
-                    <td className="admin-td">{row.total > 0 ? frac(row.languageComplete) : "—"}</td>
+                    <td className="admin-td">
+                      {row.total > 0 ? frac(row.languageComplete) : "—"}
+                    </td>
                     <td className="admin-td">
                       {href && (
                         <Link

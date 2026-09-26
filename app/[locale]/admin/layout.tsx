@@ -52,13 +52,9 @@ type Props = {
 export default async function AdminLayout(props: Props) {
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   // VIEWER, not the requireAdmin() default of EDITOR: this layout wraps
   // every admin route, so any minimum stricter than the lowest real role
@@ -67,7 +63,9 @@ export default async function AdminLayout(props: Props) {
   // Role.VIEWER guard right below this one, and including the (crm) zone
   // that SALES uses every day. The floor a route actually needs belongs to
   // that route's own guard; this one only has to admit anyone signed in.
-  const user = await requireAdmin(locale, Role.VIEWER, { allowTwoFactorSetup: true });
+  const user = await requireAdmin(locale, Role.VIEWER, {
+    allowTwoFactorSetup: true,
+  });
 
   // Live sidebar/topbar queue badges (see lib/admin-nav-counts.ts) — one
   // cheap set of counts per navigation, not per widget.
@@ -80,7 +78,9 @@ export default async function AdminLayout(props: Props) {
   // Relative times are formatted here rather than in the topbar: it is a
   // client component, and a time rendered there would differ from the one
   // the server sent for the first paint.
-  const relative = new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: "auto" });
+  const relative = new Intl.RelativeTimeFormat(intlLocale(locale), {
+    numeric: "auto",
+  });
   const whenLabel = (at: Date) => {
     const minutes = Math.round((at.getTime() - Date.now()) / 60_000);
     if (minutes > -60) return relative.format(Math.min(minutes, 0), "minute");
@@ -100,31 +100,44 @@ export default async function AdminLayout(props: Props) {
     <AuthProvider>
       <CommandK locale={locale} role={user.role} />
       <div className="min-h-screen bg-surface lg:flex">
-        <AdminSidebar locale={locale} user={user} counts={counts} />
+        {/*
+          `display: contents` so this wrapper is invisible to layout — the
+          sidebar stays the flex item it has always been — while giving the
+          print stylesheet one thing to hide. /admin/reports is printed as
+          the report alone, and the chrome around it has several root
+          elements (a mobile bar, the rail, the drawer) that would each
+          have to be found and marked otherwise. See @media print in
+          globals.css.
+        */}
+        <div data-admin-chrome className="contents">
+          <AdminSidebar locale={locale} user={user} counts={counts} />
+        </div>
 
         <div className="flex-1 lg:min-w-0">
-          <AdminTopbar
-            locale={locale}
-            counts={counts}
-            asOfLabel={asOfLabel}
-            notifications={feed.rows.map((row) => ({
-              id: row.id,
-              title: row.title,
-              body: row.body,
-              href: row.href,
-              read: row.readAt !== null,
-              when: whenLabel(row.createdAt),
-            }))}
-            unreadCount={feed.unread}
-            labels={{
-              search: t("search"),
-              searchLeads: t("leads.searchPlaceholder"),
-              language: t("topbar.language"),
-              notifications: t("topbar.notifications"),
-              noNotifications: t("topbar.noNotifications"),
-              markAllRead: t("topbar.markAllRead"),
-            }}
-          />
+          <div data-admin-chrome className="contents">
+            <AdminTopbar
+              locale={locale}
+              counts={counts}
+              asOfLabel={asOfLabel}
+              notifications={feed.rows.map((row) => ({
+                id: row.id,
+                title: row.title,
+                body: row.body,
+                href: row.href,
+                read: row.readAt !== null,
+                when: whenLabel(row.createdAt),
+              }))}
+              unreadCount={feed.unread}
+              labels={{
+                search: t("search"),
+                searchLeads: t("leads.searchPlaceholder"),
+                language: t("topbar.language"),
+                notifications: t("topbar.notifications"),
+                noNotifications: t("topbar.noNotifications"),
+                markAllRead: t("topbar.markAllRead"),
+              }}
+            />
+          </div>
 
           {/*
             Full width, gutters only — no max-width.

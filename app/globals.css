@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -452,7 +452,9 @@
   /* :not(), because `blockquote[…] p` outranks the attribution rule below
      on specificity and was setting the attribution at quote size — the
      attribution is a <p> inside the quote like any other. */
-  & blockquote[data-block="pull-quote"] > p:not([data-block="quote-attribution"]) {
+  &
+    blockquote[data-block="pull-quote"]
+    > p:not([data-block="quote-attribution"]) {
     @apply text-2xl font-light lg:text-3xl;
   }
 
@@ -1109,18 +1111,32 @@
   }
 
   .spotlight-section {
-    background: linear-gradient(180deg, var(--color-primary-900) 0%, var(--color-primary) 60%, var(--color-primary-900) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--color-primary-900) 0%,
+      var(--color-primary) 60%,
+      var(--color-primary-900) 100%
+    );
   }
 
   .spotlight-cone {
-    background: linear-gradient(180deg, rgba(255, 236, 210, 0.22), rgba(232, 179, 132, 0.06) 70%, transparent);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 236, 210, 0.22),
+      rgba(232, 179, 132, 0.06) 70%,
+      transparent
+    );
     clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
     filter: blur(6px);
     animation: flicker 7s ease-in-out infinite;
   }
 
   .spotlight-pool {
-    background: radial-gradient(closest-side, rgba(232, 179, 132, 0.38), transparent);
+    background: radial-gradient(
+      closest-side,
+      rgba(232, 179, 132, 0.38),
+      transparent
+    );
   }
 
   .spotlight-podium {
@@ -1420,5 +1436,57 @@
   .reveal {
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  /*
+    The monthly report, printed.
+
+    Save-as-PDF on /admin/reports is the whole export path — there is no
+    headless browser in the image to render one server-side, which would
+    cost around 400MB and a second rendering path to keep in step with the
+    screen. What makes that workable is that the printed page is the report
+    and nothing else: no sidebar, no top bar, no controls, no editor, no
+    alert switches. Anything that is an admin control rather than part of
+    the report carries `print:hidden` at its own call site; this handles
+    the chrome that wraps every admin page and does not know what it
+    contains.
+
+    Selected by data-attribute rather than by class so a Tailwind class
+    rename in the admin shell cannot quietly put the sidebar back on the
+    CEO's PDF.
+  */
+  [data-admin-chrome] {
+    display: none !important;
+  }
+
+  /*
+    The report itself: flat on the page. The card's border, shadow and
+    rounded corners are screen affordances that read as a stray box on
+    paper, and the padding is the page margin's job.
+  */
+  .report-sheet {
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /*
+    Two pages is the brief, so nothing inside may be orphaned across a
+    break: a table header stranded at the foot of page one costs half a
+    page and reads as a mistake.
+  */
+  .report-sheet section,
+  .report-sheet table {
+    break-inside: avoid;
+  }
+
+  .report-sheet h2,
+  .report-sheet h3 {
+    break-after: avoid;
+  }
+
+  @page {
+    margin: 14mm;
   }
 }

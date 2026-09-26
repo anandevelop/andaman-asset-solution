@@ -608,7 +608,8 @@
       "analytics": "Reports & analytics",
       "media": "Media",
       "mobileView": "Mobile view",
-      "publishing": "Review & publish"
+      "publishing": "Review & publish",
+      "reports": "Reports"
     },
     "pages": {
       "section": "Website content",
@@ -2145,6 +2146,114 @@
         "title": "4-language content completeness",
         "viewMissing": "See what's missing ({count} items)",
         "viewMissingNone": "Every locale is complete"
+      },
+      "title": "Reports",
+      "subtitle": "The monthly report, ready to print or send — readable in two minutes.",
+      "emailSubject": "Andaman SEO report",
+      "audience": {
+        "executive": "Executive",
+        "marketing": "Marketing",
+        "engineering": "Engineering"
+      },
+      "controls": {
+        "audience": "Written for",
+        "executiveHint": "Headline figures, leads, what to do next",
+        "marketingHint": "Queries, pages, languages and countries",
+        "engineeringHint": "Audit, Core Web Vitals, indexing, 404s",
+        "period": "Period",
+        "lastMonth": "Last month",
+        "thisMonth": "This month",
+        "lastQuarter": "Last quarter",
+        "language": "Report language",
+        "print": "Print / Save as PDF",
+        "csv": "CSV",
+        "excel": "Excel"
+      },
+      "view": {
+        "title": "SEO report",
+        "dataUpTo": "Data up to",
+        "headlineTitle": "Headline figures",
+        "googleClicks": "Clicks from Google",
+        "googleLeads": "Enquiries from Google",
+        "allLeads": "Enquiries, all channels",
+        "auditScore": "Page health",
+        "notConnected": "Not connected to Google yet",
+        "tableTitle": "By development: arrivals from Google to enquiries",
+        "columnProject": "Development",
+        "columnClicks": "Clicks from Google",
+        "columnGoogleLeads": "Enquiries from Google",
+        "columnRate": "Rate",
+        "columnAllLeads": "All channels",
+        "newsRow": "News & articles",
+        "tableEmpty": "No enquiry in this period can be traced to a page yet.",
+        "footnote": "\"Enquiries from Google\" counts visitors whose first page came from a Google search result with no campaign tag. The last column is context only and is never used to work out a rate.",
+        "countedSince": "Counted since",
+        "countedSinceUnknown": "Nothing has been recorded yet — this began when landing capture was deployed and cannot be filled in backwards.",
+        "vitalsTitle": "Core Web Vitals",
+        "vitalsNotEnough": "Not enough data",
+        "notesTitle": "What we should do",
+        "notesDraft": "Automatic draft",
+        "notesEditedBy": "Last edited by",
+        "notesEmpty": "Nothing written yet."
+      },
+      "note": {
+        "title": "What we should do this month",
+        "hint": "Drafted from this month's figures. Edit it before the report goes out — an untouched draft is sent labelled as one.",
+        "save": "Save note",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "failed": "Could not save",
+        "tooLong": "Too long",
+        "useDraft": "Restore the draft"
+      },
+      "schedule": {
+        "title": "Scheduled send",
+        "hint": "Who the monthly report goes to.",
+        "recipients": "To",
+        "noRecipients": "No addresses configured — set REPORT_RECIPIENTS.",
+        "notConfigured": "No mail server configured — set SMTP_HOST.",
+        "lastSent": "Last sent",
+        "neverSent": "Never sent",
+        "succeeded": "delivered",
+        "failed": "failed",
+        "sendTest": "Send a test now",
+        "sending": "Sending…",
+        "sentOk": "Sent.",
+        "draftWarning": "Nobody has edited this month's note. If it is sent as it stands, it goes out labelled \"automatic draft\" rather than as though a person wrote it.",
+        "noScheduler": "Nothing in the application triggers this — POST /api/cron/monthly-report has to be called by a scheduler outside it."
+      },
+      "alerts": {
+        "title": "Alert rules",
+        "hint": "Checked after each scheduled job. Thresholds are fixed in the code so the screen cannot disagree with what is applied.",
+        "awaitingGoogle": "Waiting for Google — this rule cannot fire yet",
+        "failed": "Could not change this rule",
+        "INDEX_DROP": {
+          "label": "Pages dropping out of the index",
+          "detail": "More than {urls} URLs in a day"
+        },
+        "NOT_FOUND_SPIKE": {
+          "label": "404s spiking",
+          "detail": "One path more than {hits} times in a day"
+        },
+        "VITALS_REGRESSION": {
+          "label": "Core Web Vitals worse after a deploy",
+          "detail": "Leaves the \"good\" band within {hours} hours"
+        },
+        "CLICKS_DROP": {
+          "label": "Clicks falling",
+          "detail": "More than {percent}% against the week before"
+        },
+        "CRON_FAILED": {
+          "label": "A scheduled job failed",
+          "detail": "Reported the first time it happens"
+        }
+      },
+      "draft": {
+        "auditIssue": "Fill in {rule} — {count} pages are missing it.",
+        "vitalsPoor": "{metric} is {value} on real visits, outside Google's \"good\" band — worth looking at the pages it is worst on.",
+        "topProject": "{project} earned the most enquiries from search this period ({leads}).",
+        "noGoogleLeads": "{project} received enquiries but none of them arrived from a search result.",
+        "notConnected": "Search Console is not connected, so clicks, queries and rankings are missing from this report."
       }
     },
     "settings": {
@@ -2709,7 +2818,11 @@
         "trendTitle": "Score over the last runs",
         "googleTitle": "From Google",
         "googleNotConnected": "Not connected yet. Clicks, positions and index coverage need a Google service account — they arrive with the Search Console work, and nothing on this page is waiting on them.",
-        "trendPointLabel": "Score"
+        "trendPointLabel": "Score",
+        "alertsTitle": "Alerts",
+        "alertsHint": "Last seven days. Checked after each scheduled job.",
+        "alertsEmpty": "Nothing has been raised in the last seven days.",
+        "alertsSettings": "Rule settings"
       }
     },
     "seoTranslations": {

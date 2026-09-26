@@ -189,6 +189,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   seoRuleWaivers SeoRuleWaiver[]
+  reportNotes    ReportNote[]    @relation("ReportNoteEditor")
 
   @@map("users")
 }
@@ -3003,4 +3004,123 @@ model HomeSection {
   updatedAt DateTime @updatedAt
 
   @@map("home_sections")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Reporting (SEO phase 6)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// The "what we should do this month" paragraph at the foot of a report.
+///
+/// Drafted by the system from the audit, the Core Web Vitals figures and
+/// the lead numbers, then edited by whoever is sending it. The distinction
+/// matters at send time: a note nobody has touched goes out carrying an
+/// "automatic draft" label rather than quietly reading as though a person
+/// wrote it. `updatedById` being null is what "nobody has touched it"
+/// means — there is no separate boolean to keep in step with it.
+///
+/// One row per period per audience per language, because the three
+/// audiences are told different things and the four languages are not
+/// translations of one text that a machine could produce.
+model ReportNote {
+  id String @id @default(cuid())
+
+  /// First day of the month the report covers, UTC. A date, not a
+  /// timestamp: "the August report" is a month, and a timestamp invites
+  /// two rows for one month that differ by a few hours.
+  period   DateTime @db.Date
+  /// executive | marketing | engineering — see lib/reports/audience.ts.
+  audience String
+  locale   String
+
+  body String
+
+  /// Who last edited it. Null means the text is still exactly what the
+  /// system drafted, which is what puts the "automatic draft" label on the
+  /// sent report.
+  updatedById String?
+  updatedBy   User?   @relation("ReportNoteEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([period, audience, locale])
+  @@index([period])
+  @@map("report_notes")
+}
+
+/// One attempt to email a monthly report, successful or not.
+///
+/// A log rather than a setting: the reports screen shows "last sent 1 Sep
+/// 08:00 · delivered", and a failed send has to be visible there too.
+/// Storing only the latest state in a key/value row would lose the history
+/// that says whether this is the first failure or the fourth.
+model ReportSend {
+  id String @id @default(cuid())
+
+  period   DateTime @db.Date
+  audience String
+  locale   String
+
+  sentAt DateTime @default(now())
+  ok     Boolean
+  /// The transport's own message when ok is false — an administrator can
+  /// act on "Invalid login" or "ECONNREFUSED".
+  error  String?
+  /// How many addresses it went to, so "delivered" is not ambiguous when
+  /// the recipient list is empty.
+  recipientCount Int @default(0)
+
+  @@index([sentAt])
+  @@map("report_sends")
+}
+
+/// Which alert rules are on. One row per rule, created on first read.
+///
+/// Thresholds are deliberately not stored: they are fixed in
+/// lib/seo/alerts.ts where the rule that uses them lives, so a number on
+/// screen can never disagree with the number being applied. What the team
+/// asked to control is whether a rule speaks at all.
+model SeoAlertRule {
+  kind SeoAlertKind @id
+
+  enabled Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("seo_alert_rules")
+}
+
+/// What each alert rule watches for.
+enum SeoAlertKind {
+  /// More than three URLs dropped out of the index in a day.
+  INDEX_DROP
+  /// One path returned 404 more than fifty times in a day.
+  NOT_FOUND_SPIKE
+  /// A Core Web Vital left the "good" band within 48 hours of a deploy.
+  VITALS_REGRESSION
+  /// Search clicks fell more than 25% against the week before.
+  CLICKS_DROP
+  /// A scheduled job failed.
+  CRON_FAILED
+}
+
+/// A fired alert, kept so the SEO overview can show what happened lately
+/// even though the email has long since been read and deleted.
+///
+/// `payload` holds the numbers the message was built from — the rule, the
+/// threshold and the observed value — so a stale alert can be judged
+/// months later without re-deriving anything.
+model SeoAlert {
+  id String @id @default(cuid())
+
+  kind    SeoAlertKind
+  message String
+  payload Json
+
+  createdAt DateTime @default(now())
+
+  @@index([kind, createdAt])
+  @@index([createdAt])
+  @@map("seo_alerts")
 }

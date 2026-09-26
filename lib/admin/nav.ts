@@ -50,6 +50,7 @@ import {
   CalendarDays,
   Contact,
   FileCheck2,
+  FileText,
   Files,
   History,
   LayoutDashboard,
@@ -77,7 +78,13 @@ import type { AdminNavCounts } from "@/lib/admin-nav-counts";
  */
 export const ROLE_SETS = {
   /** Anyone who can sign in at all. */
-  EVERYONE: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.SALES, Role.VIEWER],
+  EVERYONE: [
+    Role.SUPER_ADMIN,
+    Role.ADMIN,
+    Role.EDITOR,
+    Role.SALES,
+    Role.VIEWER,
+  ],
 
   /**
    * Content work.
@@ -196,7 +203,11 @@ export const NAV_TAB_GROUPS = {
    */
   publishing: [
     { key: "queue", segment: "", roles: ROLE_SETS.CONTENT },
-    { key: "translations", segment: "/translations", roles: ROLE_SETS.EDITOR_UP },
+    {
+      key: "translations",
+      segment: "/translations",
+      roles: ROLE_SETS.EDITOR_UP,
+    },
   ],
   /**
    * Sitewide SEO.
@@ -260,7 +271,12 @@ export const NAV_TAB_GROUPS = {
    * pass carryParams so `project` and `assignedTo` survive the switch.
    */
   leads: [
-    { key: "pipeline", segment: "/leads", roles: ROLE_SETS.CRM, capability: "viewAllLeads" },
+    {
+      key: "pipeline",
+      segment: "/leads",
+      roles: ROLE_SETS.CRM,
+      capability: "viewAllLeads",
+    },
     {
       key: "appointments",
       segment: "/appointments",
@@ -315,12 +331,7 @@ export type NavItem = Gated & {
 
 /** Also the i18n keys under `admin.navGroups.*`. */
 export type NavGroupKey =
-  | "overview"
-  | "sales"
-  | "properties"
-  | "content"
-  | "growth"
-  | "system";
+  "overview" | "sales" | "properties" | "content" | "growth" | "system";
 
 export type NavGroup = {
   key: NavGroupKey;
@@ -336,7 +347,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     key: "overview",
     labelKey: null,
     items: [
-      { key: "dashboard", href: "", icon: LayoutDashboard, roles: ROLE_SETS.EVERYONE },
+      {
+        key: "dashboard",
+        href: "",
+        icon: LayoutDashboard,
+        roles: ROLE_SETS.EVERYONE,
+      },
     ],
   },
 
@@ -444,8 +460,18 @@ export const ADMIN_NAV: readonly NavGroup[] = [
          events/[id]/registrations — so a sibling /events/registrations tab
          would point at nothing. It belongs with the event workspace, not
          with the list. */
-      { key: "events", href: "/events", icon: CalendarDays, roles: ROLE_SETS.CONTENT },
-      { key: "media", href: "/media", icon: LibraryBig, roles: ROLE_SETS.CONTENT },
+      {
+        key: "events",
+        href: "/events",
+        icon: CalendarDays,
+        roles: ROLE_SETS.CONTENT,
+      },
+      {
+        key: "media",
+        href: "/media",
+        icon: LibraryBig,
+        roles: ROLE_SETS.CONTENT,
+      },
       {
         key: "publishing",
         href: "/publishing",
@@ -485,6 +511,17 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: BarChart3,
         roles: ROLE_SETS.ADMIN_UP,
       },
+      {
+        /* The monthly report. In `growth` and not `system`, although the
+           blueprint filed it under Administration: it answers "how is the
+           site doing", which is this group's whole subject, while
+           Administration is about how the system behaves and who did what.
+           The same split SEO and Analytics were moved for. */
+        key: "reports",
+        href: "/reports",
+        icon: FileText,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
     ],
   },
 
@@ -495,7 +532,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     key: "system",
     labelKey: "system",
     items: [
-      { key: "settings", href: "/settings", icon: Settings, roles: ROLE_SETS.ADMIN_UP },
+      {
+        key: "settings",
+        href: "/settings",
+        icon: Settings,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
       {
         key: "users",
         href: "/users",
@@ -535,8 +577,13 @@ export function canSee(role: Role | null | undefined, node: Gated): boolean {
  * the link, which is exactly the shape of the "Mobile view" defect this
  * file's header describes.
  */
-export function canSeeItem(role: Role | null | undefined, key: string): boolean {
-  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+export function canSeeItem(
+  role: Role | null | undefined,
+  key: string,
+): boolean {
+  const item = ADMIN_NAV.flatMap((group) => group.items).find(
+    (i) => i.key === key,
+  );
   return item ? canSee(role, item) : false;
 }
 
@@ -560,7 +607,9 @@ export function visibleNav(
 
     if (surface === "rail") items = items.filter((item) => !item.mobileOnly);
     if (surface === "drawer") {
-      items = [...items].sort((a, b) => Number(!!b.mobileOnly) - Number(!!a.mobileOnly));
+      items = [...items].sort(
+        (a, b) => Number(!!b.mobileOnly) - Number(!!a.mobileOnly),
+      );
     }
 
     return { ...group, items };
@@ -574,8 +623,13 @@ export function visibleNav(
  * in NAV_TAB_GROUPS ("pagesAbout"). Both are looked up here so PageTabs
  * takes one prop and does not need to know which kind it was handed.
  */
-export function visibleTabs(role: Role | null | undefined, key: string): NavTab[] {
-  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+export function visibleTabs(
+  role: Role | null | undefined,
+  key: string,
+): NavTab[] {
+  const item = ADMIN_NAV.flatMap((group) => group.items).find(
+    (i) => i.key === key,
+  );
   const tabs = item?.tabs ?? NAV_TAB_GROUPS[key as keyof typeof NAV_TAB_GROUPS];
   return tabs?.filter((tab) => canSee(role, tab)) ?? [];
 }
@@ -589,7 +643,9 @@ export function visibleTabs(role: Role | null | undefined, key: string): NavTab[
  * PageTabs and visibleTabRows cannot disagree about where a tab points.
  */
 export function tabBase(key: string): string | null {
-  const item = ADMIN_NAV.flatMap((group) => group.items).find((i) => i.key === key);
+  const item = ADMIN_NAV.flatMap((group) => group.items).find(
+    (i) => i.key === key,
+  );
   if (!item) return null;
   return item.tabsBase ?? item.href;
 }
@@ -662,9 +718,12 @@ export function activeItemKey(pathname: string, base: string): string | null {
       // The dashboard is `base` itself, so it only ever matches exactly —
       // as a prefix it would match every page in the back office.
       const hit =
-        href === "" ? pathname === full : pathname === full || pathname.startsWith(`${full}/`);
+        href === ""
+          ? pathname === full
+          : pathname === full || pathname.startsWith(`${full}/`);
 
-      if (hit && (!best || full.length > best.length)) best = { key: item.key, length: full.length };
+      if (hit && (!best || full.length > best.length))
+        best = { key: item.key, length: full.length };
     }
   }
 

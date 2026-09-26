@@ -55,8 +55,10 @@ describe("admin nav config", () => {
       if (!item.capability) continue;
 
       const refused = item.roles.filter((role) => !canSee(role, item));
-      expect(refused, `${item.key} lists ${refused.join(", ")} but its capability refuses them`)
-        .toEqual([]);
+      expect(
+        refused,
+        `${item.key} lists ${refused.join(", ")} but its capability refuses them`,
+      ).toEqual([]);
     }
   });
 
@@ -93,8 +95,12 @@ describe("activeItemKey", () => {
   });
 
   it("matches a child route to its item", () => {
-    expect(activeItemKey("/th/admin/projects/abc123/units", base)).toBe("projects");
-    expect(activeItemKey("/th/admin/settings/notifications", base)).toBe("settings");
+    expect(activeItemKey("/th/admin/projects/abc123/units", base)).toBe(
+      "projects",
+    );
+    expect(activeItemKey("/th/admin/settings/notifications", base)).toBe(
+      "settings",
+    );
   });
 
   it("gives the dashboard only its own path", () => {
@@ -131,7 +137,9 @@ describe("activeItemKey", () => {
   it("highlights the hub from anywhere inside it", () => {
     expect(activeItemKey("/th/admin/pages", base)).toBe("pages");
     expect(activeItemKey("/th/admin/pages/home/sections", base)).toBe("pages");
-    expect(activeItemKey("/th/admin/pages/about/milestones", base)).toBe("pages");
+    expect(activeItemKey("/th/admin/pages/about/milestones", base)).toBe(
+      "pages",
+    );
   });
 
   it("works for every locale prefix", () => {
@@ -158,10 +166,12 @@ describe("visibleNav", () => {
        memory; filtering must remove rows, never reorder them. */
     const seen = visibleNav(Role.SUPER_ADMIN);
 
-    expect(seen.map((group) => group.key)).toEqual(ADMIN_NAV.map((group) => group.key));
-    expect(seen.flatMap((group) => group.items.map((item) => item.key))).toEqual(
-      items.map((item) => item.key),
+    expect(seen.map((group) => group.key)).toEqual(
+      ADMIN_NAV.map((group) => group.key),
     );
+    expect(
+      seen.flatMap((group) => group.items.map((item) => item.key)),
+    ).toEqual(items.map((item) => item.key));
   });
 });
 
@@ -171,7 +181,9 @@ describe("the Pages hub", () => {
        app/[locale]/admin/pages. A tab pointing at a 404 is the same defect
        as a menu row pointing at a denied page — which is what kept
        `contact` out of this strip until its screen was built. */
-    const hub = ADMIN_NAV.flatMap((group) => group.items).find((item) => item.key === "pages");
+    const hub = ADMIN_NAV.flatMap((group) => group.items).find(
+      (item) => item.key === "pages",
+    );
 
     expect(hub?.tabs?.map((tab) => tab.segment)).toEqual([
       "/home",
@@ -183,7 +195,9 @@ describe("the Pages hub", () => {
        which is what kept the order list from being a picture of the page.
        /admin/pages/home is that picture now — see lib/home-outline.ts. */
     expect(visibleTabs(Role.EDITOR, "pagesHome")).toEqual([]);
-    expect(visibleTabs(Role.EDITOR, "pagesAbout").map((tab) => tab.segment)).toEqual([
+    expect(
+      visibleTabs(Role.EDITOR, "pagesAbout").map((tab) => tab.segment),
+    ).toEqual([
       "/story",
       "/corporate",
       "/why-us",
@@ -196,7 +210,9 @@ describe("the Pages hub", () => {
   it("aliases every path next.config.js redirects into it", () => {
     // Two lists that have to agree: one lights the menu, the other moves
     // the browser. A path in only one of them is a half-finished move.
-    const hub = ADMIN_NAV.flatMap((group) => group.items).find((item) => item.key === "pages");
+    const hub = ADMIN_NAV.flatMap((group) => group.items).find(
+      (item) => item.key === "pages",
+    );
 
     expect([...(hub?.alias ?? [])].sort()).toEqual(
       [
@@ -219,28 +235,33 @@ describe("the Pages hub", () => {
 
 describe("the publishing hub", () => {
   it("offers the review queue and the translation report as tabs", () => {
-    expect(visibleTabs(Role.EDITOR, "publishing").map((tab) => tab.segment)).toEqual([
-      "",
-      "/translations",
-    ]);
+    expect(
+      visibleTabs(Role.EDITOR, "publishing").map((tab) => tab.segment),
+    ).toEqual(["", "/translations"]);
   });
 
   it("hides the translations tab from VIEWER, who the page would refuse", () => {
     /* The queue is a read and VIEWER may have it; the translation report
        calls requireAdmin(locale, Role.EDITOR) with no read floor under it.
        Offering the tab anyway is the "Mobile view" defect in miniature. */
-    expect(visibleTabs(Role.VIEWER, "publishing").map((tab) => tab.key)).toEqual(["queue"]);
+    expect(
+      visibleTabs(Role.VIEWER, "publishing").map((tab) => tab.key),
+    ).toEqual(["queue"]);
     expect(canSeeItem(Role.VIEWER, "publishing")).toBe(true);
   });
 
   it("no longer has a sidebar row of its own for translations", () => {
-    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map(
+      (item) => item.key,
+    );
 
     expect(keys).not.toContain("seoTranslations");
   });
 
   it("keeps the old SEO path highlighting this row", () => {
-    expect(activeItemKey("/th/admin/seo/translations", "/th/admin")).toBe("publishing");
+    expect(activeItemKey("/th/admin/seo/translations", "/th/admin")).toBe(
+      "publishing",
+    );
 
     // And has not swallowed the SEO hub it used to live under.
     expect(activeItemKey("/th/admin/seo", "/th/admin")).toBe("seo");
@@ -274,6 +295,7 @@ describe("the sidebar each role gets", () => {
       "publishing",
       "seo",
       "analytics",
+      "reports",
       "settings",
       "users",
       "activity",
@@ -291,56 +313,97 @@ describe("the sidebar each role gets", () => {
       "publishing",
       "seo",
       "analytics",
+      "reports",
       "settings",
     ],
     // Content only. No CRM (viewAllLeads is false for EDITOR — the PDPA
     // fix), no SEO, no analytics, no settings.
-    EDITOR: ["dashboard", "salesTeam", "projects", "pages", "news", "events", "media", "publishing"],
+    EDITOR: [
+      "dashboard",
+      "salesTeam",
+      "projects",
+      "pages",
+      "news",
+      "events",
+      "media",
+      "publishing",
+    ],
     // CRM plus the roster they are on. salesTeam is in CONTENT_AND_CRM.
     SALES: ["dashboard", "leads", "salesTeam"],
     // Read-only: everything the (catalog) and (content) zones admit them
     // to, and nothing else. Not salesTeam — CONTENT_AND_CRM leaves VIEWER
     // out because that page's own guard is a Role.SALES rank they do not
     // meet; see the note on that set in lib/admin/nav.ts.
-    VIEWER: ["dashboard", "projects", "pages", "news", "events", "media", "publishing"],
+    VIEWER: [
+      "dashboard",
+      "projects",
+      "pages",
+      "news",
+      "events",
+      "media",
+      "publishing",
+    ],
   };
 
-  for (const [role, expected] of Object.entries(EXPECTED) as [Role, string[]][]) {
+  for (const [role, expected] of Object.entries(EXPECTED) as [
+    Role,
+    string[],
+  ][]) {
     it(`${role} sees ${expected.length} rows`, () => {
-      const seen = visibleNav(role, "rail").flatMap((group) => group.items.map((i) => i.key));
+      const seen = visibleNav(role, "rail").flatMap((group) =>
+        group.items.map((i) => i.key),
+      );
 
       expect(seen).toEqual(expected);
     });
   }
 
-  it("is fourteen rows for the owner", () => {
+  it("is fifteen rows for the owner", () => {
     // The number the restructure was aiming at, stated once so a diff that
-    // changes it has to change this line too.
-    expect(EXPECTED.SUPER_ADMIN).toHaveLength(14);
+    // changes it has to change this line too. Fourteen until the monthly
+    // report joined `growth` — which is the kind of change this assertion
+    // exists to make somebody look at.
+    expect(EXPECTED.SUPER_ADMIN).toHaveLength(15);
   });
 
   it("groups them by job, not by department", () => {
-    const groups = visibleNav(Role.SUPER_ADMIN, "rail").map((group) => group.key);
+    const groups = visibleNav(Role.SUPER_ADMIN, "rail").map(
+      (group) => group.key,
+    );
 
-    expect(groups).toEqual(["overview", "sales", "properties", "content", "growth", "system"]);
+    expect(groups).toEqual([
+      "overview",
+      "sales",
+      "properties",
+      "content",
+      "growth",
+      "system",
+    ]);
   });
 
   it("labels every group it draws", () => {
     // A heading key that does not resolve renders the raw key at the top
     // of a menu section. next-intl throws for a missing one, so this is
     // the cheaper failure.
-    const messages = JSON.parse(readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"));
+    const messages = JSON.parse(
+      readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"),
+    );
 
     for (const group of visibleNav(Role.SUPER_ADMIN, "rail")) {
       if (!group.labelKey) continue;
-      expect(messages.admin.navGroups[group.labelKey], group.labelKey).toBeTruthy();
+      expect(
+        messages.admin.navGroups[group.labelKey],
+        group.labelKey,
+      ).toBeTruthy();
     }
   });
 });
 
 describe("leads and appointments", () => {
   it("are one sidebar row with two tabs", () => {
-    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map(
+      (item) => item.key,
+    );
 
     expect(keys).not.toContain("appointments");
     expect(visibleTabs(Role.SALES, "leads").map((tab) => tab.segment)).toEqual([
@@ -368,7 +431,9 @@ describe("mobileOnly", () => {
     /* /admin/m is a phone layout for reps between viewings. In the rail it
        offered a worse version of the two rows directly above it to
        somebody at a monitor. */
-    const rail = visibleNav(Role.SALES, "rail").flatMap((g) => g.items.map((i) => i.key));
+    const rail = visibleNav(Role.SALES, "rail").flatMap((g) =>
+      g.items.map((i) => i.key),
+    );
 
     expect(rail).not.toContain("mobileView");
     expect(rail).toContain("leads");
@@ -376,7 +441,9 @@ describe("mobileOnly", () => {
   });
 
   it("puts it first in its group in the drawer", () => {
-    const sales = visibleNav(Role.SALES, "drawer").find((g) => g.key === "sales");
+    const sales = visibleNav(Role.SALES, "drawer").find(
+      (g) => g.key === "sales",
+    );
 
     expect(sales?.items[0]?.key).toBe("mobileView");
   });
@@ -384,14 +451,20 @@ describe("mobileOnly", () => {
   it("leaves it in the unfiltered menu, which is what ⌘K reads", () => {
     // Hidden from one surface, not removed from the product: the route
     // stays and the palette still finds it.
-    const all = visibleNav(Role.SALES).flatMap((g) => g.items.map((i) => i.key));
+    const all = visibleNav(Role.SALES).flatMap((g) =>
+      g.items.map((i) => i.key),
+    );
 
     expect(all).toContain("mobileView");
   });
 
   it("reorders without dropping or duplicating anything", () => {
-    const rail = visibleNav(Role.SUPER_ADMIN, "rail").flatMap((g) => g.items.map((i) => i.key));
-    const drawer = visibleNav(Role.SUPER_ADMIN, "drawer").flatMap((g) => g.items.map((i) => i.key));
+    const rail = visibleNav(Role.SUPER_ADMIN, "rail").flatMap((g) =>
+      g.items.map((i) => i.key),
+    );
+    const drawer = visibleNav(Role.SUPER_ADMIN, "drawer").flatMap((g) =>
+      g.items.map((i) => i.key),
+    );
 
     expect([...drawer].sort()).toEqual([...rail, "mobileView"].sort());
     expect(new Set(drawer).size).toBe(drawer.length);
@@ -403,7 +476,9 @@ describe("the project workspace", () => {
     /* "Progress" and "E-brochures" were rows of their own for screens that
        belong to a project. Their per-project halves are tabs of the
        workspace; the cross-project lists are tabs of this row's list. */
-    const keys = ADMIN_NAV.flatMap((group) => group.items).map((item) => item.key);
+    const keys = ADMIN_NAV.flatMap((group) => group.items).map(
+      (item) => item.key,
+    );
 
     expect(keys).not.toContain("progress");
     expect(keys).not.toContain("eBrochures");
@@ -428,11 +503,9 @@ describe("the project workspace", () => {
        /admin/progress and /admin/e-brochures kept their addresses, so the
        three pages render PageTabs with baseHref="". A segment that lost
        its leading path here would resolve to /admin<segment> and 404. */
-    expect(visibleTabs(Role.EDITOR, "projects").map((tab) => tab.segment)).toEqual([
-      "/projects",
-      "/progress",
-      "/e-brochures",
-    ]);
+    expect(
+      visibleTabs(Role.EDITOR, "projects").map((tab) => tab.segment),
+    ).toEqual(["/projects", "/progress", "/e-brochures"]);
   });
 });
 
@@ -459,7 +532,9 @@ describe("the SEO hub", () => {
     expect(activeItemKey("/th/admin/settings/seo", "/th/admin")).toBe("seo");
 
     // Without the alias being longest-match, "/settings" would win it.
-    expect(activeItemKey("/th/admin/settings/privacy", "/th/admin")).toBe("settings");
+    expect(activeItemKey("/th/admin/settings/privacy", "/th/admin")).toBe(
+      "settings",
+    );
   });
 
   it("is invisible below ADMIN, tabs included", () => {
@@ -507,13 +582,18 @@ describe("visibleTabRows", () => {
     */
     const adminDir = join(process.cwd(), "app", "[locale]", "admin");
     const zones = readdirSync(adminDir).filter(
-      (entry) => /^\(.+\)$/.test(entry) && statSync(join(adminDir, entry)).isDirectory(),
+      (entry) =>
+        /^\(.+\)$/.test(entry) && statSync(join(adminDir, entry)).isDirectory(),
     );
 
     const missing = visibleTabRows(Role.SUPER_ADMIN).filter((row) => {
       const relative = row.href.replace(/^\//, "");
-      const zone = zones.find((z) => existsSync(join(adminDir, z, relative.split("/")[0])));
-      const dir = zone ? join(adminDir, zone, relative) : join(adminDir, relative);
+      const zone = zones.find((z) =>
+        existsSync(join(adminDir, z, relative.split("/")[0])),
+      );
+      const dir = zone
+        ? join(adminDir, zone, relative)
+        : join(adminDir, relative);
       return !existsSync(join(dir, "page.tsx"));
     });
 
@@ -524,10 +604,15 @@ describe("visibleTabRows", () => {
     // The palette renders "admin.nav.<itemKey> · admin.tabs.<itemKey>.
     // <tabKey>". A row whose two halves do not both resolve renders a raw
     // key in the one place people look when they are lost.
-    const messages = JSON.parse(readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"));
+    const messages = JSON.parse(
+      readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"),
+    );
 
     for (const row of visibleTabRows(Role.SUPER_ADMIN)) {
-      expect(messages.admin.nav[row.itemKey], `nav.${row.itemKey}`).toBeTruthy();
+      expect(
+        messages.admin.nav[row.itemKey],
+        `nav.${row.itemKey}`,
+      ).toBeTruthy();
       expect(
         messages.admin.tabs[row.itemKey]?.[row.tabKey],
         `tabs.${row.itemKey}.${row.tabKey}`,
@@ -552,7 +637,9 @@ describe("every admin redirect", () => {
   */
   const config = readFileSync(join(process.cwd(), "next.config.js"), "utf8");
 
-  const adminRedirectSources = [...config.matchAll(/source:\s*"\/:locale\/admin([^"]*)"/g)]
+  const adminRedirectSources = [
+    ...config.matchAll(/source:\s*"\/:locale\/admin([^"]*)"/g),
+  ]
     .map((match) => match[1])
     // Dynamic segments cannot appear in an alias, which is a plain
     // prefix — "/progress/:projectId" is aliased as "/progress".

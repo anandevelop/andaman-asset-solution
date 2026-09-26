@@ -29,6 +29,7 @@
 import { NextResponse } from "next/server";
 import { guardCron } from "@/lib/seo/cron-auth";
 import { runSeoAudit } from "@/lib/seo/run-audit";
+import { recordCronFailure, runAlertChecks } from "@/lib/seo/alerts";
 
 /** Seconds. Node's default would cut a full-site audit short. */
 export const maxDuration = 300;
@@ -50,9 +51,18 @@ export async function POST(request: Request) {
       is.
     */
     const result = await runSeoAudit({ baseUrl: new URL(request.url).origin });
-    return NextResponse.json({ ok: true, ...result });
+
+    // The alert rules read what the jobs just wrote — see runAlertChecks.
+    const alerts = await runAlertChecks();
+
+    return NextResponse.json({ ok: true, ...result, alerts });
   } catch (error) {
     console.error("[cron/seo-audit] failed", error);
+
+    // A failed run is itself an alert: until this existed, "the audit
+    // errored" and "nobody has triggered the audit yet" looked identical
+    // on every screen.
+    await recordCronFailure("SEO audit", error).catch(() => {});
 
     // 500 on purpose — see the header. A scheduler that sees 200 will not
     // retry, and nobody finds out the audit stopped running until the

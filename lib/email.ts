@@ -60,7 +60,8 @@ function getTransporter(): Transporter {
 
 function fromAddress(): string {
   const name = process.env.SMTP_FROM_NAME || siteConfig.name;
-  const email = process.env.SMTP_FROM_EMAIL || "no-reply@andamanassetsolution.com";
+  const email =
+    process.env.SMTP_FROM_EMAIL || "no-reply@andamanassetsolution.com";
   return `"${name}" <${email}>`;
 }
 
@@ -126,8 +127,73 @@ export async function sendDiagnosticEmail(
   } catch (error) {
     // The message is shown to an administrator, who is the person who can
     // act on "Invalid login" or "ECONNREFUSED".
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
+}
+
+/**
+ * A scheduled send whose outcome is recorded.
+ *
+ * Between the two shapes above: not fire-and-forget, because ReportSend
+ * stores whether the monthly report actually went out and "we think so"
+ * is not an answer anybody can act on — and not the settings screen's
+ * diagnostic either, because nobody is standing there watching it.
+ *
+ * NOT_CONFIGURED is returned rather than thrown: a deployment with no SMTP
+ * is a deployment that has not finished being set up, not a broken one, and
+ * the reports screen says so in a sentence instead of showing a stack
+ * trace.
+ */
+export async function sendReportEmail(args: {
+  to: string[];
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<
+  { ok: true; recipientCount: number } | { ok: false; error: string }
+> {
+  if (!isEmailConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
+  if (args.to.length === 0) return { ok: false, error: "NO_RECIPIENTS" };
+
+  try {
+    await getTransporter().sendMail({
+      from: fromAddress(),
+      to: args.to.join(", "),
+      subject: singleLine(args.subject),
+      html: args.html,
+      text: args.text,
+    });
+
+    return { ok: true, recipientCount: args.to.length };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * The addresses scheduled reports and alerts go to.
+ *
+ * An environment variable rather than a settings row: it is deployment
+ * configuration, it contains no content anybody edits day to day, and
+ * putting it in the settings table would have meant adding it to the
+ * allowlist the settings form rewrites wholesale — where a save of an
+ * unrelated field clears it.
+ *
+ * Empty is a legitimate state and never an error. Nothing is sent, the
+ * reports screen says nobody is configured, and the site runs exactly as
+ * before.
+ */
+export function reportRecipients(): string[] {
+  return (process.env.REPORT_RECIPIENTS ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter((address) => address.includes("@"));
 }
 
 // ── Escaping ────────────────────────────────────────────────────────────
@@ -342,7 +408,10 @@ export async function sendRsvpConfirmationEmail(args: {
     return;
   }
 
-  const t = await getTranslations({ locale: args.locale, namespace: "events.rsvp.confirmationEmail" });
+  const t = await getTranslations({
+    locale: args.locale,
+    namespace: "events.rsvp.confirmationEmail",
+  });
 
   const dateFormat = new Intl.DateTimeFormat(intlLocale(args.locale), {
     weekday: "long",
@@ -431,14 +500,21 @@ export async function notifyBuyersOfProgress(args: {
       `ความคืบหน้างานก่อสร้าง · ${args.projectName}`,
       `เรียน ${buyer.name}`,
       `รอบเดือน: ${args.monthLabel}`,
-      args.percentComplete !== null ? `ความคืบหน้ารวม: ${args.percentComplete}%` : "",
+      args.percentComplete !== null
+        ? `ความคืบหน้ารวม: ${args.percentComplete}%`
+        : "",
       args.summary ?? "",
       args.url,
     ]
       .filter(Boolean)
       .join("\n");
 
-    await sendMail({ to: buyer.email, subject: `ความคืบหน้างานก่อสร้าง · ${args.projectName}`, html, text });
+    await sendMail({
+      to: buyer.email,
+      subject: `ความคืบหน้างานก่อสร้าง · ${args.projectName}`,
+      html,
+      text,
+    });
   }
 
   return args.buyers.length;

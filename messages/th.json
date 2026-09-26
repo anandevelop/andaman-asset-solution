@@ -608,7 +608,8 @@
       "analytics": "รายงานและสถิติ",
       "media": "คลังสื่อ",
       "mobileView": "โหมดมือถือ",
-      "publishing": "ตรวจและเผยแพร่"
+      "publishing": "ตรวจและเผยแพร่",
+      "reports": "รายงาน"
     },
     "pages": {
       "section": "เนื้อหาเว็บไซต์",
@@ -2145,6 +2146,114 @@
         "title": "ความสมบูรณ์ของเนื้อหา 4 ภาษา",
         "viewMissing": "ดูรายการที่ยังขาด ({count} รายการ)",
         "viewMissingNone": "เนื้อหาครบทุกภาษาแล้ว"
+      },
+      "title": "รายงาน",
+      "subtitle": "รายงานประจำเดือน พร้อมพิมพ์หรือส่ง — อ่านจบใน 2 นาที",
+      "emailSubject": "รายงาน SEO อันดามัน",
+      "audience": {
+        "executive": "ผู้บริหาร",
+        "marketing": "การตลาด",
+        "engineering": "ทีมพัฒนา"
+      },
+      "controls": {
+        "audience": "เขียนให้ใครอ่าน",
+        "executiveHint": "ตัวเลขหลัก ผู้สนใจ และสิ่งที่ควรทำต่อ",
+        "marketingHint": "คำค้น หน้าเว็บ ภาษา และประเทศ",
+        "engineeringHint": "ผลตรวจหน้าเว็บ Core Web Vitals การเก็บ index และ 404",
+        "period": "ช่วงเวลา",
+        "lastMonth": "เดือนที่แล้ว",
+        "thisMonth": "เดือนนี้",
+        "lastQuarter": "ไตรมาสที่แล้ว",
+        "language": "ภาษารายงาน",
+        "print": "พิมพ์ / บันทึก PDF",
+        "csv": "CSV",
+        "excel": "Excel"
+      },
+      "view": {
+        "title": "รายงาน SEO",
+        "dataUpTo": "ข้อมูลถึงวันที่",
+        "headlineTitle": "ตัวเลขหลัก",
+        "googleClicks": "คลิกจาก Google",
+        "googleLeads": "ผู้สนใจจาก Google",
+        "allLeads": "ผู้สนใจทุกช่องทาง",
+        "auditScore": "สุขภาพหน้าเว็บ",
+        "notConnected": "ยังไม่เชื่อม Google",
+        "tableTitle": "แต่ละโครงการ: คนเข้าจาก Google สู่ผู้สนใจ",
+        "columnProject": "โครงการ",
+        "columnClicks": "คลิกจาก Google",
+        "columnGoogleLeads": "ผู้สนใจจาก Google",
+        "columnRate": "อัตรา",
+        "columnAllLeads": "ทุกช่องทาง",
+        "newsRow": "ข่าว & บทความ",
+        "tableEmpty": "ยังไม่มีผู้สนใจในช่วงนี้ที่สาวกลับไปหาหน้าเว็บได้",
+        "footnote": "\"ผู้สนใจจาก Google\" นับเฉพาะคนที่เข้าเว็บครั้งแรกจากผลค้นหา Google และไม่มีแท็กแคมเปญ คอลัมน์สุดท้ายแสดงไว้ดูภาพรวมเท่านั้น ไม่ได้ใช้คิดอัตรา",
+        "countedSince": "นับตั้งแต่",
+        "countedSinceUnknown": "ยังไม่มีข้อมูล — เริ่มเก็บตอนที่ landing capture ขึ้นใช้งาน และย้อนหลังไม่ได้",
+        "vitalsTitle": "Core Web Vitals",
+        "vitalsNotEnough": "ตัวอย่างไม่พอ",
+        "notesTitle": "สิ่งที่ควรทำ",
+        "notesDraft": "ร่างอัตโนมัติ",
+        "notesEditedBy": "แก้ล่าสุดโดย",
+        "notesEmpty": "ยังไม่มีใครเขียน"
+      },
+      "note": {
+        "title": "สิ่งที่ควรทำเดือนนี้",
+        "hint": "ระบบร่างจากตัวเลขของเดือนนี้ กดแก้ก่อนส่งได้ — ถ้าไม่มีใครแก้ จะส่งออกไปพร้อมป้ายว่าเป็นร่างอัตโนมัติ",
+        "save": "บันทึก",
+        "saving": "กำลังบันทึก…",
+        "saved": "บันทึกแล้ว",
+        "failed": "บันทึกไม่สำเร็จ",
+        "tooLong": "ยาวเกินไป",
+        "useDraft": "เอาร่างเดิมกลับมา"
+      },
+      "schedule": {
+        "title": "ส่งอัตโนมัติ",
+        "hint": "รายงานประจำเดือนส่งถึงใคร",
+        "recipients": "ถึง",
+        "noRecipients": "ยังไม่ได้ตั้งอีเมลผู้รับ — ตั้งที่ REPORT_RECIPIENTS",
+        "notConfigured": "ยังไม่ได้ตั้งเมลเซิร์ฟเวอร์ — ตั้งที่ SMTP_HOST",
+        "lastSent": "ส่งล่าสุด",
+        "neverSent": "ยังไม่เคยส่ง",
+        "succeeded": "สำเร็จ",
+        "failed": "ล้มเหลว",
+        "sendTest": "ส่งทดสอบตอนนี้",
+        "sending": "กำลังส่ง…",
+        "sentOk": "ส่งแล้ว",
+        "draftWarning": "เดือนนี้ยังไม่มีใครแก้ \"สิ่งที่ควรทำ\" ถ้าส่งตามนี้ จะติดป้าย \"ร่างอัตโนมัติ\" ไปด้วย ไม่ส่งเงียบ ๆ ราวกับคนเขียนเอง",
+        "noScheduler": "ตัวเว็บไม่ได้ตั้งเวลาให้เอง — ต้องมีตัวตั้งเวลาข้างนอกมายิง POST /api/cron/monthly-report"
+      },
+      "alerts": {
+        "title": "กฎแจ้งเตือน",
+        "hint": "เช็กหลัง cron แต่ละรอบ ค่าเกณฑ์ตายตัวอยู่ในโค้ด หน้าจอจึงไม่มีทางแสดงคนละค่ากับที่ใช้จริง",
+        "awaitingGoogle": "รอเชื่อม Google — กฎนี้ยังทำงานไม่ได้",
+        "failed": "เปลี่ยนกฎนี้ไม่สำเร็จ",
+        "INDEX_DROP": {
+          "label": "หน้าที่ index ลดลง",
+          "detail": "มากกว่า {urls} URL ใน 1 วัน"
+        },
+        "NOT_FOUND_SPIKE": {
+          "label": "404 พุ่ง",
+          "detail": "path เดียวเกิน {hits} ครั้งต่อวัน"
+        },
+        "VITALS_REGRESSION": {
+          "label": "CWV แย่ลงหลัง deploy",
+          "detail": "หลุดเกณฑ์ \"ดี\" ภายใน {hours} ชม."
+        },
+        "CLICKS_DROP": {
+          "label": "คลิกลดลง",
+          "detail": "มากกว่า {percent}% เทียบสัปดาห์ก่อน"
+        },
+        "CRON_FAILED": {
+          "label": "cron ล้มเหลว",
+          "detail": "แจ้งตั้งแต่ครั้งแรก"
+        }
+      },
+      "draft": {
+        "auditIssue": "เติม {rule} ที่ขาดอยู่ {count} หน้า",
+        "vitalsPoor": "{metric} วัดจากผู้ใช้จริงอยู่ที่ {value} หลุดเกณฑ์ \"ดี\" ของ Google — ควรไปดูหน้าที่แย่ที่สุดก่อน",
+        "topProject": "{project} ได้ผู้สนใจจากการค้นหามากที่สุดในช่วงนี้ ({leads} ราย)",
+        "noGoogleLeads": "{project} มีผู้สนใจเข้ามา แต่ไม่มีรายไหนมาจากผลค้นหาเลย",
+        "notConnected": "ยังไม่ได้เชื่อม Search Console รายงานนี้จึงยังไม่มีคลิก คำค้น และอันดับ"
       }
     },
     "settings": {
@@ -2709,7 +2818,11 @@
         "trendTitle": "คะแนนย้อนหลังตามรอบที่รัน",
         "googleTitle": "ข้อมูลจาก Google",
         "googleNotConnected": "ยังไม่ได้เชื่อม — คลิก อันดับ และการเก็บ index ต้องใช้ service account ของ Google จะมาพร้อมงาน Search Console และไม่มีอะไรในหน้านี้ที่รอมันอยู่",
-        "trendPointLabel": "คะแนน"
+        "trendPointLabel": "คะแนน",
+        "alertsTitle": "แจ้งเตือน",
+        "alertsHint": "7 วันล่าสุด เช็กหลัง cron แต่ละรอบ",
+        "alertsEmpty": "7 วันที่ผ่านมาไม่มีการแจ้งเตือน",
+        "alertsSettings": "ตั้งกฎ"
       }
     },
     "seoTranslations": {

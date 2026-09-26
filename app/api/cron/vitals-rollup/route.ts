@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { guardCron } from "@/lib/seo/cron-auth";
 import { runVitalsRollup } from "@/lib/analytics/vitals-rollup";
+import { recordCronFailure, runAlertChecks } from "@/lib/seo/alerts";
 
 /** Seconds. A day of measurements for one site is a few thousand rows, so
  *  this is generous rather than necessary — but a retention sweep that is
@@ -32,9 +33,21 @@ export async function POST(request: Request) {
 
   try {
     const result = await runVitalsRollup();
-    return NextResponse.json({ ok: true, ...result });
+
+    // Checked here rather than on a schedule of its own: the vitals rules
+    // read exactly what this run just wrote, so any other moment either
+    // repeats yesterday's answer or races the write.
+    const alerts = await runAlertChecks();
+
+    return NextResponse.json({ ok: true, ...result, alerts });
   } catch (error) {
     console.error("[cron/vitals-rollup] failed", error);
+
+    // Recorded before the response, so a failure is visible on the SEO
+    // overview even to somebody who never sees this status code — nothing
+    // else can tell "the job errored" from "nobody has triggered it yet".
+    await recordCronFailure("vitals rollup", error).catch(() => {});
+
     return NextResponse.json({ ok: false, error: "ROLLUP_FAILED" }, { status: 500 });
   }
 }

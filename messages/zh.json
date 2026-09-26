@@ -608,7 +608,8 @@
       "analytics": "报告与统计",
       "media": "媒体库",
       "mobileView": "移动端视图",
-      "publishing": "审核与发布"
+      "publishing": "审核与发布",
+      "reports": "报告"
     },
     "pages": {
       "section": "网站内容",
@@ -2145,6 +2146,114 @@
         "title": "四语言内容完整度",
         "viewMissing": "查看缺失项（{count} 项）",
         "viewMissingNone": "所有语言内容均已完整"
+      },
+      "title": "报告",
+      "subtitle": "每月报告，可直接打印或发送 — 两分钟读完。",
+      "emailSubject": "Andaman SEO 报告",
+      "audience": {
+        "executive": "管理层",
+        "marketing": "市场",
+        "engineering": "技术"
+      },
+      "controls": {
+        "audience": "写给谁看",
+        "executiveHint": "核心数据、客户线索、下一步该做什么",
+        "marketingHint": "关键词、页面、语言与国家",
+        "engineeringHint": "页面检查、核心网页指标、收录、404",
+        "period": "时间范围",
+        "lastMonth": "上个月",
+        "thisMonth": "本月",
+        "lastQuarter": "上季度",
+        "language": "报告语言",
+        "print": "打印 / 保存为 PDF",
+        "csv": "CSV",
+        "excel": "Excel"
+      },
+      "view": {
+        "title": "SEO 报告",
+        "dataUpTo": "数据截至",
+        "headlineTitle": "核心数据",
+        "googleClicks": "来自 Google 的点击",
+        "googleLeads": "来自 Google 的意向客户",
+        "allLeads": "全渠道意向客户",
+        "auditScore": "页面健康度",
+        "notConnected": "尚未连接 Google",
+        "tableTitle": "按项目：从 Google 进入到意向客户",
+        "columnProject": "项目",
+        "columnClicks": "来自 Google 的点击",
+        "columnGoogleLeads": "来自 Google 的意向客户",
+        "columnRate": "转化率",
+        "columnAllLeads": "全渠道",
+        "newsRow": "新闻与文章",
+        "tableEmpty": "本期还没有能追溯到具体页面的意向客户。",
+        "footnote": "\"来自 Google 的意向客户\"只统计首次访问来自 Google 搜索结果且没有营销标记的访客。最后一列仅供参考，不参与任何比率计算。",
+        "countedSince": "统计始于",
+        "countedSinceUnknown": "尚无记录 — 该统计自落地页采集上线起开始，无法回溯补齐。",
+        "vitalsTitle": "核心网页指标",
+        "vitalsNotEnough": "样本不足",
+        "notesTitle": "我们该做什么",
+        "notesDraft": "系统草稿",
+        "notesEditedBy": "最后修改",
+        "notesEmpty": "尚未填写。"
+      },
+      "note": {
+        "title": "本月该做什么",
+        "hint": "根据本月数据自动起草。发送前请修改 — 未经修改的草稿会带着标记发出。",
+        "save": "保存",
+        "saving": "保存中…",
+        "saved": "已保存",
+        "failed": "保存失败",
+        "tooLong": "内容过长",
+        "useDraft": "恢复草稿"
+      },
+      "schedule": {
+        "title": "定时发送",
+        "hint": "每月报告发给谁。",
+        "recipients": "收件人",
+        "noRecipients": "尚未配置收件地址 — 请设置 REPORT_RECIPIENTS。",
+        "notConfigured": "尚未配置邮件服务器 — 请设置 SMTP_HOST。",
+        "lastSent": "最近发送",
+        "neverSent": "从未发送",
+        "succeeded": "成功",
+        "failed": "失败",
+        "sendTest": "立即发送测试",
+        "sending": "发送中…",
+        "sentOk": "已发送。",
+        "draftWarning": "本月的\"该做什么\"还没有人修改。若按现状发送，将带上\"系统草稿\"标记，而不会伪装成人工撰写。",
+        "noScheduler": "应用本身不会定时触发 — 需要外部调度器调用 POST /api/cron/monthly-report。"
+      },
+      "alerts": {
+        "title": "告警规则",
+        "hint": "在每次定时任务后检查。阈值固定在代码中，界面显示与实际执行不会不一致。",
+        "awaitingGoogle": "等待连接 Google — 此规则暂时无法触发",
+        "failed": "修改此规则失败",
+        "INDEX_DROP": {
+          "label": "收录页面减少",
+          "detail": "一天内超过 {urls} 个 URL"
+        },
+        "NOT_FOUND_SPIKE": {
+          "label": "404 激增",
+          "detail": "单个路径一天超过 {hits} 次"
+        },
+        "VITALS_REGRESSION": {
+          "label": "发布后核心指标变差",
+          "detail": "{hours} 小时内跌出\"良好\"区间"
+        },
+        "CLICKS_DROP": {
+          "label": "点击下降",
+          "detail": "较上周下降超过 {percent}%"
+        },
+        "CRON_FAILED": {
+          "label": "定时任务失败",
+          "detail": "首次发生即通知"
+        }
+      },
+      "draft": {
+        "auditIssue": "补全{rule} — 有 {count} 个页面缺失。",
+        "vitalsPoor": "真实访问中 {metric} 为 {value}，已跌出 Google 的\"良好\"区间 — 建议先看表现最差的页面。",
+        "topProject": "本期 {project} 从搜索获得的意向客户最多（{leads} 位）。",
+        "noGoogleLeads": "{project} 有意向客户，但没有一位来自搜索结果。",
+        "notConnected": "尚未连接 Search Console，因此本报告缺少点击、关键词和排名数据。"
       }
     },
     "settings": {
@@ -2709,7 +2818,11 @@
         "trendTitle": "近几次运行的分数",
         "googleTitle": "来自 Google 的数据",
         "googleNotConnected": "尚未连接。点击量、排名和收录情况需要 Google 服务账号，将随 Search Console 部分一起提供；本页内容不依赖它们。",
-        "trendPointLabel": "分数"
+        "trendPointLabel": "分数",
+        "alertsTitle": "告警",
+        "alertsHint": "最近 7 天。每次定时任务后检查。",
+        "alertsEmpty": "最近 7 天没有任何告警。",
+        "alertsSettings": "规则设置"
       }
     },
     "seoTranslations": {
