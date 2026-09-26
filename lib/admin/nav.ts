@@ -215,6 +215,10 @@ export const NAV_TAB_GROUPS = {
    */
   seo: [
     { key: "overview", segment: "", roles: ROLE_SETS.ADMIN_UP },
+    /* The on-page audit (phase 1). Second, because it is the tab the
+       overview's numbers link into — "70 pages missing a description" is
+       only useful next to the list of which seventy. */
+    { key: "audit", segment: "/audit", roles: ROLE_SETS.ADMIN_UP },
     { key: "keywords", segment: "/keywords", roles: ROLE_SETS.ADMIN_UP },
     { key: "links", segment: "/links", roles: ROLE_SETS.ADMIN_UP },
     { key: "urls", segment: "/urls", roles: ROLE_SETS.ADMIN_UP },

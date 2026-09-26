@@ -24,6 +24,8 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { getSeoAudit, type ContentTypeKey, type SeoIssue } from "@/lib/seo-audit";
+import { getAuditOverview } from "@/lib/seo/audit-report";
+import { TrendChart } from "@/components/admin/DashboardCharts";
 import { intlLocale } from "@/lib/format";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -59,10 +61,18 @@ export default async function AdminSeoOverviewPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, audit] = await Promise.all([
+  const [t, audit, overview] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSeoAudit(),
+    getAuditOverview(),
   ]);
+
+  /* "71" alone says nothing; "71, up 4 since Tuesday" is the form anybody
+     acts on. Only SeoAuditRun can produce it. */
+  const delta =
+    overview.latest && overview.previous
+      ? overview.latest.avgScore - overview.previous.avgScore
+      : null;
 
   const offline = isDatabaseOffline();
 
@@ -97,15 +107,41 @@ export default async function AdminSeoOverviewPage(props: Props) {
 
       {/* ── Top-line stats ───────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* The audit's own average, not the aggregate this page used to
+            compute. Two numbers both called "the SEO score" is the thing
+            the plan warns about most often — one of them is always the
+            one somebody quotes, and it was never clear which. */}
         <div className="admin-card">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
             {t("seo.score")}
           </p>
-          <p className="mt-4 flex items-baseline gap-1.5">
-            <span className="text-3xl font-semibold tabular-nums text-primary">{audit.score}</span>
-            <span className="text-sm text-ink-muted">/100</span>
-          </p>
-          <p className="mt-1 text-xs text-ink-muted">{t("seo.scoreHint")}</p>
+          {overview.latest ? (
+            <>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className="text-3xl font-semibold tabular-nums text-primary">
+                  {overview.latest.avgScore}
+                </span>
+                <span className="text-sm text-ink-muted">/100</span>
+                {delta !== null && (
+                  <span
+                    className={`ml-1 text-xs tabular-nums ${
+                      delta > 0 ? "text-emerald-700" : delta < 0 ? "text-red-700" : "text-ink-muted"
+                    }`}
+                  >
+                    {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta)}
+                  </span>
+                )}
+              </p>
+              <p className="mt-1 text-xs text-ink-muted">
+                {t("seo.overview.auditScoreHint", { urls: overview.latest.urlCount })}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 text-3xl font-semibold text-ink-muted">—</p>
+              <p className="mt-1 text-xs text-ink-muted">{t("seo.overview.neverRun")}</p>
+            </>
+          )}
         </div>
 
         <div className="admin-card">
@@ -145,6 +181,15 @@ export default async function AdminSeoOverviewPage(props: Props) {
           <p className="mt-1 text-xs text-ink-muted">
             {t("seo.issuesBreakdown", { critical: counts.critical, warning: counts.warning, minor: counts.minor })}
           </p>
+          {overview.latest && (
+            <p className="mt-2 text-xs">
+              <Link href={`/${locale}/admin/seo/audit`} className="text-ink-muted underline hover:text-primary">
+                {t("seo.overview.urlsFailing", {
+                  count: overview.latest.urlCount - overview.latest.passAllCount,
+                })}
+              </Link>
+            </p>
+          )}
         </div>
 
         <div className="admin-card">
@@ -169,6 +214,32 @@ export default async function AdminSeoOverviewPage(props: Props) {
           </p>
         </div>
       </div>
+
+      {/* The trend, which only SeoAuditRun can answer: SeoUrlState is
+          overwritten every run and knows nothing about last week. */}
+      {overview.trend.length > 1 && (
+        <section className="admin-card">
+          <h2 className="admin-label">{t("seo.overview.trendTitle")}</h2>
+          <TrendChart
+            data={overview.trend.map((point) => ({
+              label: point.at.toISOString().slice(5, 10),
+              count: point.avgScore,
+            }))}
+            labels={{
+              count: t("seo.overview.trendPointLabel"),
+              empty: t("seo.overview.neverRun"),
+            }}
+          />
+        </section>
+      )}
+
+      {/* Rule 8's "credentials not set yet" state. Everything Google knows
+          — clicks, positions, index coverage — arrives in phase 4, and an
+          empty card that says why is not the same as a broken one. */}
+      <section className="admin-card border-dashed">
+        <h2 className="admin-label">{t("seo.overview.googleTitle")}</h2>
+        <p className="admin-hint">{t("seo.overview.googleNotConnected")}</p>
+      </section>
 
       {/* ── Issues + technical checklist ────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">

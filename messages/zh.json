@@ -641,8 +641,9 @@
         "translations": "翻译"
       },
       "seo": {
-        "label": "SEO",
         "overview": "概览",
+        "audit": "页面检查",
+        "label": "SEO",
         "keywords": "关键词",
         "links": "内部链接",
         "urls": "网址与重定向",
@@ -2640,7 +2641,76 @@
         "externalStatusUnreachable": "无法访问"
       },
       "hubSubtitle": "适用于整站的设置：搜索引擎能找到什么、我们告诉它什么，以及旧网址指向哪里。",
-      "idealLength": "建议长度 {min}–{max} 字符"
+      "idealLength": "建议长度 {min}–{max} 字符",
+      "audit": {
+        "title": "页面检查",
+        "subtitle": "对每个公开页面执行 15 项检查，数据来自最近一次运行。",
+        "offline": "无法连接数据库，因此这些数字没有任何来源。",
+        "neverRun": "尚未运行过检查。",
+        "neverRunHint": "通过 POST /api/cron/seo-audit 并携带 CRON_SECRET 运行。在有调度器调用之前，此页面没有内容可显示。",
+        "stale": "最近一次运行是 {when} — 每晚的任务至少漏了一次。",
+        "rulesTitle": "规则",
+        "rulesHint": "点击规则以仅查看未通过该项的页面。",
+        "weight": "{weight} 分",
+        "filteredBy": "仅显示未通过的页面：{rule}。",
+        "clearFilter": "显示全部",
+        "urlHeader": "页面",
+        "scoreHeader": "分数",
+        "issuesHeader": "问题",
+        "actionsHeader": "操作",
+        "notChecked": "未检查",
+        "edit": "编辑",
+        "waive": "为此页面豁免该规则",
+        "unwaive": "取消豁免",
+        "waived": "已豁免",
+        "waiveTitle": "豁免「{rule}」",
+        "waiveHint": "适用于本就应当不通过的页面，例如天然简短的政策页。下次运行起不再计入分数。",
+        "reasonLabel": "原因",
+        "reasonPlaceholder": "为什么此页面可以不通过该规则",
+        "save": "豁免",
+        "waiveFailed": "保存失败，请重试。",
+        "exportCsv": "导出 CSV",
+        "empty": "没有可显示的内容。",
+        "clean": "全部通过",
+        "severity": {
+          "critical": "高",
+          "warning": "中",
+          "minor": "低"
+        },
+        "csv": {
+          "url": "网址",
+          "locale": "语言",
+          "score": "分数",
+          "rule": "规则",
+          "editUrl": "编辑链接"
+        },
+        "rules": {
+          "meta-description": "缺少 meta description",
+          "hreflang": "hreflang 未涵盖全部 4 种语言",
+          "canonical": "canonical 与网址不符",
+          "unintended-noindex": "意外被标记为 noindex",
+          "h1": "缺少 H1 或存在多个",
+          "duplicate-title": "标题与其他页面重复",
+          "title-length": "标题超过 60 个字符",
+          "json-ld": "没有结构化数据",
+          "duplicate-meta-description": "描述与其他页面重复",
+          "og-image": "缺少 og:image",
+          "internal-links": "存在失效的内部链接",
+          "thin-content": "内容过少，不足 300 词",
+          "image-alt": "有图片缺少 alt 文本",
+          "slug-length": "slug 超过 75 个字符",
+          "translation-complete": "仍有语言缺少翻译"
+        }
+      },
+      "overview": {
+        "auditScoreHint": "来自最近一次检查，{urls} 个页面的平均值。",
+        "neverRun": "尚未运行过检查。",
+        "urlsFailing": "{count} 个页面至少存在一个问题 →",
+        "trendTitle": "近几次运行的分数",
+        "googleTitle": "来自 Google 的数据",
+        "googleNotConnected": "尚未连接。点击量、排名和收录情况需要 Google 服务账号，将随 Search Console 部分一起提供；本页内容不依赖它们。",
+        "trendPointLabel": "分数"
+      }
     },
     "seoTranslations": {
       "title": "翻译状态",

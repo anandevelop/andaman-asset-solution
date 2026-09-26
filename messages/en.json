@@ -641,8 +641,9 @@
         "translations": "Translations"
       },
       "seo": {
-        "label": "SEO",
         "overview": "Overview",
+        "audit": "Audit",
+        "label": "SEO",
         "keywords": "Keywords",
         "links": "Internal links",
         "urls": "URLs & redirects",
@@ -2640,7 +2641,76 @@
         "externalStatusUnreachable": "Unreachable"
       },
       "hubSubtitle": "Everything that applies to the whole site: what search engines find, what they are told, and where the old addresses point.",
-      "idealLength": "Ideal length: {min}–{max} characters"
+      "idealLength": "Ideal length: {min}–{max} characters",
+      "audit": {
+        "title": "On-page audit",
+        "subtitle": "Fifteen checks against every public page, from the last scheduled run.",
+        "offline": "The database is unreachable, so these numbers are from nothing at all.",
+        "neverRun": "The audit has not run yet.",
+        "neverRunHint": "It runs from POST /api/cron/seo-audit with the CRON_SECRET. Until a scheduler calls it, this page has nothing to show.",
+        "stale": "The last run was {when} — the nightly job has missed at least one night.",
+        "rulesTitle": "Rules",
+        "rulesHint": "Click a rule to see only the pages failing it.",
+        "weight": "{weight} pts",
+        "filteredBy": "Showing only pages failing: {rule}.",
+        "clearFilter": "Show all",
+        "urlHeader": "Page",
+        "scoreHeader": "Score",
+        "issuesHeader": "Issues",
+        "actionsHeader": "Action",
+        "notChecked": "not checked",
+        "edit": "Edit",
+        "waive": "Waive this rule for this page",
+        "unwaive": "Remove the waiver",
+        "waived": "waived",
+        "waiveTitle": "Waive \"{rule}\"",
+        "waiveHint": "For a page that is meant to fail this — a policy page that is short by nature. It stops counting against the score on the next run.",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "Why this page is allowed to fail this rule",
+        "save": "Waive",
+        "waiveFailed": "Could not save that. Try again.",
+        "exportCsv": "Export CSV",
+        "empty": "Nothing to show.",
+        "clean": "All clear",
+        "severity": {
+          "critical": "High",
+          "warning": "Medium",
+          "minor": "Low"
+        },
+        "csv": {
+          "url": "URL",
+          "locale": "Language",
+          "score": "Score",
+          "rule": "Rule",
+          "editUrl": "Edit link"
+        },
+        "rules": {
+          "meta-description": "Meta description missing",
+          "hreflang": "hreflang not complete for all 4 languages",
+          "canonical": "Canonical does not match the URL",
+          "unintended-noindex": "noindex nobody asked for",
+          "h1": "H1 missing or more than one",
+          "duplicate-title": "Title used on another page",
+          "title-length": "Title longer than 60 characters",
+          "json-ld": "No structured data",
+          "duplicate-meta-description": "Description used on another page",
+          "og-image": "og:image missing",
+          "internal-links": "Broken internal link",
+          "thin-content": "Thin content, under 300 words",
+          "image-alt": "Image without alt text",
+          "slug-length": "Slug longer than 75 characters",
+          "translation-complete": "A language is missing its translation"
+        }
+      },
+      "overview": {
+        "auditScoreHint": "Average across {urls} pages, from the last audit run.",
+        "neverRun": "The audit has not run yet.",
+        "urlsFailing": "{count} pages have at least one issue →",
+        "trendTitle": "Score over the last runs",
+        "googleTitle": "From Google",
+        "googleNotConnected": "Not connected yet. Clicks, positions and index coverage need a Google service account — they arrive with the Search Console work, and nothing on this page is waiting on them.",
+        "trendPointLabel": "Score"
+      }
     },
     "seoTranslations": {
       "title": "Translation Status",

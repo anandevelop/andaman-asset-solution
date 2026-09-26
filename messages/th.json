@@ -641,8 +641,9 @@
         "translations": "คำแปล"
       },
       "seo": {
-        "label": "SEO",
         "overview": "ภาพรวม",
+        "audit": "ตรวจหน้าเว็บ",
+        "label": "SEO",
         "keywords": "คีย์เวิร์ด",
         "links": "ลิงก์ภายใน",
         "urls": "URL และการเปลี่ยนเส้นทาง",
@@ -2640,7 +2641,76 @@
         "externalStatusUnreachable": "เข้าถึงไม่ได้"
       },
       "hubSubtitle": "ทุกอย่างที่มีผลกับทั้งเว็บ — สิ่งที่เสิร์ชเอนจินเจอ สิ่งที่เราบอกมันไป และ URL เดิมถูกส่งไปที่ไหน",
-      "idealLength": "ความยาวเหมาะสม {min}–{max} ตัวอักษร"
+      "idealLength": "ความยาวเหมาะสม {min}–{max} ตัวอักษร",
+      "audit": {
+        "title": "ตรวจหน้าเว็บ",
+        "subtitle": "15 ข้อตรวจกับทุกหน้าสาธารณะ จากผลรอบล่าสุด",
+        "offline": "ติดต่อฐานข้อมูลไม่ได้ ตัวเลขเหล่านี้จึงไม่ได้มาจากอะไรเลย",
+        "neverRun": "ยังไม่เคยรันการตรวจ",
+        "neverRunHint": "รันด้วย POST /api/cron/seo-audit พร้อม CRON_SECRET — จนกว่าจะมีตัวตั้งเวลาเรียก หน้านี้จะยังไม่มีอะไรแสดง",
+        "stale": "รอบล่าสุดคือ {when} — งานรายคืนขาดไปอย่างน้อยหนึ่งคืน",
+        "rulesTitle": "กฎ",
+        "rulesHint": "กดที่กฎเพื่อดูเฉพาะหน้าที่ไม่ผ่านข้อนั้น",
+        "weight": "{weight} น.",
+        "filteredBy": "แสดงเฉพาะหน้าที่ไม่ผ่าน: {rule}",
+        "clearFilter": "แสดงทั้งหมด",
+        "urlHeader": "หน้า",
+        "scoreHeader": "คะแนน",
+        "issuesHeader": "ปัญหา",
+        "actionsHeader": "จัดการ",
+        "notChecked": "ตรวจไม่ได้",
+        "edit": "แก้ไข",
+        "waive": "ยกเว้นกฎนี้สำหรับหน้านี้",
+        "unwaive": "ยกเลิกการยกเว้น",
+        "waived": "ยกเว้นแล้ว",
+        "waiveTitle": "ยกเว้น \"{rule}\"",
+        "waiveHint": "สำหรับหน้าที่ตั้งใจให้ไม่ผ่าน เช่น หน้านโยบายที่สั้นโดยธรรมชาติ จะหยุดนับกับคะแนนตั้งแต่รอบถัดไป",
+        "reasonLabel": "เหตุผล",
+        "reasonPlaceholder": "ทำไมหน้านี้ถึงไม่ผ่านกฎนี้ได้",
+        "save": "ยกเว้น",
+        "waiveFailed": "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
+        "exportCsv": "ส่งออก CSV",
+        "empty": "ไม่มีข้อมูลให้แสดง",
+        "clean": "ผ่านหมด",
+        "severity": {
+          "critical": "สูง",
+          "warning": "กลาง",
+          "minor": "ต่ำ"
+        },
+        "csv": {
+          "url": "URL",
+          "locale": "ภาษา",
+          "score": "คะแนน",
+          "rule": "กฎ",
+          "editUrl": "ลิงก์แก้ไข"
+        },
+        "rules": {
+          "meta-description": "ไม่มี meta description",
+          "hreflang": "hreflang ไม่ครบ 4 ภาษา",
+          "canonical": "canonical ไม่ตรงกับ URL",
+          "unintended-noindex": "ติด noindex ทั้งที่ไม่ได้ตั้งใจ",
+          "h1": "ไม่มี H1 หรือมีหลายตัว",
+          "duplicate-title": "title ซ้ำกับหน้าอื่น",
+          "title-length": "title ยาวเกิน 60 ตัวอักษร",
+          "json-ld": "ไม่มี structured data",
+          "duplicate-meta-description": "คำอธิบายซ้ำกับหน้าอื่น",
+          "og-image": "ไม่มี og:image",
+          "internal-links": "มีลิงก์ภายในเสีย",
+          "thin-content": "เนื้อหาบาง ไม่ถึง 300 คำ",
+          "image-alt": "มีรูปที่ไม่มี alt",
+          "slug-length": "slug ยาวเกิน 75 ตัวอักษร",
+          "translation-complete": "ยังมีภาษาที่ไม่มีคำแปล"
+        }
+      },
+      "overview": {
+        "auditScoreHint": "ค่าเฉลี่ยจาก {urls} หน้า จากการตรวจรอบล่าสุด",
+        "neverRun": "ยังไม่เคยรันการตรวจ",
+        "urlsFailing": "{count} หน้ามีปัญหาอย่างน้อยหนึ่งข้อ →",
+        "trendTitle": "คะแนนย้อนหลังตามรอบที่รัน",
+        "googleTitle": "ข้อมูลจาก Google",
+        "googleNotConnected": "ยังไม่ได้เชื่อม — คลิก อันดับ และการเก็บ index ต้องใช้ service account ของ Google จะมาพร้อมงาน Search Console และไม่มีอะไรในหน้านี้ที่รอมันอยู่",
+        "trendPointLabel": "คะแนน"
+      }
     },
     "seoTranslations": {
       "title": "สถานะคำแปล",
