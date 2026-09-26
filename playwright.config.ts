@@ -110,6 +110,20 @@ const SERVER_ENV = {
   // 127.0.0.1, so the lead and login limits would trip partway through a
   // run and fail tests for a reason that has nothing to do with the code.
   RATE_LIMIT_DISABLED: "1",
+  /*
+    The suite tests the indexable site, which is the one that matters.
+
+    lib/indexing.ts blocks unless SITE_INDEXABLE is exactly "true" — a
+    deliberately unsafe-to-forget default, so staging cannot accidentally
+    be indexed. Unset here, every page carries "noindex, nofollow" and two
+    tests in project-listing-filter.spec.ts stop meaning anything: the one
+    asserting the unfiltered listing stays indexable fails, and — worse —
+    the one asserting filtered pages are kept *out* of the index passes
+    whatever the code does, including with the filter logic deleted.
+
+    Set to "true" so both sides of that distinction are exercised.
+  */
+  SITE_INDEXABLE: "true",
 };
 
 export default defineConfig({
