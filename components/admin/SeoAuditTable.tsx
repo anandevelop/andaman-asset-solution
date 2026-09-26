@@ -56,7 +56,9 @@ export type AuditTableLabels = {
   waive: string;
   unwaive: string;
   waived: string;
-  waiveTitle: (rule: string) => string;
+  /** Carries "{rule}", replaced with the rule's name at render. A
+   *  builder function here is a server render error — see ruleNames. */
+  waiveTitle: string;
   waiveHint: string;
   reasonLabel: string;
   reasonPlaceholder: string;
@@ -66,7 +68,17 @@ export type AuditTableLabels = {
   exportCsv: string;
   empty: string;
   clean: string;
-  ruleName: (key: string) => string;
+  /**
+   * Every rule's display name, keyed by rule key.
+   *
+   * A Record and not a `(key) => string` lookup. A function in a Client
+   * Component's props is not a serialisation warning: React throws
+   * "Functions cannot be passed directly to Client Components" and the
+   * whole page hits its error boundary, with tsc and the unit suite both
+   * green. This screen shipped that way and 404'd in production; it is
+   * the third time the mistake has been made in this codebase.
+   */
+  ruleNames: Record<string, string>;
 };
 
 type Props = {
@@ -177,7 +189,7 @@ export default function SeoAuditTable({
                             title={labels.waive}
                             className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] text-red-800 transition-colors hover:bg-red-100"
                           >
-                            {labels.ruleName(key)}
+                            {labels.ruleNames[key] ?? key}
                             <ShieldOff size={10} aria-hidden />
                           </button>
                         </li>
@@ -194,7 +206,7 @@ export default function SeoAuditTable({
                             title={labels.unwaive}
                             className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink-muted transition-colors hover:bg-ink/10"
                           >
-                            {labels.ruleName(key)} · {labels.waived}
+                            {labels.ruleNames[key] ?? key} · {labels.waived}
                             <Undo2 size={10} aria-hidden />
                           </button>
                         </li>
@@ -222,7 +234,7 @@ export default function SeoAuditTable({
 
       {target && (
         <div className="admin-card border-amber-200">
-          <h4 className="admin-label">{labels.waiveTitle(labels.ruleName(target.ruleKey))}</h4>
+          <h4 className="admin-label">{labels.waiveTitle.replace("{rule}", labels.ruleNames[target.ruleKey] ?? target.ruleKey)}</h4>
           <p className="admin-hint">{labels.waiveHint}</p>
           <p className="mt-2 font-mono text-xs text-ink-muted">{target.url}</p>
 

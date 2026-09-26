@@ -104,7 +104,7 @@ export async function renderReportEmail(options: {
 
     `<h2 style="font-size:15px;margin:16px 0 6px">${escapeHtml(t("reports.view.headlineTitle"))}</h2>`,
     `<ul style="margin:0;padding-left:18px;font-size:14px">`,
-    `<li>${escapeHtml(t("reports.view.googleClicks"))}: ${escapeHtml(t("reports.view.notConnected"))}</li>`,
+    `<li>${escapeHtml(t("reports.view.googleClicks"))}: ${escapeHtml(t(data.search.reason === "noData" ? "reports.view.noGoogleData" : "reports.view.notConnected"))}</li>`,
     `<li>${escapeHtml(t("reports.view.googleLeads"))}: <b>${data.leads.current.google}</b></li>`,
     `<li>${escapeHtml(t("reports.view.allLeads"))}: ${data.leads.current.all}</li>`,
     `<li>${escapeHtml(t("reports.view.auditScore"))}: ${data.audit.score ?? "—"}</li>`,

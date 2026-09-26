@@ -2195,7 +2195,8 @@
         "notesTitle": "我们该做什么",
         "notesDraft": "系统草稿",
         "notesEditedBy": "最后修改",
-        "notesEmpty": "尚未填写。"
+        "notesEmpty": "尚未填写。",
+        "noGoogleData": "已连接，但 Google 尚无此资源的数据"
       },
       "note": {
         "title": "本月该做什么",

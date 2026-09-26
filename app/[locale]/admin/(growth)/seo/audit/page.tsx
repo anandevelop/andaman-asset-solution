@@ -29,7 +29,7 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { toCsv, csvFilename } from "@/lib/csv";
 import { getAuditOverview, getAuditUrls, auditCsvRows } from "@/lib/seo/audit-report";
-import { findRule } from "@/lib/seo/rules";
+import { findRule, SEO_RULE_KEYS } from "@/lib/seo/rules";
 import SeoAuditTable from "@/components/admin/SeoAuditTable";
 import { waiveRule, removeWaiver } from "./actions";
 
@@ -56,7 +56,17 @@ export default async function SeoAuditPage(props: Props) {
   ]);
 
   const offline = isDatabaseOffline();
+  /*
+    Built once, as data. The page still uses ruleName() for its own
+    server-rendered bits, but what crosses into SeoAuditTable is the
+    Record — a function in a Client Component's props takes the whole page
+    down at render time, which is exactly how this screen broke.
+  */
   const ruleName = (key: string) => t(`seo.audit.rules.${key}` as never);
+
+  const ruleNames = Object.fromEntries(
+    SEO_RULE_KEYS.map((key) => [key, ruleName(key)]),
+  ) as Record<string, string>;
 
   const csv = toCsv(
     [
@@ -171,7 +181,8 @@ export default async function SeoAuditPage(props: Props) {
           waive: t("seo.audit.waive"),
           unwaive: t("seo.audit.unwaive"),
           waived: t("seo.audit.waived"),
-          waiveTitle: (name: string) => t("seo.audit.waiveTitle", { rule: name }),
+          // The raw template; the client substitutes {rule}.
+          waiveTitle: t.raw("seo.audit.waiveTitle") as string,
           waiveHint: t("seo.audit.waiveHint"),
           reasonLabel: t("seo.audit.reasonLabel"),
           reasonPlaceholder: t("seo.audit.reasonPlaceholder"),
@@ -181,7 +192,7 @@ export default async function SeoAuditPage(props: Props) {
           exportCsv: t("seo.audit.exportCsv"),
           empty: t("seo.audit.empty"),
           clean: t("seo.audit.clean"),
-          ruleName,
+          ruleNames,
         }}
       />
     </div>

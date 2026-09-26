@@ -53,7 +53,21 @@ import {
 } from "@/lib/analytics/vitals";
 
 /** A figure that needs a data source this deployment does not have yet. */
-export type Unavailable = { available: false; reason: "google" };
+/**
+ * A figure that needs Google, and why it is not here.
+ *
+ *   notConfigured  no service account or no property set
+ *   noData         connected, and Google has nothing for this property —
+ *                  which is what a site it has never crawled looks like
+ *
+ * The two are a different problem with a different fix, and the screen
+ * that says "not connected to Google yet" when the credentials are in
+ * fact working sends somebody to check the wrong thing.
+ */
+export type Unavailable = {
+  available: false;
+  reason: "notConfigured" | "noData";
+};
 
 export type LeadTotals = {
   /** Landed from a Google search result, no utm — see google-origin.ts. */
@@ -112,7 +126,23 @@ export type ReportData = {
   note: ReportNoteView;
 };
 
-const UNAVAILABLE: Unavailable = { available: false, reason: "google" };
+const NOT_CONFIGURED: Unavailable = { available: false, reason: "notConfigured" };
+const NO_DATA: Unavailable = { available: false, reason: "noData" };
+
+/**
+ * Whether Search Console is wired up at all.
+ *
+ * Both halves are needed: a service account with no property to ask about
+ * is as useless as a property with no credentials, and either one missing
+ * means "not finished being set up" rather than "Google has nothing".
+ */
+function searchConsoleConfigured(): boolean {
+  return Boolean(
+    process.env.GOOGLE_SA_EMAIL?.trim() &&
+      process.env.GOOGLE_SA_PRIVATE_KEY?.trim() &&
+      process.env.GSC_SITE_URL?.trim(),
+  );
+}
 
 type LeadRow = {
   projectId: string | null;
@@ -177,8 +207,14 @@ export async function getReportData(options: {
     topIssues: topIssuesOf(audit?.failCountByRule),
     vitals,
     rows: buildRows(leads, projects, slugToProjectId, locale),
-    search: UNAVAILABLE,
-    indexing: UNAVAILABLE,
+    /*
+      Phase 6 hardcoded both of these as unavailable, because phase 4 did
+      not exist yet. It does now, so the report says which of the two
+      reasons applies instead of claiming Google is unconnected on a
+      deployment where the credentials work.
+    */
+    search: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
+    indexing: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
     note: note ?? draftNoteView(),
   };
 }
@@ -390,7 +426,7 @@ function buildRows(
       return {
         key: project.id,
         name: pickLocale(locale, project.nameTh, project.nameEn),
-        googleClicks: UNAVAILABLE,
+        googleClicks: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
         googleLeads: entry.google,
         allLeads: entry.all,
         rate: null,
@@ -402,7 +438,7 @@ function buildRows(
     rows.push({
       key: "news",
       name: "news",
-      googleClicks: UNAVAILABLE,
+      googleClicks: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
       googleLeads: news.google,
       allLeads: news.all,
       rate: null,

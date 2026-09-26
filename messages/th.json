@@ -2195,7 +2195,8 @@
         "notesTitle": "สิ่งที่ควรทำ",
         "notesDraft": "ร่างอัตโนมัติ",
         "notesEditedBy": "แก้ล่าสุดโดย",
-        "notesEmpty": "ยังไม่มีใครเขียน"
+        "notesEmpty": "ยังไม่มีใครเขียน",
+        "noGoogleData": "เชื่อมแล้ว แต่ Google ยังไม่มีข้อมูลของ property นี้"
       },
       "note": {
         "title": "สิ่งที่ควรทำเดือนนี้",

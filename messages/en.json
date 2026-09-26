@@ -2195,7 +2195,8 @@
         "notesTitle": "What we should do",
         "notesDraft": "Automatic draft",
         "notesEditedBy": "Last edited by",
-        "notesEmpty": "Nothing written yet."
+        "notesEmpty": "Nothing written yet.",
+        "noGoogleData": "Connected, but Google has no data for this property yet"
       },
       "note": {
         "title": "What we should do this month",

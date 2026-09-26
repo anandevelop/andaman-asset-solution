@@ -40,7 +40,11 @@ export type ReportViewLabels = {
   googleLeads: string;
   allLeads: string;
   auditScore: string;
+  /** Credentials or property missing — somebody has to set them. */
   notConnected: string;
+  /** Connected, and Google has nothing for this property. A different
+   *  problem with a different fix, so a different sentence. */
+  noGoogleData: string;
   tableTitle: string;
   columnProject: string;
   columnClicks: string;
@@ -101,7 +105,7 @@ export default function ReportView({
           {/* Phase 4. Drawn, not omitted — see the header. */}
           <Figure
             label={labels.googleClicks}
-            value={labels.notConnected}
+            value={data.search.reason === "noData" ? labels.noGoogleData : labels.notConnected}
             muted
           />
 

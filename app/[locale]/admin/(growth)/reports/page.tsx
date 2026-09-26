@@ -202,6 +202,7 @@ export default async function AdminReportsPage(props: Props) {
           allLeads: t("reports.view.allLeads"),
           auditScore: t("reports.view.auditScore"),
           notConnected: t("reports.view.notConnected"),
+          noGoogleData: t("reports.view.noGoogleData"),
           tableTitle: t("reports.view.tableTitle"),
           columnProject: t("reports.view.columnProject"),
           columnClicks: t("reports.view.columnClicks"),
