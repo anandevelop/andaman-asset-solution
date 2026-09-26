@@ -144,18 +144,31 @@ function schedule(job) {
 
 if (!SECRET) {
   /*
-    Exit rather than run. Without the secret every call is refused, so a
-    scheduler that kept going would look healthy in `docker ps` while
-    nothing it exists for ever happened. Under `restart: always` this
-    becomes a visible crash loop with the reason in the logs, which is the
-    point.
-  */
-  console.error("[cron] CRON_SECRET is not set — every request would be refused. Exiting.");
-  process.exit(1);
-}
+    Stay up, do nothing, and say so — repeatedly.
 
-log(`scheduling ${JOBS.length} jobs against ${BASE}`);
-for (const job of JOBS) schedule(job);
+    This exited instead, on the reasoning that a silent scheduler is worse
+    than a loud crash. Under the service's `restart: always` that produced
+    a container restarting for ever, so a deployment whose .env simply had
+    no CRON_SECRET came up with the stack apparently broken. The
+    application itself treats that variable as recommended and runs
+    perfectly well without it — lib/env.ts warns and carries on, and
+    phase 0 was explicit that none of these may become required. A
+    companion service that cannot start on a configuration the app
+    considers valid is that requirement by the back door.
+
+    So: one clear line at startup, and the same line every hour, because
+    the startup message scrolls out of `docker logs` within a day while
+    the reason is still true.
+  */
+  const complain = () =>
+    log("CRON_SECRET is not set — nothing will be scheduled. The audit, the vitals rollup and the monthly report will not run until it is set and this service is restarted.");
+
+  complain();
+  setInterval(complain, 60 * 60_000);
+} else {
+  log(`scheduling ${JOBS.length} jobs against ${BASE}`);
+  for (const job of JOBS) schedule(job);
+}
 
 /*
   Nothing keeps a Node process alive but its timers, and every timer here

@@ -209,10 +209,13 @@ docker compose -f docker-compose.prod.yml logs -f cron
 
 Each line says what ran and when the next one is due. Three things to know:
 
-- **It needs `CRON_SECRET`.** Without it every request is refused, so the
-  script exits rather than run — under `restart: always` that is a visible
-  crash loop with the reason in the logs, which is the point. The same
-  secret is what the endpoints check.
+- **It needs `CRON_SECRET`.** It is the same secret the endpoints check.
+  Without it nothing is scheduled: the service stays up and logs why, once
+  at startup and again every hour, so the reason is still in `docker logs`
+  a week later. It does not exit — a companion service that refuses to
+  start would make a variable the application itself treats as optional
+  into a required one, and bring the whole stack up looking broken on a
+  configuration the app runs fine on.
 - **Exactly one replica.** There is no lock. A second would run every job
   twice, including emailing the monthly report to the executives twice.
 - **Deploying another way?** Anything that can POST with a bearer token
