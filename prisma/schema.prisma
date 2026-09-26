@@ -2304,6 +2304,24 @@ model SeoUrlState {
 
   /// 0-100, out of the weight that could actually be judged.
   auditScore    Int
+
+  /// What URL Inspection last said about this page — phase 4.
+  ///
+  /// coverageState is Google's own sentence ("Submitted and indexed",
+  /// "Crawled — currently not indexed", "URL is unknown to Google") and is
+  /// stored verbatim: it is the most useful string the API returns, and any
+  /// paraphrase loses the distinction between "we chose not to index it"
+  /// and "we have never seen it".
+  ///
+  /// googleCanonical is how a duplicate-content problem announces itself —
+  /// Google naming a different URL as the real one for this page.
+  ///
+  /// All null until the first seo-inspect run reaches this URL. Null means
+  /// "not asked yet", never "not indexed", and the screens say so.
+  coverageState   String?
+  googleCanonical String?
+  lastCrawledAt   DateTime?
+  inspectedAt     DateTime?
   /// Total weight of the rules that returned a verdict. 0 means the page
   /// could not be fetched and the score above says nothing — the screen
   /// shows "not checked" rather than a number. See lib/seo/score.ts.
@@ -3179,4 +3197,51 @@ model CrawlHit {
   @@index([hour])
   @@index([path])
   @@map("crawl_hits")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Search Console (SEO phase 4)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One day's Search Console figures for one query on one page, per device.
+///
+/// The composite key is the grain Google itself reports at, so a re-run of
+/// the same day overwrites rather than doubling — which matters because
+/// the first sync pulls sixteen months and every nightly run re-reads the
+/// last few days as Google finishes counting them.
+///
+/// Country is deliberately not in the key. Adding it multiplies the row
+/// count by the number of countries the site is seen in, to answer a
+/// question the screens do not ask; a country breakdown is a live query
+/// against the API when somebody wants one.
+///
+/// THE ROWS DO NOT ADD UP TO THE TOTALS, AND MUST NOT BE MADE TO
+///
+/// Google withholds queries searched by very few people, to stop a rare
+/// search identifying the person who made it. So the sum of these rows is
+/// always less than the property's real click count, and the gap is real
+/// traffic. Every screen showing a breakdown says so — see
+/// lib/seo/search-console.ts's queryWithTotals.
+model SeoQueryStat {
+  /// The day in Search Console's own terms (its dates are property-local,
+  /// not UTC, and are not converted anywhere).
+  date   DateTime @db.Date
+  query  String
+  page   String
+  /// DESKTOP | MOBILE | TABLET, as Google spells it.
+  device String
+
+  clicks      Int
+  impressions Int
+  /// 0–1, stored unrounded. A helper that rounded on the way in would turn
+  /// a real 0.04% into "0.0%" with no way back.
+  ctr      Float
+  /// Average position; 1 is the top of the page.
+  position Float
+
+  @@id([date, query, page, device])
+  @@index([date])
+  @@index([query])
+  @@index([page])
+  @@map("seo_query_stats")
 }

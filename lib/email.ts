@@ -180,10 +180,13 @@ export async function sendReportEmail(args: {
  * The addresses scheduled reports and alerts go to.
  *
  * An environment variable rather than a settings row: it is deployment
- * configuration, it contains no content anybody edits day to day, and
- * putting it in the settings table would have meant adding it to the
- * allowlist the settings form rewrites wholesale — where a save of an
- * unrelated field clears it.
+ * configuration and contains no content anybody edits day to day.
+ *
+ * (An earlier version of this comment claimed the settings form would
+ * clear it on an unrelated save. That is not true — updateSettings skips
+ * any key the submitted form did not carry, which is exactly how the SEO
+ * defaults tab shares the action safely. The reason above is the real
+ * one.)
  *
  * Empty is a legitimate state and never an error. Nothing is sent, the
  * reports screen says nobody is configured, and the site runs exactly as

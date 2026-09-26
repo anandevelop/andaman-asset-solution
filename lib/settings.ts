@@ -69,6 +69,10 @@ export const SETTING_KEYS = [
   "seo.metaDescriptionRu",
   "seo.titleTemplate",
   "seo.twitterHandle",
+  /* Comma-separated words that mean somebody already knows this company —
+     see lib/seo/brand.ts. Every click figure is split on it, and the
+     non-brand half is the one the reports lead with. */
+  "seo.brandTerms",
   "analytics.metaPixelId",
   "analytics.gaMeasurementId",
   "analytics.googleSiteVerification",
@@ -142,6 +146,9 @@ export type SiteSettings = {
     metaDescription: { th: string; en: string; zh: string; ru: string };
     titleTemplate: string;
     twitterHandle: string;
+    /** Raw, comma-separated. Parsed by lib/seo/brand.ts, which owns the
+     *  rules about what is too short or too common to be a brand. */
+    brandTerms: string;
   };
   analytics: {
     /** Facebook Events Manager → the numeric Pixel ID, nothing else. */
@@ -190,6 +197,11 @@ export function defaultSettings(): Record<SettingKey, string> {
     "seo.metaDescriptionRu": siteConfig.description.ru,
     "seo.titleTemplate": siteConfig.seo.titleTemplate,
     "seo.twitterHandle": siteConfig.seo.twitterHandle,
+    /* Empty by default, and the consequence is stated on the screen: with
+       no terms every search counts as non-brand, which overstates the one
+       figure the split exists to protect. Guessing at brand names here
+       would be worse — a wrong guess shrinks it silently. */
+    "seo.brandTerms": "",
     // Env vars are the deploy-time fallback — the admin field takes
     // priority the moment someone fills it in, same as every other key
     // here, but a fresh environment with nothing in the database yet still
@@ -351,6 +363,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       },
       titleTemplate: values["seo.titleTemplate"],
       twitterHandle: values["seo.twitterHandle"],
+      brandTerms: values["seo.brandTerms"],
     },
     analytics: {
       metaPixelId: values["analytics.metaPixelId"],

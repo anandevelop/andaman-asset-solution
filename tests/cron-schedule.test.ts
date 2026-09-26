@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -141,13 +141,18 @@ describe("the monthly job", () => {
 });
 
 describe("the shipped schedule", () => {
-  it("covers all three endpoints that exist", () => {
-    const paths = jobs().map((job) => job.path).sort();
-    expect(paths).toEqual([
-      "/api/cron/monthly-report",
-      "/api/cron/seo-audit",
-      "/api/cron/vitals-rollup",
-    ]);
+  it("covers every cron endpoint the application exposes", () => {
+    /*
+      Read off disk rather than listed here. An endpoint added without a
+      job is an endpoint nothing ever calls — which is the exact state
+      seo-audit, vitals-rollup and monthly-report were all in before this
+      scheduler existed.
+    */
+    const endpoints = readdirSync(join(process.cwd(), "app/api/cron"))
+      .map((name) => `/api/cron/${name}`)
+      .sort();
+
+    expect(jobs().map((job) => job.path).sort()).toEqual(endpoints);
   });
 
   it("leaves a gap between the two jobs that check alerts", () => {

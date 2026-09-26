@@ -61,6 +61,19 @@ const SECRET = process.env.CRON_SECRET;
 const JOBS = [
   { name: "seo-audit", path: "/api/cron/seo-audit", at: [3, 15] },
   { name: "vitals-rollup", path: "/api/cron/vitals-rollup", at: [3, 45] },
+  /*
+    Search Console's own data runs two to three days behind, so the hour
+    is not load-bearing — what matters is that it lands before anybody
+    opens the screens in the morning. Its first run pulls sixteen months
+    and takes minutes rather than seconds.
+  */
+  { name: "seo-search", path: "/api/cron/seo-search", at: [4, 15] },
+  /*
+    After the search sync, because the URLs worth inspecting are the ones
+    the audit and Search Console have just told us about — and far enough
+    behind it that the long first sync does not overlap with it.
+  */
+  { name: "seo-inspect", path: "/api/cron/seo-inspect", at: [5, 0] },
   { name: "monthly-report", path: "/api/cron/monthly-report", at: [8, 0], day: 1 },
 ];
 
