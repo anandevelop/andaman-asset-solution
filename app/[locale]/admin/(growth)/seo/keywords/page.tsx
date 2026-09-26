@@ -17,10 +17,14 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { getKeywordLibrary } from "@/lib/admin/keyword-library";
+import { getKeywordReport, findOpportunities, trackedPhrases } from "@/lib/seo/keyword-report";
+import { getSiteSettings } from "@/lib/settings";
+import { parseBrandTerms, isBrandQuery, brandTotals } from "@/lib/seo/brand";
 import { intlLocale } from "@/lib/format";
 import RescanButton from "@/components/admin/RescanButton";
 import KeywordRankImportPanel from "@/components/admin/KeywordRankImportPanel";
 import KeywordLibraryTable from "@/components/admin/KeywordLibraryTable";
+import SearchQueryViews, { type QueryRow } from "@/components/admin/SearchQueryViews";
 import { rescanContentLinks, importKeywordRanksCsv } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -30,10 +34,56 @@ export default async function KeywordLibraryPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, library] = await Promise.all([
+  const [t, library, report, tracked, settings] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getKeywordLibrary(),
+    getKeywordReport(),
+    trackedPhrases(),
+    getSiteSettings(),
   ]);
+
+  const brandTerms = parseBrandTerms(settings.seo.brandTerms);
+  const totals = brandTotals(report.stats, brandTerms);
+
+  /*
+    Formatted here, where the locale lives. CTR as a percentage to one
+    decimal because 0.04% and 0.4% are a tenfold difference that "0%" would
+    hide, and position to one decimal because an average position is never
+    a whole number and rounding it to one invents precision.
+  */
+  const percent = new Intl.NumberFormat(intlLocale(locale), {
+    style: "percent",
+    maximumFractionDigits: 1,
+  });
+  const oneDecimal = new Intl.NumberFormat(intlLocale(locale), {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+
+  const toRow = (stat: { query: string; clicks: number; impressions: number; ctr: number; position: number }): QueryRow => ({
+    query: stat.query,
+    clicks: stat.clicks,
+    impressions: stat.impressions,
+    ctr: percent.format(stat.ctr),
+    position: oneDecimal.format(stat.position),
+    isBrand: isBrandQuery(stat.query, brandTerms),
+  });
+
+  const isTracked = (query: string) => tracked.has(query.trim().toLowerCase());
+
+  const opportunities = findOpportunities(report.stats).map((row) => ({
+    ...toRow(row),
+    potential: t("seo.keywords.search.potentialClicks", { clicks: row.potentialClicks }),
+  }));
+
+  const dataUpToLabel = report.dataUpTo
+    ? new Intl.DateTimeFormat(intlLocale(locale), {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(report.dataUpTo)
+    : null;
 
   const offline = isDatabaseOffline();
 
@@ -110,6 +160,60 @@ export default async function KeywordLibraryPage(props: Props) {
           </p>
         </div>
       </div>
+
+      {/*
+        What Google actually sends people on, above the library of phrases
+        somebody hoped for. Deliberately inside this tab rather than a new
+        one: "the words we chose" and "the words that work" are one
+        subject, and splitting them across two screens is how the library
+        stopped matching reality in the first place.
+      */}
+      <SearchQueryViews
+        labels={{
+          title: t("seo.keywords.search.title"),
+          subtitle: t("seo.keywords.search.subtitle"),
+          tabs: {
+            tracked: t("seo.keywords.search.tabTracked"),
+            untracked: t("seo.keywords.search.tabUntracked"),
+            opportunity: t("seo.keywords.search.tabOpportunity"),
+          },
+          tabHints: {
+            tracked: t("seo.keywords.search.hintTracked"),
+            untracked: t("seo.keywords.search.hintUntracked"),
+            opportunity: t("seo.keywords.search.hintOpportunity"),
+          },
+          columnQuery: t("seo.keywords.search.columnQuery"),
+          columnClicks: t("seo.keywords.search.columnClicks"),
+          columnImpressions: t("seo.keywords.search.columnImpressions"),
+          columnCtr: t("seo.keywords.search.columnCtr"),
+          columnPosition: t("seo.keywords.search.columnPosition"),
+          columnPotential: t("seo.keywords.search.columnPotential"),
+          brand: t("seo.keywords.search.brand"),
+          nonBrand: t("seo.keywords.search.nonBrand"),
+          brandSplit: t("seo.keywords.search.brandSplit"),
+          noBrandTerms: t("seo.keywords.search.noBrandTerms"),
+          withheld: t("seo.keywords.search.withheld"),
+          dataUpTo: t("seo.keywords.search.dataUpTo"),
+          empty: t("seo.keywords.search.empty"),
+          emptyHint: t("seo.keywords.search.emptyHint"),
+          emptyView: t("seo.keywords.search.emptyView"),
+          track: t("seo.keywords.search.track"),
+        }}
+        views={{
+          tracked: report.stats.filter((stat) => isTracked(stat.query)).map(toRow),
+          untracked: report.stats.filter((stat) => !isTracked(stat.query)).map(toRow),
+          opportunity: opportunities,
+        }}
+        dataUpTo={dataUpToLabel}
+        totals={{
+          brandClicks: totals.brand.clicks,
+          nonBrandClicks: totals.nonBrand.clicks,
+          withheldClicks: 0,
+        }}
+        brandTermsConfigured={brandTerms.length > 0}
+        empty={report.empty}
+        trackHrefPrefix="#keyword-library?add="
+      />
 
       {/* ── Cannibalization ──────────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">

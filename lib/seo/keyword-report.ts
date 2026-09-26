@@ -97,11 +97,18 @@ export function findOpportunities(rows: readonly QueryStat[]): Opportunity[] {
     const medianCtr = median(ctrsByBand.get(bandOf(row.position)) ?? []);
     if (row.ctr >= medianCtr) continue;
 
-    opportunities.push({
-      ...row,
-      medianCtr,
-      potentialClicks: Math.round(row.impressions * (medianCtr - row.ctr)),
-    });
+    const potentialClicks = Math.round(row.impressions * (medianCtr - row.ctr));
+
+    /*
+      Below the median but by so little that closing the gap is worth no
+      clicks at all. Technically an underperformer, practically a row that
+      makes the list longer and less believable — and a list of things
+      worth doing loses its authority the first time it suggests something
+      that is not.
+    */
+    if (potentialClicks < 1) continue;
+
+    opportunities.push({ ...row, medianCtr, potentialClicks });
   }
 
   return opportunities.sort((a, b) => b.potentialClicks - a.potentialClicks);

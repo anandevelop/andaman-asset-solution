@@ -36,6 +36,9 @@ import {
 } from "@/lib/seo-audit";
 import { getAuditOverview } from "@/lib/seo/audit-report";
 import { getRecentAlerts } from "@/lib/seo/alerts";
+import { getKeywordReport } from "@/lib/seo/keyword-report";
+import { getSiteSettings } from "@/lib/settings";
+import { brandTotals, parseBrandTerms } from "@/lib/seo/brand";
 import { TrendChart } from "@/components/admin/DashboardCharts";
 import { intlLocale } from "@/lib/format";
 
@@ -75,12 +78,16 @@ export default async function AdminSeoOverviewPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, audit, overview, alerts] = await Promise.all([
+  const [t, audit, overview, alerts, search, settings] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSeoAudit(),
     getAuditOverview(),
     getRecentAlerts(),
+    getKeywordReport(),
+    getSiteSettings(),
   ]);
+
+  const searchTotals = brandTotals(search.stats, parseBrandTerms(settings.seo.brandTerms));
 
   /* "71" alone says nothing; "71, up 4 since Tuesday" is the form anybody
      acts on. Only SeoAuditRun can produce it. */
@@ -100,6 +107,16 @@ export default async function AdminSeoOverviewPage(props: Props) {
   const structuredMissing = audit.structuredData.filter(
     (s) => !s.implemented,
   ).length;
+
+  /* A Search Console date is a day, not a moment — it reports per day and
+     has no clock. Showing "24 Sep 07:00" invents a precision the source
+     does not have. */
+  const searchDayFormat = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 
   const alertDayFormat = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
@@ -344,12 +361,62 @@ export default async function AdminSeoOverviewPage(props: Props) {
         )}
       </section>
 
-      {/* Rule 8's "credentials not set yet" state. Everything Google knows
-          — clicks, positions, index coverage — arrives in phase 4, and an
-          empty card that says why is not the same as a broken one. */}
-      <section className="admin-card border-dashed">
-        <h2 className="admin-label">{t("seo.overview.googleTitle")}</h2>
-        <p className="admin-hint">{t("seo.overview.googleNotConnected")}</p>
+      {/*
+        Phase 1 drew this as "not connected yet". It is connected now, so
+        it shows what Google reports — and keeps a distinct empty state,
+        because "nothing synced yet" and "synced, and Google has no data
+        for this property" are different problems with different fixes.
+
+        Non-brand leads. Brand searches come from people who already know
+        the company, and counted together they make a month of existing
+        customers read as the site being found by someone new.
+      */}
+      <section className={`admin-card ${search.empty ? "border-dashed" : ""}`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="admin-label mb-0">{t("seo.overview.googleTitle")}</h2>
+          <Link href={`/${locale}/admin/seo/keywords`} className="text-xs text-primary underline">
+            {t("seo.overview.googleDetail")}
+          </Link>
+        </div>
+
+        {search.empty ? (
+          <p className="admin-hint">{t("seo.overview.googleNoData")}</p>
+        ) : (
+          <>
+            <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xs border border-primary/10 px-3 py-2.5">
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">
+                  {t("seo.overview.googleNonBrandClicks")}
+                </dt>
+                <dd className="mt-1 text-2xl font-semibold tabular-nums text-ink">
+                  {searchTotals.nonBrand.clicks}
+                </dd>
+              </div>
+              <div className="rounded-xs border border-primary/10 px-3 py-2.5">
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">
+                  {t("seo.overview.googleBrandClicks")}
+                </dt>
+                <dd className="mt-1 text-2xl font-semibold tabular-nums text-ink-muted">
+                  {searchTotals.brand.clicks}
+                </dd>
+              </div>
+              <div className="rounded-xs border border-primary/10 px-3 py-2.5">
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">
+                  {t("seo.overview.googleImpressions")}
+                </dt>
+                <dd className="mt-1 text-2xl font-semibold tabular-nums text-ink-muted">
+                  {searchTotals.brand.impressions + searchTotals.nonBrand.impressions}
+                </dd>
+              </div>
+            </dl>
+
+            {search.dataUpTo && (
+              <p className="admin-hint mt-2">
+                {t("seo.overview.googleDataUpTo")} {searchDayFormat.format(search.dataUpTo)}
+              </p>
+            )}
+          </>
+        )}
       </section>
 
       {/* ── Issues + technical checklist ────────────────────────────── */}

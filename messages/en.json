@@ -2721,6 +2721,33 @@
             "DUPLICATE_IN_FILE": "This query appears more than once in the file.",
             "PHRASE_TRACKED_IN_ANOTHER_LOCALE": "Already tracked in a different locale."
           }
+        },
+        "search": {
+          "title": "What Google sends people on",
+          "subtitle": "From Search Console, for the last 28 days.",
+          "tabTracked": "Tracked",
+          "tabUntracked": "Not tracked",
+          "tabOpportunity": "Opportunities",
+          "hintTracked": "Phrases in the library below, with what they actually earn.",
+          "hintUntracked": "Google already sends people on these and nobody has listed them. Usually the most interesting list here: it is what the site is found for, rather than what it was hoped to be found for.",
+          "hintOpportunity": "Position 5–15, seen at least 1,000 times, and clicked less than this site's own results at a similar position. The estimate is arithmetic, not a forecast.",
+          "columnQuery": "Search",
+          "columnClicks": "Clicks",
+          "columnImpressions": "Seen",
+          "columnCtr": "CTR",
+          "columnPosition": "Position",
+          "columnPotential": "If it clicked as well as its peers",
+          "brand": "brand",
+          "nonBrand": "Non-brand clicks",
+          "potentialClicks": "+{clicks}",
+          "brandSplit": "Brand searches come from people who already know the company, so they are counted separately — the non-brand figure is the one that says whether anyone new is finding the site.",
+          "noBrandTerms": "No brand terms are configured, so every search counts as non-brand and that figure is overstated. Set them in Sitewide defaults.",
+          "withheld": "Google withholds searches made by very few people, so the rows add up to less than the totals above — the difference is real traffic from searches it will not name.",
+          "dataUpTo": "Data up to",
+          "empty": "Nothing has been synced from Search Console yet.",
+          "emptyHint": "POST /api/cron/seo-search pulls it, and the scheduled job runs at 04:15. The first run takes all sixteen months Google keeps.",
+          "emptyView": "Nothing in this view for the last 28 days.",
+          "track": "Track"
         }
       },
       "links": {
@@ -2823,7 +2850,13 @@
         "alertsTitle": "Alerts",
         "alertsHint": "Last seven days. Checked after each scheduled job.",
         "alertsEmpty": "Nothing has been raised in the last seven days.",
-        "alertsSettings": "Rule settings"
+        "alertsSettings": "Rule settings",
+        "googleDetail": "See the searches",
+        "googleNoData": "Connected, but Google has no data for this property yet. The scheduled sync runs at 04:15; a property Google has never crawled stays empty until it is.",
+        "googleNonBrandClicks": "Non-brand clicks",
+        "googleBrandClicks": "Brand clicks",
+        "googleImpressions": "Times seen",
+        "googleDataUpTo": "Data up to"
       },
       "indexing": {
         "title": "Crawling & indexing",
@@ -2852,6 +2885,10 @@
         "addRedirect": "Add a redirect",
         "uncrawledTitle": "Published, never fetched",
         "uncrawledHint": "No search crawler has asked for these. A page Google has never fetched cannot be indexed — worth checking they are linked from somewhere and allowed in robots.txt."
+      },
+      "defaults": {
+        "brandTerms": "Brand terms",
+        "brandTermsHint": "Comma separated. Searches containing any of these count as brand — people who already know the company — and are reported separately from everyone else. Include every language and spelling customers use, Thai included: a term left out inflates the non-brand figure in the market the site actually sells in."
       }
     },
     "seoTranslations": {

@@ -127,6 +127,15 @@ export default async function AdminSeoDefaultsPage(props: Props) {
         field("seo.twitterHandle", t("settings.fields.twitterHandle"), {
           hint: t("settings.fields.twitterHandleHint"),
         }),
+        /* What separates "someone looking for us" from "someone looking
+           for a villa in Phuket" on every screen that shows clicks. Lives
+           here rather than on the keywords tab because it is a sitewide
+           judgement about the company, not a per-phrase one — and because
+           the keywords tab is where its *effect* is read, which is a
+           different job from setting it. */
+        field("seo.brandTerms", t("seo.defaults.brandTerms"), {
+          hint: t("seo.defaults.brandTermsHint"),
+        }),
       ],
     },
     {

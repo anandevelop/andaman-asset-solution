@@ -95,6 +95,23 @@ describe("findOpportunities", () => {
     expect(found[0].potentialClicks).toBeGreaterThan(found[1].potentialClicks);
   });
 
+  it("leaves out a gap too small to be worth a single click", () => {
+    /*
+      Found on screen: a row 0.03 percentage points below its band median
+      was offered as an opportunity worth "+0". Technically an
+      underperformer, practically noise — and a list of things worth doing
+      loses its authority the first time it suggests something that is
+      not.
+    */
+    const rows = [
+      row({ query: "barely-behind", impressions: 1000, ctr: 0.0999 }),
+      row({ query: "peer-a", impressions: 1000, ctr: 0.1 }),
+      row({ query: "peer-b", impressions: 1000, ctr: 0.1 }),
+    ];
+
+    expect(findOpportunities(rows)).toEqual([]);
+  });
+
   it("says nothing when every row is already doing well", () => {
     // Half the rows are always below their own median, so a band of
     // identical performers must produce no opportunities at all.

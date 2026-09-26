@@ -2721,6 +2721,33 @@
             "DUPLICATE_IN_FILE": "此 query 在文件中出现了不止一次。",
             "PHRASE_TRACKED_IN_ANOTHER_LOCALE": "已在其他语言下被追踪。"
           }
+        },
+        "search": {
+          "title": "Google 带来的搜索词",
+          "subtitle": "来自 Search Console，最近 28 天。",
+          "tabTracked": "已跟踪",
+          "tabUntracked": "未跟踪",
+          "tabOpportunity": "机会",
+          "hintTracked": "下方词库中的词，以及它们的实际表现。",
+          "hintUntracked": "Google 已经在用这些词把人带过来，但没人把它们列入词库。这通常是本页最有价值的列表：它是网站真正被搜到的样子，而不是我们希望的样子。",
+          "hintOpportunity": "排名 5–15，展现至少 1,000 次，且点击率低于本站同排名区间的其他结果。估算值是算术，不是预测。",
+          "columnQuery": "搜索词",
+          "columnClicks": "点击",
+          "columnImpressions": "展现",
+          "columnCtr": "点击率",
+          "columnPosition": "排名",
+          "columnPotential": "若点击率达到同侪水平",
+          "brand": "品牌",
+          "nonBrand": "非品牌点击",
+          "potentialClicks": "+{clicks}",
+          "brandSplit": "品牌词来自已经知道公司的人，因此单独统计 —— 非品牌数字才能说明是否有新访客找到网站。",
+          "noBrandTerms": "尚未配置品牌词，所有搜索都被计为非品牌，该数字被高估。请在\"全站默认设置\"中配置。",
+          "withheld": "Google 会隐去极少人搜索的词，因此各行之和小于上方总计 —— 差额是来自它不肯具名的搜索的真实流量。",
+          "dataUpTo": "数据截至",
+          "empty": "尚未从 Search Console 同步任何数据。",
+          "emptyHint": "由 POST /api/cron/seo-search 拉取，定时任务在 04:15 运行。首次运行会取回 Google 保留的全部 16 个月。",
+          "emptyView": "最近 28 天此视图无内容。",
+          "track": "跟踪"
         }
       },
       "links": {
@@ -2823,7 +2850,13 @@
         "alertsTitle": "告警",
         "alertsHint": "最近 7 天。每次定时任务后检查。",
         "alertsEmpty": "最近 7 天没有任何告警。",
-        "alertsSettings": "规则设置"
+        "alertsSettings": "规则设置",
+        "googleDetail": "查看搜索词",
+        "googleNoData": "已连接，但 Google 尚无此资源的数据。定时同步在 04:15 运行；Google 从未抓取过的资源在被抓取前始终为空。",
+        "googleNonBrandClicks": "非品牌点击",
+        "googleBrandClicks": "品牌点击",
+        "googleImpressions": "展现次数",
+        "googleDataUpTo": "数据截至"
       },
       "indexing": {
         "title": "抓取与收录",
@@ -2852,6 +2885,10 @@
         "addRedirect": "添加重定向",
         "uncrawledTitle": "已发布，但从未被抓取",
         "uncrawledHint": "还没有搜索爬虫请求过这些页面。Google 从未抓取的页面不可能被收录 —— 建议检查是否有链接指向它们，以及 robots.txt 是否放行。"
+      },
+      "defaults": {
+        "brandTerms": "品牌词",
+        "brandTermsHint": "以逗号分隔。包含这些词的搜索将计为品牌搜索 —— 来自已经知道公司的人 —— 并与其他搜索分开统计。请涵盖客户使用的每种语言和拼写，包括泰语：遗漏一个词就会在网站真正销售的市场里高估非品牌数字。"
       }
     },
     "seoTranslations": {
