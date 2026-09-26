@@ -85,6 +85,13 @@ Cross-check against `.env.example`, which annotates each one.
       see the analytics note in section 7 before you add it.
 - [x] `TZ=Asia/Bangkok` set on the container — verified 2026-09-02 on
       both the `app` and `migrate` services in `docker-compose.prod.yml`
+- [ ] `SITE_INDEXABLE="true"` — **the live site is invisible to Google
+      without it.** Nothing else turns indexing on: unset or any other
+      value, `robots.txt` disallows everything and every response carries
+      `X-Robots-Tag: noindex, nofollow`. The default is deliberately the
+      safe one, because a staging host that gets indexed is far more
+      expensive to undo than a production host that needs one variable —
+      see section 9 and `lib/indexing.ts`. Set it on production only.
 - [x] No `.env` file committed to the repository — verified 2026-09-02,
       `git ls-files .env` is empty and `.gitignore` covers it
 
@@ -319,14 +326,22 @@ Cross-check against `.env.example`, which annotates each one.
       three published projects, two articles and one event, each in th/en/
       zh/ru, all on `https://andamanassetsolution.com`. The count will
       differ on production; the shape is what this checks.
-- [ ] `/robots.txt` **allows** crawling — confirm on the real deployment.
-      The earlier wording here said it blocks everything unless `VERCEL_ENV`
-      is `production`, which would have made a VPS deployment permanently
-      uncrawlable. `app/robots.ts` does not do that: it treats
-      `NODE_ENV=production` with no `VERCEL_ENV` at all as production, which
-      is exactly this deployment, and the Dockerfile sets `NODE_ENV`. Still
-      worth one `curl` against the live site, because the cost of being
-      wrong is invisible and expensive.
+- [ ] `/robots.txt` **allows** crawling — confirm on the real deployment
+      with one `curl`, because the cost of being wrong is invisible and
+      expensive.
+
+      This item has been wrong twice, in opposite directions, so read the
+      mechanism rather than trusting the sentence. It originally claimed
+      crawling was blocked unless `VERCEL_ENV` was `production`, which
+      would have made a VPS deployment permanently uncrawlable. The
+      correction said `NODE_ENV=production` with no `VERCEL_ENV` counts as
+      production — true of this deployment, and also true of the staging
+      container, which is why staging was quietly indexable.
+
+      Neither is how it works now. `app/robots.ts` asks `lib/indexing.ts`,
+      which allows crawling only when `SITE_INDEXABLE` is exactly `"true"`.
+      Set it on production and nowhere else. If robots.txt disallows
+      everything on the live site, that variable is the reason.
 - [ ] Google Search Console verified, sitemap submitted
 - [ ] Rich Results Test passes for a project page (`RealEstateListing`),
       an article (`Article`) and an event (`Event`)

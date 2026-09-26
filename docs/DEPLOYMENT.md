@@ -63,6 +63,21 @@ NEXT_PUBLIC_SITE_URL  # canonical origin
 NEXT_PUBLIC_MEDIA_DOMAIN
 ```
 
+And one that the container will start perfectly well without, which is
+exactly the problem:
+
+```
+SITE_INDEXABLE="true"   # production only
+```
+
+Unset, `robots.txt` disallows everything and every response carries
+`X-Robots-Tag: noindex, nofollow`. The site works, looks right, and is
+invisible to Google. The default is the safe one on purpose — a staging
+host that gets indexed is far more expensive to undo than a production
+host that needs one variable — but it does mean a launch that forgets it
+fails silently. See `lib/indexing.ts` and section 9 of
+LAUNCH_CHECKLIST.md.
+
 ### The build-time trap
 
 `NEXT_PUBLIC_*` values are **compiled into the browser bundle**, not read
