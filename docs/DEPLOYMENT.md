@@ -204,6 +204,39 @@ curl -fsS http://localhost:3000/api/health | jq
 `200` with `"status":"ok"` means the database is reachable. `503` with
 `"status":"degraded"` means it is not — check `checks.database.error`.
 
+### Running the stack on an Apple Silicon Mac
+
+`docker compose -f docker-compose.prod.yml up -d` fails there with:
+
+```
+no matching manifest for linux/arm64/v8 in the manifest list entries
+```
+
+Nothing is broken. The published image is `linux/amd64` only, because the
+deploy target is an amd64 VPS and CI pins it so a future arm64 runner
+cannot silently ship an image the server cannot execute. There is simply
+no arm64 build to pull.
+
+The compose file now says `platform: linux/amd64` on the three services
+that use the image, so Docker Desktop emulates instead of failing. That is
+enough to check the image boots, migrates and serves; it is not a way to
+measure performance. For ordinary local work use `npm run db:up` and
+`npm run dev`, both native.
+
+One thing that looks like a failure and is not: if something else on the
+machine already listens on port 80 — a local nginx, most likely — then
+`curl localhost/api/health` answers from *that*, not from the container,
+usually with a 404. Check which one replied:
+
+```bash
+curl -sI http://127.0.0.1/api/health | grep -i server
+docker compose -f docker-compose.prod.yml ps
+```
+
+A container reporting `(healthy)` is passing its own probe against
+127.0.0.1:3000 inside the container, so the app is fine and only the host
+port is contested.
+
 ### The scheduled jobs
 
 Three things in this application only happen when something calls them:

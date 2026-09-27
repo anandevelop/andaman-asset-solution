@@ -32,6 +32,21 @@
 
 name: andaman-prod
 
+# ── One architecture, on purpose ──────────────────────────────────────
+#
+# The published image is linux/amd64 only, because the deploy target is an
+# amd64 VPS and .github/workflows/ci.yml pins it so that a future arm64
+# runner cannot silently ship an image the server cannot execute.
+#
+# On an Apple Silicon machine that makes a bare `docker compose up` fail
+# with "no matching manifest for linux/arm64/v8" — nothing is wrong, there
+# simply is no arm64 build. The `platform:` lines below say so, and Docker
+# Desktop emulates. Emulated, it is fine for checking that the image boots
+# and serves; it is not a way to measure how fast anything is.
+#
+# For ordinary local work use the dev stack instead: `npm run db:up` for
+# Postgres and `npm run dev` for the app, both native.
+
 services:
   db:
     image: postgres:16-alpine
@@ -60,6 +75,7 @@ services:
   migrate:
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_migrate
+    platform: linux/amd64 # amd64-only image; see the note above `services`
     # :latest is a moving tag, and compose reuses whatever it already has
     # locally unless told otherwise — without this, a redeploy silently
     # reruns the image it deployed last time.
@@ -81,6 +97,7 @@ services:
   app:
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_app
+    platform: linux/amd64 # amd64-only image; see the note above `services`
     pull_policy: always
     restart: always
     # Node is PID 1 in this image and does not reap orphaned children.
@@ -126,6 +143,7 @@ services:
   cron:
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_cron
+    platform: linux/amd64 # amd64-only image; see the note above `services`
     pull_policy: always
     restart: always
     init: true
