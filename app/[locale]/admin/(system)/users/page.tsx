@@ -47,7 +47,24 @@ export default async function AdminUsersPage(props: Props) {
           createdAt: true,
           totpEnabledAt: true,
           scopedProjects: { select: { id: true, nameEn: true, nameTh: true } },
+          salesPerson: { select: { id: true, nameEn: true, nameTh: true } },
         },
+      }),
+    [],
+  );
+
+  /*
+    Only the unclaimed profiles, because this list feeds the *create* form —
+    there is no existing link to keep in the options. The edit page has to
+    add the account's own profile back; see its own query.
+  */
+  const salesPeople = await safeQuery(
+    "admin:users:salesPeople",
+    () =>
+      prisma.salesPerson.findMany({
+        where: { staffAccount: { is: null } },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: { id: true, nameEn: true, nameTh: true },
       }),
     [],
   );
@@ -97,12 +114,13 @@ export default async function AdminUsersPage(props: Props) {
       {/* ── Existing accounts ───────────────────────────────────────── */}
       {users.length > 0 && (
         <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
-          <table className="w-full min-w-[720px] border-collapse">
+          <table className="w-full min-w-[840px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>
                 <th className="admin-th">{t("users.name")}</th>
                 <th className="admin-th">{t("users.role")}</th>
                 <th className="admin-th">{t("users.scope")}</th>
+                <th className="admin-th">{t("users.salesPerson")}</th>
                 <th className="admin-th">{t("users.twoFactor")}</th>
                 <th className="admin-th">{t("users.lastSignIn")}</th>
                 <th className="admin-th">{t("users.status")}</th>
@@ -145,6 +163,16 @@ export default async function AdminUsersPage(props: Props) {
                           .map((project) => (locale === "th" ? project.nameTh : project.nameEn))
                           .join(", ")
                       : t("users.scopeAll")}
+                  </td>
+
+                  {/* Unlinked is the common case and not a fault — an em
+                      dash, not a warning. */}
+                  <td className="admin-td max-w-[180px] truncate text-xs text-ink-muted">
+                    {user.salesPerson
+                      ? locale === "th"
+                        ? user.salesPerson.nameTh
+                        : user.salesPerson.nameEn
+                      : "—"}
                   </td>
 
                   <td className="admin-td whitespace-nowrap text-xs">
@@ -264,6 +292,10 @@ export default async function AdminUsersPage(props: Props) {
         <UserForm
           action={createUser.bind(null, locale)}
           mode="create"
+          salesPeople={salesPeople.map((person) => ({
+            id: person.id,
+            name: locale === "th" ? person.nameTh : person.nameEn,
+          }))}
           submitLabel={t("common.create")}
         />
       </section>

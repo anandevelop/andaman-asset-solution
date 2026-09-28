@@ -6,13 +6,20 @@
  * Create and edit an account. The password field only appears on create;
  * changing an existing password goes through PasswordForm, so a routine
  * name correction can never silently reset someone's credentials.
+ *
+ * It is also where an account is tied to a SalesPerson profile, which is
+ * what makes it eligible to be handed a lead. That field follows the role
+ * being chosen rather than the role the page loaded with — see canHoldLeads
+ * below for why VIEWER has no such field at all.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import type { Role } from "@prisma/client";
+import { hasRole } from "@/lib/role-rank";
 import { ROLES } from "@/lib/validations";
 import SaveToast from "@/components/admin/SaveToast";
 import type { UserFormState } from "@/app/[locale]/admin/(system)/users/actions";
@@ -25,7 +32,15 @@ type Props = {
     email: string;
     role: string;
     isActive: boolean;
+    /** The SalesPerson profile this account is, or null. */
+    salesPersonId?: string | null;
   };
+  /**
+   * Profiles this account may be linked to: the unclaimed ones, plus
+   * whichever one it already holds. Names are already resolved to the
+   * viewing locale by the page.
+   */
+  salesPeople?: { id: string; name: string }[];
   /** True when this row is the signed-in user — role and active are frozen. */
   isSelf?: boolean;
   /** True when demoting this user would leave no super admin. */
@@ -35,7 +50,7 @@ type Props = {
 
 const INITIAL: UserFormState = { ok: false };
 
-const EMPTY = { name: "", email: "", role: "EDITOR", isActive: true };
+const EMPTY = { name: "", email: "", role: "EDITOR", isActive: true, salesPersonId: null };
 
 function SubmitButton({ label }: { label: string }) {
   const t = useTranslations("admin.common");
@@ -59,6 +74,7 @@ export default function UserForm({
   action,
   mode,
   values = EMPTY,
+  salesPeople = [],
   isSelf = false,
   isLastSuperAdmin = false,
   submitLabel,
@@ -66,14 +82,32 @@ export default function UserForm({
   const t = useTranslations("admin");
   const [state, formAction] = useActionState(action, INITIAL);
 
+  /*
+    Tracked in state rather than read once at mount: the sales-profile field
+    below appears and disappears with the role being chosen, and an admin
+    promoting a VIEWER to SALES expects it to show up without a reload.
+  */
+  const [role, setRole] = useState(values.role);
+
   // Freezing role/active for these two cases keeps the UI honest about a
   // rule the server enforces anyway.
   const locked = isSelf || isLastSuperAdmin;
 
+  /*
+    VIEWER is the one role that cannot be handed a lead, so it is the one
+    role with no profile to link. Leaving the field out for VIEWER also
+    means demoting a salesperson releases their profile for somebody else,
+    rather than leaving it claimed by an account that can no longer act on
+    it — an absent field parses to null, which is the unlink.
+  */
+  const canHoldLeads = hasRole(role as Role, "SALES");
+
   const err = (name: string) => {
     const code = state.fields?.[name];
     if (!code) return null;
-    return code === "EMAIL_TAKEN" ? t("users.emailTaken") : code;
+    if (code === "EMAIL_TAKEN") return t("users.emailTaken");
+    if (code === "SALES_PERSON_TAKEN") return t("users.salesPersonTaken");
+    return code;
   };
 
   const banner = (() => {
@@ -149,6 +183,7 @@ export default function UserForm({
           id="role"
           name="role"
           defaultValue={values.role}
+          onChange={(event) => setRole(event.target.value)}
           disabled={locked}
           className="admin-input max-w-xs disabled:bg-surface-muted disabled:text-ink-muted"
         >
@@ -167,6 +202,32 @@ export default function UserForm({
           <p className="admin-hint">{t("users.lastSuperAdminHint")}</p>
         )}
       </div>
+
+      {/* ── Which salesperson this account is ───────────────────────── */}
+      {canHoldLeads && (
+        <div>
+          <label htmlFor="salesPersonId" className="admin-label">
+            {t("users.salesPerson")}
+          </label>
+          <select
+            id="salesPersonId"
+            name="salesPersonId"
+            defaultValue={values.salesPersonId ?? ""}
+            className="admin-input max-w-xs"
+          >
+            <option value="">{t("users.salesPersonNone")}</option>
+            {salesPeople.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+          <p className="admin-hint">{t("users.salesPersonHint")}</p>
+          {err("salesPersonId") && (
+            <p className="mt-1.5 text-xs text-red-700">{err("salesPersonId")}</p>
+          )}
+        </div>
+      )}
 
       {mode === "create" && (
         <div>

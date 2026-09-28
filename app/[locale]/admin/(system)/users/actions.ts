@@ -18,6 +18,14 @@
  * Deletion is hard, but safe: NewsArticle.authorId and
  * ProjectProgress.publishedBy are both onDelete: SetNull, so the content
  * survives and simply loses its byline.
+ *
+ * This is also where an account is tied to a SalesPerson profile. The
+ * column and its unique constraint have existed since the sales-team screen
+ * shipped, and that screen has been telling admins to "link an account on
+ * the users page" ever since — but nothing anywhere wrote the field, so the
+ * instruction pointed at a control that did not exist. The link is what
+ * makes someone eligible to receive a lead (lib/lead-routing.ts), so it
+ * belongs with granting access rather than with editing a public profile.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -61,6 +69,60 @@ async function isLastSuperAdmin(userId: string): Promise<boolean> {
   return remaining === 0;
 }
 
+/**
+ * Which unique column a P2002 tripped over.
+ *
+ * Two columns on User are unique now, and the handlers below answered
+ * EMAIL_TAKEN for either — so linking a sales profile another account
+ * already held reported a duplicate email address, on a form where the
+ * email was fine.
+ */
+function uniqueTarget(error: Prisma.PrismaClientKnownRequestError): string {
+  const { target } = error.meta ?? {};
+  return Array.isArray(target) ? target.join(",") : String(target ?? "");
+}
+
+function duplicateField(error: unknown): UserFormState | null {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return null;
+  if (error.code !== "P2002") return null;
+
+  return uniqueTarget(error).includes("salesPersonId")
+    ? { ok: false, fields: { salesPersonId: "SALES_PERSON_TAKEN" } }
+    : { ok: false, fields: { email: "EMAIL_TAKEN" } };
+}
+
+/**
+ * Refuse a sales profile that does not exist, or that somebody else holds.
+ *
+ * `User.salesPersonId` is unique, so the database would catch the second
+ * case on its own — but only as a P2002 after the write, and on create that
+ * rejects the whole row. Checked up front so the answer names the field
+ * that was wrong instead of failing the account creation as a whole. The
+ * P2002 handler stays as the backstop for the race between this read and
+ * the write.
+ *
+ * `forUserId` is the account being saved, so re-saving a user whose link is
+ * unchanged is not a conflict with itself.
+ */
+async function salesProfileConflict(
+  salesPersonId: string,
+  forUserId: string | null,
+): Promise<UserFormState | null> {
+  const profile = await prisma.salesPerson.findUnique({
+    where: { id: salesPersonId },
+    select: { staffAccount: { select: { id: true } } },
+  });
+
+  if (!profile) return { ok: false, message: "NOT_FOUND" };
+
+  const holder = profile.staffAccount?.id ?? null;
+  if (holder !== null && holder !== forUserId) {
+    return { ok: false, fields: { salesPersonId: "SALES_PERSON_TAKEN" } };
+  }
+
+  return null;
+}
+
 // ── Create ──────────────────────────────────────────────────────────────
 
 export async function createUser(
@@ -76,27 +138,34 @@ export async function createUser(
     role: text(formData, "role"),
     password: text(formData, "password"),
     isActive: formData.get("isActive") === "on",
+    salesPersonId: text(formData, "salesPersonId"),
   });
 
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
 
   const { password, ...rest } = parsed.data;
 
+  if (rest.salesPersonId) {
+    // No id to exempt: this account does not exist yet, so whoever holds
+    // the profile is by definition somebody else.
+    const conflict = await salesProfileConflict(rest.salesPersonId, null);
+    if (conflict) return conflict;
+  }
+
   try {
     await prisma.user.create({
       data: { ...rest, passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS) },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return { ok: false, fields: { email: "EMAIL_TAKEN" } };
-    }
+    const duplicate = duplicateField(error);
+    if (duplicate) return duplicate;
     return { ok: false, message: "SAVE_FAILED" };
   }
 
   revalidatePath(`/${locale}/admin/users`);
+  // The sales-team cards read this link to decide whether a profile can be
+  // handed a lead, so they are stale the moment it changes.
+  revalidatePath(`/${locale}/admin/sales-team`);
   return { ok: true, message: "CREATED" };
 }
 
@@ -115,6 +184,7 @@ export async function updateUser(
     email: text(formData, "email"),
     role: text(formData, "role"),
     isActive: formData.get("isActive") === "on",
+    salesPersonId: text(formData, "salesPersonId"),
   });
 
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
@@ -144,20 +214,25 @@ export async function updateUser(
     return { ok: false, message: "LAST_SUPER_ADMIN" };
   }
 
+  // After the invariants: a blocked demotion is the more important thing to
+  // say, and this costs a query.
+  if (parsed.data.salesPersonId) {
+    const conflict = await salesProfileConflict(parsed.data.salesPersonId, id);
+    if (conflict) return conflict;
+  }
+
   try {
     await prisma.user.update({ where: { id }, data: parsed.data });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return { ok: false, fields: { email: "EMAIL_TAKEN" } };
-    }
+    const duplicate = duplicateField(error);
+    if (duplicate) return duplicate;
     return { ok: false, message: "SAVE_FAILED" };
   }
 
   revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/users/${id}/edit`);
+  // See createUser — the sales-team cards key off this link.
+  revalidatePath(`/${locale}/admin/sales-team`);
   return { ok: true, message: "SAVED" };
 }
 

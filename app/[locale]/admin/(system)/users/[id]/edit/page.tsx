@@ -16,6 +16,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { deleteUser, resetUserTwoFactor, setUserPassword, updateUser } from "../../actions";
 import UserForm from "@/components/admin/UserForm";
@@ -40,12 +41,34 @@ export default async function EditUserPage(props: Props) {
       email: true,
       role: true,
       isActive: true,
+      salesPersonId: true,
       totpEnabledAt: true,
       _count: { select: { articles: true, projectProgresses: true } },
     },
   });
 
   if (!user) notFound();
+
+  /*
+    The profiles this account could be linked to: unclaimed ones, plus the
+    one it already holds — without that second half, opening the edit page
+    of a linked user would offer a list their own profile is missing from,
+    and the select would fall back to "not linked".
+
+    Ordered like the sales-team screen so the two lists read the same way.
+  */
+  const salesPeople = await safeQuery(
+    "admin:users:salesPeople",
+    () =>
+      prisma.salesPerson.findMany({
+        where: user.salesPersonId
+          ? { OR: [{ staffAccount: { is: null } }, { id: user.salesPersonId }] }
+          : { staffAccount: { is: null } },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: { id: true, nameEn: true, nameTh: true },
+      }),
+    [],
+  );
 
   const otherSuperAdmins = await prisma.user.count({
     where: { role: Role.SUPER_ADMIN, isActive: true, id: { not: id } },
@@ -74,6 +97,17 @@ export default async function EditUserPage(props: Props) {
         <p className="mt-1 text-sm text-ink-muted">{user.email}</p>
       </header>
 
+      {/*
+        The only degrading read on this page is the sales-profile list, and
+        an empty one is indistinguishable from "every profile is taken" —
+        which would look like a reason to leave this account unlinked.
+      */}
+      {isDatabaseOffline() && (
+        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("common.offline")}
+        </p>
+      )}
+
       {/* ── Profile, role, access ───────────────────────────────────── */}
       <section className="admin-card">
         <h2 className="mb-5 text-base font-semibold text-primary">
@@ -88,7 +122,12 @@ export default async function EditUserPage(props: Props) {
             email: user.email,
             role: user.role,
             isActive: user.isActive,
+            salesPersonId: user.salesPersonId,
           }}
+          salesPeople={salesPeople.map((person) => ({
+            id: person.id,
+            name: locale === "th" ? person.nameTh : person.nameEn,
+          }))}
           isSelf={isSelf}
           isLastSuperAdmin={isLastSuperAdmin}
           submitLabel={t("common.save")}

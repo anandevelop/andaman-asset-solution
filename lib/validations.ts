@@ -534,12 +534,29 @@ const email = z
   .email("Enter a valid email address")
   .max(180);
 
+/**
+ * Which SalesPerson profile this account *is*, if any — the link that makes
+ * someone eligible to be handed a lead (lib/lead-routing.ts).
+ *
+ * An empty string has to become `null` rather than travelling as `""`: it
+ * is what the "not linked" row of a `<select>` submits, it means unlink,
+ * and `""` reaches Postgres as a foreign key that matches nothing. Nullish
+ * rather than required because the control is only rendered for roles that
+ * can hold leads at all — an absent field means the same as an empty one.
+ */
+const salesPersonId = z
+  .string()
+  .trim()
+  .nullish()
+  .transform((value) => value || null);
+
 export const userCreateSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
   email,
   role: z.enum(ROLES),
   password,
   isActive: z.coerce.boolean(),
+  salesPersonId,
 });
 
 /** Password is changed through its own form, so it is absent here. */
@@ -548,6 +565,7 @@ export const userUpdateSchema = z.object({
   email,
   role: z.enum(ROLES),
   isActive: z.coerce.boolean(),
+  salesPersonId,
 });
 
 /** An admin setting someone else's password — no current password needed. */
