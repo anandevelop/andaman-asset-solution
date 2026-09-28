@@ -86,11 +86,13 @@ beforeEach(() => {
   prismaMock.floorPlan.findMany.mockResolvedValue([
     { id: "floor-1", imageUrl: FLOOR.imageUrl },
   ]);
-  prismaMock.floorPlan.update.mockImplementation(async ({ where }: never) => ({ id: where.id }));
+  prismaMock.floorPlan.update.mockImplementation(
+    async ({ where }: { where: { id: string } }) => ({ id: where.id }),
+  );
   prismaMock.floorPlan.create.mockResolvedValue({ id: "floor-new" });
-  prismaMock.floorPlanRoom.update.mockImplementation(async ({ where }: never) => ({
-    id: where.id,
-  }));
+  prismaMock.floorPlanRoom.update.mockImplementation(
+    async ({ where }: { where: { id: string } }) => ({ id: where.id }),
+  );
   prismaMock.floorPlanRoom.create.mockResolvedValue({ id: "room-new" });
   deriveBlueprint.mockResolvedValue({ blueprintUrl: "/bp.webp", width: 1800, height: 700 });
 });
@@ -147,7 +149,7 @@ describe("the id-preserving diff", () => {
     ]);
 
     const orders = prismaMock.floorPlan.update.mock.calls.map(
-      ([args]: never) => args.data.sortOrder,
+      (call) => (call[0] as { data: { sortOrder: number } }).data.sortOrder,
     );
     expect(orders).toEqual([0, 1]);
   });
@@ -182,7 +184,7 @@ describe("blueprint derivation", () => {
   it("leaves the existing blueprint alone when nothing was derived", async () => {
     await save([FLOOR]);
 
-    const [{ data }] = prismaMock.floorPlan.update.mock.calls[0] as never;
+    const [{ data }] = prismaMock.floorPlan.update.mock.calls[0] as [{ data: object }];
     expect(data).not.toHaveProperty("blueprintImageUrl");
   });
 
