@@ -18,7 +18,13 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
-import { saveUnitType, deleteUnitType } from "./actions";
+import { saveUnitType, deleteUnitType, saveUnitTypeFloors } from "./actions";
+import UnitTypesWorkspace, {
+  type DraftFloor,
+  type DraftType,
+} from "@/components/admin/unit-types/UnitTypesWorkspace";
+import { locales, adminLocales, type Locale } from "@/i18n";
+import { DEFAULT_PLAN_ASPECT } from "@/lib/projects";
 import UnitTypeForm from "@/components/admin/UnitTypeForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
@@ -58,12 +64,158 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     where: { projectId },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     include: {
-      floorPlans: { orderBy: { sortOrder: "asc" } },
+      floorPlans: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          rooms: { orderBy: { sortOrder: "asc" }, include: { translations: true } },
+        },
+      },
       translations: true,
     },
   });
 
   const projectName = locale === "th" ? project.nameTh : project.nameEn;
+
+  /*
+    The workspace's starting draft.
+
+    Areas arrive as the strings their inputs hold rather than numbers: an
+    admin halfway through typing "19." has a value that is not a number yet,
+    and storing it as one would either reject the keystroke or silently
+    round it. They are parsed once, on save.
+  */
+  const draftTypes: DraftType[] = unitTypes.map((type: any) => ({
+    id: type.id,
+    name: type.name,
+    code: type.code,
+    bedrooms: type.bedrooms,
+    bathrooms: type.bathrooms,
+    livingAreaSqm: type.livingAreaSqm === null ? null : Number(type.livingAreaSqm),
+    totalUnits: type.totalUnits,
+    hasPrivateLift: type.hasPrivateLift,
+    floors: [],
+  }));
+
+  const floorsByType: Record<string, DraftFloor[]> = Object.fromEntries(
+    unitTypes.map((type: any) => [
+      type.id,
+      type.floorPlans.map((plan: any) => ({
+        // The database id doubles as the draft key for a saved row; only
+        // rows the admin adds need a temporary one.
+        key: plan.id,
+        id: plan.id,
+        floorName: plan.floorName,
+        shortLabel: plan.shortLabel ?? "",
+        areaSqm: plan.areaSqm === null ? "" : String(plan.areaSqm),
+        imageUrl: plan.imageUrl,
+        furnishedImageUrl: plan.furnishedImageUrl,
+        aspect:
+          plan.imageWidth && plan.imageHeight
+            ? plan.imageWidth / plan.imageHeight
+            : DEFAULT_PLAN_ASPECT,
+        portraitRotation: plan.portraitRotation,
+        rooms: plan.rooms.map((room: any) => ({
+          key: room.id,
+          id: room.id,
+          names: Object.fromEntries(
+            room.translations.map((row: any) => [row.locale, row.name]),
+          ) as Partial<Record<Locale, string>>,
+          areaSqm: room.areaSqm === null ? "" : String(room.areaSqm),
+          xPercent: room.xPercent,
+          yPercent: room.yPercent,
+          photoUrl: room.photoUrl,
+        })),
+      })),
+    ]),
+  );
+
+  const uw = await getTranslations({ locale, namespace: "admin.unitTypes.workspace" });
+  const up = await getTranslations({ locale, namespace: "projects.unitTypesSection" });
+
+  const workspaceLabels = {
+    tabs: { details: uw("tabDetails"), floors: uw("tabFloors"), preview: uw("tabPreview") },
+    typeList: uw("typeList"),
+    addFloor: uw("addFloor"),
+    copyFloor: uw("copyFloor"),
+    floorName: uw("floorName"),
+    liftLabel: uw("liftLabel"),
+    floorArea: uw("floorArea"),
+    rotation: uw("rotation"),
+    rotationCw: uw("rotationCw"),
+    rotationCcw: uw("rotationCcw"),
+    rotationHint: uw("rotationHint"),
+    moveUp: uw("moveUp"),
+    moveDown: uw("moveDown"),
+    deleteFloor: uw("deleteFloor"),
+    lastFloor: uw("lastFloor"),
+    lineUpload: uw("lineUpload"),
+    lineUploadHint: uw("lineUploadHint"),
+    furnishedUpload: uw("furnishedUpload"),
+    furnishedUploadHint: uw("furnishedUploadHint"),
+    roomsHeading: uw("roomsHeading"),
+    roomName: uw("roomName"),
+    roomArea: uw("roomArea"),
+    roomPhoto: uw("roomPhoto"),
+    pickPhoto: uw("pickPhoto"),
+    clearPhoto: uw("clearPhoto"),
+    deleteRoom: uw("deleteRoom"),
+    untranslated: uw("untranslated"),
+    roomTotal: uw("roomTotal"),
+    areaMatches: uw("areaMatches"),
+    areaDiffers: uw("areaDiffers"),
+    noRooms: uw("noRooms"),
+    unsaved: uw("unsaved"),
+    discard: uw("discard"),
+    save: t("common.save"),
+    saving: t("common.saving"),
+    saved: t("common.saved"),
+    saveFailed: t("common.error"),
+    complete: uw("complete"),
+    issues: uw("issues"),
+    desktop: uw("desktop"),
+    mobile: uw("mobile"),
+    previewHint: uw("previewHint"),
+    issueLabels: {
+      noPlan: uw("issue.noPlan"),
+      noRooms: uw("issue.noRooms"),
+      roomsWithoutPhoto: uw("issue.roomsWithoutPhoto"),
+      roomsUntranslated: uw("issue.roomsUntranslated"),
+      furnishedAspect: uw("issue.furnishedAspect"),
+      areaMismatch: uw("issue.areaMismatch"),
+    },
+    pinner: {
+      lineView: uw("lineView"),
+      furnishedView: uw("furnishedView"),
+      placePin: uw("placePin"),
+      stopPlacing: uw("stopPlacing"),
+      placeHint: uw("placeHint"),
+      dragHint: uw("dragHint"),
+      noPlan: uw("issue.noPlan"),
+      noPlanHint: uw("noPlanHint"),
+      deleteSelected: uw("deleteSelected"),
+    },
+    elevator: {
+      eyebrow: t("unitTypes.title"),
+      project: up("project"),
+      type: up("type"),
+      bed: up("bed"),
+      bath: up("bath"),
+      floor: up("floor"),
+      areaThisFloor: up("areaThisFloor"),
+      areaByFloor: up("areaByFloor"),
+      total: up("total"),
+      roomSchedule: up("roomSchedule"),
+      sqm: uw("sqm"),
+      notToScale: up("notToScale"),
+      showHomePhoto: up("showHomePhoto"),
+      previousRoom: up("previousRoom"),
+      nextRoom: up("nextRoom"),
+      close: up("close"),
+      floorSelector: up("floorSelector"),
+    },
+    translationComplete: t("common.translationComplete"),
+    translationMissing: t("common.translationMissing"),
+  };
 
   return (
     <div className="space-y-8">
@@ -101,6 +253,25 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         completeLabel={t("common.translationComplete")}
         missingLabel={t("common.translationMissing")}
       />
+
+      {/* ── Floors, plans and room pins ──────────────────────────────
+          The workspace holds one unsaved draft for the whole type — see
+          its own header. The per-type spec forms below are unchanged and
+          still save through their own action. */}
+      {draftTypes.length > 0 && (
+        <UnitTypesWorkspace
+          locale={locale}
+          projectName={projectName}
+          projectSlug={project.slug}
+          types={draftTypes}
+          initialFloorsByType={floorsByType}
+          locales={locales}
+          adminLocales={adminLocales}
+          canWrite={canWrite}
+          onSave={saveUnitTypeFloors.bind(null, locale, project.id, project.slug)}
+          labels={workspaceLabels}
+        />
+      )}
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
