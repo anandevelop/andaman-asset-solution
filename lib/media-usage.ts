@@ -168,7 +168,46 @@ const SOURCES: Source[] = [
     find: (args) => prisma.floorPlan.findMany(args),
     select: { id: true, unitType: { select: { projectId: true, name: true } } },
     label: (f) => f.unitType.name,
-    href: (f) => `/admin/projects/${f.unitType.projectId}/edit`,
+    // The floors are edited on the unit-types screen, not the project's own
+    // edit form — this used to send people to a page with no floor on it.
+    href: (f) => `/admin/projects/${f.unitType.projectId}/unit-types`,
+  }),
+  column({
+    kind: "floorPlan",
+    note: "furnished",
+    field: "furnishedImageUrl",
+    find: (args) => prisma.floorPlan.findMany(args),
+    select: { id: true, unitType: { select: { projectId: true, name: true } } },
+    label: (f) => f.unitType.name,
+    href: (f) => `/admin/projects/${f.unitType.projectId}/unit-types`,
+  }),
+  /*
+    blueprintImageUrl is deliberately absent. It is derived by
+    lib/floor-plan-images.ts from imageUrl and regenerated at a predictable
+    key, so it is not a library image somebody chose — listing it would
+    report the same drawing as "used twice" and offer a delete for a file
+    the next save recreates.
+  */
+  column({
+    kind: "floorPlanRoom",
+    note: "roomPhoto",
+    field: "photoUrl",
+    find: (args) => prisma.floorPlanRoom.findMany(args),
+    select: {
+      id: true,
+      translations: { select: { locale: true, name: true } },
+      floorPlan: {
+        select: { floorName: true, unitType: { select: { projectId: true, name: true } } },
+      },
+    },
+    label: (room) => {
+      const name =
+        room.translations.find((t: { locale: string }) => t.locale === "en")?.name ??
+        room.translations[0]?.name ??
+        "";
+      return [name, room.floorPlan.unitType.name].filter(Boolean).join(" · ");
+    },
+    href: (room) => `/admin/projects/${room.floorPlan.unitType.projectId}/unit-types`,
   }),
   column({
     kind: "facility",
