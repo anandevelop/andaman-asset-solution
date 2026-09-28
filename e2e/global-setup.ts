@@ -119,6 +119,36 @@ async function seed(prisma: PrismaClient) {
   }
 
   /*
+    One unclaimed sales profile.
+
+    It exists so the account screens have something to render rather than an
+    empty list — the users page's sales-profile select would otherwise offer
+    only "not linked", and the roster would draw no cards at all, which made
+    admin-accounts.spec.ts pass while never touching the props it is there
+    to check. A function smuggled into an empty array is still an empty
+    array.
+
+    Deliberately isActive: false. Nothing needs it on the public site, and a
+    visible seeded rep would turn up in the public sales-team section where
+    no spec asks for one. The admin roster lists inactive people too, and
+    the users page offers any profile no account has claimed, so both paths
+    still get their row.
+  */
+  await prisma.salesPerson.create({
+    data: {
+      nameEn: "E2E Sales Fixture",
+      nameTh: "ตัวอย่างเซลล์สำหรับทดสอบ",
+      positionEn: "Property Consultant",
+      positionTh: "ที่ปรึกษาการขาย",
+      // Unique in the schema, and its natural business key.
+      whatsappNumber: "+66000000001",
+      phoneNumber: "+66000000001",
+      isActive: false,
+      sortOrder: 0,
+    },
+  });
+
+  /*
     One published e-brochure, attached to the first project so the spec
     covers the project-link path, translated into all four locales so the
     viewer's chrome can be asserted in any of them.

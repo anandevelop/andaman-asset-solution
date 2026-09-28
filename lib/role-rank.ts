@@ -51,3 +51,16 @@ export function hasRole(role: Role | undefined | null, minimum: Role): boolean {
   if (!role) return false;
   return ROLE_RANK[role] >= ROLE_RANK[minimum];
 }
+
+/**
+ * The same comparison as a list, for a Prisma `role: { in: ... }`.
+ *
+ * A query cannot call hasRole per row, so the choice is this or a hand-kept
+ * array of role names beside it — and a hand-kept array is how "who may be
+ * handed a lead" ends up meaning two different things in two files. It is
+ * derived from ROLE_RANK, so adding a role to the ladder cannot leave a
+ * query behind.
+ */
+export function rolesAtLeast(minimum: Role): Role[] {
+  return (Object.keys(ROLE_RANK) as Role[]).filter((role) => hasRole(role, minimum));
+}

@@ -1789,6 +1789,7 @@
       "durationM": "{minutes}m",
       "showOnSite": "Show on the website",
       "noAccount": "No back-office account linked, so this person cannot be assigned leads. Link one from Users.",
+      "accountCannotTakeLeads": "Linked, but this account's role cannot be handed leads. Raise it to Sales or above on the users page.",
       "noResponses": "—",
       "addTitle": "Add a team member",
       "addBody": "Creates a profile, then link a SALES account to hand them leads.",

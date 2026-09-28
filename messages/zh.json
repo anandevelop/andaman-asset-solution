@@ -1789,6 +1789,7 @@
       "durationM": "{minutes} 分",
       "showOnSite": "在网站上显示",
       "noAccount": "尚未关联后台账号，无法分配线索。请在用户页面关联。",
+      "accountCannotTakeLeads": "已关联账号，但该账号的角色无法接收线索。请在用户页面将其提升为销售或更高的角色。",
       "noResponses": "—",
       "addTitle": "添加团队成员",
       "addBody": "先创建资料，再关联“销售”账号以便接收线索。",

@@ -28,6 +28,13 @@ export type TeamCardMember = {
   photoUrl: string | null;
   isActive: boolean;
   hasAccount: boolean;
+  /**
+   * Linked to an account, but one the lead router will skip — a role below
+   * SALES cannot act on a lead, so assigning one would park it where nobody
+   * can change its status. Separate from hasAccount because the stats below
+   * are real history and stay worth showing.
+   */
+  accountCannotTakeLeads: boolean;
   /** Locale codes their profile is written in. */
   languages: string[];
   openLeads: number;
@@ -49,6 +56,7 @@ type Props = {
     closed90d: string;
     showOnSite: string;
     noAccount: string;
+    accountCannotTakeLeads: string;
     noResponses: string;
     addTitle: string;
     addBody: string;
@@ -133,15 +141,23 @@ export default function SalesTeamCards({ locale, members, addHref, labels }: Pro
             </div>
 
             {member.hasAccount ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-primary/10 pt-3">
-                <Stat value={String(member.openLeads)} label={labels.openLeads} />
-                <Stat
-                  value={member.responseLabel ?? labels.noResponses}
-                  label={labels.avgResponse}
-                  tone={member.responseIsSlow ? "warn" : "normal"}
-                />
-                <Stat value={String(member.viewings30d)} label={labels.viewings30d} />
-                <Stat value={String(member.closed90d)} label={labels.closed90d} />
+              <div className="border-t border-primary/10 pt-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <Stat value={String(member.openLeads)} label={labels.openLeads} />
+                  <Stat
+                    value={member.responseLabel ?? labels.noResponses}
+                    label={labels.avgResponse}
+                    tone={member.responseIsSlow ? "warn" : "normal"}
+                  />
+                  <Stat value={String(member.viewings30d)} label={labels.viewings30d} />
+                  <Stat value={String(member.closed90d)} label={labels.closed90d} />
+                </div>
+
+                {member.accountCannotTakeLeads && (
+                  <p className="mt-3 text-xs leading-relaxed text-amber-800">
+                    {labels.accountCannotTakeLeads}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="border-t border-primary/10 pt-3 text-xs leading-relaxed text-ink-muted">

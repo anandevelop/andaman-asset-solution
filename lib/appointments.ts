@@ -18,6 +18,7 @@
 import "server-only";
 import { AppointmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { LEAD_CANDIDATE_WHERE } from "@/lib/lead-routing";
 import { safeQuery } from "@/lib/db";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -208,7 +209,11 @@ export async function getTeamWorkload(weekStart: Date): Promise<WorkloadRow[]> {
     async () => {
       const [salesPeople, appointments] = await Promise.all([
         prisma.user.findMany({
-          where: { salesPersonId: { not: null } },
+          // The same people the lead router would pick, rather than
+          // everyone who merely has a profile attached — a workload table
+          // listing someone who is never given anything reads as a rep
+          // doing nothing all week.
+          where: LEAD_CANDIDATE_WHERE,
           select: { id: true, name: true },
         }),
         prisma.appointment.findMany({

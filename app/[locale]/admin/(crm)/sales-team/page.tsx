@@ -22,7 +22,7 @@ import {
 /** Below this percentage answered inside the fast window, the table draws
  *  the bar red and the note below it may fire. */
 const SLOW_RESPONSE_RATE_THRESHOLD = 60;
-import { getRoutingRules } from "@/lib/lead-routing";
+import { getRoutingRules, roleCanHoldLeads } from "@/lib/lead-routing";
 import { hasRole } from "@/lib/role-rank";
 import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import { Role } from "@prisma/client";
@@ -70,7 +70,13 @@ export default async function AdminSalesTeamPage(props: Props) {
     () =>
       db.salesPerson.findMany({
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-        include: { translations: true, staffAccount: { select: { id: true, name: true } } },
+        include: {
+          translations: true,
+          // role and isActive are here so the card can say whether the
+          // linked account is one the lead router would actually pick —
+          // see LEAD_CANDIDATE_WHERE.
+          staffAccount: { select: { id: true, name: true, role: true, isActive: true } },
+        },
       }),
     [] as any[],
   );
@@ -107,6 +113,15 @@ export default async function AdminSalesTeamPage(props: Props) {
       photoUrl: person.photoUrl,
       isActive: person.isActive,
       hasAccount: Boolean(person.staffAccount),
+      /*
+        Only the role, which is what the warning tells them to change. A
+        disabled account is a separate and more obvious condition — that
+        person cannot sign in at all — and answering it with "raise the
+        role" would send someone to the wrong switch.
+      */
+      accountCannotTakeLeads: Boolean(
+        person.staffAccount && !roleCanHoldLeads(person.staffAccount.role),
+      ),
       // The languages their *profile* is written in. There is no
       // "languages spoken" field on SalesPerson, and inventing one from a
       // bio would be a guess; this is the fact the database actually has.
@@ -165,8 +180,14 @@ export default async function AdminSalesTeamPage(props: Props) {
         })
       : null;
 
+  /*
+    Only accounts the router would actually pick. Offering one it skips lets
+    an admin point a language at somebody and watch nothing ever arrive —
+    decideAssignee drops an ineligible preference and falls through to the
+    lightest workload, silently.
+  */
   const routingMembers = team
-    .filter((person: any) => person.staffAccount)
+    .filter((person: any) => person.staffAccount && roleCanHoldLeads(person.staffAccount.role))
     .map((person: any) => ({ userId: person.staffAccount.id as string, name: nameFor(person) }));
 
   return (
@@ -196,6 +217,7 @@ export default async function AdminSalesTeamPage(props: Props) {
           closed90d: t("salesTeam.stats.closed90d"),
           showOnSite: t("salesTeam.showOnSite"),
           noAccount: t("salesTeam.noAccount"),
+          accountCannotTakeLeads: t("salesTeam.accountCannotTakeLeads"),
           noResponses: t("salesTeam.noResponses"),
           addTitle: t("salesTeam.addTitle"),
           addBody: t("salesTeam.addBody"),

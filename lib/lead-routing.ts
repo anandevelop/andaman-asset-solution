@@ -27,11 +27,53 @@ import "server-only";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { LeadStatus } from "@prisma/client";
+import { LeadStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { rolesAtLeast } from "@/lib/role-rank";
 import { locales } from "@/i18n";
 
 export const ROUTING_SETTING_KEY = "leadRouting";
+
+/**
+ * The lowest role that may be handed a lead.
+ *
+ * VIEWER is read-only everywhere it can reach, and the leads board scopes a
+ * SALES user to the rows assigned to them — so a lead assigned to a VIEWER
+ * is a lead nobody can work: they cannot change its status, add a note or
+ * mark it won. It would simply age on the board looking claimed.
+ */
+export const LEAD_ROLE_MINIMUM = Role.SALES;
+
+/**
+ * Everyone who could receive a lead: an active back-office account, in a
+ * role that can act on one, tied to a sales profile that is itself active.
+ *
+ * Exported because more than one screen answers "is this person taking
+ * leads" — the sales-team roster and the routing panel's own dropdowns —
+ * and a screen that answers it differently from the router is a screen that
+ * promises leads the router will never send. The role clause was missing
+ * here for as long as the link existed: nothing could write
+ * User.salesPersonId from the admin at all, so no VIEWER ever held one, and
+ * the gap stayed theoretical until the users page grew the control.
+ */
+export const LEAD_CANDIDATE_WHERE = {
+  isActive: true,
+  role: { in: rolesAtLeast(LEAD_ROLE_MINIMUM) },
+  salesPersonId: { not: null },
+  salesPerson: { isActive: true },
+} satisfies Prisma.UserWhereInput;
+
+/**
+ * Whether a role may be handed a lead — the row-at-a-time half of the query
+ * above, for a screen that already has the account in hand.
+ *
+ * components/admin/UserForm.tsx asks the same question of the role being
+ * chosen, through hasRole directly, because it is a client component and
+ * this module is server-only. Both read ROLE_RANK, so they agree.
+ */
+export function roleCanHoldLeads(role: Role): boolean {
+  return rolesAtLeast(LEAD_ROLE_MINIMUM).includes(role);
+}
 
 export type LeadRoutingRules = {
   enabled: boolean;
@@ -132,14 +174,8 @@ export async function decideAssignee(lead: {
   const rules = await getRoutingRules();
   if (!rules.enabled) return { userId: null, reason: "disabled" };
 
-  // Everyone who could receive a lead: an active back-office account tied
-  // to a sales profile that is itself active.
   const candidates = await prisma.user.findMany({
-    where: {
-      isActive: true,
-      salesPersonId: { not: null },
-      salesPerson: { isActive: true },
-    },
+    where: LEAD_CANDIDATE_WHERE,
     select: {
       id: true,
       _count: {

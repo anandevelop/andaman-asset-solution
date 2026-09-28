@@ -71,6 +71,10 @@ export default function LeadRoutingPanel({
   const [error, setError] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  /** True when this id still names one of the people who can take leads. */
+  const resolves = (userId: string | null | undefined) =>
+    Boolean(userId) && members.some((member) => member.userId === userId);
+
   const nameOf = (userId: string | null) =>
     (userId && members.find((member) => member.userId === userId)?.name) || labels.none;
 
@@ -257,8 +261,18 @@ export default function LeadRoutingPanel({
         </div>
       ) : (
         <dl className="divide-y divide-primary/5">
+          {/*
+            Only rules that still name somebody taking leads. A stored rule
+            outlives the account it points at being demoted or unlinked, and
+            `members` is now the set the router would actually pick — so
+            without this second test the summary lists a rule for a language
+            and gives its assignee as "nobody", which reads as a bug rather
+            than as the inert rule it is. decideAssignee ignores it too, so
+            hiding it here is the summary agreeing with the behaviour. The
+            editor above drops it on the next save.
+          */}
           {languages
-            .filter((language) => rules.byLanguage[language.code])
+            .filter((language) => resolves(rules.byLanguage[language.code]))
             .map((language) => (
               <Row key={language.code} label={labels.languageRule.replace("{language}", language.label)}>
                 {nameOf(rules.byLanguage[language.code])}
