@@ -18,7 +18,12 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
 import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
-import { saveUnitType, deleteUnitType, saveUnitTypeFloors } from "./actions";
+import {
+  saveUnitType,
+  deleteUnitType,
+  saveUnitTypeFloors,
+  reorderUnitTypes,
+} from "./actions";
 import UnitTypesWorkspace, {
   type DraftFloor,
   type DraftType,
@@ -132,6 +137,53 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
   const uw = await getTranslations({ locale, namespace: "admin.unitTypes.workspace" });
   const up = await getTranslations({ locale, namespace: "projects.unitTypesSection" });
 
+  /*
+    One spec form per type, rendered here and shown inside the workspace's
+    "type details" tab.
+
+    They used to be a list of cards below the workspace, which meant two
+    editors for the same type on one screen and a reader with no way to tell
+    which one owned what. Built on the server because UnitTypeForm binds a
+    server action per type.
+  */
+  const detailForms = Object.fromEntries(
+    unitTypes.map((type: any) => {
+      const editing = pickEditingTranslation<any>(type.translations, lang);
+      const completeness = translationCompleteness<any>(type.translations, "description");
+
+      return [
+        type.id,
+        <section key={type.id} className="admin-card">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold text-primary">{type.name}</h2>
+            <TranslationStatusBadges completeness={completeness} />
+          </div>
+
+          <fieldset disabled={!canWrite} className="contents">
+            <UnitTypeForm
+              lang={lang}
+              projectSlug={project.slug}
+              action={saveUnitType.bind(null, locale, project.id, project.slug, type.id)}
+              onDelete={deleteUnitType.bind(null, locale, project.id, project.slug, type.id)}
+              values={{
+                name: type.name,
+                description: editing?.description ?? "",
+                livingAreaSqm: str(type.livingAreaSqm),
+                bedrooms: str(type.bedrooms),
+                bathrooms: str(type.bathrooms),
+                totalUnits: str(type.totalUnits),
+                sortOrder: String(type.sortOrder),
+                floorPlans: [],
+              }}
+              manageFloorPlans={false}
+              submitLabel={t("common.save")}
+            />
+          </fieldset>
+        </section>,
+      ];
+    }),
+  );
+
   const workspaceLabels = {
     tabs: { details: uw("tabDetails"), floors: uw("tabFloors"), preview: uw("tabPreview") },
     typeList: uw("typeList"),
@@ -175,6 +227,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     desktop: uw("desktop"),
     mobile: uw("mobile"),
     previewHint: uw("previewHint"),
+    sqm: uw("sqm"),
     issueLabels: {
       noPlan: uw("issue.noPlan"),
       noRooms: uw("issue.noRooms"),
@@ -265,6 +318,8 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
           projectSlug={project.slug}
           types={draftTypes}
           initialFloorsByType={floorsByType}
+          detailForms={detailForms}
+          onReorder={reorderUnitTypes.bind(null, locale, project.id, project.slug)}
           locales={locales}
           adminLocales={adminLocales}
           canWrite={canWrite}
@@ -292,54 +347,6 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         </fieldset>
       </section>
 
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {unitTypes.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
-          {t("unitTypes.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {unitTypes.map((type: any) => {
-            const completeness = translationCompleteness<any>(type.translations, "description");
-            const editing = pickEditingTranslation<any>(type.translations, lang);
-
-            return (
-              <section key={type.id} className="admin-card">
-                <div className="mb-5 flex flex-wrap items-center gap-3">
-                  <h2 className="text-base font-semibold text-primary">{type.name}</h2>
-                  <TranslationStatusBadges completeness={completeness} />
-                </div>
-
-                <fieldset disabled={!canWrite} className="contents">
-                  <UnitTypeForm
-                    key={lang}
-                    lang={lang}
-                    projectSlug={project.slug}
-                    action={saveUnitType.bind(null, locale, project.id, project.slug, type.id)}
-                    onDelete={deleteUnitType.bind(null, locale, project.id, project.slug, type.id)}
-                    values={{
-                      name: type.name,
-                      description: editing?.description ?? "",
-                      livingAreaSqm: str(type.livingAreaSqm),
-                      bedrooms: str(type.bedrooms),
-                      bathrooms: str(type.bathrooms),
-                      totalUnits: str(type.totalUnits),
-                      sortOrder: String(type.sortOrder),
-                      floorPlans: type.floorPlans.map((fp: any) => ({
-                        id: fp.id,
-                        floorName: fp.floorName,
-                        imageUrl: fp.imageUrl,
-                      })),
-                    }}
-                    manageFloorPlans={false}
-                    submitLabel={t("common.save")}
-                  />
-                </fieldset>
-              </section>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

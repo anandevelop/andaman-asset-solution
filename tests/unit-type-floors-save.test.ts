@@ -28,6 +28,7 @@ const { deriveBlueprint } = vi.hoisted(() => ({ deriveBlueprint: vi.fn() }));
 vi.mock("@/lib/floor-plan-images", () => ({ deriveBlueprint }));
 
 const prismaMock = vi.hoisted(() => {
+  const projectUnitType = { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() };
   const floorPlan = {
     findMany: vi.fn(),
     update: vi.fn(),
@@ -38,7 +39,7 @@ const prismaMock = vi.hoisted(() => {
   const floorPlanRoomTranslation = { upsert: vi.fn(), deleteMany: vi.fn() };
 
   return {
-    projectUnitType: { findFirst: vi.fn() },
+    projectUnitType,
     floorPlan,
     floorPlanRoom,
     floorPlanRoomTranslation,
@@ -50,7 +51,7 @@ const prismaMock = vi.hoisted(() => {
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-const { saveUnitTypeFloors } = await import(
+const { saveUnitTypeFloors, reorderUnitTypes } = await import(
   "@/app/[locale]/admin/(catalog)/projects/[id]/unit-types/actions"
 );
 
@@ -263,5 +264,64 @@ describe("refusals", () => {
 
     expect(result.ok).toBe(false);
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("reorderUnitTypes", () => {
+  const reorder = (ids: string[]) => reorderUnitTypes("en", "project-1", "victory", ids);
+
+  beforeEach(() => {
+    prismaMock.projectUnitType.findMany.mockResolvedValue([
+      { id: "type-a" },
+      { id: "type-b" },
+    ]);
+    prismaMock.$transaction.mockImplementation(async (arg: unknown) =>
+      Array.isArray(arg) ? arg : (arg as (tx: unknown) => Promise<unknown>)({}),
+    );
+  });
+
+  it("writes each type's position from its place in the list", async () => {
+    const result = await reorder(["type-b", "type-a"]);
+
+    expect(result.ok).toBe(true);
+    expect(prismaMock.projectUnitType.update).toHaveBeenCalledWith({
+      where: { id: "type-b" },
+      data: { sortOrder: 0 },
+    });
+    expect(prismaMock.projectUnitType.update).toHaveBeenCalledWith({
+      where: { id: "type-a" },
+      data: { sortOrder: 1 },
+    });
+  });
+
+  /*
+    The ids come from the browser. Without this filter a tampered list could
+    renumber — and so reorder the public page of — another project's types.
+  */
+  it("ignores ids that do not belong to this project", async () => {
+    prismaMock.projectUnitType.findMany.mockResolvedValue([{ id: "type-a" }]);
+
+    await reorder(["someone-elses-type", "type-a"]);
+
+    expect(prismaMock.projectUnitType.update).toHaveBeenCalledTimes(1);
+    expect(prismaMock.projectUnitType.update).toHaveBeenCalledWith({
+      where: { id: "type-a" },
+      data: { sortOrder: 0 },
+    });
+  });
+
+  it("writes nothing when none of the ids belong to the project", async () => {
+    prismaMock.projectUnitType.findMany.mockResolvedValue([]);
+
+    const result = await reorder(["someone-elses-type"]);
+
+    expect(result).toEqual({ ok: false, message: "NOT_FOUND" });
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("requires EDITOR", async () => {
+    requireAdminAction.mockRejectedValue(new Error("UNAUTHORISED"));
+
+    await expect(reorder(["type-a"])).rejects.toThrow("UNAUTHORISED");
   });
 });

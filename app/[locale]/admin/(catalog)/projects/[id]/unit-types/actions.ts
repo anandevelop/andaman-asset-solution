@@ -415,3 +415,46 @@ export async function saveUnitTypeFloors(
   revalidateUnitTypes(locale, projectId, projectSlug);
   return { ok: true, message: "SAVED" };
 }
+
+/**
+ * Persist the order the admin dragged the type list into.
+ *
+ * Its own action rather than part of saveUnitTypeFloors: the order is a
+ * property of the project's list, not of any one type's floors, and folding
+ * it into that save would mean dragging two types and then saving one of
+ * them wrote an order derived from a stale list.
+ *
+ * Ids are filtered against the project before anything is written, so a
+ * tampered list cannot reorder — or touch — another project's types.
+ */
+export async function reorderUnitTypes(
+  locale: string,
+  projectId: string,
+  projectSlug: string,
+  orderedIds: string[],
+): Promise<UnitTypeFormState> {
+  await requireAdminAction(Role.EDITOR);
+
+  const owned = await prisma.projectUnitType.findMany({
+    where: { projectId, id: { in: orderedIds } },
+    select: { id: true },
+  });
+  const ownedIds = new Set(owned.map((row) => row.id));
+  const ordered = orderedIds.filter((id) => ownedIds.has(id));
+
+  if (ordered.length === 0) return { ok: false, message: "NOT_FOUND" };
+
+  try {
+    await prisma.$transaction(
+      ordered.map((id, index) =>
+        prisma.projectUnitType.update({ where: { id }, data: { sortOrder: index } }),
+      ),
+    );
+  } catch (error) {
+    console.error("[reorderUnitTypes] failed", error);
+    return { ok: false, message: "SAVE_FAILED" };
+  }
+
+  revalidateUnitTypes(locale, projectId, projectSlug);
+  return { ok: true, message: "SAVED" };
+}

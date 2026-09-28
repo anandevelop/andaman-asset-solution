@@ -19,6 +19,7 @@
 
 import { expect, test } from "./harness";
 import { signIn } from "./sign-in";
+import { expectNoA11yViolations } from "./a11y";
 import { PROJECTS } from "./fixtures";
 
 /*
@@ -83,6 +84,16 @@ test.describe("the public section", () => {
     await expect(card).toBeVisible();
     await expect(card.getByText(/Show-home photo/i)).toBeVisible();
 
+    /*
+      Scanned with the card open, not just the section at rest. The card is
+      a dialog built out of a fixed div and positioned by hand, which is
+      precisely the shape that ends up without a name or without a reachable
+      close button — and it only exists after a click, so a scan of the page
+      in its default state would never see it.
+    */
+    await expectNoA11yViolations(page, { include: "#unit-types" });
+    await expectNoA11yViolations(page, { include: "[data-room-photo-card]" });
+
     // Escape closes it, and focus goes back to the pin it came from.
     await page.keyboard.press("Escape");
     await expect(card).toHaveCount(0);
@@ -115,6 +126,8 @@ test.describe("the workspace", () => {
     await expect(
       page.locator("[data-unit-types-workspace]").getByRole("button", { name: /Place pin/i }),
     ).toBeVisible();
+
+    await expectNoA11yViolations(page, { include: "[data-unit-types-workspace]" });
   });
 
   test("shows the unsaved bar only after an edit", async ({ page }) => {

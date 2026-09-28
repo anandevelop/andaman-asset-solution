@@ -29,7 +29,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Copy, Plus, Trash2 } from "lucide-react";
 import type { Locale } from "@/i18n";
 import ImageUploader from "@/components/admin/ImageUploader";
 import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
@@ -121,6 +121,7 @@ export type WorkspaceLabels = {
   desktop: string;
   mobile: string;
   previewHint: string;
+  sqm: string;
   issueLabels: Record<FloorIssue["kind"], string>;
   pinner: React.ComponentProps<typeof FloorPlanPinner>["labels"];
   elevator: ElevatorLabels;
@@ -137,6 +138,20 @@ type Props = {
   locales: readonly Locale[];
   adminLocales: readonly Locale[];
   canWrite: boolean;
+  /**
+   * The existing spec form for each type, rendered on the server and keyed
+   * by type id.
+   *
+   * Passed as nodes rather than rebuilt here: UnitTypeForm already owns the
+   * spec fields, their validation and their own save, and a second copy
+   * inside this component would be two forms writing the same columns. They
+   * are all rendered and the inactive ones hidden, because the type is
+   * switched on the client and re-fetching a form per click would mean a
+   * round trip to show fields that are already on the page.
+   */
+  detailForms?: Record<string, React.ReactNode>;
+  /** Bound server action — persists the order the list was dragged into. */
+  onReorder?: (orderedIds: string[]) => Promise<{ ok: boolean; message?: string }>;
   labels: WorkspaceLabels;
   /**
    * Bound server action. A function prop is fine here and only here: this
@@ -163,6 +178,22 @@ function isNoop<T>(row: T, patch: Partial<T>): boolean {
   return Object.entries(patch).every(([field, value]) => row[field as keyof T] === value);
 }
 
+/**
+ * A floor ready to be attached to a different unit type.
+ *
+ * Every database id is dropped and every draft key regenerated, so the save
+ * creates new rows instead of updating — and moving a pin on the copy
+ * cannot move it on the original, which is what sharing ids would mean.
+ */
+function detachFloor(floor: DraftFloor): DraftFloor {
+  return {
+    ...floor,
+    key: nextKey("floor"),
+    id: null,
+    rooms: floor.rooms.map((room) => ({ ...room, key: nextKey("room"), id: null })),
+  };
+}
+
 let temporaryKey = 0;
 const nextKey = (prefix: string) => `${prefix}:${(temporaryKey += 1)}`;
 
@@ -182,8 +213,10 @@ export default function UnitTypesWorkspace({
   locales,
   adminLocales,
   canWrite,
+  detailForms,
   labels,
   onSave,
+  onReorder,
 }: Props) {
   const [typeId, setTypeId] = useState(types[0]?.id ?? "");
   const [tab, setTab] = useState<"details" | "floors" | "preview">("floors");
@@ -192,12 +225,38 @@ export default function UnitTypesWorkspace({
   const [floorKey, setFloorKey] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  /*
+    Which types have unsaved changes, not a single boolean.
+
+    Copying a floor writes into a *different* type's draft than the one on
+    screen, so a lone flag would show the bar and then save only the type
+    the admin happened to be looking at — silently dropping the copy.
+  */
+  const [dirtyTypes, setDirtyTypes] = useState<string[]>([]);
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
+  /*
+    The dragged order, held locally so the list reorders under the pointer
+    and only then persists. Null while nothing has been dragged, so the
+    server's own order stays authoritative until it has been.
+  */
+  const [order, setOrder] = useState<string[] | null>(null);
+  const dragFrom = useRef<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const saved = useRef(initialFloorsByType);
+
+  const orderedTypes = useMemo(() => {
+    if (!order) return types;
+
+    const byId = new Map(types.map((candidate) => [candidate.id, candidate]));
+    // Anything the drag order does not mention — a type added in another
+    // tab since — keeps its place at the end rather than disappearing.
+    const dragged = order.map((id) => byId.get(id)).filter(Boolean) as DraftType[];
+    const rest = types.filter((candidate) => !order.includes(candidate.id));
+
+    return [...dragged, ...rest];
+  }, [order, types]);
 
   const type = types.find((candidate) => candidate.id === typeId) ?? types[0];
   const floors = useMemo(() => floorsByType[type?.id ?? ""] ?? [], [floorsByType, type]);
@@ -226,12 +285,29 @@ export default function UnitTypesWorkspace({
     closed tab, which is how this work actually gets lost.
   */
   useEffect(() => {
-    if (!dirty) return;
+    if (dirtyTypes.length === 0) return;
 
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  }, [dirtyTypes]);
+
+  const markDirty = useCallback(
+    (id: string) => setDirtyTypes((current) => (current.includes(id) ? current : [...current, id])),
+    [],
+  );
+
+  /** Edit another type's floors — what "copy this floor to…" does. */
+  const mutateType = useCallback(
+    (targetId: string, update: (current: DraftFloor[]) => DraftFloor[]) => {
+      setFloorsByType((current) => ({
+        ...current,
+        [targetId]: update(current[targetId] ?? []),
+      }));
+      markDirty(targetId);
+    },
+    [markDirty],
+  );
 
   const mutate = useCallback(
     (update: (current: DraftFloor[]) => DraftFloor[]) => {
@@ -245,9 +321,9 @@ export default function UnitTypesWorkspace({
       if (after === before) return;
 
       setFloorsByType((current) => ({ ...current, [type.id]: after }));
-      setDirty(true);
+      markDirty(type.id);
     },
-    [type, floorsByType],
+    [type, floorsByType, markDirty],
   );
 
   const patchFloor = useCallback(
@@ -293,45 +369,60 @@ export default function UnitTypesWorkspace({
     [floors, locales],
   );
 
+  /** One type's floors, shaped for the action. */
+  const payloadFor = (rows: DraftFloor[]) => ({
+    floors: rows.map((f, index) => ({
+      id: f.id,
+      floorName: f.floorName,
+      shortLabel: f.shortLabel,
+      areaSqm: toNumberOrNull(f.areaSqm),
+      imageUrl: f.imageUrl,
+      furnishedImageUrl: f.furnishedImageUrl,
+      portraitRotation: f.portraitRotation,
+      sortOrder: index,
+      rooms: f.rooms.map((r, roomIndex) => ({
+        id: r.id,
+        names: r.names,
+        areaSqm: toNumberOrNull(r.areaSqm),
+        xPercent: r.xPercent,
+        yPercent: r.yPercent,
+        photoUrl: r.photoUrl,
+        sortOrder: roomIndex,
+      })),
+    })),
+  });
+
   const save = () => {
-    if (!type) return;
-
     startTransition(async () => {
-      const payload = {
-        floors: floors.map((f, index) => ({
-          id: f.id,
-          floorName: f.floorName,
-          shortLabel: f.shortLabel,
-          areaSqm: toNumberOrNull(f.areaSqm),
-          imageUrl: f.imageUrl,
-          furnishedImageUrl: f.furnishedImageUrl,
-          portraitRotation: f.portraitRotation,
-          sortOrder: index,
-          rooms: f.rooms.map((r, roomIndex) => ({
-            id: r.id,
-            names: r.names,
-            areaSqm: toNumberOrNull(r.areaSqm),
-            xPercent: r.xPercent,
-            yPercent: r.yPercent,
-            photoUrl: r.photoUrl,
-            sortOrder: roomIndex,
-          })),
-        })),
-      };
+      /*
+        Every changed type, not just the one on screen. Sequential rather
+        than Promise.all: each call derives blueprints and opens a
+        transaction, and there are at most a handful of types — running them
+        together buys nothing and makes a partial failure harder to report.
+      */
+      const stillDirty: string[] = [];
+      let failure: { ok: boolean; message?: string } | null = null;
 
-      const outcome = await onSave(type.id, payload);
-      setResult(outcome);
+      for (const id of dirtyTypes) {
+        const rows = floorsByType[id] ?? [];
+        const outcome = await onSave(id, payloadFor(rows));
 
-      if (outcome.ok) {
-        saved.current = { ...saved.current, [type.id]: floors };
-        setDirty(false);
+        if (outcome.ok) {
+          saved.current = { ...saved.current, [id]: rows };
+        } else {
+          stillDirty.push(id);
+          failure = failure ?? outcome;
+        }
       }
+
+      setDirtyTypes(stillDirty);
+      setResult(failure ?? { ok: true });
     });
   };
 
   const discard = () => {
     setFloorsByType(saved.current);
-    setDirty(false);
+    setDirtyTypes([]);
     setResult(null);
   };
 
@@ -358,7 +449,7 @@ export default function UnitTypesWorkspace({
           </h2>
 
           <ul className="divide-y divide-primary/5">
-            {types.map((candidate) => {
+            {orderedTypes.map((candidate, position) => {
               const candidateFloors = floorsByType[candidate.id] ?? [];
               const issues = unitTypeHealth(
                 candidateFloors.map((f) => ({
@@ -377,7 +468,31 @@ export default function UnitTypesWorkspace({
               ).issueCount;
 
               return (
-                <li key={candidate.id}>
+                <li
+                  key={candidate.id}
+                  draggable={canWrite && Boolean(onReorder)}
+                  onDragStart={() => {
+                    dragFrom.current = candidate.id;
+                  }}
+                  // Without preventDefault the browser refuses the drop.
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    const from = dragFrom.current;
+                    dragFrom.current = null;
+                    if (!from || from === candidate.id) return;
+
+                    const current = orderedTypes.map((row) => row.id);
+                    const next = current.filter((id) => id !== from);
+                    next.splice(position, 0, from);
+
+                    setOrder(next);
+                    // Persisted immediately: the order is one column on a
+                    // handful of rows, and holding it in the unsaved bar
+                    // alongside the floor draft would mean one Save writing
+                    // two unrelated things.
+                    void onReorder?.(next);
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => selectType(candidate.id)}
@@ -428,7 +543,15 @@ export default function UnitTypesWorkspace({
             ))}
           </div>
 
-          {tab === "details" && <DetailsTab type={type} floors={floors} labels={labels} />}
+          {tab === "details" && (
+            <DetailsTab
+              type={type}
+              floors={floors}
+              labels={labels}
+              forms={detailForms}
+              activeId={type.id}
+            />
+          )}
 
           {tab === "floors" && floor && (
             <FloorsTab
@@ -441,6 +564,10 @@ export default function UnitTypesWorkspace({
               adminLocales={adminLocales}
               canWrite={canWrite}
               labels={labels}
+              otherTypes={types.filter((candidate) => candidate.id !== type.id)}
+              onCopyFloor={(targetTypeId, source) =>
+                mutateType(targetTypeId, (current) => [...current, source])
+              }
               placing={placing}
               selectedRoom={selectedRoom}
               onSelectFloor={setFloorKey}
@@ -467,7 +594,7 @@ export default function UnitTypesWorkspace({
       </div>
 
       {/* ── Save bar ────────────────────────────────────────────── */}
-      {canWrite && dirty && (
+      {canWrite && dirtyTypes.length > 0 && (
         <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t border-primary/15 bg-surface-raised/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgba(8,53,81,.25)] backdrop-blur">
           <p className="flex items-center gap-2 text-sm text-amber-900">
             <AlertTriangle size={15} aria-hidden />
@@ -491,25 +618,47 @@ export default function UnitTypesWorkspace({
 // ── Tabs ────────────────────────────────────────────────────────────────
 
 function DetailsTab({
-  type,
   floors,
   labels,
+  forms,
+  activeId,
 }: {
   type: DraftType;
   floors: DraftFloor[];
   labels: WorkspaceLabels;
+  forms?: Record<string, React.ReactNode>;
+  activeId: string;
 }) {
   const total = floors.reduce((sum, f) => sum + (toNumberOrNull(f.areaSqm) ?? 0), 0);
 
   return (
-    <section className="admin-card space-y-3 text-sm">
-      <Field label={labels.floorName} value={type.name} />
-      <Field label="Code" value={type.code ?? "—"} />
-      <Field
-        label={labels.roomTotal}
-        value={`${total.toFixed(2)} (${floors.length})`}
-      />
-      <p className="admin-hint">{labels.previewHint}</p>
+    <section className="space-y-4">
+      {/*
+        The sum of the floors, next to the living area the spec form asks
+        for. They are separate figures in the Sale Kits and do not always
+        agree, so this is shown rather than enforced — but an editor typing
+        a living area has no other way to see what the floors add up to.
+      */}
+      <p className="admin-card text-sm">
+        <span className="text-ink-muted">{labels.roomTotal}: </span>
+        <span className="font-medium text-primary">
+          {total.toFixed(2)} {labels.sqm}
+        </span>
+        <span className="admin-hint mt-1 block">{labels.previewHint}</span>
+      </p>
+
+      {/*
+        Every type's form is on the page; only the selected one is shown.
+        Hidden with `hidden` rather than unmounted so a half-typed
+        description survives flicking to another type and back — the same
+        reason the floors themselves are held as one draft.
+      */}
+      {forms &&
+        Object.entries(forms).map(([id, form]) => (
+          <div key={id} hidden={id !== activeId}>
+            {form}
+          </div>
+        ))}
     </section>
   );
 }
@@ -625,6 +774,8 @@ function FloorsTab({
   adminLocales,
   canWrite,
   labels,
+  otherTypes,
+  onCopyFloor,
   placing,
   selectedRoom,
   onSelectFloor,
@@ -644,6 +795,8 @@ function FloorsTab({
   adminLocales: readonly Locale[];
   canWrite: boolean;
   labels: WorkspaceLabels;
+  otherTypes: DraftType[];
+  onCopyFloor: (targetTypeId: string, floor: DraftFloor) => void;
   placing: boolean;
   selectedRoom: string | null;
   onSelectFloor: (key: string) => void;
@@ -656,6 +809,7 @@ function FloorsTab({
 }) {
   const index = floors.findIndex((f) => f.key === floor.key);
   const floorHealth = health.floors[index];
+  const [copyTarget, setCopyTarget] = useState("");
 
   const addFloor = () =>
     onMutate((current) => [
@@ -765,6 +919,49 @@ function FloorsTab({
             <Plus size={14} aria-hidden />
             {labels.addFloor}
           </button>
+        )}
+
+        {/*
+          Copying a floor to another type. The Victory's A and A+ share a
+          second floor exactly — the same drawing, the same twelve rooms —
+          and retyping it is both slow and a source of drift between two
+          pages that are meant to be identical.
+
+          The copy is detached: fresh draft keys and null database ids, so
+          it is created as new rows rather than being confused for the
+          original and updated in place on the next save.
+        */}
+        {canWrite && otherTypes.length > 0 && (
+          <span className="flex items-center gap-1">
+            <label htmlFor="copy-floor-target" className="sr-only">
+              {labels.copyFloor}
+            </label>
+            <select
+              id="copy-floor-target"
+              value={copyTarget}
+              onChange={(event) => setCopyTarget(event.target.value)}
+              className="admin-input max-w-40 py-1 text-xs"
+            >
+              <option value="">{labels.copyFloor}</option>
+              {otherTypes.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.name}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              disabled={copyTarget === ""}
+              onClick={() => {
+                onCopyFloor(copyTarget, detachFloor(floor));
+                setCopyTarget("");
+              }}
+              className="admin-btn-ghost disabled:opacity-40"
+            >
+              <Copy size={14} aria-hidden />
+            </button>
+          </span>
         )}
       </div>
 
@@ -982,6 +1179,14 @@ function FloorsTab({
                           className="admin-input"
                           value={value}
                           placeholder={untranslated ? fallback : ""}
+                          /*
+                            A column header is not an accessible name — axe
+                            reports these as critical without one, and a
+                            screen reader lands on thirty unnamed text
+                            boxes. Numbered, because "room name" thirty
+                            times is no more use than nothing.
+                          */
+                          aria-label={`${labels.roomName} ${roomIndex + 1}`}
                           disabled={!canWrite}
                           onChange={(event) =>
                             onPatchRoom(floor.key, room.key, {
@@ -1001,6 +1206,7 @@ function FloorsTab({
                           className="admin-input max-w-24"
                           inputMode="decimal"
                           value={room.areaSqm}
+                          aria-label={`${labels.roomArea} ${roomIndex + 1}`}
                           disabled={!canWrite}
                           onChange={(event) =>
                             onPatchRoom(floor.key, room.key, { areaSqm: event.target.value })
