@@ -951,6 +951,90 @@ export const floorPlanRowSchema = z.object({
 export type FloorPlanRowInput = z.infer<typeof floorPlanRowSchema>;
 
 // ─────────────────────────────────────────────────────────────────────────
+// FLOORS, ROOM PINS AND ROOM PHOTOS (the unit-types workspace)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * These validate a JSON payload, not form fields.
+ *
+ * The workspace edits a whole unit type's floors — plans, pins, four
+ * languages of room name — as one draft and submits it in a single action,
+ * so the values arrive already typed. That is why this section does not use
+ * optionalText/optionalNumber above: those parse the strings an <input>
+ * produces, and running a real `null` through them is a type error waiting
+ * to be written as `String(value)`.
+ */
+const jsonArea = z.number().min(0).max(99_999).nullable();
+
+/** 0–100, matching ProjectUnit.shapePoints' coordinate space. */
+const percent = z.number().min(0).max(100);
+
+export const floorRoomSchema = z.object({
+  /** Blank for a pin the admin just placed; the row id otherwise. */
+  id: z.string().trim().max(40).nullable().optional(),
+  /**
+   * locale → name. Partial on purpose: a room named only in English is a
+   * normal state of a half-translated project, and the public page falls
+   * back through lib/get-translation.ts. Only *nowhere* named is refused,
+   * because an unnamed pin renders as a blank chip over the drawing.
+   */
+  names: z
+    /*
+      partialRecord, not record: with an enum key zod 4's `record` is
+      exhaustive, so a plain record here demanded all four languages and
+      rejected every half-translated room — which is most of the catalogue,
+      and the exact state the fallback chain exists to handle.
+    */
+    .partialRecord(z.enum(locales), z.string().trim().max(80))
+    .refine((names) => Object.values(names).some((name) => (name ?? "").trim() !== ""), {
+      message: "Name the room in at least one language",
+    }),
+  areaSqm: jsonArea,
+  xPercent: percent,
+  yPercent: percent,
+  photoUrl: z.string().trim().max(600).nullable().optional(),
+  sortOrder: z.number().int().min(0).max(999),
+});
+
+export const floorSchema = z.object({
+  id: z.string().trim().max(40).nullable().optional(),
+  floorName: z.string().trim().min(1, "Floor name is required").max(80),
+  /** What the lift button prints — see FloorPlan.shortLabel. */
+  shortLabel: z.string().trim().min(1, "Give the floor a lift label").max(3),
+  areaSqm: jsonArea,
+  imageUrl: z.string().trim().min(1, "Upload the line drawing").max(600),
+  furnishedImageUrl: z.string().trim().max(600).nullable().optional(),
+  portraitRotation: z.enum(["CW", "CCW"]),
+  /** A Sale Kit floor lists a dozen or so; 60 is a ceiling, not a target. */
+  rooms: z.array(floorRoomSchema).max(60),
+  sortOrder: z.number().int().min(0).max(99),
+});
+
+/**
+ * One unit type's whole set of floors.
+ *
+ * At least one, because a type in this workspace is defined by having
+ * plans; a type with none is edited on the specs tab and simply does not
+ * appear in the public section.
+ */
+export const unitTypeFloorsSchema = z
+  .object({ floors: z.array(floorSchema).min(1).max(8) })
+  .refine(
+    (value) => {
+      // Lift labels have to be distinguishable: two buttons both reading
+      // "2" is a panel nobody can use, and the display would show the same
+      // digit for two different drawings.
+      const labels = value.floors.map((floor) => floor.shortLabel.trim().toUpperCase());
+      return new Set(labels).size === labels.length;
+    },
+    { message: "Two floors share a lift label", path: ["floors"] },
+  );
+
+export type FloorRoomInput = z.infer<typeof floorRoomSchema>;
+export type FloorInput = z.infer<typeof floorSchema>;
+export type UnitTypeFloorsInput = z.infer<typeof unitTypeFloorsSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────
 // PROJECT UNITS (individual plots — drives the Interactive Master Plan)
 // ─────────────────────────────────────────────────────────────────────────
 

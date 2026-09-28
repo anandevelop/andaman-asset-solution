@@ -29,6 +29,8 @@ import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { unitTypeSchema, floorPlanRowSchema, fieldErrors } from "@/lib/validations";
+import { unitTypeFloorsSchema, type UnitTypeFloorsInput } from "@/lib/validations";
+import { deriveBlueprint } from "@/lib/floor-plan-images";
 
 export type UnitTypeFormState = {
   ok: boolean;
@@ -238,4 +240,163 @@ export async function deleteUnitType(
   await prisma.projectUnitType.deleteMany({ where: { id: unitTypeId, projectId } });
 
   revalidateUnitTypes(locale, projectId, projectSlug);
+}
+
+/**
+ * Replace one unit type's floors, pins and room names with the workspace's
+ * draft.
+ *
+ * DIFFED BY ID, NEVER WIPED AND RECREATED
+ *
+ * The obvious implementation — delete every floor, insert the draft — is
+ * wrong here for the same reason saveUnitType's own floor-plan diff above
+ * says it is: new rows mint new ids. A room's id is what the public page
+ * keys its labels on and what a photo is attached to, so a re-save that
+ * changed every id would invalidate anything holding one, and the audit
+ * trail would show the whole type deleted and recreated on every edit of a
+ * single room name. Rows with an id are updated in place, rows without one
+ * are created, and whatever is no longer in the draft is deleted.
+ *
+ * (prisma/seed.ts does replace wholesale, and says why in its own comment:
+ * it is loading a corrected drawing from scratch, not editing one.)
+ *
+ * Blueprints are derived before the transaction opens, and only for a floor
+ * whose drawing actually changed. It is a download, a decode and an upload
+ * — not something to hold a database transaction open across, and not
+ * something to repeat for a floor whose label was corrected.
+ */
+export async function saveUnitTypeFloors(
+  locale: string,
+  projectId: string,
+  projectSlug: string,
+  unitTypeId: string,
+  payload: UnitTypeFloorsInput,
+): Promise<UnitTypeFormState> {
+  await requireAdminAction(Role.EDITOR);
+
+  const parsed = unitTypeFloorsSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
+
+  // The type has to belong to the project in the URL. Re-read rather than
+  // trusted from the client, which is the whole point of doing it here as
+  // well as in the page's own guard.
+  const owner = await prisma.projectUnitType.findFirst({
+    where: { id: unitTypeId, projectId },
+    select: { id: true },
+  });
+  if (!owner) return { ok: false, message: "NOT_FOUND" };
+
+  const existing = await prisma.floorPlan.findMany({
+    where: { unitTypeId },
+    select: { id: true, imageUrl: true },
+  });
+  const previousImage = new Map(existing.map((row) => [row.id, row.imageUrl]));
+
+  /*
+    Derive a blueprint for every floor whose drawing is new to it — a fresh
+    floor, or one whose imageUrl changed. deriveBlueprint never throws at
+    us: a floor that could not be derived keeps its dimensions and falls
+    back to the line drawing on the public page.
+  */
+  const derived = new Map<number, { blueprintUrl: string | null; width: number; height: number }>();
+
+  await Promise.all(
+    parsed.data.floors.map(async (floor, index) => {
+      const unchanged = floor.id && previousImage.get(floor.id) === floor.imageUrl;
+      if (unchanged) return;
+
+      try {
+        derived.set(index, await deriveBlueprint(floor.imageUrl));
+      } catch (error) {
+        console.error("[saveUnitTypeFloors] blueprint failed", floor.imageUrl, error);
+      }
+    }),
+  );
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const keptFloorIds: string[] = [];
+
+      for (const [index, floor] of parsed.data.floors.entries()) {
+        const blueprint = derived.get(index);
+
+        const data = {
+          floorName: floor.floorName,
+          shortLabel: floor.shortLabel,
+          areaSqm: floor.areaSqm === null ? null : floor.areaSqm.toFixed(2),
+          imageUrl: floor.imageUrl,
+          furnishedImageUrl: floor.furnishedImageUrl ?? null,
+          portraitRotation: floor.portraitRotation,
+          sortOrder: index,
+          // Left alone when nothing was derived this time round, so a
+          // floor whose label changed keeps the blueprint it already had.
+          ...(blueprint
+            ? {
+                blueprintImageUrl: blueprint.blueprintUrl,
+                imageWidth: blueprint.width,
+                imageHeight: blueprint.height,
+              }
+            : {}),
+        };
+
+        const saved = floor.id
+          ? await tx.floorPlan.update({ where: { id: floor.id }, data })
+          : await tx.floorPlan.create({ data: { ...data, unitTypeId } });
+
+        keptFloorIds.push(saved.id);
+
+        const keptRoomIds: string[] = [];
+
+        for (const [roomIndex, room] of floor.rooms.entries()) {
+          const roomData = {
+            xPercent: room.xPercent,
+            yPercent: room.yPercent,
+            areaSqm: room.areaSqm === null ? null : room.areaSqm.toFixed(2),
+            photoUrl: room.photoUrl ?? null,
+            sortOrder: roomIndex,
+          };
+
+          const savedRoom = room.id
+            ? await tx.floorPlanRoom.update({ where: { id: room.id }, data: roomData })
+            : await tx.floorPlanRoom.create({ data: { ...roomData, floorPlanId: saved.id } });
+
+          keptRoomIds.push(savedRoom.id);
+
+          for (const target of locales) {
+            const name = (room.names[target] ?? "").trim();
+
+            if (name === "") {
+              // An emptied field removes that language's row rather than
+              // storing "", so getTranslation falls through to a language
+              // that has one instead of rendering a blank label.
+              await tx.floorPlanRoomTranslation.deleteMany({
+                where: { roomId: savedRoom.id, locale: target },
+              });
+              continue;
+            }
+
+            await tx.floorPlanRoomTranslation.upsert({
+              where: { roomId_locale: { roomId: savedRoom.id, locale: target } },
+              update: { name },
+              create: { roomId: savedRoom.id, locale: target, name },
+            });
+          }
+        }
+
+        await tx.floorPlanRoom.deleteMany({
+          where: { floorPlanId: saved.id, id: { notIn: keptRoomIds } },
+        });
+      }
+
+      await tx.floorPlan.deleteMany({
+        where: { unitTypeId, id: { notIn: keptFloorIds } },
+      });
+    });
+  } catch (error) {
+    console.error("[saveUnitTypeFloors] failed", error);
+    return { ok: false, message: "SAVE_FAILED" };
+  }
+
+  revalidateUnitTypes(locale, projectId, projectSlug);
+  return { ok: true, message: "SAVED" };
 }
