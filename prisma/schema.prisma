@@ -516,6 +516,21 @@ model ProjectUnitType {
   /// where the internal code and the Sale Kit's display name diverge.
   name String
 
+  /// The Sale Kit's short code — "R", "A", "A+", and "V" for Trinity
+  /// Village's "Type B" (see the note in
+  /// prisma/seed-data/units-and-types-seed-data.json for that divergence).
+  ///
+  /// Nullable because the column arrived after the rows did. It exists so
+  /// the seed can find a type it has already created: before this, it
+  /// matched on `name`, which is the one field an admin is free to edit, so
+  /// a renamed type silently stopped matching and its units lost their link.
+  code String?
+
+  /// Whether each home of this type has its own lift, which changes the
+  /// line the unit-types section leads with. Only The Residence Prime does,
+  /// so it is a flag rather than a guess from the floor count.
+  hasPrivateLift Boolean @default(false)
+
   /// @deprecated — superseded by `UnitTypeTranslation` below. `name` above
   /// is unaffected (never was a bilingual pair — see its own comment) and
   /// is not part of the Translation table.
@@ -572,6 +587,18 @@ model UnitTypeTranslation {
   @@map("unit_type_translations")
 }
 
+/// Which way a landscape plan is turned to fill a portrait screen.
+///
+/// The plan is stored once, in landscape, and rotated with CSS — so the
+/// choice is per floor rather than a second image file. It is a real
+/// decision and not a default: rotating the wrong way puts the front door
+/// at the top of a phone screen, which reads as upside-down to anyone
+/// walking through the house on the drawing.
+enum PortraitRotation {
+  CW
+  CCW
+}
+
 /// One image per floor of a unit type — a type with a ground, first and
 /// second floor has three rows, each independently orderable. This is why
 /// it is a child table rather than a `floorPlanImages String[]` on the
@@ -583,7 +610,29 @@ model FloorPlan {
   unitType   ProjectUnitType @relation(fields: [unitTypeId], references: [id], onDelete: Cascade)
 
   floorName String // e.g. "Ground Floor", "1st Floor"
+  /// The line drawing, landscape, white background. The coordinate space
+  /// every FloorPlanRoom pin is expressed against — which is why the
+  /// furnished image below has to share its aspect ratio.
   imageUrl  String
+
+  /// What the lift panel prints on its button and its FLOOR display —
+  /// "G", "1", "R". Not derived from floorName: "Ground Floor" and "1st
+  /// Floor" both begin with a character nobody would choose.
+  shortLabel        String?          @db.VarChar(3)
+  areaSqm           Decimal?         @db.Decimal(8, 2)
+  /// The same plan, furnished. Must match imageUrl's aspect ratio, because
+  /// the room pins are stored once and drawn over whichever is showing.
+  furnishedImageUrl String?
+  /// Derived from imageUrl by lib/floor-plan-images.ts, never edited by
+  /// hand: the line drawing as transparent strokes, for the dark shaft.
+  blueprintImageUrl String?
+  /// imageUrl's real pixel size, so the page can reserve the right box
+  /// before the image loads instead of measuring it in JavaScript.
+  imageWidth        Int?
+  imageHeight       Int?
+  portraitRotation  PortraitRotation @default(CW)
+
+  rooms FloorPlanRoom[]
 
   sortOrder Int @default(0)
 
@@ -592,6 +641,51 @@ model FloorPlan {
 
   @@index([unitTypeId, sortOrder])
   @@map("floor_plans")
+}
+
+/// A labelled point on a floor plan — "Master Bedroom", at 62% across and
+/// 31% down the line drawing.
+///
+/// A point and not an outline: the Sale Kits label rooms, they do not
+/// polygon them, and ProjectUnit.shapePoints already exists for the case
+/// that genuinely needs an area. Same 0–100 percentage space as that field,
+/// so the two are read the same way.
+model FloorPlanRoom {
+  id          String    @id @default(cuid())
+  floorPlanId String
+  floorPlan   FloorPlan @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+
+  xPercent Float
+  yPercent Float
+  areaSqm  Decimal? @db.Decimal(8, 2)
+  /// An absolute Media.url, like every other image field in this schema, so
+  /// lib/media-usage.ts can find it. Null means the label is not clickable.
+  photoUrl String?
+
+  translations FloorPlanRoomTranslation[]
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([floorPlanId, sortOrder])
+  @@map("floor_plan_rooms")
+}
+
+/// The room's name per locale. Its own table rather than nameEn/nameTh
+/// because these are the strings a Chinese or Russian visitor reads off the
+/// drawing, and the Sale Kits only ever supplied English.
+model FloorPlanRoomTranslation {
+  id     String        @id @default(cuid())
+  roomId String
+  room   FloorPlanRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  locale String // en | th | zh | ru
+
+  name String @db.VarChar(80)
+
+  @@unique([roomId, locale])
+  @@map("floor_plan_room_translations")
 }
 
 /// One physical plot. Drives the Site Plan + Unit Status display — each
