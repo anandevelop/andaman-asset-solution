@@ -162,6 +162,8 @@ export type FloorPlanSummary = {
 export type UnitTypeSummary = {
   id: string;
   name: string;
+  /** Sale Kit short code — "A+", "R". Null on rows predating the column. */
+  code: string | null;
   descriptionEn: string | null;
   descriptionTh: string | null;
   description: string;       // locale-picked
@@ -834,6 +836,7 @@ export async function getUnitTypesForProject(
     return {
     id: t.id,
     name: t.name,
+    code: t.code,
     descriptionEn: t.descriptionEn,
     descriptionTh: t.descriptionTh,
     description: tr?.description ?? pickLocale(locale, t.descriptionTh, t.descriptionEn),

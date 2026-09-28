@@ -15,7 +15,8 @@ import FaqAccordion from "@/components/FaqAccordion";
 import FacilityCard from "@/components/FacilityCard";
 import FacilityScroller from "@/components/FacilityScroller";
 import ProjectGallery from "@/components/ProjectGallery";
-import FloorPlanViewer from "@/components/FloorPlanViewer";
+import UnitTypesElevator from "@/components/unit-types/UnitTypesElevator";
+import type { ElevatorType } from "@/components/unit-types/types";
 import { getFaqs } from "@/lib/faqs";
 import { getAwards } from "@/lib/awards";
 import { getSiteSettings } from "@/lib/settings";
@@ -165,6 +166,63 @@ export default async function ProjectPage(props: Props) {
   // from" or "cheapest" pick. Hidden entirely when a project has no unit
   // types yet, or that type has no living area set.
   const heroUnitType = unitTypes[0] ?? null;
+
+  /*
+    The unit-types section's data, formatted here rather than in the
+    component. Two title strings per type instead of one template, because
+    next-intl formats eagerly: handing the client "{count} floors" and
+    letting it substitute prints the key path, which is what
+    /admin/analytics did with weekOverWeekHint for a week.
+  */
+  const ut = await getTranslations({ locale, namespace: "projects.unitTypesSection" });
+  const area = (value: number | null) => (value === null ? null : formatNumber(locale, value));
+
+  const elevatorTypes: ElevatorType[] = unitTypes
+    .filter((type) => type.floorPlans.length > 0)
+    .map((type) => {
+      // The bar is relative to this type's own largest floor, so a single-
+      // floor type still draws a full bar rather than a sliver.
+      const largest = Math.max(...type.floorPlans.map((plan) => plan.areaSqm ?? 0), 0);
+
+      return {
+        id: type.id,
+        name: type.name,
+        code: type.code ?? type.name,
+        bedrooms: type.bedrooms === null ? "—" : String(type.bedrooms),
+        bathrooms: type.bathrooms === null ? "—" : String(type.bathrooms),
+        totalAreaLabel: area(type.livingAreaSqm),
+        chipMeta: [
+          type.livingAreaSqm === null ? null : `${area(type.livingAreaSqm)} ${t("units.sqm")}`,
+          type.bedrooms === null ? null : `${type.bedrooms} ${ut("bed")}`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        title: ut("ride", { type: type.name }),
+        subtitle: type.hasPrivateLift
+          ? ut("liftHint")
+          : ut("floorsHint", { count: type.floorPlans.length }),
+        floors: type.floorPlans.map((plan) => ({
+          id: plan.id,
+          name: plan.floorName,
+          shortLabel: plan.shortLabel,
+          // The blueprint is the variant built for this dark frame; the
+          // line drawing is the fallback when one was never derived.
+          imageUrl: plan.blueprintImageUrl ?? plan.imageUrl,
+          aspect: plan.aspect,
+          areaLabel: area(plan.areaSqm),
+          areaRatio: largest > 0 ? (plan.areaSqm ?? 0) / largest : 0,
+          rotation: plan.portraitRotation,
+          rooms: plan.rooms.map((room) => ({
+            id: room.id,
+            name: room.name,
+            areaLabel: area(room.areaSqm),
+            x: room.x,
+            y: room.y,
+            photoUrl: room.photoUrl,
+          })),
+        })),
+      };
+    });
 
   // Hero distance line ("7 km to Layan Beach, 15 km to the airport") — the
   // same site-wide, code-owned facts the "Nearby Attractions" section
@@ -758,99 +816,36 @@ export default async function ProjectPage(props: Props) {
         </section>
       )}
 
-      {/* ── Unit Types ───────────────────────────────────────────────── */}
-      {unitTypes.length > 0 && (
-        <section id="unit-types" className="scroll-mt-24 bg-primary-900/3 py-20 sm:py-28">
-          <div className="container-luxe">
-            <Reveal>
-              <p className="eyebrow">{t("unitTypesEyebrow")}</p>
-              <h2 className="mt-3 max-w-lg text-3xl font-light text-primary sm:text-4xl">
-                {t("unitTypesTitle")}
-              </h2>
-            </Reveal>
-
-            <div className="mt-10 space-y-8">
-              {unitTypes.map((type, i) => (
-                <Reveal key={type.id} delay={i * 0.08}>
-                  <div className="border border-primary/10 bg-white p-6 sm:p-8">
-                    <h3 className="text-xl font-light text-primary">{type.name}</h3>
-                    {type.description && (
-                      <p className="mt-2 max-w-2xl text-sm text-ink/60">{type.description}</p>
-                    )}
-
-                    {type.floorPlans.length > 0 && (
-                      <div className="mt-6">
-                        <FloorPlanViewer
-                          floorPlans={type.floorPlans}
-                          typeName={type.name}
-                          labels={{
-                            close: t("galleryClose"),
-                            previous: t("galleryPrevious"),
-                            next: t("galleryNext"),
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/*
-                      No divide-x/divide-y here on purpose — those Tailwind
-                      utilities add a border to every element with a
-                      preceding DOM sibling, which only lines up correctly
-                      in a single row. In this 2-col-on-mobile/4-col-on-
-                      desktop grid it put a stray border-top on item 2 and a
-                      stray border-left on item 3 that didn't correspond to
-                      any real row/column edge — the odd floating line seen
-                      on mobile. Plain gap spacing avoids the whole class of
-                      bug.
-                    */}
-                    <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-primary/10 pt-6 sm:grid-cols-4 sm:pt-7">
-                      {type.livingAreaSqm !== null && (
-                        <div>
-                          <dt className="text-[10px] font-normal uppercase tracking-widest2 text-ink/45">
-                            {t("unitTypeLabels.livingArea")}
-                          </dt>
-                          <dd className="mt-1.5 text-lg font-light tracking-tight text-primary">
-                            {formatNumber(locale, type.livingAreaSqm)} {t("units.sqm")}
-                          </dd>
-                        </div>
-                      )}
-                      {type.bedrooms !== null && (
-                        <div>
-                          <dt className="text-[10px] font-normal uppercase tracking-widest2 text-ink/45">
-                            {t("unitTypeLabels.bedrooms")}
-                          </dt>
-                          <dd className="mt-1.5 text-lg font-light tracking-tight text-primary">
-                            {type.bedrooms}
-                          </dd>
-                        </div>
-                      )}
-                      {type.bathrooms !== null && (
-                        <div>
-                          <dt className="text-[10px] font-normal uppercase tracking-widest2 text-ink/45">
-                            {t("unitTypeLabels.bathrooms")}
-                          </dt>
-                          <dd className="mt-1.5 text-lg font-light tracking-tight text-primary">
-                            {type.bathrooms}
-                          </dd>
-                        </div>
-                      )}
-                      {type.totalUnits !== null && (
-                        <div>
-                          <dt className="text-[10px] font-normal uppercase tracking-widest2 text-ink/45">
-                            {t("unitTypeLabels.totalUnits")}
-                          </dt>
-                          <dd className="mt-1.5 text-lg font-light tracking-tight text-primary">
-                            {type.totalUnits}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* ── Unit Types ───────────────────────────────────────────────
+          A ride up through the house rather than a stack of plans. Every
+          figure below is formatted here, on the server: the section
+          switches type and floor on the client, and anything it had to
+          format there would either duplicate the locale's number rules or
+          travel as a template — see components/unit-types/types.ts. */}
+      {elevatorTypes.length > 0 && (
+        <UnitTypesElevator
+          projectName={project.name}
+          types={elevatorTypes}
+          labels={{
+            eyebrow: t("unitTypesEyebrow"),
+            project: ut("project"),
+            type: ut("type"),
+            bed: ut("bed"),
+            bath: ut("bath"),
+            floor: ut("floor"),
+            areaThisFloor: ut("areaThisFloor"),
+            areaByFloor: ut("areaByFloor"),
+            total: ut("total"),
+            roomSchedule: ut("roomSchedule"),
+            sqm: t("units.sqm"),
+            notToScale: ut("notToScale"),
+            showHomePhoto: ut("showHomePhoto"),
+            previousRoom: ut("previousRoom"),
+            nextRoom: ut("nextRoom"),
+            close: ut("close"),
+            floorSelector: ut("floorSelector"),
+          }}
+        />
       )}
 
       {/* ── Site Plan + Unit Status ──────────────────────────────────── */}
