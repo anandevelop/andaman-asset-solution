@@ -286,6 +286,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
             lang={lang}
             projectSlug={project.slug}
             action={saveUnitType.bind(null, locale, project.id, project.slug, null)}
+            manageFloorPlans={false}
             submitLabel={t("common.create")}
           />
         </fieldset>
@@ -330,6 +331,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
                         imageUrl: fp.imageUrl,
                       })),
                     }}
+                    manageFloorPlans={false}
                     submitLabel={t("common.save")}
                   />
                 </fieldset>

@@ -55,6 +55,12 @@ type Props = {
   onDelete?: () => Promise<void>;
   values?: UnitTypeValues;
   submitLabel: string;
+  /**
+   * False when another editor on the page owns this type's floors — the
+   * unit-types workspace does. Defaults to true so every other caller is
+   * unaffected.
+   */
+  manageFloorPlans?: boolean;
 };
 
 const INITIAL: UnitTypeFormState = { ok: false };
@@ -102,6 +108,7 @@ export default function UnitTypeForm({
   onDelete,
   values = EMPTY_UNIT_TYPE,
   submitLabel,
+  manageFloorPlans = true,
 }: Props) {
   const t = useTranslations("admin");
   const [state, formAction] = useActionState(action, INITIAL);
@@ -211,7 +218,16 @@ export default function UnitTypeForm({
           />
         </div>
 
-        <div className="border-t border-primary/10 pt-5">
+        {/*
+          Hidden wherever the unit-types workspace is on the page: two
+          editors for the same floors, and this one's save deletes any floor
+          missing from its own list — so saving a spec change here would
+          quietly drop a floor the workspace had just added. The flag below
+          is what tells the action to leave floors alone.
+        */}
+        {!manageFloorPlans && <input type="hidden" name="floorPlansManaged" value="no" />}
+
+        <div hidden={!manageFloorPlans} className="border-t border-primary/10 pt-5">
           <p className="admin-label">{t("unitTypes.floorPlansTitle")}</p>
           <p className="admin-hint mb-4">{t("unitTypes.floorPlansHint")}</p>
 

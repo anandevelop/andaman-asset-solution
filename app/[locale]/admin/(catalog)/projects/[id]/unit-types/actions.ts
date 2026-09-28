@@ -131,7 +131,18 @@ export async function saveUnitType(
 
   const { name, description, livingAreaSqm, bedrooms, bathrooms, totalUnits, sortOrder } = parsed.data;
 
-  const { rows: floorPlanRows, fields: floorPlanErrors } = readFloorPlanRows(formData);
+  /*
+    The unit-types workspace owns this type's floors wherever it is on the
+    page, and says so with a hidden field. Without that signal this form
+    submits no floor rows and the reconcile below reads an empty list as
+    "delete every floor" — so saving a spec change would drop the floors the
+    workspace had just saved.
+  */
+  const managesFloorPlans = formData.get("floorPlansManaged") !== "no";
+
+  const { rows: floorPlanRows, fields: floorPlanErrors } = managesFloorPlans
+    ? readFloorPlanRows(formData)
+    : { rows: [], fields: undefined };
   if (floorPlanErrors) return { ok: false, fields: floorPlanErrors };
 
   const db = prisma;
@@ -172,10 +183,14 @@ export async function saveUnitType(
 
         // Diff floor plans against what's already in the database — see
         // the file comment for why this replaced delete-then-recreate.
-        const existing = await tx.floorPlan.findMany({
-          where: { unitTypeId },
-          select: { id: true },
-        });
+        // Skipped entirely when another editor owns the floors — see
+        // managesFloorPlans above.
+        const existing = managesFloorPlans
+          ? await tx.floorPlan.findMany({
+              where: { unitTypeId },
+              select: { id: true },
+            })
+          : [];
         const submittedIds = new Set(
           floorPlanRows.filter((row) => row.id).map((row) => row.id as string),
         );

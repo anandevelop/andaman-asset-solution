@@ -150,6 +150,19 @@ type Props = {
   ) => Promise<{ ok: boolean; message?: string; fields?: Record<string, string> }>;
 };
 
+/**
+ * True when every field in the patch already holds that value.
+ *
+ * ImageUploader re-fires onChange on every render of its parent, not only
+ * when the file changes — its own comment warns that this is fine "if
+ * onChange is idempotent", and marking the draft dirty is not. Without this
+ * guard the unsaved bar appeared on load, before anybody had touched
+ * anything, which makes it mean nothing.
+ */
+function isNoop<T>(row: T, patch: Partial<T>): boolean {
+  return Object.entries(patch).every(([field, value]) => row[field as keyof T] === value);
+}
+
 let temporaryKey = 0;
 const nextKey = (prefix: string) => `${prefix}:${(temporaryKey += 1)}`;
 
@@ -223,18 +236,28 @@ export default function UnitTypesWorkspace({
   const mutate = useCallback(
     (update: (current: DraftFloor[]) => DraftFloor[]) => {
       if (!type) return;
-      setFloorsByType((current) => ({
-        ...current,
-        [type.id]: update(current[type.id] ?? []),
-      }));
+      const before = floorsByType[type.id] ?? [];
+      const after = update(before);
+
+      // An update that returned the same array changed nothing — see isNoop
+      // for the caller that does this on every render. Compared out here
+      // rather than inside the updater, which has to stay pure.
+      if (after === before) return;
+
+      setFloorsByType((current) => ({ ...current, [type.id]: after }));
       setDirty(true);
     },
-    [type],
+    [type, floorsByType],
   );
 
   const patchFloor = useCallback(
     (key: string, patch: Partial<DraftFloor>) =>
-      mutate((current) => current.map((f) => (f.key === key ? { ...f, ...patch } : f))),
+      mutate((current) => {
+        const target = current.find((f) => f.key === key);
+        if (!target || isNoop(target, patch)) return current;
+
+        return current.map((f) => (f.key === key ? { ...f, ...patch } : f));
+      }),
     [mutate],
   );
 
@@ -317,7 +340,9 @@ export default function UnitTypesWorkspace({
   }
 
   return (
-    <div className="space-y-5">
+    /* data-unit-types-workspace is a test hook: the page also carries the
+       older per-type spec forms, whose inputs look identical to these. */
+    <div data-unit-types-workspace className="space-y-5">
       {result && (
         <SaveToast tone={result.ok ? "success" : "error"} token={result}>
           {result.ok ? <Check size={15} aria-hidden /> : <AlertTriangle size={15} aria-hidden />}

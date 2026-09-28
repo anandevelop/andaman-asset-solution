@@ -119,6 +119,78 @@ async function seed(prisma: PrismaClient) {
   }
 
   /*
+    One unit type with a floor, two room pins and a photo on one of them.
+
+    The unit-types workspace and the public section it previews both render
+    from this shape, and with no unit type at all they render an empty state
+    — which is a page that loads while proving nothing about the props it
+    was written for. The drawing is a real one from public/, so the plan and
+    its aspect ratio behave as they do in production.
+
+    Deliberately asymmetric: one room has a photo and one does not, because
+    the two draw differently (a button that opens a card, and a plain label
+    that cannot) and a fixture where every room matched would exercise one
+    branch.
+  */
+  const firstProject = await prisma.project.findUnique({
+    where: { slug: PROJECTS[0].slug },
+    select: { id: true },
+  });
+
+  if (firstProject) {
+    await prisma.projectUnitType.create({
+      data: {
+        projectId: firstProject.id,
+        name: "Type A",
+        code: "A",
+        bedrooms: 3,
+        bathrooms: 3,
+        livingAreaSqm: "196.10",
+        totalUnits: 8,
+        sortOrder: 0,
+        floorPlans: {
+          create: {
+            floorName: "1st Floor",
+            shortLabel: "1",
+            areaSqm: "196.10",
+            imageUrl: "/floor-plans/victory/unit-types/vA1-line.webp",
+            blueprintImageUrl: "/floor-plans/victory/unit-types/vA1-blueprint.webp",
+            imageWidth: 1800,
+            imageHeight: 734,
+            portraitRotation: "CW",
+            sortOrder: 0,
+            rooms: {
+              create: [
+                {
+                  xPercent: 49.4,
+                  yPercent: 69.4,
+                  areaSqm: "30.11",
+                  photoUrl: "/floor-plans/victory/unit-types/vA1-furnished.webp",
+                  sortOrder: 0,
+                  translations: {
+                    create: [
+                      { locale: "en", name: "Kitchen & Dining" },
+                      { locale: "th", name: "ครัวและห้องทานอาหาร" },
+                    ],
+                  },
+                },
+                {
+                  xPercent: 17.1,
+                  yPercent: 29.4,
+                  areaSqm: "42.30",
+                  photoUrl: null,
+                  sortOrder: 1,
+                  translations: { create: [{ locale: "en", name: "Garage" }] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+  }
+
+  /*
     One unclaimed sales profile.
 
     It exists so the account screens have something to render rather than an
