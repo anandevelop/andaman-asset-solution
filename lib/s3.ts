@@ -222,6 +222,71 @@ export function toPublicUrl(key: string, config?: S3Config): string {
   return `https://${resolved.mediaDomain}/${key.replace(/^\/+/, "")}`;
 }
 
+/**
+ * The reverse of toPublicUrl, for the rows that store a URL and no key.
+ *
+ * Media rows carry their own `key`, so this is not for them. It is for
+ * fields like FloorPlan.imageUrl, which have only ever stored an absolute
+ * URL (see the note on lib/s3.ts's publicUrl choice in AGENTS.md) and now
+ * need a derived object written beside the original.
+ *
+ * Returns null rather than guessing when the URL is not on this bucket's
+ * public host: next.config.js deliberately lists more than one media
+ * hostname, and old rows keep pointing at the old one forever.
+ */
+export function objectKeyFromUrl(url: string, config?: S3Config): string | null {
+  const resolved = config ?? readS3Config();
+  if (!resolved) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    // A relative path — a seeded file under public/, not an object at all.
+    return null;
+  }
+
+  if (parsed.host !== resolved.mediaDomain) return null;
+
+  const key = parsed.pathname.replace(/^\/+/, "");
+  return key === "" ? null : key;
+}
+
+/**
+ * Upload a buffer the server itself produced, at a key it chooses.
+ *
+ * Distinct from getPresignedUploadUrl above, which hands the browser a
+ * one-time URL for a file the server never sees. This is for derived
+ * artefacts — an image the app generated from another image — where there
+ * is no browser in the loop and the key has to be predictable rather than a
+ * fresh UUID, so regenerating overwrites the previous version instead of
+ * littering the bucket with orphans.
+ *
+ * Same ACL and cache policy as a browser upload, except the max-age: these
+ * keys are *not* immutable, precisely because they are regenerated.
+ */
+export async function putS3Object(options: {
+  key: string;
+  body: Buffer;
+  contentType: string;
+}): Promise<string> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+
+  await getClient(config).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: options.key,
+      Body: options.body,
+      ContentType: options.contentType,
+      ACL: OBJECT_ACL as "public-read" | "private",
+      CacheControl: "public, max-age=86400",
+    }),
+  );
+
+  return toPublicUrl(options.key, config);
+}
+
 // ── Deletion ────────────────────────────────────────────────────────────
 
 /**
