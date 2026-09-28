@@ -120,9 +120,9 @@
         "gallery": ["gallery/p4-04.jpg", "gallery/p5-05.jpg", "gallery/p6-06.jpg", "gallery/p7-07.jpg", "gallery/p17-17.jpg", "gallery/p18-18.jpg"],
         "sitePlan": "site-plan/masterplan.jpg",
         "floorPlansByType": {
-          "A": ["floor-plans/A_p9-09.jpg", "floor-plans/A_p10-10.jpg"],
-          "A+": ["floor-plans/Aplus_p11-11.jpg", "floor-plans/Aplus_p12-12.jpg"],
-          "B": ["floor-plans/B_p15-15.jpg", "floor-plans/B_p16-16.jpg"]
+          "A": ["floor-plans/A_p10-10.jpg", "floor-plans/Aplus_p11-11.jpg"],
+          "A+": ["floor-plans/Aplus_p12-12.jpg", "floor-plans/B_p15-15.jpg"],
+          "B": ["floor-plans/B_p16-16.jpg"]
         }
       }
     }

@@ -32,6 +32,7 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import bcrypt from "bcryptjs";
+import sharp from "sharp";
 import { Prisma, PrismaClient, PropertyType, ProjectStatus, Role, SectionIcon } from "@prisma/client";
 import { pgAdapter } from "../lib/prisma-adapter";
 
@@ -117,6 +118,80 @@ type UnitsSeed = {
 
 const contentSeed = readSeedJson<ContentSeed>("content-seed-data.json");
 const unitsSeed = readSeedJson<UnitsSeed>("units-and-types-seed-data.json");
+
+/**
+ * Floors, room pins and room photos for the unit-types section.
+ *
+ * Its own file rather than more of content-seed-data.json because it is a
+ * different kind of data with a different provenance: the pin coordinates
+ * were digitised off the Sale Kit drawings by hand, and the room photos are
+ * a first pass matched on room *name* from each project's show-home gallery
+ * — they are not photographs of that particular type's rooms, and the team
+ * re-matches them through /admin. Keeping it separate is what makes that
+ * distinction visible instead of buried.
+ */
+type FloorsSeed = {
+  projects: {
+    slug: string;
+    unitTypes: {
+      code: string;
+      name: string;
+      hasPrivateLift?: boolean;
+      floors: {
+        floorName: string;
+        shortLabel: string;
+        areaSqm: number | null;
+        sortOrder: number;
+        portraitRotation: "CW" | "CCW";
+        lineImage: string;
+        blueprintImage: string | null;
+        furnishedImage: string | null;
+        rooms: {
+          sortOrder: number;
+          name: Record<string, string>;
+          areaSqm: number | null;
+          xPercent: number;
+          yPercent: number;
+          photoUrl: string | null;
+        }[];
+      }[];
+    }[];
+  }[];
+};
+
+const floorsSeed = readSeedJson<FloorsSeed>("unit-type-floors-seed.json");
+
+/**
+ * Kit asset path → public URL.
+ *
+ * Deliberately not floorPlanUrl() above, which runs the path through
+ * path.basename() and would flatten "victory/unit-types/vA1-line.webp" to
+ * "/floor-plans/victory/vA1-line.webp" — a 404, because these files live in
+ * the unit-types subfolder that keeps them apart from the original full-page
+ * Sale Kit scans.
+ */
+const unitTypeAssetUrl = (assetPath: string) => `/floor-plans/${assetPath}`;
+
+/**
+ * Pixel size of a kit asset, read from the file in public/.
+ *
+ * Not lib/floor-plan-images.ts's readImageSize, which fetches over HTTP: at
+ * seed time there is no server to fetch from, and these files are on disk
+ * right here. Returns null rather than throwing so one unreadable drawing
+ * costs that floor its reserved aspect ratio and nothing else.
+ */
+async function readLocalImageSize(
+  assetPath: string
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const file = path.join(__dirname, "..", "public", "floor-plans", assetPath);
+    const { width, height } = await sharp(file).metadata();
+    return width && height ? { width, height } : null;
+  } catch {
+    console.warn(`    ! Could not read image size for ${assetPath}`);
+    return null;
+  }
+}
 
 /**
  * Corporate services / Why-us points / Mission principles — the icon-card
@@ -923,6 +998,127 @@ async function seedInitialAdmin() {
   }
 }
 
+/**
+ * Floors, rooms and room pins for every unit type the kit covers.
+ *
+ * WHOLESALE REPLACEMENT, AND WHY THAT IS SAFE HERE
+ *
+ * Every other `update` branch in this file is empty or existence-guarded,
+ * because the fields would otherwise revert content an admin has edited
+ * (see this file's header). This step is the exception and is allowed to be:
+ * FloorPlanRoom and its pins did not exist before this seed, so there is no
+ * admin-entered pin for it to overwrite on the first run. It is written as a
+ * replace rather than an upsert so a corrected drawing — new crop, shifted
+ * walls, different room list — lands whole instead of leaving orphan pins
+ * from the previous version floating over the new plan.
+ *
+ * The consequence is real and worth stating: re-running the seed after the
+ * team has re-matched room photos through /admin discards that work for the
+ * types listed in the JSON. Everything else in this file is idempotent in
+ * the "leaves your edits alone" sense; this is idempotent only in the
+ * "same input, same output" sense.
+ *
+ * Types are matched on `code`, falling back to `name` for rows created
+ * before that column existed — and the code is backfilled when the fallback
+ * hits, so the fragile match happens at most once per row.
+ */
+async function seedUnitTypeFloors(db: PrismaClient | Prisma.TransactionClient) {
+  for (const seedProject of floorsSeed.projects) {
+    const project = await db.project.findUnique({
+      where: { slug: seedProject.slug },
+      select: { id: true },
+    });
+
+    if (!project) {
+      console.warn(`    ! No project "${seedProject.slug}" — skipped its floor plans`);
+      continue;
+    }
+
+    const types = await db.projectUnitType.findMany({
+      where: { projectId: project.id },
+      select: { id: true, code: true, name: true },
+    });
+
+    for (const seedType of seedProject.unitTypes) {
+      const match =
+        types.find((t) => t.code === seedType.code) ??
+        types.find((t) => t.name === seedType.name);
+
+      if (!match) {
+        console.warn(
+          `    ! No unit type ${seedProject.slug}/${seedType.code} — skipped its floor plans`
+        );
+        continue;
+      }
+
+      await db.projectUnitType.update({
+        where: { id: match.id },
+        data: {
+          code: seedType.code,
+          hasPrivateLift: seedType.hasPrivateLift ?? false,
+        },
+      });
+
+      // Sizes come off the files on disk rather than the JSON: they are a
+      // fact about the image, and one that silently goes stale the moment
+      // somebody re-exports a drawing at a different width.
+      const sized = await Promise.all(
+        seedType.floors.map(async (floor) => ({
+          floor,
+          size: await readLocalImageSize(floor.lineImage),
+        }))
+      );
+
+      await db.$transaction(async (tx) => {
+        await tx.floorPlan.deleteMany({ where: { unitTypeId: match.id } });
+
+        for (const { floor, size } of sized) {
+          await tx.floorPlan.create({
+            data: {
+              unitTypeId: match.id,
+              floorName: floor.floorName,
+              shortLabel: floor.shortLabel,
+              areaSqm: floor.areaSqm?.toFixed(2) ?? null,
+              sortOrder: floor.sortOrder,
+              portraitRotation: floor.portraitRotation,
+              imageUrl: unitTypeAssetUrl(floor.lineImage),
+              blueprintImageUrl: floor.blueprintImage
+                ? unitTypeAssetUrl(floor.blueprintImage)
+                : null,
+              furnishedImageUrl: floor.furnishedImage
+                ? unitTypeAssetUrl(floor.furnishedImage)
+                : null,
+              imageWidth: size?.width ?? null,
+              imageHeight: size?.height ?? null,
+              rooms: {
+                create: floor.rooms.map((room) => ({
+                  xPercent: room.xPercent,
+                  yPercent: room.yPercent,
+                  areaSqm: room.areaSqm?.toFixed(2) ?? null,
+                  photoUrl: room.photoUrl,
+                  sortOrder: room.sortOrder,
+                  translations: {
+                    create: Object.entries(room.name)
+                      .filter(([, name]) => name.trim() !== "")
+                      .map(([locale, name]) => ({ locale, name })),
+                  },
+                })),
+              },
+            },
+          });
+        }
+      });
+
+      const roomCount = seedType.floors.reduce((sum, f) => sum + f.rooms.length, 0);
+      console.log(
+        `    ✓ Floors   ${seedProject.slug}/${seedType.code} — ${seedType.floors.length} floor${
+          seedType.floors.length === 1 ? "" : "s"
+        }, ${roomCount} room${roomCount === 1 ? "" : "s"}`
+      );
+    }
+  }
+}
+
 async function main() {
   assertNotProduction();
 
@@ -1553,6 +1749,9 @@ async function main() {
   });
 
   console.log(`  ✓ Event    ${event.slug}`);
+
+  // After every project and unit type exists: this step looks them up.
+  await seedUnitTypeFloors(prisma);
 
   console.log("🌱 Seed complete.");
 }
