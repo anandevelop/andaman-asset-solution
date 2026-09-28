@@ -119,10 +119,43 @@ export type ProjectListCard = ProjectCard & {
   longitude: number | null;
 };
 
+/** One labelled point on a floor plan, ready to draw. */
+export type FloorRoom = {
+  id: string;
+  /** Locale-picked, with the site's usual fallback chain. */
+  name: string;
+  areaSqm: number | null;
+  /** 0–100, against the *line* drawing — see FloorPlanSummary.imageUrl. */
+  x: number;
+  y: number;
+  photoUrl: string | null;
+};
+
+/**
+ * Fallback aspect ratio for a plan whose real size was never recorded.
+ *
+ * Rows predating the imageWidth/imageHeight columns have no size to reserve
+ * a box from, and a box of zero height collapses the shaft. 2.8 is roughly
+ * the middle of the seeded drawings (2.45 to 2.97): wrong for any given
+ * plan, but wrong by a little in both directions rather than catastrophically
+ * in one.
+ */
+export const DEFAULT_PLAN_ASPECT = 2.8;
+
 export type FloorPlanSummary = {
   id: string;
   floorName: string;
+  /** Lift button and FLOOR display. Falls back to floorName's first character. */
+  shortLabel: string;
+  /** The line drawing. The coordinate space every room's x/y refers to. */
   imageUrl: string;
+  blueprintImageUrl: string | null;
+  furnishedImageUrl: string | null;
+  /** width / height, so the page can reserve the box before the image loads. */
+  aspect: number;
+  areaSqm: number | null;
+  portraitRotation: "CW" | "CCW";
+  rooms: FloorRoom[];
   sortOrder: number;
 };
 
@@ -141,6 +174,8 @@ export type UnitTypeSummary = {
   coverImageUrl: string | null;
   gallery: string[];
   sortOrder: number;
+  /** Whether each home of this type has its own lift — changes the copy. */
+  hasPrivateLift: boolean;
   floorPlans: FloorPlanSummary[];
 };
 
@@ -781,7 +816,12 @@ export async function getUnitTypesForProject(
         where: { projectId },
         orderBy: { sortOrder: "asc" },
         include: {
-          floorPlans: { orderBy: { sortOrder: "asc" } },
+          floorPlans: {
+            orderBy: { sortOrder: "asc" },
+            include: {
+              rooms: { orderBy: { sortOrder: "asc" }, include: { translations: true } },
+            },
+          },
           translations: true,
         },
       }),
@@ -806,10 +846,40 @@ export async function getUnitTypesForProject(
     coverImageUrl: t.coverImageUrl,
     gallery: t.gallery,
     sortOrder: t.sortOrder,
+    hasPrivateLift: t.hasPrivateLift,
     floorPlans: t.floorPlans.map((fp: any) => ({
       id: fp.id,
       floorName: fp.floorName,
+      // A label is what the lift button prints, so it cannot be empty.
+      // "Ground Floor" and "1st Floor" both start with a character nobody
+      // would choose, which is why the column exists — this is only the
+      // last resort for a row that predates it.
+      shortLabel: (fp.shortLabel ?? "").trim() || fp.floorName.trim().charAt(0).toUpperCase(),
       imageUrl: fp.imageUrl,
+      blueprintImageUrl: fp.blueprintImageUrl,
+      furnishedImageUrl: fp.furnishedImageUrl,
+      aspect:
+        fp.imageWidth && fp.imageHeight
+          ? fp.imageWidth / fp.imageHeight
+          : DEFAULT_PLAN_ASPECT,
+      areaSqm: toNumber(fp.areaSqm),
+      portraitRotation: fp.portraitRotation,
+      /*
+        A room with no name in any locale is dropped rather than drawn as an
+        empty label: it is a pin an admin placed and has not got back to, and
+        a blank chip over a drawing reads as a rendering fault. The admin
+        screen counts these as a warning; the public page simply omits them.
+      */
+      rooms: fp.rooms
+        .map((room: any) => ({
+          id: room.id,
+          name: getTranslation<any>(room.translations, locale)?.name?.trim() ?? "",
+          areaSqm: toNumber(room.areaSqm),
+          x: room.xPercent,
+          y: room.yPercent,
+          photoUrl: room.photoUrl,
+        }))
+        .filter((room: FloorRoom) => room.name !== ""),
       sortOrder: fp.sortOrder,
     })),
     };

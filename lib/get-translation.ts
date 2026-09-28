@@ -29,10 +29,15 @@ type LocaleRow = { locale: string };
  *
  * Two fallback steps, not one: "en" is the language every Sale Kit source
  * document was originally written in, so it is the most complete locale
- * for older content; "th" is the site's `defaultLocale` (see i18n.ts) and
- * therefore the second-most-likely to exist. A `zh` or `ru` visitor on a
- * project an admin hasn't translated yet still gets real content instead
- * of a blank section.
+ * for older content; "th" is the language the team writes in, so it is the
+ * second-most-likely to exist. A `zh` or `ru` visitor on a project an admin
+ * hasn't translated yet still gets real content instead of a blank section.
+ *
+ * Neither step is i18n.ts's `defaultLocale`, which this deliberately does
+ * not read. That constant answers "which language does a visitor who asked
+ * for nothing get", and it has already changed once; this chain answers
+ * "which row is most likely to have been written", which is a fact about
+ * the content and does not move when the front door does.
  *
  * Returns undefined only if `translations` has no row for `locale`,
  * `fallbackLocale`, or "th" — i.e. the parent record has no translations
