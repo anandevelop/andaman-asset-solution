@@ -192,7 +192,7 @@ export default async function ProjectPage(props: Props) {
         bathrooms: type.bathrooms === null ? "—" : String(type.bathrooms),
         totalAreaLabel: area(type.livingAreaSqm),
         chipMeta: [
-          type.livingAreaSqm === null ? null : `${area(type.livingAreaSqm)} ${t("units.sqm")}`,
+          type.livingAreaSqm === null ? null : `${area(type.livingAreaSqm)} ${ut("sqm")}`,
           type.bedrooms === null ? null : `${type.bedrooms} ${ut("bed")}`,
         ]
           .filter(Boolean)
@@ -837,7 +837,7 @@ export default async function ProjectPage(props: Props) {
             areaByFloor: ut("areaByFloor"),
             total: ut("total"),
             roomSchedule: ut("roomSchedule"),
-            sqm: t("units.sqm"),
+            sqm: ut("sqm"),
             notToScale: ut("notToScale"),
             showHomePhoto: ut("showHomePhoto"),
             previousRoom: ut("previousRoom"),

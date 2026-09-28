@@ -40,7 +40,10 @@ export default function LiftPanel({
   onSelect,
 }: Props) {
   return (
-    <div className="flex items-center justify-center gap-6 border-b border-[#c3d3dd]/12 px-4 py-4 lg:flex-col lg:gap-[30px] lg:border-b-0 lg:border-r lg:px-0 lg:py-[34px]">
+    /* lg:self-start — the panel belongs at the top of the shaft's height,
+       like a real lift's. Left to the grid it stretches and centres, which
+       floats the FLOOR display halfway down a 560px column. */
+    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 lg:h-full lg:flex-col lg:justify-start lg:gap-[30px] lg:border-b-0 lg:border-r lg:px-0 lg:py-[34px]">
       {/* ── FLOOR display ──────────────────────────────────────────── */}
       <div className="relative w-16 pb-2.5 text-center lg:pb-3.5">
         <span className="mb-1 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 lg:mb-2">

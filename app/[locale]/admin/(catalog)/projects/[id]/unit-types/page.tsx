@@ -258,7 +258,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       areaByFloor: up("areaByFloor"),
       total: up("total"),
       roomSchedule: up("roomSchedule"),
-      sqm: uw("sqm"),
+      sqm: up("sqm"),
       notToScale: up("notToScale"),
       showHomePhoto: up("showHomePhoto"),
       previousRoom: up("previousRoom"),

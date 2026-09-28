@@ -212,9 +212,14 @@ export default function UnitTypesElevator({
         <div
           className="relative mt-9 grid grid-cols-1 border border-[#c3d3dd]/20 lg:grid-cols-[92px_1fr_300px]"
           style={{
+            /* Two grids, not one: the 40px major lines read as a drawing
+               board, and the 8px minor ones are what make it read as
+               *squared paper* rather than a table. */
             background:
               "linear-gradient(rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
-              "linear-gradient(90deg,rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px,#062a41",
+              "linear-gradient(90deg,rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
+              "linear-gradient(rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px," +
+              "linear-gradient(90deg,rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px,#062a41",
           }}
         >
           <LiftPanel
@@ -240,6 +245,14 @@ export default function UnitTypesElevator({
                 : undefined
             }
           >
+            {/* A drawing of a building carries its orientation. */}
+            <span
+              aria-hidden
+              className="absolute right-5 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-[#c3d3dd]/35 font-mono text-[10px] font-medium text-[#c3d3dd]/80"
+            >
+              N
+            </span>
+
             {floors.map((candidate, index) => (
               <FloorCar
                 key={candidate.id}
