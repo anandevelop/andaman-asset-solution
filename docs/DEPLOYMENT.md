@@ -93,7 +93,7 @@ docker build \
   --build-arg NEXT_PUBLIC_META_PIXEL_ID="000000000000000" \
   --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Lc..." \
   --build-arg NEXT_PUBLIC_LINE_ADD_FRIEND_URL="https://line.me/R/ti/p/@andamanasset" \
-  --build-arg NEXT_PUBLIC_DEFAULT_LOCALE="th" \
+  --build-arg NEXT_PUBLIC_DEFAULT_LOCALE="en" \
   -t andaman-asset-solution:$(git rev-parse --short HEAD) .
 ```
 

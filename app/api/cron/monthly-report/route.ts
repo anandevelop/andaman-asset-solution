@@ -35,7 +35,7 @@ import { renderReportEmail } from "@/lib/reports/email-body";
 import { draftNoteText } from "@/lib/reports/audience";
 import { lastMonth } from "@/lib/reports/period";
 import { recordCronFailure } from "@/lib/seo/alerts";
-import { defaultLocale } from "@/i18n";
+import type { Locale } from "@/i18n";
 
 /** Seconds. A month of leads and rollups is a handful of queries, but the
  *  SMTP round trip is somebody else's server. */
@@ -53,7 +53,17 @@ export async function POST(request: Request) {
   if (denied) return denied;
 
   const period = lastMonth();
-  const locale = defaultLocale;
+  /*
+    Thai, pinned, and no longer the site's defaultLocale.
+
+    It used to read that constant, which was Thai — so the two agreed by
+    accident rather than on purpose. When the public default became English
+    this email would have quietly switched language on the Thai staff who
+    receive it. The language the report is *written in* is about its readers
+    (REPORT_RECIPIENTS), not about which language the site greets visitors
+    in, so it is stated here instead of inherited.
+  */
+  const locale: Locale = "th";
 
   try {
     const data = await getReportData({ period, locale, audience: AUDIENCE });

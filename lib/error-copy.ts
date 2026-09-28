@@ -29,7 +29,11 @@ export type BoundaryLocale = "en" | "th" | "zh" | "ru";
 
 const BOUNDARY_LOCALES: BoundaryLocale[] = ["en", "th", "zh", "ru"];
 
-export const BOUNDARY_DEFAULT_LOCALE: BoundaryLocale = "th";
+/** Kept equal to i18n.ts's defaultLocale — tests/error-copy.test.ts asserts
+ *  it, because a boundary that disagrees with routing about the default is
+ *  the bug this module was written to end. Not imported from there: these
+ *  boundaries render without the request config. */
+export const BOUNDARY_DEFAULT_LOCALE: BoundaryLocale = "en";
 
 /**
  * The locale segment of a path, or the default.

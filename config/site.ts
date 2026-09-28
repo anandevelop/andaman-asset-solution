@@ -18,10 +18,18 @@ export const siteConfig = {
     zh: "安达曼资产解决方案精心甄选的普吉岛豪华泳池别墅及高端房地产项目。",
     ru: "Роскошные виллы с бассейном и элитная недвижимость на Пхукете от Andaman Asset Solution.",
   },
-  // Unused elsewhere in the codebase (routing derives locale/defaultLocale
-  // from i18n.ts instead) — kept in sync with it regardless, so this never
-  // becomes a second, stale source of truth if something starts reading it.
-  defaultLocale: (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as "en" | "th" | "zh" | "ru") ?? "th",
+  /*
+    Routing does not read this — proxy.ts and the sitemap take the default
+    from i18n.ts. app/manifest.ts does, for the PWA's description, `lang`
+    and `start_url`, so the two have to agree or an installed app launches
+    into a language the site would then redirect away from.
+
+    Overridable per build because it is a NEXT_PUBLIC_* value, which means
+    it is compiled in and cannot be corrected on a running container — see
+    the ARG block in the Dockerfile. The fallback is the real default and is
+    what every environment currently passes.
+  */
+  defaultLocale: (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as "en" | "th" | "zh" | "ru") ?? "en",
   locales: ["en", "th", "zh", "ru"] as const,
 
   contact: {

@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { summariseVisits, visitHash, type LiveVisitRow } from "@/lib/analytics/live-visit";
 import { isCountablePublicPath } from "@/lib/public-paths";
 import { localeOf } from "@/lib/analytics/locale-of";
+import { defaultLocale } from "@/i18n";
 
 const ORIGINAL = process.env;
 
@@ -164,7 +165,9 @@ describe("localeOf", () => {
   });
 
   it("falls back to the default locale for an unprefixed path", () => {
-    expect(localeOf("/contact")).toBe("th");
+    // Asserted against the constant, not a literal: the test is about the
+    // fallback happening, not about which language it currently lands on.
+    expect(localeOf("/contact")).toBe(defaultLocale);
   });
 
   it("ignores a query string", () => {

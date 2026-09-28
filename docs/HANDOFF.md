@@ -120,7 +120,7 @@ Full annotated reference: `.env.example`. Summary:
 | `NEXTAUTH_URL` | ● | Exact public origin | Sign-in callback fails silently |
 | `NEXTAUTH_SECRET` | ● | JWT signing | Rotating logs everyone out |
 | `NEXT_PUBLIC_SITE_URL` | ● | Canonical origin | Corrupts canonicals, sitemap, hreflang, JSON-LD |
-| `NEXT_PUBLIC_DEFAULT_LOCALE` | ● | `th` | Wrong default language |
+| `NEXT_PUBLIC_DEFAULT_LOCALE` | ● | `en` | Wrong default language |
 | `DO_SPACES_REGION` | ● | Spaces region (sgp1) | Uploads fail |
 | `DO_SPACES_ACCESS_KEY_ID` | ● | Spaces access key | Uploads fail |
 | `DO_SPACES_SECRET_ACCESS_KEY` | ● | Spaces secret | Uploads fail |

@@ -161,10 +161,19 @@ describe("navbar active-state matching", () => {
     expect(activeFor(`/${locale}`, locale)).toEqual(["/"]);
   });
 
+  /*
+    Paths built from defaultLocale rather than a literal "/th": activeFor()
+    takes the locale from that same constant, and hardcoding one side meant
+    the two agreed only while the default happened to be Thai. Changing the
+    default to English broke a test about navigation highlighting, which is
+    not what it is for.
+  */
   it("keeps a parent lit on its detail pages", () => {
-    expect(activeFor("/th/projects/trinity-village")).toEqual(["/projects"]);
-    expect(activeFor("/th/news/an-article")).toEqual(["/news"]);
-    expect(activeFor("/th/events/open-house")).toEqual(["/events"]);
+    const at = (path: string) => activeFor(`/${defaultLocale}${path}`);
+
+    expect(at("/projects/trinity-village")).toEqual(["/projects"]);
+    expect(at("/news/an-article")).toEqual(["/news"]);
+    expect(at("/events/open-house")).toEqual(["/events"]);
   });
 
   it("never marks home active on a sub-page", () => {
@@ -176,7 +185,7 @@ describe("navbar active-state matching", () => {
 
   it("marks exactly one item per top-level page", () => {
     for (const href of hrefs) {
-      const pathname = `/th${href === "/" ? "" : href}`;
+      const pathname = `/${defaultLocale}${href === "/" ? "" : href}`;
 
       expect(activeFor(pathname), pathname).toHaveLength(1);
     }
@@ -187,8 +196,14 @@ describe("navbar active-state matching", () => {
   });
 
   it("marks nothing on pages outside the navigation", () => {
-    for (const path of ["/th/privacy-policy", "/th/admin", "/th/login"]) {
-      expect(activeFor(path), path).toEqual([]);
+    // Built from defaultLocale for the same reason as above: against a
+    // literal "/th" this would pass because the locale did not match, not
+    // because the page is outside the navigation — green either way, and
+    // testing nothing.
+    for (const path of ["/privacy-policy", "/admin", "/login"]) {
+      const pathname = `/${defaultLocale}${path}`;
+
+      expect(activeFor(pathname), pathname).toEqual([]);
     }
   });
 });
@@ -201,6 +216,18 @@ describe("site configuration", () => {
 
   it("declares the default locale among the supported locales", () => {
     expect(locales).toContain(siteConfig.defaultLocale);
+  });
+
+  /*
+    app/manifest.ts builds the PWA's lang, description and start_url from
+    siteConfig.defaultLocale, while proxy.ts redirects "/" using i18n.ts's.
+    If they disagree, an installed app launches straight into a redirect out
+    of the language it just asked for. Nothing else keeps them in step —
+    siteConfig's comes from NEXT_PUBLIC_DEFAULT_LOCALE, a separate
+    build-time value — so it is asserted rather than assumed.
+  */
+  it("agrees with i18n.ts about which locale is the default", () => {
+    expect(siteConfig.defaultLocale).toBe(defaultLocale);
   });
 
   it("has an og:image path that will resolve from the site root", () => {

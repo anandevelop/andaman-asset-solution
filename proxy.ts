@@ -80,7 +80,8 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
     // The admin backend's own UI only renders in Thai or English (see
     // i18n.ts's adminLocales) — a stray /zh or /ru admin/login link (an old
     // bookmark, a locale cookie left over from the public site) bounces to
-    // the same page under Thai rather than rendering an admin nobody reads.
+    // the same page under defaultLocale rather than rendering an admin
+    // nobody reads. Both adminLocales are valid targets for that bounce.
     if (!(adminLocales as readonly string[]).includes(locale)) {
       const url = request.nextUrl.clone();
       url.pathname = `/${defaultLocale}${pathname.slice(locale.length + 1)}`;

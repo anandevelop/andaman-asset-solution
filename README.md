@@ -101,10 +101,18 @@ Adminer (DB browser) is available at `http://localhost:8080` once `db:up` is run
 
 ## Routing & i18n
 
-All pages live under `app/[locale]/...` with `locale` = `th` or `en`
-(`localePrefix: "always"`, default `th`, set in `config/site.ts` /
-`NEXT_PUBLIC_DEFAULT_LOCALE`). Copy lives in `messages/th.json` and
-`messages/en.json` — never hardcode UI strings in components.
+All pages live under `app/[locale]/...` with `locale` one of `en`, `th`,
+`zh`, `ru` (`localePrefix: "always"`). The default is `en` and lives in
+`i18n.ts`, which is what routing, the sitemap's `x-default` and the error
+boundaries read; `NEXT_PUBLIC_DEFAULT_LOCALE` is the separate build-time
+copy the PWA manifest uses, and the two are kept equal.
+
+The default only applies when nothing else decides: next-intl's locale
+detection is on, so a `NEXT_LOCALE` cookie wins first and `accept-language`
+second. A Thai browser still lands on `/th`.
+
+Copy lives in `messages/{en,th,zh,ru}.json`, all four of which must carry
+every key — never hardcode UI strings in components.
 
 ## Design system
 

@@ -159,7 +159,7 @@ jobs:
       # shorter one, and the e2e job runs `next start`, i.e. NODE_ENV=production.
       NEXTAUTH_SECRET: e2e-ci-placeholder-secret-000000000000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
-      NEXT_PUBLIC_DEFAULT_LOCALE: th
+      NEXT_PUBLIC_DEFAULT_LOCALE: en
       # Tells global-setup.ts that the step below already did the work, so
       # it does not truncate the fixtures the production build was just
       # prerendered from. See the note on its default export.
@@ -252,7 +252,7 @@ jobs:
         env:
           NEXTAUTH_SECRET: ci-build-placeholder-secret
           NEXT_PUBLIC_SITE_URL: https://andamanassetsolution.com
-          NEXT_PUBLIC_DEFAULT_LOCALE: th
+          NEXT_PUBLIC_DEFAULT_LOCALE: en
         run: npm run build
 
       - name: Report bundle size
@@ -290,7 +290,7 @@ jobs:
       # the pixel is read from site settings at request time anyway.
       IMAGE_BUILD_ARGS: |
         NEXT_PUBLIC_SITE_URL=https://andamanassetsolution.com
-        NEXT_PUBLIC_DEFAULT_LOCALE=th
+        NEXT_PUBLIC_DEFAULT_LOCALE=en
         NEXT_PUBLIC_MEDIA_DOMAIN=andamanasset-media.sgp1.cdn.digitaloceanspaces.com
         NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdkEaEtAAAAAOUwQsQOWAw-EwR-6KYjJ9WmMXEd
         NEXT_PUBLIC_LINE_ADD_FRIEND_URL=https://line.me/R/ti/p/@andamanasset

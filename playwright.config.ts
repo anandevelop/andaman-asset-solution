@@ -94,7 +94,7 @@ const SERVER_ENV = {
   NEXTAUTH_URL: BASE_URL,
   NEXTAUTH_SECRET,
   NEXT_PUBLIC_SITE_URL: BASE_URL,
-  NEXT_PUBLIC_DEFAULT_LOCALE: "th",
+  NEXT_PUBLIC_DEFAULT_LOCALE: "en",
   NEXT_TELEMETRY_DISABLED: "1",
   /*
     Off for the run, not merely unconfigured.
