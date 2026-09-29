@@ -39,6 +39,7 @@ import UnitTypesElevator from "@/components/unit-types/UnitTypesElevator";
 import type { ElevatorLabels, ElevatorType } from "@/components/unit-types/types";
 import { unitTypeHealth, type FloorIssue } from "@/lib/admin/unit-type-health";
 import { formatNumber } from "@/lib/format";
+import { liftLabelFor } from "@/lib/lift-label";
 import type { UnitTypeFloorsInput } from "@/lib/validations";
 import FloorPlanPinner, { type PinnerRoom } from "./FloorPlanPinner";
 import { useDraftBlueprints } from "./useDraftBlueprints";
@@ -741,7 +742,7 @@ function PreviewTab({
       id: f.key,
       name: f.floorName,
       // Same fallback the public page's data layer uses (lib/projects.ts).
-      shortLabel: f.shortLabel.trim() || f.floorName.trim().charAt(0).toUpperCase() || "?",
+      shortLabel: liftLabelFor(f.shortLabel, f.floorName) || "?",
       imageUrl: planFor[f.key] ?? f.imageUrl,
       aspect: f.aspect,
       areaLabel: areaOf(f.areaSqm),

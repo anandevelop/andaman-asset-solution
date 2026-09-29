@@ -53,6 +53,7 @@ export { pickLocale, type Locale } from "@/lib/locale";
 // for that everywhere in this file — see getProjectBySlug for the first
 // example.
 import { getTranslation } from "@/lib/get-translation";
+import { liftLabelFor } from "@/lib/lift-label";
 
 /** Prisma Decimal → number (safe for the magnitudes we store). */
 function toNumber(value: Prisma.Decimal | number | null): number | null {
@@ -854,10 +855,8 @@ export async function getUnitTypesForProject(
       id: fp.id,
       floorName: fp.floorName,
       // A label is what the lift button prints, so it cannot be empty.
-      // "Ground Floor" and "1st Floor" both start with a character nobody
-      // would choose, which is why the column exists — this is only the
-      // last resort for a row that predates it.
-      shortLabel: (fp.shortLabel ?? "").trim() || fp.floorName.trim().charAt(0).toUpperCase(),
+      // The stand-in for a row that predates the column — see lift-label.ts.
+      shortLabel: liftLabelFor(fp.shortLabel, fp.floorName),
       imageUrl: fp.imageUrl,
       blueprintImageUrl: fp.blueprintImageUrl,
       furnishedImageUrl: fp.furnishedImageUrl,

@@ -33,6 +33,7 @@ import { DEFAULT_PLAN_ASPECT } from "@/lib/projects";
 import UnitTypeForm from "@/components/admin/UnitTypeForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import { liftLabelFor } from "@/lib/lift-label";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -110,7 +111,16 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         key: plan.id,
         id: plan.id,
         floorName: plan.floorName,
-        shortLabel: plan.shortLabel ?? "",
+        /*
+          Prefilled with the fallback the public page already shows
+          (lib/lift-label.ts). Plans from before the column existed have no
+          label, and the save requires one — so on the deployed site every
+          save of a type with such a floor failed, whatever was changed,
+          while the site and the preview both displayed a label that looked
+          set. Prefilled, the admin sees what the site shows and the first
+          save stores it.
+        */
+        shortLabel: liftLabelFor(plan.shortLabel, plan.floorName),
         areaSqm: plan.areaSqm === null ? "" : String(plan.areaSqm),
         imageUrl: plan.imageUrl,
         blueprintImageUrl: plan.blueprintImageUrl ?? null,
