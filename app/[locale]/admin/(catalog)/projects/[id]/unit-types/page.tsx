@@ -113,6 +113,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         shortLabel: plan.shortLabel ?? "",
         areaSqm: plan.areaSqm === null ? "" : String(plan.areaSqm),
         imageUrl: plan.imageUrl,
+        blueprintImageUrl: plan.blueprintImageUrl ?? null,
         furnishedImageUrl: plan.furnishedImageUrl,
         aspect:
           plan.imageWidth && plan.imageHeight

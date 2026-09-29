@@ -40,13 +40,13 @@ export default function LiftPanel({
   onSelect,
 }: Props) {
   return (
-    /* lg:self-start — the panel belongs at the top of the shaft's height,
+    /* @min-[1000px]:self-start — the panel belongs at the top of the shaft's height,
        like a real lift's. Left to the grid it stretches and centres, which
        floats the FLOOR display halfway down a 560px column. */
-    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 lg:h-full lg:flex-col lg:justify-start lg:gap-[30px] lg:border-b-0 lg:border-r lg:px-0 lg:py-[34px]">
+    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-[30px] @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-[34px]">
       {/* ── FLOOR display ──────────────────────────────────────────── */}
-      <div className="relative w-16 pb-2.5 text-center lg:pb-3.5">
-        <span className="mb-1 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 lg:mb-2">
+      <div className="relative w-16 pb-2.5 text-center @min-[1000px]:pb-3.5">
+        <span className="mb-1 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 @min-[1000px]:mb-2">
           {labels.floor}
         </span>
 
@@ -86,12 +86,12 @@ export default function LiftPanel({
       <div
         role="group"
         aria-label={labels.floorSelector}
-        className="relative flex flex-row items-center gap-4 lg:flex-col-reverse"
+        className="relative flex flex-row items-center gap-4 @min-[1000px]:flex-col-reverse"
       >
         {/* The panel's axis line, behind the buttons. */}
         <span
           aria-hidden
-          className="absolute left-[22px] right-[22px] top-1/2 h-px bg-[#c3d3dd]/15 lg:left-1/2 lg:right-auto lg:top-[22px] lg:bottom-[22px] lg:h-auto lg:w-px"
+          className="absolute left-[22px] right-[22px] top-1/2 h-px bg-[#c3d3dd]/15 @min-[1000px]:left-1/2 @min-[1000px]:right-auto @min-[1000px]:top-[22px] @min-[1000px]:bottom-[22px] @min-[1000px]:h-auto @min-[1000px]:w-px"
         />
 
         {floors.map((floor, index) => {

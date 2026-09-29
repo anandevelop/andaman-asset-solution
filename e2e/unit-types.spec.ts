@@ -165,4 +165,36 @@ test.describe("the workspace", () => {
     */
     await expect(floorName).toHaveValue("Ground Floor");
   });
+
+  /*
+    The desktop preview has to be the desktop board. The pane beside the
+    floor list is ~840px at a 1440px screen, under the board's 1000px
+    container breakpoint, so previewing at the pane's own width showed the
+    stacked phone layout behind the "Desktop" button. The heading was the
+    bare type name, where the public page says "Type R — ride through the
+    house".
+  */
+  test("previews the desktop board as the public page draws it", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/en/login");
+    await page.goto("/en/login");
+    await signIn(page);
+
+    const projectId = await firstProjectId(page);
+    await page.goto(`/en/admin/projects/${projectId}/unit-types`);
+
+    const workspace = page.locator("[data-unit-types-workspace]");
+    await workspace.getByRole("button", { name: "Live preview" }).click();
+
+    const board = workspace.locator("#unit-types");
+    await expect(board.getByRole("heading", { name: /ride through the house/ })).toBeVisible();
+
+    // Landscape: the floor buttons sit in a column to the left of the title
+    // block, not in a row above it.
+    const selector = await board.getByRole("group", { name: /floor/i }).boundingBox();
+    const project = await board.getByText("Project", { exact: true }).boundingBox();
+    expect(selector && project, "both the lift panel and the title block render").toBeTruthy();
+    expect(project!.x).toBeGreaterThan(selector!.x + selector!.width);
+    expect(project!.y).toBeLessThan(selector!.y + selector!.height);
+  });
 });

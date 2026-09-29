@@ -30,6 +30,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { AlertTriangle, Check, Copy, Plus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Locale } from "@/i18n";
 import ImageUploader from "@/components/admin/ImageUploader";
 import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
@@ -37,8 +38,10 @@ import SaveToast from "@/components/admin/SaveToast";
 import UnitTypesElevator from "@/components/unit-types/UnitTypesElevator";
 import type { ElevatorLabels, ElevatorType } from "@/components/unit-types/types";
 import { unitTypeHealth, type FloorIssue } from "@/lib/admin/unit-type-health";
+import { formatNumber } from "@/lib/format";
 import type { UnitTypeFloorsInput } from "@/lib/validations";
 import FloorPlanPinner, { type PinnerRoom } from "./FloorPlanPinner";
+import { useDraftBlueprints } from "./useDraftBlueprints";
 
 // ── The draft ───────────────────────────────────────────────────────────
 
@@ -60,6 +63,9 @@ export type DraftFloor = {
   shortLabel: string;
   areaSqm: string;
   imageUrl: string;
+  /** The saved dark-frame variant of imageUrl. Null until a save derives
+   *  one — the preview draws its own meanwhile (useDraftBlueprints). */
+  blueprintImageUrl: string | null;
   furnishedImageUrl: string | null;
   aspect: number;
   portraitRotation: "CW" | "CCW";
@@ -582,6 +588,7 @@ export default function UnitTypesWorkspace({
 
           {tab === "preview" && (
             <PreviewTab
+              locale={locale}
               type={type}
               floors={floors}
               projectName={projectName}
@@ -673,6 +680,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function PreviewTab({
+  locale,
   type,
   floors,
   projectName,
@@ -680,6 +688,7 @@ function PreviewTab({
   labels,
   onWidth,
 }: {
+  locale: string;
   type: DraftType;
   floors: DraftFloor[];
   projectName: string;
@@ -688,6 +697,17 @@ function PreviewTab({
   onWidth: (value: "desktop" | "mobile") => void;
 }) {
   const largest = Math.max(...floors.map((f) => toNumberOrNull(f.areaSqm) ?? 0), 0);
+  // The shaft is navy: a white-paper line drawing there is a solid white
+  // box. Draw what the public page draws — the blueprint.
+  const planFor = useDraftBlueprints(floors);
+  // The heading, chip and area strings, built exactly as the public page
+  // builds them (app/[locale]/(site)/projects/[slug]/page.tsx) but from the
+  // draft. The preview used to print the bare type name as the heading, an
+  // empty subtitle and "228.00" where the site says "228" — the first thing
+  // anyone comparing it with the mockup noticed.
+  const ut = useTranslations("projects.unitTypesSection");
+  const area = (value: number | null) => (value === null ? null : formatNumber(locale, value));
+  const areaOf = (raw: string) => area(toNumberOrNull(raw));
 
   const elevatorType: ElevatorType = {
     id: type.id,
@@ -695,17 +715,25 @@ function PreviewTab({
     code: type.code ?? type.name,
     bedrooms: type.bedrooms === null ? "—" : String(type.bedrooms),
     bathrooms: type.bathrooms === null ? "—" : String(type.bathrooms),
-    totalAreaLabel: type.livingAreaSqm === null ? null : type.livingAreaSqm.toFixed(2),
-    chipMeta: type.name,
-    title: type.name,
-    subtitle: "",
+    totalAreaLabel: area(type.livingAreaSqm),
+    chipMeta: [
+      type.livingAreaSqm === null ? null : `${area(type.livingAreaSqm)} ${ut("sqm")}`,
+      type.bedrooms === null ? null : `${type.bedrooms} ${ut("bed")}`,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    title: ut("ride", { type: type.name }),
+    subtitle: type.hasPrivateLift
+      ? ut("liftHint")
+      : ut("floorsHint", { count: floors.length }),
     floors: floors.map((f) => ({
       id: f.key,
       name: f.floorName,
-      shortLabel: f.shortLabel || "?",
-      imageUrl: f.imageUrl,
+      // Same fallback the public page's data layer uses (lib/projects.ts).
+      shortLabel: f.shortLabel.trim() || f.floorName.trim().charAt(0).toUpperCase() || "?",
+      imageUrl: planFor[f.key] ?? f.imageUrl,
       aspect: f.aspect,
-      areaLabel: f.areaSqm.trim() === "" ? null : f.areaSqm,
+      areaLabel: areaOf(f.areaSqm),
       areaRatio: largest > 0 ? (toNumberOrNull(f.areaSqm) ?? 0) / largest : 0,
       rotation: f.portraitRotation,
       rooms: f.rooms
@@ -713,7 +741,7 @@ function PreviewTab({
         .map((r) => ({
           id: r.key,
           name: Object.values(r.names).find((n) => (n ?? "").trim() !== "") ?? "",
-          areaLabel: r.areaSqm.trim() === "" ? null : r.areaSqm,
+          areaLabel: areaOf(r.areaSqm),
           x: r.xPercent,
           y: r.yPercent,
           photoUrl: r.photoUrl,
@@ -747,18 +775,86 @@ function PreviewTab({
         implementation would drift from it, and the drift would surface as
         "it looked right in the admin".
       */}
-      <div
-        className="overflow-hidden rounded-xs border border-primary/15"
-        style={width === "mobile" ? { maxWidth: 380 } : undefined}
-      >
-        <UnitTypesElevator
-          projectName={projectName}
-          types={[elevatorType]}
-          labels={labels.elevator}
-          variant="preview"
-        />
-      </div>
+      {width === "mobile" ? (
+        <div className="overflow-hidden rounded-xs border border-primary/15" style={{ maxWidth: 380 }}>
+          <UnitTypesElevator
+            projectName={projectName}
+            types={[elevatorType]}
+            labels={labels.elevator}
+            variant="preview"
+          />
+        </div>
+      ) : (
+        <DesktopFrame>
+          <UnitTypesElevator
+            projectName={projectName}
+            types={[elevatorType]}
+            labels={labels.elevator}
+            variant="preview"
+          />
+        </DesktopFrame>
+      )}
     </section>
+  );
+}
+
+/** The width the desktop preview is laid out at before it is scaled down. */
+const DESKTOP_WIDTH = 1280;
+
+/*
+  Lays its child out at a real desktop width and scales the result down to
+  fit the pane.
+
+  Handing the component the pane's own width did not preview the desktop
+  page. The pane sits beside the 260px floor list inside the admin shell,
+  so at a 1440px screen it is about 840px wide. The board's layout switch is
+  a container query at 1000px, so it stacked and turned the plan upright:
+  the "Desktop" button showed the phone layout. On wider screens it stayed
+  landscape, but the room labels, which are sized in px, piled onto a plan
+  drawn at half size. A transform scales the labels with the plan, and it
+  leaves layout width alone, so the container query and the elevator's
+  ResizeObserver both still see DESKTOP_WIDTH.
+*/
+function DesktopFrame({ children }: { children: React.ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ scale: 1, height: 0 });
+
+  useEffect(() => {
+    const o = outer.current;
+    const i = inner.current;
+    if (!o || !i) return;
+    const measure = () => {
+      const scale = Math.min(1, o.clientWidth / DESKTOP_WIDTH);
+      setBox({ scale, height: i.offsetHeight * scale });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(o);
+    observer.observe(i);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={outer}
+      className="relative overflow-hidden rounded-xs border border-primary/15"
+      style={{ height: box.height || undefined }}
+    >
+      {/* Absolute, so its 1280px never becomes the grid column's min-content
+          width and pushes the pane wider than the screen. */}
+      <div
+        ref={inner}
+        className="absolute left-0 top-0"
+        style={{
+          width: DESKTOP_WIDTH,
+          transform: `scale(${box.scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -821,6 +917,7 @@ function FloorsTab({
         shortLabel: "",
         areaSqm: "",
         imageUrl: "",
+        blueprintImageUrl: null,
         furnishedImageUrl: null,
         aspect: 2.8,
         portraitRotation: "CW",
@@ -1085,7 +1182,19 @@ function FloorsTab({
                 defaultValue={floor.imageUrl}
                 label={labels.lineUpload}
                 hint={labels.lineUploadHint}
-                onChange={(value) => onPatchFloor(floor.key, { imageUrl: value })}
+                // A new drawing makes the saved blueprint stale; the save derives a
+                // fresh one, and the preview draws its own until then. Only when
+                // the URL really changed: ImageUploader re-fires onChange with
+                // the same value on every render (see isNoop), and clearing the
+                // blueprint then marked every floor dirty on load.
+                onChange={(value) =>
+                  onPatchFloor(
+                    floor.key,
+                    value === floor.imageUrl
+                      ? { imageUrl: value }
+                      : { imageUrl: value, blueprintImageUrl: null },
+                  )
+                }
               />
               <ImageUploader
                 name={`furnished-${floor.key}`}

@@ -33,7 +33,19 @@ import type { ElevatorLabels, ElevatorRoom, ElevatorType } from "./types";
 
 /** Matches the CSS transition on the car. */
 const TRAVEL_MS = 900;
-/** Below this the board stacks and the plans stand up — see FloorCar. */
+/**
+ * Below this *container* width the board stacks and the plans stand up —
+ * see FloorCar. It must be the same number as the `@min-[1000px]:` variants
+ * in this folder, and both are measured on the same element (`host` below).
+ *
+ * It used to be `window.innerWidth < 1000` in JS against Tailwind's `lg:`
+ * (1024px, viewport) in CSS. Between 1000 and 1023px the script said
+ * "landscape" while the stylesheet had already stacked the board, so the
+ * shaft got neither its portrait aspect-ratio nor its landscape min-height
+ * and collapsed to a strip with every room label piled on top of each other.
+ * Measuring the component's own box also makes the admin preview's
+ * 380px "mobile" frame turn portrait, which a viewport query never could.
+ */
 const PORTRAIT_MAX = 1000;
 
 type Props = {
@@ -77,11 +89,22 @@ export default function UnitTypesElevator({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
+  const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const check = () => setPortrait(window.innerWidth < PORTRAIT_MAX);
+    const element = host.current;
+    if (!element) return;
+    // Content box, to match what the container query measures
+    // (container-luxe has side padding).
+    const check = () => {
+      const style = getComputedStyle(element);
+      const inner =
+        element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setPortrait(inner < PORTRAIT_MAX);
+    };
     check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    const observer = new ResizeObserver(check);
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   /** Rooms with a photo, in schedule order — what ‹ › steps through. */
@@ -179,7 +202,7 @@ export default function UnitTypesElevator({
       id="unit-types"
       className="scroll-mt-24 bg-[#041d2c] py-16 text-white sm:py-24"
     >
-      <div className="container-luxe">
+      <div ref={host} className="container-luxe @container">
         <p className="eyebrow text-accent">{labels.eyebrow}</p>
         <h2 className="mt-3 text-3xl font-light text-white sm:text-4xl">{type.title}</h2>
         <p className="mt-2.5 text-sm text-white/60">{type.subtitle}</p>
@@ -210,7 +233,7 @@ export default function UnitTypesElevator({
 
         {/* ── The board ───────────────────────────────────────────── */}
         <div
-          className="relative mt-9 grid grid-cols-1 border border-[#c3d3dd]/20 lg:grid-cols-[92px_1fr_300px]"
+          className="relative mt-9 grid grid-cols-1 border border-[#c3d3dd]/20 @min-[1000px]:grid-cols-[92px_1fr_300px]"
           style={{
             /* Two grids, not one: the 40px major lines read as a drawing
                board, and the 8px minor ones are what make it read as
@@ -234,7 +257,7 @@ export default function UnitTypesElevator({
           {/* The shaft. In portrait it is a tall box centred in its column —
               it was flush left at around 920px before the margin. */}
           <div
-            className="relative mx-auto w-full overflow-hidden p-5 lg:min-h-[clamp(420px,38vw,560px)] lg:p-[34px]"
+            className="relative mx-auto w-full overflow-hidden p-5 @min-[1000px]:min-h-[clamp(420px,38vw,560px)] @min-[1000px]:p-[34px]"
             style={
               portrait
                 ? {
@@ -270,7 +293,10 @@ export default function UnitTypesElevator({
           </div>
 
           {/* ── Title block ───────────────────────────────────────── */}
-          <div className="border-t border-[#c3d3dd]/15 font-mono lg:border-l lg:border-t-0">
+          {/* Mono for the keys and the schedule, Roboto for the values — the
+              mockup's .tb .v. With the values in mono too, "Ground Floor"
+              and 178.09 read as code rather than as a drawing's title block. */}
+          <div className="border-t border-[#c3d3dd]/15 font-mono @min-[1000px]:border-l @min-[1000px]:border-t-0">
             <Row label={labels.project} value={projectName} />
 
             <div className="grid grid-cols-3">
@@ -283,7 +309,7 @@ export default function UnitTypesElevator({
 
             <div className="border-b border-[#c3d3dd]/15 px-4.5 py-3.5">
               <Key>{labels.areaThisFloor}</Key>
-              <div className="mt-1.5 text-4xl font-extralight leading-none text-white">
+              <div className="mt-1.5 font-sans text-4xl font-extralight leading-none text-white">
                 {floor.areaLabel ?? "—"}
                 {floor.areaLabel && (
                   <small className="ml-1 text-xs text-white/55">{labels.sqm}</small>
@@ -317,7 +343,7 @@ export default function UnitTypesElevator({
                   <div className="mt-3.5">
                     <Key>{labels.total}</Key>
                   </div>
-                  <div className="mt-1.5 text-[15px] text-white">
+                  <div className="mt-1.5 font-sans text-[15px] text-white">
                     {type.totalAreaLabel} {labels.sqm}
                   </div>
                 </>
@@ -378,7 +404,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-b border-[#c3d3dd]/15 px-4.5 py-3.5">
       <Key>{label}</Key>
-      <div className="mt-1.5 text-[15px] text-white">{value}</div>
+      <div className="mt-1.5 font-sans text-[15px] text-white">{value}</div>
     </div>
   );
 }
@@ -391,7 +417,7 @@ function Cell({ label, value, bordered }: { label: string; value: string; border
       }`}
     >
       <Key>{label}</Key>
-      <div className="mt-1.5 text-[15px] text-white">{value}</div>
+      <div className="mt-1.5 font-sans text-[15px] text-white">{value}</div>
     </div>
   );
 }

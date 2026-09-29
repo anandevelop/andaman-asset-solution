@@ -35,9 +35,11 @@ import "server-only";
 import sharp, { type Sharp } from "sharp";
 import { objectKeyFromUrl, putS3Object, isS3Configured } from "@/lib/s3";
 import { reportError } from "@/lib/sentry";
+import { BLUEPRINT_ALPHA_GAIN, BLUEPRINT_STROKE } from "@/lib/blueprint-pixels";
 
-/** Flat colour every stroke is redrawn in — pale blue, for navy paper. */
-const STROKE = { r: 215, g: 229, b: 238 } as const;
+/** Flat colour every stroke is redrawn in — pale blue, for navy paper.
+ *  Shared with the admin preview's canvas copy of this transform. */
+const STROKE = BLUEPRINT_STROKE;
 
 /**
  * Contrast applied to the inverted luminance.
@@ -46,7 +48,7 @@ const STROKE = { r: 215, g: 229, b: 238 } as const;
  * interior walls washed out against the navy, and above ~2.5 the paper's
  * own scanning noise started to show as a haze.
  */
-const ALPHA_GAIN = 2.1;
+const ALPHA_GAIN = BLUEPRINT_ALPHA_GAIN;
 
 /** Anything this far apart in aspect ratio puts the room pins visibly off. */
 export const ASPECT_TOLERANCE = 0.02;

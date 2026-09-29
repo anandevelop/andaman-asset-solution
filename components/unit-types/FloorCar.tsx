@@ -61,16 +61,17 @@ export default function FloorCar({
 
   return (
     <div
-      className="absolute inset-5 transition-transform duration-[900ms] ease-[cubic-bezier(.65,0,.35,1)] motion-reduce:transition-none lg:inset-[34px]"
+      className="absolute inset-5 transition-transform duration-[900ms] ease-[cubic-bezier(.65,0,.35,1)] motion-reduce:transition-none @min-[1000px]:inset-[34px]"
       style={{ transform: translate }}
       aria-hidden={offset !== "current"}
     >
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
-          // In portrait the turned drawing is as tall as it was wide, so the
-          // box is the reciprocal and capped by the shaft's own height.
-          width: portrait ? `min(100%, ${100 / floor.aspect}%)` : "100%",
+          // In portrait the shaft itself is already 1 : aspect (see
+          // UnitTypesElevator), so the box fills it. Shrinking it again by
+          // 1/aspect here drew the plan at a third of the shaft's width.
+          width: "100%",
           aspectRatio: portrait ? `1 / ${floor.aspect}` : `${floor.aspect}`,
         }}
       >
