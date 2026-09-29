@@ -87,7 +87,6 @@ export type ElevatorLabels = {
   total: string;
   roomSchedule: string;
   sqm: string;
-  notToScale: string;
   showHomePhoto: string;
   previousRoom: string;
   nextRoom: string;

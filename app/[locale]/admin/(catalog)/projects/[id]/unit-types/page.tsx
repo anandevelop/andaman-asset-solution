@@ -272,7 +272,6 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       total: up("total"),
       roomSchedule: up("roomSchedule"),
       sqm: up("sqm"),
-      notToScale: up("notToScale"),
       showHomePhoto: up("showHomePhoto"),
       previousRoom: up("previousRoom"),
       nextRoom: up("nextRoom"),

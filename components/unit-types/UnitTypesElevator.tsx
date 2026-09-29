@@ -368,10 +368,6 @@ export default function UnitTypesElevator({
                 </div>
               )}
             </div>
-
-            <div className="px-4.5 py-3.5 font-mono text-[10px] tracking-[0.1em] text-[#c3d3dd]/50">
-              {labels.notToScale}
-            </div>
           </div>
         </div>
       </div>

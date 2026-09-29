@@ -838,7 +838,6 @@ export default async function ProjectPage(props: Props) {
             total: ut("total"),
             roomSchedule: ut("roomSchedule"),
             sqm: ut("sqm"),
-            notToScale: ut("notToScale"),
             showHomePhoto: ut("showHomePhoto"),
             previousRoom: ut("previousRoom"),
             nextRoom: ut("nextRoom"),
