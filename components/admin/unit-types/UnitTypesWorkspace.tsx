@@ -239,7 +239,11 @@ export default function UnitTypesWorkspace({
     the admin happened to be looking at — silently dropping the copy.
   */
   const [dirtyTypes, setDirtyTypes] = useState<string[]>([]);
-  const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
+  const [result, setResult] = useState<{
+    ok: boolean;
+    message?: string;
+    fields?: Record<string, string>;
+  } | null>(null);
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
   /*
     The dragged order, held locally so the list reorders under the pointer
@@ -407,7 +411,8 @@ export default function UnitTypesWorkspace({
         together buys nothing and makes a partial failure harder to report.
       */
       const stillDirty: string[] = [];
-      let failure: { ok: boolean; message?: string } | null = null;
+      let failure: { ok: boolean; message?: string; fields?: Record<string, string> } | null =
+        null;
 
       for (const id of dirtyTypes) {
         const rows = floorsByType[id] ?? [];
@@ -444,6 +449,12 @@ export default function UnitTypesWorkspace({
         <SaveToast tone={result.ok ? "success" : "error"} token={result}>
           {result.ok ? <Check size={15} aria-hidden /> : <AlertTriangle size={15} aria-hidden />}
           {result.ok ? labels.saved : labels.saveFailed}
+          {/* Which field, when the server said. A refused room name and a
+              database failure used to read identically: "Something went
+              wrong", with the reason thrown away on the way to the toast. */}
+          {!result.ok && result.fields && Object.values(result.fields)[0] && (
+            <span className="ml-1">({Object.values(result.fields)[0]})</span>
+          )}
         </SaveToast>
       )}
 

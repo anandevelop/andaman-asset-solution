@@ -31,6 +31,7 @@ import { requireAdminAction } from "@/lib/admin/guard";
 import { unitTypeSchema, floorPlanRowSchema, fieldErrors } from "@/lib/validations";
 import { unitTypeFloorsSchema, type UnitTypeFloorsInput } from "@/lib/validations";
 import { deriveBlueprint } from "@/lib/floor-plan-images";
+import { reportError } from "@/lib/sentry";
 
 export type UnitTypeFormState = {
   ok: boolean;
@@ -324,6 +325,10 @@ export async function saveUnitTypeFloors(
         derived.set(index, await deriveBlueprint(floor.imageUrl));
       } catch (error) {
         console.error("[saveUnitTypeFloors] blueprint failed", floor.imageUrl, error);
+        reportError(error, {
+          tags: { scope: "saveUnitTypeFloors.blueprint" },
+          extra: { unitTypeId, imageUrl: floor.imageUrl },
+        });
       }
     }),
   );
@@ -408,7 +413,17 @@ export async function saveUnitTypeFloors(
       });
     });
   } catch (error) {
+    /*
+      To Sentry as well as the log. A failed save reaches the admin as one
+      generic line, and the only copy of the reason used to be the VPS's
+      container log — which is how a deployed save that failed on a changed
+      floor plan could not be diagnosed from anywhere else.
+    */
     console.error("[saveUnitTypeFloors] failed", error);
+    reportError(error, {
+      tags: { scope: "saveUnitTypeFloors" },
+      extra: { unitTypeId, floors: parsed.data.floors.length },
+    });
     return { ok: false, message: "SAVE_FAILED" };
   }
 
