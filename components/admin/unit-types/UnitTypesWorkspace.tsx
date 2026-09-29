@@ -124,6 +124,8 @@ export type WorkspaceLabels = {
   saved: string;
   saveFailed: string;
   complete: string;
+  noFloorsBadge: string;
+  noFloors: string;
   issues: string;
   desktop: string;
   mobile: string;
@@ -183,6 +185,23 @@ type Props = {
  */
 function isNoop<T>(row: T, patch: Partial<T>): boolean {
   return Object.entries(patch).every(([field, value]) => row[field as keyof T] === value);
+}
+
+/** A new, empty floor at the end of the draft. */
+function blankFloor(): DraftFloor {
+  return {
+    key: nextKey("floor"),
+    id: null,
+    floorName: "",
+    shortLabel: "",
+    areaSqm: "",
+    imageUrl: "",
+    blueprintImageUrl: null,
+    furnishedImageUrl: null,
+    aspect: 2.8,
+    portraitRotation: "CW",
+    rooms: [],
+  };
 }
 
 /**
@@ -521,14 +540,22 @@ export default function UnitTypesWorkspace({
                   >
                     <span className="flex items-center justify-between gap-2">
                       <span className="font-medium text-primary">{candidate.name}</span>
+                      {/* No floors is not "Ready": there is nothing to check,
+                          and nothing on the public page either. */}
                       <span
                         className={`rounded-xs px-1.5 py-0.5 text-[11px] font-medium ${
-                          issues === 0
-                            ? "bg-emerald-50 text-emerald-800"
-                            : "bg-amber-50 text-amber-900"
+                          candidateFloors.length === 0
+                            ? "bg-primary/5 text-ink-muted"
+                            : issues === 0
+                              ? "bg-emerald-50 text-emerald-800"
+                              : "bg-amber-50 text-amber-900"
                         }`}
                       >
-                        {issues === 0 ? labels.complete : `${issues} ${labels.issues}`}
+                        {candidateFloors.length === 0
+                          ? labels.noFloorsBadge
+                          : issues === 0
+                            ? labels.complete
+                            : `${issues} ${labels.issues}`}
                       </span>
                     </span>
                     <span className="mt-0.5 block text-xs text-ink-muted">
@@ -569,6 +596,33 @@ export default function UnitTypesWorkspace({
               forms={detailForms}
               activeId={type.id}
             />
+          )}
+
+          {/*
+            A type with no floors yet. FloorsTab is built around a selected
+            floor and holds the only "Add floor" button, so it cannot render
+            here — and with nothing in its place, a new type (all of The
+            Victory's, on the deployed site) showed an empty tab with no way
+            to add its first floor.
+          */}
+          {tab === "floors" && !floor && (
+            <div className="admin-card space-y-3 text-sm">
+              <p className="text-ink-muted">{labels.noFloors}</p>
+              {canWrite && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const first = blankFloor();
+                    mutate((current) => [...current, first]);
+                    setFloorKey(first.key);
+                  }}
+                  className="admin-btn-ghost"
+                >
+                  <Plus size={14} aria-hidden />
+                  {labels.addFloor}
+                </button>
+              )}
+            </div>
           )}
 
           {tab === "floors" && floor && (
@@ -761,6 +815,12 @@ function PreviewTab({
     })),
   };
 
+  // The elevator reads floors[0] unconditionally; the public page never
+  // hands it a type without floors, and neither may the preview.
+  if (floors.length === 0) {
+    return <p className="admin-card text-sm text-ink-muted">{labels.noFloors}</p>;
+  }
+
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
@@ -919,23 +979,7 @@ function FloorsTab({
   const floorHealth = health.floors[index];
   const [copyTarget, setCopyTarget] = useState("");
 
-  const addFloor = () =>
-    onMutate((current) => [
-      ...current,
-      {
-        key: nextKey("floor"),
-        id: null,
-        floorName: "",
-        shortLabel: "",
-        areaSqm: "",
-        imageUrl: "",
-        blueprintImageUrl: null,
-        furnishedImageUrl: null,
-        aspect: 2.8,
-        portraitRotation: "CW",
-        rooms: [],
-      },
-    ]);
+  const addFloor = () => onMutate((current) => [...current, blankFloor()]);
 
   const moveFloor = (delta: number) =>
     onMutate((current) => {
@@ -1066,6 +1110,10 @@ function FloorsTab({
                 onCopyFloor(copyTarget, detachFloor(floor));
                 setCopyTarget("");
               }}
+              // Icon-only, so it needs a name of its own. Nothing flagged it
+              // until a fixture project had a second type to copy to.
+              aria-label={labels.copyFloor}
+              title={labels.copyFloor}
               className="admin-btn-ghost disabled:opacity-40"
             >
               <Copy size={14} aria-hidden />

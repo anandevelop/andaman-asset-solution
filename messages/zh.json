@@ -2157,6 +2157,8 @@
         "unsaved": "Unsaved changes",
         "discard": "Discard changes",
         "complete": "Ready",
+        "noFloorsBadge": "暂无楼层",
+        "noFloors": "该户型还没有楼层。先添加第一层，再上传线稿平面图并标注房间。",
         "issues": "to fix",
         "desktop": "Desktop",
         "mobile": "Mobile",

@@ -166,6 +166,28 @@ test.describe("the workspace", () => {
     await expect(floorName).toHaveValue("Ground Floor");
   });
 
+  test("adds the first floor to a type that has none", async ({ page }) => {
+    await page.goto("/en/login");
+    await page.goto("/en/login");
+    await signIn(page);
+
+    const projectId = await firstProjectId(page);
+    await page.goto(`/en/admin/projects/${projectId}/unit-types`);
+
+    const workspace = page.locator("[data-unit-types-workspace]");
+    const typeZ = workspace.getByRole("button", { name: /Type Z/ });
+
+    // Not "Ready": a type with nothing on it has nothing to be ready.
+    await expect(typeZ).toContainText("No floors");
+    await typeZ.click();
+
+    await expect(workspace.getByText(/has no floors yet/)).toBeVisible();
+    await workspace.getByRole("button", { name: "Add floor" }).click();
+
+    await expect(workspace.getByLabel(/Floor name/i).first()).toBeVisible();
+    await expect(page.getByText(/Unsaved changes/i)).toBeVisible();
+  });
+
   /*
     The desktop preview has to be the desktop board. The pane beside the
     floor list is ~840px at a 1440px screen, under the board's 1000px

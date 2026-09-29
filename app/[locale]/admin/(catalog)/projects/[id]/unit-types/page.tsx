@@ -234,6 +234,8 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     saved: t("common.saved"),
     saveFailed: t("common.error"),
     complete: uw("complete"),
+    noFloorsBadge: uw("noFloorsBadge"),
+    noFloors: uw("noFloors"),
     issues: uw("issues"),
     desktop: uw("desktop"),
     mobile: uw("mobile"),

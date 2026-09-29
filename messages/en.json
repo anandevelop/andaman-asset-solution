@@ -2157,6 +2157,8 @@
         "unsaved": "Unsaved changes",
         "discard": "Discard changes",
         "complete": "Ready",
+        "noFloorsBadge": "No floors",
+        "noFloors": "This type has no floors yet. Add the first one, then upload its line drawing and place the rooms.",
         "issues": "to fix",
         "desktop": "Desktop",
         "mobile": "Mobile",

@@ -2157,6 +2157,8 @@
         "unsaved": "Unsaved changes",
         "discard": "Discard changes",
         "complete": "Ready",
+        "noFloorsBadge": "Нет этажей",
+        "noFloors": "У этого типа пока нет этажей. Добавьте первый, затем загрузите поэтажный план и отметьте комнаты.",
         "issues": "to fix",
         "desktop": "Desktop",
         "mobile": "Mobile",

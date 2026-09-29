@@ -188,6 +188,15 @@ async function seed(prisma: PrismaClient) {
         },
       },
     });
+
+    /*
+      And one with no floors at all — a type just created on the specs tab,
+      which is what every one of The Victory's types was on the deployed
+      site when the workspace offered them no way to add a first floor.
+    */
+    await prisma.projectUnitType.create({
+      data: { projectId: firstProject.id, name: "Type Z", code: "Z", sortOrder: 1 },
+    });
   }
 
   /*
