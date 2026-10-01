@@ -55,29 +55,36 @@ const REPORT_QUERIES = [
   "getPageViewTrend",
 ] as const;
 
+/**
+ * Reports the dashboard may quote as one headline number on a KPI card.
+ *
+ * Not a report drawn twice: a single figure that links to the chart, read
+ * through the very function the chart uses, so the two screens cannot
+ * disagree about it. The v4 dashboard's page-view and consent cards are
+ * exactly this, and a card that queried the same table its own way would
+ * be the drift this file exists to prevent.
+ */
+const HEADLINE_QUERIES = ["getPageViewTrend", "getCookieConsentStats"] as const;
+
 describe("the dashboard", () => {
   it("draws no report of its own", () => {
-    const drawn = REPORT_QUERIES.filter((query) => dashboard.includes(query));
+    const drawn = REPORT_QUERIES.filter(
+      (query) => dashboard.includes(query) && !(HEADLINE_QUERIES as readonly string[]).includes(query),
+    );
 
     expect(drawn, "these belong on /admin/analytics, not the dashboard").toEqual([]);
   });
 
-  it("keeps the work queue and this month's figures", () => {
+  it("keeps the work queue", () => {
     // What the page is *for*, as opposed to what it stopped being. A
     // dashboard trimmed all the way to a greeting would pass the check
     // above and be useless.
-    for (const query of [
-      "getUnassignedLeadQueue",
-      "getOverdueResponseQueue",
-      "getTodayAppointmentQueue",
-      "getReviewQueueBreakdown",
-      "getMonthSummary",
-    ]) {
+    for (const query of ["getUnassignedLeads", "getOverdueAppointments", "getTodayEvents", "WorkInbox"]) {
       expect(dashboard, query).toContain(query);
     }
   });
 
-  it("gates the link to the full reports on the nav item's own rule", () => {
+  it("gates what it links to on the nav item's own rule", () => {
     /* A role list written out beside the link is how the "Mobile view"
        defect happened — see lib/admin/nav.ts's header. canSeeItem() asks
        the real item, so the link and the destination cannot drift. */

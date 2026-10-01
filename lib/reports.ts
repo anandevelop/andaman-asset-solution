@@ -289,7 +289,7 @@ export const FUNNEL_STAGES: LeadStatus[] = PIPELINE_ORDER.filter(
 /**
  * Candidates for the "bottleneck" flag — stages a lead is actively being
  * worked in. NEW is excluded: a lead that just arrived is not stuck, it is
- * new (see getOverdueResponseQueue() for that concern instead). WON/LOST
+ * new (RESPONSE_SLA_HOURS in lib/dashboard-queue.ts is that concern). WON/LOST
  * are terminal, not a stage to get stuck in.
  */
 const BOTTLENECK_CANDIDATES: LeadStatus[] = [

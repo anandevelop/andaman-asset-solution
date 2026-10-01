@@ -39,6 +39,7 @@ import AuthProvider from "@/components/admin/AuthProvider";
 import AdminSidebar, { type AdminEnvironment } from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import CommandK from "@/components/admin/CommandK";
+import { UndoToaster } from "@/components/admin/UndoToast";
 
 export const metadata: Metadata = {
   title: "Back office",
@@ -129,6 +130,7 @@ export default async function AdminLayout(props: Props) {
   return (
     <AuthProvider>
       <CommandK locale={locale} role={user.role} />
+      <UndoToaster />
       {/* data-admin-root switches on the back office's denser type and
           spacing scale — see "Back-office density" in globals.css. */}
       <div data-admin-root className="min-h-screen bg-surface text-sm text-ink lg:flex">

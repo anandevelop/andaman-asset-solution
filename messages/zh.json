@@ -723,54 +723,107 @@
     },
     "dashboard": {
       "title": "仪表盘",
-      "recentLeads": "最新咨询",
       "viewAll": "查看全部",
       "greetingMorning": "早上好，{name}",
       "greetingAfternoon": "下午好，{name}",
       "greetingEvening": "晚上好，{name}",
-      "overdueSubtitle": "有 {count} 条销售线索超出标准回复时间——建议先处理这些。",
-      "overdueSubtitleNone": "今天没有超时未回复的销售线索——一切正常。",
-      "monthSummary": {
-        "title": "本月概况",
-        "newLeads": "新客户线索",
-        "appointments": "看房预约",
-        "booked": "成交",
-        "viewFullReports": "查看完整报告"
-      },
       "rangeLabel": "时间范围",
       "range7": "最近7天",
       "range30": "最近30天",
       "range90": "最近90天",
       "range365": "最近365天",
       "exportReport": "导出报告",
-      "workQueue": {
-        "title": "今日待办队列",
-        "unassigned": {
-          "label": "尚未分配的新销售线索",
-          "oldest": "最早：{hours} 小时前",
-          "none": "没有待分配的线索"
-        },
-        "overdue": {
-          "label": "回复超时（{hours} 小时）",
-          "hint": "今天必须联系",
-          "none": "没有超时未回复的线索"
-        },
-        "appointments": {
-          "label": "今日看房预约",
-          "none": "今天没有预约看房",
-          "more": "还有 {count} 项"
-        },
-        "review": {
-          "label": "发布前待审核",
-          "none": "没有待审核的内容"
-        }
-      },
       "inventory": {
         "title": "各项目房源库存",
         "sold": "已售",
         "reserved": "已预订",
         "available": "可售",
         "freeOfTotal": "可售 {free} / {total}"
+      },
+      "brief": {
+        "chip": "今日摘要",
+        "waiting": "待处理：{list}",
+        "allClear": "没有待办事项，可以开始今天的工作了。",
+        "parts": {
+          "leads": "{count} 条未分配的新线索",
+          "overdue": "{count} 个已过时未结的预约",
+          "events": "今日 {count} 场活动"
+        },
+        "tiles": {
+          "leads": "新线索（未分配）",
+          "leadsNone": "没有等待中的线索",
+          "leadsOldest": "最久已等 {hours} 小时",
+          "overdue": "已过时未结的预约",
+          "overdueHint": "标记为已看房或未到",
+          "overdueNone": "已全部结案",
+          "events": "今日活动",
+          "eventsNone": "今天没有活动",
+          "eventsOpen": "{title} · 已报名 {taken} 人",
+          "eventsSeats": "{title} · {taken} / {capacity} 个座位"
+        }
+      },
+      "kpi": {
+        "title": "关键数据",
+        "openLeads": "进行中的线索",
+        "openLeadsHint": "{days} 天内新增 {count} 条",
+        "units": "可售单元",
+        "unitsHint": "已预订 {reserved} · 已售 {sold}",
+        "pageViews": "页面浏览量",
+        "pageViewsHint": "最近 {days} 天",
+        "consent": "分析 Cookie 同意率",
+        "consentHint": "基于 {total} 次选择",
+        "consentNone": "暂无数据"
+      },
+      "inbox": {
+        "title": "待办事项",
+        "filter": "按类型筛选",
+        "kinds": {
+          "all": "全部",
+          "lead": "线索",
+          "appointment": "预约",
+          "content": "内容"
+        },
+        "empty": "此类别没有待办",
+        "failed": "操作未成功，可能已被他人处理",
+        "done": {
+          "claimed": "已接手 {name}",
+          "visited": "已将 {name} 标记为已看房",
+          "noShow": "已将 {name} 标记为未到"
+        },
+        "actions": {
+          "claim": "我来处理",
+          "visited": "已看房",
+          "noShow": "未到",
+          "edit": "编辑"
+        },
+        "age": {
+          "minute": "{value} 分钟",
+          "hour": "{value} 小时",
+          "day": "{value} 天"
+        },
+        "noCustomer": "未关联客户的预约",
+        "appointmentDue": "预约于 {when}",
+        "missingThai": "尚无泰语内容"
+      },
+      "funnel": {
+        "title": "客户漏斗"
+      },
+      "stock": {
+        "title": "各项目单元库存",
+        "empty": "尚无项目录入单元"
+      },
+      "live": {
+        "title": "当前访客",
+        "people": "人正在浏览网站",
+        "empty": "目前没有访客"
+      },
+      "keywords": {
+        "title": "跟踪的关键词",
+        "empty": "尚无已检查排名的关键词"
+      },
+      "activity": {
+        "title": "最近更改",
+        "empty": "暂无更改"
       }
     },
     "leads": {
@@ -3536,6 +3589,17 @@
         "imagery": "图片与视频",
         "publication": "发布"
       }
+    },
+    "projectStatus": {
+      "UPCOMING": "即将推出",
+      "UNDER_CONSTRUCTION": "在建中",
+      "READY_TO_MOVE_IN": "现房",
+      "SOLD_OUT": "已售罄"
+    },
+    "toast": {
+      "undo": "撤销",
+      "undone": "已撤销",
+      "undoFailed": "撤销失败"
     }
   },
   "legalPage": {

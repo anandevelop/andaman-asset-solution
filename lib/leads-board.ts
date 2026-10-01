@@ -218,7 +218,7 @@ export async function getLeadBoardData(
     ),
     // "Overdue" is specifically the response-SLA breach — NEW leads sitting
     // past RESPONSE_SLA_HOURS — matching the toggle chip's own count and
-    // the dashboard's identical definition (getOverdueResponseQueue).
+    // the dashboard's age badges, which use the same constant.
     safeQuery(
       "leadsBoard:overdueCount",
       () =>

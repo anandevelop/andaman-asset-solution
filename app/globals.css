@@ -91,6 +91,7 @@
   --color-adm-fill: var(--adm-fill);
   --color-adm-on-fill: var(--adm-on-fill);
   --color-adm-band: var(--adm-band);
+  --color-adm-band-2: var(--adm-band-2);
   --color-adm-info: var(--adm-info);
 
   --color-adm-success: var(--adm-success);
@@ -746,6 +747,8 @@
   --adm-fill: #e8b384;
   --adm-on-fill: #0d2635;
   --adm-band: #083551;
+  /* The far end of the band's gradient (the daily brief). */
+  --adm-band-2: #123a50;
   --adm-info: #296682;
 
   --adm-success: #17663f;
@@ -855,6 +858,20 @@
   }
 }
 
+/* UndoToast: rises in, and its bottom line empties over the undo window. */
+@keyframes toast-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [role="dialog"][aria-modal="true"] {
     animation: none !important;
@@ -900,6 +917,7 @@
   --adm-muted: #9db0bd;
   --adm-accent-ink: #e8b384;
   --adm-band: #041d2c;
+  --adm-band-2: #0a3a58;
   --adm-info: #8fb5cc;
 
   --adm-success: #5fc79a;

@@ -723,54 +723,107 @@
     },
     "dashboard": {
       "title": "Dashboard",
-      "recentLeads": "Latest enquiries",
       "viewAll": "View all",
       "greetingMorning": "Good morning, {name}",
       "greetingAfternoon": "Good afternoon, {name}",
       "greetingEvening": "Good evening, {name}",
-      "overdueSubtitle": "{count} leads have passed the standard response time — start there.",
-      "overdueSubtitleNone": "No leads have passed the response-time SLA today — you're all caught up.",
-      "monthSummary": {
-        "title": "This month",
-        "newLeads": "New leads",
-        "appointments": "Site visits",
-        "booked": "Closed",
-        "viewFullReports": "See the full reports"
-      },
       "rangeLabel": "Date range",
       "range7": "Last 7 days",
       "range30": "Last 30 days",
       "range90": "Last 90 days",
       "range365": "Last 365 days",
       "exportReport": "Export report",
-      "workQueue": {
-        "title": "Today's work queue",
-        "unassigned": {
-          "label": "New leads with no owner",
-          "oldest": "Oldest: {hours}h ago",
-          "none": "Nothing waiting to be assigned"
-        },
-        "overdue": {
-          "label": "Overdue response ({hours}h)",
-          "hint": "Must be contacted today",
-          "none": "No leads are overdue"
-        },
-        "appointments": {
-          "label": "Site visits today",
-          "none": "No visits scheduled today",
-          "more": "and {count} more"
-        },
-        "review": {
-          "label": "Awaiting review before publish",
-          "none": "Nothing awaiting review"
-        }
-      },
       "inventory": {
         "title": "Unit stock by project",
         "sold": "Sold",
         "reserved": "Reserved",
         "available": "Available",
         "freeOfTotal": "{free} free / {total}"
+      },
+      "brief": {
+        "chip": "Today's summary",
+        "waiting": "Waiting on you: {list}",
+        "allClear": "Nothing is waiting — you're clear to start the day.",
+        "parts": {
+          "leads": "{count, plural, one {# unassigned lead} other {# unassigned leads}}",
+          "overdue": "{count, plural, one {# viewing not yet closed} other {# viewings not yet closed}}",
+          "events": "{count, plural, one {# event today} other {# events today}}"
+        },
+        "tiles": {
+          "leads": "New leads, unassigned",
+          "leadsNone": "No lead is waiting",
+          "leadsOldest": "Oldest waiting {hours} h",
+          "overdue": "Viewings past due, not closed",
+          "overdueHint": "Mark them visited or no-show",
+          "overdueNone": "All closed",
+          "events": "Events today",
+          "eventsNone": "No event today",
+          "eventsOpen": "{title} · {taken} registered",
+          "eventsSeats": "{title} · {taken} / {capacity} seats"
+        }
+      },
+      "kpi": {
+        "title": "Key numbers",
+        "openLeads": "Open leads",
+        "openLeadsHint": "{count} new in {days} days",
+        "units": "Available units",
+        "unitsHint": "{reserved} reserved · {sold} sold",
+        "pageViews": "Page views",
+        "pageViewsHint": "Last {days} days",
+        "consent": "Analytics cookie consent",
+        "consentHint": "From {total} decisions",
+        "consentNone": "No data yet"
+      },
+      "inbox": {
+        "title": "To do",
+        "filter": "Filter by type",
+        "kinds": {
+          "all": "All",
+          "lead": "Leads",
+          "appointment": "Viewings",
+          "content": "Content"
+        },
+        "empty": "Nothing waiting here",
+        "failed": "That didn't go through — someone may have handled it already",
+        "done": {
+          "claimed": "You took {name}",
+          "visited": "Marked {name} as visited",
+          "noShow": "Marked {name} as no-show"
+        },
+        "actions": {
+          "claim": "Take it",
+          "visited": "Visited",
+          "noShow": "No-show",
+          "edit": "Edit"
+        },
+        "age": {
+          "minute": "{value} min",
+          "hour": "{value} h",
+          "day": "{value} d"
+        },
+        "noCustomer": "Viewing with no customer linked",
+        "appointmentDue": "Due {when}",
+        "missingThai": "No Thai yet"
+      },
+      "funnel": {
+        "title": "Customer funnel"
+      },
+      "stock": {
+        "title": "Unit stock by project",
+        "empty": "No project has units entered yet"
+      },
+      "live": {
+        "title": "On the site now",
+        "people": "people on the site",
+        "empty": "Nobody is on the site right now"
+      },
+      "keywords": {
+        "title": "Tracked keywords",
+        "empty": "No keyword has been rank-checked yet"
+      },
+      "activity": {
+        "title": "Recent changes",
+        "empty": "No changes yet"
       }
     },
     "leads": {
@@ -3536,6 +3589,17 @@
         "imagery": "Images & video",
         "publication": "Publishing"
       }
+    },
+    "projectStatus": {
+      "UPCOMING": "Coming soon",
+      "UNDER_CONSTRUCTION": "Under construction",
+      "READY_TO_MOVE_IN": "Ready to move in",
+      "SOLD_OUT": "Sold out"
+    },
+    "toast": {
+      "undo": "Undo",
+      "undone": "Undone",
+      "undoFailed": "Couldn't undo"
     }
   },
   "legalPage": {

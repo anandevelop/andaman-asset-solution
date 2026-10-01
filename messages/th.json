@@ -723,54 +723,107 @@
     },
     "dashboard": {
       "title": "ภาพรวม",
-      "recentLeads": "รายการล่าสุด",
       "viewAll": "ดูทั้งหมด",
       "greetingMorning": "สวัสดีตอนเช้า {name}",
       "greetingAfternoon": "สวัสดีตอนบ่าย {name}",
       "greetingEvening": "สวัสดีตอนเย็น {name}",
-      "overdueSubtitle": "มี {count} ลีดที่เกินเวลาตอบกลับมาตรฐาน — เริ่มจากตรงนั้นก่อนนะครับ",
-      "overdueSubtitleNone": "วันนี้ยังไม่มีลีดที่เกินเวลาตอบกลับ — ทำงานต่อได้ตามปกติ",
-      "monthSummary": {
-        "title": "สรุปเดือนนี้",
-        "newLeads": "ลีดใหม่",
-        "appointments": "นัดชมโครงการ",
-        "booked": "ปิดการขาย",
-        "viewFullReports": "ดูรายงานเต็ม"
-      },
       "rangeLabel": "ช่วงเวลา",
       "range7": "7 วันล่าสุด",
       "range30": "30 วันล่าสุด",
       "range90": "90 วันล่าสุด",
       "range365": "365 วันล่าสุด",
       "exportReport": "ส่งออกรายงาน",
-      "workQueue": {
-        "title": "คิวงานวันนี้",
-        "unassigned": {
-          "label": "ลีดใหม่ที่ยังไม่มีผู้รับผิดชอบ",
-          "oldest": "เก่าสุด {hours} ชม. ที่แล้ว",
-          "none": "ไม่มีลีดที่ค้างมอบหมาย"
-        },
-        "overdue": {
-          "label": "เกินเวลาตอบกลับ {hours} ชม.",
-          "hint": "ต้องติดต่อภายในวันนี้",
-          "none": "ไม่มีลีดที่เกินเวลาตอบกลับ"
-        },
-        "appointments": {
-          "label": "นัดชมโครงการวันนี้",
-          "none": "ไม่มีนัดชมวันนี้",
-          "more": "และอีก {count} รายการ"
-        },
-        "review": {
-          "label": "รอตรวจก่อนเผยแพร่",
-          "none": "ไม่มีเนื้อหารอตรวจ"
-        }
-      },
       "inventory": {
         "title": "สต็อกยูนิตตามโครงการ",
         "sold": "ขาย",
         "reserved": "จอง",
         "available": "ว่าง",
         "freeOfTotal": "ว่าง {free} / {total}"
+      },
+      "brief": {
+        "chip": "สรุปวันนี้",
+        "waiting": "งานที่รออยู่: {list}",
+        "allClear": "ไม่มีงานค้าง เริ่มงานของวันนี้ได้เลย",
+        "parts": {
+          "leads": "ลีดใหม่ที่ยังไม่มีคนดูแล {count} ราย",
+          "overdue": "นัดที่เลยเวลาแต่ยังไม่ปิดสถานะ {count} นัด",
+          "events": "กิจกรรมวันนี้ {count} งาน"
+        },
+        "tiles": {
+          "leads": "ลีดใหม่ ยังไม่มอบหมาย",
+          "leadsNone": "ไม่มีลีดรอคนดูแล",
+          "leadsOldest": "รายที่รอนานสุด {hours} ชม.",
+          "overdue": "นัดเลยเวลา ยังไม่ปิดสถานะ",
+          "overdueHint": "บันทึกว่าเข้าชมแล้วหรือไม่มา",
+          "overdueNone": "ปิดสถานะครบแล้ว",
+          "events": "กิจกรรมวันนี้",
+          "eventsNone": "ไม่มีกิจกรรมวันนี้",
+          "eventsOpen": "{title} · ลงทะเบียน {taken} คน",
+          "eventsSeats": "{title} · {taken} / {capacity} ที่นั่ง"
+        }
+      },
+      "kpi": {
+        "title": "ตัวเลขหลัก",
+        "openLeads": "ลีดที่ยังเปิดอยู่",
+        "openLeadsHint": "เข้ามาใหม่ {count} รายใน {days} วัน",
+        "units": "ยูนิตว่าง",
+        "unitsHint": "จอง {reserved} · ขายแล้ว {sold}",
+        "pageViews": "การเข้าชมหน้าเว็บ",
+        "pageViewsHint": "{days} วันล่าสุด",
+        "consent": "ยินยอมคุกกี้วิเคราะห์",
+        "consentHint": "จากการตัดสินใจ {total} ครั้ง",
+        "consentNone": "ยังไม่มีข้อมูล"
+      },
+      "inbox": {
+        "title": "งานที่ต้องทำ",
+        "filter": "กรองตามประเภท",
+        "kinds": {
+          "all": "ทั้งหมด",
+          "lead": "ลีด",
+          "appointment": "นัด",
+          "content": "เนื้อหา"
+        },
+        "empty": "ไม่มีงานค้างในหมวดนี้",
+        "failed": "ทำรายการไม่สำเร็จ อาจมีคนอื่นจัดการไปแล้ว",
+        "done": {
+          "claimed": "รับเรื่อง {name} แล้ว",
+          "visited": "บันทึกว่า {name} เข้าชมแล้ว",
+          "noShow": "บันทึกว่า {name} ไม่มา"
+        },
+        "actions": {
+          "claim": "รับเรื่องเอง",
+          "visited": "เข้าชมแล้ว",
+          "noShow": "ไม่มา",
+          "edit": "แก้ไข"
+        },
+        "age": {
+          "minute": "{value} นาที",
+          "hour": "{value} ชม.",
+          "day": "{value} วัน"
+        },
+        "noCustomer": "นัดที่ไม่ผูกกับลูกค้า",
+        "appointmentDue": "นัด {when}",
+        "missingThai": "ยังไม่มีภาษาไทย"
+      },
+      "funnel": {
+        "title": "เส้นทางลูกค้า"
+      },
+      "stock": {
+        "title": "สต็อกยูนิตรายโครงการ",
+        "empty": "ยังไม่มีโครงการที่ใส่ยูนิตไว้"
+      },
+      "live": {
+        "title": "ผู้ชมตอนนี้",
+        "people": "คนบนเว็บไซต์",
+        "empty": "ยังไม่มีใครอยู่บนเว็บไซต์"
+      },
+      "keywords": {
+        "title": "คีย์เวิร์ดที่ติดตาม",
+        "empty": "ยังไม่มีคีย์เวิร์ดที่ตรวจอันดับแล้ว"
+      },
+      "activity": {
+        "title": "การแก้ไขล่าสุด",
+        "empty": "ยังไม่มีการแก้ไข"
       }
     },
     "leads": {
@@ -3536,6 +3589,17 @@
         "imagery": "ภาพและวิดีโอ",
         "publication": "การเผยแพร่"
       }
+    },
+    "projectStatus": {
+      "UPCOMING": "เร็ว ๆ นี้",
+      "UNDER_CONSTRUCTION": "กำลังก่อสร้าง",
+      "READY_TO_MOVE_IN": "พร้อมอยู่",
+      "SOLD_OUT": "ขายหมด"
+    },
+    "toast": {
+      "undo": "เลิกทำ",
+      "undone": "ยกเลิกแล้ว",
+      "undoFailed": "เลิกทำไม่สำเร็จ"
     }
   },
   "legalPage": {

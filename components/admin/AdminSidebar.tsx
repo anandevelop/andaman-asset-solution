@@ -159,7 +159,7 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
             {group.labelKey && (
               <p
                 className={[
-                  "mb-[6px] px-[10px] text-[10.5px] font-medium tracking-[0.06em] text-white/50",
+                  "mb-[6px] px-[10px] text-[10.5px] font-medium tracking-[0.06em] text-white/60",
                   onRail ? "rail-collapsed:hidden" : "",
                 ].join(" ")}
               >
