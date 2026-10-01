@@ -24,14 +24,19 @@
  */
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { getAdminNavCounts } from "@/lib/admin-nav-counts";
 import { getNotificationsFor } from "@/lib/notifications";
 import { intlLocale } from "@/lib/format";
+import { canSeeItem } from "@/lib/admin/nav";
+import { countLiveVisits } from "@/lib/analytics/live-visit";
+import { safeQuery } from "@/lib/db";
+import { isSiteIndexable } from "@/lib/indexing";
 import AuthProvider from "@/components/admin/AuthProvider";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminSidebar, { type AdminEnvironment } from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import CommandK from "@/components/admin/CommandK";
 
@@ -69,11 +74,36 @@ export default async function AdminLayout(props: Props) {
 
   // Live sidebar/topbar queue badges (see lib/admin-nav-counts.ts) — one
   // cheap set of counts per navigation, not per widget.
-  const [counts, t, feed] = await Promise.all([
+  //
+  // The live-visitors pill is asked of the nav config rather than a role
+  // list of its own: it links into /admin/analytics, so it appears for
+  // exactly the roles that link does. Through safeQuery because it is a
+  // nicety on every page — Postgres blinking must not take the chrome down.
+  const [counts, t, feed, liveCount, requestHeaders] = await Promise.all([
     getAdminNavCounts(user.id),
     getTranslations({ locale, namespace: "admin" }),
     getNotificationsFor(user.id),
+    canSeeItem(user.role, "analytics")
+      ? safeQuery("admin.topbar.liveCount", countLiveVisits, 0)
+      : Promise.resolve(null),
+    headers(),
   ]);
+
+  /* Which deployment this is, under the logo. Production is whatever has
+     declared itself indexable (lib/indexing.ts) — the one switch that
+     already has to be set on the real site and nowhere else — so a
+     production build that has forgotten SITE_INDEXABLE says "staging"
+     here, which is the warning it deserves. */
+  const environmentKind: AdminEnvironment["kind"] = isSiteIndexable()
+    ? "production"
+    : process.env.NODE_ENV === "production"
+      ? "staging"
+      : "development";
+  const environment: AdminEnvironment = {
+    kind: environmentKind,
+    label: t(`rail.env.${environmentKind}`),
+    host: requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"),
+  };
 
   // Relative times are formatted here rather than in the topbar: it is a
   // client component, and a time rendered there would differ from the one
@@ -112,7 +142,7 @@ export default async function AdminLayout(props: Props) {
           globals.css.
         */}
         <div data-admin-chrome className="contents">
-          <AdminSidebar locale={locale} user={user} counts={counts} />
+          <AdminSidebar locale={locale} user={user} counts={counts} environment={environment} />
         </div>
 
         <div className="flex-1 lg:min-w-0">
@@ -121,6 +151,7 @@ export default async function AdminLayout(props: Props) {
               locale={locale}
               counts={counts}
               asOfLabel={asOfLabel}
+              liveCount={liveCount}
               notifications={feed.rows.map((row) => ({
                 id: row.id,
                 title: row.title,

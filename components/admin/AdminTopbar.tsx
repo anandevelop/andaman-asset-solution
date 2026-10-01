@@ -26,11 +26,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, Check, ChevronDown, ChevronRight, Moon, Rows3, Rows4, Search, Sun } from "lucide-react";
+import { Bell, Check, ChevronDown, Moon, PanelLeftClose, PanelLeftOpen, Rows3, Rows4, Search, Sun } from "lucide-react";
 import { adminLocales, type Locale } from "@/i18n";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
 import { ADMIN_NAV, activeItemKey } from "@/lib/admin/nav";
-import { applyDisplayPref, restoreDisplayPrefs, useDisplayPref } from "@/lib/admin/use-display-pref";
+import { applyDisplayPref, restoreDisplayPrefs, toggleRail, useDisplayPref } from "@/lib/admin/use-display-pref";
 import { markNotificationsRead } from "@/app/[locale]/admin/notifications-actions";
 
 export type TopbarNotification = {
@@ -55,6 +55,9 @@ type Props = {
   counts: AdminNavCounts;
   /** Server-rendered "as of" timestamp, already formatted for this locale. */
   asOfLabel: string;
+  /** People on the public site right now, or null when this role may not
+   *  read analytics — see the layout. */
+  liveCount: number | null;
   notifications: TopbarNotification[];
   unreadCount: number;
   labels: {
@@ -74,6 +77,7 @@ export default function AdminTopbar({
   locale,
   counts,
   asOfLabel,
+  liveCount,
   notifications,
   unreadCount,
   labels,
@@ -86,6 +90,7 @@ export default function AdminTopbar({
   const t = useTranslations("admin");
   const density = useDisplayPref("density");
   const theme = useDisplayPref("theme");
+  const rail = useDisplayPref("rail");
 
   // The root layout's inline script applied stored choices on the first
   // full load; this picks up any changed in another tab since.
@@ -100,56 +105,87 @@ export default function AdminTopbar({
   const localizedPath = (target: Locale) =>
     `/${target}${pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale}`;
 
-  // Breadcrumb: group › page, from the same nav table the rail draws, so a
-  // page renamed in nav.ts is renamed here too.
+  // Breadcrumb: zone / page, from the same nav table the rail draws, so a
+  // page renamed in nav.ts is renamed here too. A page no item owns (the
+  // account screen) falls back to the back office's own name.
   const activeKey = activeItemKey(pathname, `/${locale}/admin`);
   const activeGroup = ADMIN_NAV.find((group) => group.items.some((item) => item.key === activeKey));
-  const crumbs = [
-    activeGroup?.labelKey ? t(`navGroups.${activeGroup.labelKey}` as never) : null,
-    activeKey ? t(`nav.${activeKey}` as never) : null,
-  ].filter((crumb): crumb is string => Boolean(crumb));
+  const zone = activeGroup?.labelKey ? t(`navGroups.${activeGroup.labelKey}` as never) : t("brand");
+  const page = activeKey ? t(`nav.${activeKey}` as never) : null;
 
-  const searchPlaceholder = pathnameWithoutLocale === "/admin/leads" ? labels.searchLeads : labels.search;
+  const searchPlaceholder =
+    pathnameWithoutLocale === "/admin/leads" ? labels.searchLeads : t("topbar.searchOrCommand");
+
+  const iconButton =
+    "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-ink-muted transition-colors hover:bg-primary/5 hover:text-ink";
 
   return (
-    // px-8 matches the content gutter below it (see the admin layout), so
-    // the search box lines up with the page title rather than sitting 8px
-    // to its left.
-    <div className="sticky top-0 z-30 hidden h-[52px] items-center gap-2 border-b border-primary/10 bg-white px-6 lg:flex">
-      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-muted">
-        <Link href={`/${locale}/admin`} className="shrink-0 transition-colors hover:text-primary">
-          {t("brand")}
-        </Link>
-        {crumbs.map((crumb, index) => (
-          <span key={crumb} className="flex min-w-0 items-center gap-1.5">
-            <ChevronRight size={12} aria-hidden className="shrink-0 opacity-60" />
-            <span
-              className={index === crumbs.length - 1 ? "truncate font-medium text-ink" : "truncate"}
-              aria-current={index === crumbs.length - 1 ? "page" : undefined}
-            >
-              {crumb}
-            </span>
-          </span>
-        ))}
-      </nav>
-
-      <div className="flex-1" />
-
+    <div className="sticky top-0 z-30 hidden h-[60px] items-center gap-3 border-b border-adm-line bg-adm-bg/85 px-5 backdrop-blur-md lg:flex">
       <button
         type="button"
-        onClick={() => window.dispatchEvent(new Event("admin:open-search"))}
-        className="flex h-8 w-[280px] shrink items-center gap-2 rounded-[6px] border border-primary/15 bg-surface px-2.5 text-[12px] text-ink-muted transition-colors hover:border-primary/30"
+        onClick={toggleRail}
+        aria-pressed={rail === "collapsed"}
+        aria-label={rail === "collapsed" ? t("expandSidebar") : t("collapseSidebar")}
+        title={`${rail === "collapsed" ? t("expandSidebar") : t("collapseSidebar")} ( [ )`}
+        className={iconButton}
       >
-        <Search size={14} aria-hidden className="shrink-0" />
-        <span className="flex-1 truncate text-left">{searchPlaceholder}</span>
-        <kbd className="rounded-[4px] border border-b-2 border-primary/15 bg-white px-1 py-0.5 font-mono text-[10px] leading-none">
-          ⌘K
-        </kbd>
+        {rail === "collapsed" ? <PanelLeftOpen size={18} aria-hidden /> : <PanelLeftClose size={18} aria-hidden />}
       </button>
 
-      <span className="hidden whitespace-nowrap pl-2 text-[11px] text-ink-muted 2xl:inline">{asOfLabel}</span>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 shrink items-center gap-2 text-[13px] text-ink-muted">
+        {page ? (
+          <>
+            <span className="shrink-0">{zone}</span>
+            <span aria-hidden className="opacity-50">/</span>
+            <span aria-current="page" className="truncate font-medium text-ink">
+              {page}
+            </span>
+          </>
+        ) : (
+          <Link href={`/${locale}/admin`} className="truncate font-medium text-ink transition-colors hover:text-primary">
+            {zone}
+          </Link>
+        )}
+      </nav>
 
-      <span className="mx-1 h-5 w-px bg-primary/10" aria-hidden />
+      {/* Centred in the space left over, not in the bar: the breadcrumb and
+          the right-hand cluster are different widths on every page, and a
+          field that moved with them would never be where the eye expects. */}
+      <div className="flex min-w-0 flex-1 justify-center px-2">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("admin:open-search"))}
+          className="flex h-[38px] w-full max-w-[560px] items-center gap-2.5 rounded-[12px] border border-adm-line bg-adm-panel pl-3.5 pr-2 text-[13px] text-ink-muted transition-colors hover:border-adm-line-strong"
+        >
+          <Search size={16} aria-hidden className="shrink-0" />
+          <span className="flex-1 truncate text-left">{searchPlaceholder}</span>
+          <kbd className="rounded-[6px] border border-adm-line-strong px-1.5 py-0.5 font-mono text-[10.5px] leading-none">
+            ⌘K
+          </kbd>
+        </button>
+      </div>
+
+      {/* null when this role cannot read analytics — the layout asks the
+          nav config, so the pill and the Analytics link share one rule. */}
+      {liveCount !== null && (
+        <Link
+          href={`/${locale}/admin/analytics`}
+          title={asOfLabel}
+          className="flex h-[30px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-adm-success/30 bg-adm-success-bg px-3 text-[12px] text-adm-success transition-colors hover:border-adm-success/60"
+        >
+          <span aria-hidden className="relative flex h-2 w-2">
+            {liveCount > 0 && (
+              <span className="absolute inset-0 rounded-full bg-adm-success opacity-60 motion-safe:animate-ping" />
+            )}
+            <span className="relative h-2 w-2 rounded-full bg-adm-success" />
+          </span>
+          {t("topbar.liveVisitors", { count: liveCount })}
+        </Link>
+      )}
+
+      <span className="hidden whitespace-nowrap text-[11px] text-ink-muted 2xl:inline">{asOfLabel}</span>
+
+      <span className="h-5 w-px shrink-0 bg-adm-line" aria-hidden />
 
       <button
         type="button"
@@ -157,9 +193,9 @@ export default function AdminTopbar({
         aria-pressed={density === "comfortable"}
         title={density === "compact" ? t("topbar.densityComfortable") : t("topbar.densityCompact")}
         aria-label={t("topbar.density")}
-        className="flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+        className={iconButton}
       >
-        {density === "compact" ? <Rows4 size={16} aria-hidden /> : <Rows3 size={16} aria-hidden />}
+        {density === "compact" ? <Rows4 size={17} aria-hidden /> : <Rows3 size={17} aria-hidden />}
       </button>
 
       <button
@@ -168,9 +204,9 @@ export default function AdminTopbar({
         aria-pressed={theme === "dark"}
         title={theme === "light" ? t("topbar.themeDark") : t("topbar.themeLight")}
         aria-label={t("topbar.theme")}
-        className="flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+        className={iconButton}
       >
-        {theme === "light" ? <Moon size={16} aria-hidden /> : <Sun size={16} aria-hidden />}
+        {theme === "light" ? <Moon size={17} aria-hidden /> : <Sun size={17} aria-hidden />}
       </button>
 
       <div className="relative">
@@ -180,12 +216,12 @@ export default function AdminTopbar({
           aria-expanded={bellOpen}
           aria-label={labels.notifications}
           onClick={() => setBellOpen((open) => !open)}
-          className="relative flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+          className={iconButton}
         >
-          <Bell size={16} aria-hidden />
+          <Bell size={17} aria-hidden />
           {unreadCount > 0 && (
             <span
-              className="absolute right-[7px] top-[7px] h-[7px] w-[7px] rounded-full bg-red-600 ring-2 ring-white"
+              className="absolute right-2 top-2 h-[7px] w-[7px] rounded-full bg-adm-danger ring-2 ring-adm-bg"
               aria-hidden
             />
           )}
@@ -204,7 +240,7 @@ export default function AdminTopbar({
 
             <div
               role="menu"
-              className="absolute right-0 z-50 mt-2 w-[360px] overflow-hidden rounded-[10px] border border-primary/10 bg-white py-1 shadow-[0_24px_60px_-20px_rgba(4,29,44,0.45)]"
+              className="absolute right-0 z-50 mt-2 w-[360px] overflow-hidden rounded-[12px] border border-adm-line bg-adm-solid py-1 shadow-[var(--adm-shadow-float)]"
             >
               <div className="flex items-center justify-between gap-2 px-3.5 py-2 text-xs">
                 <span className="font-semibold text-primary">{labels.notifications}</span>
@@ -261,7 +297,7 @@ export default function AdminTopbar({
           aria-haspopup="listbox"
           aria-expanded={langOpen}
           onClick={() => setLangOpen((v) => !v)}
-          className="flex h-8 items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+          className="flex h-9 items-center gap-1 rounded-[10px] px-2 text-[11px] font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
         >
           {locale.toUpperCase()}
           <ChevronDown size={13} aria-hidden className={langOpen ? "rotate-180 transition-transform" : "transition-transform"} />
@@ -280,7 +316,7 @@ export default function AdminTopbar({
             <div
               role="listbox"
               aria-label={labels.language}
-              className="absolute right-0 top-full z-20 mt-2 min-w-40 overflow-hidden rounded-xs border border-primary/10 bg-white py-1 shadow-card"
+              className="absolute right-0 top-full z-20 mt-2 min-w-40 overflow-hidden rounded-[12px] border border-adm-line bg-adm-solid py-1 shadow-[var(--adm-shadow-float)]"
             >
               {adminLocales.map((code) => (
                 <Link

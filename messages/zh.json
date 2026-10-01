@@ -614,18 +614,18 @@
     },
     "nav": {
       "dashboard": "今日工作",
-      "projects": "项目",
+      "projects": "项目与单元",
       "news": "新闻",
       "eBrochures": "电子手册",
       "leads": "客户与预约",
       "events": "活动",
-      "users": "用户",
+      "users": "用户与权限",
       "salesTeam": "销售团队",
       "pages": "网站页面",
       "settings": "设置",
       "activity": "操作记录",
       "seo": "SEO",
-      "analytics": "报告与统计",
+      "analytics": "网站统计",
       "media": "媒体库",
       "mobileView": "移动端视图",
       "publishing": "审核与发布",
@@ -2693,14 +2693,19 @@
       }
     },
     "navGroups": {
-      "sales": "销售",
-      "properties": "项目",
-      "content": "网站内容",
-      "growth": "市场推广",
+      "daily": "日常工作",
+      "master": "基础数据",
       "system": "系统"
     },
     "collapseSidebar": "收起侧边栏",
     "expandSidebar": "展开侧边栏",
+    "rail": {
+      "env": {
+        "production": "生产环境",
+        "staging": "测试环境",
+        "development": "开发环境"
+      }
+    },
     "seo": {
       "title": "全站 SEO",
       "subtitle": "每次打开本页都会从数据库实时检查 · 最近检查 {date}",
@@ -3278,7 +3283,9 @@
       "densityComfortable": "切换为宽松（更大字体）",
       "theme": "颜色主题",
       "themeDark": "切换到深色模式",
-      "themeLight": "切换到浅色模式"
+      "themeLight": "切换到浅色模式",
+      "searchOrCommand": "搜索或输入命令",
+      "liveVisitors": "{count} 人正在浏览网站"
     },
     "commandK": {
       "placeholder": "搜索项目、户型、线索、新闻或活动…",

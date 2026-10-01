@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* The back office's collapsed sidebar — data-admin-rail on <html>, set
+   before paint by the display-prefs boot script, so the rail never paints
+   wide and then snaps narrow. See lib/admin/display-prefs.ts. */
+@custom-variant rail-collapsed (:root[data-admin-rail="collapsed"] &);
+
 @theme {
   --color-primary-50: #e7edf1;
   --color-primary-100: #c3d3dd;
@@ -1041,8 +1046,7 @@
 
   /* The band is the page's own navy in this theme; a hairline, not a
      tone, separates it from the content. */
-  & [data-admin-sidebar].bg-primary {
-    background-color: var(--adm-band);
+  & aside[data-admin-sidebar] {
     box-shadow: inset -1px 0 var(--adm-line);
   }
 

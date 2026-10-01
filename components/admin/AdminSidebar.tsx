@@ -5,11 +5,18 @@
  * ─────────────────────────────────────────────────────────────────────────
  * Sidebar navigation, identity block and sign-out.
  *
- * Client-side because it needs `usePathname()` for the active state, a
- * mobile disclosure, and the desktop collapse toggle below. The user object
- * is passed down from the server layout rather than read via useSession(),
- * so the correct name and role are in the first paint with no loading
- * flicker.
+ * Client-side because it needs `usePathname()` for the active state and a
+ * mobile disclosure. The user object is passed down from the server layout
+ * rather than read via useSession(), so the correct name and role are in
+ * the first paint with no loading flicker.
+ *
+ * The rail is the CI's navy band in both themes — the one surface that
+ * never changes, so the back office is recognisably the same product in
+ * light and dark. Its collapsed state is not React state: it is the `rail`
+ * display pref, an attribute on <html> that the boot script sets before
+ * paint, and every collapsed-only style below is the `rail-collapsed:`
+ * variant. The topbar's button and the `[` key both flip the same
+ * attribute, so there is nothing to keep in sync between them.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -18,40 +25,55 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, LogOut, Menu, Search, UserCog, X } from "lucide-react";
+import { LogOut, Menu, Search, UserCog, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { activeItemKey, visibleNav, type NavItem } from "@/lib/admin/nav";
 import { initialsFrom } from "@/lib/format";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
+import { toggleRail, useDisplayPref } from "@/lib/admin/use-display-pref";
+import { isTypingTarget } from "@/lib/admin/keyboard";
+
+export type AdminEnvironment = {
+  kind: "production" | "staging" | "development";
+  /** Already translated by the layout. */
+  label: string;
+  /** The host this back office was reached on, e.g. andamanassetsolution.com. */
+  host: string | null;
+};
 
 type Props = {
   locale: string;
   user: { name: string; email: string; role: Role };
   counts: AdminNavCounts;
+  environment: AdminEnvironment;
 };
 
-const COLLAPSE_STORAGE_KEY = "admin-sidebar-collapsed";
+const ENV_DOT: Record<AdminEnvironment["kind"], string> = {
+  production: "bg-emerald-400",
+  staging: "bg-amber-400",
+  development: "bg-white/40",
+};
 
-export default function AdminSidebar({ locale, user, counts }: Props) {
+export default function AdminSidebar({ locale, user, counts, environment }: Props) {
   const t = useTranslations("admin");
   const tAuth = useTranslations("auth");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const rail = useDisplayPref("rail");
+  const collapsed = rail === "collapsed";
 
-  // Read after mount, not in useState's initializer: the server-rendered
-  // markup has no access to localStorage, so starting from it here would
-  // make the first client render disagree with the server and trigger a
-  // hydration mismatch. A one-frame flash to the stored value is the
-  // acceptable trade.
+  // `[` collapses and expands the rail, as in the mockup. Bound here rather
+  // than in the topbar because this is the component whose state it is.
   useEffect(() => {
-    const stored = window.localStorage.getItem(COLLAPSE_STORAGE_KEY);
-    if (stored === "1") setCollapsed(true);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "[" || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      event.preventDefault();
+      toggleRail();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
-  }, [collapsed]);
 
   const base = `/${locale}/admin`;
 
@@ -63,12 +85,15 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
 
   const initials = initialsFrom(user.name);
 
-  const renderLink = ({ key, href, icon: Icon, countKey }: NavItem, isCollapsed: boolean) => {
+  /* `onRail` is the desktop rail, which can collapse; the phone drawer
+     never does, so it must not pick up the collapsed styles from a
+     preference set on a laptop. */
+  const renderLink = ({ key, href, icon: Icon, countKey }: NavItem, onRail: boolean) => {
     const active = key === activeKey;
     const label = t(`nav.${key}` as never);
-    // Live queue counts (new leads, today's appointments, the review
-    // queue) — see lib/admin-nav-counts.ts. Zero renders as no badge at
-    // all rather than a "0" pill; an empty queue is not news.
+    // Live queue counts (new leads, the review queue) — see
+    // lib/admin-nav-counts.ts. Only items with a countKey carry one, and
+    // zero renders as no badge at all: an empty queue is not news.
     const count = countKey ? counts[countKey] : 0;
 
     return (
@@ -77,23 +102,34 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         href={`${base}${href}`}
         onClick={() => setOpen(false)}
         aria-current={active ? "page" : undefined}
-        title={isCollapsed ? label : undefined}
+        title={onRail && collapsed ? label : undefined}
         className={[
-          "relative flex h-8 items-center gap-2.5 rounded-[6px] text-[13px] transition-colors",
-          isCollapsed ? "justify-center px-0" : "px-[10px]",
+          "relative flex h-9 items-center gap-[11px] rounded-[10px] px-[10px] text-[13px] transition-colors",
+          onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
           active
-            ? "bg-white/10 font-medium text-white before:absolute before:-left-[10px] before:top-[7px] before:bottom-[7px] before:w-[3px] before:rounded-r-[3px] before:bg-accent"
+            ? "bg-linear-to-r from-adm-fill/15 to-transparent font-medium text-white before:absolute before:-left-[10px] before:top-2 before:bottom-2 before:w-[3px] before:rounded-r-[3px] before:bg-adm-fill"
             : "text-white/65 hover:bg-white/5 hover:text-white",
         ].join(" ")}
       >
-        <Icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
-        {!isCollapsed && (
+        <Icon size={18} strokeWidth={1.75} aria-hidden className="shrink-0" />
+        <span className={["flex-1 truncate", onRail ? "rail-collapsed:hidden" : ""].join(" ")}>{label}</span>
+        {count > 0 && (
           <>
-            <span className="flex-1 truncate">{label}</span>
-            {count > 0 && (
-              <span className="ml-auto shrink-0 rounded-full bg-accent px-[6px] py-[3px] text-[10.5px] font-bold leading-none text-primary">
-                {count > 99 ? "99+" : count}
-              </span>
+            <span
+              className={[
+                "ml-auto min-w-5 shrink-0 rounded-full bg-adm-fill px-[6px] py-[3px] text-center text-[11px] font-semibold leading-none text-adm-on-fill",
+                onRail ? "rail-collapsed:hidden" : "",
+              ].join(" ")}
+            >
+              {count > 99 ? "99+" : count}
+            </span>
+            {/* Collapsed, the number has nowhere to go; a dot still says
+                "something is waiting here". */}
+            {onRail && (
+              <span
+                aria-hidden
+                className="absolute left-[38px] top-[7px] hidden h-[7px] w-[7px] rounded-full bg-adm-fill rail-collapsed:block"
+              />
             )}
           </>
         )}
@@ -101,33 +137,37 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
     );
   };
 
-  const renderNav = (isCollapsed: boolean, surface: "rail" | "drawer") => {
-    /* Structure and filtering both live in lib/admin/nav.ts now: a role
-       never sees a link that only lands it on a denied redirect, and a
-       group left with no visible items drops its heading too. This
-       component draws what it is handed.
+  const renderNav = (surface: "rail" | "drawer") => {
+    /* Structure and filtering both live in lib/admin/nav.ts: a role never
+       sees a link that only lands it on a denied redirect, and a zone left
+       with no visible items drops its heading too. This component draws
+       what it is handed.
 
        `surface` is the one thing the two copies of this nav disagree
        about: "Mobile view" is a phone layout, so the drawer shows it
-       first and the desktop rail does not show it at all. Deciding that
-       in nav.ts rather than here keeps ⌘K — which wants the whole menu —
-       from having to know about the distinction. */
+       first and the desktop rail does not show it at all. */
     const groups = visibleNav(user.role, surface);
+    const onRail = surface === "rail";
 
     return (
       <nav aria-label={t("brand")} className="flex flex-col">
         {groups.map((group, index) => (
           <div key={group.key} className={index > 0 ? "mt-[14px]" : undefined}>
-            {index > 0 && isCollapsed && (
-              <span className="mx-[10px] mb-[8px] block h-px bg-white/10" aria-hidden />
+            {index > 0 && onRail && (
+              <span className="mx-[10px] mb-[8px] hidden h-px bg-white/10 rail-collapsed:block" aria-hidden />
             )}
-            {group.labelKey && !isCollapsed && (
-              <p className="mb-[4px] px-[10px] text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/60">
+            {group.labelKey && (
+              <p
+                className={[
+                  "mb-[6px] px-[10px] text-[10.5px] font-medium tracking-[0.06em] text-white/50",
+                  onRail ? "rail-collapsed:hidden" : "",
+                ].join(" ")}
+              >
                 {t(`navGroups.${group.labelKey}` as never)}
               </p>
             )}
             <div className="flex flex-col gap-[2px]">
-              {group.items.map((item) => renderLink(item, isCollapsed))}
+              {group.items.map((item) => renderLink(item, onRail))}
             </div>
           </div>
         ))}
@@ -135,9 +175,8 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
     );
   };
 
-  /* Mobile drawer only — the desktop rail deliberately has no search, see
-     the note where the rail is rendered. There is no collapsed variant for
-     the same reason: the drawer is never collapsed. */
+  /* Mobile drawer only — on desktop the topbar's search field is directly
+     above the rail. */
   const renderSearchTrigger = () => (
     <button
       type="button"
@@ -145,56 +184,75 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         setOpen(false);
         window.dispatchEvent(new Event("admin:open-search"));
       }}
-      className="flex items-center gap-2.5 rounded-xs border border-white/10 px-3 py-2 text-xs text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
+      className="flex items-center gap-2.5 rounded-[10px] border border-white/10 px-3 py-2 text-xs text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
     >
       <Search size={15} strokeWidth={1.75} aria-hidden className="shrink-0" />
       <span className="flex-1 text-left">{t("search")}</span>
     </button>
   );
 
-  const renderIdentity = (isCollapsed: boolean) => (
+  const renderEnvironment = (onRail: boolean) => (
+    <div
+      className={[
+        "flex items-center gap-2 whitespace-nowrap rounded-[10px] border border-white/10 px-2.5 py-1.5 text-[11.5px] text-white/60",
+        onRail ? "mx-3 mt-3 rail-collapsed:hidden" : "",
+      ].join(" ")}
+    >
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${ENV_DOT[environment.kind]}`} />
+      <span className="font-medium text-white">{environment.label}</span>
+      {environment.host && (
+        <>
+          <span aria-hidden>·</span>
+          <span className="truncate">{environment.host}</span>
+        </>
+      )}
+    </div>
+  );
+
+  const renderIdentity = (onRail: boolean) => (
     <div className="border-t border-white/10 px-[10px] py-[10px]">
       {/* The identity block doubles as the link to your own account — the
           first place people look to change their password. */}
       <Link
         href={`${base}/account`}
         onClick={() => setOpen(false)}
-        title={isCollapsed ? user.name : undefined}
+        title={onRail && collapsed ? user.name : undefined}
         className={[
-          "flex items-center gap-[10px] rounded-[6px] py-[6px] transition-colors hover:bg-white/5",
-          isCollapsed ? "justify-center px-0" : "px-[6px]",
+          "flex items-center gap-[10px] rounded-[10px] px-[6px] py-[6px] transition-colors hover:bg-white/5",
+          onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
         ].join(" ")}
       >
         <span
           aria-hidden
-          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-accent/20 text-[11px] font-semibold text-accent"
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-adm-fill text-[11px] font-semibold text-adm-on-fill"
         >
           {initials || "·"}
         </span>
-        {!isCollapsed && (
-          <>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[12.5px] font-medium leading-tight text-white">{user.name}</p>
-              <p className="truncate text-[11px] leading-tight text-accent">
-                {t(`roles.${user.role}` as never)}
-              </p>
-            </div>
-            <UserCog size={15} className="shrink-0 text-white/40" aria-hidden />
-          </>
-        )}
+        <div className={["min-w-0 flex-1", onRail ? "rail-collapsed:hidden" : ""].join(" ")}>
+          <p className="truncate text-[12.5px] font-medium leading-tight text-white">{user.name}</p>
+          <p className="truncate text-[11px] leading-tight text-white/55">
+            {t(`roles.${user.role}` as never)}
+          </p>
+        </div>
+        <UserCog
+          size={15}
+          className={["shrink-0 text-white/40", onRail ? "rail-collapsed:hidden" : ""].join(" ")}
+          aria-hidden
+        />
       </Link>
 
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
-        title={isCollapsed ? tAuth("signOut") : undefined}
+        title={onRail && collapsed ? tAuth("signOut") : undefined}
+        aria-label={tAuth("signOut")}
         className={[
-          "mt-[4px] flex h-8 w-full items-center gap-2.5 rounded-[6px] text-[13px] text-white/60 transition-colors hover:bg-white/5 hover:text-white",
-          isCollapsed ? "justify-center px-0" : "px-[10px]",
+          "mt-[4px] flex h-9 w-full items-center gap-[11px] rounded-[10px] px-[10px] text-[13px] text-white/60 transition-colors hover:bg-white/5 hover:text-white",
+          onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
         ].join(" ")}
       >
-        <LogOut size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
-        {!isCollapsed && tAuth("signOut")}
+        <LogOut size={18} strokeWidth={1.75} aria-hidden className="shrink-0" />
+        <span className={onRail ? "rail-collapsed:hidden" : undefined}>{tAuth("signOut")}</span>
       </button>
     </div>
   );
@@ -202,15 +260,18 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
   return (
     <>
       {/* Mobile bar */}
-      <div data-admin-sidebar className="flex h-[52px] items-center justify-between border-b border-white/10 bg-primary px-4 lg:hidden">
+      <div
+        data-admin-sidebar
+        className="flex h-[52px] items-center justify-between border-b border-white/10 bg-adm-band px-4 lg:hidden"
+      >
         <Link href={base} className="inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo-white.png"
             alt="Andaman Asset Solution Co., Ltd."
-            width={160}
-            height={32}
-            className="h-[24px] w-auto brightness-0 invert"
+            width={895}
+            height={120}
+            className="h-[20px] w-auto"
           />
         </Link>
         <button
@@ -225,9 +286,10 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
       </div>
 
       {open && (
-        <div data-admin-sidebar className="flex flex-col gap-6 bg-primary px-5 pb-6 lg:hidden">
+        <div data-admin-sidebar className="flex flex-col gap-5 bg-adm-band px-5 pb-6 lg:hidden">
+          {renderEnvironment(false)}
           {renderSearchTrigger()}
-          {renderNav(false, "drawer")}
+          {renderNav("drawer")}
           {renderIdentity(false)}
         </div>
       )}
@@ -242,55 +304,39 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
           identity block below are pinned, and sign-out is always on screen. */}
       <aside
         data-admin-sidebar
-        className={[
-          "hidden shrink-0 flex-col overflow-hidden bg-primary transition-[width] duration-150 lg:sticky lg:top-0 lg:flex lg:h-screen",
-          collapsed ? "w-[64px]" : "w-[232px]",
-        ].join(" ")}
+        className="hidden w-[248px] shrink-0 flex-col overflow-hidden bg-adm-band transition-[width] duration-200 ease-out motion-reduce:transition-none rail-collapsed:w-[68px] lg:sticky lg:top-0 lg:flex lg:h-screen"
       >
-        {/* 52px, the topbar's height, so the two hairlines meet in one line. */}
-        <div
-          className={[
-            "flex h-[52px] shrink-0 items-center border-b border-white/10",
-            collapsed ? "justify-center" : "justify-between pl-[16px] pr-[8px]",
-          ].join(" ")}
-        >
-          {!collapsed && (
-            <Link href={base} className="block" title={t("brand")}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo.png"
-                alt="Andaman Asset Solution Co., Ltd."
-                width={160}
-                height={32}
-                className="h-[22px] w-auto brightness-0 invert"
-              />
-            </Link>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-            className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            {collapsed ? (
-              <ChevronRight size={16} aria-hidden />
-            ) : (
-              <ChevronLeft size={16} aria-hidden />
-            )}
-          </button>
+        {/* 60px, the topbar's height, so the two hairlines meet in one line. */}
+        <div className="flex h-[60px] shrink-0 items-center border-b border-white/10 px-4 rail-collapsed:justify-center rail-collapsed:px-0">
+          <Link href={base} title={t("brand")} className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-white.png"
+              alt="Andaman Asset Solution Co., Ltd."
+              width={895}
+              height={120}
+              className="h-[20px] w-auto rail-collapsed:hidden"
+            />
+            {/* The mark alone, when there is no room for the wordmark. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icon-192.png"
+              alt=""
+              aria-hidden
+              width={192}
+              height={192}
+              className="hidden h-8 w-8 rounded-[10px] rail-collapsed:block"
+            />
+          </Link>
         </div>
 
-        {/* No search box here: AdminTopbar already has one directly above
-            this rail on every desktop screen. The mobile drawer still
-            renders one, because the topbar is lg-only and there would
-            otherwise be no way in but ⌘K — which a phone has no keyboard
-            for. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-[10px] py-[10px] [scrollbar-color:rgba(255,255,255,0.15)_transparent] [scrollbar-width:thin]">
-          {renderNav(collapsed, "rail")}
+        {renderEnvironment(true)}
+
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-[10px] py-[10px] [scrollbar-color:rgba(255,255,255,0.15)_transparent] [scrollbar-width:thin]">
+          {renderNav("rail")}
         </div>
 
-        {renderIdentity(collapsed)}
+        {renderIdentity(true)}
       </aside>
     </>
   );

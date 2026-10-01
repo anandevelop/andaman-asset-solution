@@ -45,6 +45,14 @@ export function restoreDisplayPrefs() {
   }
 }
 
+/** Flip the sidebar between wide and narrow — the topbar's button and the
+ *  rail's `[` key. Reads the attribute, not a React copy, so two callers
+ *  can never toggle from different ideas of the current state. */
+export function toggleRail() {
+  const collapsed = document.documentElement.dataset[DISPLAY_PREFS.rail.dataKey] === "collapsed";
+  applyDisplayPref("rail", collapsed ? "expanded" : "collapsed");
+}
+
 function subscribe(onChange: () => void) {
   window.addEventListener(CHANGE_EVENT, onChange);
   return () => window.removeEventListener(CHANGE_EVENT, onChange);

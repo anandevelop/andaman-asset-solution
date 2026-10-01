@@ -614,18 +614,18 @@
     },
     "nav": {
       "dashboard": "Today's work",
-      "projects": "Projects",
+      "projects": "Projects & units",
       "news": "News",
       "eBrochures": "E-Brochures",
       "leads": "Leads & appointments",
       "events": "Events",
-      "users": "Users",
+      "users": "Users & permissions",
       "salesTeam": "Sales Team",
       "pages": "Pages",
       "settings": "Settings",
       "activity": "Activity",
       "seo": "SEO",
-      "analytics": "Reports & analytics",
+      "analytics": "Site analytics",
       "media": "Media",
       "mobileView": "Mobile view",
       "publishing": "Review & publish",
@@ -2693,14 +2693,19 @@
       }
     },
     "navGroups": {
-      "sales": "Sales",
-      "properties": "Properties",
-      "content": "Website content",
-      "growth": "Marketing",
+      "daily": "Daily work",
+      "master": "Master data",
       "system": "System"
     },
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
+    "rail": {
+      "env": {
+        "production": "Production",
+        "staging": "Staging",
+        "development": "Development"
+      }
+    },
     "seo": {
       "title": "Sitewide SEO",
       "subtitle": "Checked live from the database on every load · last checked {date}",
@@ -3278,7 +3283,9 @@
       "densityComfortable": "Switch to comfortable (larger text)",
       "theme": "Colour theme",
       "themeDark": "Switch to dark mode",
-      "themeLight": "Switch to light mode"
+      "themeLight": "Switch to light mode",
+      "searchOrCommand": "Search or type a command",
+      "liveVisitors": "{count, plural, one {# person} other {# people}} on the site"
     },
     "commandK": {
       "placeholder": "Search projects, units, leads, news or events…",

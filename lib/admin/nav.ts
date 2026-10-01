@@ -35,7 +35,8 @@
  *   · Mobile view            → still a row, but `mobileOnly`: the drawer
  *                              draws it, the desktop rail does not
  *
- * Six groups, named after the job rather than the department: the SEO and
+ * Three zones — see NavGroupKey below for why they are cut by frequency of
+ * use. Before that, six groups by job; before that, the SEO and
  * analytics rows used to sit under "Administration" beside user accounts
  * and the audit log, which put "how is the site doing" and "who deleted
  * that" in one list.
@@ -333,9 +334,20 @@ export type NavItem = Gated & {
   tabsBase?: string;
 };
 
-/** Also the i18n keys under `admin.navGroups.*`. */
-export type NavGroupKey =
-  "overview" | "sales" | "properties" | "content" | "growth" | "system";
+/**
+ * Also the i18n keys under `admin.navGroups.*`.
+ *
+ * Three zones, by how often somebody opens them rather than by department:
+ * what has to be dealt with today, the records the website is built from,
+ * and the system itself. The six groups before this split the same links
+ * by subject — "sales", "properties", "content", "growth" — which put the
+ * review queue beside the media library and the traffic report beside SEO
+ * settings, so a person's daily round crossed four headings. Only the
+ * grouping and order moved: every item below is the same object with the
+ * same roles, capability, tabs and aliases, and tests/admin/nav.test.ts
+ * pins each role's link set to what it was before the move.
+ */
+export type NavGroupKey = "daily" | "master" | "system";
 
 export type NavGroup = {
   key: NavGroupKey;
@@ -348,8 +360,11 @@ export type NavGroup = {
 
 export const ADMIN_NAV: readonly NavGroup[] = [
   {
-    key: "overview",
-    labelKey: null,
+    /* What somebody opens the back office to do on an ordinary morning:
+       today's work, the customers waiting on a reply, what is waiting to
+       go live, and how the site did. */
+    key: "daily",
+    labelKey: "daily",
     items: [
       {
         key: "dashboard",
@@ -357,13 +372,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: LayoutDashboard,
         roles: ROLE_SETS.EVERYONE,
       },
-    ],
-  },
-
-  {
-    key: "sales",
-    labelKey: "sales",
-    items: [
       {
         /* Leads and their appointments, one row. The badge is still the
            unassigned-lead count and not the two backlogs added together:
@@ -381,14 +389,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabsBase: "",
       },
       {
-        // A rep must be able to see the roster of the team they are on;
-        // editing it stays with content people. Fixed in Phase 1 (P5).
-        key: "salesTeam",
-        href: "/sales-team",
-        icon: Contact,
-        roles: ROLE_SETS.CONTENT_AND_CRM,
-      },
-      {
         // Was minRole: SALES, which EDITOR cleared on the ladder and then
         // failed at the page's requireCapability("viewAllLeads") — P2.
         key: "mobileView",
@@ -398,12 +398,44 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         capability: "viewAllLeads",
         mobileOnly: true,
       },
+      {
+        key: "publishing",
+        href: "/publishing",
+        icon: FileCheck2,
+        roles: ROLE_SETS.CONTENT,
+        /* Still the review queue alone. Rolling the translation gaps into
+           this number would make one badge mean two unrelated backlogs,
+           and the one that needs a person today is the review queue. */
+        countKey: "reviewQueue",
+        alias: ["/seo/translations"],
+        tabs: NAV_TAB_GROUPS.publishing,
+      },
+      {
+        // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
+        // floor, no exception needed here (see that layout's header).
+        key: "analytics",
+        href: "/analytics",
+        icon: BarChart3,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
+      {
+        /* The monthly report. Here and not in `system`, although the
+           blueprint filed it under Administration: it answers "how is the
+           site doing", beside the traffic numbers it summarises, while
+           `system` is about how the back office behaves and who did what. */
+        key: "reports",
+        href: "/reports",
+        icon: FileText,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
     ],
   },
 
   {
-    key: "properties",
-    labelKey: "properties",
+    /* The records the public site is assembled from — edited when they
+       change, not every day. */
+    key: "master",
+    labelKey: "master",
     items: [
       {
         /* One row for everything about a property. "Progress" and
@@ -421,13 +453,14 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.projects,
         tabsBase: "",
       },
-    ],
-  },
-
-  {
-    key: "content",
-    labelKey: "content",
-    items: [
+      {
+        // A rep must be able to see the roster of the team they are on;
+        // editing it stays with content people. Fixed in Phase 1 (P5).
+        key: "salesTeam",
+        href: "/sales-team",
+        icon: Contact,
+        roles: ROLE_SETS.CONTENT_AND_CRM,
+      },
       {
         /* One hub instead of eight links to the pieces of two pages.
            /admin/pages/home already knew about the home page's
@@ -477,29 +510,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         roles: ROLE_SETS.CONTENT,
       },
       {
-        key: "publishing",
-        href: "/publishing",
-        icon: FileCheck2,
-        roles: ROLE_SETS.CONTENT,
-        /* Still the review queue alone. Rolling the translation gaps into
-           this number would make one badge mean two unrelated backlogs,
-           and the one that needs a person today is the review queue. */
-        countKey: "reviewQueue",
-        alias: ["/seo/translations"],
-        tabs: NAV_TAB_GROUPS.publishing,
-      },
-    ],
-  },
-
-  {
-    /* Growth is not administration. SEO and the analytics reports used to
-       sit in one list with user accounts and the audit log, which put
-       "how is the site doing" beside "who deleted that" — two jobs, two
-       people, one heading. */
-    key: "growth",
-    labelKey: "growth",
-    items: [
-      {
         key: "seo",
         href: "/seo",
         icon: Search,
@@ -507,41 +517,15 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         alias: ["/settings/seo"],
         tabs: NAV_TAB_GROUPS.seo,
       },
-      {
-        // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
-        // floor, no exception needed here (see that layout's header).
-        key: "analytics",
-        href: "/analytics",
-        icon: BarChart3,
-        roles: ROLE_SETS.ADMIN_UP,
-      },
-      {
-        /* The monthly report. In `growth` and not `system`, although the
-           blueprint filed it under Administration: it answers "how is the
-           site doing", which is this group's whole subject, while
-           Administration is about how the system behaves and who did what.
-           The same split SEO and Analytics were moved for. */
-        key: "reports",
-        href: "/reports",
-        icon: FileText,
-        roles: ROLE_SETS.ADMIN_UP,
-      },
     ],
   },
 
   {
-    /* What the word actually covers: how the system behaves, not what the
-       website says. Three groups left this one for a hub of their own
-       (see the file header) and two more moved to `growth`. */
+    /* How the system behaves and who did what — accounts first, because
+       "give the new rep access" is the most common reason to come here. */
     key: "system",
     labelKey: "system",
     items: [
-      {
-        key: "settings",
-        href: "/settings",
-        icon: Settings,
-        roles: ROLE_SETS.ADMIN_UP,
-      },
       {
         key: "users",
         href: "/users",
@@ -555,6 +539,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: History,
         roles: ROLE_SETS.OWNER_ONLY,
         capability: "viewAuditLog",
+      },
+      {
+        key: "settings",
+        href: "/settings",
+        icon: Settings,
+        roles: ROLE_SETS.ADMIN_UP,
       },
     ],
   },

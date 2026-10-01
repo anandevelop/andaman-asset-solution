@@ -1,8 +1,9 @@
 /**
  * lib/admin/display-prefs.ts
  * ─────────────────────────────────────────────────────────────────────────
- * The back office's two per-browser display choices — text density and
- * light/dark — and the one place that knows how each is stored and shown.
+ * The back office's per-browser display choices — text density, light/dark
+ * and a collapsed sidebar — and the one place that knows how each is
+ * stored and shown.
  *
  * Each is a data attribute on <html> (read by globals.css) mirrored to
  * localStorage. The attribute is the source of truth for what is on
@@ -21,6 +22,13 @@
 export const DISPLAY_PREFS = {
   density: { storageKey: "admin-density", dataKey: "adminDensity", values: ["compact", "comfortable"] },
   theme: { storageKey: "admin-theme", dataKey: "adminTheme", values: ["light", "dark"] },
+  /* The rail's width. It was React state in AdminSidebar, read from
+     storage after mount — so a collapsed rail painted wide for a frame on
+     every full load, and the topbar's collapse button and the `[` key had
+     no way to reach it. As an attribute on <html> the boot script sets it
+     before paint and the rail's width is plain CSS (the `rail-collapsed`
+     variant in globals.css). */
+  rail: { storageKey: "admin-rail", dataKey: "adminRail", values: ["expanded", "collapsed"] },
 } as const;
 
 export type DisplayPref = keyof typeof DISPLAY_PREFS;

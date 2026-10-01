@@ -145,6 +145,17 @@ export async function getLiveSnapshot(): Promise<LiveSnapshot> {
   return summariseVisits(rows);
 }
 
+/**
+ * Just the headline number, for the topbar's live pill on every admin
+ * page. A count, not getLiveSnapshot(): the pill needs one integer, and
+ * the snapshot's 500-row read would run on every navigation in the back
+ * office. Same window, so the pill and the realtime tab cannot disagree.
+ */
+export async function countLiveVisits(): Promise<number> {
+  const cutoff = new Date(Date.now() - LIVE_VISIT_TTL_MS);
+  return prisma.liveVisit.count({ where: { lastSeenAt: { gte: cutoff } } });
+}
+
 /** The arithmetic, separated so it can be tested without a database. */
 export function summariseVisits(rows: readonly LiveVisitRow[]): LiveSnapshot {
   const byPath = new Map<string, number[]>();

@@ -81,6 +81,58 @@ describe("admin nav config", () => {
   });
 });
 
+describe("the menu each role sees", () => {
+  /*
+    Pinned by hand, from the menu as it stood before the three-zone
+    regroup. That change was meant to move rows and nothing else; a
+    grouping edit is exactly where an item gets dropped or pasted into a
+    second group, and the other tests here would call either one fine —
+    the item still has a role, still has a key. If a row is added or
+    removed on purpose, update this table in the same change.
+  */
+  const EXPECTED: Record<Role, { rail: string[]; drawerExtra: string[]; tabs: string[] }> = {
+    SUPER_ADMIN: {
+      rail: ["activity", "analytics", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
+      drawerExtra: ["mobileView"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+    },
+    ADMIN: {
+      rail: ["analytics", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
+      drawerExtra: ["mobileView"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+    },
+    EDITOR: {
+      rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing", "salesTeam"],
+      drawerExtra: [],
+      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/progress", "/projects", "/publishing/translations"],
+    },
+    SALES: {
+      rail: ["dashboard", "leads", "salesTeam"],
+      drawerExtra: ["mobileView"],
+      tabs: ["/appointments", "/leads"],
+    },
+    VIEWER: {
+      rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing"],
+      drawerExtra: [],
+      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/progress", "/projects"],
+    },
+  };
+
+  const keysOf = (role: Role, surface: "rail" | "drawer" | "all") =>
+    visibleNav(role, surface).flatMap((group) => group.items.map((item) => item.key)).sort();
+
+  for (const role of ALL_ROLES) {
+    it(`is unchanged for ${role}`, () => {
+      const expected = EXPECTED[role];
+      const withMobile = [...expected.rail, ...expected.drawerExtra].sort();
+      expect(keysOf(role, "rail")).toEqual([...expected.rail].sort());
+      expect(keysOf(role, "drawer")).toEqual(withMobile);
+      expect(keysOf(role, "all")).toEqual(withMobile);
+      expect(visibleTabRows(role).map((row) => row.href).sort()).toEqual(expected.tabs);
+    });
+  }
+});
+
 describe("activeItemKey", () => {
   const base = "/th/admin";
 
@@ -286,47 +338,47 @@ describe("the sidebar each role gets", () => {
     SUPER_ADMIN: [
       "dashboard",
       "leads",
-      "salesTeam",
+      "publishing",
+      "analytics",
+      "reports",
       "projects",
+      "salesTeam",
       "pages",
       "news",
       "events",
       "media",
-      "publishing",
       "seo",
-      "analytics",
-      "reports",
-      "settings",
       "users",
       "activity",
+      "settings",
     ],
     // No users or activity: both are OWNER_ONLY.
     ADMIN: [
       "dashboard",
       "leads",
-      "salesTeam",
+      "publishing",
+      "analytics",
+      "reports",
       "projects",
+      "salesTeam",
       "pages",
       "news",
       "events",
       "media",
-      "publishing",
       "seo",
-      "analytics",
-      "reports",
       "settings",
     ],
     // Content only. No CRM (viewAllLeads is false for EDITOR — the PDPA
     // fix), no SEO, no analytics, no settings.
     EDITOR: [
       "dashboard",
-      "salesTeam",
+      "publishing",
       "projects",
+      "salesTeam",
       "pages",
       "news",
       "events",
       "media",
-      "publishing",
     ],
     // CRM plus the roster they are on. salesTeam is in CONTENT_AND_CRM.
     SALES: ["dashboard", "leads", "salesTeam"],
@@ -336,12 +388,12 @@ describe("the sidebar each role gets", () => {
     // meet; see the note on that set in lib/admin/nav.ts.
     VIEWER: [
       "dashboard",
+      "publishing",
       "projects",
       "pages",
       "news",
       "events",
       "media",
-      "publishing",
     ],
   };
 
@@ -366,19 +418,14 @@ describe("the sidebar each role gets", () => {
     expect(EXPECTED.SUPER_ADMIN).toHaveLength(15);
   });
 
-  it("groups them by job, not by department", () => {
+  it("groups them by how often they are opened", () => {
+    // Daily work, master data, system — see NavGroupKey in
+    // lib/admin/nav.ts. Six groups by department before this.
     const groups = visibleNav(Role.SUPER_ADMIN, "rail").map(
       (group) => group.key,
     );
 
-    expect(groups).toEqual([
-      "overview",
-      "sales",
-      "properties",
-      "content",
-      "growth",
-      "system",
-    ]);
+    expect(groups).toEqual(["daily", "master", "system"]);
   });
 
   it("labels every group it draws", () => {
@@ -441,11 +488,11 @@ describe("mobileOnly", () => {
   });
 
   it("puts it first in its group in the drawer", () => {
-    const sales = visibleNav(Role.SALES, "drawer").find(
-      (g) => g.key === "sales",
+    const daily = visibleNav(Role.SALES, "drawer").find(
+      (g) => g.key === "daily",
     );
 
-    expect(sales?.items[0]?.key).toBe("mobileView");
+    expect(daily?.items[0]?.key).toBe("mobileView");
   });
 
   it("leaves it in the unfiltered menu, which is what ⌘K reads", () => {
