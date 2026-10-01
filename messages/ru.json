@@ -1181,7 +1181,7 @@
         "next": "Следующая страница",
         "page": "Страница"
       },
-      "hubUnits": "Типы домов, юниты и генплан",
+      "hubUnits": "Юниты и генплан",
       "hubLabel": "Рабочая область проекта",
       "readiness": {
         "title": "Готовность проекта",
@@ -1201,6 +1201,18 @@
           "partial": "частично",
           "missing": "нет"
         }
+      },
+      "hubContentSeo": "Контент и SEO",
+      "hubUnitTypes": "Типы вилл",
+      "viewSite": "Открыть страницу",
+      "cards": {
+        "types": "{count, plural, one {# тип} few {# типа} other {# типов}}",
+        "noPrice": "Цена не указана",
+        "priceFrom": "От {price}",
+        "readiness": "Готовность {percent}%",
+        "viewLabel": "Вид списка",
+        "viewCards": "Карточки",
+        "viewTable": "Таблица"
       }
     },
     "progress": {
@@ -1346,7 +1358,20 @@
         "rateLimited": "Слишком много экспортов подряд. Подождите минуту и повторите.",
         "truncated": "Экспорт достиг предела в 5000 строк."
       },
-      "untracedNote": "План не показан: {count, plural, one {# участок ещё не размещён} few {# участка ещё не размещены} many {# участков ещё не размещены} other {# участка ещё не размещены}} на нём."
+      "untracedNote": "План не показан: {count, plural, one {# участок ещё не размещён} few {# участка ещё не размещены} many {# участков ещё не размещены} other {# участка ещё не размещены}} на нём.",
+      "phaseLabel": "Очередь",
+      "tiles": {
+        "details": "Подробнее",
+        "lockedHint": "Забронировано для клиента — меняйте в панели подробностей",
+        "shiftHint": "Клик по плитке — сменить статус · Shift-клик — выбрать несколько",
+        "bulkStatus": "Сменить статус",
+        "clear": "Снять выбор",
+        "noType": "Без типа",
+        "traced": "Обведено {traced} из {total}",
+        "changedOne": "Юнит {unit} → {status}",
+        "changedMany": "{count} юнитов → {status}",
+        "selected": "Выбрано: {count}"
+      }
     },
     "sitePlan": {
       "title": "Генплан",
@@ -2294,6 +2319,14 @@
           "furnishedAspect": "Furnished plan does not match the drawing",
           "areaMismatch": "Room areas do not add up"
         }
+      },
+      "card": {
+        "bedrooms": "Спальни",
+        "bathrooms": "Ванные",
+        "area": "Жилая площадь",
+        "units": "Юниты",
+        "noPrice": "Нет цены",
+        "noThai": "Нет описания на тайском"
       }
     },
     "faqs": {
@@ -3592,7 +3625,8 @@
       "previewMobile": "Телефон",
       "previewUnpublished": "Проект не опубликован, публичной страницы для просмотра пока нет.",
       "previewNote": "Реальная публичная страница. Обновится вскоре после сохранения.",
-      "confirmDiscard": "Отменить несохранённые изменения для этого языка?"
+      "confirmDiscard": "Отменить несохранённые изменения для этого языка?",
+      "serpTitle": "В Google"
     },
     "pageSeo": {
       "tab": "SEO",

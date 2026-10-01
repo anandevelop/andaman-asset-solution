@@ -18,7 +18,8 @@ import "server-only";
  * This renders in the Overview tab's sidebar, on a page that already runs
  * its own full project fetch. A readiness panel that cost five more round
  * trips would make the slowest screen in the back office slower to tell you
- * something you could already see by clicking around. So: one `findFirst`,
+ * something you could already see by clicking around. So: one `findMany`
+ * (by id — one row on the Overview tab, a page of rows on the list's cards),
  * with the two relation counts as `_count` and this month's progress as a
  * `take: 1`, rather than separate counts per check.
  *
@@ -37,13 +38,14 @@ import "server-only";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { locales } from "@/i18n";
 import { localeFills, type LocaleFill } from "@/lib/locale-completeness";
 
 /** Which workspace tab fixes a failing check. */
-export type ReadinessTab = "overview" | "content" | "seo" | "units" | "progress";
+export type ReadinessTab = "overview" | "content" | "seo" | "unitTypes" | "progress";
 
 export type ReadinessCheck = {
   /** i18n key suffix under admin.projects.readiness.check.* */
@@ -74,45 +76,68 @@ const EMPTY: ProjectReadiness = {
 
 const filled = (value: string | null | undefined) => (value ?? "").trim().length > 0;
 
-export async function getProjectReadiness(projectId: string): Promise<ProjectReadiness> {
-  const now = new Date();
+/** What one project's checks are computed from. A function because this
+ *  month's progress filter needs the date. */
+function readinessSelect(now: Date) {
+  return {
+    id: true,
+    isPublished: true,
+    heroImageUrl: true,
+    heroMediaType: true,
+    heroVideoUrl: true,
+    gallery: true,
+    translations: {
+      select: {
+        locale: true,
+        name: true,
+        tagline: true,
+        description: true,
+        metaTitle: true,
+        metaDescription: true,
+      },
+    },
+    _count: { select: { unitTypes: true } },
+    // This calendar month only: the question is "has anybody logged
+    // this month yet", not "is there a log at all".
+    progressUpdates: {
+      where: { year: now.getFullYear(), month: now.getMonth() + 1 },
+      select: { isPublished: true },
+      take: 1,
+    },
+  } satisfies Prisma.ProjectSelect;
+}
 
-  const row = await safeQuery(
+type ReadinessRow = Prisma.ProjectGetPayload<{ select: ReturnType<typeof readinessSelect> }>;
+
+/**
+ * Readiness for several projects in one query — the project list's cards.
+ * getProjectReadiness() is this with one id, so the file still issues
+ * exactly one query however it is called (see the header): a page of 25
+ * cards costs one round trip, not 25.
+ */
+export async function getProjectReadinessFor(
+  projectIds: readonly string[],
+): Promise<Map<string, ProjectReadiness>> {
+  if (projectIds.length === 0) return new Map();
+
+  const rows = await safeQuery(
     "admin:projectReadiness",
     () =>
-      prisma.project.findFirst({
-        where: { id: projectId, deletedAt: null },
-        select: {
-          isPublished: true,
-          heroImageUrl: true,
-          heroMediaType: true,
-          heroVideoUrl: true,
-          gallery: true,
-          translations: {
-            select: {
-              locale: true,
-              name: true,
-              tagline: true,
-              description: true,
-              metaTitle: true,
-              metaDescription: true,
-            },
-          },
-          _count: { select: { unitTypes: true } },
-          // This calendar month only: the question is "has anybody logged
-          // this month yet", not "is there a log at all".
-          progressUpdates: {
-            where: { year: now.getFullYear(), month: now.getMonth() + 1 },
-            select: { isPublished: true },
-            take: 1,
-          },
-        },
+      prisma.project.findMany({
+        where: { id: { in: [...projectIds] }, deletedAt: null },
+        select: readinessSelect(new Date()),
       }),
-    null,
+    [],
   );
 
-  if (!row) return EMPTY;
+  return new Map(rows.map((row) => [row.id, readinessOf(row)]));
+}
 
+export async function getProjectReadiness(projectId: string): Promise<ProjectReadiness> {
+  return (await getProjectReadinessFor([projectId])).get(projectId) ?? EMPTY;
+}
+
+function readinessOf(row: ReadinessRow): ProjectReadiness {
   /* A hero is an image *or* a video, decided by heroMediaType — checking
      heroImageUrl alone would report a video-led project as missing its
      hero. See the field comment on Project.heroMediaType. */
@@ -148,7 +173,7 @@ export async function getProjectReadiness(projectId: string): Promise<ProjectRea
     {
       key: "unitTypes",
       ok: row._count.unitTypes > 0,
-      tab: "units",
+      tab: "unitTypes",
       done: row._count.unitTypes,
     },
     {

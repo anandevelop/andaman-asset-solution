@@ -13,10 +13,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -126,33 +124,9 @@ export default async function AdminProjectContentPage(props: Props) {
     isSource: code === SOURCE_LOCALE,
   }));
 
-  const projectName = locale === "th" ? project.nameTh : project.nameEn;
 
   return (
     <div className="space-y-6">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("projects.title")}
-        </Link>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
-          <span
-            className={
-              project.isPublished
-                ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-            }
-          >
-            {project.isPublished ? t("common.published") : t("common.draft")}
-          </span>
-        </div>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
@@ -207,6 +181,7 @@ export default async function AdminProjectContentPage(props: Props) {
           previewMobile: t("projectContent.previewMobile"),
           previewUnpublished: t("projectContent.previewUnpublished"),
           previewNote: t("projectContent.previewNote"),
+          serpTitle: t("projectContent.serpTitle"),
           error: t("common.error"),
           confirmDiscard: t("projectContent.confirmDiscard"),
         }}

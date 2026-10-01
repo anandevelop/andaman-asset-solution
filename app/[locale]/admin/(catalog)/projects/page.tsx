@@ -19,7 +19,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import { LayoutGrid, List, Plus } from "lucide-react";
 import { ProjectStatus, PropertyType, Role } from "@prisma/client";
 import { isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -32,6 +32,9 @@ import {
   getAdminProjectList,
   type ProjectListSort,
 } from "@/lib/admin/project-list";
+import { getProjectReadinessFor } from "@/lib/admin/project-readiness";
+import { intlLocale } from "@/lib/format";
+import ProjectCards, { type ProjectCardView } from "@/components/admin/ProjectCards";
 import PageTabs from "@/components/admin/PageTabs";
 import ProjectFilters from "@/components/admin/ProjectFilters";
 import ProjectsTable, { type ProjectTableRow } from "@/components/admin/ProjectsTable";
@@ -46,6 +49,8 @@ type SearchParams = {
   sort?: string;
   page?: string;
   perPage?: string;
+  /** "table" for the bulk-action table; cards otherwise. */
+  view?: string;
 };
 
 type Props = {
@@ -141,6 +146,52 @@ export default async function AdminProjectsPage(props: Props) {
     progressCount: row.progressCount,
   }));
 
+  /* Cards first (v4); the table keeps bulk publish, reorder and export. */
+  const view = searchParams.view === "table" ? "table" : "cards";
+
+  /* Readiness for the cards on this page, in one query. */
+  const readiness =
+    view === "cards" ? await getProjectReadinessFor(list.rows.map((row) => row.id)) : new Map();
+  const priceFormat = new Intl.NumberFormat(intlLocale(locale), {
+    style: "currency",
+    currency: "THB",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  const cards: ProjectCardView[] = list.rows.map((row) => {
+    const check = readiness.get(row.id);
+    const percent = check && check.checks.length > 0 ? Math.round((check.passed / check.checks.length) * 100) : 0;
+    return {
+      id: row.id,
+      name: row.name,
+      location: row.location,
+      imageUrl: row.thumbnailUrl,
+      status: row.status,
+      statusLabel: t(`projectStatus.${row.status}` as never),
+      isPublished: row.isPublished,
+      units: row.units,
+      unitsLabel: unitsLabelFor(row.units),
+      typesLabel: t("projects.cards.types", { count: row.unitTypeCount }),
+      priceLabel:
+        row.priceFromTHB === null
+          ? t("projects.cards.noPrice")
+          : t("projects.cards.priceFrom", { price: priceFormat.format(row.priceFromTHB) }),
+      readiness: percent,
+      readinessLabel: t("projects.cards.readiness", { percent }),
+      locales: row.locales,
+    };
+  });
+
+  const viewHref = (target: "cards" | "table") => {
+    const params = new URLSearchParams(
+      Object.entries(searchParams).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    );
+    if (target === "table") params.set("view", "table");
+    else params.delete("view");
+    const query = params.toString();
+    return `/${locale}/admin/projects${query ? `?${query}` : ""}`;
+  };
+
   const isFiltered =
     Boolean(filters.search.trim()) ||
     filters.propertyType !== "ALL" ||
@@ -201,6 +252,27 @@ export default async function AdminProjectsPage(props: Props) {
         </p>
       )}
 
+      <div className="flex justify-end">
+        <nav aria-label={t("projects.cards.viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+          {(["cards", "table"] as const).map((option) => (
+            <Link
+              key={option}
+              href={viewHref(option)}
+              aria-current={view === option ? "page" : undefined}
+              className={[
+                "flex h-7 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] transition-colors",
+                view === option
+                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
+                  : "text-ink-muted hover:text-ink",
+              ].join(" ")}
+            >
+              {option === "cards" ? <LayoutGrid size={14} aria-hidden /> : <List size={14} aria-hidden />}
+              {option === "cards" ? t("projects.cards.viewCards") : t("projects.cards.viewTable")}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
       <ProjectFilters
         locale={locale}
         activeSearch={filters.search}
@@ -248,6 +320,13 @@ export default async function AdminProjectsPage(props: Props) {
         </div>
       ) : (
         <>
+          {view === "cards" ? (
+            <ProjectCards
+              locale={locale}
+              cards={cards}
+              labels={{ draft: t("common.draft"), localeMissing: t("common.translationMissing") }}
+            />
+          ) : (
           <fieldset disabled={!canWrite} className="contents">
           <ProjectsTable
             locale={locale}
@@ -290,6 +369,7 @@ export default async function AdminProjectsPage(props: Props) {
             }}
           />
           </fieldset>
+          )}
 
           <TablePagination
             basePath={`/${locale}/admin/projects`}

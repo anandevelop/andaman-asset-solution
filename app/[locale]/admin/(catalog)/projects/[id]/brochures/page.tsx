@@ -25,7 +25,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, ExternalLink, Pencil, Plus } from "lucide-react";
+import { ExternalLink, Pencil, Plus } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
@@ -82,23 +82,9 @@ export default async function AdminProjectBrochuresPage(props: Props) {
      list. */
   const offline = isDatabaseOffline();
 
-  const projectName = locale === "th" ? project.nameTh : project.nameEn;
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("projects.title")}
-        </Link>
-
-        <p className="admin-section-title mt-4">{t("eBrochures.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
-      </header>
-
       <ProjectHubTabs locale={locale} projectId={project.id} active="brochures" />
 
       {offline && (

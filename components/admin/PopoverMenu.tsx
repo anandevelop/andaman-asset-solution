@@ -29,6 +29,8 @@ export default function PopoverMenu({
   onSelect,
   align = "left",
   disabled = false,
+  interceptClick,
+  className = "relative inline-block",
 }: {
   /** Accessible name of the button — its visible content may be a pill. */
   label: string;
@@ -39,6 +41,11 @@ export default function PopoverMenu({
   onSelect: (value: string) => void;
   align?: "left" | "right";
   disabled?: boolean;
+  /** Return true to handle a click on the button yourself instead of
+   *  opening the menu — shift-click selecting a unit tile, say. */
+  interceptClick?: (event: React.MouseEvent<HTMLButtonElement>) => boolean;
+  /** The wrapper's classes; it must stay positioned for the menu. */
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -81,7 +88,7 @@ export default function PopoverMenu({
   };
 
   return (
-    <div ref={rootRef} className="relative inline-block" onClick={(event) => event.stopPropagation()}>
+    <div ref={rootRef} className={className} onClick={(event) => event.stopPropagation()}>
       <button
         ref={buttonRef}
         type="button"
@@ -90,7 +97,10 @@ export default function PopoverMenu({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         disabled={disabled}
-        onClick={() => setOpen((value) => !value)}
+        onClick={(event) => {
+          if (interceptClick?.(event)) return;
+          setOpen((value) => !value);
+        }}
         className={buttonClassName}
       >
         {buttonContent}

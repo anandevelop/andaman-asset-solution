@@ -56,6 +56,8 @@ describe("the workspace tabs", () => {
       "edit",
       "content",
       "seo",
+      "unit-types",
+      "units",
       "site-plan",
       "facilities",
       "progress",
@@ -68,12 +70,17 @@ describe("the workspace tabs", () => {
     }
   });
 
-  it("lands the units tab on the site plan", () => {
-    /* The site plan had no tab and no link from anywhere in the back
-       office — the only way in was to type the URL. Making it where the
-       combined tab lands is what fixed that, so this is the assertion
-       that would catch someone "tidying" it back to /units. */
-    expect(tabs).toContain("href: `${base}/site-plan`");
+  it("keeps the site plan reachable from the units tab", () => {
+    /* The site plan once had no tab and no link from anywhere in the back
+       office — the only way in was to type the URL. The tab used to land
+       on it for that reason. The v4 tab lands on the unit tiles instead,
+       so the rule is now stated directly: the plan is a step of that tab
+       (the segmented control under the strip), and the units page links
+       to it from its rail. Dropping either would bring the defect back. */
+    expect(tabs).toContain('{ key: "sitePlan", segment: "/site-plan"');
+    expect(tabs).toContain('sitePlan: "unitsPlan"');
+    const units = read(CATALOG, "projects", "[id]", "units", "page.tsx");
+    expect(units).toContain("/site-plan`");
   });
 
   it("reads its own labels instead of taking them as a prop", () => {
@@ -84,26 +91,25 @@ describe("the workspace tabs", () => {
   });
 });
 
-describe("the three unit steps", () => {
-  it("are all reachable from each other", () => {
-    const subnav = read(ROOT, "components", "admin", "ProjectUnitsSubnav.tsx");
+describe("the two-route tabs", () => {
+  const tabs = read(ROOT, "components", "admin", "ProjectHubTabs.tsx");
 
-    for (const segment of ["site-plan", "units", "unit-types"]) {
-      expect(subnav, segment).toContain(`${segment}\``);
+  it("draw both routes in the segmented control", () => {
+    for (const segment of ["/content", "/seo", "/units", "/site-plan"]) {
+      expect(tabs, segment).toContain(`segment: "${segment}"`);
     }
   });
 
-  it("each render the sub-nav", () => {
+  it("are each opened by the page that is that step", () => {
     for (const [dir, step] of [
-      ["site-plan", "sitePlan"],
+      ["content", "content"],
+      ["seo", "seo"],
       ["units", "units"],
+      ["site-plan", "sitePlan"],
       ["unit-types", "unitTypes"],
     ] as const) {
       const page = read(CATALOG, "projects", "[id]", dir, "page.tsx");
-
-      expect(page, dir).toContain(`<ProjectUnitsSubnav locale={locale} projectId={project.id} active="${step}" />`);
-      // …and agree that they are all one tab.
-      expect(page, dir).toContain('active="units"');
+      expect(page, dir).toMatch(new RegExp(`<ProjectHubTabs[^>]*active="${step}"`));
     }
   });
 });

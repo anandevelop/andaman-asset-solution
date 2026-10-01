@@ -25,13 +25,12 @@ import { Check, ChevronRight, Minus } from "lucide-react";
 import { LOCALE_NATIVE_NAMES } from "@/lib/locale-completeness";
 import type { ProjectReadiness, ReadinessTab } from "@/lib/admin/project-readiness";
 
-/** The tab each check sends you to. Mirrors ProjectHubTabs' own hrefs —
- *  "units" lands on the site plan there too, for the same reason. */
+/** The tab each check sends you to. Mirrors ProjectHubTabs' own hrefs. */
 const TAB_SEGMENT: Record<ReadinessTab, string> = {
   overview: "/edit",
   content: "/content",
   seo: "/seo",
-  units: "/site-plan",
+  unitTypes: "/unit-types",
   progress: "/progress",
 };
 

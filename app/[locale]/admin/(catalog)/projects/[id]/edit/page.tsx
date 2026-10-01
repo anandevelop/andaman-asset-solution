@@ -6,10 +6,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -107,33 +106,6 @@ export default async function EditProjectPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("projects.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold text-primary sm:text-3xl">
-          {t("projects.editTitle")}
-        </h1>
-
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-          {project.isPublished && (
-            <Link
-              href={`/${locale}/projects/${project.slug}`}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 text-ink-muted hover:text-primary"
-            >
-              <ExternalLink size={14} aria-hidden />
-              /{project.slug}
-            </Link>
-          )}
-        </div>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}

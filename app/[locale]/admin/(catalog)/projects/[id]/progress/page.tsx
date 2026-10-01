@@ -23,11 +23,10 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -149,29 +148,15 @@ export default async function AdminProgressPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("progress.backToProjects")}
-        </Link>
-
-        <p className="admin-section-title mt-4">{t("progress.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">
-          {projectName}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {t("progress.subtitle", { project: projectName })}
-        </p>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
         active="progress"
       />
+
+      <p className="text-sm text-ink-muted">
+          {t("progress.subtitle", { project: projectName })}
+        </p>
 
       <ProgressPhaseTimeline
         phases={overview.phases}

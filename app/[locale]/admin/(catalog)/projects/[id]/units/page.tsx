@@ -19,7 +19,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowRight, Info, Map as MapIcon } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -35,8 +35,7 @@ import {
   type UnitRow,
 } from "@/lib/admin/project-units";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
-import ProjectUnitsSubnav from "@/components/admin/ProjectUnitsSubnav";
-import UnitSitePlan from "@/components/admin/UnitSitePlan";
+import UnitTileBoard, { type TileGroup } from "@/components/admin/UnitTileBoard";
 import UnitDetailPanel from "@/components/admin/UnitDetailPanel";
 import UnitsPanel, { type UnitTableRow } from "@/components/admin/UnitsPanel";
 import { saveUnit } from "./actions";
@@ -64,10 +63,7 @@ export default async function AdminUnitsPage(props: Props) {
   const session = await requireAdmin(locale, Role.VIEWER);
   const canWrite = hasRole(session.role, Role.EDITOR);
 
-  const [t, tEnum] = await Promise.all([
-    getTranslations({ locale, namespace: "admin" }),
-    getTranslations({ locale, namespace: "projects" }),
-  ]);
+  const t = await getTranslations({ locale, namespace: "admin" });
 
   const project = await safeQuery(
     "admin:project:unitsPage",
@@ -103,7 +99,6 @@ export default async function AdminUnitsPage(props: Props) {
     ),
   ]);
 
-  const projectName = locale === "th" ? project.nameTh : project.nameEn;
   const now = new Date();
 
   const statusLabels = {
@@ -142,21 +137,8 @@ export default async function AdminUnitsPage(props: Props) {
   const phaseUnits = activeGroup?.units ?? [];
   const counts = countUnits(phaseUnits);
 
-  // "Phase 2 (8 plots) not released yet" for every phase that is not the
-  // one on screen and has nothing on sale — the mockup's footnote.
-  const otherPhaseNotes = phaseGroups
-    .filter((group) => group !== activeGroup && group.allUnreleased)
-    .map((group) =>
-      t("units.phaseUnreleasedNote", {
-        phase: phaseLabelFor(group.phase),
-        count: group.units.length,
-      }),
-    );
-
   // Plots with neither a traced shape nor an anchor cannot be drawn on the
-  // master plan image — the same test UnitSitePlan uses to decide between
-  // the image and the tile grid, counted here so the explanation it shows
-  // is a finished sentence rather than a template.
+  // master plan image — the site-plan card's "traced x / y".
   const untracedCount = phaseUnits.filter(
     (unit) =>
       !(unit.shapePoints && unit.shapePoints.length > 2) &&
@@ -170,6 +152,41 @@ export default async function AdminUnitsPage(props: Props) {
     // in the phase, rather than an empty panel asking for a click.
     phaseUnits[0] ??
     null;
+
+
+  // ── Tiles, grouped by house type ───────────────────────────────────────
+  /* In the house types' own order; plots with no type last. A plot held
+     for somebody is `locked` — see UnitTileBoard's header for why it gets
+     the detail panel rather than the quick menu. */
+  const typeOrder = new Map(unitTypes.map((type, index) => [type.id, index]));
+  const tileGroupsById = new Map<string, TileGroup>();
+  for (const unit of phaseUnits) {
+    const key = unit.unitTypeId ?? "none";
+    const group = tileGroupsById.get(key) ?? {
+      key,
+      label: unit.unitTypeName ?? t("units.tiles.noType"),
+      meta: unit.bedrooms ? t("units.bedroomsLabel", { count: unit.bedrooms }) : null,
+      units: [],
+    };
+    group.units.push({
+      id: unit.id,
+      unitNumber: unit.unitNumber,
+      status: unit.status,
+      released: unit.releasedForSale,
+      locked:
+        unit.status === "RESERVED" &&
+        Boolean(unit.reservedByLead || unit.reservedByName || unit.reservationExpiresAt),
+      selectedInPanel: unit.id === selected?.id,
+      detailHref: `?${new URLSearchParams({
+        ...(activeGroup ? { phase: String(activeGroup.phase ?? "none") } : {}),
+        unit: unit.id,
+      }).toString()}`,
+    });
+    tileGroupsById.set(key, group);
+  }
+  const tileGroups = [...tileGroupsById.values()].sort(
+    (a, b) => (typeOrder.get(a.key) ?? Number.MAX_SAFE_INTEGER) - (typeOrder.get(b.key) ?? Number.MAX_SAFE_INTEGER),
+  );
 
   const livingAreaLabelFor = (unit: UnitRow) =>
     unit.livingAreaSqm === null
@@ -284,39 +301,11 @@ export default async function AdminUnitsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("projects.title")}
-        </Link>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
-          <span className="rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
-            {tEnum(`status.${project.status}` as never)}
-          </span>
-          <span
-            className={
-              project.isPublished
-                ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-            }
-          >
-            {project.isPublished ? t("common.published") : t("common.draft")}
-          </span>
-        </div>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
         active="units"
       />
-
-      <ProjectUnitsSubnav locale={locale} projectId={project.id} active="units" />
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -335,48 +324,104 @@ export default async function AdminUnitsPage(props: Props) {
       </p>
 
       <fieldset disabled={!canWrite} className="contents">
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <UnitSitePlan
-            locale={locale}
-            projectId={project.id}
-            units={phaseUnits.map((unit) => ({
-              id: unit.id,
-              unitNumber: unit.unitNumber,
-              status: unit.status,
-              releasedForSale: unit.releasedForSale,
-              shapePoints: unit.shapePoints,
-              positionXPercent: unit.positionXPercent,
-              positionYPercent: unit.positionYPercent,
-            }))}
-            selectedUnitId={selected?.id ?? null}
-            activePhase={activeGroup?.phase ?? null}
-            phases={phaseGroups.map((group) => ({
-              phase: group.phase,
-              label: phaseLabelFor(group.phase),
-              count: group.units.length,
-              allUnreleased: group.allUnreleased,
-            }))}
-            masterPlanImageUrl={project.masterPlanImageUrl}
-            counts={counts}
-            labels={{
-              title: `${t("sitePlan.title")} · ${phaseLabelFor(activeGroup?.phase ?? null)}`,
-              changeImage: t("units.changePlanImage"),
-              editPositions: t("units.editPositions"),
-              north: t("units.north"),
-              available: statusLabels.AVAILABLE,
-              reserved: statusLabels.RESERVED,
-              sold: statusLabels.SOLD,
-              unreleased: t("units.unreleased"),
-              otherPhaseNotes,
-              untracedNote:
-                untracedCount > 0 ? t("units.untracedNote", { count: untracedCount }) : null,
-              empty: t("units.empty"),
-            }}
-          />
-        </div>
+      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        <section className="admin-card space-y-4">
+          {/* Phases, when the project releases in stages — the tiles and
+              the counts are one phase at a time, as the plan was. */}
+          {phaseGroups.length > 1 && (
+            <nav aria-label={t("units.phaseLabel")} className="inline-flex flex-wrap rounded-[10px] border border-adm-line bg-surface p-0.5">
+              {phaseGroups.map((group) => {
+                const current = group === activeGroup;
+                return (
+                  <Link
+                    key={group.phase ?? "none"}
+                    href={`?phase=${group.phase ?? "none"}`}
+                    scroll={false}
+                    aria-current={current ? "page" : undefined}
+                    className={[
+                      "rounded-[8px] px-3 py-1 text-[12.5px] transition-colors",
+                      current
+                        ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
+                        : "text-ink-muted hover:text-ink",
+                    ].join(" ")}
+                  >
+                    {phaseLabelFor(group.phase)} · {group.units.length}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
-        <div className="lg:col-span-2">
+          {phaseUnits.length === 0 ? (
+            <p className="py-8 text-center text-sm text-ink-muted">{t("units.empty")}</p>
+          ) : (
+            <UnitTileBoard
+              locale={locale}
+              projectId={project.id}
+              projectSlug={project.slug}
+              groups={tileGroups}
+              statusLabels={statusLabels}
+              canWrite={canWrite}
+              labels={{
+                details: t("units.tiles.details"),
+                unreleased: t("units.unreleased"),
+                lockedHint: t("units.tiles.lockedHint"),
+                shiftHint: t("units.tiles.shiftHint"),
+                bulkStatus: t("units.tiles.bulkStatus"),
+                clear: t("units.tiles.clear"),
+                failed: t("common.error"),
+              }}
+            />
+          )}
+        </section>
+
+        <div className="space-y-4">
+          {/* How much is left, as one ring: available of what is on sale.
+              Unreleased plots are not counted as available — see
+              countUnits. */}
+          <section className="admin-card flex items-center gap-4">
+            <AvailabilityRing available={counts.available} total={counts.available + counts.reserved + counts.sold} />
+            <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-xs">
+              <dt className="text-ink-muted">{statusLabels.AVAILABLE}</dt>
+              <dd className="text-right font-semibold tabular-nums text-adm-success">{counts.available}</dd>
+              <dt className="text-ink-muted">{statusLabels.RESERVED}</dt>
+              <dd className="text-right font-semibold tabular-nums text-adm-warning">{counts.reserved}</dd>
+              <dt className="text-ink-muted">{statusLabels.SOLD}</dt>
+              <dd className="text-right font-semibold tabular-nums text-adm-neutral">{counts.sold}</dd>
+              {counts.unreleased > 0 && (
+                <>
+                  <dt className="text-ink-muted">{t("units.unreleased")}</dt>
+                  <dd className="text-right font-semibold tabular-nums text-ink-muted">{counts.unreleased}</dd>
+                </>
+              )}
+            </dl>
+          </section>
+
+          {/* The plan editor is a step of this tab; this card is the way in
+              from the tiles (tests/admin/project-workspace.test.ts). */}
+          <Link
+            href={`/${locale}/admin/projects/${project.id}/site-plan`}
+            className="admin-card group block overflow-hidden p-0! transition-colors hover:border-adm-line-strong"
+          >
+            <span className="flex h-28 items-center justify-center overflow-hidden bg-surface-muted">
+              {project.masterPlanImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail, see ProjectsTable
+                <img src={project.masterPlanImageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <MapIcon size={28} aria-hidden className="text-ink-muted" />
+              )}
+            </span>
+            <span className="block px-4 py-3">
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-ink">
+                {t("sitePlan.title")}
+                <ArrowRight size={14} aria-hidden className="text-ink-muted transition-transform group-hover:translate-x-0.5" />
+              </span>
+              <span className="mt-0.5 block text-xs text-ink-muted">
+                {t("units.tiles.traced", { traced: phaseUnits.length - untracedCount, total: phaseUnits.length })}
+              </span>
+            </span>
+          </Link>
+
           <UnitDetailPanel
             locale={locale}
             projectId={project.id}
@@ -474,5 +519,34 @@ export default async function AdminUnitsPage(props: Props) {
       />
       </fieldset>
     </div>
+  );
+}
+
+/** Available of what is on sale, as a ring. Server-rendered SVG; the
+ *  number beside it carries the meaning, the ring is the glance. */
+function AvailabilityRing({ available, total }: { available: number; total: number }) {
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const share = total === 0 ? 0 : available / total;
+  return (
+    <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
+      <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90" aria-hidden>
+        <circle cx="32" cy="32" r={radius} fill="none" strokeWidth="6" className="stroke-adm-line" />
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          fill="none"
+          strokeWidth="6"
+          strokeLinecap="round"
+          className="stroke-adm-success"
+          strokeDasharray={`${share * circumference} ${circumference}`}
+        />
+      </svg>
+      <span className="absolute text-sm font-semibold tabular-nums text-ink">
+        {available}
+        <span className="text-[10px] font-normal text-ink-muted">/{total}</span>
+      </span>
+    </span>
   );
 }

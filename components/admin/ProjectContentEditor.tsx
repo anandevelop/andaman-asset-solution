@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { saveProjectContent } from "@/app/[locale]/admin/(catalog)/projects/[id]/content/actions";
 import { CONTENT_FIELDS, META_LIMITS, type ContentField } from "@/lib/project-content";
+import SerpPreview from "@/components/admin/seo/SerpPreview";
 
 export type ContentValues = Record<ContentField, string>;
 
@@ -86,6 +87,8 @@ type Props = {
     previewMobile: string;
     previewUnpublished: string;
     previewNote: string;
+    /** "In Google" — the SERP preview's heading. */
+    serpTitle: string;
     error: string;
     confirmDiscard: string;
   };
@@ -244,6 +247,7 @@ export default function ProjectContentEditor({
      in development that is localhost, not the production host the URL bar
      below displays. The nonce busts the iframe cache after a save. */
   const previewSrc = `/${target}/projects/${projectSlug}?v=${previewNonce}`;
+  const serpHost = siteOrigin.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
   return (
     <div className="space-y-4">
@@ -295,46 +299,46 @@ export default function ProjectContentEditor({
       )}
 
       {/* ── Language row ─────────────────────────────────────────────── */}
+      {/* A segmented switch, TH/EN/ZH/RU, with a dot on each language that
+          is not complete yet — red under half, amber above — so the gaps
+          are visible before anyone opens them. The exact share is in the
+          title; the source language is marked rather than scored. */}
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="text-xs text-ink-muted">{labels.compareWith}</span>
 
-        {languages.map((language) => {
-          const isTarget = language.locale === target;
-          return (
-            <span key={language.locale} className="flex items-center gap-2.5">
+        <nav aria-label={labels.compareWith} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+          {languages.map((language) => {
+            const isTarget = language.locale === target;
+            const missing = !language.isSource && language.percent < 100;
+            return (
               <a
+                key={language.locale}
                 href={`?lang=${language.locale}`}
                 aria-current={isTarget ? "page" : undefined}
+                title={language.isSource ? labels.sourceNote : `${language.percent}%`}
                 className={[
-                  "flex items-center gap-2 rounded-xs border px-3 py-1.5 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-1.5 rounded-[8px] px-3 py-1 text-[13px] font-medium uppercase transition-colors",
                   isTarget
-                    ? "border-primary bg-primary text-white"
-                    : language.isSource
-                      ? "border-primary/25 bg-surface-raised text-primary"
-                      : "border-primary/15 bg-surface-raised text-ink-muted hover:border-primary/30",
+                    ? "bg-adm-solid text-ink shadow-[0_0_0_1px_var(--adm-line)]"
+                    : "text-ink-muted hover:text-ink",
                 ].join(" ")}
               >
                 {language.label}
-                <span
-                  className={[
-                    "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
-                    language.isSource
-                      ? "bg-primary/10 text-primary"
-                      : language.percent >= 90
-                        ? "bg-emerald-100 text-emerald-800"
-                        : language.percent >= 50
-                          ? "bg-accent/20 text-accent-800"
-                          : "bg-red-100 text-red-700",
-                    isTarget ? "bg-white/20! text-white!" : "",
-                  ].join(" ")}
-                >
-                  {language.isSource ? labels.sourceNote : `${language.percent}%`}
-                </span>
+                {language.isSource && (
+                  <span className="rounded-full bg-adm-neutral-bg px-1.5 text-[10px] font-medium normal-case text-adm-neutral">
+                    {labels.sourceNote}
+                  </span>
+                )}
+                {missing && (
+                  <span
+                    aria-label={`${language.percent}%`}
+                    className={`h-1.5 w-1.5 rounded-full ${language.percent < 50 ? "bg-adm-danger" : "bg-adm-warning"}`}
+                  />
+                )}
               </a>
-              {language.isSource && <ArrowRight size={14} className="text-ink-muted" aria-hidden />}
-            </span>
-          );
-        })}
+            );
+          })}
+        </nav>
 
         <button
           type="button"
@@ -468,7 +472,21 @@ export default function ProjectContentEditor({
         </section>
 
         {/* ── Live preview ───────────────────────────────────────────── */}
-        <section className="admin-card p-0! xl:sticky xl:top-4 xl:self-start">
+        <div className="space-y-4 xl:sticky xl:top-[124px] xl:self-start">
+        {/* How Google would show this language, from what is typed now —
+            unsaved edits included, which is the point: the meta fields'
+            length limits only mean something next to the result they cut. */}
+        <section className="admin-card space-y-2">
+          <h2 className="text-sm font-semibold text-ink">{labels.serpTitle}</h2>
+          <SerpPreview
+            displayPath={`${serpHost} › ${target} › projects › ${projectSlug}`}
+            title={values.metaTitle.trim() || values.name.trim()}
+            description={values.metaDescription.trim() || values.tagline.trim()}
+            className="rounded-[10px] border border-adm-line p-3"
+          />
+        </section>
+
+        <section className="admin-card p-0!">
           <div className="flex items-center justify-between border-b border-primary/10 px-4 py-3">
             <h2 className="text-sm font-semibold text-primary">{labels.previewTitle}</h2>
             <div className="flex items-center gap-1">
@@ -526,6 +544,7 @@ export default function ProjectContentEditor({
             </div>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

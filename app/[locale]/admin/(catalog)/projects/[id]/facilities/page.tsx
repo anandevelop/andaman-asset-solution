@@ -8,11 +8,10 @@
  * model comment on ProjectFacility in schema.prisma).
  */
 
-import Link from "next/link";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -54,29 +53,16 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
     include: { translations: true },
   });
 
-  const projectName = locale === "th" ? project.nameTh : project.nameEn;
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects/${project.id}/edit`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {projectName}
-        </Link>
-
-        <p className="admin-section-title mt-4">{t("facilities.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("facilities.subtitle")}</p>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
         active="facilities"
       />
+
+      <p className="max-w-2xl text-sm text-ink-muted">{t("facilities.subtitle")}</p>
 
       {/* One language selection drives every facility's form on this page —
           see the file comment on LanguageTabs. */}

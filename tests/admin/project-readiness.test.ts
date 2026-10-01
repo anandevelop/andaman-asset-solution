@@ -64,17 +64,24 @@ describe("project readiness", () => {
     expect(gate).not.toContain("getProjectReadiness");
   });
 
-  it("is read by nothing but the Overview tab", () => {
-    /* A second caller is the moment to ask whether this should be one
-       query shared through a layout instead — a different design, not a
-       drive-by import. Naming the expected caller rather than counting
-       makes the failure say which file appeared. */
-    const callers = sourceFiles(ROOT)
-      .filter((file) => !file.endsWith(join("lib", "admin", "project-readiness.ts")))
-      .filter((file) => stripComments(readFileSync(file, "utf8")).includes("getProjectReadiness("))
-      .map((file) => file.slice(ROOT.length + 1));
+  it("is read by the Overview tab, and the list's cards in one batch", () => {
+    /* A new caller is the moment to ask whether it needs its own query
+       shape. The project list did: a card per project, read per project,
+       would be a page of round trips. It calls getProjectReadinessFor
+       with every id on the page instead — the same single query. Naming
+       the expected callers makes the failure say which file appeared. */
+    const callersOf = (needle: string) =>
+      sourceFiles(ROOT)
+        .filter((file) => !file.endsWith(join("lib", "admin", "project-readiness.ts")))
+        .filter((file) => stripComments(readFileSync(file, "utf8")).includes(needle))
+        .map((file) => file.slice(ROOT.length + 1));
 
-    expect(callers).toEqual([join("app", "[locale]", "admin", "(catalog)", "projects", "[id]", "edit", "page.tsx")]);
+    expect(callersOf("getProjectReadiness(")).toEqual([
+      join("app", "[locale]", "admin", "(catalog)", "projects", "[id]", "edit", "page.tsx"),
+    ]);
+    expect(callersOf("getProjectReadinessFor(")).toEqual([
+      join("app", "[locale]", "admin", "(catalog)", "projects", "page.tsx"),
+    ]);
   });
 
   it("stays one query", () => {
@@ -120,12 +127,10 @@ describe("the panel's links", () => {
     }
   });
 
-  it("agree with ProjectHubTabs about where the units tab lands", () => {
-    /* Both point at the site plan, which is the screen that had no way in
-       at all before the workspace was reorganised. If one of them is
-       "tidied" back to /units, the checklist and the tab bar disagree
-       about the same destination. */
-    expect(panel).toContain('units: "/site-plan"');
-    expect(hubTabs).toContain("href: `${base}/site-plan`");
+  it("agree with ProjectHubTabs about where house types are edited", () => {
+    /* House types have their own tab since v4; the "no house types yet"
+       check must open that tab, not the unit tiles. */
+    expect(panel).toContain('unitTypes: "/unit-types"');
+    expect(hubTabs).toContain("href: `${base}/unit-types`");
   });
 });

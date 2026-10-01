@@ -81,6 +81,11 @@ export type ProjectListRow = {
   lastEditedBy: string | null;
   lastEditedAt: Date | null;
   progressCount: number;
+  /** House types defined — the v4 card's "types" figure. */
+  unitTypeCount: number;
+  /** The lowest "from" price across its house types, or null if none is
+   *  priced (the card then says so rather than showing ฿0). */
+  priceFromTHB: number | null;
 };
 
 export type ProjectListFilters = {
@@ -287,9 +292,23 @@ export async function getAdminProjectList(
 
       const auditByProject = new Map(audits.map((entry) => [entry.recordId, entry]));
 
+      // House types and the cheapest "from" price, for the page only.
+      const typeStats = visible.length
+        ? await prisma.projectUnitType.groupBy({
+            by: ["projectId"],
+            where: { projectId: { in: visible.map((row) => row.project.id) } },
+            _count: { _all: true },
+            _min: { priceFromTHB: true },
+          })
+        : [];
+      const typesByProject = new Map(typeStats.map((entry) => [entry.projectId, entry]));
+
       const rows: ProjectListRow[] = visible.map(({ project, name, locales, units, hasMissingLocale }) => {
         const audit = auditByProject.get(project.id);
+        const types = typesByProject.get(project.id);
         return {
+          unitTypeCount: types?._count._all ?? 0,
+          priceFromTHB: types?._min.priceFromTHB == null ? null : Number(types._min.priceFromTHB),
           id: project.id,
           slug: project.slug,
           name,

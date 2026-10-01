@@ -7,12 +7,10 @@
  * own nested FloorPlansEditor rather than a single image field).
  */
 
-import Link from "next/link";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
-import ProjectUnitsSubnav from "@/components/admin/ProjectUnitsSubnav";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Plus } from "lucide-react";
+import { AlertTriangle, Bath, BedDouble, Plus, Ruler, Grid2x2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -77,6 +75,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         },
       },
       translations: true,
+      _count: { select: { units: true } },
     },
   });
 
@@ -284,27 +283,13 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/projects/${project.id}/edit`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {projectName}
-        </Link>
-
-        <p className="admin-section-title mt-4">{t("unitTypes.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{projectName}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("unitTypes.subtitle")}</p>
-      </header>
-
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
-        active="units"
+        active="unitTypes"
       />
 
-      <ProjectUnitsSubnav locale={locale} projectId={project.id} active="unitTypes" />
+      <p className="max-w-2xl text-sm text-ink-muted">{t("unitTypes.subtitle")}</p>
 
       {/* One language selection drives every unit type's description field
           on this page — see the file comment on LanguageTabs. Hardcoded
@@ -318,6 +303,47 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         completeLabel={t("common.translationComplete")}
         missingLabel={t("common.translationMissing")}
       />
+
+      {/* ── At a glance ──────────────────────────────────────────────
+          One card per type, with what is missing called out: a type with
+          no price shows "price on request" on the public page whether or
+          not that was meant, and one with no Thai description shows the
+          English one to Thai readers. Unit count is the plots actually
+          placed on the plan, falling back to the declared total. */}
+      {unitTypes.length > 0 && (
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {unitTypes.map((type) => {
+            const thai =
+              type.translations.find((row) => row.locale === "th")?.description?.trim() || type.descriptionTh?.trim();
+            const noPrice = type.priceFromTHB === null;
+            const units = type._count.units || type.totalUnits;
+            return (
+              <li key={type.id} className="admin-card p-4!">
+                <p className="flex items-baseline justify-between gap-2">
+                  <span className="truncate text-sm font-semibold text-ink">{type.name}</span>
+                  {type.code && <span className="admin-mono text-xs text-ink-muted">{type.code}</span>}
+                </p>
+                <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                  <Spec icon={BedDouble} value={type.bedrooms} label={t("unitTypes.card.bedrooms")} />
+                  <Spec icon={Bath} value={type.bathrooms} label={t("unitTypes.card.bathrooms")} />
+                  <Spec
+                    icon={Ruler}
+                    value={type.livingAreaSqm === null ? null : `${Math.round(Number(type.livingAreaSqm))} m²`}
+                    label={t("unitTypes.card.area")}
+                  />
+                  <Spec icon={Grid2x2} value={units} label={t("unitTypes.card.units")} />
+                </dl>
+                {(noPrice || !thai) && (
+                  <p className="mt-3 flex flex-wrap gap-1.5">
+                    {noPrice && <Warning label={t("unitTypes.card.noPrice")} />}
+                    {!thai && <Warning label={t("unitTypes.card.noThai")} />}
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {/* ── Floors, plans and room pins ──────────────────────────────
           The workspace holds one unsaved draft for the whole type — see
@@ -360,5 +386,32 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       </section>
 
     </div>
+  );
+}
+
+function Spec({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof BedDouble;
+  value: string | number | null;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-1" title={label}>
+      <Icon size={13} aria-hidden />
+      <dt className="sr-only">{label}</dt>
+      <dd className="tabular-nums text-ink">{value ?? "—"}</dd>
+    </div>
+  );
+}
+
+function Warning({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-medium text-adm-warning">
+      <AlertTriangle size={11} aria-hidden />
+      {label}
+    </span>
   );
 }

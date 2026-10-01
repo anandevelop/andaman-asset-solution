@@ -1181,7 +1181,7 @@
         "next": "Next page",
         "page": "Page"
       },
-      "hubUnits": "Homes, units & site plan",
+      "hubUnits": "Units & site plan",
       "hubLabel": "Project workspace",
       "readiness": {
         "title": "Project readiness",
@@ -1201,6 +1201,18 @@
           "partial": "partial",
           "missing": "missing"
         }
+      },
+      "hubContentSeo": "Content & SEO",
+      "hubUnitTypes": "House types",
+      "viewSite": "View page",
+      "cards": {
+        "types": "{count, plural, one {# type} other {# types}}",
+        "noPrice": "No price yet",
+        "priceFrom": "From {price}",
+        "readiness": "{percent}% ready",
+        "viewLabel": "List layout",
+        "viewCards": "Cards",
+        "viewTable": "Table"
       }
     },
     "progress": {
@@ -1346,7 +1358,20 @@
         "rateLimited": "Too many exports. Wait a minute and try again.",
         "truncated": "The export hit the 5,000-row limit."
       },
-      "untracedNote": "The master plan image is not shown because {count, plural, one {# plot has} other {# plots have}} not been placed on it yet."
+      "untracedNote": "The master plan image is not shown because {count, plural, one {# plot has} other {# plots have}} not been placed on it yet.",
+      "phaseLabel": "Phase",
+      "tiles": {
+        "details": "Details",
+        "lockedHint": "Reserved for a customer — change it from the details panel",
+        "shiftHint": "Click a tile to change its status · Shift-click to select several",
+        "bulkStatus": "Change status",
+        "clear": "Clear selection",
+        "noType": "No house type",
+        "traced": "{traced} of {total} units traced",
+        "changedOne": "Unit {unit} → {status}",
+        "changedMany": "{count} units → {status}",
+        "selected": "{count} selected"
+      }
     },
     "sitePlan": {
       "title": "Site Plan",
@@ -2294,6 +2319,14 @@
           "furnishedAspect": "Furnished plan does not match the drawing",
           "areaMismatch": "Room areas do not add up"
         }
+      },
+      "card": {
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms",
+        "area": "Living area",
+        "units": "Units",
+        "noPrice": "No price",
+        "noThai": "No Thai description"
       }
     },
     "faqs": {
@@ -3592,7 +3625,8 @@
       "previewMobile": "Mobile",
       "previewUnpublished": "This project is not published, so it has no public page to preview yet.",
       "previewNote": "The real public page. It updates a moment after you save.",
-      "confirmDiscard": "Discard your unsaved changes to this language?"
+      "confirmDiscard": "Discard your unsaved changes to this language?",
+      "serpTitle": "In Google"
     },
     "pageSeo": {
       "tab": "SEO",

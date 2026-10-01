@@ -1181,7 +1181,7 @@
         "next": "下一页",
         "page": "页"
       },
-      "hubUnits": "户型、单位与总平面图",
+      "hubUnits": "单位与总平面图",
       "hubLabel": "项目工作区",
       "readiness": {
         "title": "项目完成度",
@@ -1201,6 +1201,18 @@
           "partial": "部分",
           "missing": "缺失"
         }
+      },
+      "hubContentSeo": "内容与 SEO",
+      "hubUnitTypes": "户型",
+      "viewSite": "查看页面",
+      "cards": {
+        "types": "{count} 种户型",
+        "noPrice": "尚未定价",
+        "priceFrom": "起价 {price}",
+        "readiness": "完成度 {percent}%",
+        "viewLabel": "列表样式",
+        "viewCards": "卡片",
+        "viewTable": "表格"
       }
     },
     "progress": {
@@ -1346,7 +1358,20 @@
         "rateLimited": "导出过于频繁，请稍后再试。",
         "truncated": "导出已达到 5,000 行上限。"
       },
-      "untracedNote": "尚未显示规划图，因为还有 {count} 个地块未在图上定位。"
+      "untracedNote": "尚未显示规划图，因为还有 {count} 个地块未在图上定位。",
+      "phaseLabel": "期",
+      "tiles": {
+        "details": "详情",
+        "lockedHint": "已为客户预留 — 请在详情面板中更改",
+        "shiftHint": "点击方块更改状态 · 按住 Shift 点击可多选",
+        "bulkStatus": "更改状态",
+        "clear": "取消选择",
+        "noType": "未指定户型",
+        "traced": "已描绘 {traced} / {total} 个单位",
+        "changedOne": "单位 {unit} → {status}",
+        "changedMany": "{count} 个单位 → {status}",
+        "selected": "已选 {count} 个"
+      }
     },
     "sitePlan": {
       "title": "总平面图",
@@ -2294,6 +2319,14 @@
           "furnishedAspect": "Furnished plan does not match the drawing",
           "areaMismatch": "Room areas do not add up"
         }
+      },
+      "card": {
+        "bedrooms": "卧室",
+        "bathrooms": "浴室",
+        "area": "使用面积",
+        "units": "单位数",
+        "noPrice": "未定价",
+        "noThai": "缺少泰语描述"
       }
     },
     "faqs": {
@@ -3592,7 +3625,8 @@
       "previewMobile": "手机",
       "previewUnpublished": "该项目尚未发布，暂无公开页面可预览。",
       "previewNote": "真实的公开页面，保存后稍等片刻即会更新。",
-      "confirmDiscard": "确定放弃该语言未保存的修改吗？"
+      "confirmDiscard": "确定放弃该语言未保存的修改吗？",
+      "serpTitle": "在 Google 中"
     },
     "pageSeo": {
       "tab": "SEO",
