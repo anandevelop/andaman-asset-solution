@@ -24,7 +24,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useMemo } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -32,6 +32,8 @@ import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { PROJECT_STATUSES, PROPERTY_TYPES } from "@/lib/validations";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveToast from "@/components/admin/SaveToast";
+import FormSectionNav from "@/components/admin/FormSectionNav";
+import FormSaveBar from "@/components/admin/FormSaveBar";
 import SlugField from "@/components/admin/SlugField";
 import type { Locale } from "@/i18n";
 import type { ProjectFormState } from "@/app/[locale]/admin/(catalog)/projects/actions";
@@ -207,6 +209,22 @@ export default function ProjectForm({
     values.heroMediaType === "VIDEO" ? "VIDEO" : "IMAGE",
   );
 
+  // See FormSaveBar: any input inside the form marks it dirty; submitting
+  // clears it. Uploaders that only set a hidden input do not count, which
+  // errs on the quiet side rather than nagging about nothing.
+  const [dirty, setDirty] = useState(false);
+
+  const sections = useMemo(
+    () => [
+    { id: "project-identity", label: t("projectForm.sections.identity") },
+    { id: "project-content", label: t("projectForm.sections.content") },
+    { id: "project-spec", label: t("projectForm.sections.specification") },
+    { id: "project-imagery", label: t("projectForm.sections.imagery") },
+    { id: "project-publication", label: t("projectForm.sections.publication") },
+    ],
+    [t],
+  );
+
   const err = (name: string) => {
     const code = state.fields?.[name];
     if (!code) return null;
@@ -214,8 +232,20 @@ export default function ProjectForm({
   };
 
   return (
-    <>
-      <form id="project-form" action={formAction} className="space-y-8">
+    <div className="xl:grid xl:grid-cols-[152px_minmax(0,1fr)] xl:gap-6">
+      <FormSectionNav sections={sections} label={t("projectForm.sectionsNav")} />
+
+      <div className="min-w-0">
+      <form
+        id="project-form"
+        action={(formData: FormData) => {
+          setDirty(false);
+          formAction(formData);
+        }}
+        onInput={() => setDirty(true)}
+        onChange={() => setDirty(true)}
+        className="space-y-5"
+      >
       <input type="hidden" name="locale" value={lang} />
 
       {state.ok && state.message === "SAVED" && (
@@ -233,7 +263,8 @@ export default function ProjectForm({
       )}
 
       {/* ── Identity ────────────────────────────────────────────────── */}
-      <section className="admin-card space-y-5">
+      <section id="project-identity" aria-labelledby="project-identity-title" className="admin-card scroll-mt-20 space-y-5">
+        <SectionTitle id="project-identity-title">{t("projectForm.sections.identity")}</SectionTitle>
         <Field name="name"
         error={err("name")} label={`${t("projects.name")} · ${lang.toUpperCase()}`}>
           <input
@@ -302,7 +333,8 @@ export default function ProjectForm({
       </section>
 
       {/* ── Copy ────────────────────────────────────────────────────── */}
-      <section className="admin-card space-y-5">
+      <section id="project-content" aria-labelledby="project-content-title" className="admin-card scroll-mt-20 space-y-5">
+        <SectionTitle id="project-content-title">{t("projectForm.sections.content")}</SectionTitle>
         <h2 className="admin-section-title">{`${t("projects.tagline")} · ${lang.toUpperCase()}`}</h2>
 
         <Field name="tagline" error={err("tagline")} label="">
@@ -377,7 +409,8 @@ export default function ProjectForm({
       </section>
 
       {/* ── Specification ───────────────────────────────────────────── */}
-      <section className="admin-card space-y-5">
+      <section id="project-spec" aria-labelledby="project-spec-title" className="admin-card scroll-mt-20 space-y-5">
+        <SectionTitle id="project-spec-title">{t("projectForm.sections.specification")}</SectionTitle>
         <div className="grid gap-5 sm:grid-cols-3">
           <Field name="totalUnits"
           error={err("totalUnits")} label={t("projects.units")}>
@@ -484,7 +517,8 @@ export default function ProjectForm({
       </section>
 
       {/* ── Imagery ─────────────────────────────────────────────────── */}
-      <section className="admin-card space-y-6">
+      <section id="project-imagery" aria-labelledby="project-imagery-title" className="admin-card scroll-mt-20 space-y-6">
+        <SectionTitle id="project-imagery-title">{t("projectForm.sections.imagery")}</SectionTitle>
         {/* ── Hero media type ─────────────────────────────────────────
             Same radio + conditional-uploader pattern as
             HeroStorySlideForm's mediaType — IMAGE uses heroImageUrl
@@ -594,7 +628,8 @@ export default function ProjectForm({
           `seoSubmitted` check there. */}
 
       {/* ── Publication ─────────────────────────────────────────────── */}
-      <section className="admin-card space-y-5">
+      <section id="project-publication" aria-labelledby="project-publication-title" className="admin-card scroll-mt-20 space-y-5">
+        <SectionTitle id="project-publication-title">{t("projectForm.sections.publication")}</SectionTitle>
         <label className="flex items-start gap-3 text-sm text-ink">
           <input
             type="checkbox"
@@ -621,13 +656,12 @@ export default function ProjectForm({
         </Field>
       </section>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <SubmitButton label={submitLabel} />
-
+        <FormSaveBar dirty={dirty} unsavedLabel={t("projectForm.unsaved")}>
           <Link href={`/${locale}/admin/projects`} className="admin-btn-ghost">
             {t("common.cancel")}
           </Link>
-        </div>
+          <SubmitButton label={submitLabel} />
+        </FormSaveBar>
       </form>
 
       {/*
@@ -638,7 +672,7 @@ export default function ProjectForm({
       {onDelete && (
         <form
           action={onDelete}
-          className="mt-10 border-t border-primary/10 pt-6"
+          className="mt-8 border-t border-primary/10 pt-5"
         >
           <DeleteButton
             label={t("common.delete")}
@@ -646,6 +680,15 @@ export default function ProjectForm({
           />
         </form>
       )}
-    </>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2 id={id} className="-mt-1 border-b border-primary/5 pb-3 text-sm font-semibold text-ink">
+      {children}
+    </h2>
   );
 }

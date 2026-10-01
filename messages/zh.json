@@ -764,6 +764,13 @@
           "label": "发布前待审核",
           "none": "没有待审核的内容"
         }
+      },
+      "inventory": {
+        "title": "各项目房源库存",
+        "sold": "已售",
+        "reserved": "已预订",
+        "available": "可售",
+        "freeOfTotal": "可售 {free} / {total}"
       }
     },
     "leads": {
@@ -3265,7 +3272,13 @@
       "language": "语言",
       "notifications": "通知",
       "noNotifications": "暂无通知",
-      "markAllRead": "全部标为已读"
+      "markAllRead": "全部标为已读",
+      "density": "界面密度",
+      "densityCompact": "切换为紧凑",
+      "densityComfortable": "切换为宽松（更大字体）",
+      "theme": "颜色主题",
+      "themeDark": "切换到深色模式",
+      "themeLight": "切换到浅色模式"
     },
     "commandK": {
       "placeholder": "搜索项目、户型、线索、新闻或活动…",
@@ -3497,6 +3510,24 @@
         "geo": "地图坐标",
         "agent": "公司信息",
         "breadcrumb": "页面路径"
+      }
+    },
+    "leadDrawer": {
+      "close": "关闭",
+      "openFullPage": "打开完整页面",
+      "dialog": "客户详情",
+      "loading": "加载中…",
+      "notFound": "找不到该客户，或您无权查看。"
+    },
+    "projectForm": {
+      "sectionsNav": "表单分区",
+      "unsaved": "有未保存的更改",
+      "sections": {
+        "identity": "基本信息",
+        "content": "内容与理念",
+        "specification": "详情与位置",
+        "imagery": "图片与视频",
+        "publication": "发布"
       }
     }
   },

@@ -92,6 +92,9 @@ describe("the pages that show customer records", () => {
     "app/[locale]/admin/(crm)/m/page.tsx",
     "app/[locale]/admin/(crm)/m/leads/page.tsx",
     "app/[locale]/admin/(crm)/m/leads/[id]/page.tsx",
+    // Not a page, but it reads the record for both /leads/[id] and the
+    // pipeline's ?lead= drawer, so it must carry the same guard.
+    "components/admin/LeadDetailView.tsx",
   ];
 
   it("guard on the capability, never on rank", () => {

@@ -79,19 +79,19 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         aria-current={active ? "page" : undefined}
         title={isCollapsed ? label : undefined}
         className={[
-          "flex items-center gap-3 rounded-xs py-2.5 text-sm transition-colors",
-          isCollapsed ? "justify-center px-0" : "px-3",
+          "relative flex h-8 items-center gap-2.5 rounded-[6px] text-[13px] transition-colors",
+          isCollapsed ? "justify-center px-0" : "px-[10px]",
           active
-            ? "bg-white/10 font-medium text-white"
-            : "text-white/60 hover:bg-white/5 hover:text-white",
+            ? "bg-white/10 font-medium text-white before:absolute before:-left-[10px] before:top-[7px] before:bottom-[7px] before:w-[3px] before:rounded-r-[3px] before:bg-accent"
+            : "text-white/65 hover:bg-white/5 hover:text-white",
         ].join(" ")}
       >
-        <Icon size={17} strokeWidth={1.75} aria-hidden className="shrink-0" />
+        <Icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
         {!isCollapsed && (
           <>
-            <span className="flex-1">{label}</span>
+            <span className="flex-1 truncate">{label}</span>
             {count > 0 && (
-              <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary">
+              <span className="ml-auto shrink-0 rounded-full bg-accent px-[6px] py-[3px] text-[10.5px] font-bold leading-none text-primary">
                 {count > 99 ? "99+" : count}
               </span>
             )}
@@ -117,16 +117,16 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
     return (
       <nav aria-label={t("brand")} className="flex flex-col">
         {groups.map((group, index) => (
-          <div key={group.key} className={index > 0 ? "mt-4" : undefined}>
+          <div key={group.key} className={index > 0 ? "mt-[14px]" : undefined}>
             {index > 0 && isCollapsed && (
-              <span className="mx-3 mb-2 block h-px bg-white/10" aria-hidden />
+              <span className="mx-[10px] mb-[8px] block h-px bg-white/10" aria-hidden />
             )}
             {group.labelKey && !isCollapsed && (
-              <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/60">
+              <p className="mb-[4px] px-[10px] text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/60">
                 {t(`navGroups.${group.labelKey}` as never)}
               </p>
             )}
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-[2px]">
               {group.items.map((item) => renderLink(item, isCollapsed))}
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         setOpen(false);
         window.dispatchEvent(new Event("admin:open-search"));
       }}
-      className="flex items-center gap-2.5 rounded-xs border border-white/10 px-3 py-2 text-xs text-white/50 transition-colors hover:border-white/20 hover:text-white/80"
+      className="flex items-center gap-2.5 rounded-xs border border-white/10 px-3 py-2 text-xs text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
     >
       <Search size={15} strokeWidth={1.75} aria-hidden className="shrink-0" />
       <span className="flex-1 text-left">{t("search")}</span>
@@ -153,7 +153,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
   );
 
   const renderIdentity = (isCollapsed: boolean) => (
-    <div className="border-t border-white/10 pt-5">
+    <div className="border-t border-white/10 px-[10px] py-[10px]">
       {/* The identity block doubles as the link to your own account — the
           first place people look to change their password. */}
       <Link
@@ -161,21 +161,21 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         onClick={() => setOpen(false)}
         title={isCollapsed ? user.name : undefined}
         className={[
-          "flex items-center gap-3 rounded-xs py-1.5 transition-colors hover:bg-white/5",
-          isCollapsed ? "justify-center px-0" : "px-1",
+          "flex items-center gap-[10px] rounded-[6px] py-[6px] transition-colors hover:bg-white/5",
+          isCollapsed ? "justify-center px-0" : "px-[6px]",
         ].join(" ")}
       >
         <span
           aria-hidden
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-accent"
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-accent/20 text-[11px] font-semibold text-accent"
         >
           {initials || "·"}
         </span>
         {!isCollapsed && (
           <>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user.name}</p>
-              <p className="truncate text-xs text-accent">
+              <p className="truncate text-[12.5px] font-medium leading-tight text-white">{user.name}</p>
+              <p className="truncate text-[11px] leading-tight text-accent">
                 {t(`roles.${user.role}` as never)}
               </p>
             </div>
@@ -189,11 +189,11 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
         onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
         title={isCollapsed ? tAuth("signOut") : undefined}
         className={[
-          "mt-4 flex w-full items-center gap-3 rounded-xs py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white",
-          isCollapsed ? "justify-center px-0" : "px-3",
+          "mt-[4px] flex h-8 w-full items-center gap-2.5 rounded-[6px] text-[13px] text-white/60 transition-colors hover:bg-white/5 hover:text-white",
+          isCollapsed ? "justify-center px-0" : "px-[10px]",
         ].join(" ")}
       >
-        <LogOut size={17} strokeWidth={1.75} aria-hidden className="shrink-0" />
+        <LogOut size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
         {!isCollapsed && tAuth("signOut")}
       </button>
     </div>
@@ -202,7 +202,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
   return (
     <>
       {/* Mobile bar */}
-      <div className="flex items-center justify-between border-b border-primary/10 bg-primary px-5 py-4 lg:hidden">
+      <div data-admin-sidebar className="flex h-[52px] items-center justify-between border-b border-white/10 bg-primary px-4 lg:hidden">
         <Link href={base} className="inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -210,7 +210,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
             alt="Andaman Asset Solution Co., Ltd."
             width={160}
             height={32}
-            className="h-7 w-auto brightness-0 invert"
+            className="h-[24px] w-auto brightness-0 invert"
           />
         </Link>
         <button
@@ -225,7 +225,7 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
       </div>
 
       {open && (
-        <div className="flex flex-col gap-6 bg-primary px-5 pb-6 lg:hidden">
+        <div data-admin-sidebar className="flex flex-col gap-6 bg-primary px-5 pb-6 lg:hidden">
           {renderSearchTrigger()}
           {renderNav(false, "drawer")}
           {renderIdentity(false)}
@@ -233,63 +233,61 @@ export default function AdminSidebar({ locale, user, counts }: Props) {
       )}
 
       {/* Desktop rail */}
-      {/* overflow-y-auto because the rail is exactly one screen tall and the
-          content is not. A SUPER_ADMIN sees the full set of grouped links,
-          which at a 720px viewport pushes the identity block and its
-          sign-out button past the bottom edge — off the dark panel
-          entirely, unreachable and, where it landed on the white page
-          behind, unreadable at a contrast of 1.03. The collapse toggle
-          below narrows the rail but does not shorten it — scrolling stays
-          the fallback at short viewports either way. */}
+      {/* The rail is exactly one screen tall and the content is not. A
+          SUPER_ADMIN sees the full set of grouped links, which at a 720px
+          viewport used to push the identity block and its sign-out button
+          past the bottom edge — off the dark panel entirely and, where it
+          landed on the white page behind, unreadable at a contrast of 1.03.
+          So only the link list scrolls: the brand bar above it and the
+          identity block below are pinned, and sign-out is always on screen. */}
       <aside
+        data-admin-sidebar
         className={[
-          "hidden shrink-0 flex-col justify-between overflow-y-auto bg-primary py-8 transition-[width] duration-150 lg:sticky lg:top-0 lg:flex lg:h-screen",
-          collapsed ? "w-[76px] px-3" : "w-64 px-5",
+          "hidden shrink-0 flex-col overflow-hidden bg-primary transition-[width] duration-150 lg:sticky lg:top-0 lg:flex lg:h-screen",
+          collapsed ? "w-[64px]" : "w-[232px]",
         ].join(" ")}
       >
-        <div>
-          <div className={collapsed ? "flex flex-col items-center gap-3" : "flex items-center justify-between"}>
-            <Link href={base} className="block" title={collapsed ? t("brand") : undefined}>
-              {collapsed ? (
-                <span
-                  aria-hidden
-                  className="flex h-8 w-8 items-center justify-center rounded-xs bg-white/10 text-sm font-bold text-white"
-                >
-                  A
-                </span>
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src="/logo.png"
-                  alt="Andaman Asset Solution Co., Ltd."
-                  width={160}
-                  height={32}
-                  className="h-7 w-auto brightness-0 invert"
-                />
-              )}
+        {/* 52px, the topbar's height, so the two hairlines meet in one line. */}
+        <div
+          className={[
+            "flex h-[52px] shrink-0 items-center border-b border-white/10",
+            collapsed ? "justify-center" : "justify-between pl-[16px] pr-[8px]",
+          ].join(" ")}
+        >
+          {!collapsed && (
+            <Link href={base} className="block" title={t("brand")}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo.png"
+                alt="Andaman Asset Solution Co., Ltd."
+                width={160}
+                height={32}
+                className="h-[22px] w-auto brightness-0 invert"
+              />
             </Link>
+          )}
 
-            <button
-              type="button"
-              onClick={() => setCollapsed((value) => !value)}
-              aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {collapsed ? (
-                <ChevronRight size={16} aria-hidden />
-              ) : (
-                <ChevronLeft size={16} aria-hidden />
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+            className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {collapsed ? (
+              <ChevronRight size={16} aria-hidden />
+            ) : (
+              <ChevronLeft size={16} aria-hidden />
+            )}
+          </button>
+        </div>
 
-          {/* No search box here: AdminTopbar already has one directly
-              above this rail on every desktop screen, and two identical
-              boxes one under the other is just the same control twice.
-              The mobile drawer below still renders one, because the topbar
-              is lg-only and there would otherwise be no way in but ⌘K —
-              which a phone has no keyboard for. */}
-          <div className="mt-5">{renderNav(collapsed, "rail")}</div>
+        {/* No search box here: AdminTopbar already has one directly above
+            this rail on every desktop screen. The mobile drawer still
+            renders one, because the topbar is lg-only and there would
+            otherwise be no way in but ⌘K — which a phone has no keyboard
+            for. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-[10px] py-[10px] [scrollbar-color:rgba(255,255,255,0.15)_transparent] [scrollbar-width:thin]">
+          {renderNav(collapsed, "rail")}
         </div>
 
         {renderIdentity(collapsed)}

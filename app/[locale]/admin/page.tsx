@@ -26,6 +26,10 @@
  * full reports. Content completeness went to /admin/publishing, which is
  * where somebody acts on a missing translation.
  *
+ * Beside the queue: the latest leads, and unit stock per project — the one
+ * number sales and content both ask for first, and until now only
+ * reachable by opening each project's units tab in turn.
+ *
  * All reads go through safeQuery so a database blip degrades to zeroes
  * rather than a 500 on the operator's home screen.
  * ─────────────────────────────────────────────────────────────────────────
@@ -34,7 +38,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Role } from "@prisma/client";
+import { ArrowRight, CalendarClock, Clock, FileCheck2, UserPlus, type LucideIcon } from "lucide-react";
+import { LeadStatus, Role, UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   getMonthSummary,
@@ -47,7 +52,7 @@ import { getReviewQueueBreakdown } from "@/lib/admin-nav-counts";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { canSeeItem } from "@/lib/admin/nav";
-import { intlLocale } from "@/lib/format";
+import { initialsFrom, intlLocale } from "@/lib/format";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -90,7 +95,7 @@ export default async function AdminDashboardPage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin" });
   const now = new Date();
 
-  const [recentLeads, unassignedQueue, overdueQueue, appointmentQueue, reviewBreakdown, month] =
+  const [recentLeads, unassignedQueue, overdueQueue, appointmentQueue, reviewBreakdown, month, inventory] =
     await Promise.all([
       safeQuery(
         "dashboard:recentLeads",
@@ -114,6 +119,39 @@ export default async function AdminDashboardPage(props: Props) {
       getTodayAppointmentQueue(),
       getReviewQueueBreakdown(),
       getMonthSummary(),
+      safeQuery(
+        "dashboard:inventory",
+        async () => {
+          const [projects, counts] = await Promise.all([
+            prisma.project.findMany({
+              where: { deletedAt: null },
+              orderBy: { sortOrder: "asc" },
+              select: { id: true, nameEn: true, nameTh: true },
+            }),
+            prisma.projectUnit.groupBy({
+              by: ["projectId", "status"],
+              _count: { _all: true },
+            }),
+          ]);
+
+          const count = (projectId: string, status: UnitStatus) =>
+            counts.find((row) => row.projectId === projectId && row.status === status)?._count._all ?? 0;
+
+          return (
+            projects
+              .map((project) => {
+                const sold = count(project.id, UnitStatus.SOLD);
+                const reserved = count(project.id, UnitStatus.RESERVED);
+                const available = count(project.id, UnitStatus.AVAILABLE);
+                return { ...project, sold, reserved, available, total: sold + reserved + available };
+              })
+              // A project with no plots entered yet has nothing to show but
+              // an empty bar, which reads as "sold out" at a glance.
+              .filter((project) => project.total > 0)
+          );
+        },
+        [],
+      ),
     ]);
 
   const offline = isDatabaseOffline();
@@ -160,13 +198,26 @@ export default async function AdminDashboardPage(props: Props) {
      a role list written out again here, which is how the "Mobile view"
      link came to be shown to editors the page then refused. */
   const canOpenAnalytics = canSeeItem(session.role, "analytics");
+  const canOpenLeads = canSeeItem(session.role, "leads");
+  const canOpenProjects = canSeeItem(session.role, "projects");
+
+  const projectName = (project: { nameEn: string; nameTh: string | null }) =>
+    locale === "th" && project.nameTh ? project.nameTh : project.nameEn;
 
   return (
-    <div className="space-y-10">
-      <header>
-        <p className="admin-section-title">{t("dashboard.title")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{greeting}</h1>
-        <p className="mt-2 text-sm text-ink-muted">{headerSubtitle}</p>
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold text-ink">{greeting}</h1>
+          <p className="mt-1 text-sm text-ink-muted">{headerSubtitle}</p>
+        </div>
+
+        {canOpenAnalytics && (
+          <Link href={`/${locale}/admin/analytics`} className="admin-btn-ghost">
+            {t("dashboard.monthSummary.viewFullReports")}
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        )}
       </header>
 
       {/* Set by requireAdmin() when a page demanded a higher role. */}
@@ -183,15 +234,12 @@ export default async function AdminDashboardPage(props: Props) {
       )}
 
       {/* ── Today's work queue ───────────────────────────────────────── */}
-      <div>
-        <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-widest2 text-ink-muted">
-          {t("dashboard.workQueue.title")}
-        </p>
-
+      <section aria-label={t("dashboard.workQueue.title")}>
         <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
           <QueueCard
             href={`/${locale}/admin/leads?assignedTo=unassigned`}
             tone="accent"
+            icon={UserPlus}
             label={t("dashboard.workQueue.unassigned.label")}
             value={numberFormat.format(unassignedQueue.count)}
             hint={
@@ -204,6 +252,7 @@ export default async function AdminDashboardPage(props: Props) {
           <QueueCard
             href={`/${locale}/admin/leads?status=NEW&sort=oldest`}
             tone={overdueQueue.count > 0 ? "danger" : "neutral"}
+            icon={Clock}
             label={t("dashboard.workQueue.overdue.label", { hours: RESPONSE_SLA_HOURS })}
             value={numberFormat.format(overdueQueue.count)}
             hint={
@@ -216,6 +265,7 @@ export default async function AdminDashboardPage(props: Props) {
           <QueueCard
             href={`/${locale}/admin/appointments`}
             tone="positive"
+            icon={CalendarClock}
             label={t("dashboard.workQueue.appointments.label")}
             value={numberFormat.format(appointmentQueue.count)}
             hint={
@@ -232,6 +282,7 @@ export default async function AdminDashboardPage(props: Props) {
           <QueueCard
             href={`/${locale}/admin/publishing`}
             tone="neutral"
+            icon={FileCheck2}
             label={t("dashboard.workQueue.review.label")}
             value={numberFormat.format(reviewBreakdown.total)}
             hint={
@@ -241,79 +292,176 @@ export default async function AdminDashboardPage(props: Props) {
             }
           />
         </div>
-      </div>
+      </section>
 
-      {/* ── This month in three numbers ──────────────────────────────── */}
-      <section className="admin-card">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 className="text-base font-semibold text-primary">{t("dashboard.monthSummary.title")}</h2>
-
-          {canOpenAnalytics && (
-            <Link
-              href={`/${locale}/admin/analytics`}
-              className="text-sm font-medium text-accent-700 hover:text-accent-800"
-            >
-              {t("dashboard.monthSummary.viewFullReports")}
-            </Link>
-          )}
-        </div>
-
-        <dl className="mt-5 grid gap-5 sm:grid-cols-3">
-          <MonthFigure label={t("dashboard.monthSummary.newLeads")} value={numberFormat.format(month.newLeads)} />
-          <MonthFigure
-            label={t("dashboard.monthSummary.appointments")}
-            value={numberFormat.format(month.appointments)}
+      <div className="grid items-start gap-3.5 lg:grid-cols-3">
+        {/* ── Latest leads ─────────────────────────────────────────── */}
+        <section className="admin-card overflow-hidden p-0! lg:col-span-2">
+          <CardHeader
+            title={t("dashboard.recentLeads")}
+            action={
+              canOpenLeads && (
+                <Link
+                  href={`/${locale}/admin/leads`}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-primary"
+                >
+                  {t("dashboard.viewAll")}
+                  <ArrowRight size={13} aria-hidden />
+                </Link>
+              )
+            }
           />
-          <MonthFigure label={t("dashboard.monthSummary.booked")} value={numberFormat.format(month.booked)} />
-        </dl>
-      </section>
 
-      <section className="admin-card">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <h2 className="text-base font-semibold text-primary">
-            {t("dashboard.recentLeads")}
-          </h2>
-          <Link
-            href={`/${locale}/admin/leads`}
-            className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
-          >
-            {t("dashboard.viewAll")}
-          </Link>
-        </div>
+          {recentLeads.length === 0 ? (
+            <p className="px-5 py-10 text-center text-sm text-ink-muted">{t("common.empty")}</p>
+          ) : (
+            <ul className="divide-y divide-primary/5">
+              {recentLeads.map((lead) => (
+                <li key={lead.id}>
+                  <MaybeLink
+                    href={canOpenLeads ? `/${locale}/admin/leads?lead=${lead.id}` : null}
+                    className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-surface"
+                  >
+                    <span
+                      aria-hidden
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[10.5px] font-semibold text-primary-500"
+                    >
+                      {initialsFrom(lead.name) || "·"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-ink">{lead.name}</span>
+                      <span className="block truncate text-xs text-ink-muted">
+                        {lead.project ? projectName(lead.project) : t("leads.noProject")}
+                      </span>
+                    </span>
+                    <StatusPill status={lead.status} label={t(`leadStatus.${lead.status}` as never)} />
+                    <time
+                      dateTime={lead.createdAt.toISOString()}
+                      className="hidden w-28 shrink-0 text-right text-xs tabular-nums text-ink-muted sm:block"
+                    >
+                      {dateFormat.format(lead.createdAt)}
+                    </time>
+                  </MaybeLink>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-        {recentLeads.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-muted">{t("common.empty")}</p>
-        ) : (
-          <ul className="divide-y divide-primary/5">
-            {recentLeads.map((lead) => (
-              <li
-                key={lead.id}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-ink">{lead.name}</p>
-                  <p className="truncate text-xs text-ink-muted">
-                    {lead.project
-                      ? locale === "th"
-                        ? lead.project.nameTh
-                        : lead.project.nameEn
-                      : t("leads.noProject")}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-ink-muted">
-                  <span className="rounded-xs bg-primary/5 px-2 py-1 font-medium text-primary">
-                    {t(`leadStatus.${lead.status}` as never)}
+        <div className="space-y-3.5">
+          {/* ── Unit stock per project ─────────────────────────────── */}
+          {inventory.length > 0 && (
+            <section className="admin-card overflow-hidden p-0!">
+              <CardHeader
+                title={t("dashboard.inventory.title")}
+                action={
+                  <span className="flex items-center gap-3 text-[11px] text-ink-muted">
+                    <LegendDot className="bg-primary" label={t("dashboard.inventory.sold")} />
+                    <LegendDot className="bg-accent" label={t("dashboard.inventory.reserved")} />
+                    <LegendDot
+                      className="bg-surface-muted ring-1 ring-primary/10"
+                      label={t("dashboard.inventory.available")}
+                    />
                   </span>
-                  <time dateTime={lead.createdAt.toISOString()}>
-                    {dateFormat.format(lead.createdAt)}
-                  </time>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                }
+              />
+              <ul className="space-y-4 px-5 py-4">
+                {inventory.map((project) => (
+                  <li key={project.id}>
+                    <MaybeLink
+                      href={canOpenProjects ? `/${locale}/admin/projects/${project.id}/units` : null}
+                      className="group block"
+                    >
+                      <span className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+                        <span className="truncate font-medium text-ink group-hover:text-primary-500">
+                          {projectName(project)}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-ink-muted">
+                          {t("dashboard.inventory.freeOfTotal", {
+                            free: numberFormat.format(project.available),
+                            total: numberFormat.format(project.total),
+                          })}
+                        </span>
+                      </span>
+                      <span className="flex h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                        <span className="bg-primary" style={{ width: `${(project.sold / project.total) * 100}%` }} />
+                        <span className="bg-accent" style={{ width: `${(project.reserved / project.total) * 100}%` }} />
+                      </span>
+                    </MaybeLink>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* ── This month in three numbers ──────────────────────────── */}
+          <section className="admin-card overflow-hidden p-0!">
+            <CardHeader title={t("dashboard.monthSummary.title")} />
+            <dl className="grid grid-cols-3 divide-x divide-primary/5">
+              <MonthFigure label={t("dashboard.monthSummary.newLeads")} value={numberFormat.format(month.newLeads)} />
+              <MonthFigure
+                label={t("dashboard.monthSummary.appointments")}
+                value={numberFormat.format(month.appointments)}
+              />
+              <MonthFigure label={t("dashboard.monthSummary.booked")} value={numberFormat.format(month.booked)} />
+            </dl>
+          </section>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/** A row that is a link only for a role the destination admits — the same
+ *  rule nav.ts applies to the sidebar, so nothing here lands on a denial. */
+function MaybeLink({ href, className, children }: { href: string | null; className: string; children: ReactNode }) {
+  return href ? (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <div className={className}>{children}</div>
+  );
+}
+
+function CardHeader({ title, action }: { title: string; action?: ReactNode }) {
+  return (
+    <div className="flex min-h-[46px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-primary/5 px-5 py-2.5">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      {action}
+    </div>
+  );
+}
+
+function LegendDot({ className, label }: { className: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span aria-hidden className={`h-2 w-2 rounded-[2px] ${className}`} />
+      {label}
+    </span>
+  );
+}
+
+/* Colour carries the stage at a glance; the label still says it, so the
+   pill is never the only way to tell two statuses apart. */
+const STATUS_TONE: Record<LeadStatus, string> = {
+  NEW: "bg-primary-50 text-primary-500",
+  CONTACTED: "bg-surface-muted text-ink-muted",
+  QUALIFIED: "bg-violet-50 text-violet-700",
+  VIEWING_SCHEDULED: "bg-accent-50 text-accent-700",
+  NEGOTIATING: "bg-amber-50 text-amber-700",
+  WON: "bg-emerald-50 text-emerald-700",
+  LOST: "bg-red-50 text-red-700",
+};
+
+function StatusPill({ status, label }: { status: LeadStatus; label: string }) {
+  return (
+    <span
+      className={`inline-flex h-5 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 text-[11px] font-medium ${STATUS_TONE[status]}`}
+    >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
+      {label}
+    </span>
   );
 }
 
@@ -339,12 +487,14 @@ const QUEUE_DOT: Record<QueueTone, string> = {
 function QueueCard({
   href,
   tone,
+  icon: Icon,
   label,
   value,
   hint,
 }: {
   href: string;
   tone: QueueTone;
+  icon: LucideIcon;
   label: string;
   value: string;
   hint: ReactNode;
@@ -355,38 +505,32 @@ function QueueCard({
     <Link
       href={href}
       className={[
-        "admin-card flex flex-col gap-1 p-4! transition-colors hover:border-accent/60",
+        "admin-card flex flex-col gap-1.5 p-4! transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-[0_4px_16px_-8px_rgba(8,53,81,0.2)]",
         alert ? "border-red-300/70" : "",
       ].join(" ")}
     >
-      <span
-        className={`flex items-center gap-1.5 text-[11.5px] ${
-          alert ? "font-medium text-red-700" : "text-ink-muted"
-        }`}
-      >
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${QUEUE_DOT[tone]}`} aria-hidden />
-        {label}
+      <span className={`flex items-center gap-1.5 text-xs ${alert ? "font-medium text-red-700" : "text-ink-muted"}`}>
+        <Icon size={14} strokeWidth={1.75} aria-hidden className="shrink-0 opacity-70" />
+        <span className="truncate">{label}</span>
+        <span className={`ml-auto h-1.5 w-1.5 shrink-0 rounded-full ${QUEUE_DOT[tone]}`} aria-hidden />
       </span>
       <span
-        className={`text-[28px] font-semibold leading-tight tracking-tight ${
-          alert ? "text-red-600" : "text-primary"
+        className={`text-[26px] font-medium leading-tight tracking-tight tabular-nums ${
+          alert ? "text-red-600" : "text-ink"
         }`}
       >
         {value}
       </span>
-      <span className="truncate text-[11px] text-ink-muted">{hint}</span>
+      <span className="truncate text-[11.5px] text-ink-muted">{hint}</span>
     </Link>
   );
 }
 
-/** One of the three month-to-date figures. */
 function MonthFigure({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-[11.5px] text-ink-muted">{label}</dt>
-      <dd className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-primary">
-        {value}
-      </dd>
+    <div className="px-5 py-3.5">
+      <dt className="text-xs text-ink-muted">{label}</dt>
+      <dd className="mt-0.5 text-[22px] font-medium leading-tight tracking-tight tabular-nums text-ink">{value}</dd>
     </div>
   );
 }

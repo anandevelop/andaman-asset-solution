@@ -11,6 +11,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates } from "@/lib/seo";
 import { isSiteIndexable } from "@/lib/indexing";
 import Analytics, { AnalyticsPageview } from "@/components/Analytics";
+import { DISPLAY_PREFS_BOOT_SCRIPT } from "@/lib/admin/display-prefs";
 import "../globals.css";
 
 const roboto = Roboto({
@@ -246,8 +247,28 @@ export default async function LocaleLayout(props: Props) {
 
   const isThai = locale === "th";
 
+  /* suppressHydrationWarning on <html>: the back office's inline script
+     sets data-admin-theme / data-admin-density there before React hydrates
+     (so a saved dark theme never flashes light). It covers this element's
+     own attributes only, not anything inside it. */
   return (
-    <html lang={locale} className={`${roboto.variable} ${fcVision.variable}`}>
+    <html
+      lang={locale}
+      className={`${roboto.variable} ${fcVision.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* The back office's stored density and theme, applied before first
+            paint. Here rather than in the admin layout: signing in reaches
+            /admin by client-side navigation, and a <script> React mounts on
+            the client never runs — React 19 reports it as a dev error, whose
+            badge then sat over the rail's sign-out button and failed both
+            sign-out e2e specs. This layout is only ever server-rendered, so
+            the script always runs. Harmless on the public site: every rule
+            that reads these attributes is scoped by :has([data-admin-root]).
+            Static string from lib/admin/display-prefs.ts — no user input. */}
+        <script dangerouslySetInnerHTML={{ __html: DISPLAY_PREFS_BOOT_SCRIPT }} />
+      </head>
       <body
         className={`min-h-screen bg-surface ${isThai ? "font-thai" : "font-sans"} text-ink antialiased`}
       >

@@ -66,7 +66,7 @@ export default function LeadBoardCard({
         card.ageTone === "urgent" ? "border-red-300/70" : "",
       ].join(" ")}
     >
-      <Link href={href} className="block" draggable={false}>
+      <Link href={href} scroll={false} className="block" draggable={false}>
         <div className="flex items-start justify-between gap-2">
           <p className="text-[13px] font-semibold leading-snug text-primary">{card.name}</p>
           <span

@@ -677,60 +677,329 @@
   }
 }
 
+/*
+  ── Back-office density ─────────────────────────────────────────────────
+  The admin shares the site's palette but not its scale. The public site
+  is read at a distance on a phone; the back office is worked in for hours
+  on a laptop, and at the site's 14–16px body, 44px inputs and 28px card
+  padding a single project form ran to five screens.
+
+  Tailwind 4 resolves every text-*, spacing and rounded-* utility through a
+  CSS variable, so the whole admin is re-scaled here rather than in ~80
+  component files: 13px body, a 10% tighter spacing unit, 6px corners.
+  Scoped with :has([data-admin-root]) on the root — not on the layout div —
+  so AdminModal's portal (rendered into <body>, outside the layout) gets
+  the same scale. The public site never renders data-admin-root and is
+  untouched.
+
+  data-admin-density="comfortable" on <html> (the topbar toggle) restores
+  the site's own scale for anyone who finds 13px too small.
+*/
+:root:has([data-admin-root]) {
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1.0625rem;
+  --text-2xl: 1.1875rem;
+  --text-3xl: 1.375rem;
+  --text-4xl: 1.625rem;
+  --spacing: 0.225rem;
+  --radius-xs: 6px;
+  --color-surface: #f3f5f7;
+  --color-surface-muted: #eef1f4;
+  --tracking-widest2: 0.14em;
+}
+
+:root[data-admin-density="comfortable"]:has([data-admin-root]) {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.3125rem;
+  --text-3xl: 1.5rem;
+  --text-4xl: 1.875rem;
+  --spacing: 0.25rem;
+}
+
+/* Tracked capitals are a Latin device. Thai has no case, and the same
+   0.12–0.28em letter-spacing pulls its stacked vowels and tone marks away
+   from their consonants — "ระบบ" reads as four loose glyphs. */
+:root:lang(th) [data-admin-root] .uppercase,
+:root:lang(th) [data-admin-root] .admin-section-title {
+  letter-spacing: 0.02em;
+}
+
+/* LeadDrawer's entrance. Named keyframes rather than a transition because
+   the panel mounts already open — there is no "before" state to transition
+   from. Reduced motion gets the end state with no movement. */
+@keyframes lead-drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes lead-drawer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [role="dialog"][aria-modal="true"] {
+    animation: none !important;
+  }
+}
+
+/*
+  ── Back-office dark theme ──────────────────────────────────────────────
+  Opt-in from the topbar (data-admin-theme="dark" on <html>, restored
+  before first paint by the inline script in admin/layout.tsx).
+
+  The admin's ~3,000 colour classes are Tailwind utilities, and Tailwind 4
+  resolves each through a CSS variable — so the theme is a remap, not a
+  second set of classes:
+
+    · surfaces and ink swap to dark and light;
+    · --color-primary becomes a light steel blue, because in ~900 places
+      it is *text* or a hairline (text-primary, border-primary/10,
+      bg-primary/5 hovers), all of which need to read on dark;
+    · the few places it is a *solid fill* (.bg-primary: buttons, active
+      segments, the sidebar) are pinned back to navy below;
+    · the status hues (red, amber, emerald …) are mirrored, 50↔950,
+      100↔900 …, so a light chip with dark text becomes a dark chip with
+      light text and keeps its meaning.
+
+  Scoped by :has([data-admin-root]) like the density scale, so the public
+  site can never pick it up from a stored preference.
+*/
+:root[data-admin-theme="dark"]:has([data-admin-root]) {
+  color-scheme: dark;
+
+  --color-surface: #08121a;
+  --color-surface-raised: #0e1b25;
+  --color-surface-muted: #162936;
+  --color-ink: #e4ebf0;
+  --color-ink-muted: #9db0bd;
+
+  --color-primary: #cfe0ea;
+  --color-primary-50: #10222e;
+  --color-primary-100: #15303f;
+  --color-primary-200: #1f4256;
+  --color-primary-300: #3f6f8c;
+  --color-primary-400: #7099af;
+  --color-primary-500: #8fb5cc;
+  --color-primary-600: #a9c7d9;
+  --color-primary-700: #c3d3dd;
+  --color-primary-800: #dce6ec;
+  --color-primary-900: #eef3f6;
+
+  --color-accent-50: #2a2118;
+  --color-accent-100: #3a2b1c;
+  --color-accent-200: #5c4027;
+  --color-accent-300: #9c602c;
+  --color-accent-400: #c47b3a;
+  --color-accent-600: #e8b384;
+  --color-accent-700: #edc199;
+  --color-accent-800: #f3d5b3;
+
+  --color-red-50: oklch(25.8% 0.092 26.042);
+  --color-red-100: oklch(39.6% 0.141 25.723);
+  --color-red-200: oklch(44.4% 0.177 26.899);
+  --color-red-300: oklch(50.5% 0.213 27.518);
+  --color-red-400: oklch(57.7% 0.245 27.325);
+  --color-red-500: oklch(63.7% 0.237 25.331);
+  --color-red-600: oklch(70.4% 0.191 22.216);
+  --color-red-700: oklch(80.8% 0.114 19.571);
+  --color-red-800: oklch(88.5% 0.062 18.334);
+  --color-red-900: oklch(93.6% 0.032 17.717);
+  --color-red-950: oklch(97.1% 0.013 17.38);
+  --color-amber-50: oklch(27.9% 0.077 45.635);
+  --color-amber-100: oklch(41.4% 0.112 45.904);
+  --color-amber-200: oklch(47.3% 0.137 46.201);
+  --color-amber-300: oklch(55.5% 0.163 48.998);
+  --color-amber-400: oklch(66.6% 0.179 58.318);
+  --color-amber-500: oklch(76.9% 0.188 70.08);
+  --color-amber-600: oklch(82.8% 0.189 84.429);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-amber-800: oklch(92.4% 0.12 95.746);
+  --color-amber-900: oklch(96.2% 0.059 95.617);
+  --color-amber-950: oklch(98.7% 0.022 95.277);
+  --color-emerald-50: oklch(26.2% 0.051 172.552);
+  --color-emerald-100: oklch(37.8% 0.077 168.94);
+  --color-emerald-200: oklch(43.2% 0.095 166.913);
+  --color-emerald-300: oklch(50.8% 0.118 165.612);
+  --color-emerald-400: oklch(59.6% 0.145 163.225);
+  --color-emerald-500: oklch(69.6% 0.17 162.48);
+  --color-emerald-600: oklch(76.5% 0.177 163.223);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-emerald-800: oklch(90.5% 0.093 164.15);
+  --color-emerald-900: oklch(95% 0.052 163.051);
+  --color-emerald-950: oklch(97.9% 0.021 166.113);
+  --color-slate-50: oklch(12.9% 0.042 264.695);
+  --color-slate-100: oklch(20.8% 0.042 265.755);
+  --color-slate-200: oklch(27.9% 0.041 260.031);
+  --color-slate-300: oklch(37.2% 0.044 257.287);
+  --color-slate-400: oklch(44.6% 0.043 257.281);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+  --color-slate-600: oklch(70.4% 0.04 256.788);
+  --color-slate-700: oklch(86.9% 0.022 252.894);
+  --color-slate-800: oklch(92.9% 0.013 255.508);
+  --color-slate-900: oklch(96.8% 0.007 247.896);
+  --color-slate-950: oklch(98.4% 0.003 247.858);
+  --color-sky-50: oklch(29.3% 0.066 243.157);
+  --color-sky-100: oklch(39.1% 0.09 240.876);
+  --color-sky-200: oklch(44.3% 0.11 240.79);
+  --color-sky-300: oklch(50% 0.134 242.749);
+  --color-sky-400: oklch(58.8% 0.158 241.966);
+  --color-sky-500: oklch(68.5% 0.169 237.323);
+  --color-sky-600: oklch(74.6% 0.16 232.661);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+  --color-sky-800: oklch(90.1% 0.058 230.902);
+  --color-sky-900: oklch(95.1% 0.026 236.824);
+  --color-sky-950: oklch(97.7% 0.013 236.62);
+  --color-violet-50: oklch(28.3% 0.141 291.089);
+  --color-violet-100: oklch(38% 0.189 293.745);
+  --color-violet-200: oklch(43.2% 0.232 292.759);
+  --color-violet-300: oklch(49.1% 0.27 292.581);
+  --color-violet-400: oklch(54.1% 0.281 293.009);
+  --color-violet-500: oklch(60.6% 0.25 292.717);
+  --color-violet-600: oklch(70.2% 0.183 293.541);
+  --color-violet-700: oklch(81.1% 0.111 293.571);
+  --color-violet-800: oklch(89.4% 0.057 293.283);
+  --color-violet-900: oklch(94.3% 0.029 294.588);
+  --color-violet-950: oklch(96.9% 0.016 293.756);
+  --color-orange-50: oklch(26.6% 0.079 36.259);
+  --color-orange-100: oklch(40.8% 0.123 38.172);
+  --color-orange-200: oklch(47% 0.157 37.304);
+  --color-orange-300: oklch(55.3% 0.195 38.402);
+  --color-orange-400: oklch(64.6% 0.222 41.116);
+  --color-orange-500: oklch(70.5% 0.213 47.604);
+  --color-orange-600: oklch(75% 0.183 55.934);
+  --color-orange-700: oklch(83.7% 0.128 66.29);
+  --color-orange-800: oklch(90.1% 0.076 70.697);
+  --color-orange-900: oklch(95.4% 0.038 75.164);
+  --color-orange-950: oklch(98% 0.016 73.684);
+  --color-blue-50: oklch(28.2% 0.091 267.935);
+  --color-blue-100: oklch(37.9% 0.146 265.522);
+  --color-blue-200: oklch(42.4% 0.199 265.638);
+  --color-blue-300: oklch(48.8% 0.243 264.376);
+  --color-blue-400: oklch(54.6% 0.245 262.881);
+  --color-blue-500: oklch(62.3% 0.214 259.815);
+  --color-blue-600: oklch(70.7% 0.165 254.624);
+  --color-blue-700: oklch(80.9% 0.105 251.813);
+  --color-blue-800: oklch(88.2% 0.059 254.128);
+  --color-blue-900: oklch(93.2% 0.032 255.585);
+  --color-blue-950: oklch(97% 0.014 254.604);
+}
+
+:root[data-admin-theme="dark"]:has([data-admin-root]) {
+  /* Solid navy fills stay navy: white text sits on them. */
+  & .bg-primary,
+  & .hover\:bg-primary:hover {
+    background-color: #1c4e69;
+  }
+
+  & [data-admin-sidebar].bg-primary {
+    background-color: #051521;
+  }
+
+  /* bg-white is a card or popover surface everywhere in the admin except
+     the sidebar's translucent white/10 and white/20, which are left alone. */
+  & .bg-white,
+  & .hover\:bg-white:hover,
+  & .bg-white\/70,
+  & .bg-white\/90 {
+    background-color: var(--color-surface-raised);
+  }
+
+  /* The primary action turns gold, as in the CI's dark treatments: a navy
+     button on a near-black page has nothing to stand out with. */
+  & .admin-btn {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: #083551;
+  }
+
+  & .admin-btn:hover {
+    border-color: #edc199;
+    background-color: #edc199;
+  }
+
+  /* Navy text on a gold chip (the sidebar's queue counts) — text-primary
+     is light in this theme, which on gold would all but disappear. */
+  & .bg-accent.text-primary {
+    color: #083551;
+  }
+
+  & img[src$="logo.png"]:not(.invert) {
+    filter: brightness(0) invert(1);
+  }
+}
+
 @utility admin-label {
-  /* ── Back-office primitives ───────────────────────────────────────────
-     The admin uses the same palette as the public site but a denser,
-     lower-contrast rhythm: forms are worked in for hours, not admired. */
-  @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted;
+  /* Sentence case, not UPPERCASE: Thai has no case, and tracked capitals
+     on the English labels read as shouting at 12px. */
+  @apply mb-1.5 block text-xs font-medium text-ink-muted;
 }
 
 @utility admin-input {
-  @apply w-full rounded-xs border border-primary/15 bg-surface-raised px-3.5 py-2.5
-      text-sm text-ink placeholder:text-ink-muted
-      focus:border-primary/40 focus:outline-hidden focus:ring-1 focus:ring-primary/20;
+  @apply w-full rounded-xs border border-primary/15 bg-surface-raised px-2.5 py-1.5
+      text-sm text-ink placeholder:text-ink-muted/70 transition-[border-color,box-shadow]
+      hover:border-primary/25
+      focus:border-primary-500 focus:outline-hidden focus:ring-3 focus:ring-primary-500/15;
 }
 
 @utility admin-textarea {
-  @apply admin-input min-h-[120px] resize-y leading-relaxed;
+  @apply admin-input min-h-[96px] resize-y leading-relaxed;
 }
 
 @utility admin-hint {
-  @apply mt-1.5 text-xs leading-relaxed text-ink-muted;
+  @apply mt-1 text-xs leading-relaxed text-ink-muted;
 }
 
 @utility admin-card {
-  @apply rounded-xs border border-primary/10 bg-surface-raised p-6 shadow-card;
+  /* A hairline and a 1px lift, not the site's 40px glow: in a screen of
+     twelve cards the big shadow was most of what made it look busy. */
+  @apply rounded-[8px] border border-primary/10 bg-surface-raised p-5
+      shadow-[0_1px_2px_rgba(8,53,81,0.05)];
 }
 
 @utility admin-btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs bg-primary px-5 py-2.5
-      text-sm font-medium text-white transition-colors hover:bg-primary-700
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
+      border border-primary bg-primary px-3.5 py-1.5 text-sm font-medium text-white
+      transition-colors hover:border-primary-700 hover:bg-primary-700
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
       disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 @utility admin-btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/20
-      px-5 py-2.5 text-sm font-medium text-primary transition-colors
-      hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60;
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
+      border border-primary/15 bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-ink
+      transition-colors hover:border-primary/30 hover:bg-surface-muted
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+      disabled:opacity-60;
 }
 
 @utility admin-btn-danger {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-red-200
-      px-4 py-2.5 text-sm font-medium text-red-700 transition-colors
-      hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
+      border border-red-200 bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-red-700
+      transition-colors hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
 }
 
 @utility admin-th {
-  @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase
-      tracking-wide text-ink-muted;
+  @apply h-9 whitespace-nowrap bg-surface/70 px-3 py-2 text-left text-xs font-medium
+      text-ink-muted;
 }
 
 @utility admin-td {
-  @apply px-4 py-3 align-top text-sm text-ink;
+  @apply px-3 py-2 align-middle text-sm text-ink;
 }
 
 @utility admin-section-title {
-  @apply text-xs font-semibold uppercase tracking-widest2 text-accent-700;
+  @apply text-[11px] font-medium uppercase tracking-widest2 text-accent-700;
 }
 
 @layer utilities {

@@ -14,6 +14,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { getMyAppointmentsToday } from "@/lib/appointments";
@@ -41,6 +42,8 @@ import LeadExportButton from "@/components/admin/LeadExportButton";
 import LeadViewToggle from "@/components/admin/LeadViewToggle";
 import LeadBoard, { type LeadBoardColumn } from "@/components/admin/LeadBoard";
 import type { LeadCardView } from "@/components/admin/LeadBoardCard";
+import LeadDrawer from "@/components/admin/LeadDrawer";
+import LeadDetailView from "@/components/admin/LeadDetailView";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -53,6 +56,8 @@ type Props = {
     source?: string;
     range?: string;
     overdue?: string;
+    /** The lead open in the side drawer, if any — see LeadDrawer.tsx. */
+    lead?: string;
   }>;
 };
 
@@ -113,6 +118,35 @@ export default async function AdminLeadsPage(props: Props) {
   const session = await requireCapability(locale, "viewAllLeads");
 
   const t = await getTranslations({ locale, namespace: "admin" });
+
+  /* Rows open the lead in a drawer over this page rather than navigating
+     away: the same URL plus ?lead=, so filters, view and scroll survive and
+     Back closes it. The full page is still one click away inside it. */
+  const listQuery = new URLSearchParams(
+    Object.entries(searchParams).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string" && entry[0] !== "lead",
+    ),
+  ).toString();
+  const leadHrefBase = `/${locale}/admin/leads?${listQuery ? `${listQuery}&` : ""}lead=`;
+  const openLeadId = parseId(searchParams.lead);
+
+  const drawer = openLeadId ? (
+    <LeadDrawer
+      key={openLeadId}
+      fullPageHref={`/${locale}/admin/leads/${openLeadId}`}
+      labels={{
+        close: t("leadDrawer.close"),
+        openFullPage: t("leadDrawer.openFullPage"),
+        dialog: t("leadDrawer.dialog"),
+      }}
+    >
+      <Suspense
+        fallback={<p className="px-5 py-10 text-center text-sm text-ink-muted">{t("leadDrawer.loading")}</p>}
+      >
+        <LeadDetailView locale={locale} id={openLeadId} variant="drawer" />
+      </Suspense>
+    </LeadDrawer>
+  ) : null;
 
   /* Today's viewings, for the appointments tab's badge. The same figure
      lib/admin-nav-counts.ts computes for the sidebar — "mine, plus
@@ -378,7 +412,13 @@ export default async function AdminLeadsPage(props: Props) {
           {board.lostCount > 0 && ` · ${t("leads.lostCount", { count: board.lostCount })}`}
         </p>
 
-        <LeadBoard locale={locale} columns={columns} errorLabel={t("common.error")} />
+        <LeadBoard
+          locale={locale}
+          columns={columns}
+          leadHrefBase={leadHrefBase}
+          errorLabel={t("common.error")}
+        />
+        {drawer}
       </div>
     );
   }
@@ -471,7 +511,8 @@ export default async function AdminLeadsPage(props: Props) {
                 <tr key={lead.id} className="transition-colors hover:bg-surface-muted/60">
                   <td className="admin-td">
                     <Link
-                      href={`/${locale}/admin/leads/${lead.id}`}
+                      href={`${leadHrefBase}${lead.id}`}
+                      scroll={false}
                       className="font-medium text-primary hover:underline"
                     >
                       {lead.name}
@@ -573,7 +614,8 @@ export default async function AdminLeadsPage(props: Props) {
 
                   <td className="admin-td whitespace-nowrap">
                     <Link
-                      href={`/${locale}/admin/leads/${lead.id}`}
+                      href={`${leadHrefBase}${lead.id}`}
+                      scroll={false}
                       className="text-xs font-medium text-primary hover:underline"
                     >
                       {t("leads.viewDetail")}
@@ -586,6 +628,7 @@ export default async function AdminLeadsPage(props: Props) {
           </table>
         </div>
       )}
+      {drawer}
     </div>
   );
 }

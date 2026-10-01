@@ -99,7 +99,9 @@ export default async function AdminLayout(props: Props) {
   return (
     <AuthProvider>
       <CommandK locale={locale} role={user.role} />
-      <div className="min-h-screen bg-surface lg:flex">
+      {/* data-admin-root switches on the back office's denser type and
+          spacing scale — see "Back-office density" in globals.css. */}
+      <div data-admin-root className="min-h-screen bg-surface text-sm text-ink lg:flex">
         {/*
           `display: contents` so this wrapper is invisible to layout — the
           sidebar stays the flex item it has always been — while giving the
@@ -152,7 +154,7 @@ export default async function AdminLayout(props: Props) {
             not apply; the components that *are* prose carry their own
             max-w-2xl/3xl and keep it.
           */}
-          <div className="w-full px-5 py-8 sm:px-6 lg:px-8 lg:py-12">
+          <div className="w-full px-4 py-5 sm:px-6 lg:px-7 lg:py-6">
             {children}
           </div>
         </div>

@@ -52,17 +52,13 @@ export type LeadBoardColumn = {
 type Props = {
   locale: string;
   columns: LeadBoardColumn[];
+  /** "/th/admin/leads?…&lead=" — each card appends its id, opening the
+   *  lead in the page's drawer with the board's filters kept. */
+  leadHrefBase: string;
   errorLabel: string;
 };
 
-function Column({
-  column,
-  locale,
-}: {
-  column: LeadBoardColumn;
-  /** Baked into each card's link href. */
-  locale: string;
-}) {
+function Column({ column, leadHrefBase }: { column: LeadBoardColumn; leadHrefBase: string }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.status });
 
   return (
@@ -86,7 +82,7 @@ function Column({
           <LeadBoardCard
             key={card.id}
             card={card}
-            href={`/${locale}/admin/leads/${card.id}`}
+            href={`${leadHrefBase}${card.id}`}
           />
         ))}
       </div>
@@ -94,7 +90,7 @@ function Column({
   );
 }
 
-export default function LeadBoard({ locale, columns: initialColumns, errorLabel }: Props) {
+export default function LeadBoard({ locale, columns: initialColumns, leadHrefBase, errorLabel }: Props) {
   const [columns, setColumns] = useState(initialColumns);
   const [error, setError] = useState(false);
 
@@ -153,7 +149,7 @@ export default function LeadBoard({ locale, columns: initialColumns, errorLabel 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {columns.map((column) => (
-            <Column key={column.status} column={column} locale={locale} />
+            <Column key={column.status} column={column} leadHrefBase={leadHrefBase} />
           ))}
         </div>
       </DndContext>

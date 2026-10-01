@@ -764,6 +764,13 @@
           "label": "Awaiting review before publish",
           "none": "Nothing awaiting review"
         }
+      },
+      "inventory": {
+        "title": "Unit stock by project",
+        "sold": "Sold",
+        "reserved": "Reserved",
+        "available": "Available",
+        "freeOfTotal": "{free} free / {total}"
       }
     },
     "leads": {
@@ -3265,7 +3272,13 @@
       "language": "Language",
       "notifications": "Notifications",
       "noNotifications": "Nothing yet",
-      "markAllRead": "Mark all read"
+      "markAllRead": "Mark all read",
+      "density": "Screen density",
+      "densityCompact": "Switch to compact",
+      "densityComfortable": "Switch to comfortable (larger text)",
+      "theme": "Colour theme",
+      "themeDark": "Switch to dark mode",
+      "themeLight": "Switch to light mode"
     },
     "commandK": {
       "placeholder": "Search projects, units, leads, news or events…",
@@ -3497,6 +3510,24 @@
         "geo": "Map coordinates",
         "agent": "Company details",
         "breadcrumb": "Page trail"
+      }
+    },
+    "leadDrawer": {
+      "close": "Close",
+      "openFullPage": "Open full page",
+      "dialog": "Lead details",
+      "loading": "Loading…",
+      "notFound": "This lead doesn't exist, or isn't yours to view."
+    },
+    "projectForm": {
+      "sectionsNav": "Form sections",
+      "unsaved": "Unsaved changes",
+      "sections": {
+        "identity": "Basics",
+        "content": "Content & concept",
+        "specification": "Details & location",
+        "imagery": "Images & video",
+        "publication": "Publishing"
       }
     }
   },

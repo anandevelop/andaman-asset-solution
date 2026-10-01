@@ -58,7 +58,7 @@ export default async function ProjectReadinessPanel({
   if (total === 0) return null;
 
   return (
-    <aside className="admin-card space-y-4">
+    <aside className="admin-card space-y-4 xl:sticky xl:top-[68px] xl:self-start">
       <div>
         <h2 className="text-sm font-semibold text-primary">{t("projects.readiness.title")}</h2>
         <p className="mt-1 text-xs text-ink-muted">
