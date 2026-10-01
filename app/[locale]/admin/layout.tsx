@@ -28,6 +28,7 @@ import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { getAdminNavCounts } from "@/lib/admin-nav-counts";
 import { getNotificationsFor } from "@/lib/notifications";
 import { intlLocale } from "@/lib/format";
@@ -41,6 +42,7 @@ import AdminTopbar from "@/components/admin/AdminTopbar";
 import CommandK from "@/components/admin/CommandK";
 import { UndoToaster } from "@/components/admin/UndoToast";
 import CopilotPanel from "@/components/admin/CopilotPanel";
+import KeyboardShortcuts from "@/components/admin/KeyboardShortcuts";
 import { isCopilotEnabled } from "@/lib/admin/copilot";
 
 export const metadata: Metadata = {
@@ -85,7 +87,9 @@ export default async function AdminLayout(props: Props) {
   const [counts, t, feed, liveCount, requestHeaders] = await Promise.all([
     getAdminNavCounts(user.id),
     getTranslations({ locale, namespace: "admin" }),
-    getNotificationsFor(user.id),
+    // More than the old dropdown's ten: the drawer folds repeats and test
+    // rows away, so it needs enough to fill a screen after doing so.
+    getNotificationsFor(user.id, 30),
     canSeeItem(user.role, "analytics")
       ? safeQuery("admin.topbar.liveCount", countLiveVisits, 0)
       : Promise.resolve(null),
@@ -135,8 +139,9 @@ export default async function AdminLayout(props: Props) {
 
   return (
     <AuthProvider>
-      <CommandK locale={locale} role={user.role} />
+      <CommandK locale={locale} role={user.role} copilotEnabled={copilot} />
       <UndoToaster />
+      <KeyboardShortcuts locale={locale} role={user.role} />
       {/* data-admin-root switches on the back office's denser type and
           spacing scale — see "Back-office density" in globals.css. */}
       <div data-admin-root className="min-h-screen bg-surface text-sm text-ink lg:flex">
@@ -161,8 +166,10 @@ export default async function AdminLayout(props: Props) {
               asOfLabel={asOfLabel}
               liveCount={liveCount}
               copilotEnabled={copilot}
+              canClearTestNotifications={hasRole(user.role, Role.ADMIN)}
               notifications={feed.rows.map((row) => ({
                 id: row.id,
+                event: row.event,
                 title: row.title,
                 body: row.body,
                 href: row.href,
@@ -175,8 +182,6 @@ export default async function AdminLayout(props: Props) {
                 searchLeads: t("leads.searchPlaceholder"),
                 language: t("topbar.language"),
                 notifications: t("topbar.notifications"),
-                noNotifications: t("topbar.noNotifications"),
-                markAllRead: t("topbar.markAllRead"),
               }}
             />
           </div>
@@ -194,7 +199,7 @@ export default async function AdminLayout(props: Props) {
             not apply; the components that *are* prose carry their own
             max-w-2xl/3xl and keep it.
           */}
-          <div className="w-full px-4 py-5 sm:px-6 lg:px-7 lg:py-6">
+          <div data-admin-page className="w-full min-w-0 px-4 py-5 sm:px-6 lg:px-7 lg:py-6">
             {children}
           </div>
         </div>

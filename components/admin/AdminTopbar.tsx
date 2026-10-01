@@ -23,8 +23,8 @@
  */
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Bell,
@@ -49,10 +49,12 @@ import {
   toggleRail,
   useDisplayPref,
 } from "@/lib/admin/use-display-pref";
-import { markNotificationsRead } from "@/app/[locale]/admin/notifications-actions";
+import NotificationDrawer from "@/components/admin/NotificationDrawer";
 
 export type TopbarNotification = {
   id: string;
+  /** NotificationEvent key — sorts it into สำคัญ or not (notification-feed). */
+  event: string;
   title: string;
   body: string | null;
   href: string | null;
@@ -78,13 +80,13 @@ type Props = {
   liveCount: number | null;
   /** ADMIN_COPILOT — the button is drawn only when the panel exists. */
   copilotEnabled: boolean;
+  /** ADMIN and above may clear test notifications (see the drawer). */
+  canClearTestNotifications: boolean;
   notifications: TopbarNotification[];
   unreadCount: number;
   labels: {
     search: string;
     notifications: string;
-    noNotifications: string;
-    markAllRead: string;
     /** Shown only on the leads board/table's own route (LeadBoard.dc.html's
      *  topbar) — the mockup's lead detail page keeps the generic prompt
      *  below, so this is a match on that one exact route, not a prefix. */
@@ -99,15 +101,15 @@ export default function AdminTopbar({
   asOfLabel,
   liveCount,
   copilotEnabled,
+  canClearTestNotifications,
   notifications,
   unreadCount,
   labels,
 }: Props) {
-  const router = useRouter();
   const pathname = usePathname();
   const [langOpen, setLangOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const closeBell = useCallback(() => setBellOpen(false), []);
   const t = useTranslations("admin");
   const density = useDisplayPref("density");
   const theme = useDisplayPref("theme");
@@ -231,87 +233,32 @@ export default function AdminTopbar({
         {theme === "light" ? <Moon size={17} aria-hidden /> : <Sun size={17} aria-hidden />}
       </button>
 
-      <div className="relative">
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={bellOpen}
-          aria-label={labels.notifications}
-          onClick={() => setBellOpen((open) => !open)}
-          className={iconButton}
-        >
-          <Bell size={17} aria-hidden />
-          {unreadCount > 0 && (
-            <span
-              className="absolute right-2 top-2 h-[7px] w-[7px] rounded-full bg-adm-danger ring-2 ring-adm-bg"
-              aria-hidden
-            />
-          )}
-        </button>
-
-        {bellOpen && (
-          <>
-            {/* Click-away layer, the same pattern as the language menu. */}
-            <button
-              type="button"
-              aria-hidden
-              tabIndex={-1}
-              onClick={() => setBellOpen(false)}
-              className="fixed inset-0 z-40 cursor-default"
-            />
-
-            <div
-              role="menu"
-              className="absolute right-0 z-50 mt-2 w-[360px] overflow-hidden rounded-[12px] border border-adm-line bg-adm-solid py-1 shadow-[var(--adm-shadow-float)]"
-            >
-              <div className="flex items-center justify-between gap-2 px-3.5 py-2 text-xs">
-                <span className="font-semibold text-primary">{labels.notifications}</span>
-                {unreadCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      startTransition(async () => {
-                        await markNotificationsRead(locale);
-                        router.refresh();
-                      })
-                    }
-                    className="text-ink-muted underline hover:text-primary"
-                  >
-                    {labels.markAllRead}
-                  </button>
-                )}
-              </div>
-
-              {notifications.length === 0 ? (
-                <p className="px-3.5 py-6 text-center text-xs text-ink-muted">
-                  {labels.noNotifications}
-                </p>
-              ) : (
-                <ul className="max-h-80 overflow-y-auto border-t border-primary/5">
-                  {notifications.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href ? `/${locale}${item.href}` : `/${locale}/admin`}
-                        onClick={() => setBellOpen(false)}
-                        className={[
-                          "block px-3.5 py-2.5 transition-colors hover:bg-surface-muted",
-                          item.read ? "" : "bg-accent-50/40",
-                        ].join(" ")}
-                      >
-                        <p className="truncate text-xs font-medium text-primary">{item.title}</p>
-                        {item.body && (
-                          <p className="mt-0.5 truncate text-xs text-ink-muted">{item.body}</p>
-                        )}
-                        <p className="mt-0.5 text-[11px] text-ink-muted/80">{item.when}</p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={bellOpen}
+        aria-label={labels.notifications}
+        onClick={() => setBellOpen(true)}
+        className={iconButton}
+      >
+        <Bell size={17} aria-hidden />
+        {unreadCount > 0 && (
+          <span
+            className="absolute right-2 top-2 h-[7px] w-[7px] rounded-full bg-adm-danger ring-2 ring-adm-bg"
+            aria-hidden
+          />
         )}
-      </div>
+      </button>
+
+      {bellOpen && (
+        <NotificationDrawer
+          locale={locale}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          canClearTests={canClearTestNotifications}
+          onClose={closeBell}
+        />
+      )}
 
       <div className="relative">
         <button

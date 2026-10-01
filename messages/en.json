@@ -3462,13 +3462,22 @@
       "themeDark": "Switch to dark mode",
       "themeLight": "Switch to light mode",
       "searchOrCommand": "Search or type a command",
-      "liveVisitors": "{count, plural, one {# person} other {# people}} on the site"
+      "liveVisitors": "{count, plural, one {# person} other {# people}} on the site",
+      "drawer": {
+        "close": "Close",
+        "important": "Important",
+        "all": "All",
+        "emptyImportant": "Nothing important waiting",
+        "tests": "{count} test records ({unread} unread)",
+        "clearTests": "Clear test records",
+        "testsCleared": "Marked {count} test records read",
+        "failed": "That didn't go through"
+      }
     },
     "commandK": {
       "placeholder": "Search projects, units, leads, news or events…",
       "hint": "Type at least 2 characters to search",
       "empty": "No results found",
-      "quickActions": "Quick actions",
       "navigate": "Navigate",
       "select": "Open",
       "toggle": "Open from anywhere",
@@ -3480,7 +3489,19 @@
         "media": "Go to media library",
         "seo": "Go to sitewide SEO",
         "settings": "Go to settings"
-      }
+      },
+      "groups": {
+        "navigate": "Go to",
+        "create": "Create",
+        "commands": "Commands"
+      },
+      "commands": {
+        "theme": "Switch light / dark",
+        "density": "Switch screen density",
+        "rail": "Collapse / expand the menu",
+        "copilot": "Open / close Copilot"
+      },
+      "goHint": "Jump to a page (g, then d l p n s a)"
     },
     "mobile": {
       "tabs": {

@@ -3462,13 +3462,22 @@
       "themeDark": "切换到深色模式",
       "themeLight": "切换到浅色模式",
       "searchOrCommand": "搜索或输入命令",
-      "liveVisitors": "{count} 人正在浏览网站"
+      "liveVisitors": "{count} 人正在浏览网站",
+      "drawer": {
+        "close": "关闭",
+        "important": "重要",
+        "all": "全部",
+        "emptyImportant": "没有需要处理的重要事项",
+        "tests": "测试记录 {count} 条（未读 {unread}）",
+        "clearTests": "清除测试记录",
+        "testsCleared": "已将 {count} 条测试记录标为已读",
+        "failed": "操作未成功"
+      }
     },
     "commandK": {
       "placeholder": "搜索项目、户型、线索、新闻或活动…",
       "hint": "输入至少 2 个字符即可搜索",
       "empty": "未找到结果",
-      "quickActions": "快捷操作",
       "navigate": "移动",
       "select": "打开",
       "toggle": "在任意页面呼出",
@@ -3480,7 +3489,19 @@
         "media": "前往媒体库",
         "seo": "前往全站 SEO",
         "settings": "前往系统设置"
-      }
+      },
+      "groups": {
+        "navigate": "前往",
+        "create": "新建",
+        "commands": "命令"
+      },
+      "commands": {
+        "theme": "切换浅色 / 深色",
+        "density": "切换界面密度",
+        "rail": "折叠 / 展开菜单",
+        "copilot": "打开 / 关闭 Copilot"
+      },
+      "goHint": "快速跳转（g 后按 d l p n s a）"
     },
     "mobile": {
       "tabs": {
