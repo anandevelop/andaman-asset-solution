@@ -864,7 +864,6 @@
       "filterProject": "Проект",
       "filterSource": "Канал",
       "filterRange": "Период",
-      "overdueOnly": "Только просроченные",
       "boardView": "Доска",
       "tableView": "Таблица",
       "openCount": "Показано {count} открытых заявок",
@@ -877,10 +876,39 @@
         "noFollowUp": "Нет контакта {days} дн.",
         "followUpOn": "Позвонить {date}",
         "appointmentWith": "{when} {time} · {name}",
-        "moveError": "Не удалось переместить заявку. Попробуйте ещё раз."
+        "moveError": "Не удалось переместить заявку. Попробуйте ещё раз.",
+        "moved": "{name} → {status}"
       },
       "searchPlaceholder": "Поиск по имени, email или телефону…",
-      "filterAssigneeAll": "Вся команда"
+      "filterAssigneeAll": "Вся команда",
+      "views": {
+        "label": "Сохранённые виды",
+        "all": "Все",
+        "mine": "Мои",
+        "unassigned": "Без ответственного",
+        "sla": "Просрочен SLA"
+      },
+      "table": {
+        "select": "Выбрать {name}",
+        "selectAll": "Выбрать все строки",
+        "customer": "Клиент",
+        "owner": "Ответственный",
+        "assign": "Назначить",
+        "noConsent": "Нет согласия",
+        "assigned": "Назначено: {name}",
+        "unassignedDone": "Ответственный снят",
+        "statusChanged": "Статус: {status}"
+      },
+      "bulk": {
+        "selected": "Выбрано: {count}",
+        "assign": "Назначить",
+        "status": "Сменить статус",
+        "export": "Экспорт",
+        "clear": "Снять выбор",
+        "done": "Обновлено: {count}",
+        "partial": "Обновлено: {changed} · пропущено без прав: {refused}"
+      },
+      "clearSearch": "Очистить поиск"
     },
     "leadDetail": {
       "title": "Клиент",
@@ -914,7 +942,6 @@
       "lastTouched": "Последний контакт {ago}",
       "hoursAgo": "{hours} ч. назад",
       "daysAgo": "{days} дн. назад",
-      "logCall": "Записать звонок",
       "scheduleViewing": "Запланировать показ",
       "timelineTitle": "Активность",
       "timelineEmpty": "Пока нет активности.",
@@ -982,6 +1009,34 @@
         "release": "Снять бронь",
         "reservedTag": "Забронировано",
         "noUnits": "В этом проекте нет доступных юнитов."
+      },
+      "reveal": "Показать",
+      "revealFailed": "Не удалось показать контакты",
+      "appointmentOverdue": "Просроченный показ не закрыт",
+      "appointmentNext": "Следующий показ",
+      "nextStep": {
+        "title": "Рекомендуемый шаг",
+        "call": "Позвонить",
+        "whatsapp": "WhatsApp",
+        "claim": "Взять себе и позвонить в течение часа",
+        "claimDetail": "У лида пока нет ответственного",
+        "claimButton": "Взять себе",
+        "closeAppointment": "Закрыть показ",
+        "closeAppointmentDetail": "Показ на {when} — не отмечено, пришёл ли клиент",
+        "followUpDue": "Пора связаться",
+        "followUpDueDetail": "Назначено на {date}",
+        "firstContact": "Первый звонок",
+        "firstContactDetail": "Лид ещё новый — клиенту не перезвонили",
+        "prepareViewing": "Подготовиться к показу {when}",
+        "prepareViewingDetail": "Подтвердите время с клиентом заранее",
+        "keepNegotiating": "Продвигать переговоры",
+        "keepNegotiatingDetail": "Назначьте следующий разговор или отправьте предложение",
+        "visited": "Состоялся",
+        "noShow": "Не пришли",
+        "claimed": "Лид ваш",
+        "closedVisited": "Отмечено: показ состоялся",
+        "closedNoShow": "Отмечено: не пришли",
+        "failed": "Не получилось"
       }
     },
     "leadStatus": {
@@ -2743,7 +2798,8 @@
           "TRUNCATED": "Одно из значений слишком длинное и сохранено не полностью — откат укоротил бы текст на сайте. Отредактируйте запись напрямую.",
           "RECORD_GONE": "Запись, к которой это относится, удалена."
         }
-      }
+      },
+      "actionRevealContact": "просмотрел(а) контакты"
     },
     "navGroups": {
       "daily": "Ежедневная работа",
@@ -3315,7 +3371,14 @@
         "notes": "Заметки"
       },
       "filteredNotice": "Показано {shown} из {total} встреч на этой неделе — применён фильтр из списка заявок.",
-      "clearFilter": "Показать все"
+      "clearFilter": "Показать все",
+      "viewLabel": "Вид календаря",
+      "viewMonth": "Месяц",
+      "viewWeek": "Неделя",
+      "previousMonth": "Предыдущий месяц",
+      "nextMonth": "Следующий месяц",
+      "moreOnDay": "ещё {count}",
+      "needsAction": "Требует действий"
     },
     "appointmentStatus": {
       "REQUESTED": "Запрошено",

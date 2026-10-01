@@ -29,6 +29,9 @@ import { prisma } from "@/lib/prisma";
 // lib/permissions.ts.
 import { requireAdminAction, requireCapabilityAction } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
+import { rateLimit } from "@/lib/rate-limit";
+import { recordContactReveal } from "@/lib/audit/events";
+import { isLeadVisibleTo } from "@/lib/leads-board";
 import {
   leadAssignSchema,
   leadFollowUpSchema,
@@ -469,4 +472,112 @@ export async function releaseUnitReservation(
   revalidateLead(locale, leadId);
 
   return { ok: true };
+}
+
+/* ── Reveal and bulk ────────────────────────────────────────────────── */
+
+const revealSchema = z.object({
+  id: z.string().min(1),
+  field: z.enum(["email", "phone"]),
+});
+
+/**
+ * Generous for a person working a list, and a ceiling on anyone trying to
+ * walk the whole table one reveal at a time.
+ */
+const REVEAL_LIMIT = { limit: 60, windowMs: 10 * 60_000 };
+
+export type RevealResult = { ok: true; value: string } | { ok: false; error: string };
+
+/**
+ * One masked contact detail, in full, for somebody allowed to see it —
+ * and an audit row saying they did (lib/audit/events.ts,
+ * recordContactReveal). Lists show lib/contact-mask.ts's masked form; this
+ * is the only way to the real value from them.
+ *
+ * viewCustomerContact, not viewAllLeads: the capability that exists for
+ * exactly this. The lead has to be inside the caller's own scope
+ * (isLeadVisibleTo — SALES and project scoping both), because the id
+ * arrives from the browser. And the reveal is refused outright if its
+ * audit row cannot be written: an unrecorded look is the one outcome this
+ * action exists to prevent.
+ */
+export async function revealLeadContact(id: string, field: string): Promise<RevealResult> {
+  const session = await requireCapabilityAction("viewCustomerContact");
+
+  const parsed = revealSchema.safeParse({ id, field });
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+
+  if (!rateLimit(`lead-reveal:${session.id}`, REVEAL_LIMIT).ok) return { ok: false, error: "RATE_LIMITED" };
+  if (!(await isLeadVisibleTo(session, parsed.data.id))) return { ok: false, error: "FORBIDDEN" };
+
+  const lead = await prisma.leadInquiry.findUnique({
+    where: { id: parsed.data.id },
+    select: { name: true, email: true, phone: true },
+  });
+  if (!lead) return { ok: false, error: "NOT_FOUND" };
+
+  try {
+    await recordContactReveal({
+      actor: { id: session.id, email: session.email, role: session.role },
+      leadId: parsed.data.id,
+      leadName: lead.name,
+      field: parsed.data.field,
+    });
+  } catch (error) {
+    console.error("[leads] contact reveal not recorded; refused", error);
+    return { ok: false, error: "AUDIT_FAILED" };
+  }
+
+  return { ok: true, value: parsed.data.field === "email" ? lead.email : lead.phone };
+}
+
+const bulkSchema = z
+  .array(
+    z.object({
+      id: z.string().min(1),
+      status: z.nativeEnum(LeadStatus).optional(),
+      /** "" = unassign, as in assignLead. */
+      assignedToId: z.string().optional(),
+    }),
+  )
+  .min(1)
+  .max(100);
+
+export type BulkResult = { ok: true; changed: string[]; refused: string[] } | { ok: false; error: string };
+
+/**
+ * The bulk bar's assign and change-status, and the undo that puts each row
+ * back to what it was.
+ *
+ * A loop over assignLead and updateLeadStatus rather than one updateMany:
+ * each row keeps the SALES ownership check, the timeline note and the
+ * audit row it would get if changed by hand. A rep who selects ten leads,
+ * three of them a colleague's, gets seven changed and three refused — not
+ * an all-or-nothing error that hides which three.
+ *
+ * Deliberately no bulk delete. Leads are not deleted from the back office
+ * at all (see updateLeadStatus above): the consent record is part of the
+ * PDPA trail, and LOST is how a lead leaves the pipeline.
+ */
+export async function bulkUpdateLeads(locale: string, input: unknown): Promise<BulkResult> {
+  await requireCapabilityAction("viewAllLeads");
+
+  const parsed = bulkSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+
+  const changed: string[] = [];
+  const refused: string[] = [];
+
+  for (const change of parsed.data) {
+    // One after the other, so the row's timeline reads in a fixed order.
+    const results = [
+      change.status ? await updateLeadStatus(locale, change.id, change.status) : null,
+      change.assignedToId !== undefined ? await assignLead(locale, change.id, change.assignedToId) : null,
+    ];
+    if (results.every((result) => result === null || result.ok)) changed.push(change.id);
+    else refused.push(change.id);
+  }
+
+  return { ok: true, changed, refused };
 }

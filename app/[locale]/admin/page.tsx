@@ -67,7 +67,7 @@ import { getCookieConsentStats } from "@/lib/cookie-consent-stats";
 import { getPageViewTrend } from "@/lib/admin/analytics";
 import { getTranslationStatusReport } from "@/lib/locale-completeness";
 import { EMPTY_SNAPSHOT, getLiveSnapshot } from "@/lib/analytics/live-visit";
-import { AUTH_LOGIN, AUTH_LOGOUT } from "@/lib/audit/events";
+import { AUTH_LOGIN, AUTH_LOGOUT, CONTACT_REVEAL } from "@/lib/audit/events";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { canSeeItem } from "@/lib/admin/nav";
@@ -329,6 +329,7 @@ export default async function AdminDashboardPage(props: Props) {
     delete: t("activity.actionDelete"),
     [AUTH_LOGIN]: t("activity.actionLogin"),
     [AUTH_LOGOUT]: t("activity.actionLogout"),
+    [CONTACT_REVEAL]: t("activity.actionRevealContact"),
   };
 
   // ── Funnel ───────────────────────────────────────────────────────────

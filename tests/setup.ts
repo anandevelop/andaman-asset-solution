@@ -114,8 +114,8 @@ if (typeof window !== "undefined") {
   Object.defineProperty(window, "scrollTo", { writable: true, value: () => {} });
 
   // Same reasoning, same no-op: CountrySelect.tsx scrolls its highlighted
-  // row into view on arrow-key navigation, and LeadQuickActions.tsx
-  // scrolls the composer into view — neither has anything to scroll
+  // row into view on arrow-key navigation, and focusComposer()
+  // (LeadActivityComposer.tsx) scrolls the composer into view — neither has anything to scroll
   // without a layout engine, but without this stub jsdom throws instead
   // of silently doing nothing.
   Object.defineProperty(window.Element.prototype, "scrollIntoView", {

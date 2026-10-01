@@ -17,9 +17,9 @@
  * shortcut into the same calendar the full /admin/appointments page
  * manages — not a second, parallel booking system.
  *
- * Listens for a `lead-composer:focus-tab` window event so the header's two
- * quick-action buttons ("Log a call" / "Schedule a viewing" —
- * LeadQuickActions.tsx) can jump straight to the right tab without a ref
+ * Listens for a `lead-composer:focus-tab` window event so the next-step
+ * card's buttons (call, book a viewing — LeadNextStepCard.tsx, via
+ * focusComposer below) can jump straight to the right tab without a ref
  * threaded across the server/client boundary. Same cross-component-signal
  * pattern AdminSidebar's search trigger already uses to open CommandK
  * (`admin:open-search`) — reused here rather than inventing a second way
@@ -37,6 +37,12 @@ export type LeadComposerTab = "NOTE" | "CALL" | "EMAIL" | "APPOINTMENT";
 type Tab = LeadComposerTab;
 
 export const LEAD_COMPOSER_FOCUS_EVENT = "lead-composer:focus-tab";
+
+/** Scroll to the composer and switch it to `tab`. */
+export function focusComposer(tab: LeadComposerTab) {
+  document.getElementById("lead-composer")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.dispatchEvent(new CustomEvent(LEAD_COMPOSER_FOCUS_EVENT, { detail: tab }));
+}
 
 type Props = {
   locale: string;

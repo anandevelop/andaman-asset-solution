@@ -128,6 +128,42 @@ export async function getWeekAppointments(weekStart: Date): Promise<AppointmentC
   );
 }
 
+/** Every appointment in [from, to) — the month view's read. */
+export async function getAppointmentsBetween(from: Date, to: Date): Promise<AppointmentCard[]> {
+  return safeQuery(
+    "getAppointmentsBetween",
+    async () => {
+      const rows = await prisma.appointment.findMany({
+        where: { scheduledAt: { gte: from, lt: to } },
+        orderBy: { scheduledAt: "asc" },
+        select: CARD_SELECT,
+      });
+      return rows.map(toCard);
+    },
+    [],
+  );
+}
+
+export type CalendarEvent = { id: string; titleEn: string; titleTh: string; startsAt: Date };
+
+/**
+ * Published events starting in [from, to), drawn on the month view beside
+ * the viewings: a rep booking a Saturday viewing should see that Saturday
+ * is also the open house.
+ */
+export async function getEventsBetween(from: Date, to: Date): Promise<CalendarEvent[]> {
+  return safeQuery(
+    "getEventsBetween",
+    () =>
+      prisma.event.findMany({
+        where: { isPublished: true, startsAt: { gte: from, lt: to } },
+        orderBy: { startsAt: "asc" },
+        select: { id: true, titleEn: true, titleTh: true, startsAt: true },
+      }),
+    [],
+  );
+}
+
 /** Not windowed to the visible week on purpose — an unassigned appointment
  *  three weeks out is exactly the one most likely to be forgotten if it
  *  only shows up once its week happens to be on screen. */

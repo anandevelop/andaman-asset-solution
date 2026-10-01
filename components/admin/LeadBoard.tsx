@@ -39,7 +39,10 @@ import {
 } from "@dnd-kit/core";
 import { LeadStatus } from "@prisma/client";
 import { AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { updateLeadStatus } from "@/app/[locale]/admin/(crm)/leads/actions";
+import { showUndoToast } from "@/components/admin/UndoToast";
 import LeadBoardCard, { type LeadCardView } from "@/components/admin/LeadBoardCard";
 
 export type LeadBoardColumn = {
@@ -91,6 +94,8 @@ function Column({ column, leadHrefBase }: { column: LeadBoardColumn; leadHrefBas
 }
 
 export default function LeadBoard({ locale, columns: initialColumns, leadHrefBase, errorLabel }: Props) {
+  const router = useRouter();
+  const t = useTranslations("admin.leads.board");
   const [columns, setColumns] = useState(initialColumns);
   const [error, setError] = useState(false);
 
@@ -129,11 +134,25 @@ export default function LeadBoard({ locale, columns: initialColumns, leadHrefBas
     );
     setError(false);
 
+    const fromStatus = sourceColumn.status;
     void updateLeadStatus(locale, card.id, nextStatus).then((result) => {
       if (!result.ok) {
         setColumns(previous);
         setError(true);
+        return;
       }
+      /* Tier 1: the move stands, with eight seconds to put it back. The
+         undo is the same action in reverse; the refresh that follows
+         redraws both columns from the server. */
+      const target = columns.find((c) => c.status === nextStatus)?.label ?? nextStatus;
+      showUndoToast({
+        message: t("moved", { name: card.name, status: target }),
+        onUndo: async () => {
+          const reverted = await updateLeadStatus(locale, card.id, fromStatus);
+          if (!reverted.ok) throw new Error("undo refused");
+          router.refresh();
+        },
+      });
     });
   };
 

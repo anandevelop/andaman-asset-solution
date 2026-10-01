@@ -68,6 +68,8 @@ export type LeadBoardFilters = {
   rangeDays?: RangeDays;
   /** Response-SLA overdue only (NEW, older than RESPONSE_SLA_HOURS). */
   overdueOnly?: boolean;
+  /** Free text: name, email or phone contains it. */
+  q?: string;
 };
 
 export type LeadCard = {
@@ -116,8 +118,36 @@ function whereFromFilters(
     const since = new Date(Date.now() - Number(filters.rangeDays) * 24 * 60 * 60_000);
     clauses.push({ createdAt: { gte: since } });
   }
+  /* Searching the full email and phone is fine here — every caller is
+     behind viewAllLeads and scoped above — and it is how a rep finds the
+     customer who just rang. The results still show them masked. One
+     character matches half the table, so the box waits for two. */
+  const q = filters.q?.trim();
+  if (q && q.length >= 2) {
+    clauses.push({
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q } },
+      ],
+    });
+  }
 
   return clauses.length > 0 ? { AND: clauses } : {};
+}
+
+/**
+ * May this session see this one lead at all — the same scope the board and
+ * table apply (SALES: own + unassigned; project-scoped accounts: their
+ * projects). For actions that act on a single id handed up from the
+ * browser, where "it was in my list" is a claim, not a fact.
+ */
+export async function isLeadVisibleTo(session: { id: string; role: Role }, leadId: string): Promise<boolean> {
+  const scope = await leadScopeWhere(session);
+  const count = await prisma.leadInquiry.count({
+    where: scope ? { AND: [scope, { id: leadId }] } : { id: leadId },
+  });
+  return count > 0;
 }
 
 /**
@@ -322,4 +352,94 @@ export async function getLeadBoardFilterOptions(): Promise<LeadBoardFilterOption
   ]);
 
   return { assignees, projects };
+}
+
+/* ── The table view ─────────────────────────────────────────────────── */
+
+export type LeadTableRow = {
+  id: string;
+  name: string;
+  phone: string;
+  commsLanguage: string | null;
+  source: LeadSource;
+  status: LeadStatus;
+  consentGiven: boolean;
+  createdAt: Date;
+  assignedTo: { id: string; name: string } | null;
+  project: { id: string; nameEn: string; nameTh: string; imageUrl: string | null } | null;
+};
+
+/**
+ * The table's rows, through the same scope as the board.
+ *
+ * The table used to build its own where-clause in the page, with the SALES
+ * narrowing written out again and the per-account project scope missing —
+ * so a project-scoped account saw only its projects on the board and every
+ * project in the table. One scope function for both is the fix.
+ */
+export async function getLeadTableRows(
+  session: { id: string; role: Role },
+  filters: LeadBoardFilters,
+  options: { status: LeadStatus | null; direction: Prisma.SortOrder; take: number },
+): Promise<LeadTableRow[]> {
+  const baseWhere = whereFromFilters(filters, await leadScopeWhere(session));
+  const overdueCutoff = new Date(Date.now() - RESPONSE_SLA_HOURS * 60 * 60_000);
+
+  const rows = await safeQuery(
+    "leadsTable:rows",
+    () =>
+      prisma.leadInquiry.findMany({
+        where: {
+          AND: [
+            baseWhere,
+            options.status ? { status: options.status } : {},
+            filters.overdueOnly ? { status: LeadStatus.NEW, createdAt: { lte: overdueCutoff } } : {},
+          ],
+        },
+        orderBy: { createdAt: options.direction },
+        take: options.take,
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          commsLanguage: true,
+          source: true,
+          status: true,
+          consentGiven: true,
+          createdAt: true,
+          assignedTo: { select: { id: true, name: true } },
+          project: { select: { id: true, nameEn: true, nameTh: true, heroImageUrl: true, ogImageUrl: true } },
+        },
+      }),
+    [],
+  );
+
+  return rows.map(({ project, ...row }) => ({
+    ...row,
+    project: project
+      ? {
+          id: project.id,
+          nameEn: project.nameEn,
+          nameTh: project.nameTh,
+          imageUrl: project.heroImageUrl ?? project.ogImageUrl,
+        }
+      : null,
+  }));
+}
+
+/** The "ยังไม่มอบหมาย · n" segment's count: open leads nobody owns,
+ *  inside every filter but the assignee one it replaces. */
+export async function getUnassignedCount(
+  session: { id: string; role: Role },
+  filters: LeadBoardFilters,
+): Promise<number> {
+  const baseWhere = whereFromFilters({ ...filters, assignedTo: "unassigned" }, await leadScopeWhere(session));
+  return safeQuery(
+    "leadsBoard:unassignedCount",
+    () =>
+      prisma.leadInquiry.count({
+        where: { AND: [baseWhere, { status: { notIn: [LeadStatus.WON, LeadStatus.LOST] } }] },
+      }),
+    0,
+  );
 }

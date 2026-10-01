@@ -19,23 +19,25 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { getMyAppointmentsToday } from "@/lib/appointments";
 import { LeadSource, LeadStatus, Prisma, Role } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { safeQuery, isDatabaseOffline } from "@/lib/db";
+import { isDatabaseOffline } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
-import { intlLocale } from "@/lib/format";
-import { nationalityLabel } from "@/lib/countries";
-import type { Locale } from "@/i18n";
+import { can } from "@/lib/permissions";
+import { initialsFrom, intlLocale } from "@/lib/format";
+import { maskPhone } from "@/lib/contact-mask";
+import { ageParts } from "@/lib/admin/dashboard-model";
+import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
+import { LEAD_STATUS_DOT } from "@/lib/admin/lead-status-tone";
 import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import {
   LEAD_BOARD_STATUSES,
   getLeadBoardData,
   getLeadBoardFilterOptions,
+  getLeadTableRows,
   getOverdueCount,
+  getUnassignedCount,
   type LeadBoardFilters,
 } from "@/lib/leads-board";
-import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
-import LeadAssignSelect from "@/components/admin/LeadAssignSelect";
-import LeadFollowUpInput from "@/components/admin/LeadFollowUpInput";
+import LeadTable, { type LeadRowView } from "@/components/admin/LeadTable";
 import PageTabs from "@/components/admin/PageTabs";
 import LeadFilters from "@/components/admin/LeadFilters";
 import LeadExportButton from "@/components/admin/LeadExportButton";
@@ -56,23 +58,14 @@ type Props = {
     source?: string;
     range?: string;
     overdue?: string;
+    /** Free-text search — see whereFromFilters in lib/leads-board.ts. */
+    q?: string;
     /** The lead open in the side drawer, if any — see LeadDrawer.tsx. */
     lead?: string;
   }>;
 };
 
 const PAGE_SIZE = 100;
-
-/** A column dot colour per status — the board's at-a-glance stage cue,
- *  the same job LeadStatusSelect's TONE map does for the table's select. */
-const COLUMN_DOT: Record<(typeof LEAD_BOARD_STATUSES)[number], string> = {
-  NEW: "bg-accent",
-  CONTACTED: "bg-sky-500",
-  QUALIFIED: "bg-blue-600",
-  VIEWING_SCHEDULED: "bg-emerald-600",
-  NEGOTIATING: "bg-orange-500",
-  WON: "bg-primary",
-};
 
 function parseStatus(value: string | undefined): LeadStatus | null {
   if (!value || value === "ALL") return null;
@@ -90,12 +83,6 @@ function parseSource(value: string | undefined): LeadSource | null {
 
 function parseId(value: string | undefined): string | undefined {
   return value && value !== "ALL" ? value : undefined;
-}
-
-/** "YYYY-MM-DD" in UTC, for the plain <input type="date"> follow-up field. */
-function toDateInputValue(date: Date | null): string | null {
-  if (!date) return null;
-  return date.toISOString().slice(0, 10);
 }
 
 function isSameUtcDay(a: Date, b: Date): boolean {
@@ -182,18 +169,29 @@ export default async function AdminLeadsPage(props: Props) {
   const assignedToUnassigned = searchParams.assignedTo === "unassigned";
   const assignedTo = parseId(searchParams.assignedTo);
 
+  const query = searchParams.q?.trim() ?? "";
+
   const boardFilters: LeadBoardFilters = {
     assignedTo,
     projectId,
     source: source ?? undefined,
     rangeDays,
     overdueOnly,
+    q: query || undefined,
   };
 
-  const [filterOptions, overdueCount] = await Promise.all([
+  const [filterOptions, overdueCount, unassignedCount] = await Promise.all([
     getLeadBoardFilterOptions(),
-    getOverdueCount(session, boardFilters),
+    // The saved-view counts ignore the assignee and SLA filters they
+    // themselves set, so "unassigned · 4" still says 4 while "mine" is on.
+    getOverdueCount(session, { ...boardFilters, assignedTo: undefined, overdueOnly: false }),
+    getUnassignedCount(session, { ...boardFilters, assignedTo: undefined, overdueOnly: false }),
   ]);
+
+  /* SALES may only give a lead to themselves (assignLead enforces it), so
+     that is the only name its menus offer. */
+  const assignableTo =
+    session.role === Role.SALES ? [{ id: session.id, name: session.name }] : filterOptions.assignees;
 
   const offline = isDatabaseOffline();
 
@@ -226,14 +224,18 @@ export default async function AdminLeadsPage(props: Props) {
     <LeadFilters
       locale={locale}
       view={view}
+      currentUserId={session.id}
+      canPickAssignee={session.role !== Role.SALES}
       activeStatus={searchParams.status ?? "ALL"}
       activeSort={direction === "asc" ? "oldest" : "newest"}
       activeAssignee={assignedTo ?? searchParams.assignedTo ?? "ALL"}
       activeProject={projectId ?? "ALL"}
       activeSource={source ?? "ALL"}
       activeRange={rangeDays ?? "ALL"}
+      activeQuery={query}
       overdueOnly={overdueOnly}
       overdueCount={overdueCount}
+      unassignedCount={unassignedCount}
       statusLabels={statusLabels}
       sourceLabels={sourceLabels}
       assignees={filterOptions.assignees}
@@ -242,6 +244,13 @@ export default async function AdminLeadsPage(props: Props) {
         name: projectLabel(project) ?? project.nameEn,
       }))}
       labels={{
+        views: t("leads.views.label"),
+        viewAll: t("leads.views.all"),
+        viewMine: t("leads.views.mine"),
+        viewUnassigned: t("leads.views.unassigned"),
+        viewSla: t("leads.views.sla"),
+        search: t("leads.searchPlaceholder"),
+        clearSearch: t("leads.clearSearch"),
         status: t("leads.filterStatus"),
         sort: t("leads.sort"),
         all: t("common.all"),
@@ -256,7 +265,6 @@ export default async function AdminLeadsPage(props: Props) {
         range30: t("dashboard.range30"),
         range90: t("dashboard.range90"),
         range365: t("dashboard.range365"),
-        overdueOnly: t("leads.overdueOnly"),
       }}
     />
   );
@@ -323,7 +331,7 @@ export default async function AdminLeadsPage(props: Props) {
     const columns: LeadBoardColumn[] = LEAD_BOARD_STATUSES.map((columnStatus) => ({
       status: columnStatus,
       label: statusLabels[columnStatus],
-      dotClassName: COLUMN_DOT[columnStatus],
+      dotClassName: LEAD_STATUS_DOT[columnStatus],
       cards: board.columns[columnStatus].map((lead): LeadCardView => {
         let ageLabel: string;
         let ageTone: LeadCardView["ageTone"] = lead.isUrgent ? "urgent" : "default";
@@ -424,209 +432,74 @@ export default async function AdminLeadsPage(props: Props) {
   }
 
   // ── Table view ──────────────────────────────────────────────────────
-  const scopeWhere: Prisma.LeadInquiryWhereInput | undefined =
-    session.role === Role.SALES
-      ? { OR: [{ assignedToId: null }, { assignedToId: session.id }] }
-      : undefined;
+  const rows = await getLeadTableRows(session, boardFilters, { status, direction, take: PAGE_SIZE });
+  const now = new Date();
 
-  const assignedToWhere: Prisma.LeadInquiryWhereInput | undefined = assignedTo
-    ? { assignedToId: assignedTo === "unassigned" ? null : assignedTo }
-    : undefined;
-
-  const rangeWhere: Prisma.LeadInquiryWhereInput | undefined = rangeDays
-    ? { createdAt: { gte: new Date(Date.now() - Number(rangeDays) * 24 * 60 * 60_000) } }
-    : undefined;
-
-  const overdueWhere: Prisma.LeadInquiryWhereInput | undefined = overdueOnly
-    ? { status: LeadStatus.NEW, createdAt: { lte: new Date(Date.now() - 24 * 60 * 60_000) } }
-    : undefined;
-
-  const leads = await safeQuery(
-    "admin:leads",
-    () =>
-      prisma.leadInquiry.findMany({
-        where: {
-          ...(status ? { status } : {}),
-          ...(source ? { source } : {}),
-          ...(projectId ? { projectId } : {}),
-          ...scopeWhere,
-          ...assignedToWhere,
-          ...rangeWhere,
-          ...overdueWhere,
-        },
-        orderBy: { createdAt: direction },
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          nationality: true,
-          message: true,
-          source: true,
-          status: true,
-          consentGiven: true,
-          createdAt: true,
-          assignedToId: true,
-          followUpAt: true,
-          assignedTo: { select: { id: true, name: true } },
-          project: { select: { slug: true, nameEn: true, nameTh: true } },
-          _count: { select: { notes: true } },
-        },
-      }),
-    [],
-  );
+  const rowViews: LeadRowView[] = rows.map((lead) => {
+    const age = ageParts(lead.createdAt, now);
+    return {
+      id: lead.id,
+      name: lead.name,
+      initials: initialsFrom(lead.name),
+      // Masked here, on the server: the full number never reaches the
+      // browser from a list. See lib/contact-mask.ts.
+      maskedPhone: maskPhone(lead.phone),
+      commsLanguage: lead.commsLanguage,
+      projectName: projectLabel(lead.project),
+      projectImage: lead.project?.imageUrl ?? null,
+      sourceLabel: sourceLabels[lead.source],
+      status: lead.status,
+      assignee: lead.assignedTo,
+      receivedIso: lead.createdAt.toISOString(),
+      receivedLabel: dateFormat.format(lead.createdAt),
+      ageLabel: t(`dashboard.inbox.age.${age.unit}`, { value: age.value }),
+      late:
+        lead.status === LeadStatus.NEW &&
+        now.getTime() - lead.createdAt.getTime() >= RESPONSE_SLA_HOURS * 3_600_000,
+      consentGiven: lead.consentGiven,
+    };
+  });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {header}
       {tabs}
       {unassignedBanner}
       {filtersUi}
       {offlineNotice}
 
-      <p className="text-sm text-ink-muted">{t("leads.count", { count: leads.length })}</p>
+      <p className="text-sm text-ink-muted">{t("leads.count", { count: rows.length })}</p>
 
-      {leads.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="admin-card text-center text-sm text-ink-muted">{t("leads.empty")}</div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
-          <table className="w-full min-w-[1180px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
-              <tr>
-                <th className="admin-th">{t("leads.name")}</th>
-                <th className="admin-th">{t("leads.contact")}</th>
-                <th className="admin-th">{t("leads.project")}</th>
-                <th className="admin-th">{t("leads.source")}</th>
-                <th className="admin-th">{t("leads.received")}</th>
-                <th className="admin-th">{t("leads.status")}</th>
-                <th className="admin-th">{t("leads.assignedTo")}</th>
-                <th className="admin-th">{t("leads.followUp")}</th>
-                <th className="admin-th" />
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-primary/5">
-              {leads.map((lead) => (
-                <tr key={lead.id} className="transition-colors hover:bg-surface-muted/60">
-                  <td className="admin-td">
-                    <Link
-                      href={`${leadHrefBase}${lead.id}`}
-                      scroll={false}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {lead.name}
-                    </Link>
-                    {(() => {
-                      const nationality = nationalityLabel(lead.nationality, locale as Locale);
-                      return (
-                        nationality && (
-                          <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-muted">
-                            {nationality.flagSrc && (
-                              // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
-                              <img
-                                src={nationality.flagSrc}
-                                alt=""
-                                aria-hidden
-                                className="h-3 w-4 shrink-0 rounded-[1px] object-cover"
-                              />
-                            )}
-                            {nationality.label}
-                          </p>
-                        )
-                      );
-                    })()}
-                    {lead.message && (
-                      <p className="mt-1 max-w-xs text-xs leading-relaxed text-ink-muted line-clamp-2">
-                        {lead.message}
-                      </p>
-                    )}
-                    {!lead.consentGiven && (
-                      <p className="mt-1 text-xs font-medium text-red-700">
-                        {t("leads.consent")}: {t("common.no")}
-                      </p>
-                    )}
-                  </td>
-
-                  <td className="admin-td whitespace-nowrap">
-                    <a
-                      href={`mailto:${lead.email}`}
-                      className="block text-accent-700 hover:underline"
-                    >
-                      {lead.email}
-                    </a>
-                    <a
-                      href={`tel:${lead.phone}`}
-                      className="mt-0.5 block text-xs text-ink-muted hover:underline"
-                    >
-                      {lead.phone}
-                    </a>
-                  </td>
-
-                  <td className="admin-td">
-                    {lead.project ? (
-                      projectLabel(lead.project)
-                    ) : (
-                      <span className="text-ink-muted">{t("leads.noProject")}</span>
-                    )}
-                  </td>
-
-                  <td className="admin-td whitespace-nowrap text-ink-muted">
-                    {sourceLabels[lead.source]}
-                  </td>
-
-                  <td className="admin-td whitespace-nowrap text-ink-muted">
-                    <time dateTime={lead.createdAt.toISOString()}>
-                      {dateFormat.format(lead.createdAt)}
-                    </time>
-                  </td>
-
-                  <td className="admin-td">
-                    <LeadStatusSelect
-                      locale={locale}
-                      leadId={lead.id}
-                      value={lead.status}
-                      labels={statusLabels}
-                      errorLabel={t("common.error")}
-                    />
-                  </td>
-
-                  <td className="admin-td">
-                    <LeadAssignSelect
-                      locale={locale}
-                      leadId={lead.id}
-                      value={lead.assignedToId}
-                      assignees={filterOptions.assignees}
-                      unassignedLabel={t("leads.unassigned")}
-                      errorLabel={t("common.error")}
-                    />
-                  </td>
-
-                  <td className="admin-td">
-                    <LeadFollowUpInput
-                      locale={locale}
-                      leadId={lead.id}
-                      value={toDateInputValue(lead.followUpAt)}
-                      overdueLabel={t("leads.followUpOverdue")}
-                      errorLabel={t("common.error")}
-                    />
-                  </td>
-
-                  <td className="admin-td whitespace-nowrap">
-                    <Link
-                      href={`${leadHrefBase}${lead.id}`}
-                      scroll={false}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      {t("leads.viewDetail")}
-                      {lead._count.notes > 0 ? ` (${lead._count.notes})` : ""}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <LeadTable
+          locale={locale}
+          rows={rowViews}
+          leadHrefBase={leadHrefBase}
+          assignees={assignableTo}
+          statusLabels={statusLabels}
+          canExport={can(session.role, "exportCustomerData")}
+          labels={{
+            selectAll: t("leads.table.selectAll"),
+            customer: t("leads.table.customer"),
+            project: t("leads.project"),
+            source: t("leads.source"),
+            status: t("leads.status"),
+            owner: t("leads.table.owner"),
+            received: t("leads.received"),
+            assign: t("leads.table.assign"),
+            unassign: t("leads.unassigned"),
+            noProject: t("leads.noProject"),
+            noConsent: t("leads.table.noConsent"),
+            bulkAssign: t("leads.bulk.assign"),
+            bulkStatus: t("leads.bulk.status"),
+            bulkExport: t("leads.bulk.export"),
+            bulkClear: t("leads.bulk.clear"),
+            unassigned: t("leads.table.unassignedDone"),
+            failed: t("common.error"),
+          }}
+        />
       )}
       {drawer}
     </div>

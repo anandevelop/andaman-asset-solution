@@ -24,6 +24,13 @@
  * pattern anyone should reach for casually. Three is still where this
  * stops: a fourth writer needs the same justification these two had.
  *
+ * recordContactReveal() is that fourth, and it has it. Pressing "show" on
+ * a lead's masked phone or email reads personal data without writing
+ * anything, so — like a sign-in — there is no table write for the
+ * extension to see, and PDPA's accountability principle is precisely a
+ * record of who looked at whose details and when. Without this row the
+ * masking in lib/contact-mask.ts would be decoration.
+ *
  * WHAT A MISSING "logout" MEANS.
  *
  * NextAuth fires its signOut event when somebody presses the button. It
@@ -234,4 +241,41 @@ export async function recordSeoOverride(params: {
       extra: { action: SEO_PUBLISH_OVERRIDE, articleId: params.articleId, actorId: params.actor.id },
     });
   }
+}
+
+/** The action value recordContactReveal() writes. */
+export const CONTACT_REVEAL = "reveal_contact";
+
+/**
+ * Record that somebody unmasked a lead's phone or email
+ * (revealLeadContact in app/[locale]/admin/(crm)/leads/actions.ts).
+ *
+ * `field` goes in changedFields so the activity page's existing "which
+ * fields" column says what was looked at; the value itself is never
+ * logged — an audit trail of personal data must not become a second copy
+ * of it.
+ *
+ * Unlike the writers above this one DOES throw on failure, and the caller
+ * refuses the reveal when it does: an unlogged look at personal data is
+ * exactly what the log exists to rule out, and a rep can press the button
+ * again, whereas an access that left no trace cannot be taken back.
+ */
+export async function recordContactReveal(params: {
+  actor: { id: string; email: string; role: Role };
+  leadId: string;
+  leadName: string;
+  field: "email" | "phone";
+}): Promise<void> {
+  await prisma.auditLog.create({
+    data: {
+      actorId: params.actor.id,
+      actorEmail: params.actor.email.slice(0, 200),
+      actorRole: params.actor.role,
+      action: CONTACT_REVEAL,
+      model: "LeadInquiry",
+      recordId: params.leadId,
+      recordLabel: params.leadName.slice(0, 200),
+      changedFields: [params.field],
+    },
+  });
 }

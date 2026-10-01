@@ -25,21 +25,25 @@ import { LeadStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
-import { intlLocale } from "@/lib/format";
+import { initialsFrom, intlLocale } from "@/lib/format";
 import { nationalityLabel } from "@/lib/countries";
 import type { Locale } from "@/i18n";
 import { getLeadTimeline, type LeadTimelineEntry } from "@/lib/lead-timeline";
 import { getReservableUnits } from "@/lib/projects";
 import { phoneLocalTime } from "@/lib/phone-timezone";
 import { retentionTargetDate } from "@/lib/pdpa";
+import { can } from "@/lib/permissions";
+import { maskEmail, maskPhone } from "@/lib/contact-mask";
+import { nextStepFor } from "@/lib/admin/lead-next-step";
 import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
 import LeadAssignSelect from "@/components/admin/LeadAssignSelect";
 import LeadFollowUpInput from "@/components/admin/LeadFollowUpInput";
 import LeadHousePreferenceInput from "@/components/admin/LeadHousePreferenceInput";
 import LeadActivityComposer from "@/components/admin/LeadActivityComposer";
 import LeadActivityTimeline, { type TimelineItem } from "@/components/admin/LeadActivityTimeline";
-import LeadQuickActions from "@/components/admin/LeadQuickActions";
 import LeadUnitPicker from "@/components/admin/LeadUnitPicker";
+import RevealContact from "@/components/admin/RevealContact";
+import LeadNextStepCard, { type NextStepAction } from "@/components/admin/LeadNextStepCard";
 
 export type LeadDetailVariant = "page" | "drawer";
 
@@ -125,7 +129,7 @@ export default async function LeadDetailView({
     return notHere;
   }
 
-  const [assignees, timeline, reservableUnits] = await Promise.all([
+  const [assignees, timeline, reservableUnits, openAppointments] = await Promise.all([
     safeQuery(
       "admin:leads:assignees",
       () =>
@@ -138,6 +142,25 @@ export default async function LeadDetailView({
     ),
     getLeadTimeline(id),
     lead.project ? getReservableUnits(lead.project.id) : Promise.resolve([]),
+    /* Still-open appointments only: the card shows the one that needs
+       something — past and unclosed, or the next one ahead. */
+    safeQuery(
+      "admin:leads:openAppointments",
+      () =>
+        prisma.appointment.findMany({
+          where: { leadId: id, status: { in: ["REQUESTED", "CONFIRMED"] } },
+          orderBy: { scheduledAt: "asc" },
+          select: {
+            id: true,
+            scheduledAt: true,
+            status: true,
+            location: true,
+            project: { select: { nameEn: true, nameTh: true } },
+            assignedTo: { select: { name: true } },
+          },
+        }),
+      [],
+    ),
   ]);
 
   const statusLabels = Object.fromEntries(
@@ -276,285 +299,448 @@ export default async function LeadDetailView({
 
   const timelineItems = timeline.map(itemFor);
 
+  // ── Next step ──────────────────────────────────────────────────────────
+  const overdueAppointment =
+    openAppointments.find((a) => a.status === "REQUESTED" && a.scheduledAt.getTime() < now.getTime()) ?? null;
+  const upcomingAppointment = openAppointments.find((a) => a.scheduledAt.getTime() >= now.getTime()) ?? null;
+  const shownAppointment = overdueAppointment ?? upcomingAppointment;
+
+  const step = nextStepFor(
+    {
+      status: lead.status,
+      assignedToId: lead.assignedToId,
+      followUpAt: lead.followUpAt,
+      overdueAppointment,
+      upcomingAppointment,
+    },
+    now,
+  );
+
+  const stepCopy: { headline: string; detail: string | null; action: NextStepAction } | null = (() => {
+    switch (step?.kind) {
+      case "claim":
+        return {
+          headline: t("leadDetail.nextStep.claim"),
+          detail: t("leadDetail.nextStep.claimDetail"),
+          action: { kind: "claim", userId: session.id },
+        };
+      case "closeAppointment":
+        return {
+          headline: t("leadDetail.nextStep.closeAppointment"),
+          detail: t("leadDetail.nextStep.closeAppointmentDetail", { when: dateFormat.format(step.scheduledAt) }),
+          action: { kind: "closeAppointment", appointmentId: step.appointmentId },
+        };
+      case "followUpDue":
+        return {
+          headline: t("leadDetail.nextStep.followUpDue"),
+          detail: t("leadDetail.nextStep.followUpDueDetail", { date: dateFormat.format(step.since) }),
+          action: null,
+        };
+      case "firstContact":
+        return {
+          headline: t("leadDetail.nextStep.firstContact"),
+          detail: t("leadDetail.nextStep.firstContactDetail"),
+          action: null,
+        };
+      case "prepareViewing":
+        return {
+          headline: t("leadDetail.nextStep.prepareViewing", { when: dateFormat.format(step.scheduledAt) }),
+          detail: t("leadDetail.nextStep.prepareViewingDetail"),
+          action: null,
+        };
+      case "keepNegotiating":
+        return {
+          headline: t("leadDetail.nextStep.keepNegotiating"),
+          detail: t("leadDetail.nextStep.keepNegotiatingDetail"),
+          action: null,
+        };
+      default:
+        return null;
+    }
+  })();
+
   const isDrawer = variant === "drawer";
   const Heading = isDrawer ? "h2" : "h1";
+  const canContact = can(session.role, "viewCustomerContact");
+  const revealLabels = { show: t("leadDetail.reveal"), failed: t("leadDetail.revealFailed") };
 
-  return (
-    <div className={isDrawer ? "space-y-4 px-5 py-4" : "space-y-6"}>
-      {!isDrawer && (
-        <div>
-          <Link
-            href={`/${locale}/admin/leads`}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
+  // ── Blocks, arranged per variant below ─────────────────────────────────
+  const header = (
+    <header className="flex items-start gap-3">
+      <span
+        aria-hidden
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-adm-fill text-base font-semibold text-adm-on-fill"
+      >
+        {initialsFrom(lead.name) || "·"}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Heading
+            id={isDrawer ? "lead-drawer-title" : undefined}
+            className={isDrawer ? "text-xl font-semibold text-ink" : "text-2xl font-semibold text-ink sm:text-3xl"}
           >
-            <ArrowLeft size={15} aria-hidden />
-            {t("leadDetail.back")}
-          </Link>
-        </div>
-      )}
-
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Heading
-              id={isDrawer ? "lead-drawer-title" : undefined}
-              className={isDrawer ? "text-xl font-semibold text-ink" : "text-2xl font-semibold text-primary sm:text-3xl"}
-            >
-              {lead.name}
-            </Heading>
-            <LeadStatusSelect
-              locale={locale}
-              leadId={lead.id}
-              value={lead.status}
-              labels={statusLabels}
-              errorLabel={t("common.error")}
-            />
-            {(nationality || commsLabel) && (
-              <span className="flex items-center gap-1 rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
-                {nationality?.flagSrc && (
-                  // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
-                  <img
-                    src={nationality.flagSrc}
-                    alt=""
-                    aria-hidden
-                    className="h-3 w-4 shrink-0 rounded-[1px] object-cover"
-                  />
-                )}
-                {[nationality?.label, commsLabel ? t("leadDetail.commsLanguage", { code: commsLabel }) : null]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-sm text-ink-muted">
-            {t("leadDetail.enteredAt", { date: dateFormat.format(lead.createdAt) })}
-            {" · "}
-            {t("leadDetail.inPipeline", { days: pipelineDays })}
-            {" · "}
-            {t("leadDetail.lastTouched", { ago: agoLabel(lastTouchedAt) })}
-          </p>
-        </div>
-
-        <LeadQuickActions
-          labels={{ logCall: t("leadDetail.logCall"), scheduleViewing: t("leadDetail.scheduleViewing") }}
-        />
-      </header>
-
-      {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {t("common.offline")}
-        </p>
-      )}
-
-      <div className={isDrawer ? "space-y-4" : "grid gap-6 lg:grid-cols-3"}>
-        <div className={isDrawer ? "space-y-4" : "space-y-6 lg:col-span-2"}>
-          <LeadActivityComposer
+            {lead.name}
+          </Heading>
+          <LeadStatusSelect
             locale={locale}
             leadId={lead.id}
-            projectId={lead.project?.id ?? null}
-            assignedToId={lead.assignedToId}
-            labels={{
-              tabNote: t("leadDetail.composer.tabNote"),
-              tabCall: t("leadDetail.composer.tabCall"),
-              tabEmail: t("leadDetail.composer.tabEmail"),
-              tabAppointment: t("leadDetail.composer.tabAppointment"),
-              placeholderNote: t("leadDetail.composer.placeholderNote"),
-              placeholderCall: t("leadDetail.composer.placeholderCall"),
-              placeholderEmail: t("leadDetail.composer.placeholderEmail"),
-              durationLabel: t("leadDetail.composer.durationLabel"),
-              minutes: t("leadDetail.composer.minutes"),
-              seconds: t("leadDetail.composer.seconds"),
-              submit: t("leadDetail.composer.submit"),
-              error: t("common.error"),
-              appointmentDate: t("leadDetail.composer.appointmentDate"),
-              appointmentDuration: t("leadDetail.composer.appointmentDuration"),
-              appointmentSubmit: t("leadDetail.composer.appointmentSubmit"),
-              appointmentFullLink: t("leadDetail.composer.appointmentFullLink"),
-            }}
+            value={lead.status}
+            labels={statusLabels}
+            errorLabel={t("common.error")}
           />
+          {(nationality || commsLabel) && (
+            <span className="flex items-center gap-1 rounded-full bg-adm-neutral-bg px-2 py-0.5 text-xs font-medium text-adm-neutral">
+              {nationality?.flagSrc && (
+                // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
+                <img
+                  src={nationality.flagSrc}
+                  alt=""
+                  aria-hidden
+                  className="h-3 w-4 shrink-0 rounded-[1px] object-cover"
+                />
+              )}
+              {[nationality?.label, commsLabel ? t("leadDetail.commsLanguage", { code: commsLabel }) : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          )}
+        </div>
+        {/* id · source · date, as in the mockup, then how long it has been
+            in the pipeline and since anyone touched it. */}
+        <p className="mt-1.5 text-xs text-ink-muted">
+          <span className="admin-mono">#{lead.id.slice(-6)}</span>
+          {" · "}
+          {t(`leadSource.${lead.source}` as never)}
+          {" · "}
+          {dateFormat.format(lead.createdAt)}
+        </p>
+        <p className="mt-0.5 text-xs text-ink-muted">
+          {t("leadDetail.inPipeline", { days: pipelineDays })}
+          {" · "}
+          {t("leadDetail.lastTouched", { ago: agoLabel(lastTouchedAt) })}
+        </p>
+      </div>
+    </header>
+  );
 
-          <section className="admin-card space-y-4">
-            <h2 className="text-sm font-semibold text-primary">{t("leadDetail.timelineTitle")}</h2>
-            <LeadActivityTimeline items={timelineItems} emptyLabel={t("leadDetail.timelineEmpty")} />
-          </section>
+  const nextStepCard = (
+    <LeadNextStepCard
+      locale={locale}
+      leadId={lead.id}
+      headline={stepCopy?.headline ?? null}
+      detail={stepCopy?.detail ?? null}
+      action={stepCopy?.action ?? null}
+      canContact={canContact}
+      labels={{
+        title: t("leadDetail.nextStep.title"),
+        call: t("leadDetail.nextStep.call"),
+        whatsapp: t("leadDetail.nextStep.whatsapp"),
+        scheduleViewing: t("leadDetail.scheduleViewing"),
+        claim: t("leadDetail.nextStep.claimButton"),
+        visited: t("leadDetail.nextStep.visited"),
+        noShow: t("leadDetail.nextStep.noShow"),
+        claimed: t("leadDetail.nextStep.claimed"),
+        closedVisited: t("leadDetail.nextStep.closedVisited"),
+        closedNoShow: t("leadDetail.nextStep.closedNoShow"),
+        failed: t("leadDetail.nextStep.failed"),
+        revealFailed: t("leadDetail.revealFailed"),
+      }}
+    />
+  );
+
+  /* Key/value, masked. The full value is one audited click away — see
+     RevealContact and lib/contact-mask.ts. */
+  const contact = (
+    <section className="admin-card space-y-3">
+      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.contactInfo")}</h2>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
+        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.email")}</dt>
+        <dd>
+          {canContact ? (
+            <RevealContact leadId={lead.id} field="email" masked={maskEmail(lead.email)} labels={revealLabels} />
+          ) : (
+            <span className="admin-mono">{maskEmail(lead.email)}</span>
+          )}
+        </dd>
+        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.phone")}</dt>
+        <dd>
+          {canContact ? (
+            <RevealContact leadId={lead.id} field="phone" masked={maskPhone(lead.phone)} labels={revealLabels} />
+          ) : (
+            <span className="admin-mono">{maskPhone(lead.phone)}</span>
+          )}
+        </dd>
+        {nationality && (
+          <>
+            <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.nationality")}</dt>
+            <dd className="flex items-center gap-1.5 text-ink">
+              {nationality.flagSrc && (
+                // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
+                <img
+                  src={nationality.flagSrc}
+                  alt=""
+                  aria-hidden
+                  className="h-3.5 w-5 shrink-0 rounded-[1px] object-cover"
+                />
+              )}
+              {nationality.label}
+            </dd>
+          </>
+        )}
+        {localTime && (
+          <>
+            <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.localTime")}</dt>
+            <dd className="text-ink">
+              {localTime.offsetLabel} · {localTime.timeLabel}
+              <span className="ml-1.5 text-xs text-ink-muted">({t("leadDetail.localTimeEstimate")})</span>
+            </dd>
+          </>
+        )}
+        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.project")}</dt>
+        <dd className="text-ink">{projectLabel ?? t("leadDetail.noProject")}</dd>
+      </dl>
+      {lead.message && (
+        <div className="border-t border-adm-line pt-3">
+          <p className="text-xs text-ink-muted">{t("leadDetail.message")}</p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink">{lead.message}</p>
+        </div>
+      )}
+    </section>
+  );
+
+  const appointmentCard = shownAppointment && (
+    <section
+      className={[
+        "admin-card space-y-1",
+        shownAppointment === overdueAppointment ? "border-adm-warning/40!" : "",
+      ].join(" ")}
+    >
+      <h2 className="text-sm font-semibold text-ink">
+        {shownAppointment === overdueAppointment
+          ? t("leadDetail.appointmentOverdue")
+          : t("leadDetail.appointmentNext")}
+      </h2>
+      <p className="text-sm text-ink">{dateFormat.format(shownAppointment.scheduledAt)}</p>
+      <p className="text-xs text-ink-muted">
+        {[
+          shownAppointment.project
+            ? locale === "th"
+              ? shownAppointment.project.nameTh
+              : shownAppointment.project.nameEn
+            : null,
+          shownAppointment.location,
+          shownAppointment.assignedTo?.name,
+          t(`appointmentStatus.${shownAppointment.status}` as never),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+    </section>
+  );
+
+  const timelineCard = (
+    <section className="admin-card space-y-4">
+      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.timelineTitle")}</h2>
+      <LeadActivityTimeline items={timelineItems} emptyLabel={t("leadDetail.timelineEmpty")} />
+    </section>
+  );
+
+  const composer = (
+    <LeadActivityComposer
+      locale={locale}
+      leadId={lead.id}
+      projectId={lead.project?.id ?? null}
+      assignedToId={lead.assignedToId}
+      labels={{
+        tabNote: t("leadDetail.composer.tabNote"),
+        tabCall: t("leadDetail.composer.tabCall"),
+        tabEmail: t("leadDetail.composer.tabEmail"),
+        tabAppointment: t("leadDetail.composer.tabAppointment"),
+        placeholderNote: t("leadDetail.composer.placeholderNote"),
+        placeholderCall: t("leadDetail.composer.placeholderCall"),
+        placeholderEmail: t("leadDetail.composer.placeholderEmail"),
+        durationLabel: t("leadDetail.composer.durationLabel"),
+        minutes: t("leadDetail.composer.minutes"),
+        seconds: t("leadDetail.composer.seconds"),
+        submit: t("leadDetail.composer.submit"),
+        error: t("common.error"),
+        appointmentDate: t("leadDetail.composer.appointmentDate"),
+        appointmentDuration: t("leadDetail.composer.appointmentDuration"),
+        appointmentSubmit: t("leadDetail.composer.appointmentSubmit"),
+        appointmentFullLink: t("leadDetail.composer.appointmentFullLink"),
+      }}
+    />
+  );
+
+  const ownership = (
+    <section className="admin-card space-y-4">
+      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.ownershipTitle")}</h2>
+
+      <div>
+        <p className="admin-label">{t("leadDetail.assignTitle")}</p>
+        <LeadAssignSelect
+          locale={locale}
+          leadId={lead.id}
+          value={lead.assignedToId}
+          assignees={assignees}
+          unassignedLabel={t("leadDetail.unassigned")}
+          errorLabel={t("common.error")}
+        />
+      </div>
+
+      <div>
+        <p className="admin-label">{t("leadDetail.followUpTitle")}</p>
+        <LeadFollowUpInput
+          locale={locale}
+          leadId={lead.id}
+          value={toDateInputValue(lead.followUpAt)}
+          overdueLabel={t("leads.followUpOverdue")}
+          errorLabel={t("common.error")}
+        />
+      </div>
+
+      <div>
+        <p className="admin-label">{t("leadDetail.housePreference")}</p>
+        <LeadHousePreferenceInput
+          locale={locale}
+          leadId={lead.id}
+          value={lead.housePreference}
+          placeholder={t("leadDetail.housePreferencePlaceholder")}
+          errorLabel={t("common.error")}
+        />
+      </div>
+
+      {lead.project && (
+        <LeadUnitPicker
+          locale={locale}
+          leadId={lead.id}
+          reservableUnits={reservableUnits}
+          current={currentReservation}
+          labels={{
+            label: t("leadDetail.unitInterest.label"),
+            placeholder: t("leadDetail.unitInterest.placeholder"),
+            expiresLabel: t("leadDetail.unitInterest.expiresLabel"),
+            reserve: t("leadDetail.unitInterest.reserve"),
+            release: t("leadDetail.unitInterest.release"),
+            reservedTag: t("leadDetail.unitInterest.reservedTag"),
+            error: t("common.error"),
+            noUnits: t("leadDetail.unitInterest.noUnits"),
+          }}
+        />
+      )}
+    </section>
+  );
+
+  const consent = (
+    <section className="admin-card space-y-2">
+      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.consentTitle")}</h2>
+      <p className="text-sm text-ink">
+        {lead.consentGiven ? t("leadDetail.consentGiven") : t("leadDetail.consentNotGiven")}
+      </p>
+      {lead.consentVersion && (
+        <p className="text-xs text-ink-muted">{t("leadDetail.consentVersion", { version: lead.consentVersion })}</p>
+      )}
+      {lead.consentedAt && <p className="text-xs text-ink-muted">{dateFormat.format(lead.consentedAt)}</p>}
+      {retentionDate && (
+        <p className="text-xs text-ink-muted">
+          {t("leadDetail.retentionTarget", { date: dateFormat.format(retentionDate) })}
+        </p>
+      )}
+      <Link
+        href={`/${locale}/admin/settings/privacy`}
+        className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-adm-accent-ink hover:underline"
+      >
+        <ShieldAlert size={12} aria-hidden />
+        {t("leadDetail.privacyLink")}
+      </Link>
+    </section>
+  );
+
+  const sourceCard = (
+    <section className="admin-card space-y-2">
+      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.sourceTitle")}</h2>
+      <p className="text-sm text-ink">{t(`leadSource.${lead.source}` as never)}</p>
+
+      {/* Not in the mockup's sidebar, kept because it's real,
+          existing functionality (raw campaign attribution) that a
+          marketer relies on. */}
+      {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
+        <dl className="space-y-1 border-t border-adm-line pt-2 text-xs text-ink-muted">
+          {lead.utmSource && (
+            <div>
+              <span className="font-medium text-ink">utm_source:</span> {lead.utmSource}
+            </div>
+          )}
+          {lead.utmMedium && (
+            <div>
+              <span className="font-medium text-ink">utm_medium:</span> {lead.utmMedium}
+            </div>
+          )}
+          {lead.utmCampaign && (
+            <div>
+              <span className="font-medium text-ink">utm_campaign:</span> {lead.utmCampaign}
+            </div>
+          )}
+        </dl>
+      )}
+    </section>
+  );
+
+  const offlineNotice = isDatabaseOffline() && (
+    <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
+      {t("common.offline")}
+    </p>
+  );
+
+  /* The drawer reads top to bottom in the order a rep works a lead (the v4
+     mockup): who, what to do next, how to reach them, the booked viewing,
+     what has happened, then the composer — with ownership, consent and
+     source below. The page has the room for two columns. */
+  if (isDrawer) {
+    return (
+      <div className="space-y-4 px-5 py-4">
+        {header}
+        {offlineNotice}
+        {nextStepCard}
+        {contact}
+        {appointmentCard}
+        {timelineCard}
+        {composer}
+        {ownership}
+        {consent}
+        {sourceCard}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Link
+          href={`/${locale}/admin/leads`}
+          className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
+        >
+          <ArrowLeft size={15} aria-hidden />
+          {t("leadDetail.back")}
+        </Link>
+      </div>
+
+      {header}
+      {offlineNotice}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {nextStepCard}
+          {composer}
+          {timelineCard}
         </div>
 
-        <div className={isDrawer ? "space-y-4" : "space-y-6"}>
-          <section className="admin-card space-y-3">
-            <h2 className="text-sm font-semibold text-primary">{t("leadDetail.contactInfo")}</h2>
-            <dl className="space-y-3">
-              <div>
-                <dt className="text-xs text-ink-muted">{t("leadDetail.email")}</dt>
-                <dd>
-                  <a href={`mailto:${lead.email}`} className="text-accent-700 hover:underline">
-                    {lead.email}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-ink-muted">{t("leadDetail.phone")}</dt>
-                <dd>
-                  <a href={`tel:${lead.phone}`} className="text-primary hover:underline">
-                    {lead.phone}
-                  </a>
-                </dd>
-              </div>
-              {nationality && (
-                <div>
-                  <dt className="text-xs text-ink-muted">{t("leadDetail.nationality")}</dt>
-                  <dd className="flex items-center gap-1.5 text-primary">
-                    {nationality.flagSrc && (
-                      // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
-                      <img
-                        src={nationality.flagSrc}
-                        alt=""
-                        aria-hidden
-                        className="h-3.5 w-5 shrink-0 rounded-[1px] object-cover"
-                      />
-                    )}
-                    {nationality.label}
-                  </dd>
-                </div>
-              )}
-              {localTime && (
-                <div>
-                  <dt className="text-xs text-ink-muted">{t("leadDetail.localTime")}</dt>
-                  <dd className="text-primary">
-                    {localTime.offsetLabel} · {localTime.timeLabel}
-                    <span className="ml-1.5 text-xs text-ink-muted">
-                      ({t("leadDetail.localTimeEstimate")})
-                    </span>
-                  </dd>
-                </div>
-              )}
-            </dl>
-            {lead.message && (
-              <div className="border-t border-primary/10 pt-3">
-                <p className="text-xs text-ink-muted">{t("leadDetail.message")}</p>
-                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-primary">
-                  {lead.message}
-                </p>
-              </div>
-            )}
-          </section>
-
-          <section className="admin-card space-y-4">
-            <h2 className="text-sm font-semibold text-primary">{t("leadDetail.ownershipTitle")}</h2>
-
-            <div>
-              <p className="admin-label">{t("leadDetail.assignTitle")}</p>
-              <LeadAssignSelect
-                locale={locale}
-                leadId={lead.id}
-                value={lead.assignedToId}
-                assignees={assignees}
-                unassignedLabel={t("leadDetail.unassigned")}
-                errorLabel={t("common.error")}
-              />
-            </div>
-
-            <div>
-              <p className="admin-label">{t("leadDetail.followUpTitle")}</p>
-              <LeadFollowUpInput
-                locale={locale}
-                leadId={lead.id}
-                value={toDateInputValue(lead.followUpAt)}
-                overdueLabel={t("leads.followUpOverdue")}
-                errorLabel={t("common.error")}
-              />
-            </div>
-
-            <div>
-              <dt className="admin-label">{t("leadDetail.project")}</dt>
-              <dd className="text-sm text-primary">{projectLabel ?? t("leadDetail.noProject")}</dd>
-            </div>
-
-            <div>
-              <p className="admin-label">{t("leadDetail.housePreference")}</p>
-              <LeadHousePreferenceInput
-                locale={locale}
-                leadId={lead.id}
-                value={lead.housePreference}
-                placeholder={t("leadDetail.housePreferencePlaceholder")}
-                errorLabel={t("common.error")}
-              />
-            </div>
-
-            {lead.project && (
-              <LeadUnitPicker
-                locale={locale}
-                leadId={lead.id}
-                reservableUnits={reservableUnits}
-                current={currentReservation}
-                labels={{
-                  label: t("leadDetail.unitInterest.label"),
-                  placeholder: t("leadDetail.unitInterest.placeholder"),
-                  expiresLabel: t("leadDetail.unitInterest.expiresLabel"),
-                  reserve: t("leadDetail.unitInterest.reserve"),
-                  release: t("leadDetail.unitInterest.release"),
-                  reservedTag: t("leadDetail.unitInterest.reservedTag"),
-                  error: t("common.error"),
-                  noUnits: t("leadDetail.unitInterest.noUnits"),
-                }}
-              />
-            )}
-          </section>
-
-          <section className="admin-card space-y-2">
-            <h2 className="text-sm font-semibold text-primary">{t("leadDetail.consentTitle")}</h2>
-            <p className="text-sm text-primary">
-              {lead.consentGiven ? t("leadDetail.consentGiven") : t("leadDetail.consentNotGiven")}
-            </p>
-            {lead.consentVersion && (
-              <p className="text-xs text-ink-muted">
-                {t("leadDetail.consentVersion", { version: lead.consentVersion })}
-              </p>
-            )}
-            {lead.consentedAt && (
-              <p className="text-xs text-ink-muted">{dateFormat.format(lead.consentedAt)}</p>
-            )}
-            {retentionDate && (
-              <p className="text-xs text-ink-muted">
-                {t("leadDetail.retentionTarget", { date: dateFormat.format(retentionDate) })}
-              </p>
-            )}
-            <Link
-              href={`/${locale}/admin/settings/privacy`}
-              className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-accent-700 hover:text-accent-800"
-            >
-              <ShieldAlert size={12} aria-hidden />
-              {t("leadDetail.privacyLink")}
-            </Link>
-          </section>
-
-          <section className="admin-card space-y-2">
-            <h2 className="text-sm font-semibold text-primary">{t("leadDetail.sourceTitle")}</h2>
-            <p className="text-sm text-primary">{t(`leadSource.${lead.source}` as never)}</p>
-
-            {/* Not in the mockup's sidebar, kept because it's real,
-                existing functionality (raw campaign attribution) that a
-                marketer relies on — same call the dashboard made to keep
-                its own "more reports" beyond the mockup's single frame. */}
-            {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
-              <dl className="space-y-1 border-t border-primary/10 pt-2 text-xs text-ink-muted">
-                {lead.utmSource && (
-                  <div>
-                    <span className="font-medium text-primary">utm_source:</span> {lead.utmSource}
-                  </div>
-                )}
-                {lead.utmMedium && (
-                  <div>
-                    <span className="font-medium text-primary">utm_medium:</span> {lead.utmMedium}
-                  </div>
-                )}
-                {lead.utmCampaign && (
-                  <div>
-                    <span className="font-medium text-primary">utm_campaign:</span> {lead.utmCampaign}
-                  </div>
-                )}
-              </dl>
-            )}
-          </section>
+        <div className="space-y-6">
+          {contact}
+          {appointmentCard}
+          {ownership}
+          {consent}
+          {sourceCard}
         </div>
       </div>
     </div>

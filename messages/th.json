@@ -864,7 +864,6 @@
       "filterProject": "โครงการ",
       "filterSource": "ช่องทาง",
       "filterRange": "ช่วงเวลา",
-      "overdueOnly": "เกิน SLA เท่านั้น",
       "boardView": "บอร์ด",
       "tableView": "ตาราง",
       "openCount": "แสดง {count} ลีดที่ยังเปิดอยู่",
@@ -877,10 +876,39 @@
         "noFollowUp": "ไม่มีการติดตาม {days} วัน",
         "followUpOn": "โทรตาม {date}",
         "appointmentWith": "{when} {time} · เซลส์ {name}",
-        "moveError": "ย้ายสถานะไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"
+        "moveError": "ย้ายสถานะไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+        "moved": "ย้าย {name} ไป {status} แล้ว"
       },
       "searchPlaceholder": "ค้นหาชื่อ อีเมล หรือเบอร์โทร...",
-      "filterAssigneeAll": "ทั้งทีม"
+      "filterAssigneeAll": "ทั้งทีม",
+      "views": {
+        "label": "มุมมองที่บันทึกไว้",
+        "all": "ทั้งหมด",
+        "mine": "ของฉัน",
+        "unassigned": "ยังไม่มอบหมาย",
+        "sla": "เกิน SLA"
+      },
+      "table": {
+        "select": "เลือก {name}",
+        "selectAll": "เลือกทุกแถว",
+        "customer": "ลูกค้า",
+        "owner": "ผู้ดูแล",
+        "assign": "มอบหมาย",
+        "noConsent": "ไม่ยินยอม",
+        "assigned": "มอบหมายให้ {name} แล้ว",
+        "unassignedDone": "ยกเลิกการมอบหมายแล้ว",
+        "statusChanged": "เปลี่ยนสถานะเป็น {status} แล้ว"
+      },
+      "bulk": {
+        "selected": "เลือก {count} รายการ",
+        "assign": "มอบหมาย",
+        "status": "เปลี่ยนสถานะ",
+        "export": "ส่งออก",
+        "clear": "ยกเลิกการเลือก",
+        "done": "อัปเดต {count} รายการแล้ว",
+        "partial": "อัปเดต {changed} รายการ · ข้าม {refused} รายการที่ไม่มีสิทธิ์"
+      },
+      "clearSearch": "ล้างคำค้นหา"
     },
     "leadDetail": {
       "title": "ลูกค้า",
@@ -914,7 +942,6 @@
       "lastTouched": "สัมผัสล่าสุด {ago}",
       "hoursAgo": "{hours} ชม. ที่แล้ว",
       "daysAgo": "{days} วัน ที่แล้ว",
-      "logCall": "บันทึกการโทร",
       "scheduleViewing": "นัดชมโครงการ",
       "timelineTitle": "บันทึกกิจกรรม",
       "timelineEmpty": "ยังไม่มีกิจกรรม",
@@ -982,6 +1009,34 @@
         "release": "ยกเลิกการจอง",
         "reservedTag": "จองไว้",
         "noUnits": "ไม่มียูนิตว่างในโครงการนี้"
+      },
+      "reveal": "แสดง",
+      "revealFailed": "แสดงข้อมูลติดต่อไม่ได้",
+      "appointmentOverdue": "นัดที่เลยเวลา ยังไม่ปิดสถานะ",
+      "appointmentNext": "นัดถัดไป",
+      "nextStep": {
+        "title": "ขั้นถัดไปที่แนะนำ",
+        "call": "โทร",
+        "whatsapp": "WhatsApp",
+        "claim": "มอบหมายแล้วโทรภายใน 1 ชม.",
+        "claimDetail": "ยังไม่มีใครดูแลลีดนี้",
+        "claimButton": "รับเรื่องเอง",
+        "closeAppointment": "ปิดสถานะนัด",
+        "closeAppointmentDetail": "นัดเมื่อ {when} ยังไม่ได้บันทึกว่าลูกค้ามาหรือไม่",
+        "followUpDue": "ถึงกำหนดติดตาม",
+        "followUpDueDetail": "กำหนดไว้ {date}",
+        "firstContact": "โทรติดต่อครั้งแรก",
+        "firstContactDetail": "ลีดยังอยู่สถานะใหม่ ยังไม่ได้ติดต่อกลับ",
+        "prepareViewing": "เตรียมนัดชม {when}",
+        "prepareViewingDetail": "ยืนยันเวลากับลูกค้าก่อนวันนัด",
+        "keepNegotiating": "ติดตามการเจรจา",
+        "keepNegotiatingDetail": "นัดคุยรอบถัดไปหรือส่งข้อเสนอ",
+        "visited": "เข้าชมแล้ว",
+        "noShow": "ไม่มา",
+        "claimed": "รับเรื่องแล้ว",
+        "closedVisited": "บันทึกว่าเข้าชมแล้ว",
+        "closedNoShow": "บันทึกว่าลูกค้าไม่มา",
+        "failed": "ทำรายการไม่สำเร็จ"
       }
     },
     "leadStatus": {
@@ -2743,7 +2798,8 @@
           "TRUNCATED": "มีค่าที่ยาวเกินกว่าจะเก็บได้ทั้งหมด การย้อนกลับจะทำให้ข้อความบนเว็บสั้นลง กรุณาแก้ที่รายการโดยตรงแทน",
           "RECORD_GONE": "รายการที่อ้างถึงถูกลบไปแล้ว"
         }
-      }
+      },
+      "actionRevealContact": "เปิดดูข้อมูลติดต่อ"
     },
     "navGroups": {
       "daily": "งานประจำวัน",
@@ -3315,7 +3371,14 @@
         "notes": "หมายเหตุ"
       },
       "filteredNotice": "แสดง {shown} จาก {total} นัดหมายในสัปดาห์นี้ — มีตัวกรองจากหน้ารายชื่อผู้สนใจอยู่",
-      "clearFilter": "แสดงทั้งหมด"
+      "clearFilter": "แสดงทั้งหมด",
+      "viewLabel": "มุมมองปฏิทิน",
+      "viewMonth": "เดือน",
+      "viewWeek": "สัปดาห์",
+      "previousMonth": "เดือนก่อน",
+      "nextMonth": "เดือนถัดไป",
+      "moreOnDay": "อีก {count} รายการ",
+      "needsAction": "ต้องจัดการ"
     },
     "appointmentStatus": {
       "REQUESTED": "รอยืนยัน",

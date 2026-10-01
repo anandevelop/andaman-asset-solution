@@ -864,7 +864,6 @@
       "filterProject": "项目",
       "filterSource": "渠道",
       "filterRange": "时间范围",
-      "overdueOnly": "仅显示超时",
       "boardView": "看板",
       "tableView": "列表",
       "openCount": "显示 {count} 个进行中的客资",
@@ -877,10 +876,39 @@
         "noFollowUp": "{days} 天未跟进",
         "followUpOn": "{date} 回电",
         "appointmentWith": "{when} {time} · 销售 {name}",
-        "moveError": "移动失败，请重试。"
+        "moveError": "移动失败，请重试。",
+        "moved": "已将 {name} 移至 {status}"
       },
       "searchPlaceholder": "按姓名、邮箱或电话搜索…",
-      "filterAssigneeAll": "全体团队"
+      "filterAssigneeAll": "全体团队",
+      "views": {
+        "label": "已保存视图",
+        "all": "全部",
+        "mine": "我的",
+        "unassigned": "未分配",
+        "sla": "超出 SLA"
+      },
+      "table": {
+        "select": "选择 {name}",
+        "selectAll": "选择所有行",
+        "customer": "客户",
+        "owner": "负责人",
+        "assign": "分配",
+        "noConsent": "未同意",
+        "assigned": "已分配给 {name}",
+        "unassignedDone": "已取消分配",
+        "statusChanged": "已改为 {status}"
+      },
+      "bulk": {
+        "selected": "已选 {count} 项",
+        "assign": "分配",
+        "status": "更改状态",
+        "export": "导出",
+        "clear": "取消选择",
+        "done": "已更新 {count} 项",
+        "partial": "已更新 {changed} 项 · 跳过 {refused} 项无权限"
+      },
+      "clearSearch": "清除搜索"
     },
     "leadDetail": {
       "title": "客户",
@@ -914,7 +942,6 @@
       "lastTouched": "最近联系 {ago}",
       "hoursAgo": "{hours} 小时前",
       "daysAgo": "{days} 天前",
-      "logCall": "记录通话",
       "scheduleViewing": "预约看房",
       "timelineTitle": "活动记录",
       "timelineEmpty": "暂无活动记录。",
@@ -982,6 +1009,34 @@
         "release": "释放",
         "reservedTag": "已预留",
         "noUnits": "该项目暂无可用单位。"
+      },
+      "reveal": "显示",
+      "revealFailed": "无法显示联系方式",
+      "appointmentOverdue": "已过时未结的预约",
+      "appointmentNext": "下一次预约",
+      "nextStep": {
+        "title": "建议的下一步",
+        "call": "致电",
+        "whatsapp": "WhatsApp",
+        "claim": "接手并在 1 小时内致电",
+        "claimDetail": "此线索尚无人负责",
+        "claimButton": "我来处理",
+        "closeAppointment": "结束预约",
+        "closeAppointmentDetail": "预约于 {when}，尚未记录客户是否到场",
+        "followUpDue": "已到跟进时间",
+        "followUpDueDetail": "原定 {date}",
+        "firstContact": "首次致电",
+        "firstContactDetail": "仍为新线索，尚未回复客户",
+        "prepareViewing": "准备 {when} 的看房",
+        "prepareViewingDetail": "提前与客户确认时间",
+        "keepNegotiating": "推进谈判",
+        "keepNegotiatingDetail": "约定下次沟通或发送报价",
+        "visited": "已看房",
+        "noShow": "未到",
+        "claimed": "已接手",
+        "closedVisited": "已标记为已看房",
+        "closedNoShow": "已标记为未到",
+        "failed": "操作未成功"
       }
     },
     "leadStatus": {
@@ -2743,7 +2798,8 @@
           "TRUNCATED": "有一个值过长未能完整保存，恢复会截短线上文本。请直接编辑该记录。",
           "RECORD_GONE": "该记录指向的对象已被删除。"
         }
-      }
+      },
+      "actionRevealContact": "查看了联系方式"
     },
     "navGroups": {
       "daily": "日常工作",
@@ -3315,7 +3371,14 @@
         "notes": "备注"
       },
       "filteredNotice": "本周显示 {shown} / {total} 个预约 —— 已套用来自客户列表的筛选条件。",
-      "clearFilter": "显示全部"
+      "clearFilter": "显示全部",
+      "viewLabel": "日历视图",
+      "viewMonth": "月",
+      "viewWeek": "周",
+      "previousMonth": "上个月",
+      "nextMonth": "下个月",
+      "moreOnDay": "另有 {count} 项",
+      "needsAction": "待处理"
     },
     "appointmentStatus": {
       "REQUESTED": "待确认",

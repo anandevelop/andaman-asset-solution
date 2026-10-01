@@ -35,8 +35,15 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { intlLocale, toDateTimeLocal } from "@/lib/format";
+import { maskPhone } from "@/lib/contact-mask";
+import { canSeeItem } from "@/lib/admin/nav";
+import { getOverdueAppointments } from "@/lib/admin/dashboard";
+import { ageParts, type InboxItem } from "@/lib/admin/dashboard-model";
+import { addMonths, dayKey as monthDayKey, monthGrid, parseMonthParam, toMonthParam } from "@/lib/admin/month-grid";
 import {
   type AppointmentCard,
+  getAppointmentsBetween,
+  getEventsBetween,
   getTeamWorkload,
   getUnassignedAppointments,
   getWeekAppointments,
@@ -49,10 +56,11 @@ import AppointmentStatusSelect from "@/components/admin/AppointmentStatusSelect"
 import AppointmentRescheduleInput from "@/components/admin/AppointmentRescheduleInput";
 import AppointmentCreateForm from "@/components/admin/AppointmentCreateForm";
 import PageTabs from "@/components/admin/PageTabs";
+import WorkInbox from "@/components/admin/WorkInbox";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ week?: string; project?: string; assignedTo?: string }>;
+  searchParams: Promise<{ view?: string; month?: string; week?: string; project?: string; assignedTo?: string }>;
 };
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -69,6 +77,26 @@ function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** A month-view chip per appointment status, from the status tokens. */
+const CHIP_TONE: Record<AppointmentStatus, string> = {
+  REQUESTED: "bg-adm-warning-bg text-adm-warning",
+  CONFIRMED: "bg-adm-success-bg text-adm-success",
+  COMPLETED: "bg-adm-neutral-bg text-adm-neutral",
+  CANCELLED: "bg-adm-neutral-bg text-adm-neutral line-through",
+  NO_SHOW: "bg-adm-danger-bg text-adm-danger",
+};
+
+/** A chip is a link only where the viewer may open what it points at. */
+function MaybeLink({ href, className, children }: { href: string | null; className: string; children: React.ReactNode }) {
+  return href ? (
+    <Link href={href} className={`${className} block hover:opacity-80`}>
+      {children}
+    </Link>
+  ) : (
+    <span className={`${className} block`}>{children}</span>
+  );
+}
+
 export default async function AdminAppointmentsPage(props: Props) {
   const params = await props.params;
   const searchParams = await props.searchParams;
@@ -79,13 +107,22 @@ export default async function AdminAppointmentsPage(props: Props) {
      every customer's name, phone and email. See lib/permissions.ts. */
   const session = await requireCapability(locale, "viewAllLeads");
 
+  /* Month first (the v4 calendar), week on request — the week agenda is
+     where appointments are edited in place, so it stays one click away
+     rather than being replaced. */
+  const view = searchParams.view === "week" ? "week" : "month";
+  const monthStart = parseMonthParam(searchParams.month);
+  const weeks = monthGrid(monthStart);
+  const gridFrom = weeks[0][0].date;
+  const gridTo = new Date(weeks.at(-1)![6].date.getTime() + DAY_MS);
+
   const weekStart = parseWeekParam(searchParams.week);
   const days = weekDays(weekStart);
   const prevWeek = toWeekParam(new Date(weekStart.getTime() - 7 * DAY_MS));
   const nextWeek = toWeekParam(new Date(weekStart.getTime() + 7 * DAY_MS));
   const thisWeek = toWeekParam(new Date());
 
-  const [tRoot, t, tStatus, weekAppointments, unassigned, workload, recentLeads, projects] = await Promise.all([
+  const [tRoot, t, tStatus, weekAppointments, unassigned, workload, recentLeads, projects, overdue, monthAppointments, monthEvents] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getTranslations({ locale, namespace: "admin.appointments" }),
     getTranslations({ locale, namespace: "admin.appointmentStatus" }),
@@ -112,6 +149,9 @@ export default async function AdminAppointmentsPage(props: Props) {
         }),
       [],
     ),
+    getOverdueAppointments(session),
+    view === "month" ? getAppointmentsBetween(gridFrom, gridTo) : Promise.resolve([]),
+    view === "month" ? getEventsBetween(gridFrom, gridTo) : Promise.resolve([]),
   ]);
 
   const offline = isDatabaseOffline();
@@ -159,7 +199,59 @@ export default async function AdminAppointmentsPage(props: Props) {
   const assigneeOptions = workload.map((w) => ({ id: w.id, name: w.name }));
   const assigneeSelectOptions = workload.map((w) => ({ id: w.id, label: w.name }));
 
-  function renderCard(a: AppointmentCard) {
+  // ── "ต้องจัดการ": REQUESTED and already past ─────────────────────────
+  const now = new Date();
+  const dueFmt = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const needsAction: InboxItem[] = overdue.rows.map((row) => {
+    const age = ageParts(row.scheduledAt, now);
+    return {
+      key: `appointment:${row.id}`,
+      kind: "appointment",
+      id: row.id,
+      title: row.lead?.name ?? t("noLeadLinked"),
+      detail: [
+        dueFmt.format(row.scheduledAt),
+        row.project ? (locale === "th" ? row.project.nameTh : row.project.nameEn) : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      since: row.scheduledAt.toISOString(),
+      ageLabel: tRoot(`dashboard.inbox.age.${age.unit}`, { value: age.value }),
+      late: true,
+      href: null,
+    };
+  });
+
+  // ── Month grid ─────────────────────────────────────────────────────────
+  const monthByDay = new Map<string, AppointmentCard[]>();
+  for (const a of monthAppointments.filter(matchesFilters)) {
+    const key = monthDayKey(a.scheduledAt);
+    monthByDay.set(key, [...(monthByDay.get(key) ?? []), a]);
+  }
+  const eventsByDay = new Map<string, typeof monthEvents>();
+  for (const event of monthEvents) {
+    const key = monthDayKey(event.startsAt);
+    eventsByDay.set(key, [...(eventsByDay.get(key) ?? []), event]);
+  }
+  /* th's Intl calendar is Buddhist by default, so the header reads
+     "กันยายน 2569" there and "September 2026" in English with no special
+     case. timeZone UTC to match the grid's own days. */
+  const monthLabel = new Intl.DateTimeFormat(intlLocale(locale), {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(monthStart);
+  const weekdayFmt = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", timeZone: "UTC" });
+  const canOpenEvents = canSeeItem(session.role, "events");
+  const monthHref = (month: Date) => `/${locale}/admin/appointments?month=${toMonthParam(month)}`;
+  const CHIPS_PER_DAY = 3;
+
+    function renderCard(a: AppointmentCard) {
     return (
       <div key={a.id} className={`rounded-xs border p-2 text-[11px] leading-snug ${STATUS_BORDER[a.status]}`}>
         <p className="font-semibold text-primary">
@@ -200,7 +292,10 @@ export default async function AdminAppointmentsPage(props: Props) {
         </div>
         <AppointmentCreateForm
           locale={locale}
-          leads={recentLeads.map((l) => ({ id: l.id, label: `${l.name} · ${l.phone}` }))}
+          // Masked: a picker is a list, and lists do not print phone
+          // numbers (lib/contact-mask.ts). Enough is left to tell two
+          // customers with one name apart.
+          leads={recentLeads.map((l) => ({ id: l.id, label: `${l.name} · ${maskPhone(l.phone)}` }))}
           projects={projects.map((p) => ({ id: p.id, label: p.nameEn || p.nameTh }))}
           assignees={assigneeSelectOptions}
           canAssignOthers={canAssignOthers}
@@ -254,19 +349,133 @@ export default async function AdminAppointmentsPage(props: Props) {
       )}
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <Link href={`/${locale}/admin/appointments?week=${prevWeek}`} className="admin-btn-ghost px-2 py-1.5">
-          <ChevronLeft size={14} aria-hidden />
-        </Link>
-        <Link href={`/${locale}/admin/appointments?week=${nextWeek}`} className="admin-btn-ghost px-2 py-1.5">
-          <ChevronRight size={14} aria-hidden />
-        </Link>
-        <span className="text-sm font-semibold text-primary">{weekLabel}</span>
-        <Link href={`/${locale}/admin/appointments?week=${thisWeek}`} className="admin-btn-ghost px-2.5 py-1.5 text-xs">
-          {t("today")}
-        </Link>
+        {/* Month | week. */}
+        <div role="group" aria-label={t("viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+          {(["month", "week"] as const).map((option) => (
+            <Link
+              key={option}
+              href={`/${locale}/admin/appointments${option === "week" ? "?view=week" : ""}`}
+              aria-current={view === option ? "page" : undefined}
+              className={[
+                "flex h-7 items-center rounded-[8px] px-3 text-[12.5px] transition-colors",
+                view === option
+                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
+                  : "text-ink-muted hover:text-ink",
+              ].join(" ")}
+            >
+              {option === "month" ? t("viewMonth") : t("viewWeek")}
+            </Link>
+          ))}
+        </div>
+
+        {view === "month" ? (
+          <>
+            <Link href={monthHref(addMonths(monthStart, -1))} aria-label={t("previousMonth")} className="admin-btn-ghost px-2 py-1.5">
+              <ChevronLeft size={14} aria-hidden />
+            </Link>
+            <Link href={monthHref(addMonths(monthStart, 1))} aria-label={t("nextMonth")} className="admin-btn-ghost px-2 py-1.5">
+              <ChevronRight size={14} aria-hidden />
+            </Link>
+            <span className="text-sm font-semibold text-ink">{monthLabel}</span>
+            <Link href={`/${locale}/admin/appointments`} className="admin-btn-ghost px-2.5 py-1.5 text-xs">
+              {t("today")}
+            </Link>
+          </>
+        ) : (
+          <>
+          <Link href={`/${locale}/admin/appointments?view=week&week=${prevWeek}`} className="admin-btn-ghost px-2 py-1.5">
+            <ChevronLeft size={14} aria-hidden />
+          </Link>
+          <Link href={`/${locale}/admin/appointments?view=week&week=${nextWeek}`} className="admin-btn-ghost px-2 py-1.5">
+            <ChevronRight size={14} aria-hidden />
+          </Link>
+          <span className="text-sm font-semibold text-primary">{weekLabel}</span>
+          <Link href={`/${locale}/admin/appointments?view=week&week=${thisWeek}`} className="admin-btn-ghost px-2.5 py-1.5 text-xs">
+            {t("today")}
+          </Link>
+          </>
+        )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_300px]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+        {view === "month" ? (
+          <div className="admin-card overflow-hidden p-0!">
+            <div className="grid grid-cols-7 border-b border-adm-line">
+              {weeks[0].map(({ date }) => (
+                <div key={monthDayKey(date)} className="px-2 py-2 text-center text-[11px] text-ink-muted">
+                  {weekdayFmt.format(date)}
+                </div>
+              ))}
+            </div>
+            {/* Scrolls sideways inside the card on a phone, never the page. */}
+            <div className="overflow-x-auto">
+              <div className="grid min-w-[640px] grid-cols-7">
+                {weeks.flat().map(({ date, inMonth }) => {
+                  const key = monthDayKey(date);
+                  const isToday = key === todayKey;
+                  const dayAppointments = monthByDay.get(key) ?? [];
+                  const dayEvents = eventsByDay.get(key) ?? [];
+                  const chips = [
+                    ...dayEvents.map((event) => ({ kind: "event" as const, event })),
+                    ...dayAppointments.map((appointment) => ({ kind: "appointment" as const, appointment })),
+                  ];
+                  const hidden = chips.length - CHIPS_PER_DAY;
+                  return (
+                    <div
+                      key={key}
+                      className={[
+                        "min-h-[104px] border-b border-r border-adm-line p-1.5 [&:nth-child(7n)]:border-r-0",
+                        inMonth ? "" : "bg-surface/60",
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs tabular-nums",
+                          isToday
+                            ? "bg-adm-fill font-semibold text-adm-on-fill"
+                            : inMonth
+                              ? "text-ink"
+                              : "text-ink-muted/60",
+                        ].join(" ")}
+                      >
+                        {date.getUTCDate()}
+                      </span>
+                      <div className="flex flex-col gap-1">
+                        {chips.slice(0, CHIPS_PER_DAY).map((chip) =>
+                          chip.kind === "event" ? (
+                            <MaybeLink
+                              key={`e-${chip.event.id}`}
+                              href={canOpenEvents ? `/${locale}/admin/events/${chip.event.id}/edit` : null}
+                              className="truncate rounded-[6px] bg-adm-status-info-bg px-1.5 py-0.5 text-[10.5px] font-medium text-adm-status-info"
+                            >
+                              {locale === "th" ? chip.event.titleTh : chip.event.titleEn}
+                            </MaybeLink>
+                          ) : (
+                            <MaybeLink
+                              key={`a-${chip.appointment.id}`}
+                              href={
+                                chip.appointment.leadId
+                                  ? `/${locale}/admin/leads?lead=${chip.appointment.leadId}`
+                                  : null
+                              }
+                              className={`truncate rounded-[6px] px-1.5 py-0.5 text-[10.5px] ${CHIP_TONE[chip.appointment.status]}`}
+                            >
+                              <span className="tabular-nums">{timeFmt.format(chip.appointment.scheduledAt)}</span>{" "}
+                              {chip.appointment.customerName ?? t("noLeadLinked")}
+                            </MaybeLink>
+                          ),
+                        )}
+                        {hidden > 0 && (
+                          <span className="px-1.5 text-[10.5px] text-ink-muted">{t("moreOnDay", { count: hidden })}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="admin-card overflow-hidden p-0!">
           <div className="grid grid-cols-7 divide-x divide-primary/5 border-b border-primary/10 bg-surface-muted">
             {days.map((d) => {
@@ -302,8 +511,30 @@ export default async function AdminAppointmentsPage(props: Props) {
             })}
           </div>
         </div>
+        )}
 
         <div className="flex flex-col gap-4">
+          {/* Viewings whose time has passed with nobody saying whether
+              they happened. The same list and buttons as the dashboard's
+              inbox — one component, so the two cannot drift. */}
+          <section className="admin-card overflow-hidden p-0!">
+            <div className="flex items-center gap-2 border-b border-adm-line px-3.5 py-2.5">
+              <h2 className="text-sm font-semibold text-ink">{t("needsAction")}</h2>
+              {overdue.count > 0 && (
+                <span className="ml-auto rounded-full bg-adm-danger-bg px-2 text-xs font-semibold tabular-nums text-adm-danger">
+                  {overdue.count}
+                </span>
+              )}
+            </div>
+            <WorkInbox
+              locale={locale}
+              items={needsAction}
+              totals={{ lead: 0, appointment: overdue.count, content: 0 }}
+              kinds={["appointment"]}
+              currentUserId={session.id}
+            />
+          </section>
+
           <section className="admin-card p-0!">
             <div className="flex items-center gap-2 border-b border-primary/10 px-3.5 py-2.5 text-red-700">
               <AlertCircle size={14} aria-hidden />

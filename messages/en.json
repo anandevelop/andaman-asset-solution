@@ -864,7 +864,6 @@
       "filterProject": "Project",
       "filterSource": "Channel",
       "filterRange": "Date range",
-      "overdueOnly": "Over SLA only",
       "boardView": "Board",
       "tableView": "Table",
       "openCount": "{count, plural, =0 {No open leads} one {Showing # open lead} other {Showing # open leads}}",
@@ -877,10 +876,39 @@
         "noFollowUp": "No follow-up in {days} days",
         "followUpOn": "Call {date}",
         "appointmentWith": "{when} {time} · {name}",
-        "moveError": "Could not move this lead. Please try again."
+        "moveError": "Could not move this lead. Please try again.",
+        "moved": "Moved {name} to {status}"
       },
       "searchPlaceholder": "Search by name, email, or phone…",
-      "filterAssigneeAll": "Whole team"
+      "filterAssigneeAll": "Whole team",
+      "views": {
+        "label": "Saved views",
+        "all": "All",
+        "mine": "Mine",
+        "unassigned": "Unassigned",
+        "sla": "Past SLA"
+      },
+      "table": {
+        "select": "Select {name}",
+        "selectAll": "Select all rows",
+        "customer": "Customer",
+        "owner": "Owner",
+        "assign": "Assign",
+        "noConsent": "No consent",
+        "assigned": "Assigned to {name}",
+        "unassignedDone": "Unassigned",
+        "statusChanged": "Moved to {status}"
+      },
+      "bulk": {
+        "selected": "{count} selected",
+        "assign": "Assign",
+        "status": "Change status",
+        "export": "Export",
+        "clear": "Clear selection",
+        "done": "Updated {count}",
+        "partial": "Updated {changed} · skipped {refused} you can't change"
+      },
+      "clearSearch": "Clear search"
     },
     "leadDetail": {
       "title": "Lead",
@@ -914,7 +942,6 @@
       "lastTouched": "Last touched {ago}",
       "hoursAgo": "{hours, plural, =0 {just now} one {# hour ago} other {# hours ago}}",
       "daysAgo": "{days} {days, plural, one {day} other {days}} ago",
-      "logCall": "Log a call",
       "scheduleViewing": "Schedule a viewing",
       "timelineTitle": "Activity",
       "timelineEmpty": "No activity yet.",
@@ -982,6 +1009,34 @@
         "release": "Release",
         "reservedTag": "Reserved",
         "noUnits": "No available units in this project."
+      },
+      "reveal": "Show",
+      "revealFailed": "Couldn't show contact details",
+      "appointmentOverdue": "Viewing past due, not closed",
+      "appointmentNext": "Next viewing",
+      "nextStep": {
+        "title": "Suggested next step",
+        "call": "Call",
+        "whatsapp": "WhatsApp",
+        "claim": "Take it and call within the hour",
+        "claimDetail": "Nobody owns this lead yet",
+        "claimButton": "Take it",
+        "closeAppointment": "Close the viewing",
+        "closeAppointmentDetail": "Booked for {when} — nobody has recorded whether they came",
+        "followUpDue": "Follow-up is due",
+        "followUpDueDetail": "Set for {date}",
+        "firstContact": "Make the first call",
+        "firstContactDetail": "Still NEW — nobody has got back to them yet",
+        "prepareViewing": "Get ready for the viewing on {when}",
+        "prepareViewingDetail": "Confirm the time with the customer beforehand",
+        "keepNegotiating": "Keep the negotiation moving",
+        "keepNegotiatingDetail": "Book the next conversation or send an offer",
+        "visited": "Visited",
+        "noShow": "No-show",
+        "claimed": "You took this lead",
+        "closedVisited": "Marked as visited",
+        "closedNoShow": "Marked as no-show",
+        "failed": "That didn't go through"
       }
     },
     "leadStatus": {
@@ -2743,7 +2798,8 @@
           "TRUNCATED": "One value was too long to store in full, so reverting would shorten the live text. Edit the record directly instead.",
           "RECORD_GONE": "The record this entry refers to has been deleted."
         }
-      }
+      },
+      "actionRevealContact": "viewed contact details of"
     },
     "navGroups": {
       "daily": "Daily work",
@@ -3315,7 +3371,14 @@
         "notes": "Notes"
       },
       "filteredNotice": "Showing {shown} of {total} appointments this week — a filter from the leads table is applied.",
-      "clearFilter": "Show all"
+      "clearFilter": "Show all",
+      "viewLabel": "Calendar view",
+      "viewMonth": "Month",
+      "viewWeek": "Week",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "moreOnDay": "+{count} more",
+      "needsAction": "Needs action"
     },
     "appointmentStatus": {
       "REQUESTED": "Requested",

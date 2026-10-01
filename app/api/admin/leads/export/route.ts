@@ -42,6 +42,13 @@ const querySchema = z.object({
   status: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
+  /** Comma-separated lead ids — the table's bulk bar exporting exactly the
+   *  rows ticked. The same cap as the bar's own selection. */
+  ids: z
+    .string()
+    .optional()
+    .transform((value) => (value ? value.split(",").filter(Boolean) : []))
+    .pipe(z.array(z.string().regex(/^[a-z0-9]{10,40}$/)).max(100)),
 });
 
 /** "2026-08-01" → Date, or null. Invalid input is ignored, not rejected. */
@@ -81,7 +88,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "VALIDATION_FAILED" }, { status: 422 });
   }
 
-  const { status, from, to } = parsed.data;
+  const { status, from, to, ids } = parsed.data;
 
   const statusFilter =
     status && status !== "ALL" && (Object.values(LeadStatus) as string[]).includes(status)
@@ -92,6 +99,7 @@ export async function GET(request: Request) {
   const toDate = parseDate(to, true);
 
   const where: Prisma.LeadInquiryWhereInput = {
+    ...(ids.length > 0 ? { id: { in: ids } } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(fromDate || toDate
       ? {
@@ -187,7 +195,7 @@ export async function GET(request: Request) {
     console.info(
       `[leads/export] ${leads.length} rows by user=${actor.id} status=${
         statusFilter ?? "ALL"
-      } from=${from ?? "-"} to=${to ?? "-"}`,
+      } from=${from ?? "-"} to=${to ?? "-"} ids=${ids.length > 0 ? ids.length : "-"}`,
     );
 
     const csv = toCsv(headers, rows);
