@@ -3727,6 +3727,54 @@
       "undo": "撤销",
       "undone": "已撤销",
       "undoFailed": "撤销失败"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "close": "关闭 Copilot",
+      "contextDefault": "后台",
+      "notConnectedTitle": "尚未连接模型。",
+      "notConnectedBody": "此面板仅为布局预览，在配置后端之前无法回答任何问题。",
+      "suggestionsTitle": "此页面的建议问题",
+      "rules": "连接后，Copilot 只会以您的权限读取数据，任何修改都会先显示预览供您确认。",
+      "inputLabel": "询问 Copilot",
+      "inputPlaceholder": "暂不可用",
+      "send": "发送",
+      "suggest": {
+        "dashboard": {
+          "summary": "帮我总结今天的工作",
+          "callFirst": "应该先给哪条线索打电话？",
+          "compareStock": "比较各项目的库存"
+        },
+        "leads": {
+          "whoToAssign": "新线索该分配给谁？",
+          "draftEmail": "起草一封英文回复邮件",
+          "atRisk": "哪些线索有流失风险？"
+        },
+        "projects": {
+          "incomplete": "哪些项目页面还不完整？",
+          "draftDescription": "起草泰语项目介绍",
+          "unitTypes": "汇总所有户型"
+        },
+        "news": {
+          "ideas": "根据关键词的文章选题",
+          "seoCheck": "检查这篇文章的 SEO",
+          "translate": "把这篇文章翻译成中文"
+        },
+        "seo": {
+          "fixFirst": "应该先修复什么？",
+          "rising": "哪些关键词在上升？",
+          "redirects": "为 404 页面创建重定向"
+        },
+        "publishing": {
+          "mostMissing": "哪些翻译缺得最多？",
+          "translateFaq": "帮忙翻译常见问题"
+        },
+        "default": {
+          "summary": "帮我总结今天的工作",
+          "anomalies": "系统里有异常吗？",
+          "frequent": "带我去常用页面"
+        }
+      }
     }
   },
   "legalPage": {

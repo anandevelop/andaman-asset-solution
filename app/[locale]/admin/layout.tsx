@@ -40,6 +40,8 @@ import AdminSidebar, { type AdminEnvironment } from "@/components/admin/AdminSid
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import CommandK from "@/components/admin/CommandK";
 import { UndoToaster } from "@/components/admin/UndoToast";
+import CopilotPanel from "@/components/admin/CopilotPanel";
+import { isCopilotEnabled } from "@/lib/admin/copilot";
 
 export const metadata: Metadata = {
   title: "Back office",
@@ -100,6 +102,10 @@ export default async function AdminLayout(props: Props) {
     : process.env.NODE_ENV === "production"
       ? "staging"
       : "development";
+  // Off unless ADMIN_COPILOT=1 — and off means not rendered at all: no
+  // button, no panel, no `.` shortcut. See lib/admin/copilot.ts.
+  const copilot = isCopilotEnabled();
+
   const environment: AdminEnvironment = {
     kind: environmentKind,
     label: t(`rail.env.${environmentKind}`),
@@ -154,6 +160,7 @@ export default async function AdminLayout(props: Props) {
               counts={counts}
               asOfLabel={asOfLabel}
               liveCount={liveCount}
+              copilotEnabled={copilot}
               notifications={feed.rows.map((row) => ({
                 id: row.id,
                 title: row.title,
@@ -191,6 +198,14 @@ export default async function AdminLayout(props: Props) {
             {children}
           </div>
         </div>
+
+        {/* A sibling of the page column, so opening it narrows the page
+            rather than covering it. Chrome, like the rail: hidden in print. */}
+        {copilot && (
+          <div data-admin-chrome className="contents">
+            <CopilotPanel locale={locale} />
+          </div>
+        )}
       </div>
     </AuthProvider>
   );

@@ -26,11 +26,29 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, Check, ChevronDown, Moon, PanelLeftClose, PanelLeftOpen, Rows3, Rows4, Search, Sun } from "lucide-react";
+import {
+  Bell,
+  Check,
+  ChevronDown,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Rows3,
+  Rows4,
+  Search,
+  Sparkles,
+  Sun,
+} from "lucide-react";
 import { adminLocales, type Locale } from "@/i18n";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
 import { ADMIN_NAV, activeItemKey } from "@/lib/admin/nav";
-import { applyDisplayPref, restoreDisplayPrefs, toggleRail, useDisplayPref } from "@/lib/admin/use-display-pref";
+import {
+  applyDisplayPref,
+  restoreDisplayPrefs,
+  toggleCopilot,
+  toggleRail,
+  useDisplayPref,
+} from "@/lib/admin/use-display-pref";
 import { markNotificationsRead } from "@/app/[locale]/admin/notifications-actions";
 
 export type TopbarNotification = {
@@ -58,6 +76,8 @@ type Props = {
   /** People on the public site right now, or null when this role may not
    *  read analytics — see the layout. */
   liveCount: number | null;
+  /** ADMIN_COPILOT — the button is drawn only when the panel exists. */
+  copilotEnabled: boolean;
   notifications: TopbarNotification[];
   unreadCount: number;
   labels: {
@@ -78,6 +98,7 @@ export default function AdminTopbar({
   counts,
   asOfLabel,
   liveCount,
+  copilotEnabled,
   notifications,
   unreadCount,
   labels,
@@ -91,6 +112,7 @@ export default function AdminTopbar({
   const density = useDisplayPref("density");
   const theme = useDisplayPref("theme");
   const rail = useDisplayPref("rail");
+  const copilot = useDisplayPref("copilot");
 
   // The root layout's inline script applied stored choices on the first
   // full load; this picks up any changed in another tab since.
@@ -338,6 +360,19 @@ export default function AdminTopbar({
           </>
         )}
       </div>
+
+      {copilotEnabled && (
+        <button
+          type="button"
+          onClick={toggleCopilot}
+          aria-pressed={copilot === "open"}
+          title={`${t("copilot.title")} ( . )`}
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] bg-adm-fill px-3 text-[13px] font-semibold text-adm-on-fill transition-opacity hover:opacity-90"
+        >
+          <Sparkles size={15} aria-hidden />
+          {t("copilot.title")}
+        </button>
+      )}
     </div>
   );
 }

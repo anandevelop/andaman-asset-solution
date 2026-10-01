@@ -53,6 +53,12 @@ export function toggleRail() {
   applyDisplayPref("rail", collapsed ? "expanded" : "collapsed");
 }
 
+/** Open or close the Copilot panel — its topbar button and the `.` key. */
+export function toggleCopilot() {
+  const open = document.documentElement.dataset[DISPLAY_PREFS.copilot.dataKey] === "open";
+  applyDisplayPref("copilot", open ? "closed" : "open");
+}
+
 function subscribe(onChange: () => void) {
   window.addEventListener(CHANGE_EVENT, onChange);
   return () => window.removeEventListener(CHANGE_EVENT, onChange);

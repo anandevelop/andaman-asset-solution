@@ -7,6 +7,9 @@
    wide and then snaps narrow. See lib/admin/display-prefs.ts. */
 @custom-variant rail-collapsed (:root[data-admin-rail="collapsed"] &);
 
+/* The Copilot panel open — data-admin-copilot on <html>, same mechanism. */
+@custom-variant copilot-open (:root[data-admin-copilot="open"] &);
+
 @theme {
   --color-primary-50: #e7edf1;
   --color-primary-100: #c3d3dd;

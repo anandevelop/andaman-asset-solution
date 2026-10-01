@@ -3727,6 +3727,54 @@
       "undo": "เลิกทำ",
       "undone": "ยกเลิกแล้ว",
       "undoFailed": "เลิกทำไม่สำเร็จ"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "close": "ปิด Copilot",
+      "contextDefault": "หลังบ้าน",
+      "notConnectedTitle": "ยังไม่ได้เชื่อมต่อโมเดล",
+      "notConnectedBody": "แผงนี้เป็นโครงสำหรับทดสอบเท่านั้น ยังตอบคำถามไม่ได้จนกว่าจะตั้งค่า backend",
+      "suggestionsTitle": "คำถามแนะนำสำหรับหน้านี้",
+      "rules": "เมื่อเชื่อมต่อแล้ว Copilot จะอ่านข้อมูลด้วยสิทธิ์ของคุณเท่านั้น และทุกการแก้ไขต้องแสดงตัวอย่างให้ยืนยันก่อน",
+      "inputLabel": "ถาม Copilot",
+      "inputPlaceholder": "ยังใช้งานไม่ได้",
+      "send": "ส่ง",
+      "suggest": {
+        "dashboard": {
+          "summary": "สรุปงานวันนี้ให้หน่อย",
+          "callFirst": "ลีดไหนควรโทรก่อน?",
+          "compareStock": "เทียบสต็อกทุกโครงการ"
+        },
+        "leads": {
+          "whoToAssign": "มอบหมายลีดใหม่ให้ใครดี?",
+          "draftEmail": "ร่างอีเมลตอบลีดภาษาอังกฤษ",
+          "atRisk": "ลีดไหนเสี่ยงหลุด?"
+        },
+        "projects": {
+          "incomplete": "หน้าโครงการไหนยังไม่ครบ?",
+          "draftDescription": "ร่างคำอธิบายโครงการภาษาไทย",
+          "unitTypes": "สรุปแบบบ้านทั้งหมด"
+        },
+        "news": {
+          "ideas": "ไอเดียบทความจากคีย์เวิร์ด",
+          "seoCheck": "ตรวจ SEO บทความนี้",
+          "translate": "แปลบทความเป็นภาษาจีน"
+        },
+        "seo": {
+          "fixFirst": "อะไรควรแก้ก่อน?",
+          "rising": "คีย์เวิร์ดไหนกำลังขึ้น?",
+          "redirects": "สร้าง redirect ให้หน้า 404"
+        },
+        "publishing": {
+          "mostMissing": "คำแปลไหนขาดมากที่สุด?",
+          "translateFaq": "ช่วยแปล FAQ"
+        },
+        "default": {
+          "summary": "สรุปงานวันนี้ให้หน่อย",
+          "anomalies": "มีอะไรผิดปกติในระบบไหม?",
+          "frequent": "พาไปหน้าที่ใช้บ่อย"
+        }
+      }
     }
   },
   "legalPage": {

@@ -29,6 +29,11 @@ export const DISPLAY_PREFS = {
      before paint and the rail's width is plain CSS (the `rail-collapsed`
      variant in globals.css). */
   rail: { storageKey: "admin-rail", dataKey: "adminRail", values: ["expanded", "collapsed"] },
+  /* The Copilot panel, open or shut — only ever consulted when the
+     ADMIN_COPILOT flag renders the panel at all (lib/admin/copilot.ts). An
+     attribute for the same reason as `rail`: the content column's width
+     depends on it, and it must be right on the first paint. */
+  copilot: { storageKey: "admin-copilot", dataKey: "adminCopilot", values: ["closed", "open"] },
 } as const;
 
 export type DisplayPref = keyof typeof DISPLAY_PREFS;

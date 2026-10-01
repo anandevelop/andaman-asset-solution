@@ -3727,6 +3727,54 @@
       "undo": "Undo",
       "undone": "Undone",
       "undoFailed": "Couldn't undo"
+    },
+    "copilot": {
+      "title": "Copilot",
+      "close": "Close Copilot",
+      "contextDefault": "Back office",
+      "notConnectedTitle": "No model connected yet.",
+      "notConnectedBody": "This panel is a preview of the layout only; it can't answer anything until a backend is set up.",
+      "suggestionsTitle": "Suggested for this screen",
+      "rules": "Once connected, Copilot will read data with your own permissions only, and every change will show a preview for you to confirm first.",
+      "inputLabel": "Ask Copilot",
+      "inputPlaceholder": "Not available yet",
+      "send": "Send",
+      "suggest": {
+        "dashboard": {
+          "summary": "Summarise today for me",
+          "callFirst": "Which lead should I call first?",
+          "compareStock": "Compare stock across projects"
+        },
+        "leads": {
+          "whoToAssign": "Who should take the new leads?",
+          "draftEmail": "Draft an English reply to a lead",
+          "atRisk": "Which leads are slipping?"
+        },
+        "projects": {
+          "incomplete": "Which project pages are unfinished?",
+          "draftDescription": "Draft a Thai project description",
+          "unitTypes": "Summarise all house types"
+        },
+        "news": {
+          "ideas": "Article ideas from our keywords",
+          "seoCheck": "Check this article's SEO",
+          "translate": "Translate this article into Chinese"
+        },
+        "seo": {
+          "fixFirst": "What should I fix first?",
+          "rising": "Which keywords are rising?",
+          "redirects": "Create redirects for 404s"
+        },
+        "publishing": {
+          "mostMissing": "Which translations are most behind?",
+          "translateFaq": "Help translate the FAQ"
+        },
+        "default": {
+          "summary": "Summarise today for me",
+          "anomalies": "Is anything unusual in the system?",
+          "frequent": "Take me to a page I use often"
+        }
+      }
     }
   },
   "legalPage": {
