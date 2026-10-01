@@ -224,7 +224,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
+      <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
         <table className="w-full min-w-[1000px] table-fixed border-collapse">
           <thead className="border-b border-primary/10 bg-surface-muted">
             <tr>

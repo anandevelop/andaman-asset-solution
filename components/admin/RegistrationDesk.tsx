@@ -183,7 +183,7 @@ export default function RegistrationDesk({
         </div>
       ) : (
         /* ── Office view ───────────────────────────────────────────── */
-        <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
           <table className="w-full min-w-[980px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>

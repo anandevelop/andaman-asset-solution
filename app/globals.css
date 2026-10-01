@@ -67,6 +67,43 @@
 }
 
 /*
+  The back office's semantic tokens, exposed to Tailwind as bg-adm-panel,
+  text-adm-accent-ink, rounded-card and so on. `inline` so each utility
+  reads the --adm-* variable itself, which only exists under
+  :root:has([data-admin-root]) (see "Back-office tokens" below) and is
+  re-pointed there by the dark theme — the public site never defines
+  them and never uses these names.
+*/
+@theme inline {
+  --color-adm-bg: var(--adm-bg);
+  --color-adm-panel: var(--adm-panel);
+  --color-adm-solid: var(--adm-solid);
+  --color-adm-line: var(--adm-line);
+  --color-adm-line-strong: var(--adm-line-strong);
+  --color-adm-text: var(--adm-text);
+  --color-adm-muted: var(--adm-muted);
+  --color-adm-accent-ink: var(--adm-accent-ink);
+  --color-adm-fill: var(--adm-fill);
+  --color-adm-on-fill: var(--adm-on-fill);
+  --color-adm-band: var(--adm-band);
+  --color-adm-info: var(--adm-info);
+
+  --color-adm-success: var(--adm-success);
+  --color-adm-success-bg: var(--adm-success-bg);
+  --color-adm-warning: var(--adm-warning);
+  --color-adm-warning-bg: var(--adm-warning-bg);
+  --color-adm-danger: var(--adm-danger);
+  --color-adm-danger-bg: var(--adm-danger-bg);
+  --color-adm-status-info: var(--adm-status-info);
+  --color-adm-status-info-bg: var(--adm-status-info-bg);
+  --color-adm-neutral: var(--adm-neutral);
+  --color-adm-neutral-bg: var(--adm-neutral-bg);
+
+  --radius-card: var(--adm-radius-card);
+  --radius-control: var(--adm-radius-control);
+}
+
+/*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
@@ -678,6 +715,69 @@
 }
 
 /*
+  ── Back-office tokens ──────────────────────────────────────────────────
+  The CI (docs/FRONTEND_BLUEPRINT.md §3.1) as named roles, so a component
+  says "panel" or "accent ink" and the dark theme re-points one variable
+  instead of chasing utilities. These are the only raw colour values the
+  back office's components are meant to reach for.
+
+  Sand has two tokens on purpose. #E8B384 on white is 1.9:1 — fine as a
+  fill behind navy text, unreadable as text. --adm-fill is for fills
+  (primary CTA, count badges, the active marker); small sand-coloured
+  *text* uses --adm-accent-ink, which is the CI's accent-700 in light and
+  the sand itself only on navy.
+
+  Status pairs are foreground/background, each ≥5.7:1.
+*/
+:root:has([data-admin-root]) {
+  --adm-bg: #f9f9fa;
+  --adm-panel: #ffffff;
+  --adm-solid: #ffffff;
+  --adm-line: rgba(8, 53, 81, 0.1);
+  --adm-line-strong: rgba(8, 53, 81, 0.16);
+  --adm-text: #0d2635;
+  --adm-muted: #516573;
+  --adm-accent-ink: #9c602c;
+  --adm-fill: #e8b384;
+  --adm-on-fill: #0d2635;
+  --adm-band: #083551;
+  --adm-info: #296682;
+
+  --adm-success: #17663f;
+  --adm-success-bg: #e6f4ec;
+  --adm-warning: #8a5100;
+  --adm-warning-bg: #fdf0d9;
+  --adm-danger: #b3261e;
+  --adm-danger-bg: #fdeceb;
+  --adm-status-info: #1f5aa6;
+  --adm-status-info-bg: #e8f0fb;
+  --adm-neutral: #465866;
+  --adm-neutral-bg: #eef1f4;
+
+  /* Lines, not shadows ("เส้นแทนเงา"): only floating layers — drawer,
+     palette, menus — cast one, and they use --adm-shadow-float. */
+  --adm-shadow-float: 0 0 0 1px var(--adm-line), 0 10px 40px -18px rgba(8, 53, 81, 0.18);
+
+  --adm-radius-card: 16px;
+  --adm-radius-control: 10px;
+}
+
+/* The site's fonts, not a separate admin face: FC Vision for Thai, Roboto
+   for Latin, chosen per locale on <body> in app/[locale]/layout.tsx.
+   Figures are tabular so counts, prices and dates line up in columns and
+   do not jitter as a live number ticks. On body, not the layout div, so
+   portalled modals and menus get it too. */
+:root:has([data-admin-root]) body {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A native checkbox or radio with rounded-xs would come out a circle at
+   the admin's 10px control radius. */
+:root:has([data-admin-root]) input:is([type="checkbox"], [type="radio"]).rounded-xs {
+  border-radius: 4px;
+}
+
+/*
   ── Back-office density ─────────────────────────────────────────────────
   The admin shares the site's palette but not its scale. The public site
   is read at a distance on a phone; the back office is worked in for hours
@@ -705,8 +805,11 @@
   --text-3xl: 1.375rem;
   --text-4xl: 1.625rem;
   --spacing: 0.225rem;
-  --radius-xs: 6px;
-  --color-surface: #f3f5f7;
+  /* rounded-xs is what ~450 admin controls, rows and popovers already
+     carry, so it takes the control radius rather than every one of them
+     being renamed. Cards use rounded-card. */
+  --radius-xs: var(--adm-radius-control);
+  --color-surface: var(--adm-bg);
   --color-surface-muted: #eef1f4;
   --tracking-widest2: 0.14em;
 }
@@ -772,22 +875,56 @@
       100↔900 …, so a light chip with dark text becomes a dark chip with
       light text and keeps its meaning.
 
+  Navy, not black: the page is the CI's darkest navy (primary-900) and
+  cards are navy glass over it, so dark mode reads as the brand at night
+  rather than a generic IDE theme. It was #08121a, which on a laptop in
+  daylight was indistinguishable from any other dark dashboard.
+
   Scoped by :has([data-admin-root]) like the density scale, so the public
   site can never pick it up from a stored preference.
 */
 :root[data-admin-theme="dark"]:has([data-admin-root]) {
   color-scheme: dark;
 
-  --color-surface: #08121a;
-  --color-surface-raised: #0e1b25;
-  --color-surface-muted: #162936;
+  --adm-bg: #041d2c;
+  --adm-panel: rgba(8, 53, 81, 0.55);
+  --adm-solid: #062a40;
+  --adm-line: rgba(207, 224, 234, 0.1);
+  --adm-line-strong: rgba(207, 224, 234, 0.18);
+  --adm-text: #e4ebf0;
+  --adm-muted: #9db0bd;
+  --adm-accent-ink: #e8b384;
+  --adm-band: #041d2c;
+  --adm-info: #8fb5cc;
+
+  --adm-success: #5fc79a;
+  --adm-success-bg: rgba(95, 199, 154, 0.14);
+  --adm-warning: #f0c078;
+  --adm-warning-bg: rgba(240, 192, 120, 0.14);
+  --adm-danger: #f08a80;
+  --adm-danger-bg: rgba(240, 138, 128, 0.14);
+  --adm-status-info: #9dbdf0;
+  --adm-status-info-bg: rgba(157, 189, 240, 0.14);
+  --adm-neutral: #9db0bd;
+  --adm-neutral-bg: rgba(157, 176, 189, 0.12);
+
+  --adm-shadow-float: 0 0 0 1px var(--adm-line), 0 20px 50px -22px rgba(0, 0, 0, 0.55);
+  --shadow-card: var(--adm-shadow-float);
+  --shadow-cardHover: 0 0 0 1px var(--adm-line-strong), 0 26px 50px -24px rgba(0, 0, 0, 0.7);
+
+  /* surface-raised stays opaque: it is also every popover, input and
+     sticky header, which must not show the page through them. Over the
+     navy page it is the same colour --adm-panel composites to. */
+  --color-surface: var(--adm-bg);
+  --color-surface-raised: var(--adm-solid);
+  --color-surface-muted: #0a3450;
   --color-ink: #e4ebf0;
   --color-ink-muted: #9db0bd;
 
   --color-primary: #cfe0ea;
-  --color-primary-50: #10222e;
-  --color-primary-100: #15303f;
-  --color-primary-200: #1f4256;
+  --color-primary-50: #0a3350;
+  --color-primary-100: #0f3d5c;
+  --color-primary-200: #184b6b;
   --color-primary-300: #3f6f8c;
   --color-primary-400: #7099af;
   --color-primary-500: #8fb5cc;
@@ -902,8 +1039,11 @@
     background-color: #1c4e69;
   }
 
+  /* The band is the page's own navy in this theme; a hairline, not a
+     tone, separates it from the content. */
   & [data-admin-sidebar].bg-primary {
-    background-color: #051521;
+    background-color: var(--adm-band);
+    box-shadow: inset -1px 0 var(--adm-line);
   }
 
   /* bg-white is a card or popover surface everywhere in the admin except
@@ -918,9 +1058,9 @@
   /* The primary action turns gold, as in the CI's dark treatments: a navy
      button on a near-black page has nothing to stand out with. */
   & .admin-btn {
-    border-color: var(--color-accent);
-    background-color: var(--color-accent);
-    color: #083551;
+    border-color: var(--adm-fill);
+    background-color: var(--adm-fill);
+    color: var(--adm-on-fill);
   }
 
   & .admin-btn:hover {
@@ -931,7 +1071,7 @@
   /* Navy text on a gold chip (the sidebar's queue counts) — text-primary
      is light in this theme, which on gold would all but disappear. */
   & .bg-accent.text-primary {
-    color: #083551;
+    color: var(--adm-on-fill);
   }
 
   & img[src$="logo.png"]:not(.invert) {
@@ -946,7 +1086,7 @@
 }
 
 @utility admin-input {
-  @apply w-full rounded-xs border border-primary/15 bg-surface-raised px-2.5 py-1.5
+  @apply w-full rounded-control border border-adm-line-strong bg-surface-raised px-2.5 py-1.5
       text-sm text-ink placeholder:text-ink-muted/70 transition-[border-color,box-shadow]
       hover:border-primary/25
       focus:border-primary-500 focus:outline-hidden focus:ring-3 focus:ring-primary-500/15;
@@ -961,14 +1101,14 @@
 }
 
 @utility admin-card {
-  /* A hairline and a 1px lift, not the site's 40px glow: in a screen of
-     twelve cards the big shadow was most of what made it look busy. */
-  @apply rounded-[8px] border border-primary/10 bg-surface-raised p-5
-      shadow-[0_1px_2px_rgba(8,53,81,0.05)];
+  /* A hairline, no shadow: in a screen of twelve cards the site's 40px
+     glow was most of what made it look busy, and even a 1px lift is a
+     second edge the line already draws. Shadows are for floating layers. */
+  @apply rounded-card border border-adm-line bg-adm-panel p-5;
 }
 
 @utility admin-btn {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
       border border-primary bg-primary px-3.5 py-1.5 text-sm font-medium text-white
       transition-colors hover:border-primary-700 hover:bg-primary-700
       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
@@ -976,15 +1116,15 @@
 }
 
 @utility admin-btn-ghost {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
-      border border-primary/15 bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-ink
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
+      border border-adm-line-strong bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-ink
       transition-colors hover:border-primary/30 hover:bg-surface-muted
       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
       disabled:opacity-60;
 }
 
 @utility admin-btn-danger {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-xs
+  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
       border border-red-200 bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-red-700
       transition-colors hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
 }
@@ -999,7 +1139,13 @@
 }
 
 @utility admin-section-title {
-  @apply text-[11px] font-medium uppercase tracking-widest2 text-accent-700;
+  @apply text-[11px] font-medium uppercase tracking-widest2 text-adm-accent-ink;
+}
+
+/* IDs, phone numbers, timestamps. The system monospace, not a webfont:
+   it is only ever a few characters at a time. */
+@utility admin-mono {
+  @apply font-mono text-[0.92em] tracking-[-0.01em] tabular-nums;
 }
 
 @layer utilities {

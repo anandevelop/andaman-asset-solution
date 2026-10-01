@@ -91,7 +91,7 @@ export default async function AdminEBrochuresPage(props: Props) {
           {t("eBrochures.empty")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
           <table className="w-full min-w-[820px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>

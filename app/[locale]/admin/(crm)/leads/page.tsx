@@ -490,7 +490,7 @@ export default async function AdminLeadsPage(props: Props) {
       {leads.length === 0 ? (
         <div className="admin-card text-center text-sm text-ink-muted">{t("leads.empty")}</div>
       ) : (
-        <div className="overflow-x-auto rounded-xs border border-primary/10 bg-surface-raised shadow-card">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
           <table className="w-full min-w-[1180px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>
