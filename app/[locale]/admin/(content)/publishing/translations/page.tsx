@@ -39,9 +39,12 @@ import { Download } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
+import { LOCALE_DISPLAY_ORDER } from "@/i18n";
+import ProgressRing from "@/components/admin/ProgressRing";
 import {
   getTranslationStatusReport,
   translationLocaleTotals,
+  translationMatrix,
   LOCALE_NATIVE_NAMES,
   type TranslationGroupKey,
 } from "@/lib/locale-completeness";
@@ -63,12 +66,6 @@ function isGroupKey(value: string | undefined): value is TranslationGroupKey {
   return !!value && (GROUP_ORDER as readonly string[]).includes(value);
 }
 
-function barColor(share: number): string {
-  if (share === 0) return "bg-emerald-600";
-  if (share < 20) return "bg-accent-700";
-  return "bg-red-600";
-}
-
 export default async function AdminPublishingTranslationsPage(props: Props) {
   const [{ locale }, searchParams] = await Promise.all([props.params, props.searchParams]);
 
@@ -82,6 +79,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
   const activeGroup = isGroupKey(searchParams.group) ? searchParams.group : null;
 
   const localeTotals = translationLocaleTotals(report);
+  const matrix = translationMatrix(report);
   const offline = isDatabaseOffline();
   const totalGaps = report.groups.reduce((sum, group) => sum + group.items.length, 0);
 
@@ -120,30 +118,87 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
       )}
 
       {/* ── Per-locale summary ───────────────────────────────────────── */}
+      {/* Share complete, not count missing: "Russian 86%" is the figure a
+          manager can compare across languages; the count is under it. */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {localeTotals.map((row) => {
-          const share = row.total === 0 ? 0 : Math.round((row.missing / row.total) * 100);
+          const have = row.total - row.missing;
+          const share = row.total === 0 ? 1 : have / row.total;
           return (
-            <div key={row.locale} className="admin-card">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                {LOCALE_NATIVE_NAMES[row.locale] ?? row.locale}
-              </p>
-              <p className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-3xl font-semibold tabular-nums text-primary">{row.missing}</span>
-                <span className="text-sm text-ink-muted">
-                  {t("seoTranslations.missingOf", { total: row.total })}
-                </span>
-              </p>
-              <span className="mt-3 block h-[5px] w-full overflow-hidden rounded-full bg-surface-muted">
-                <span
-                  className={`block h-full rounded-full ${barColor(share)}`}
-                  style={{ width: `${Math.max(share, 3)}%` }}
-                />
-              </span>
+            <div key={row.locale} className="admin-card flex items-center gap-4">
+              <ProgressRing share={share} size={52} />
+              <div className="min-w-0">
+                <p className="text-xs text-ink-muted">{LOCALE_NATIVE_NAMES[row.locale] ?? row.locale}</p>
+                <p className="text-2xl font-semibold tabular-nums text-ink">{Math.round(share * 100)}%</p>
+                <p className="text-xs text-ink-muted">
+                  {t("seoTranslations.missingCount", { missing: row.missing, total: row.total })}
+                </p>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* ── The matrix ───────────────────────────────────────────────── */}
+      {/* One row per content type, one column per language: where the
+          gaps are concentrated, at a glance. A row links to that type's
+          gaps below. Filling them is a person's job — there is no
+          translation service behind this page, so it shows the count
+          rather than a button that would promise one. */}
+      {matrix.length > 0 && (
+        <section className="admin-card overflow-hidden p-0!">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] border-collapse">
+              <thead className="border-b border-adm-line">
+                <tr>
+                  <th className="admin-th">{t("seoTranslations.matrix.type")}</th>
+                  {LOCALE_DISPLAY_ORDER.map((code) => (
+                    <th key={code} className="admin-th text-center uppercase">
+                      {code}
+                    </th>
+                  ))}
+                  <th className="admin-th text-right">{t("seoTranslations.matrix.missing")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-adm-line">
+                {matrix.map((row) => {
+                  const group = report.sections.find((entry) => entry.section === row.section)?.group;
+                  const missing = LOCALE_DISPLAY_ORDER.reduce((sum, code) => sum + (row.total - row.have[code]), 0);
+                  return (
+                    <tr key={row.section} className="text-sm">
+                      <td className="admin-td">
+                        <Link href={`${base}?group=${group}`} className="font-medium text-ink hover:text-primary-500">
+                          {t(`seoTranslations.section.${row.section}`)}
+                        </Link>
+                        <span className="ml-2 text-xs text-ink-muted">{row.total}</span>
+                      </td>
+                      {LOCALE_DISPLAY_ORDER.map((code) => (
+                        <td key={code} className="admin-td">
+                          <span className="flex items-center justify-center gap-2">
+                            <ProgressRing share={row.have[code] / row.total} />
+                            <span className="text-xs tabular-nums text-ink-muted">
+                              {row.have[code]} / {row.total}
+                            </span>
+                          </span>
+                        </td>
+                      ))}
+                      <td className="admin-td text-right">
+                        {missing > 0 ? (
+                          <span className="rounded-full bg-adm-danger-bg px-2 py-0.5 text-xs font-semibold tabular-nums text-adm-danger">
+                            {missing}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-adm-success">✓</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* ── Filter by content type ───────────────────────────────────── */}
       {totalGaps > 0 && (

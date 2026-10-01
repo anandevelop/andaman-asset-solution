@@ -209,6 +209,36 @@ export default async function AdminPagesHomePage(props: Props) {
           </ol>
         </section>
 
+        <div className="space-y-6">
+        {/* ── Wireframe ──────────────────────────────────────────────
+            The page's shape at a glance, from the same rows as the list:
+            only what is visible, in order, the two fixed bands navy at
+            either end. It changes the instant a row moves, where the
+            iframe below needs a reload and a scroll to show the same. */}
+        <section className="admin-card space-y-3">
+          <h3 className="text-sm font-semibold text-ink">{t("homeBuilder.wireframeTitle")}</h3>
+          <ol className="mx-auto flex max-w-[260px] flex-col gap-1.5 rounded-[12px] border border-adm-line bg-surface p-2">
+            {rows
+              .filter(({ state }) => !state || state.isVisible)
+              .map(({ outline, state }) => (
+                <li
+                  key={outline.key}
+                  className={[
+                    "flex items-center justify-center rounded-[6px] px-2 text-center text-[10px] leading-tight",
+                    state
+                      ? "h-7 bg-adm-line text-ink-muted"
+                      : outline.key === HERO_ROW.key
+                        ? "h-16 bg-adm-band text-white/80"
+                        : "h-10 bg-adm-band-2 text-white/80",
+                  ].join(" ")}
+                >
+                  {!state && <Lock size={9} aria-hidden className="mr-1 shrink-0" />}
+                  <span className="truncate">{t(`homeBuilder.sections.${outline.labelKey}` as never)}</span>
+                </li>
+              ))}
+          </ol>
+        </section>
+
         <section className="admin-card flex flex-col p-0!">
           <div className="border-b border-primary/10 px-5 py-4">
             <h3 className="text-sm font-semibold text-primary">{t("homeBuilder.previewTitle")}</h3>
@@ -224,6 +254,7 @@ export default async function AdminPagesHomePage(props: Props) {
             className="h-[720px] w-full flex-1 border-0"
           />
         </section>
+        </div>
       </div>
     </div>
   );

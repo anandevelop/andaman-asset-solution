@@ -25,6 +25,7 @@
  */
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { isAltTextComplete } from "@/lib/media-alt";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
@@ -92,8 +93,9 @@ function fileName(url: string): string {
   }
 }
 
+/** See lib/media-alt.ts — the same rule the server's count uses. */
 function altComplete(altText: Partial<Record<string, string>>): boolean {
-  return locales.every((l) => (altText[l] ?? "").trim().length > 0);
+  return isAltTextComplete(altText, locales);
 }
 
 type TypeFilter = "all" | "image" | "document" | "missingAlt" | "unused" | "legacy";
@@ -279,6 +281,26 @@ export default function MediaLibrary({
           </button>
         ))}
 
+        {/* "ขาด ALT" as a chip of its own (v4), not only the banner's link:
+            it is the filter somebody works through file by file. Counted
+            with the same rule as the banner (lib/media-alt.ts). */}
+        {!onSelect && (
+          <button
+            type="button"
+            onClick={() => setTypeFilter(typeFilter === "missingAlt" ? "all" : "missingAlt")}
+            aria-pressed={typeFilter === "missingAlt"}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+              typeFilter === "missingAlt"
+                ? "border-adm-warning bg-adm-warning-bg text-adm-warning"
+                : "border-dashed border-adm-line-strong text-ink-muted hover:border-adm-warning hover:text-adm-warning"
+            }`}
+          >
+            <AlertTriangle size={11} aria-hidden />
+            {t("typeFilter.missingAlt")}
+            <span className="ml-0.5 opacity-70">{missingAltCount}</span>
+          </button>
+        )}
+
         {/* Files nothing references — the answer to "what can I clear
             out", and the one filter that needs the usage pass. */}
         {!onSelect && (
@@ -317,24 +339,35 @@ export default function MediaLibrary({
             <p>{items.length === 0 ? t("emptyLibrary") : t("emptyFiltered")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" style={{ alignContent: "start" }}>
+          /* Masonry (v4): columns rather than a grid, so each image keeps
+             its own proportions instead of being cropped to a square — a
+             crop hides exactly the part of a photo the ALT should describe.
+             The width/height attributes reserve the space before load. */
+          <div className="columns-2 gap-3 sm:columns-3 xl:columns-4">
             {visible.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => (onSelect ? onSelect(item) : setSelectedId(item.id))}
-                className={`overflow-hidden rounded-xs border bg-white text-left transition-shadow ${
-                  selectedId === item.id ? "border-primary shadow-[0_0_0_2px_rgba(8,53,81,0.16)]" : "border-primary/10 hover:shadow-card"
+                className={`mb-3 block w-full break-inside-avoid overflow-hidden rounded-[12px] border bg-surface-raised text-left transition-shadow ${
+                  selectedId === item.id ? "border-adm-info ring-2 ring-adm-info/30" : "border-adm-line hover:shadow-card"
                 }`}
               >
-                <div className="relative h-28 bg-surface-muted">
+                <div className={`relative bg-surface-muted ${isDocument(item.mimeType) ? "h-28" : ""}`}>
                   {isDocument(item.mimeType) ? (
                     <div className="flex h-full items-center justify-center text-ink-muted">
                       <FileText size={30} strokeWidth={1.4} aria-hidden />
                     </div>
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    <img
+                      src={item.url}
+                      alt=""
+                      width={item.width ?? undefined}
+                      height={item.height ?? undefined}
+                      className="block h-auto min-h-16 w-full object-cover"
+                      loading="lazy"
+                    />
                   )}
                   <TileBadges item={item} />
                 </div>
@@ -410,7 +443,8 @@ function TileBadges({ item }: { item: MediaItem }) {
       </span>
 
       {missingAlt ? (
-        <span className="absolute right-1.5 top-1.5 rounded-xs bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+        <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[10px] font-semibold text-adm-warning">
+          <AlertTriangle size={10} aria-hidden />
           {t("noAltTag")}
         </span>
       ) : item.isLegacyHost ? (

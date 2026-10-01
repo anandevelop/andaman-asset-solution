@@ -1705,6 +1705,12 @@
         "found": "此浏览器中存有未保存的草稿，比已保存的版本更新。",
         "recover": "恢复",
         "discard": "丢弃"
+      },
+      "cards": {
+        "seo": "SEO 分数",
+        "seoNone": "暂无 SEO 分数",
+        "views": "次浏览",
+        "leads": "条线索"
       }
     },
     "eBrochures": {
@@ -1802,7 +1808,8 @@
         "mark": "点击签到",
         "undo": "撤销签到",
         "hint": "点击姓名即可签到，同时会标记为已出席。"
-      }
+      },
+      "live": "进行中"
     },
     "eventStatus": {
       "PENDING": "待确认",
@@ -2073,7 +2080,8 @@
         "featuredProjects": "自动取自已发布的项目",
         "upcomingEvent": "自动取自下一场已发布的活动",
         "latestNews": "自动取自最新文章"
-      }
+      },
+      "wireframeTitle": "页面结构"
     },
     "awards": {
       "title": "荣誉奖项",
@@ -3136,7 +3144,6 @@
       "title": "翻译状态",
       "subtitle": "所有缺少某种语言的项目、文章、活动、电子手册和固定页面内容 — sitemap.ts 已向 Google 承诺提供全部四种语言。",
       "exportCsv": "导出缺失项为 CSV",
-      "missingOf": "缺失，共 {total} 项",
       "allComplete": "所有内容均已具备四种语言，无需修复。",
       "group": {
         "projects": "项目",
@@ -3152,7 +3159,27 @@
         "fixLink": "修复"
       },
       "filterLabel": "按内容类型筛选",
-      "filterAll": "全部"
+      "filterAll": "全部",
+      "missingCount": "缺少 {missing} / {total}",
+      "matrix": {
+        "type": "内容类型",
+        "missing": "缺少"
+      },
+      "section": {
+        "projects": "项目",
+        "unitTypes": "户型",
+        "facilities": "配套设施",
+        "news": "新闻",
+        "events": "活动",
+        "eBrochures": "电子手册",
+        "heroSlides": "首页横幅",
+        "cta": "结尾 CTA",
+        "corporate": "企业服务",
+        "whyUs": "选择我们的理由",
+        "mission": "使命",
+        "awards": "奖项",
+        "faq": "常见问题"
+      }
     },
     "analytics": {
       "title": "统计与报告",
@@ -3316,18 +3343,19 @@
       "subtitle": "在此上传的文件可在各处重复使用，并可设置替代文字、查看具体使用位置",
       "searchPlaceholder": "搜索文件名、标签或替代文字…",
       "upload": "上传文件",
-      "missingAltBanner": "有 {count} 个文件尚未填写替代文字 (alt text) — 会影响 SEO 与无障碍访问",
+      "missingAltBanner": "有 {count} 个文件的替代文字 (alt text) 缺失或过短 — 会影响 SEO 与无障碍访问",
       "missingAltBannerCta": "逐个补充 →",
       "truncatedNotice": "仅显示最近上传的文件 — 媒体库中还有更多未在本页显示",
       "typeFilter": {
         "all": "全部",
         "image": "图片",
         "document": "文档",
-        "unused": "未被使用"
+        "unused": "未被使用",
+        "missingAlt": "缺少 ALT"
       },
       "emptyLibrary": "媒体库还没有文件 — 上传第一个文件开始使用",
       "emptyFiltered": "没有符合筛选条件的文件",
-      "noAltTag": "无替代文字",
+      "noAltTag": "ALT 缺失或过短",
       "detailTitle": "文件详情",
       "detailEmpty": "选择一个文件以查看详情",
       "uploadedBy": "{date} 由 {name} 上传",
@@ -3514,7 +3542,9 @@
       "queue": {
         "title": "待审核",
         "empty": "目前没有处于此流程中的内容。",
-        "openEdit": "打开编辑页"
+        "openEdit": "打开编辑页",
+        "emptyTitle": "没有待审核的内容",
+        "emptyTranslationsLink": "查看缺少的翻译 →"
       },
       "actions": {
         "startDraft": "开始草稿",

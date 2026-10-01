@@ -17,6 +17,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { isAltTextComplete } from "@/lib/media-alt";
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
@@ -74,10 +75,6 @@ export type MediaLibraryData = {
   truncated: boolean;
 };
 
-function isAltTextComplete(altText: MediaAltText | null): boolean {
-  if (!altText) return false;
-  return locales.every((locale) => (altText[locale] ?? "").trim().length > 0);
-}
 
 export async function getMediaLibrary(): Promise<MediaLibraryData> {
   return safeQuery(
@@ -118,7 +115,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryData> {
           tagTally.set(tag, (tagTally.get(tag) ?? 0) + 1);
         }
         const altText = (row.altText ?? {}) as MediaAltText;
-        if (!isAltTextComplete(altText)) missingAltCount += 1;
+        if (!isAltTextComplete(altText, locales)) missingAltCount += 1;
 
         const usageCount = usageByUrl.get(row.url) ?? 0;
         if (usageCount === 0) unusedCount += 1;

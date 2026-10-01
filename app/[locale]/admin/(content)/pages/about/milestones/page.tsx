@@ -23,6 +23,10 @@ import { formatYear } from "@/lib/format";
 import { createMilestone, deleteMilestone, updateMilestone } from "./actions";
 import MilestoneForm from "@/components/admin/MilestoneForm";
 
+/** From this year the timeline draws stops in sand: the current run of
+ *  developments. One constant, so moving the line is a one-word edit. */
+const RECENT_FROM_YEAR = 2021;
+
 type Props = { params: Promise<{ locale: string }> };
 
 export default async function AdminMilestonesPage(props: Props) {
@@ -72,6 +76,45 @@ export default async function AdminMilestonesPage(props: Props) {
         </p>
       )}
 
+      {/* ── Timeline ────────────────────────────────────────────────
+          The years as the About page tells them, left to right; from
+          2021 — when the current developments began — in sand. It
+          scrolls sideways inside its card, never the page. Each stop
+          jumps to its form below. */}
+      {milestones.length > 0 && (
+        <section className="admin-card overflow-hidden p-0!">
+          <ol className="flex gap-0 overflow-x-auto px-5 py-6">
+            {[...milestones]
+              .sort((a, b) => a.year - b.year || a.sortOrder - b.sortOrder)
+              .map((milestone) => {
+                const recent = milestone.year >= RECENT_FROM_YEAR;
+                return (
+                  <li key={milestone.id} className="relative min-w-[150px] flex-1 pr-4">
+                    <span aria-hidden className="absolute left-0 right-0 top-[7px] h-0.5 bg-adm-line" />
+                    <a href={`#milestone-${milestone.id}`} className="group relative block">
+                      <span
+                        aria-hidden
+                        className={[
+                          "block h-4 w-4 rounded-full border-2 border-adm-solid",
+                          recent ? "bg-adm-fill" : "bg-adm-info",
+                          milestone.isActive ? "" : "opacity-40",
+                        ].join(" ")}
+                      />
+                      <span className={`mt-2 block text-sm font-semibold tabular-nums ${recent ? "text-adm-accent-ink" : "text-ink"}`}>
+                        {formatYear(milestone.year)}
+                      </span>
+                      <span className="block text-xs leading-snug text-ink group-hover:text-primary-500">
+                        {milestone.projectName}
+                      </span>
+                      {milestone.brand && <span className="block text-[11px] text-ink-muted">{milestone.brand}</span>}
+                    </a>
+                  </li>
+                );
+              })}
+          </ol>
+        </section>
+      )}
+
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
         <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
@@ -96,7 +139,7 @@ export default async function AdminMilestonesPage(props: Props) {
             lastYearHeading = milestone.year;
 
             return (
-              <div key={milestone.id}>
+              <div key={milestone.id} id={`milestone-${milestone.id}`} className="scroll-mt-[120px]">
                 {showYearHeading && (
                   <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-accent-700">
                     {formatYear(milestone.year)}

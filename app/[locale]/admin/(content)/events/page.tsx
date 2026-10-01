@@ -9,12 +9,13 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Pencil, Plus, Users } from "lucide-react";
+import { CalendarDays, Pencil, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { Role } from "@prisma/client";
 import { hasRole } from "@/lib/role-rank";
+import { can } from "@/lib/permissions";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale } from "@/lib/format";
 import { translationCompleteness } from "@/lib/admin/translated-form";
@@ -37,6 +38,7 @@ export default async function AdminEventsPage(props: Props) {
   // Matches ../new/page.tsx's own guard exactly — see the note by the
   // "New" button below.
   const canCreate = hasRole(session.role, Role.ADMIN);
+  const canSeeRegistrations = can(session.role, "viewCustomerContact");
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -56,6 +58,7 @@ export default async function AdminEventsPage(props: Props) {
           endsAt: true,
           capacity: true,
           isPublished: true,
+          coverImageUrl: true,
           registrations: {
             where: { status: { in: [...SEAT_TAKING_STATUSES] } },
             select: { partySize: true },
@@ -116,108 +119,108 @@ export default async function AdminEventsPage(props: Props) {
           {t("events.empty")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
-          <table className="w-full min-w-[820px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
-              <tr>
-                <th className="admin-th">{t("events.eventTitle")}</th>
-                <th className="admin-th">{t("events.startsAt")}</th>
-                <th className="admin-th">{t("events.registrations")}</th>
-                <th className="admin-th">{t("common.published")}</th>
-                <th className="admin-th" />
-              </tr>
-            </thead>
+        /* Horizontal cards (v4): the photo, when and where, and how full
+           it is — the three things an events coordinator checks — on one
+           line each. A card is not a link itself because it carries two
+           (edit, registrations); the title is the edit link. */
+        <ul className="space-y-3">
+          {ordered.map((event) => {
+            const booked = event.registrations.reduce(
+              (sum: number, r: { partySize: number }) => sum + r.partySize,
+              0,
+            );
+            const ends = event.endsAt ?? event.startsAt;
+            const isPast = ends < now;
+            const isLive = event.startsAt <= now && now <= ends;
+            const full = event.capacity !== null && booked >= event.capacity;
+            const completeness = translationCompleteness<any>(event.translations, "title");
 
-            <tbody className="divide-y divide-primary/5">
-              {ordered.map((event) => {
-                const booked = event.registrations.reduce(
-                  (sum: number, r: { partySize: number }) => sum + r.partySize,
-                  0,
-                );
-                const isPast = (event.endsAt ?? event.startsAt) < now;
-                const full = event.capacity !== null && booked >= event.capacity;
-                const completeness = translationCompleteness<any>(event.translations, "title");
+            return (
+              <li
+                key={event.id}
+                className={`admin-card flex flex-col gap-4 p-3! sm:flex-row sm:items-center ${isPast ? "opacity-60" : ""}`}
+              >
+                <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden rounded-[12px] bg-surface-muted sm:w-44">
+                  {event.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail
+                    <img src={event.coverImageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full items-center justify-center">
+                      <CalendarDays size={24} aria-hidden className="text-ink-muted" />
+                    </span>
+                  )}
+                  {isLive && (
+                    <span className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-white">
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" />
+                      {t("events.live")}
+                    </span>
+                  )}
+                </span>
 
-                return (
-                  <tr
-                    key={event.id}
-                    className={`transition-colors hover:bg-surface-muted/60 ${
-                      isPast ? "opacity-60" : ""
-                    }`}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        event.isPublished ? "bg-adm-success-bg text-adm-success" : "bg-adm-neutral-bg text-adm-neutral"
+                      }`}
+                    >
+                      {event.isPublished ? t("common.published") : t("common.draft")}
+                    </span>
+                    {isPast && <span className="text-xs text-ink-muted">{t("events.pastLabel")}</span>}
+                    <TranslationStatusBadges completeness={completeness} />
+                  </div>
+                  <Link
+                    href={`/${locale}/admin/events/${event.id}/edit`}
+                    className="mt-1 block truncate text-base font-semibold text-ink hover:text-primary-500"
                   >
-                    <td className="admin-td">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-primary">
-                          {locale === "th" ? event.titleTh : event.titleEn}
-                        </p>
-                        <TranslationStatusBadges completeness={completeness} />
-                      </div>
-                      <p className="mt-0.5 font-mono text-xs text-ink-muted">
-                        /{event.slug}
-                      </p>
-                      {event.location && (
-                        <p className="mt-0.5 text-xs text-ink-muted">{event.location}</p>
-                      )}
-                    </td>
+                    {locale === "th" ? event.titleTh : event.titleEn}
+                  </Link>
+                  <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
+                    <time dateTime={event.startsAt.toISOString()}>{dateFormat.format(event.startsAt)}</time>
+                    {event.location && <span>{event.location}</span>}
+                    <span className="admin-mono">/{event.slug}</span>
+                  </p>
+                </div>
 
-                    <td className="admin-td whitespace-nowrap text-ink-muted">
-                      <time dateTime={event.startsAt.toISOString()}>
-                        {dateFormat.format(event.startsAt)}
-                      </time>
-                      {isPast && (
-                        <p className="mt-0.5 text-xs">{t("events.pastLabel")}</p>
-                      )}
-                    </td>
-
-                    <td className="admin-td whitespace-nowrap">
+                <div className="w-full shrink-0 sm:w-48">
+                  <p className={`flex items-center gap-1.5 text-sm ${full ? "font-medium text-adm-warning" : "text-ink"}`}>
+                    <Users size={14} aria-hidden />
+                    <span className="tabular-nums">
+                      {event.capacity === null ? booked : `${booked} / ${event.capacity}`}
+                    </span>
+                  </p>
+                  {event.capacity !== null && event.capacity > 0 && (
+                    <span aria-hidden className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-adm-line">
                       <span
-                        className={`inline-flex items-center gap-1.5 text-sm ${
-                          full ? "font-medium text-amber-700" : "text-ink-muted"
-                        }`}
+                        className={`block h-full rounded-full ${full ? "bg-adm-warning" : "bg-adm-info"}`}
+                        style={{ width: `${Math.min(100, (booked / event.capacity) * 100)}%` }}
+                      />
+                    </span>
+                  )}
+                  <span className="mt-2 flex gap-3">
+                    {/* Registrations are customer data: the link only for
+                        a role that page admits (viewCustomerContact). */}
+                    {canSeeRegistrations && (
+                      <Link
+                        href={`/${locale}/admin/events/${event.id}/registrations`}
+                        className="text-xs text-ink-muted hover:text-primary"
                       >
-                        <Users size={14} aria-hidden />
-                        {event.capacity === null
-                          ? booked
-                          : `${booked} / ${event.capacity}`}
-                      </span>
-                    </td>
-
-                    <td className="admin-td whitespace-nowrap">
-                      <span
-                        className={
-                          event.isPublished
-                            ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                            : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                        }
-                      >
-                        {event.isPublished ? t("common.published") : t("common.draft")}
-                      </span>
-                    </td>
-
-                    <td className="admin-td whitespace-nowrap text-right">
-                      <span className="flex justify-end gap-3">
-                        <Link
-                          href={`/${locale}/admin/events/${event.id}/registrations`}
-                          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-                        >
-                          <Users size={14} aria-hidden />
-                          {t("events.manageRegistrations")}
-                        </Link>
-                        <Link
-                          href={`/${locale}/admin/events/${event.id}/edit`}
-                          className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
-                        >
-                          <Pencil size={14} aria-hidden />
-                          {t("common.edit")}
-                        </Link>
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        {t("events.manageRegistrations")}
+                      </Link>
+                    )}
+                    <Link
+                      href={`/${locale}/admin/events/${event.id}/edit`}
+                      className="inline-flex items-center gap-1 text-xs text-adm-accent-ink hover:underline"
+                    >
+                      <Pencil size={12} aria-hidden />
+                      {t("common.edit")}
+                    </Link>
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

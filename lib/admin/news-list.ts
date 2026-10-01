@@ -91,6 +91,9 @@ export type ArticleRow = {
   translationIncomplete: boolean;
   views30: number;
   leads: number;
+  /** The stored SEO checklist score (0–100) from the last save, or null
+   *  for an article saved before scoring existed — see NewsArticle.seoScore. */
+  seoScore: number | null;
 };
 
 export type NewsFilters = {
@@ -250,6 +253,7 @@ export async function getNewsList(filters: NewsFilters): Promise<NewsListView> {
             publishedAt: true,
             updatedAt: true,
             contentStatus: true,
+            seoScore: true,
             authorId: true,
             author: { select: { id: true, name: true } },
             translations: {
@@ -285,6 +289,7 @@ export async function getNewsList(filters: NewsFilters): Promise<NewsListView> {
           ),
           views30: viewCounts.get(article.slug) ?? 0,
           leads: leadCounts.get(article.slug) ?? 0,
+          seoScore: article.seoScore,
         };
       });
 

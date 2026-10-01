@@ -31,6 +31,7 @@ import {
   type ChangeChip,
 } from "@/lib/publishing";
 import { intlLocale } from "@/lib/format";
+import { visibleTabs } from "@/lib/admin/nav";
 import PublishingRowActions from "@/components/admin/PublishingRowActions";
 import PublishingRevisionPanel from "@/components/admin/PublishingRevisionPanel";
 
@@ -54,6 +55,7 @@ const EDIT_PATH: Record<string, string> = {
 export default async function AdminPublishingPage(props: Props) {
   const [{ locale }, searchParams] = await Promise.all([props.params, props.searchParams]);
   const session = await requireAdmin(locale, Role.VIEWER);
+  const canSeeTranslations = visibleTabs(session.role, "publishing").some((tab) => tab.key === "translations");
   const t = await getTranslations({ locale, namespace: "admin.publishing" });
   const tRoot = await getTranslations({ locale, namespace: "admin" });
 
@@ -176,7 +178,25 @@ export default async function AdminPublishingPage(props: Props) {
       <div className="grid gap-6 lg:grid-cols-3">
       <section className="admin-card space-y-4 lg:col-span-2">
         <h2 className="text-sm font-semibold text-primary">{t("queue.title")}</h2>
-        {overview.reviewQueue.length === 0 && <p className="text-sm text-ink-muted">{t("queue.empty")}</p>}
+        {/* Nothing waiting is good news, and says so — then points at the
+            other half of this hub, where there is usually still work. The
+            link only for a role the translations tab admits (EDITOR_UP). */}
+        {overview.reviewQueue.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-adm-success-bg text-adm-success">
+              <CheckCircle2 size={24} aria-hidden />
+            </span>
+            <p className="text-sm font-semibold text-ink">{t("queue.emptyTitle")}</p>
+            {canSeeTranslations && (
+              <Link
+                href={`/${locale}/admin/publishing/translations`}
+                className="text-xs font-medium text-adm-info hover:underline"
+              >
+                {t("queue.emptyTranslationsLink")}
+              </Link>
+            )}
+          </div>
+        )}
         <div className="space-y-3">
           {overview.reviewQueue.map((row) => (
             <div

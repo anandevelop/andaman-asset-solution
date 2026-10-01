@@ -16,7 +16,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Info, Plus } from "lucide-react";
+import { Info, LayoutGrid, List, Plus } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
@@ -31,6 +31,7 @@ import {
 } from "@/lib/admin/news-list";
 import NewsFilters from "@/components/admin/NewsFilters";
 import NewsTable from "@/components/admin/NewsTable";
+import NewsCards from "@/components/admin/NewsCards";
 import TablePagination from "@/components/admin/TablePagination";
 
 type Props = {
@@ -85,6 +86,18 @@ export default async function AdminNewsPage(props: Props) {
     ]),
   );
 
+  /* Cards first (v4); the table keeps selection and the bulk bar. */
+  const layout = searchParams.view === "table" ? "table" : "cards";
+  const layoutHref = (target: "cards" | "table") => {
+    const params = new URLSearchParams(
+      Object.entries(searchParams).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    );
+    if (target === "table") params.set("view", "table");
+    else params.delete("view");
+    const query = params.toString();
+    return `/${locale}/admin/news${query ? `?${query}` : ""}`;
+  };
+
   const first = view.total === 0 ? 0 : (view.page - 1) * filters.perPage + 1;
   const last = Math.min(view.page * filters.perPage, view.total);
 
@@ -113,6 +126,27 @@ export default async function AdminNewsPage(props: Props) {
           {t("common.offline")}
         </p>
       )}
+
+      <div className="flex justify-end">
+        <nav aria-label={t("projects.cards.viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+          {(["cards", "table"] as const).map((option) => (
+            <Link
+              key={option}
+              href={layoutHref(option)}
+              aria-current={layout === option ? "page" : undefined}
+              className={[
+                "flex h-7 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] transition-colors",
+                layout === option
+                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
+                  : "text-ink-muted hover:text-ink",
+              ].join(" ")}
+            >
+              {option === "cards" ? <LayoutGrid size={14} aria-hidden /> : <List size={14} aria-hidden />}
+              {option === "cards" ? t("projects.cards.viewCards") : t("projects.cards.viewTable")}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       <NewsFilters
         locale={locale}
@@ -146,6 +180,27 @@ export default async function AdminNewsPage(props: Props) {
         }}
       />
 
+      {layout === "cards" ? (
+        <NewsCards
+          locale={locale}
+          rows={view.rows}
+          localeCodes={[...LOCALE_DISPLAY_ORDER]}
+          labels={{
+            status: {
+              published: t("common.published"),
+              scheduled: t("news.scheduled"),
+              inReview: t("news.statusInReview"),
+              draft: t("common.draft"),
+            },
+            noCategory: t("common.none"),
+            seo: t("news.cards.seo"),
+            seoNone: t("news.cards.seoNone"),
+            views: t("news.cards.views"),
+            leads: t("news.cards.leads"),
+            empty: view.totalAll === 0 ? t("news.empty") : t("news.noMatches"),
+          }}
+        />
+      ) : (
       <fieldset disabled={!canWrite} className="contents">
       <NewsTable
         locale={locale}
@@ -184,6 +239,7 @@ export default async function AdminNewsPage(props: Props) {
         }}
       />
       </fieldset>
+      )}
 
       <TablePagination
         basePath={`/${locale}/admin/news`}

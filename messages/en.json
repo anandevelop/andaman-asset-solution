@@ -1705,6 +1705,12 @@
         "found": "An unsaved draft of this article is stored in this browser, newer than the saved version.",
         "recover": "Recover",
         "discard": "Discard"
+      },
+      "cards": {
+        "seo": "SEO score",
+        "seoNone": "No SEO score yet",
+        "views": "views",
+        "leads": "leads"
       }
     },
     "eBrochures": {
@@ -1802,7 +1808,8 @@
         "mark": "Tap to check in",
         "undo": "Undo arrival",
         "hint": "Tap a name to check them in. Checking in also marks them as attended."
-      }
+      },
+      "live": "Happening now"
     },
     "eventStatus": {
       "PENDING": "Pending",
@@ -2073,7 +2080,8 @@
         "featuredProjects": "Filled automatically from published projects",
         "upcomingEvent": "Filled automatically from the next published event",
         "latestNews": "Filled automatically from the latest articles"
-      }
+      },
+      "wireframeTitle": "Page outline"
     },
     "awards": {
       "title": "Awards",
@@ -3136,7 +3144,6 @@
       "title": "Translation Status",
       "subtitle": "Every project, article, event, brochure and static-page section missing a language — sitemap.ts already promises Google all four.",
       "exportCsv": "Export gaps as CSV",
-      "missingOf": "missing of {total}",
       "allComplete": "Every item has all four languages. Nothing to fix here.",
       "group": {
         "projects": "Projects",
@@ -3152,7 +3159,27 @@
         "fixLink": "Fix"
       },
       "filterLabel": "Filter by content type",
-      "filterAll": "All"
+      "filterAll": "All",
+      "missingCount": "{missing} of {total} missing",
+      "matrix": {
+        "type": "Content type",
+        "missing": "Missing"
+      },
+      "section": {
+        "projects": "Projects",
+        "unitTypes": "House types",
+        "facilities": "Facilities",
+        "news": "News",
+        "events": "Events",
+        "eBrochures": "E-brochures",
+        "heroSlides": "Hero slides",
+        "cta": "Closing CTA",
+        "corporate": "Corporate services",
+        "whyUs": "Why us",
+        "mission": "Mission",
+        "awards": "Awards",
+        "faq": "FAQ"
+      }
     },
     "analytics": {
       "title": "Analytics & Reports",
@@ -3316,18 +3343,19 @@
       "subtitle": "Files uploaded here can be reused anywhere, with alt text and a record of where each one is used",
       "searchPlaceholder": "Search filename, tags or alt text…",
       "upload": "Upload files",
-      "missingAltBanner": "{count} files have no alt text — this affects both SEO and accessibility",
+      "missingAltBanner": "{count} files have missing or too-short alt text — this affects both SEO and accessibility",
       "missingAltBannerCta": "Fix one by one →",
       "truncatedNotice": "Showing only the most recent files — the library has more than fit on this page.",
       "typeFilter": {
         "all": "All",
         "image": "Images",
         "document": "Documents",
-        "unused": "Unused"
+        "unused": "Unused",
+        "missingAlt": "Missing ALT"
       },
       "emptyLibrary": "No files yet — upload your first one to get started",
       "emptyFiltered": "No files match this filter",
-      "noAltTag": "No alt text",
+      "noAltTag": "ALT missing or too short",
       "detailTitle": "File details",
       "detailEmpty": "Select a file to see its details",
       "uploadedBy": "Uploaded {date} by {name}",
@@ -3514,7 +3542,9 @@
       "queue": {
         "title": "Pending review",
         "empty": "Nothing is in the workflow right now.",
-        "openEdit": "Open in editor"
+        "openEdit": "Open in editor",
+        "emptyTitle": "Nothing waiting for review",
+        "emptyTranslationsLink": "See missing translations →"
       },
       "actions": {
         "startDraft": "Start a draft",

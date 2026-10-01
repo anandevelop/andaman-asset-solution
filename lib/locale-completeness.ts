@@ -110,8 +110,30 @@ function localesPresent(translations: TranslationRow[]): Set<string> {
  */
 export type TranslationGroupKey = "projects" | "news" | "events" | "eBrochures" | "staticPages";
 
+/**
+ * The content type an item belongs to — finer than its group. The groups
+ * are where a gap is listed (and what the CSV says); the sections are the
+ * matrix's rows, "FAQ 12 of 40 missing Russian", which the five groups
+ * were too coarse to say: "static pages" alone was seven models.
+ */
+export type TranslationSectionKey =
+  | "projects"
+  | "unitTypes"
+  | "facilities"
+  | "news"
+  | "events"
+  | "eBrochures"
+  | "heroSlides"
+  | "cta"
+  | "corporate"
+  | "whyUs"
+  | "mission"
+  | "awards"
+  | "faq";
+
 export type TranslationStatusItem = {
   id: string;
+  section: TranslationSectionKey;
   /** English first, then Thai, then the record's slug — never a
    *  deprecated column, per every *Translation model's own migration
    *  note ("not read by any query layer written after that migration"). */
@@ -133,8 +155,38 @@ export type TranslationStatusGroup = {
 
 export type TranslationLocaleTotal = { locale: string; missing: number; total: number };
 
+export type TranslationMatrixRow = {
+  section: TranslationSectionKey;
+  total: number;
+  /** Records that HAVE this locale, per locale. */
+  have: Record<string, number>;
+};
+
+/** The matrix: per content type, how many records have each locale.
+ *  Derived from the report, so it cannot disagree with the list of gaps
+ *  under it or with the per-locale totals above it. */
+export function translationMatrix(report: TranslationStatusReport): TranslationMatrixRow[] {
+  const items = report.groups.flatMap((group) => group.items);
+  return report.sections
+    .filter((entry) => entry.total > 0)
+    .map((entry) => ({
+      section: entry.section,
+      total: entry.total,
+      have: Object.fromEntries(
+        LOCALE_DISPLAY_ORDER.map((locale) => [
+          locale,
+          entry.total -
+            items.filter((item) => item.section === entry.section && item.missingLocales.includes(locale)).length,
+        ]),
+      ),
+    }));
+}
+
 export type TranslationStatusReport = {
   groups: TranslationStatusGroup[];
+  /** Every content type with how many records it has, complete or not —
+   *  the matrix's denominators. In display order. */
+  sections: { section: TranslationSectionKey; group: TranslationGroupKey; total: number }[];
   /** Every item across all five groups, complete or not — the denominator
    *  behind each TranslationLocaleTotal.total. */
   totalItems: number;
@@ -145,6 +197,7 @@ const EMPTY_TRANSLATION_REPORT: TranslationStatusReport = {
     group,
     items: [],
   })),
+  sections: [],
   totalItems: 0,
 };
 
@@ -170,6 +223,7 @@ function missingLocalesOf(rows: LocaleText[]): string[] {
 /** One list-style static-page model, described just enough to turn its
  *  rows into TranslationStatusItems the same way every other one is. */
 type StaticPageSource<Row> = {
+  section: TranslationSectionKey;
   /** Shown before the row's own label, since none of these seven models
    *  has a slug or other identifier a reader would recognise on its own. */
   sectionLabel: string;
@@ -185,6 +239,7 @@ function staticPageItems<Row>(source: StaticPageSource<Row>): TranslationStatusI
       const localeText = source.toLocaleText(row);
       return {
         id: source.id(row),
+        section: source.section,
         label: `${source.sectionLabel} — ${referenceLabel(localeText, "(untitled)")}`,
         editHref: source.editHref,
         missingLocales: missingLocalesOf(localeText),
@@ -209,6 +264,8 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
         missionPrinciples,
         awards,
         faqs,
+        unitTypes,
+        facilities,
       ] = await Promise.all([
         prisma.project.findMany({
           where: { deletedAt: null },
@@ -245,6 +302,24 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
         prisma.faq.findMany({
           select: { id: true, translations: { select: { locale: true, question: true } } },
         }),
+        /* House types and facilities: per-project copy the public project
+           page shows, and the two biggest sources of missing locales — a
+           project complete in four languages could still show Russian
+           readers English house-type descriptions. Listed under the
+           project group, since that is where they are edited. */
+        prisma.projectUnitType.findMany({
+          where: { project: { deletedAt: null } },
+          select: {
+            id: true,
+            name: true,
+            projectId: true,
+            translations: { select: { locale: true, description: true } },
+          },
+        }),
+        prisma.projectFacility.findMany({
+          where: { project: { deletedAt: null } },
+          select: { id: true, projectId: true, translations: { select: { locale: true, name: true } } },
+        }),
       ]);
 
       const projectItems: TranslationStatusItem[] = projects
@@ -254,6 +329,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
             id: project.id,
             label: referenceLabel(localeText, project.slug),
             editHref: `/projects/${project.id}/edit`,
+            section: "projects" as const,
             missingLocales: missingLocalesOf(localeText),
           };
         })
@@ -266,6 +342,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
             id: article.id,
             label: referenceLabel(localeText, article.slug),
             editHref: `/news/${article.id}/edit`,
+            section: "news" as const,
             missingLocales: missingLocalesOf(localeText),
           };
         })
@@ -278,6 +355,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
             id: event.id,
             label: referenceLabel(localeText, event.slug),
             editHref: `/events/${event.id}/edit`,
+            section: "events" as const,
             missingLocales: missingLocalesOf(localeText),
           };
         })
@@ -290,6 +368,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
             id: brochure.id,
             label: referenceLabel(localeText, brochure.slug),
             editHref: `/e-brochures/${brochure.id}/edit`,
+            section: "eBrochures" as const,
             missingLocales: missingLocalesOf(localeText),
           };
         })
@@ -297,6 +376,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
 
       const staticItems: TranslationStatusItem[] = [
         ...staticPageItems({
+          section: "heroSlides",
           sectionLabel: "Hero",
           editHref: "/pages/home/hero",
           rows: heroSlides,
@@ -304,6 +384,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.label })),
         }),
         ...staticPageItems({
+          section: "cta",
           sectionLabel: "Closing CTA",
           editHref: "/pages/home/cta",
           rows: ctaBlocks,
@@ -311,6 +392,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.title })),
         }),
         ...staticPageItems({
+          section: "corporate",
           sectionLabel: "Corporate Services",
           editHref: "/pages/about/corporate",
           rows: corporateServices,
@@ -318,6 +400,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.label })),
         }),
         ...staticPageItems({
+          section: "whyUs",
           sectionLabel: "Why Us",
           editHref: "/pages/about/why-us",
           rows: whyUsPoints,
@@ -325,6 +408,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.title })),
         }),
         ...staticPageItems({
+          section: "mission",
           sectionLabel: "Mission",
           editHref: "/pages/about/mission",
           rows: missionPrinciples,
@@ -332,6 +416,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.title })),
         }),
         ...staticPageItems({
+          section: "awards",
           sectionLabel: "Awards",
           editHref: "/pages/about/awards",
           rows: awards,
@@ -339,6 +424,7 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
           toLocaleText: (row) => row.translations.map((t) => ({ locale: t.locale, primary: t.title })),
         }),
         ...staticPageItems({
+          section: "faq",
           sectionLabel: "FAQ",
           editHref: "/pages/faq",
           rows: faqs,
@@ -347,28 +433,59 @@ export async function getTranslationStatusReport(): Promise<TranslationStatusRep
         }),
       ];
 
+      const unitTypeItems: TranslationStatusItem[] = unitTypes
+        .map((type) => {
+          const localeText = type.translations.map((row) => ({ locale: row.locale, primary: row.description }));
+          return {
+            id: type.id,
+            section: "unitTypes" as const,
+            label: `House type — ${type.name}`,
+            editHref: `/projects/${type.projectId}/unit-types`,
+            missingLocales: missingLocalesOf(localeText),
+          };
+        })
+        .filter((item) => item.missingLocales.length > 0);
+
+      const facilityItems: TranslationStatusItem[] = facilities
+        .map((facility) => {
+          const localeText = facility.translations.map((row) => ({ locale: row.locale, primary: row.name }));
+          return {
+            id: facility.id,
+            section: "facilities" as const,
+            label: `Facility — ${referenceLabel(localeText, "(untitled)")}`,
+            editHref: `/projects/${facility.projectId}/facilities`,
+            missingLocales: missingLocalesOf(localeText),
+          };
+        })
+        .filter((item) => item.missingLocales.length > 0);
+
+      const sections: TranslationStatusReport["sections"] = [
+        { section: "projects", group: "projects", total: projects.length },
+        { section: "unitTypes", group: "projects", total: unitTypes.length },
+        { section: "facilities", group: "projects", total: facilities.length },
+        { section: "news", group: "news", total: news.length },
+        { section: "events", group: "events", total: events.length },
+        { section: "eBrochures", group: "eBrochures", total: brochures.length },
+        { section: "heroSlides", group: "staticPages", total: heroSlides.length },
+        { section: "cta", group: "staticPages", total: ctaBlocks.length },
+        { section: "corporate", group: "staticPages", total: corporateServices.length },
+        { section: "whyUs", group: "staticPages", total: whyUsPoints.length },
+        { section: "mission", group: "staticPages", total: missionPrinciples.length },
+        { section: "awards", group: "staticPages", total: awards.length },
+        { section: "faq", group: "staticPages", total: faqs.length },
+      ];
+
       const groups: TranslationStatusGroup[] = [
-        { group: "projects", items: projectItems },
+        { group: "projects", items: [...projectItems, ...unitTypeItems, ...facilityItems] },
         { group: "news", items: newsItems },
         { group: "events", items: eventItems },
         { group: "eBrochures", items: brochureItems },
         { group: "staticPages", items: staticItems },
       ];
 
-      const totalItems =
-        projects.length +
-        news.length +
-        events.length +
-        brochures.length +
-        heroSlides.length +
-        ctaBlocks.length +
-        corporateServices.length +
-        whyUsPoints.length +
-        missionPrinciples.length +
-        awards.length +
-        faqs.length;
+      const totalItems = sections.reduce((sum, entry) => sum + entry.total, 0);
 
-      return { groups, totalItems };
+      return { groups, sections, totalItems };
     },
     EMPTY_TRANSLATION_REPORT,
   );
