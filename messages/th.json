@@ -2165,7 +2165,16 @@
         "upcomingEvent": "ดึงจากกิจกรรมถัดไปที่เผยแพร่อัตโนมัติ",
         "latestNews": "ดึงจากบทความล่าสุดอัตโนมัติ"
       },
-      "wireframeTitle": "โครงหน้าเว็บ"
+      "wireframeTitle": "โครงหน้าเว็บ",
+      "listTitle": "โครงสร้างหน้าแรก",
+      "listHint": "ลากเพื่อจัดลำดับ · สวิตช์เพื่อซ่อน",
+      "drag": "ลากเพื่อย้าย",
+      "heroSummary": "{count} สไลด์ · {seconds} วินาที/สไลด์",
+      "ctaSummary": "{count} บล็อกที่ใช้งาน",
+      "missing": "ขาด {list}",
+      "device": "อุปกรณ์",
+      "desktop": "คอมพิวเตอร์",
+      "phone": "มือถือ"
     },
     "awards": {
       "title": "รางวัล",
@@ -3924,6 +3933,13 @@
       "AdminNotification": "การแจ้งเตือน",
       "translationSuffix": "(คำแปล)",
       "Session": "การเข้าสู่ระบบ"
+    },
+    "aboutHub": {
+      "figures": "ตัวเลขบริษัท",
+      "founded": "ก่อตั้ง",
+      "team": "ทีมงาน",
+      "clients": "ลูกค้า",
+      "projects": "โครงการ"
     }
   },
   "legalPage": {

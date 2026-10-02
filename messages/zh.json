@@ -2165,7 +2165,16 @@
         "upcomingEvent": "自动取自下一场已发布的活动",
         "latestNews": "自动取自最新文章"
       },
-      "wireframeTitle": "页面结构"
+      "wireframeTitle": "页面结构",
+      "listTitle": "首页结构",
+      "listHint": "拖动排序 · 开关隐藏",
+      "drag": "拖动移动",
+      "heroSummary": "{count} 张幻灯片 · 每张 {seconds} 秒",
+      "ctaSummary": "{count} 个启用的区块",
+      "missing": "缺少 {list}",
+      "device": "设备",
+      "desktop": "电脑",
+      "phone": "手机"
     },
     "awards": {
       "title": "荣誉奖项",
@@ -3924,6 +3933,13 @@
       "AdminNotification": "通知",
       "translationSuffix": "（翻译）",
       "Session": "登录会话"
+    },
+    "aboutHub": {
+      "figures": "公司数据",
+      "founded": "成立",
+      "team": "团队",
+      "clients": "客户",
+      "projects": "项目"
     }
   },
   "legalPage": {

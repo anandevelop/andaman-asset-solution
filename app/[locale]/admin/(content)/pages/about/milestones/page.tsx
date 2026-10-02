@@ -1,19 +1,17 @@
 /**
  * app/[locale]/admin/pages/about/milestones/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Milestones: add at the top, every existing milestone editable in place —
- * same arrangement as /admin/pages/about/awards. Reordering is the sortOrder field on
- * each form, not drag-and-drop, matching every other list in this admin.
- *
- * Grouped by year in the list, purely as a reading aid — sortOrder is what
- * actually decides the public page's order, and rows already come back
- * sorted by year first (same as the public query in lib/milestones.ts), so
- * grouping here is a matter of not repeating a year heading, not a second
- * sort.
+ * Milestones: the timeline, and the form for one stop in a drawer
+ * (`?edit=<id>`, `?edit=new`) — the same arrangement as the awards page,
+ * where every record's form used to sit under the list. Reordering is the
+ * sortOrder field on the form, not drag-and-drop, matching every other
+ * list in this admin; rows come back sorted by year first, as on the
+ * public page (lib/milestones.ts).
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Flag, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { Role } from "@prisma/client";
@@ -23,15 +21,18 @@ import { formatYear } from "@/lib/format";
 import { createMilestone, deleteMilestone, updateMilestone } from "./actions";
 import MilestoneForm from "@/components/admin/MilestoneForm";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import { collectionHref } from "@/components/admin/ui/CollectionGrid";
 
 /** From this year the timeline draws stops in sand: the current run of
  *  developments. One constant, so moving the line is a one-word edit. */
 const RECENT_FROM_YEAR = 2021;
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ edit?: string }> };
 
 export default async function AdminMilestonesPage(props: Props) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
 
   const {
     locale
@@ -56,16 +57,29 @@ export default async function AdminMilestonesPage(props: Props) {
     [] as Awaited<ReturnType<typeof db.milestone.findMany>>,
   );
 
-  // Adjacent-run grouping, same trick the public page uses: milestones is
-  // already sorted by year, so a year only needs a heading the first time
-  // it's seen.
-  let lastYearHeading: number | null = null;
+  const base = `/${locale}/admin/pages/about/milestones`;
+  const href = (edit: string | null) => collectionHref(base, undefined, edit);
+  // "new" only for a role that can save it; an unknown id opens nothing.
+  const target =
+    searchParams.edit === "new"
+      ? canWrite
+        ? ("new" as const)
+        : null
+      : (milestones.find((milestone) => milestone.id === searchParams.edit) ?? null);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdminPageHeader
         title={t("milestones.title")}
         description={t("milestones.subtitle")}
+        actions={
+          canWrite ? (
+            <Link href={href("new")} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("milestones.newTitle")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
@@ -78,7 +92,7 @@ export default async function AdminMilestonesPage(props: Props) {
           The years as the About page tells them, left to right; from
           2021 — when the current developments began — in sand. It
           scrolls sideways inside its card, never the page. Each stop
-          jumps to its form below. */}
+          opens its form in the drawer. */}
       {milestones.length > 0 && (
         <section className="admin-card overflow-hidden p-0!">
           <ol className="flex gap-0 overflow-x-auto px-5 py-6">
@@ -89,7 +103,7 @@ export default async function AdminMilestonesPage(props: Props) {
                 return (
                   <li key={milestone.id} className="relative min-w-[150px] flex-1 pr-4">
                     <span aria-hidden className="absolute left-0 right-0 top-[7px] h-0.5 bg-adm-line" />
-                    <a href={`#milestone-${milestone.id}`} className="group relative block">
+                    <Link href={href(milestone.id)} scroll={false} className="group relative block">
                       <span
                         aria-hidden
                         className={[
@@ -105,7 +119,7 @@ export default async function AdminMilestonesPage(props: Props) {
                         {milestone.projectName}
                       </span>
                       {milestone.brand && <span className="block text-[11px] text-adm-muted">{milestone.brand}</span>}
-                    </a>
+                    </Link>
                   </li>
                 );
               })}
@@ -113,74 +127,38 @@ export default async function AdminMilestonesPage(props: Props) {
         </section>
       )}
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
-          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
-          {t("milestones.newTitle")}
-        </h2>
+      {milestones.length === 0 && (
+        <div className="admin-card text-center text-sm text-adm-muted">{t("milestones.empty")}</div>
+      )}
 
-        <fieldset disabled={!canWrite} className="contents">
-          <MilestoneForm action={createMilestone.bind(null, locale)} submitLabel={t("common.create")} />
-        </fieldset>
-      </section>
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {milestones.length === 0 ? (
-        <div className="admin-card text-center text-sm text-adm-muted">
-          {t("milestones.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {milestones.map((milestone) => {
-            const showYearHeading = milestone.year !== lastYearHeading;
-            lastYearHeading = milestone.year;
-
-            return (
-              <div key={milestone.id} id={`milestone-${milestone.id}`} className="scroll-mt-[120px]">
-                {showYearHeading && (
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-adm-accent-ink">
-                    {formatYear(milestone.year)}
-                  </p>
-                )}
-
-                <section className="admin-card">
-                  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-base font-semibold text-adm-text">
-                      {milestone.projectName}
-                    </h2>
-
-                    <span
-                      className={
-                        milestone.isActive
-                          ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
-                          : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
-                      }
-                    >
-                      {milestone.isActive ? t("milestones.active") : t("milestones.inactive")}
-                    </span>
-                  </div>
-
-                  <fieldset disabled={!canWrite} className="contents">
-                    <MilestoneForm
-                      action={updateMilestone.bind(null, locale, milestone.id)}
-                      onDelete={deleteMilestone.bind(null, locale, milestone.id)}
-                      values={{
-                        year: String(milestone.year),
-                        projectName: milestone.projectName,
-                        brand: milestone.brand ?? "",
-                        imageUrl: milestone.imageUrl ?? "",
-                        isActive: milestone.isActive,
-                        sortOrder: String(milestone.sortOrder),
-                      }}
-                      submitLabel={t("common.save")}
-                    />
-                  </fieldset>
-                </section>
-              </div>
-            );
-          })}
-        </div>
+      {target && (
+        <AdminDrawer
+          title={target === "new" ? t("milestones.newTitle") : `${formatYear(target.year)} · ${target.projectName}`}
+          icon={<Flag size={18} aria-hidden />}
+          closeHref={href(null)}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <fieldset disabled={!canWrite} className="contents">
+            {target === "new" ? (
+              <MilestoneForm action={createMilestone.bind(null, locale)} submitLabel={t("common.create")} />
+            ) : (
+              <MilestoneForm
+                key={target.id}
+                action={updateMilestone.bind(null, locale, target.id)}
+                onDelete={deleteMilestone.bind(null, locale, target.id)}
+                values={{
+                  year: String(target.year),
+                  projectName: target.projectName,
+                  brand: target.brand ?? "",
+                  imageUrl: target.imageUrl ?? "",
+                  isActive: target.isActive,
+                  sortOrder: String(target.sortOrder),
+                }}
+                submitLabel={t("common.save")}
+              />
+            )}
+          </fieldset>
+        </AdminDrawer>
       )}
     </div>
   );

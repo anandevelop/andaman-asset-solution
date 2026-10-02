@@ -27,33 +27,40 @@
  * A row with no editor says where its data comes from instead. Those three
  * sections could never be edited here and nothing previously explained why.
  *
- * VIEWER may read the whole thing; reordering and hiding stay behind a
- * disabled fieldset for anyone below EDITOR, unchanged from the screen this
- * replaces. Every link is to a page carrying its own guard.
+ * THE V4 LAYOUT (round two)
+ *
+ * A drag list with switches on the left (HomeSectionList), the banner and
+ * the closing CTA pinned at either end with their slide count and missing
+ * languages, and the live page on the right as a desktop or a phone
+ * (HomePreview) — where the up/down arrows, eye buttons and a separate
+ * wireframe card used to be.
+ *
+ * VIEWER may read the whole thing; reordering and hiding are disabled for
+ * anyone below EDITOR, as the actions require. Every link is to a page
+ * carrying its own guard.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowDown, ArrowUp, ArrowUpRight, Eye, EyeOff, Lock, Sparkles } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
+import { prisma } from "@/lib/prisma";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
+import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import { getAllSectionRows } from "@/lib/home-sections";
 import { CTA_ROW, HERO_ROW, outlineFor, type OutlineRow } from "@/lib/home-outline";
-import { moveSection, setSectionVisible } from "./sections/actions";
+import HomeSectionList, { type HomeListRow, type PinnedRow } from "@/components/admin/HomeSectionList";
+import HomePreview from "@/components/admin/HomePreview";
 
 type Props = { params: Promise<{ locale: string }> };
 
-/** A row as rendered: the outline's description of it, plus the live
- *  HomeSection state for the nine that have one. */
-type Rendered = {
-  outline: OutlineRow;
-  /** Null for the two fixed bands — they have no HomeSection row. */
-  state: { id: string; isVisible: boolean } | null;
-  /** Position among the managed rows, for the up/down buttons. */
-  index: number | null;
-};
+/** Languages with no text on at least one of the rows — "TH/ZH/RU". */
+function missingLocales(rows: { translations: { locale: string; value: string | null }[] }[]): string[] {
+  return LOCALE_DISPLAY_ORDER.filter((code) =>
+    rows.some((row) => !(row.translations.find((tr) => tr.locale === code)?.value ?? "").trim()),
+  ).map((code) => code.toUpperCase());
+}
 
 export default async function AdminPagesHomePage(props: Props) {
   const { locale } = await props.params;
@@ -62,199 +69,119 @@ export default async function AdminPagesHomePage(props: Props) {
   const canWrite = hasRole(session.role, Role.EDITOR);
 
   const t = await getTranslations({ locale, namespace: "admin" });
+  const base = `/${locale}/admin`;
 
   /* The live order, which is the HomeSection table's — the outline is
      joined onto it by key rather than the other way round, so a reorder
      never has to be mirrored in lib/home-outline.ts. */
-  const sections = await getAllSectionRows();
+  const [sections, slides, ctas] = await Promise.all([
+    getAllSectionRows(),
+    safeQuery(
+      "admin:homeBuilder:slides",
+      () =>
+        prisma.heroStorySlide.findMany({
+          where: { isActive: true },
+          select: { durationSeconds: true, translations: { select: { locale: true, caption: true } } },
+        }),
+      [],
+    ),
+    safeQuery(
+      "admin:homeBuilder:ctas",
+      () =>
+        prisma.siteCtaBlock.findMany({
+          where: { isActive: true },
+          select: { translations: { select: { locale: true, title: true } } },
+        }),
+      [],
+    ),
+  ]);
 
-  const managed: Rendered[] = sections.flatMap((row, index) => {
+  const editorLinks = (outline: OutlineRow) =>
+    outline.editors.map((editor) => ({
+      href: `${base}${editor.href}`,
+      label: t(`homeBuilder.editor.${editor.labelKey}` as never),
+    }));
+
+  const rows: HomeListRow[] = sections.flatMap((row) => {
     const outline = outlineFor(row.key);
     // A key the outline does not describe would otherwise render a raw
     // i18n key; the test pins the two lists together so this stays dead.
     if (!outline) return [];
-    return [{ outline, state: { id: row.id, isVisible: row.isVisible }, index }];
+    return [
+      {
+        id: row.id,
+        code: row.key,
+        label: t(`homeBuilder.sections.${outline.labelKey}` as never),
+        editors: editorLinks(outline),
+        autoNote: outline.editors.length === 0 ? t(`homeBuilder.auto.${outline.autoKey}` as never) : null,
+        isVisible: row.isVisible,
+      },
+    ];
   });
 
-  const rows: Rendered[] = [
-    { outline: HERO_ROW, state: null, index: null },
-    ...managed,
-    { outline: CTA_ROW, state: null, index: null },
-  ];
+  const slideMissing = missingLocales(
+    slides.map((slide) => ({ translations: slide.translations.map((tr) => ({ locale: tr.locale, value: tr.caption })) })),
+  );
+  const ctaMissing = missingLocales(
+    ctas.map((cta) => ({ translations: cta.translations.map((tr) => ({ locale: tr.locale, value: tr.title })) })),
+  );
+  const seconds = slides.length
+    ? Math.round(slides.reduce((sum, slide) => sum + slide.durationSeconds, 0) / slides.length)
+    : 0;
 
-  const lastIndex = managed.length - 1;
+  const top: PinnedRow = {
+    key: HERO_ROW.key,
+    label: t(`homeBuilder.sections.${HERO_ROW.labelKey}` as never),
+    summary: t("homeBuilder.heroSummary", { count: slides.length, seconds }),
+    missing: slideMissing.length ? t("homeBuilder.missing", { list: slideMissing.join("/") }) : null,
+    editHref: HERO_ROW.editors[0] ? `${base}${HERO_ROW.editors[0].href}` : null,
+  };
+  const bottom: PinnedRow = {
+    key: CTA_ROW.key,
+    label: t(`homeBuilder.sections.${CTA_ROW.labelKey}` as never),
+    summary: t("homeBuilder.ctaSummary", { count: ctas.length }),
+    missing: ctaMissing.length ? t("homeBuilder.missing", { list: ctaMissing.join("/") }) : null,
+    editHref: CTA_ROW.editors[0] ? `${base}${CTA_ROW.editors[0].href}` : null,
+  };
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h2 className="text-lg font-semibold text-adm-text">{t("homeBuilder.title")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("homeBuilder.subtitle")}</p>
-      </header>
-
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
-        <section className="admin-card overflow-hidden p-0!">
-          <div className="border-b border-adm-line px-5 py-4">
-            <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.orderTitle")}</h3>
-            <p className="mt-1 text-xs leading-relaxed text-adm-muted">{t("homeBuilder.orderHint")}</p>
-          </div>
-
-          <ol className="divide-y divide-adm-line">
-            {rows.map(({ outline, state, index }) => (
-              <li
-                key={outline.key}
-                className={`px-5 py-3.5 ${state && !state.isVisible ? "bg-adm-text/4" : ""}`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Reorder controls, or the reason there are none. */}
-                  <div className="flex w-7 shrink-0 flex-col items-center">
-                    {state && index !== null ? (
-                      <fieldset disabled={!canWrite} className="contents">
-                        <form action={moveSection.bind(null, locale, state.id, "up")}>
-                          <button
-                            type="submit"
-                            disabled={index === 0}
-                            aria-label={t("homeBuilder.moveUp")}
-                            className="rounded-xs p-1 text-adm-muted hover:bg-adm-text/4 disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            <ArrowUp size={14} aria-hidden />
-                          </button>
-                        </form>
-                        <form action={moveSection.bind(null, locale, state.id, "down")}>
-                          <button
-                            type="submit"
-                            disabled={index === lastIndex}
-                            aria-label={t("homeBuilder.moveDown")}
-                            className="rounded-xs p-1 text-adm-muted hover:bg-adm-text/4 disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            <ArrowDown size={14} aria-hidden />
-                          </button>
-                        </form>
-                      </fieldset>
-                    ) : (
-                      /* The banner is always first and the CTA always last
-                         — structural, not a permission. Saying so beats an
-                         empty gap where the arrows are on every other row. */
-                      <span
-                        title={t("homeBuilder.fixedPosition")}
-                        className="mt-1.5 text-adm-muted/40"
-                      >
-                        <Lock size={13} aria-hidden />
-                        <span className="sr-only">{t("homeBuilder.fixedPosition")}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-adm-text">
-                      {t(`homeBuilder.sections.${outline.labelKey}` as never)}
-                    </p>
-
-                    {/* Who owns the content, or where it comes from. */}
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                      {outline.editors.length === 0 ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-adm-muted">
-                          <Sparkles size={12} aria-hidden className="text-adm-accent-ink" />
-                          {t(`homeBuilder.auto.${outline.autoKey}` as never)}
-                        </span>
-                      ) : (
-                        outline.editors.map((editor) => (
-                          <Link
-                            key={editor.href}
-                            href={`/${locale}/admin${editor.href}`}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink hover:underline"
-                          >
-                            {t(`homeBuilder.editor.${editor.labelKey}` as never)}
-                            <ArrowUpRight size={11} aria-hidden />
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Visibility, for the nine that have it. */}
-                  {state ? (
-                    <fieldset disabled={!canWrite} className="contents">
-                      <form action={setSectionVisible.bind(null, locale, state.id, !state.isVisible)}>
-                        <button
-                          type="submit"
-                          aria-label={
-                            state.isVisible ? t("homeBuilder.hideSection") : t("homeBuilder.showSection")
-                          }
-                          className="flex shrink-0 items-center gap-1.5 rounded-xs px-2 py-1.5 text-xs text-adm-muted hover:bg-adm-text/4"
-                        >
-                          {state.isVisible ? (
-                            <>
-                              <Eye size={15} className="text-adm-success" aria-hidden />
-                              <span className="hidden text-adm-success sm:inline">
-                                {t("homeBuilder.visible")}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff size={15} aria-hidden />
-                              <span className="hidden sm:inline">{t("homeBuilder.hidden")}</span>
-                            </>
-                          )}
-                        </button>
-                      </form>
-                    </fieldset>
-                  ) : (
-                    <span className="shrink-0 px-2 py-1.5 text-xs text-adm-muted/60">
-                      {t("homeBuilder.always")}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <div className="space-y-6">
-        {/* ── Wireframe ──────────────────────────────────────────────
-            The page's shape at a glance, from the same rows as the list:
-            only what is visible, in order, the two fixed bands navy at
-            either end. It changes the instant a row moves, where the
-            iframe below needs a reload and a scroll to show the same. */}
-        <section className="admin-card space-y-3">
-          <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.wireframeTitle")}</h3>
-          <ol className="mx-auto flex max-w-[260px] flex-col gap-1.5 rounded-[12px] border border-adm-line bg-adm-bg p-2">
-            {rows
-              .filter(({ state }) => !state || state.isVisible)
-              .map(({ outline, state }) => (
-                <li
-                  key={outline.key}
-                  className={[
-                    "flex items-center justify-center rounded-[6px] px-2 text-center text-[10px] leading-tight",
-                    state
-                      ? "h-7 bg-adm-line text-adm-muted"
-                      : outline.key === HERO_ROW.key
-                        ? "h-16 bg-adm-band text-white/80"
-                        : "h-10 bg-adm-band-2 text-white/80",
-                  ].join(" ")}
-                >
-                  {!state && <Lock size={9} aria-hidden className="mr-1 shrink-0" />}
-                  <span className="truncate">{t(`homeBuilder.sections.${outline.labelKey}` as never)}</span>
-                </li>
-              ))}
-          </ol>
-        </section>
-
-        <section className="admin-card flex flex-col p-0!">
-          <div className="border-b border-adm-line px-5 py-4">
-            <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.previewTitle")}</h3>
-            <p className="mt-1 text-xs text-adm-muted">{t("homeBuilder.previewHint")}</p>
-          </div>
-
-          {/* The real homepage route, not a mockup — a saved reorder or
-              visibility change appears here on the iframe's next load
-              since every action above revalidates every locale's `/`. */}
-          <iframe
-            src={`/${locale}`}
-            title={t("homeBuilder.previewTitle")}
-            className="h-[720px] w-full flex-1 border-0"
-          />
-        </section>
-        </div>
+    <div className="grid items-start gap-5 xl:grid-cols-12">
+      {/* An empty list during an outage would read as "no sections". */}
+      {isDatabaseOffline() && (
+        <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning xl:col-span-12">
+          {t("common.offline")}
+        </p>
+      )}
+      <div className="xl:col-span-7">
+        <HomeSectionList
+          locale={locale}
+          top={top}
+          bottom={bottom}
+          rows={rows}
+          canWrite={canWrite}
+          labels={{
+            title: t("homeBuilder.listTitle"),
+            hint: t("homeBuilder.listHint"),
+            drag: t("homeBuilder.drag"),
+            edit: t("common.edit"),
+            visible: t("homeBuilder.visible"),
+            hidden: t("homeBuilder.hidden"),
+            pinned: t("homeBuilder.fixedPosition"),
+            saveFailed: t("common.error"),
+          }}
+        />
+      </div>
+      <div className="xl:col-span-5">
+        <HomePreview
+          src={`/${locale}`}
+          labels={{
+            title: t("homeBuilder.previewTitle"),
+            hint: t("homeBuilder.previewHint"),
+            device: t("homeBuilder.device"),
+            desktop: t("homeBuilder.desktop"),
+            phone: t("homeBuilder.phone"),
+          }}
+        />
       </div>
     </div>
   );

@@ -139,10 +139,17 @@ describe("the Home tab", () => {
   });
 
   it("still reaches the reorder actions it moved away from", () => {
+    // Through the drag list since round two of v4: the page renders
+    // HomeSectionList, and the list calls the sections actions.
     const page = stripComments(
       readFileSync(join(ADMIN, "(content)", "pages", "home", "page.tsx"), "utf8"),
     );
+    const list = stripComments(
+      readFileSync(join(process.cwd(), "components", "admin", "HomeSectionList.tsx"), "utf8"),
+    );
 
-    expect(page).toContain('from "./sections/actions"');
+    expect(page).toContain("<HomeSectionList");
+    expect(list).toContain("/pages/home/sections/actions");
+    expect(list).toMatch(/reorderSections|setSectionVisible/);
   });
 });

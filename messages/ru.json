@@ -2165,7 +2165,16 @@
         "upcomingEvent": "Заполняется из следующего опубликованного события",
         "latestNews": "Заполняется из последних статей"
       },
-      "wireframeTitle": "Схема страницы"
+      "wireframeTitle": "Схема страницы",
+      "listTitle": "Структура главной",
+      "listHint": "Перетащите, чтобы изменить порядок · переключатель скрывает",
+      "drag": "Перетащить",
+      "heroSummary": "Слайдов: {count} · {seconds} с на слайд",
+      "ctaSummary": "Активных блоков: {count}",
+      "missing": "Нет {list}",
+      "device": "Устройство",
+      "desktop": "Компьютер",
+      "phone": "Телефон"
     },
     "awards": {
       "title": "Награды",
@@ -3924,6 +3933,13 @@
       "AdminNotification": "Уведомление",
       "translationSuffix": "(перевод)",
       "Session": "Сеанс входа"
+    },
+    "aboutHub": {
+      "figures": "Цифры компании",
+      "founded": "Основана",
+      "team": "Команда",
+      "clients": "Клиенты",
+      "projects": "Проекты"
     }
   },
   "legalPage": {

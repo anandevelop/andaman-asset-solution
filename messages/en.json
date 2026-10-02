@@ -2165,7 +2165,16 @@
         "upcomingEvent": "Filled automatically from the next published event",
         "latestNews": "Filled automatically from the latest articles"
       },
-      "wireframeTitle": "Page outline"
+      "wireframeTitle": "Page outline",
+      "listTitle": "Home page structure",
+      "listHint": "Drag to reorder · switch to hide",
+      "drag": "Drag to move",
+      "heroSummary": "{count, plural, one {# slide} other {# slides}} · {seconds}s per slide",
+      "ctaSummary": "{count, plural, one {# active block} other {# active blocks}}",
+      "missing": "Missing {list}",
+      "device": "Device",
+      "desktop": "Desktop",
+      "phone": "Phone"
     },
     "awards": {
       "title": "Awards",
@@ -3924,6 +3933,13 @@
       "AdminNotification": "Notification",
       "translationSuffix": "(translation)",
       "Session": "Sign-in session"
+    },
+    "aboutHub": {
+      "figures": "Company figures",
+      "founded": "Founded",
+      "team": "Team",
+      "clients": "Clients",
+      "projects": "Projects"
     }
   },
   "legalPage": {
