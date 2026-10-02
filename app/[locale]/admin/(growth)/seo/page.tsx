@@ -40,6 +40,7 @@ import { getKeywordReport } from "@/lib/seo/keyword-report";
 import { getSiteSettings } from "@/lib/settings";
 import { brandTotals, parseBrandTerms } from "@/lib/seo/brand";
 import { TrendChart } from "@/components/admin/DashboardCharts";
+import ProgressRing from "@/components/admin/ui/ProgressRing";
 import { intlLocale } from "@/lib/format";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -60,6 +61,8 @@ const SEVERITY_STYLE: Record<
   warning: { badge: "bg-adm-warning-bg text-adm-warning", icon: AlertTriangle },
   minor: { badge: "bg-adm-text/4 text-adm-muted", icon: Info },
 };
+
+const SEVERITY_RANK = { critical: 0, warning: 1, minor: 2 } as const;
 
 /** Share of a fraction, for the little progress bars in the completeness table. */
 function pct(n: number, total: number): number {
@@ -148,139 +151,169 @@ export default async function AdminSeoOverviewPage(props: Props) {
         </p>
       )}
 
-      {/* ── Top-line stats ───────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {/* The audit's own average, not the aggregate this page used to
-            compute. Two numbers both called "the SEO score" is the thing
-            the plan warns about most often — one of them is always the
-            one somebody quotes, and it was never clear which. */}
-        <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-            {t("seo.score")}
-          </p>
+      {/* ── Score, figures, next steps (v4) ──────────────────────────────
+          The audit's own average as a ring on the left — not the
+          aggregate this page used to compute: two numbers both called "the
+          SEO score" is the thing the plan warns about most often — and the
+          other figures two by two beside it. */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        <section className="admin-card flex flex-col items-center justify-center text-center lg:col-span-4">
+          <h2 className="text-[13px] font-semibold text-adm-text">{t("seo.score")}</h2>
+          <div className="mt-4">
+            {overview.latest ? (
+              <ProgressRing value={overview.latest.avgScore} size="xl" label={t("seo.score")} />
+            ) : (
+              <span className="flex h-[130px] w-[130px] items-center justify-center rounded-full border-[10px] border-adm-line text-sm font-medium text-adm-muted">
+                {t("seo.overview.neverRunShort")}
+              </span>
+            )}
+          </div>
           {overview.latest ? (
-            <>
-              <p className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-3xl font-semibold tabular-nums text-adm-text">
-                  {overview.latest.avgScore}
+            <p className="mt-3 text-xs text-adm-muted">
+              {delta !== null && (
+                <span
+                  className={`mr-1.5 tabular-nums ${
+                    delta > 0 ? "text-adm-success" : delta < 0 ? "text-adm-danger" : "text-adm-muted"
+                  }`}
+                >
+                  {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta)}
                 </span>
-                <span className="text-sm text-adm-muted">/100</span>
-                {delta !== null && (
-                  <span
-                    className={`ml-1 text-xs tabular-nums ${
-                      delta > 0
-                        ? "text-adm-success"
-                        : delta < 0
-                          ? "text-adm-danger"
-                          : "text-adm-muted"
-                    }`}
-                  >
-                    {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta)}
-                  </span>
-                )}
-              </p>
-              <p className="mt-1 text-xs text-adm-muted">
-                {t("seo.overview.auditScoreHint", {
-                  urls: overview.latest.urlCount,
-                })}
-              </p>
-            </>
+              )}
+              {t("seo.overview.auditScoreHint", { urls: overview.latest.urlCount })}
+            </p>
           ) : (
-            <>
-              <p className="mt-4 text-3xl font-semibold text-adm-muted">—</p>
-              <p className="mt-1 text-xs text-adm-muted">
-                {t("seo.overview.neverRun")}
-              </p>
-            </>
+            <p className="mt-3 text-xs text-adm-muted">{t("seo.overview.neverRun")}</p>
           )}
-        </div>
+        </section>
 
+        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
         <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-            {t("seo.indexablePages")}
-          </p>
-          <p className="mt-4 flex items-baseline gap-1.5">
-            <span className="text-3xl font-semibold tabular-nums text-adm-text">
-              {audit.totals.indexableLocalePages}
-            </span>
-            <span className="text-sm text-adm-muted">
-              /{audit.totals.totalLocalePages}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-adm-muted">
-            {audit.totals.noIndexCount > 0
-              ? t("seo.indexablePagesHint", {
-                  count: audit.totals.noIndexCount,
-                })
-              : t("seo.indexablePagesHintNone")}
-          </p>
-        </div>
+            <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
+              {t("seo.indexablePages")}
+            </p>
+            <p className="mt-4 flex items-baseline gap-1.5">
+              <span className="text-3xl font-semibold tabular-nums text-adm-text">
+                {audit.totals.indexableLocalePages}
+              </span>
+              <span className="text-sm text-adm-muted">
+                /{audit.totals.totalLocalePages}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-adm-muted">
+              {audit.totals.noIndexCount > 0
+                ? t("seo.indexablePagesHint", {
+                    count: audit.totals.noIndexCount,
+                  })
+                : t("seo.indexablePagesHintNone")}
+            </p>
+          </div>
 
-        <div
-          className={`admin-card ${audit.issues.length > 0 ? "border-adm-danger/30" : ""}`}
-        >
-          <p
-            className={`text-xs font-medium uppercase tracking-wide ${
-              audit.issues.length > 0 ? "text-adm-danger" : "text-adm-muted"
-            }`}
+          <div
+            className={`admin-card ${audit.issues.length > 0 ? "border-adm-danger/30" : ""}`}
           >
-            {t("seo.issuesToFix")}
-          </p>
-          <p className="mt-4">
-            <span
-              className={`text-3xl font-semibold tabular-nums ${
-                audit.issues.length > 0 ? "text-adm-danger" : "text-adm-text"
+            <p
+              className={`text-xs font-medium uppercase tracking-wide ${
+                audit.issues.length > 0 ? "text-adm-danger" : "text-adm-muted"
               }`}
             >
-              {audit.issues.length}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-adm-muted">
-            {t("seo.issuesBreakdown", {
-              critical: counts.critical,
-              warning: counts.warning,
-              minor: counts.minor,
-            })}
-          </p>
-          {overview.latest && (
-            <p className="mt-2 text-xs">
-              <Link
-                href={`/${locale}/admin/seo/audit`}
-                className="text-adm-muted underline hover:text-adm-text"
-              >
-                {t("seo.overview.urlsFailing", {
-                  count:
-                    overview.latest.urlCount - overview.latest.passAllCount,
-                })}
-              </Link>
+              {t("seo.issuesToFix")}
             </p>
-          )}
-        </div>
+            <p className="mt-4">
+              <span
+                className={`text-3xl font-semibold tabular-nums ${
+                  audit.issues.length > 0 ? "text-adm-danger" : "text-adm-text"
+                }`}
+              >
+                {audit.issues.length}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-adm-muted">
+              {t("seo.issuesBreakdown", {
+                critical: counts.critical,
+                warning: counts.warning,
+                minor: counts.minor,
+              })}
+            </p>
+            {overview.latest && (
+              <p className="mt-2 text-xs">
+                <Link
+                  href={`/${locale}/admin/seo/audit`}
+                  className="text-adm-muted underline hover:text-adm-text"
+                >
+                  {t("seo.overview.urlsFailing", {
+                    count:
+                      overview.latest.urlCount - overview.latest.passAllCount,
+                  })}
+                </Link>
+              </p>
+            )}
+          </div>
 
-        <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-            {t("seo.structuredData")}
-          </p>
-          <p className="mt-4 flex items-baseline gap-1.5">
-            <span className="text-3xl font-semibold tabular-nums text-adm-text">
-              {audit.structuredData.length - structuredMissing}
-            </span>
-            <span className="text-sm text-adm-muted">
-              /{audit.structuredData.length}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-adm-muted">
-            {structuredMissing > 0
-              ? t("seo.structuredDataHint", {
-                  types: audit.structuredData
-                    .filter((s) => !s.implemented)
-                    .map((s) => s.type)
-                    .join(", "),
-                })
-              : t("seo.structuredDataHintNone")}
-          </p>
+          <div className="admin-card">
+            <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
+              {t("seo.structuredData")}
+            </p>
+            <p className="mt-4 flex items-baseline gap-1.5">
+              <span className="text-3xl font-semibold tabular-nums text-adm-text">
+                {audit.structuredData.length - structuredMissing}
+              </span>
+              <span className="text-sm text-adm-muted">
+                /{audit.structuredData.length}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-adm-muted">
+              {structuredMissing > 0
+                ? t("seo.structuredDataHint", {
+                    types: audit.structuredData
+                      .filter((s) => !s.implemented)
+                      .map((s) => s.type)
+                      .join(", "),
+                  })
+                : t("seo.structuredDataHintNone")}
+            </p>
+          </div>
+
+          <div className="admin-card">
+            <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
+              {t("seo.overview.alertsTitle")}
+            </p>
+            <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{alerts.length}</p>
+            <p className="mt-1 text-xs text-adm-muted">{t("seo.overview.alertsWeek")}</p>
+          </div>
         </div>
       </div>
+
+      {/* ── Next steps: the three most serious issues the audit found,
+          each a tile with its fix link. Not "AI recommends" as the mockup
+          has it — that is a later phase — so it says what it is. */}
+      {audit.issues.length > 0 && (
+        <section className="admin-card">
+          <h2 className="text-[15px] font-semibold text-adm-text">{t("seo.overview.nextSteps")}</h2>
+          <ul className="mt-3 grid gap-3 md:grid-cols-3">
+            {[...audit.issues]
+              .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
+              .slice(0, 3)
+              .map((issue) => (
+                <li key={issue.id} className="flex flex-col rounded-[12px] border border-adm-line p-3.5">
+                  <span
+                    className={`w-fit rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${SEVERITY_STYLE[issue.severity].badge}`}
+                  >
+                    {t(`seo.severity.${issue.severity}`)}
+                  </span>
+                  <p className="mt-2 flex-1 text-sm font-medium leading-snug text-adm-text">
+                    {t(`seo.issues.${issue.key}`, issue.count !== undefined ? { count: issue.count } : undefined)}
+                  </p>
+                  {issue.href && (
+                    <Link href={issue.href} className="admin-btn-ghost admin-btn-sm mt-3 w-fit">
+                      {t("seo.issuesFix")}
+                      <ArrowUpRight size={12} aria-hidden />
+                    </Link>
+                  )}
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       {/* The trend, which only SeoAuditRun can answer: SeoUrlState is
           overwritten every run and knows nothing about last week. */}

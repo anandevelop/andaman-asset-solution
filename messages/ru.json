@@ -3198,7 +3198,10 @@
         "googleNonBrandClicks": "Небрендовые клики",
         "googleBrandClicks": "Брендовые клики",
         "googleImpressions": "Показы",
-        "googleDataUpTo": "Данные по"
+        "googleDataUpTo": "Данные по",
+        "neverRunShort": "Ещё не проверялось",
+        "alertsWeek": "Оповещения за 7 дней",
+        "nextSteps": "Что исправить дальше"
       },
       "indexing": {
         "title": "Сканирование и индексация",

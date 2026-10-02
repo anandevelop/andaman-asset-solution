@@ -3198,7 +3198,10 @@
         "googleNonBrandClicks": "非品牌点击",
         "googleBrandClicks": "品牌点击",
         "googleImpressions": "展现次数",
-        "googleDataUpTo": "数据截至"
+        "googleDataUpTo": "数据截至",
+        "neverRunShort": "尚未检查",
+        "alertsWeek": "最近 7 天的提醒",
+        "nextSteps": "下一步要修复的"
       },
       "indexing": {
         "title": "抓取与收录",

@@ -3198,7 +3198,10 @@
         "googleNonBrandClicks": "Non-brand clicks",
         "googleBrandClicks": "Brand clicks",
         "googleImpressions": "Times seen",
-        "googleDataUpTo": "Data up to"
+        "googleDataUpTo": "Data up to",
+        "neverRunShort": "Not run yet",
+        "alertsWeek": "Alerts in the last 7 days",
+        "nextSteps": "What to fix next"
       },
       "indexing": {
         "title": "Crawling & indexing",

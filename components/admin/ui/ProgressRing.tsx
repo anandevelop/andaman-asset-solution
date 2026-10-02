@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  * A share as a ring with the number in the middle — the mockup's `.ring`:
  * a conic gradient over the line colour, an inner disc in the solid
- * surface, 26 / 40 / 92px. Colour by threshold: ≥80 success, ≥50 sand
+ * surface, 26 / 40 / 92 / 130px. Colour by threshold: ≥80 success, ≥50 sand
  * ink, below that warning — a ring is a nudge, not an alarm, so nothing
  * here goes red.
  *
@@ -16,6 +16,7 @@ const SIZE = {
   sm: { box: "h-[26px] w-[26px]", inset: "inset-[3px]", text: "text-[9px]" },
   md: { box: "h-10 w-10", inset: "inset-[4px]", text: "text-[11px]" },
   lg: { box: "h-[92px] w-[92px]", inset: "inset-[8px]", text: "text-[22px]" },
+  xl: { box: "h-[130px] w-[130px]", inset: "inset-[10px]", text: "text-[32px]" },
 } as const;
 
 export function ringTone(value: number): string {

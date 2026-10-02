@@ -3198,7 +3198,10 @@
         "googleNonBrandClicks": "คลิกจากคำที่ไม่ใช่แบรนด์",
         "googleBrandClicks": "คลิกจากคำแบรนด์",
         "googleImpressions": "จำนวนครั้งที่ถูกเห็น",
-        "googleDataUpTo": "ข้อมูลถึงวันที่"
+        "googleDataUpTo": "ข้อมูลถึงวันที่",
+        "neverRunShort": "ยังไม่เคยตรวจ",
+        "alertsWeek": "แจ้งเตือนใน 7 วันล่าสุด",
+        "nextSteps": "สิ่งที่ควรทำต่อ"
       },
       "indexing": {
         "title": "การเก็บ Index",
