@@ -194,6 +194,7 @@ export default async function AdminLayout(props: Props) {
               labels={{
                 search: t("search"),
                 searchLeads: t("leads.searchPlaceholder"),
+                language: t("topbar.language"),
                 notifications: t("topbar.notifications"),
               }}
             />

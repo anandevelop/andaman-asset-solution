@@ -5,9 +5,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  * The persistent strip above every admin page's content: breadcrumb,
  * search, live visitors, notifications, theme and Copilot — the v4
- * mockup's topbar, in its order. Density and language used to sit here
- * too; they are settings about you, not tools for the work, and moved to
- * the account menu at the foot of the rail (AccountMenu.tsx).
+ * mockup's topbar, in its order — plus a TH | EN switch. Density moved to
+ * the account menu at the foot of the rail (AccountMenu.tsx). Language
+ * went there too in round two, following the mockup, and came back: the
+ * team switches language often enough that two clicks behind a menu was
+ * the wrong place for it, and nobody found it there. It is in both.
  *
  * The bell now has a real feed behind it: AdminNotification rows written
  * by lib/notifications.ts when a lead arrives, somebody registers for an
@@ -22,7 +24,7 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -34,6 +36,7 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
+import { adminLocales } from "@/i18n";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
 import { ADMIN_NAV, activeItemKey } from "@/lib/admin/nav";
 import {
@@ -78,6 +81,7 @@ type Props = {
      *  topbar) — the mockup's lead detail page keeps the generic prompt
      *  below, so this is a match on that one exact route, not a prefix. */
     searchLeads: string;
+    language: string;
   };
 };
 
@@ -93,6 +97,7 @@ export default function AdminTopbar({
   labels,
 }: Props) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [bellOpen, setBellOpen] = useState(false);
   const closeBell = useCallback(() => setBellOpen(false), []);
   const t = useTranslations("admin");
@@ -218,6 +223,30 @@ export default function AdminTopbar({
           onClose={closeBell}
         />
       )}
+
+      {/* TH | EN — one click, always visible. The same path and query in
+          the other locale, so the page being worked on — filters, view, an
+          open drawer — stays as it was. */}
+      <nav aria-label={labels.language} className="inline-flex shrink-0 rounded-[10px] border border-adm-line bg-adm-text/5 p-[3px]">
+        {adminLocales.map((code) => (
+          <Link
+            key={code}
+            href={`/${code}${pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale}${
+              searchParams.size ? `?${searchParams.toString()}` : ""
+            }`}
+            aria-current={code === locale ? "true" : undefined}
+            hrefLang={code}
+            className={[
+              "flex h-[26px] items-center rounded-[7px] px-2.5 text-xs font-medium uppercase transition-colors",
+              code === locale
+                ? "bg-adm-solid text-adm-text shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                : "text-adm-muted hover:text-adm-text",
+            ].join(" ")}
+          >
+            {code}
+          </Link>
+        ))}
+      </nav>
 
       <button
         type="button"
