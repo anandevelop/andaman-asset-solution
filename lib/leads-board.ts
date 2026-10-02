@@ -186,15 +186,22 @@ async function leadScopeWhere(session: {
     clauses.push({ OR: [{ assignedToId: null }, { assignedToId: session.id }] });
   }
 
-  const scoped = await prisma.user.findUnique({
-    where: { id: session.id },
-    select: { scopedProjects: { select: { id: true } } },
-  });
-  const projectIds = scoped?.scopedProjects.map((project) => project.id) ?? [];
+  const projectIds = await scopedProjectIdsOf(session.id);
   if (projectIds.length > 0) clauses.push({ projectId: { in: projectIds } });
 
   if (clauses.length === 0) return undefined;
   return clauses.length === 1 ? clauses[0] : { AND: clauses };
+}
+
+/** The projects an account is held to; empty means unscoped (the whole
+ *  company). Exported for createLead, which must not let a scoped rep
+ *  create a lead outside their own scope — one they could then not see. */
+export async function scopedProjectIdsOf(userId: string): Promise<string[]> {
+  const scoped = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { scopedProjects: { select: { id: true } } },
+  });
+  return scoped?.scopedProjects.map((project) => project.id) ?? [];
 }
 
 export async function getLeadBoardData(

@@ -909,7 +909,43 @@
         "done": "Updated {count}",
         "partial": "Updated {changed} · skipped {refused} you can't change"
       },
-      "clearSearch": "Clear search"
+      "clearSearch": "Clear search",
+      "create": {
+        "button": "Add lead",
+        "title": "Add a lead",
+        "name": "Customer name",
+        "phone": "Phone",
+        "phoneCountry": "Country code",
+        "countrySearch": "Search country or code",
+        "countryNone": "No country found",
+        "email": "Email",
+        "emailHint": "Optional — leave empty if the customer didn't give one",
+        "project": "Interested in",
+        "noProject": "General enquiry",
+        "source": "Source",
+        "language": "Language",
+        "languageNone": "Not specified",
+        "assignee": "Owner",
+        "unassigned": "Unassigned",
+        "ownedBySelf": "You will own this lead",
+        "message": "Details / what they asked",
+        "consent": "The customer agreed to their contact details being kept and used to get back to them",
+        "consentHint": "This confirmation is recorded with your name, against the current privacy policy",
+        "submit": "Save lead",
+        "cancel": "Cancel",
+        "created": "Lead added",
+        "errors": {
+          "NAME": "Enter a name of at least 2 characters",
+          "PHONE": "That number isn't valid for the selected country",
+          "EMAIL": "That email address isn't valid",
+          "MESSAGE": "The details are too long",
+          "CONSENT": "Confirm the customer's consent before saving",
+          "FORBIDDEN": "Your account covers specific projects — choose one of yours",
+          "PROJECT": "The selected project wasn't found",
+          "ASSIGNEE": "The selected owner can't take leads",
+          "SAVE_FAILED": "Couldn't save — try again"
+        }
+      }
     },
     "leadDetail": {
       "title": "Lead",
@@ -978,7 +1014,8 @@
           "housePreferenceCleared": "House preference cleared",
           "unitReserved": "Reserved unit {unit} until {date}",
           "unitReservedNoExpiry": "Reserved unit {unit}",
-          "unitReleased": "Released unit {unit}"
+          "unitReleased": "Released unit {unit}",
+          "createdByStaff": "Lead added in the back office (consent confirmed)"
         }
       },
       "composer": {

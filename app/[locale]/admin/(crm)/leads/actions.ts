@@ -31,7 +31,9 @@ import { requireAdminAction, requireCapabilityAction } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
 import { rateLimit } from "@/lib/rate-limit";
 import { recordContactReveal } from "@/lib/audit/events";
-import { isLeadVisibleTo } from "@/lib/leads-board";
+import { isLeadVisibleTo, scopedProjectIdsOf } from "@/lib/leads-board";
+import { parseAdminLead, type AdminLeadErrors } from "@/lib/admin/lead-create";
+import { siteConfig } from "@/config/site";
 import {
   leadAssignSchema,
   leadFollowUpSchema,
@@ -85,9 +87,9 @@ function revalidateLead(locale: string, id: string) {
 }
 
 /**
- * Inline status change from the leads table. Note that leads are never
- * created or deleted here — capture is the public API's job, and deletion
- * would break the PDPA consent audit trail.
+ * Inline status change from the leads table. Leads are never deleted
+ * here — deletion would break the PDPA consent audit trail. They are
+ * created by the public form and, by hand, by createLead below.
  */
 export async function updateLeadStatus(
   locale: string,
@@ -580,4 +582,100 @@ export async function bulkUpdateLeads(locale: string, input: unknown): Promise<B
   }
 
   return { ok: true, changed, refused };
+}
+
+/* ── Hand-entered leads ─────────────────────────────────────────────── */
+
+export type CreateLeadState =
+  | { status: "idle" }
+  | { status: "invalid"; errors: AdminLeadErrors }
+  | { status: "error"; error: "FORBIDDEN" | "PROJECT" | "ASSIGNEE" | "SAVE_FAILED" }
+  | { status: "created"; leadId: string };
+
+/**
+ * "+ เพิ่มลีด" — a lead a rep took by phone, at the show house or over LINE.
+ * The input rules (phone standard, consent, optional email) are
+ * lib/admin/lead-create.ts's; this decides who may do what with it:
+ *
+ *  · viewAllLeads, like every other write on this page.
+ *  · SALES always owns what they enter — they may only ever assign leads
+ *    to themselves (assignLead), and an unowned lead they just typed in
+ *    would land in the shared pool for someone else to claim.
+ *  · Anyone else may hand it to an active staff account, or leave it
+ *    unassigned for routing to pick up by hand.
+ *  · A project-scoped account must attach it to one of its projects:
+ *    otherwise it would create a lead outside its own scope that it could
+ *    then not see.
+ *
+ * Consent is the rep's confirmation that the customer agreed, recorded
+ * with the policy version in force; the timeline note names the rep. The
+ * audit extension records the create itself.
+ */
+export async function createLead(
+  locale: string,
+  _previous: CreateLeadState,
+  formData: FormData,
+): Promise<CreateLeadState> {
+  const session = await requireCapabilityAction("viewAllLeads");
+
+  const parsed = parseAdminLead(Object.fromEntries(formData));
+  if (!parsed.ok) return { status: "invalid", errors: parsed.errors };
+  const input = parsed.data;
+
+  const scope = await scopedProjectIdsOf(session.id);
+  if (input.projectId) {
+    const project = await prisma.project.findFirst({
+      where: { id: input.projectId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!project) return { status: "error", error: "PROJECT" };
+  }
+  if (scope.length > 0 && (!input.projectId || !scope.includes(input.projectId))) {
+    return { status: "error", error: "FORBIDDEN" };
+  }
+
+  let assignedToId: string | null = session.role === Role.SALES ? session.id : input.assignedToId;
+  if (assignedToId && assignedToId !== session.id) {
+    const assignee = await prisma.user.findFirst({
+      where: {
+        id: assignedToId,
+        isActive: true,
+        role: { in: [Role.SALES, Role.EDITOR, Role.ADMIN, Role.SUPER_ADMIN] },
+      },
+      select: { id: true },
+    });
+    if (!assignee) return { status: "error", error: "ASSIGNEE" };
+  }
+  assignedToId = assignedToId ?? null;
+
+  let leadId: string;
+  try {
+    const lead = await prisma.leadInquiry.create({
+      data: {
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        phoneCountry: input.phoneCountry,
+        message: input.message,
+        projectId: input.projectId,
+        source: input.source,
+        commsLanguage: input.commsLanguage,
+        assignedToId,
+        consentGiven: true,
+        consentedAt: new Date(),
+        consentVersion: siteConfig.legal.consentVersion,
+      },
+      select: { id: true },
+    });
+    leadId = lead.id;
+  } catch (error) {
+    console.error("[createLead]", error);
+    return { status: "error", error: "SAVE_FAILED" };
+  }
+
+  const t = await getTranslations({ locale, namespace: "admin" });
+  await writeSystemNote(leadId, session.id, t("leadDetail.timeline.system.createdByStaff"));
+
+  revalidateLead(locale, leadId);
+  return { status: "created", leadId };
 }

@@ -909,7 +909,43 @@
         "done": "已更新 {count} 项",
         "partial": "已更新 {changed} 项 · 跳过 {refused} 项无权限"
       },
-      "clearSearch": "清除搜索"
+      "clearSearch": "清除搜索",
+      "create": {
+        "button": "添加线索",
+        "title": "添加新线索",
+        "name": "客户姓名",
+        "phone": "电话",
+        "phoneCountry": "国家区号",
+        "countrySearch": "搜索国家或区号",
+        "countryNone": "未找到国家",
+        "email": "电子邮件",
+        "emailHint": "可选 — 客户未提供时可留空",
+        "project": "感兴趣的项目",
+        "noProject": "一般咨询",
+        "source": "来源",
+        "language": "沟通语言",
+        "languageNone": "未指定",
+        "assignee": "负责人",
+        "unassigned": "未分配",
+        "ownedBySelf": "此线索将由您负责",
+        "message": "详情 / 客户咨询内容",
+        "consent": "客户同意保存并使用其联系方式以便回复",
+        "consentHint": "此确认将连同您的姓名，按现行隐私政策记录",
+        "submit": "保存线索",
+        "cancel": "取消",
+        "created": "已添加线索",
+        "errors": {
+          "NAME": "请输入至少 2 个字符的姓名",
+          "PHONE": "该号码对所选国家无效",
+          "EMAIL": "电子邮件格式无效",
+          "MESSAGE": "详情过长",
+          "CONSENT": "保存前请确认客户已同意",
+          "FORBIDDEN": "您的账户仅负责特定项目 — 请选择您负责的项目",
+          "PROJECT": "未找到所选项目",
+          "ASSIGNEE": "所选负责人无法接收线索",
+          "SAVE_FAILED": "保存失败，请重试"
+        }
+      }
     },
     "leadDetail": {
       "title": "客户",
@@ -978,7 +1014,8 @@
           "housePreferenceCleared": "已清除户型偏好",
           "unitReserved": "预留单位 {unit}，至 {date}",
           "unitReservedNoExpiry": "预留单位 {unit}",
-          "unitReleased": "释放单位 {unit}"
+          "unitReleased": "释放单位 {unit}",
+          "createdByStaff": "在后台添加的线索（已确认同意）"
         }
       },
       "composer": {

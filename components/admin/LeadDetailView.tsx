@@ -456,7 +456,11 @@ export default async function LeadDetailView({
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
         <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.email")}</dt>
         <dd>
-          {canContact ? (
+          {/* A hand-entered lead may have no email (lib/admin/lead-create.ts);
+              there is nothing to mask or reveal then. */}
+          {!lead.email ? (
+            <span className="text-adm-muted">—</span>
+          ) : canContact ? (
             <RevealContact leadId={lead.id} field="email" masked={maskEmail(lead.email)} labels={revealLabels} />
           ) : (
             <span className="admin-mono">{maskEmail(lead.email)}</span>

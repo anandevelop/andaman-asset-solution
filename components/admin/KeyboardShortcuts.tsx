@@ -9,6 +9,8 @@
  *   g then d|l|p|n|s|a   go to dashboard, leads, projects, news, SEO,
  *                analytics — within 900ms, as in the v4 mockup
  *   t            light ↔ dark
+ *   c            add a lead (the leads page's "+ เพิ่มลีด" drawer), for
+ *                roles that can open leads
  *
  * The others live with what they act on: `[` in AdminSidebar, `.` in
  * CopilotPanel, ⌘S in FormSaveBar.
@@ -20,9 +22,6 @@
  * visibleNav for this role, so `g l` does nothing for an editor rather
  * than sending them to a page that turns them away.
  *
- * No `c` for "new lead": leads are not created in the back office (the
- * public form and its consent record are the only way in — see
- * leads/actions.ts), so there is nothing for it to open.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -83,6 +82,12 @@ export default function KeyboardShortcuts({ locale, role }: { locale: string; ro
       } else if (key === "/") {
         event.preventDefault();
         window.dispatchEvent(new Event("admin:open-search"));
+      } else if (key === "c") {
+        const leads = hrefFor("leads");
+        if (leads) {
+          event.preventDefault();
+          router.push(`${leads}?new=1`, { scroll: false });
+        }
       } else if (key === "t") {
         const dark = document.documentElement.dataset.adminTheme === "dark";
         applyDisplayPref("theme", dark ? "light" : "dark");

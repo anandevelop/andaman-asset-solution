@@ -47,7 +47,8 @@ import type { LeadCardView } from "@/components/admin/LeadBoardCard";
 import LeadDrawer from "@/components/admin/LeadDrawer";
 import LeadDetailView from "@/components/admin/LeadDetailView";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
+import LeadCreateDrawer from "@/components/admin/LeadCreateDrawer";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -64,6 +65,8 @@ type Props = {
     q?: string;
     /** The lead open in the side drawer, if any — see LeadDrawer.tsx. */
     lead?: string;
+    /** "1" opens the add-a-lead drawer — see LeadCreateDrawer.tsx. */
+    new?: string;
   }>;
 };
 
@@ -113,10 +116,13 @@ export default async function AdminLeadsPage(props: Props) {
      Back closes it. The full page is still one click away inside it. */
   const listQuery = new URLSearchParams(
     Object.entries(searchParams).filter(
-      (entry): entry is [string, string] => typeof entry[1] === "string" && entry[0] !== "lead",
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[0] !== "lead" && entry[0] !== "new",
     ),
   ).toString();
   const leadHrefBase = `/${locale}/admin/leads?${listQuery ? `${listQuery}&` : ""}lead=`;
+  const listHref = `/${locale}/admin/leads${listQuery ? `?${listQuery}` : ""}`;
+  const newLeadHref = `/${locale}/admin/leads?${listQuery ? `${listQuery}&` : ""}new=1`;
   const openLeadId = parseId(searchParams.lead);
 
   const drawer = openLeadId ? (
@@ -272,6 +278,25 @@ export default async function AdminLeadsPage(props: Props) {
     />
   );
 
+  /* "+ เพิ่มลีด" — a lead taken by phone or at the show house. SALES own
+     what they enter (createLead enforces it), so they get no assignee
+     list; everyone else may hand it to a colleague. */
+  const createDrawer =
+    searchParams.new === "1" ? (
+      <LeadCreateDrawer
+        locale={locale}
+        closeHref={listHref}
+        leadHrefBase={leadHrefBase}
+        projects={filterOptions.projects.map((project) => ({
+          id: project.id,
+          name: projectLabel(project) ?? project.nameEn,
+        }))}
+        assignees={session.role === Role.SALES ? null : filterOptions.assignees}
+        currentUserId={session.id}
+        sourceLabels={sourceLabels}
+      />
+    ) : null;
+
   const header = (
     <AdminPageHeader
       eyebrow={{ icon: Users, label: "CRM" }}
@@ -288,6 +313,10 @@ export default async function AdminLeadsPage(props: Props) {
         {/* Carries the current status filter, so the file matches the
             table rather than always exporting everything. */}
         <LeadExportButton status={searchParams.status ?? "ALL"} />
+        <Link href={newLeadHref} scroll={false} className="admin-btn">
+          <Plus size={15} aria-hidden />
+          {t("leads.create.button")}
+        </Link>
       </div>
         </>
       }
@@ -429,6 +458,7 @@ export default async function AdminLeadsPage(props: Props) {
           errorLabel={t("common.error")}
         />
         {drawer}
+        {createDrawer}
       </div>
     );
   }
@@ -504,6 +534,7 @@ export default async function AdminLeadsPage(props: Props) {
         />
       )}
       {drawer}
+      {createDrawer}
     </div>
   );
 }
