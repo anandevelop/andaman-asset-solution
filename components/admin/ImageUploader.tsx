@@ -840,6 +840,8 @@ export default function ImageUploader({
           </p>
 
           <DndContext
+            /* Stable across server and client: see LeadBoard.tsx. */
+            id={`image-uploader-${name}`}
             sensors={sensors}
             // closestCenter suits a wrapping grid; the pointer-based
             // strategies assume a single row or column.

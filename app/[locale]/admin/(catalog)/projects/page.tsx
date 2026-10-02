@@ -21,7 +21,9 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LayoutGrid, List, Plus } from "lucide-react";
 import { ProjectStatus, PropertyType, Role } from "@prisma/client";
-import { isDatabaseOffline } from "@/lib/db";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import Segmented from "@/components/admin/ui/Segmented";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
 import { relativeTime } from "@/lib/relative-time";
@@ -102,7 +104,25 @@ export default async function AdminProjectsPage(props: Props) {
     perPage,
   };
 
-  const list = await getAdminProjectList(locale, filters);
+  const [list, catalogCounts] = await Promise.all([
+    getAdminProjectList(locale, filters),
+    /* The header's "{p} โครงการ · {t} แบบบ้าน · {u} ยูนิต · {f} …" — the
+       whole catalogue, not the filtered page. */
+    safeQuery(
+      "admin:projects:catalogCounts",
+      async () => {
+        const live = { project: { deletedAt: null } };
+        const [projects, types, units, facilities] = await Promise.all([
+          prisma.project.count({ where: { deletedAt: null } }),
+          prisma.projectUnitType.count({ where: live }),
+          prisma.projectUnit.count({ where: live }),
+          prisma.projectFacility.count({ where: live }),
+        ]);
+        return { projects, types, units, facilities };
+      },
+      { projects: 0, types: 0, units: 0, facilities: 0 },
+    ),
+  ]);
   const offline = isDatabaseOffline();
   const now = new Date();
 
@@ -173,11 +193,14 @@ export default async function AdminProjectsPage(props: Props) {
       isPublished: row.isPublished,
       units: row.units,
       unitsLabel: unitsLabelFor(row.units),
-      typesLabel: t("projects.cards.types", { count: row.unitTypeCount }),
-      priceLabel:
-        row.priceFromTHB === null
-          ? t("projects.cards.noPrice")
-          : t("projects.cards.priceFrom", { price: priceFormat.format(row.priceFromTHB) }),
+      tagline: row.tagline,
+      unitsValue: row.units.kind === "none" ? "—" : String(row.units.total),
+      typesValue: String(row.unitTypeCount),
+      priceValue: row.priceFromTHB === null ? "—" : priceFormat.format(row.priceFromTHB),
+      freeLabel:
+        row.units.kind === "counted"
+          ? t("projects.cards.freeShort", { free: row.units.available, total: row.units.total })
+          : null,
       readiness: percent,
       readinessLabel: t("projects.cards.readiness", { percent }),
       locales: row.locales,
@@ -221,8 +244,8 @@ export default async function AdminProjectsPage(props: Props) {
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
-        title={t("projects.title")}
-        description={t("projects.subtitle")}
+        title={t("nav.projects")}
+        description={t("projects.headerCounts", catalogCounts)}
         actions={
           <>
             {/* Hidden below ADMIN because ../new/page.tsx guards at
@@ -233,7 +256,7 @@ export default async function AdminProjectsPage(props: Props) {
         {canCreate && (
           <Link href={`/${locale}/admin/projects/new`} className="admin-btn">
             <Plus size={16} aria-hidden />
-            {t("projects.new")}
+            {t("projects.create")}
           </Link>
         )}
           </>
@@ -245,34 +268,13 @@ export default async function AdminProjectsPage(props: Props) {
           the project workspace now, and this is where the "across every
           project" view they also held still lives. The base comes from the
           config (NavItem.tabsBase), not from here — see PageTabs. */}
-      <PageTabs locale={locale} role={session.role} groupKey="projects" />
+      <PageTabs locale={locale} role={session.role} groupKey="projects" counts={{ all: catalogCounts.projects }} />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
         </p>
       )}
-
-      <div className="flex justify-end">
-        <nav aria-label={t("projects.cards.viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
-          {(["cards", "table"] as const).map((option) => (
-            <Link
-              key={option}
-              href={viewHref(option)}
-              aria-current={view === option ? "page" : undefined}
-              className={[
-                "flex h-7 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] transition-colors",
-                view === option
-                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                  : "text-ink-muted hover:text-ink",
-              ].join(" ")}
-            >
-              {option === "cards" ? <LayoutGrid size={14} aria-hidden /> : <List size={14} aria-hidden />}
-              {option === "cards" ? t("projects.cards.viewCards") : t("projects.cards.viewTable")}
-            </Link>
-          ))}
-        </nav>
-      </div>
 
       <ProjectFilters
         locale={locale}
@@ -284,6 +286,16 @@ export default async function AdminProjectsPage(props: Props) {
         incompleteOnly={filters.incompleteOnly}
         incompleteCount={list.incompleteCount}
         resultCount={list.total}
+        trailing={
+          <Segmented
+            label={t("projects.cards.viewLabel")}
+            active={view}
+            items={[
+              { key: "cards", label: t("projects.cards.viewCards"), icon: <LayoutGrid size={13} aria-hidden />, href: viewHref("cards") },
+              { key: "table", label: t("projects.cards.viewTable"), icon: <List size={13} aria-hidden />, href: viewHref("table") },
+            ]}
+          />
+        }
         typeLabels={typeLabels}
         statusLabels={statusLabels}
         labels={{
@@ -326,7 +338,18 @@ export default async function AdminProjectsPage(props: Props) {
             <ProjectCards
               locale={locale}
               cards={cards}
-              labels={{ draft: t("common.draft"), localeMissing: t("common.translationMissing") }}
+              labels={{
+                draft: t("common.draft"),
+                published: t("common.published"),
+                units: t("projects.cards.statUnits"),
+                types: t("projects.cards.statTypes"),
+                price: t("projects.cards.statPrice"),
+                localeTitles: {
+                  complete: t("common.translationComplete"),
+                  partial: t("common.translationPartial"),
+                  missing: t("common.translationMissing"),
+                },
+              }}
             />
           ) : (
           <fieldset disabled={!canWrite} className="contents">

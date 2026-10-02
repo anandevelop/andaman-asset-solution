@@ -145,9 +145,11 @@ export default function LeadNextStepCard({
 
         {canContact && (
           <>
+            {/* Navy, the one solid button here when the step itself has no
+                button of its own: calling is what the card is asking for. */}
             <button
               type="button"
-              className="admin-btn-ghost"
+              className={action?.kind === "claim" || action?.kind === "closeAppointment" ? "admin-btn-ghost" : "admin-btn-navy"}
               onClick={() =>
                 revealThen(
                   leadId,

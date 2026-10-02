@@ -77,7 +77,7 @@ export default function LeadDrawer({ fullPageHref, labels, children }: Props) {
         aria-label={labels.close}
         tabIndex={-1}
         onClick={close}
-        className="absolute inset-0 h-full w-full cursor-default bg-[rgba(4,29,44,0.45)] animate-[lead-drawer-fade_150ms_ease-out]"
+        className="absolute inset-0 h-full w-full cursor-default bg-adm-band/40 motion-safe:animate-[lead-drawer-fade_150ms_ease-out]"
       />
 
       <div
@@ -87,12 +87,12 @@ export default function LeadDrawer({ fullPageHref, labels, children }: Props) {
         aria-labelledby="lead-drawer-title"
         aria-label={labels.dialog}
         tabIndex={-1}
-        className="absolute inset-y-0 right-0 flex w-full max-w-[560px] flex-col bg-surface shadow-[0_24px_60px_-20px_rgba(4,29,44,0.45)] outline-none animate-[lead-drawer-in_220ms_cubic-bezier(0.2,0.8,0.2,1)]"
+        className="absolute inset-y-2.5 right-2.5 flex w-[min(560px,calc(100vw-20px))] flex-col overflow-hidden rounded-[20px] bg-adm-solid shadow-[var(--adm-shadow-float)] outline-none motion-safe:animate-[lead-drawer-in_220ms_cubic-bezier(0.2,0.8,0.2,1)]"
       >
-        <div className="flex h-[52px] shrink-0 items-center justify-end gap-1 border-b border-primary/10 bg-surface-raised px-3">
+        <div className="flex h-[52px] shrink-0 items-center justify-end gap-1 border-b border-adm-line px-3">
           <Link
             href={fullPageHref}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+            className="admin-btn-quiet admin-btn-sm"
           >
             <Maximize2 size={13} aria-hidden />
             {labels.openFullPage}
@@ -101,7 +101,7 @@ export default function LeadDrawer({ fullPageHref, labels, children }: Props) {
             type="button"
             onClick={close}
             aria-label={labels.close}
-            className="flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-muted transition-colors hover:bg-surface-muted hover:text-primary"
+            className="flex h-8 w-8 items-center justify-center rounded-[8px] text-adm-muted transition-colors hover:bg-adm-text/6 hover:text-adm-text"
           >
             <X size={17} aria-hidden />
           </button>

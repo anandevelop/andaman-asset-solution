@@ -8,7 +8,8 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, UserPlus, UsersRound } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -16,7 +17,6 @@ import { parseEditingLocale, pickEditingTranslation, translationCompleteness } f
 import {
   getSalesPerformance,
   PERFORMANCE_WINDOW_DAYS,
-  SLOW_RESPONSE_MS,
 } from "@/lib/admin/sales-performance";
 
 /** Below this percentage answered inside the fast window, the table draws
@@ -32,11 +32,13 @@ import LeadRoutingPanel from "@/components/admin/LeadRoutingPanel";
 import { createSalesPerson, deleteSalesPerson, updateSalesPerson } from "./actions";
 import SalesPersonForm from "@/components/admin/SalesPersonForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import AdminImage from "@/components/admin/ui/AdminImage";
+import Avatar from "@/components/admin/ui/Avatar";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
 export default async function AdminSalesTeamPage(props: Props) {
   const searchParams = await props.searchParams;
@@ -83,6 +85,19 @@ export default async function AdminSalesTeamPage(props: Props) {
     [] as any[],
   );
 
+  const base = `/${locale}/admin/sales-team`;
+  /* The drawer: "new" for the add form (editors only), or the person
+     whose card was clicked. Anything else — a deleted id, a SALES user
+     guessing ?edit=new — simply opens nothing. */
+  const editing: "new" | any | null =
+    searchParams.edit === "new"
+      ? canEditRoster
+        ? "new"
+        : null
+      : canEditRoster
+        ? (team.find((person: any) => person.id === searchParams.edit) ?? null)
+        : null;
+
   // ── Dashboard data ────────────────────────────────────────────────────
   const [performance, routingRules] = await Promise.all([
     getSalesPerformance(
@@ -92,26 +107,16 @@ export default async function AdminSalesTeamPage(props: Props) {
     getRoutingRules(),
   ]);
 
-  /** "1 ชม. 24 น." — the shape the cards show an average response in. */
-  const durationLabel = (ms: number | null): string | null => {
-    if (ms === null) return null;
-    const totalMinutes = Math.round(ms / 60_000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return hours > 0
-      ? t("salesTeam.durationHm", { hours, minutes })
-      : t("salesTeam.durationM", { minutes });
-  };
-
+  // A missing Thai name falls back to English rather than a blank card;
+  // the "ขาดชื่อไทย" pill on the card says it is missing.
   const nameFor = (person: any) =>
-    locale === "th" ? person.nameTh : person.nameEn;
+    (locale === "th" ? person.nameTh : person.nameEn) || person.nameEn || person.nameTh;
 
   const cards: TeamCardMember[] = team.map((person: any) => {
-    const stats = performance.get(person.id);
     return {
       id: person.id,
       name: nameFor(person),
-      position: locale === "th" ? person.positionTh : person.positionEn,
+      position: (locale === "th" ? person.positionTh : person.positionEn) || person.positionEn || "",
       photoUrl: person.photoUrl,
       isActive: person.isActive,
       hasAccount: Boolean(person.staffAccount),
@@ -130,13 +135,26 @@ export default async function AdminSalesTeamPage(props: Props) {
       languages: LOCALE_DISPLAY_ORDER.filter((code) =>
         person.translations.some((row: any) => row.locale === code && (row.name ?? "").trim()),
       ),
-      openLeads: stats?.openLeads ?? 0,
-      responseLabel: durationLabel(stats?.avgResponseMs ?? null),
-      responseIsSlow: (stats?.avgResponseMs ?? 0) > SLOW_RESPONSE_MS,
-      viewings30d: stats?.viewings30d ?? 0,
-      closed90d: stats?.closed90d ?? 0,
+      missingThai: !person.translations.some((row: any) => row.locale === "th" && (row.name ?? "").trim()),
+      phone: person.phoneNumber,
+      whatsapp: person.whatsappNumber,
+      email: person.email ?? null,
     };
   });
+
+  /* Open leads per rep — the "ภาระงานลีดต่อคน" card. Only people with an
+     account: a profile without one cannot be given a lead, so a zero for
+     it would read as an idle rep rather than an unlinked profile. */
+  const workload = team
+    .filter((person: any) => person.staffAccount)
+    .map((person: any) => ({
+      id: person.id,
+      name: nameFor(person),
+      photoUrl: person.photoUrl as string | null,
+      openLeads: performance.get(person.id)?.openLeads ?? 0,
+    }));
+  const workloadMax = Math.max(1, ...workload.map((row: { openLeads: number }) => row.openLeads));
+  const unlinkedCount = team.filter((person: any) => !person.staffAccount).length;
 
   const performanceRows = team
     .filter((person: any) => person.staffAccount)
@@ -198,6 +216,14 @@ export default async function AdminSalesTeamPage(props: Props) {
         eyebrow={zoneEyebrow((key) => t(key as never), "salesTeam")}
         title={t("salesTeam.title")}
         description={t("salesTeam.subtitle")}
+        actions={
+          canEditRoster ? (
+            <Link href={`${base}?edit=new`} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("salesTeam.addButton")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
@@ -209,21 +235,59 @@ export default async function AdminSalesTeamPage(props: Props) {
       <SalesTeamCards
         locale={locale}
         members={cards}
-        addHref="#add-member"
+        editHrefBase={canEditRoster ? `${base}?edit=` : null}
         labels={{
-          openLeads: t("salesTeam.stats.openLeads"),
-          avgResponse: t("salesTeam.stats.avgResponse"),
-          viewings30d: t("salesTeam.stats.viewings30d"),
-          closed90d: t("salesTeam.stats.closed90d"),
           showOnSite: t("salesTeam.showOnSite"),
-          noAccount: t("salesTeam.noAccount"),
-          accountCannotTakeLeads: t("salesTeam.accountCannotTakeLeads"),
-          noResponses: t("salesTeam.noResponses"),
-          addTitle: t("salesTeam.addTitle"),
-          addBody: t("salesTeam.addBody"),
+          onSite: t("salesTeam.onSite"),
+          missingThai: t("salesTeam.missingThai"),
+          noAccount: t("salesTeam.noAccountShort"),
+          accountCannotTakeLeads: t("salesTeam.cannotTakeLeadsShort"),
+          edit: t("common.edit"),
+          message: t("salesTeam.message"),
           error: t("common.error"),
         }}
       />
+
+      {/* ── Lead load per rep ──────────────────────────────────────────── */}
+      <section className="admin-card">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold text-adm-text">
+          <UsersRound size={16} aria-hidden className="text-adm-accent-ink" />
+          {t("salesTeam.workload.title")}
+        </h2>
+        {workload.length === 0 ? (
+          <p className="mt-3 text-sm text-adm-muted">{t("salesTeam.workload.empty")}</p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {workload.map((row: { id: string; name: string; photoUrl: string | null; openLeads: number }) => (
+              <li key={row.id} className="flex items-center gap-3">
+                {row.photoUrl ? (
+                  <AdminImage src={row.photoUrl} iconSize={10} className="h-[22px] w-[22px] shrink-0 rounded-full object-cover" />
+                ) : (
+                  <Avatar id={row.id} name={row.name} size="sm" />
+                )}
+                <span className="w-[200px] shrink-0 truncate text-sm text-adm-text">{row.name}</span>
+                <span className="h-2 flex-1 rounded-full bg-adm-text/6">
+                  <span
+                    className="block h-full rounded-full bg-adm-status-info"
+                    style={{ width: `${(row.openLeads / workloadMax) * 100}%` }}
+                  />
+                </span>
+                <span className="admin-mono w-16 shrink-0 text-right text-xs text-adm-muted">
+                  {t("salesTeam.workload.leads", { count: row.openLeads })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* A profile is only a rep the router can use once a user account
+            points at it (User.salesPersonId) — the usual reason somebody is
+            missing from this card. */}
+        {unlinkedCount > 0 && (
+          <p className="mt-4 border-t border-adm-line pt-3 text-xs text-adm-muted">
+            {t("salesTeam.workload.unlinked", { count: unlinkedCount })}
+          </p>
+        )}
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -280,107 +344,56 @@ export default async function AdminSalesTeamPage(props: Props) {
         />
       </div>
 
-      {/* One language selection drives every person's form on this page —
-          see the file comment on LanguageTabs. */}
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
-      />
+      {/* ── Add / edit drawer (?edit=new, ?edit=<id>) ───────────────────── */}
+      {editing && (
+        <AdminDrawer
+          title={editing === "new" ? t("salesTeam.newTitle") : editing.nameEn}
+          icon={editing === "new" ? <UserPlus size={18} aria-hidden /> : undefined}
+          closeHref={base}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <div className="space-y-5">
+            {/* The language picker drives the name and position fields;
+                its links keep ?edit=, so switching keeps the drawer open. */}
+            <LanguageTabs
+              active={lang}
+              completeness={
+                editing === "new"
+                  ? { en: true, th: true, zh: true, ru: true }
+                  : translationCompleteness<any>(editing.translations, "name")
+              }
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      {canEditRoster && (
-      <section id="add-member" className="admin-card scroll-mt-6">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
-          {t("salesTeam.newTitle")}
-        </h2>
-
-        <SalesPersonForm
-          key={lang}
-          lang={lang}
-          action={createSalesPerson.bind(null, locale)}
-          submitLabel={t("common.create")}
-        />
-      </section>
-      )}
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {team.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
-          {t("salesTeam.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {team.map((person: any) => {
-            const completeness = translationCompleteness<any>(person.translations, "name");
-            const editing = pickEditingTranslation<any>(person.translations, lang);
-
-            return (
-              <section key={person.id} className="admin-card">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-base font-semibold text-primary">{person.nameEn}</h2>
-                    <TranslationStatusBadges completeness={completeness} />
-                  </div>
-
-                  <span
-                    className={
-                      person.isActive
-                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                    }
-                  >
-                    {person.isActive ? t("salesTeam.active") : t("salesTeam.inactive")}
-                  </span>
-                </div>
-
-                {canEditRoster ? (
-                  <SalesPersonForm
-                    key={lang}
-                    lang={lang}
-                    action={updateSalesPerson.bind(null, locale, person.id)}
-                    onDelete={deleteSalesPerson.bind(null, locale, person.id)}
-                    values={{
-                      name: editing?.name ?? "",
-                      position: editing?.position ?? "",
-                      whatsappNumber: person.whatsappNumber,
-                      phoneNumber: person.phoneNumber,
-                      email: person.email ?? "",
-                      photoUrl: person.photoUrl ?? "",
-                      isActive: person.isActive,
-                      sortOrder: String(person.sortOrder),
-                    }}
-                    submitLabel={t("common.save")}
-                  />
-                ) : (
-                  /* What a rep opened this page for, without a form they
-                     cannot submit. Same fields, read-only — the actions
-                     would refuse a save from this role anyway, and showing
-                     the inputs would only make that a surprise. */
-                  <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-                    {[
-                      [t("salesTeam.position"), editing?.position ?? ""],
-                      [t("salesTeam.phone"), person.phoneNumber],
-                      [t("salesTeam.whatsapp"), person.whatsappNumber],
-                      [t("salesTeam.email"), person.email ?? ""],
-                    ]
-                      .filter(([, value]) => Boolean(value))
-                      .map(([label, value]) => (
-                        <div key={label}>
-                          <dt className="text-xs uppercase tracking-[0.1em] text-ink-muted">
-                            {label}
-                          </dt>
-                          <dd className="mt-0.5 text-ink">{value}</dd>
-                        </div>
-                      ))}
-                  </dl>
-                )}
-              </section>
-            );
-          })}
-        </div>
+            {editing === "new" ? (
+              <SalesPersonForm
+                key={lang}
+                lang={lang}
+                action={createSalesPerson.bind(null, locale)}
+                submitLabel={t("common.create")}
+              />
+            ) : canEditRoster ? (
+              <SalesPersonForm
+                key={`${editing.id}:${lang}`}
+                lang={lang}
+                action={updateSalesPerson.bind(null, locale, editing.id)}
+                onDelete={deleteSalesPerson.bind(null, locale, editing.id)}
+                values={{
+                  name: pickEditingTranslation<any>(editing.translations, lang)?.name ?? "",
+                  position: pickEditingTranslation<any>(editing.translations, lang)?.position ?? "",
+                  whatsappNumber: editing.whatsappNumber,
+                  phoneNumber: editing.phoneNumber,
+                  email: editing.email ?? "",
+                  photoUrl: editing.photoUrl ?? "",
+                  isActive: editing.isActive,
+                  sortOrder: String(editing.sortOrder),
+                }}
+                submitLabel={t("common.save")}
+              />
+            ) : null}
+          </div>
+        </AdminDrawer>
       )}
     </div>
   );

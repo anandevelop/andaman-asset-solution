@@ -17,7 +17,7 @@
 import Link from "next/link";
 import { useDraggable } from "@dnd-kit/core";
 import { CalendarClock, Clock } from "lucide-react";
-import { initialsFrom } from "@/lib/format";
+import Avatar from "@/components/admin/ui/Avatar";
 
 export type LeadCardView = {
   id: string;
@@ -33,10 +33,10 @@ export type LeadCardView = {
 };
 
 const HINT_TONE_CLASS: Record<LeadCardView["hintTone"], string> = {
-  urgent: "font-medium text-red-600",
-  followUp: "font-medium text-accent-700",
-  today: "font-medium text-emerald-700",
-  muted: "text-ink-muted",
+  urgent: "font-medium text-adm-danger",
+  followUp: "font-medium text-adm-accent-ink",
+  today: "font-medium text-adm-success",
+  muted: "text-adm-muted",
 };
 
 export default function LeadBoardCard({
@@ -61,20 +61,20 @@ export default function LeadBoardCard({
           : undefined
       }
       className={[
-        "touch-none rounded-xs border bg-surface-raised p-3 shadow-xs transition-shadow",
-        isDragging ? "z-20 border-primary/30 opacity-90 shadow-lg" : "border-primary/10 hover:shadow-card",
-        card.ageTone === "urgent" ? "border-red-300/70" : "",
+        "touch-none rounded-[12px] border bg-adm-solid p-3 shadow-[var(--adm-card-shadow)] transition-[transform,box-shadow]",
+        isDragging
+          ? "z-20 border-adm-fill/50 opacity-90 shadow-[var(--adm-shadow-float)]"
+          : "border-transparent hover:-translate-y-0.5 hover:shadow-[var(--adm-card-shadow-hover)] motion-reduce:hover:translate-y-0",
+        card.ageTone === "urgent" ? "border-adm-danger/35!" : "",
       ].join(" ")}
     >
       <Link href={href} scroll={false} className="block" draggable={false}>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-[13px] font-semibold leading-snug text-primary">{card.name}</p>
+          <p className="text-[13px] font-semibold leading-snug text-adm-text">{card.name}</p>
           <span
             className={[
-              "shrink-0 whitespace-nowrap rounded-xs px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
-              card.ageTone === "urgent"
-                ? "bg-red-50 text-red-700"
-                : "bg-surface-muted text-ink-muted",
+              "shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10.5px] font-medium tabular-nums",
+              card.ageTone === "urgent" ? "bg-adm-danger-bg text-adm-danger" : "bg-adm-text/6 text-adm-muted",
             ].join(" ")}
           >
             {card.ageLabel}
@@ -82,7 +82,7 @@ export default function LeadBoardCard({
         </div>
 
         {card.projectLabel && (
-          <p className="mt-1 truncate text-[11.5px] text-ink-muted">{card.projectLabel}</p>
+          <p className="mt-1 truncate text-[11.5px] text-adm-muted">{card.projectLabel}</p>
         )}
 
         <p className={`mt-2 flex items-center gap-1 text-[11.5px] leading-snug ${HINT_TONE_CLASS[card.hintTone]}`}>
@@ -93,18 +93,13 @@ export default function LeadBoardCard({
 
         {card.assigneeName && (
           <div className="mt-2.5 flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-white"
-            >
-              {initialsFrom(card.assigneeName)}
-            </span>
-            <span className="truncate text-[11px] text-ink-muted">{card.assigneeName}</span>
+            <Avatar id={card.assigneeName} name={card.assigneeName} size="sm" />
+            <span className="truncate text-[11px] text-adm-muted">{card.assigneeName}</span>
           </div>
         )}
 
         {!card.consentGiven && (
-          <p className="mt-2 text-[10px] font-medium text-red-600">PDPA</p>
+          <p className="mt-2 text-[10px] font-medium text-adm-danger">PDPA</p>
         )}
       </Link>
     </div>

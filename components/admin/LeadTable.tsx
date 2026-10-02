@@ -21,18 +21,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LeadStatus } from "@prisma/client";
-import { Download, UserPlus, X } from "lucide-react";
+import { Clock, Download, Lock, UserPlus, X } from "lucide-react";
 import { assignLead, bulkUpdateLeads } from "@/app/[locale]/admin/(crm)/leads/actions";
 import { LEAD_STATUS_DOT } from "@/lib/admin/lead-status-tone";
 import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
 import PopoverMenu from "@/components/admin/PopoverMenu";
 import { showUndoToast } from "@/components/admin/UndoToast";
 import AdminImage from "@/components/admin/ui/AdminImage";
+import Avatar from "@/components/admin/ui/Avatar";
 
 export type LeadRowView = {
   id: string;
   name: string;
-  initials: string;
   maskedPhone: string;
   commsLanguage: string | null;
   projectName: string | null;
@@ -51,11 +51,12 @@ export type LeadRowView = {
 type Labels = {
   selectAll: string;
   customer: string;
-  project: string;
-  source: string;
+  interest: string;
+  channel: string;
   status: string;
   owner: string;
-  received: string;
+  receivedAt: string;
+  pdpaNote: string;
   assign: string;
   unassign: string;
   noProject: string;
@@ -171,16 +172,17 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
   };
 
   return (
-    <div className="rounded-card border border-adm-line bg-surface-raised">
+    <div className="space-y-3">
       {selected.size > 0 && (
-        /* Sticky under the 60px topbar, so it stays in reach while the
-           rest of a long selection is scrolled to. */
-        <div className="sticky top-[60px] z-20 flex flex-wrap items-center gap-2 rounded-t-card border-b border-adm-line bg-adm-band px-4 py-2 text-sm text-white">
-          <span className="font-medium tabular-nums">{t("bulk.selected", { count: selected.size })}</span>
-          <span className="mx-1 h-4 w-px bg-white/20" aria-hidden />
+        /* A card of its own above the table, sticky under the 60px topbar
+           so it stays in reach while the rest of a long selection is
+           scrolled to. */
+        <div className="admin-card sticky top-[68px] z-20 flex flex-wrap items-center gap-2 border-adm-fill/40! px-4! py-2.5! text-sm">
+          <span className="font-medium tabular-nums text-adm-text">{t("bulk.selected", { count: selected.size })}</span>
+          <span className="ml-auto" aria-hidden />
           <PopoverMenu
             label={labels.bulkAssign}
-            buttonClassName="inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2.5 text-[12.5px] hover:bg-white/10"
+            buttonClassName="admin-btn-ghost admin-btn-sm"
             buttonContent={
               <>
                 <UserPlus size={14} aria-hidden />
@@ -200,7 +202,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
           />
           <PopoverMenu
             label={labels.bulkStatus}
-            buttonClassName="inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2.5 text-[12.5px] hover:bg-white/10"
+            buttonClassName="admin-btn-ghost admin-btn-sm"
             buttonContent={labels.bulkStatus}
             options={Object.values(LeadStatus).map((status) => ({
               value: status,
@@ -220,7 +222,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
           {canExport && (
             <a
               href={`/api/admin/leads/export?ids=${selectedRows.map((row) => row.id).join(",")}`}
-              className="inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2.5 text-[12.5px] hover:bg-white/10"
+              className="admin-btn-ghost admin-btn-sm"
             >
               <Download size={14} aria-hidden />
               {labels.bulkExport}
@@ -229,7 +231,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            className="ml-auto inline-flex h-7 items-center gap-1 rounded-[8px] px-2 text-[12.5px] text-white/70 hover:bg-white/10 hover:text-white"
+            className="admin-btn-quiet admin-btn-sm"
           >
             <X size={14} aria-hidden />
             {labels.bulkClear}
@@ -238,7 +240,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
       )}
 
       {/* Scrolls inside the card, never the page (Phase H's mobile rule). */}
-      <div className="overflow-x-auto">
+      <div className="admin-card overflow-x-auto p-0!">
         <table className="w-full min-w-[980px] border-collapse">
           <thead className="border-b border-adm-line">
             <tr>
@@ -255,11 +257,11 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                 />
               </th>
               <th className="admin-th">{labels.customer}</th>
-              <th className="admin-th">{labels.project}</th>
-              <th className="admin-th">{labels.source}</th>
+              <th className="admin-th">{labels.interest}</th>
+              <th className="admin-th">{labels.channel}</th>
               <th className="admin-th">{labels.status}</th>
               <th className="admin-th">{labels.owner}</th>
-              <th className="admin-th">{labels.received}</th>
+              <th className="admin-th">{labels.receivedAt}</th>
             </tr>
           </thead>
 
@@ -272,7 +274,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                   onClick={(event) => openRow(event, row.id)}
                   className={[
                     "cursor-pointer transition-colors",
-                    isSelected ? "bg-adm-status-info-bg/60" : "hover:bg-primary/5",
+                    isSelected ? "bg-adm-fill/8" : "",
                   ].join(" ")}
                 >
                   <td className="admin-td w-10">
@@ -287,21 +289,16 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
 
                   <td className="admin-td">
                     <div className="flex items-center gap-2.5">
-                      <span
-                        aria-hidden
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-adm-status-info-bg text-[11px] font-semibold text-adm-status-info"
-                      >
-                        {row.initials || "·"}
-                      </span>
+                      <Avatar id={row.id} name={row.name} />
                       <span className="min-w-0">
                         <Link
                           href={`${leadHrefBase}${row.id}`}
                           scroll={false}
-                          className="block truncate font-medium text-ink hover:text-primary-500"
+                          className="block truncate font-medium text-adm-text hover:text-adm-accent-ink"
                         >
                           {row.name}
                         </Link>
-                        <span className="flex items-center gap-1.5 text-xs text-ink-muted">
+                        <span className="flex items-center gap-1.5 text-xs text-adm-muted">
                           <span className="admin-mono">{row.maskedPhone}</span>
                           {row.commsLanguage && (
                             <span className="rounded-full bg-adm-neutral-bg px-1.5 text-[10.5px] uppercase text-adm-neutral">
@@ -321,22 +318,22 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                   <td className="admin-td">
                     {row.projectName ? (
                       <span className="flex items-center gap-2">
-                        <span className="flex h-7 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-surface-muted">
+                        <span className="flex h-5 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[5px] bg-adm-text/6">
                           <AdminImage
                             src={row.projectImage}
                             loading="lazy"
-                            iconSize={12}
+                            iconSize={10}
                             className="h-full w-full object-cover"
                           />
                         </span>
                         <span className="truncate">{row.projectName}</span>
                       </span>
                     ) : (
-                      <span className="text-ink-muted">{labels.noProject}</span>
+                      <span className="text-adm-muted">{labels.noProject}</span>
                     )}
                   </td>
 
-                  <td className="admin-td whitespace-nowrap text-ink-muted">{row.sourceLabel}</td>
+                  <td className="admin-td whitespace-nowrap text-adm-muted">{row.sourceLabel}</td>
 
                   <td className="admin-td">
                     <LeadStatusSelect
@@ -354,10 +351,19 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                       label={row.assignee ? `${labels.owner}: ${row.assignee.name}` : labels.assign}
                       buttonClassName={
                         row.assignee
-                          ? "inline-flex max-w-[160px] items-center gap-1.5 truncate rounded-full px-1 text-sm text-ink hover:bg-primary/5"
-                          : "inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-adm-line-strong px-2.5 text-xs text-ink-muted hover:border-adm-info hover:text-adm-info"
+                          ? "inline-flex max-w-[180px] items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2 text-sm text-adm-text hover:bg-adm-text/6"
+                          : "admin-btn-ghost admin-btn-sm"
                       }
-                      buttonContent={row.assignee ? <span className="truncate">{row.assignee.name}</span> : `+ ${labels.assign}`}
+                      buttonContent={
+                        row.assignee ? (
+                          <>
+                            <Avatar id={row.assignee.id} name={row.assignee.name} size="sm" />
+                            <span className="truncate">{row.assignee.name}</span>
+                          </>
+                        ) : (
+                          `+ ${labels.assign}`
+                        )
+                      }
                       options={row.assignee ? assigneeOptions : assigneeOptions.filter((option) => option.value)}
                       selected={row.assignee?.id ?? ""}
                       onSelect={(assignedToId) => assignOne(row, assignedToId)}
@@ -365,17 +371,17 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                   </td>
 
                   <td className="admin-td whitespace-nowrap">
-                    <time dateTime={row.receivedIso} className="block text-xs text-ink-muted">
+                    <time dateTime={row.receivedIso} className="block text-xs text-adm-text">
                       {row.receivedLabel}
                     </time>
-                    <span
-                      className={[
-                        "mt-0.5 inline-block rounded-full px-1.5 text-[10.5px] tabular-nums",
-                        row.late ? "bg-adm-danger-bg font-medium text-adm-danger" : "bg-adm-neutral-bg text-adm-neutral",
-                      ].join(" ")}
-                    >
-                      {row.ageLabel}
-                    </span>
+                    {/* Only past the response SLA: an age on every row was
+                        noise, and the late ones are the ones to see. */}
+                    {row.late && (
+                      <span className="mt-0.5 flex items-center gap-1 text-[11.5px] tabular-nums text-adm-danger">
+                        <Clock size={11} aria-hidden />
+                        {row.ageLabel}
+                      </span>
+                    )}
                   </td>
                 </tr>
               );
@@ -383,6 +389,11 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
           </tbody>
         </table>
       </div>
+
+      <p className="flex items-center gap-1.5 text-[11.5px] text-adm-muted">
+        <Lock size={12} aria-hidden className="shrink-0" />
+        {labels.pdpaNote}
+      </p>
     </div>
   );
 }

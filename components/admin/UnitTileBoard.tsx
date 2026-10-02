@@ -43,9 +43,9 @@ export type TileUnit = {
 export type TileGroup = { key: string; label: string; meta: string | null; units: TileUnit[] };
 
 const TONE: Record<UnitStatus, string> = {
-  AVAILABLE: "border-adm-success/35 bg-adm-success-bg text-adm-success",
-  RESERVED: "border-adm-warning/35 bg-adm-warning-bg text-adm-warning",
-  SOLD: "border-adm-line bg-adm-neutral-bg text-adm-neutral",
+  AVAILABLE: "border-adm-success/30 bg-adm-success/12 text-adm-success",
+  RESERVED: "border-adm-warning/30 bg-adm-warning/12 text-adm-warning",
+  SOLD: "border-adm-line bg-adm-text/5 text-adm-muted",
 };
 
 const DOT: Record<UnitStatus, string> = {
@@ -157,26 +157,26 @@ export default function UnitTileBoard({ locale, projectId, projectSlug, groups, 
 
       {groups.map((group) => (
         <section key={group.key}>
-          <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold text-ink">
-            {group.label}
-            {group.meta && <span className="text-xs font-normal text-ink-muted">{group.meta}</span>}
+          <h3 className="mb-2 flex items-baseline gap-2 text-xs text-adm-muted">
+            <span className="font-medium text-adm-text">{group.label}</span>
+            {group.meta && <span>· {group.meta}</span>}
           </h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(54px,1fr))] gap-1.5">
             {group.units.map((unit) => {
               const isPicked = picked.has(unit.id);
               const tileClass = [
-                "relative flex h-14 w-full flex-col items-center justify-center rounded-[10px] border text-[13px] font-semibold tabular-nums transition-[transform,box-shadow] hover:-translate-y-px",
-                unit.released ? TONE[unit.status] : "border-dashed border-adm-line-strong bg-transparent text-ink-muted",
+                // Square, mono, and a sand ring that grows on hover — the
+                // mockup's .unit. Status is the tile's colour and its title;
+                // the word under the number did not fit at 54px.
+                "admin-mono relative flex aspect-square w-full items-center justify-center rounded-[9px] border text-[11px] font-semibold tabular-nums transition-[transform,box-shadow] duration-150 hover:z-10 hover:scale-[1.08] hover:shadow-[0_0_0_2px_var(--adm-fill),0_0_14px_var(--adm-rail-glow)] motion-reduce:hover:scale-100",
+                unit.released ? TONE[unit.status] : "border-dashed border-adm-line-strong bg-transparent text-adm-muted",
                 unit.selectedInPanel ? "ring-2 ring-adm-info ring-offset-1 ring-offset-adm-bg" : "",
                 isPicked ? "ring-2 ring-adm-fill ring-offset-1 ring-offset-adm-bg" : "",
               ].join(" ");
               const body = (
                 <>
                   {unit.unitNumber}
-                  <span className="text-[9.5px] font-medium opacity-80">
-                    {unit.released ? statusLabels[unit.status] : labels.unreleased}
-                  </span>
-                  {unit.locked && <Lock size={10} aria-hidden className="absolute right-1.5 top-1.5 opacity-70" />}
+                  {unit.locked && <Lock size={9} aria-hidden className="absolute right-1 top-1 opacity-70" />}
                 </>
               );
               const label = `${unit.unitNumber} · ${unit.released ? statusLabels[unit.status] : labels.unreleased}`;
@@ -186,7 +186,7 @@ export default function UnitTileBoard({ locale, projectId, projectSlug, groups, 
                   <button
                     key={unit.id}
                     type="button"
-                    title={unit.locked ? labels.lockedHint : undefined}
+                    title={unit.locked ? `${label} · ${labels.lockedHint}` : label}
                     aria-label={label}
                     onClick={() => router.push(unit.detailHref, { scroll: false })}
                     className={tileClass}

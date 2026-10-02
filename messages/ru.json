@@ -709,7 +709,8 @@
       "translationMissing": "Ещё не переведено",
       "today": "Сегодня",
       "yesterday": "Вчера",
-      "clearFilter": "Сбросить фильтр"
+      "clearFilter": "Сбросить фильтр",
+      "translationPartial": "Частично переведено"
     },
     "dateTime": {
       "open": "Выберите дату и время",
@@ -761,7 +762,10 @@
           "eventsNone": "Сегодня мероприятий нет",
           "eventsOpen": "{title} · зарегистрировано {taken}",
           "eventsSeats": "{title} · {taken} / {capacity} мест"
-        }
+        },
+        "chipUpdated": "✦ Сводка дня · обновлено {time}",
+        "headline": "{count, plural, one {# дело на сегодня в первую очередь} few {# дела на сегодня в первую очередь} many {# дел на сегодня в первую очередь} other {# дела на сегодня в первую очередь}}",
+        "headlineClear": "сегодня ничего не ждёт"
       },
       "kpi": {
         "title": "Ключевые показатели",
@@ -773,7 +777,8 @@
         "pageViewsHint": "Последние {days} дн.",
         "consent": "Согласие на аналитические cookie",
         "consentHint": "Из {total} решений",
-        "consentNone": "Данных пока нет"
+        "consentNone": "Данных пока нет",
+        "viewsUnit": "просм."
       },
       "inbox": {
         "title": "Задачи",
@@ -804,14 +809,20 @@
         },
         "noCustomer": "Показ без привязанного клиента",
         "appointmentDue": "Назначен на {when}",
-        "missingThai": "Нет тайской версии"
+        "missingThai": "Нет тайской версии",
+        "contentGroup": "{type}: {count, plural, one {# запись} few {# записи} many {# записей} other {# записи}} без тайского",
+        "seeAll": "Показать все ({count})",
+        "subtitle": "По срочности",
+        "urgent": "Срочно"
       },
       "funnel": {
-        "title": "Воронка клиентов"
+        "title": "Воронка клиентов",
+        "allNew": "Все лиды ещё в статусе «Новый» — никто не связан."
       },
       "stock": {
         "title": "Юниты по проектам",
-        "empty": "Ни в одном проекте ещё нет юнитов"
+        "empty": "Ни в одном проекте ещё нет юнитов",
+        "cardLine": "свободно <b>{free}</b> / {total} · {types, plural, one {# тип} few {# типа} many {# типов} other {# типа}} домов"
       },
       "live": {
         "title": "Сейчас на сайте",
@@ -898,7 +909,11 @@
         "noConsent": "Нет согласия",
         "assigned": "Назначено: {name}",
         "unassignedDone": "Ответственный снят",
-        "statusChanged": "Статус: {status}"
+        "statusChanged": "Статус: {status}",
+        "interest": "Интерес",
+        "channel": "Канал",
+        "receivedAt": "Получен",
+        "pdpaNote": "Телефоны и e-mail скрыты по PDPA — откройте лид, чтобы их увидеть (запись в журнале аудита)."
       },
       "bulk": {
         "selected": "Выбрано: {count}",
@@ -945,7 +960,9 @@
           "ASSIGNEE": "Выбранный ответственный не может принимать лиды",
           "SAVE_FAILED": "Не удалось сохранить — попробуйте ещё раз"
         }
-      }
+      },
+      "headerDescription": "Заявки с форм сайта · {count, plural, one {# открытый лид} few {# открытых лида} many {# открытых лидов} other {# открытого лида}}",
+      "viewLabel": "Вид"
     },
     "leadDetail": {
       "title": "Клиент",
@@ -1250,8 +1267,15 @@
         "readiness": "Готовность {percent}%",
         "viewLabel": "Вид списка",
         "viewCards": "Карточки",
-        "viewTable": "Таблица"
-      }
+        "viewTable": "Таблица",
+        "statUnits": "Юниты",
+        "statTypes": "Типы домов",
+        "statPrice": "От",
+        "freeShort": "свободно {free}/{total}"
+      },
+      "headerCounts": "Проектов: {projects} · типов домов: {types} · юнитов: {units} · удобств: {facilities}",
+      "create": "Создать проект",
+      "allProjects": "Все проекты"
     },
     "progress": {
       "title": "Ход строительства",
@@ -2044,6 +2068,18 @@
         "auditNote": "Каждое автоматическое назначение записывается в таймлайн лида: кому и по какому правилу.",
         "disabledNote": "Выключено — новые лиды приходят без исполнителя, их разбирают с доски.",
         "readOnlyNote": "Менять эти правила может только администратор."
+      },
+      "addButton": "Добавить продавца",
+      "onSite": "На сайте",
+      "missingThai": "Нет тайского имени",
+      "noAccountShort": "Нет аккаунта",
+      "cannotTakeLeadsShort": "Не принимает лиды",
+      "message": "Написать в WhatsApp",
+      "workload": {
+        "title": "Нагрузка по лидам",
+        "empty": "Ни у кого в команде пока нет аккаунта.",
+        "leads": "{count, plural, one {# лид} few {# лида} many {# лидов} other {# лида}}",
+        "unlinked": "{count, plural, one {# профиль не связан} few {# профиля не связаны} many {# профилей не связаны} other {# профиля не связаны}} с учётной записью (User.salesPersonId) — распределение лидов их пропускает."
       }
     },
     "heroBanner": {

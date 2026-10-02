@@ -472,7 +472,10 @@ export default function ProjectsTable({
 
       {/* ── Table ──────────────────────────────────────────────────── */}
       <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        {/* A fixed id: dnd-kit otherwise numbers its aria-describedby from a
+          module counter that the server and the browser do not share, and
+          every render of this page was a hydration mismatch. */}
+      <DndContext id="projects-table" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <table className="w-full min-w-[1040px] border-collapse">
             <thead className="border-b border-primary/10 bg-surface-muted">
               <tr>

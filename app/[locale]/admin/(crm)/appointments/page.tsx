@@ -57,6 +57,7 @@ import AppointmentRescheduleInput from "@/components/admin/AppointmentReschedule
 import AppointmentCreateForm from "@/components/admin/AppointmentCreateForm";
 import PageTabs from "@/components/admin/PageTabs";
 import WorkInbox from "@/components/admin/WorkInbox";
+import { getScopedOpenLeadCount } from "@/lib/leads-board";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 type Props = {
@@ -107,6 +108,7 @@ export default async function AdminAppointmentsPage(props: Props) {
      requireAdmin(locale, Role.SALES) here let every content editor read
      every customer's name, phone and email. See lib/permissions.ts. */
   const session = await requireCapability(locale, "viewAllLeads");
+  const openLeadCount = await getScopedOpenLeadCount(session);
 
   /* Month first (the v4 calendar), week on request — the week agenda is
      where appointments are edited in place, so it stays one click away
@@ -286,9 +288,12 @@ export default async function AdminAppointmentsPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      {/* The leads hub's own header: this page is its second tab, and a
+          different title here read as having left the section. */}
       <AdminPageHeader
         eyebrow={{ icon: Users, label: "CRM" }}
-        title={t("title")}
+        title={tRoot("nav.leads")}
+        description={tRoot("leads.headerDescription", { count: openLeadCount })}
         actions={
           <>
             <AppointmentCreateForm
@@ -325,6 +330,7 @@ export default async function AdminAppointmentsPage(props: Props) {
         locale={locale}
         role={session.role}
         groupKey="leads"
+        counts={{ pipeline: openLeadCount }}
         carryParams={["project", "assignedTo"]}
       />
 
@@ -535,6 +541,7 @@ export default async function AdminAppointmentsPage(props: Props) {
               totals={{ lead: 0, appointment: overdue.count, content: 0 }}
               kinds={["appointment"]}
               currentUserId={session.id}
+              variant="rail"
             />
           </section>
 

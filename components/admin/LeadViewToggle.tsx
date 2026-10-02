@@ -3,57 +3,51 @@
 /**
  * components/admin/LeadViewToggle.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Board / table switch for the leads page — a plain link pair rather than
- * a stateful tab, so the choice survives a refresh and is shareable the
- * same way the status/sort filters already are (see LeadFilters.tsx).
+ * Table / board switch for the leads page, at the right of the toolbar.
+ *
+ * The choice goes in the URL (`view=`), so a link opens the same view, and
+ * in a cookie, so the next visit without one opens where this person left
+ * off. A cookie rather than the localStorage display prefs: the page is
+ * rendered on the server, which has to know the view before it can decide
+ * what to query — a stored preference read after hydration would draw the
+ * table and then swap it for the board.
+ *
+ * The table is the default (v4 round two): it is the view that shows the
+ * phone, the owner and the age at once, which is what a rep works from.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LayoutGrid, List } from "lucide-react";
-
-type View = "board" | "table";
+import Segmented from "@/components/admin/ui/Segmented";
+import { LEADS_VIEW_COOKIE, type LeadsView } from "@/lib/admin/leads-view";
 
 type Props = {
   locale: string;
-  active: View;
-  labels: { board: string; table: string };
+  active: LeadsView;
+  labels: { group: string; board: string; table: string };
 };
 
 export default function LeadViewToggle({ locale, active, labels }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  function hrefFor(view: View) {
+  const select = (view: LeadsView) => {
+    document.cookie = `${LEADS_VIEW_COOKIE}=${view}; path=/; max-age=31536000; samesite=lax`;
     const params = new URLSearchParams(searchParams.toString());
-    // "board" is the default, matching the page's own fallback — keep the
-    // URL bare when landing back on it.
-    if (view === "board") params.delete("view");
-    else params.set("view", view);
-    const query = params.toString();
-    return `/${locale}/admin/leads${query ? `?${query}` : ""}`;
-  }
-
-  const item = (view: View, label: string, Icon: typeof LayoutGrid) => (
-    <Link
-      href={hrefFor(view)}
-      aria-current={active === view ? "page" : undefined}
-      className={[
-        "flex items-center gap-1.5 rounded-xs px-3 py-2 text-xs font-medium transition-colors",
-        active === view
-          ? "bg-primary text-white"
-          : "text-ink-muted hover:bg-surface-muted hover:text-primary",
-      ].join(" ")}
-    >
-      <Icon size={14} aria-hidden />
-      {label}
-    </Link>
-  );
+    params.set("view", view);
+    router.push(`/${locale}/admin/leads?${params.toString()}`, { scroll: false });
+  };
 
   return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-xs border border-primary/15 bg-surface-raised p-0.5">
-      {item("board", labels.board, LayoutGrid)}
-      {item("table", labels.table, List)}
-    </div>
+    <Segmented
+      label={labels.group}
+      active={active}
+      onSelect={(key) => select(key as LeadsView)}
+      items={[
+        { key: "table", label: labels.table, icon: List },
+        { key: "board", label: labels.board, icon: LayoutGrid },
+      ]}
+    />
   );
 }

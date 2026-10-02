@@ -13,13 +13,17 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { isValidElement, type ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 export type SegmentedItem = {
   key: string;
   label: string;
-  icon?: LucideIcon;
+  /** A component from a client caller, or an element (`<List size={13} />`)
+   *  from a server page — a function cannot be passed across that
+   *  boundary, and doing so takes the page to its error boundary. */
+  icon?: LucideIcon | ReactNode;
   /** Muted count after the label. */
   count?: number;
   /** Set for link items. */
@@ -50,14 +54,15 @@ export default function Segmented({
     >
       {items.map((item) => {
         const selected = item.key === active;
-        const Icon = item.icon;
+        const icon = item.icon;
+        const Icon = icon && !isValidElement(icon) ? (icon as LucideIcon) : null;
         const cls = [
           "inline-flex h-[26px] items-center gap-1.5 whitespace-nowrap rounded-[7px] px-[11px] text-xs transition-colors",
           selected ? "bg-adm-solid text-adm-text shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-adm-muted hover:text-adm-text",
         ].join(" ");
         const body = (
           <>
-            {Icon && <Icon size={13} aria-hidden />}
+            {Icon ? <Icon size={13} aria-hidden /> : isValidElement(icon) ? icon : null}
             {item.label}
             {item.count !== undefined && <span className="tabular-nums text-adm-muted">{item.count}</span>}
             {item.dot && (

@@ -709,7 +709,8 @@
       "translationMissing": "尚未翻译",
       "today": "今天",
       "yesterday": "昨天",
-      "clearFilter": "清除筛选"
+      "clearFilter": "清除筛选",
+      "translationPartial": "部分翻译"
     },
     "dateTime": {
       "open": "选择日期和时间",
@@ -761,7 +762,10 @@
           "eventsNone": "今天没有活动",
           "eventsOpen": "{title} · 已报名 {taken} 人",
           "eventsSeats": "{title} · {taken} / {capacity} 个座位"
-        }
+        },
+        "chipUpdated": "✦ 今日概要 · 更新于 {time}",
+        "headline": "今天有 {count} 件事需要优先处理",
+        "headlineClear": "今天没有待办事项"
       },
       "kpi": {
         "title": "关键数据",
@@ -773,7 +777,8 @@
         "pageViewsHint": "最近 {days} 天",
         "consent": "分析 Cookie 同意率",
         "consentHint": "基于 {total} 次选择",
-        "consentNone": "暂无数据"
+        "consentNone": "暂无数据",
+        "viewsUnit": "次"
       },
       "inbox": {
         "title": "待办事项",
@@ -804,14 +809,20 @@
         },
         "noCustomer": "未关联客户的预约",
         "appointmentDue": "预约于 {when}",
-        "missingThai": "尚无泰语内容"
+        "missingThai": "尚无泰语内容",
+        "contentGroup": "{type}：{count} 项缺少泰文",
+        "seeAll": "查看全部 {count} 项",
+        "subtitle": "按紧急程度排序",
+        "urgent": "紧急"
       },
       "funnel": {
-        "title": "客户漏斗"
+        "title": "客户漏斗",
+        "allNew": "所有线索仍是“新”状态，尚未联系任何客户。"
       },
       "stock": {
         "title": "各项目单元库存",
-        "empty": "尚无项目录入单元"
+        "empty": "尚无项目录入单元",
+        "cardLine": "空置 <b>{free}</b> / {total} · {types} 种户型"
       },
       "live": {
         "title": "当前访客",
@@ -898,7 +909,11 @@
         "noConsent": "未同意",
         "assigned": "已分配给 {name}",
         "unassignedDone": "已取消分配",
-        "statusChanged": "已改为 {status}"
+        "statusChanged": "已改为 {status}",
+        "interest": "意向",
+        "channel": "渠道",
+        "receivedAt": "收到时间",
+        "pdpaNote": "根据 PDPA，电话和邮箱已隐藏 — 打开详情可查看（记录在审计日志中）。"
       },
       "bulk": {
         "selected": "已选 {count} 项",
@@ -945,7 +960,9 @@
           "ASSIGNEE": "所选负责人无法接收线索",
           "SAVE_FAILED": "保存失败，请重试"
         }
-      }
+      },
+      "headerDescription": "来自网站表单的咨询 · {count} 条未结线索",
+      "viewLabel": "视图"
     },
     "leadDetail": {
       "title": "客户",
@@ -1250,8 +1267,15 @@
         "readiness": "完成度 {percent}%",
         "viewLabel": "列表样式",
         "viewCards": "卡片",
-        "viewTable": "表格"
-      }
+        "viewTable": "表格",
+        "statUnits": "单元",
+        "statTypes": "户型",
+        "statPrice": "起价",
+        "freeShort": "空置 {free}/{total}"
+      },
+      "headerCounts": "{projects} 个项目 · {types} 种户型 · {units} 个单元 · {facilities} 项配套",
+      "create": "创建项目",
+      "allProjects": "全部项目"
     },
     "progress": {
       "title": "施工进度",
@@ -2044,6 +2068,18 @@
         "auditNote": "每次自动分配都会写入该线索的时间线，注明分给了谁以及依据哪条规则。",
         "disabledNote": "已关闭 — 新线索将处于未分配状态，由成员从看板自行认领。",
         "readOnlyNote": "只有管理员可以修改这些规则。"
+      },
+      "addButton": "添加销售",
+      "onSite": "在网站显示",
+      "missingThai": "缺少泰文名",
+      "noAccountShort": "无账户",
+      "cannotTakeLeadsShort": "无法接线索",
+      "message": "WhatsApp 联系",
+      "workload": {
+        "title": "每人线索负载",
+        "empty": "团队中还没有人拥有后台账户。",
+        "leads": "{count} 条线索",
+        "unlinked": "有 {count} 个资料未关联用户账户（User.salesPersonId），线索分配会跳过。"
       }
     },
     "heroBanner": {

@@ -709,7 +709,8 @@
       "translationMissing": "ยังไม่ได้แปล",
       "today": "วันนี้",
       "yesterday": "เมื่อวาน",
-      "clearFilter": "ล้างตัวกรอง"
+      "clearFilter": "ล้างตัวกรอง",
+      "translationPartial": "แปลบางส่วน"
     },
     "dateTime": {
       "open": "เลือกวันและเวลา",
@@ -761,7 +762,10 @@
           "eventsNone": "ไม่มีกิจกรรมวันนี้",
           "eventsOpen": "{title} · ลงทะเบียน {taken} คน",
           "eventsSeats": "{title} · {taken} / {capacity} ที่นั่ง"
-        }
+        },
+        "chipUpdated": "✦ สรุปวันนี้ · อัปเดต {time}",
+        "headline": "วันนี้มี {count} เรื่องที่ควรทำก่อน",
+        "headlineClear": "วันนี้ไม่มีงานค้าง"
       },
       "kpi": {
         "title": "ตัวเลขหลัก",
@@ -773,7 +777,8 @@
         "pageViewsHint": "{days} วันล่าสุด",
         "consent": "ยินยอมคุกกี้วิเคราะห์",
         "consentHint": "จากการตัดสินใจ {total} ครั้ง",
-        "consentNone": "ยังไม่มีข้อมูล"
+        "consentNone": "ยังไม่มีข้อมูล",
+        "viewsUnit": "ครั้ง"
       },
       "inbox": {
         "title": "งานที่ต้องทำ",
@@ -804,14 +809,20 @@
         },
         "noCustomer": "นัดที่ไม่ผูกกับลูกค้า",
         "appointmentDue": "นัด {when}",
-        "missingThai": "ยังไม่มีภาษาไทย"
+        "missingThai": "ยังไม่มีภาษาไทย",
+        "contentGroup": "{type} {count} รายการยังไม่มีภาษาไทย",
+        "seeAll": "ดูทั้งหมด {count} รายการ",
+        "subtitle": "เรียงตามความเร่งด่วน",
+        "urgent": "ด่วน"
       },
       "funnel": {
-        "title": "เส้นทางลูกค้า"
+        "title": "เส้นทางลูกค้า",
+        "allNew": "ลีดทุกรายยังอยู่ที่ขั้น \"ใหม่\" ยังไม่มีใครถูกติดต่อ"
       },
       "stock": {
         "title": "สต็อกยูนิตรายโครงการ",
-        "empty": "ยังไม่มีโครงการที่ใส่ยูนิตไว้"
+        "empty": "ยังไม่มีโครงการที่ใส่ยูนิตไว้",
+        "cardLine": "ว่าง <b>{free}</b> / {total} · {types} แบบบ้าน"
       },
       "live": {
         "title": "ผู้ชมตอนนี้",
@@ -893,12 +904,16 @@
         "select": "เลือก {name}",
         "selectAll": "เลือกทุกแถว",
         "customer": "ลูกค้า",
-        "owner": "ผู้ดูแล",
+        "owner": "ผู้รับผิดชอบ",
         "assign": "มอบหมาย",
         "noConsent": "ไม่ยินยอม",
         "assigned": "มอบหมายให้ {name} แล้ว",
         "unassignedDone": "ยกเลิกการมอบหมายแล้ว",
-        "statusChanged": "เปลี่ยนสถานะเป็น {status} แล้ว"
+        "statusChanged": "เปลี่ยนสถานะเป็น {status} แล้ว",
+        "interest": "สนใจ",
+        "channel": "ช่องทาง",
+        "receivedAt": "รับเมื่อ",
+        "pdpaNote": "เบอร์โทรและอีเมลถูกปิดบังตาม PDPA — กดดูรายละเอียดเพื่อเปิดเผย (บันทึกลง Audit log)"
       },
       "bulk": {
         "selected": "เลือก {count} รายการ",
@@ -945,7 +960,9 @@
           "ASSIGNEE": "ผู้ดูแลที่เลือกใช้งานไม่ได้",
           "SAVE_FAILED": "บันทึกไม่สำเร็จ ลองอีกครั้ง"
         }
-      }
+      },
+      "headerDescription": "ข้อมูลที่ส่งเข้ามาจากฟอร์มบนเว็บไซต์ · {count} ลีดที่ยังเปิดอยู่",
+      "viewLabel": "มุมมอง"
     },
     "leadDetail": {
       "title": "ลูกค้า",
@@ -1250,8 +1267,15 @@
         "readiness": "ความพร้อม {percent}%",
         "viewLabel": "รูปแบบรายการ",
         "viewCards": "การ์ด",
-        "viewTable": "ตาราง"
-      }
+        "viewTable": "ตาราง",
+        "statUnits": "ยูนิต",
+        "statTypes": "แบบบ้าน",
+        "statPrice": "ราคาเริ่ม",
+        "freeShort": "ว่าง {free}/{total}"
+      },
+      "headerCounts": "{projects} โครงการ · {types} แบบบ้าน · {units} ยูนิต · {facilities} สิ่งอำนวยความสะดวก",
+      "create": "สร้างโครงการ",
+      "allProjects": "โครงการทั้งหมด"
     },
     "progress": {
       "title": "ความคืบหน้าการก่อสร้าง",
@@ -2044,6 +2068,18 @@
         "auditNote": "ทุกครั้งที่ระบบจ่ายงานอัตโนมัติ จะบันทึกลงไทม์ไลน์ของลีดว่าใครได้รับและเพราะกติกาข้อไหน",
         "disabledNote": "ปิดอยู่ — ลีดใหม่จะเข้ามาแบบยังไม่มีเจ้าของ ให้ไปรับเองจากบอร์ด",
         "readOnlyNote": "เฉพาะผู้ดูแลระบบเท่านั้นที่แก้กติกาได้"
+      },
+      "addButton": "เพิ่มพนักงานขาย",
+      "onSite": "แสดงบนเว็บ",
+      "missingThai": "ขาดชื่อไทย",
+      "noAccountShort": "ยังไม่มีบัญชี",
+      "cannotTakeLeadsShort": "รับลีดไม่ได้",
+      "message": "ส่งข้อความทาง WhatsApp",
+      "workload": {
+        "title": "ภาระงานลีดต่อคน",
+        "empty": "ยังไม่มีใครในทีมที่มีบัญชีหลังบ้าน",
+        "leads": "{count} ลีด",
+        "unlinked": "มี {count} โปรไฟล์ที่ยังไม่ได้ผูกกับบัญชีผู้ใช้ (User.salesPersonId) ระบบแจกลีดจึงข้ามไป"
       }
     },
     "heroBanner": {

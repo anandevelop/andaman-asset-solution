@@ -31,3 +31,15 @@ export const LEAD_STATUS_DOT: Record<LeadStatus, string> = {
   WON: "bg-adm-success",
   LOST: "bg-adm-danger",
 };
+
+/** The dot's hue as `color`, for what is drawn in currentColor — the
+ *  dashboard funnel's glow is a box-shadow in the bar's own colour. */
+export const LEAD_STATUS_TEXT: Record<LeadStatus, string> = {
+  NEW: "text-adm-status-info",
+  CONTACTED: "text-adm-neutral",
+  QUALIFIED: "text-adm-info",
+  VIEWING_SCHEDULED: "text-adm-fill",
+  NEGOTIATING: "text-adm-warning",
+  WON: "text-adm-success",
+  LOST: "text-adm-danger",
+};

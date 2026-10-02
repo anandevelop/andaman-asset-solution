@@ -25,7 +25,7 @@
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { LeadSource, LeadStatus } from "@prisma/client";
 import Segmented from "@/components/admin/ui/Segmented";
 import FilterChip from "@/components/admin/ui/FilterChip";
@@ -54,6 +54,8 @@ type Props = {
   sourceLabels: Record<LeadSource, string>;
   assignees: { id: string; name: string }[];
   projects: { id: string; name: string }[];
+  /** After the search — the table/board switch. */
+  trailing?: ReactNode;
   labels: {
     views: string;
     viewAll: string;
@@ -293,6 +295,7 @@ export default function LeadFilters(props: Props) {
           </button>
         )}
       </label>
+      {props.trailing}
     </div>
   );
 }

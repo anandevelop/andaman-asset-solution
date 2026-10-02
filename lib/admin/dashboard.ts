@@ -190,6 +190,7 @@ export type ProjectStockRow = {
   reserved: number;
   sold: number;
   total: number;
+  unitTypes: number;
 };
 
 /**
@@ -215,6 +216,7 @@ export async function getProjectStock(): Promise<ProjectStockRow[]> {
             status: true,
             heroImageUrl: true,
             ogImageUrl: true,
+            _count: { select: { unitTypes: true } },
           },
         }),
         prisma.projectUnit.groupBy({ by: ["projectId", "status"], _count: { _all: true } }),
@@ -224,7 +226,7 @@ export async function getProjectStock(): Promise<ProjectStockRow[]> {
         counts.find((row) => row.projectId === projectId && row.status === status)?._count._all ?? 0;
 
       return projects
-        .map(({ heroImageUrl, ogImageUrl, ...project }) => {
+        .map(({ heroImageUrl, ogImageUrl, _count, ...project }) => {
           const available = count(project.id, UnitStatus.AVAILABLE);
           const reserved = count(project.id, UnitStatus.RESERVED);
           const sold = count(project.id, UnitStatus.SOLD);
@@ -235,6 +237,7 @@ export async function getProjectStock(): Promise<ProjectStockRow[]> {
             reserved,
             sold,
             total: available + reserved + sold,
+            unitTypes: _count.unitTypes,
           };
         })
         .filter((project) => project.total > 0);

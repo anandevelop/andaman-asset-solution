@@ -709,7 +709,8 @@
       "translationMissing": "Not translated yet",
       "today": "Today",
       "yesterday": "Yesterday",
-      "clearFilter": "Clear filter"
+      "clearFilter": "Clear filter",
+      "translationPartial": "Partly translated"
     },
     "dateTime": {
       "open": "Choose a date and time",
@@ -761,7 +762,10 @@
           "eventsNone": "No event today",
           "eventsOpen": "{title} · {taken} registered",
           "eventsSeats": "{title} · {taken} / {capacity} seats"
-        }
+        },
+        "chipUpdated": "✦ Today's summary · updated {time}",
+        "headline": "{count, plural, one {# thing to do first today} other {# things to do first today}}",
+        "headlineClear": "nothing waiting today"
       },
       "kpi": {
         "title": "Key numbers",
@@ -773,7 +777,8 @@
         "pageViewsHint": "Last {days} days",
         "consent": "Analytics cookie consent",
         "consentHint": "From {total} decisions",
-        "consentNone": "No data yet"
+        "consentNone": "No data yet",
+        "viewsUnit": "views"
       },
       "inbox": {
         "title": "To do",
@@ -804,14 +809,20 @@
         },
         "noCustomer": "Viewing with no customer linked",
         "appointmentDue": "Due {when}",
-        "missingThai": "No Thai yet"
+        "missingThai": "No Thai yet",
+        "contentGroup": "{type}: {count, plural, one {# item} other {# items}} without Thai",
+        "seeAll": "See all {count}",
+        "subtitle": "Sorted by urgency",
+        "urgent": "Urgent"
       },
       "funnel": {
-        "title": "Customer funnel"
+        "title": "Customer funnel",
+        "allNew": "Every lead is still New — nobody has been contacted yet."
       },
       "stock": {
         "title": "Unit stock by project",
-        "empty": "No project has units entered yet"
+        "empty": "No project has units entered yet",
+        "cardLine": "<b>{free}</b> of {total} free · {types, plural, one {# house type} other {# house types}}"
       },
       "live": {
         "title": "On the site now",
@@ -898,7 +909,11 @@
         "noConsent": "No consent",
         "assigned": "Assigned to {name}",
         "unassignedDone": "Unassigned",
-        "statusChanged": "Moved to {status}"
+        "statusChanged": "Moved to {status}",
+        "interest": "Interested in",
+        "channel": "Channel",
+        "receivedAt": "Received",
+        "pdpaNote": "Phone numbers and emails are masked under the PDPA — open a lead to reveal them (recorded in the audit log)."
       },
       "bulk": {
         "selected": "{count} selected",
@@ -945,7 +960,9 @@
           "ASSIGNEE": "The selected owner can't take leads",
           "SAVE_FAILED": "Couldn't save — try again"
         }
-      }
+      },
+      "headerDescription": "Enquiries from the website's forms · {count, plural, one {# open lead} other {# open leads}}",
+      "viewLabel": "View"
     },
     "leadDetail": {
       "title": "Lead",
@@ -1250,8 +1267,15 @@
         "readiness": "{percent}% ready",
         "viewLabel": "List layout",
         "viewCards": "Cards",
-        "viewTable": "Table"
-      }
+        "viewTable": "Table",
+        "statUnits": "Units",
+        "statTypes": "House types",
+        "statPrice": "From",
+        "freeShort": "{free}/{total} free"
+      },
+      "headerCounts": "{projects} projects · {types} house types · {units} units · {facilities} facilities",
+      "create": "Create project",
+      "allProjects": "All projects"
     },
     "progress": {
       "title": "Construction progress",
@@ -2044,6 +2068,18 @@
         "auditNote": "Every automatic assignment is written to that lead’s timeline, naming who got it and which rule sent it there.",
         "disabledNote": "Turned off — new leads arrive unassigned for someone to claim from the board.",
         "readOnlyNote": "Only an administrator can change these rules."
+      },
+      "addButton": "Add salesperson",
+      "onSite": "On the website",
+      "missingThai": "No Thai name",
+      "noAccountShort": "No account",
+      "cannotTakeLeadsShort": "Can't take leads",
+      "message": "Message on WhatsApp",
+      "workload": {
+        "title": "Lead load per person",
+        "empty": "No one on the team has a back-office account yet.",
+        "leads": "{count, plural, one {# lead} other {# leads}}",
+        "unlinked": "{count, plural, one {# profile is} other {# profiles are}} not linked to a user account (User.salesPersonId), so the lead router skips them."
       }
     },
     "heroBanner": {

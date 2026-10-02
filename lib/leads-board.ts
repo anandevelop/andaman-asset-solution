@@ -450,3 +450,18 @@ export async function getUnassignedCount(
     0,
   );
 }
+
+/** Every open lead this person can see, no filters — the header's "{n}
+ *  ลีดที่ยังเปิดอยู่" and the tab count, which describe the pipeline, not
+ *  the slice the toolbar has narrowed it to. */
+export async function getScopedOpenLeadCount(session: { id: string; role: Role }): Promise<number> {
+  const scope = await leadScopeWhere(session);
+  return safeQuery(
+    "leadsBoard:openCount",
+    () =>
+      prisma.leadInquiry.count({
+        where: { AND: [scope ?? {}, { status: { notIn: [LeadStatus.WON, LeadStatus.LOST] } }] },
+      }),
+    0,
+  );
+}

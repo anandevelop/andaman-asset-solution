@@ -3,23 +3,24 @@
 /**
  * components/admin/SalesTeamCards.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * One card per member (SalesTeam.dc.html) — who they are, the four numbers
- * that matter, and the switch that puts them on the public site.
- *
- * Every number is computed from the lead timeline (see
- * lib/admin/sales-performance.ts) and none of it is editable here, which
- * is the point of the screen: the team's own dashboard, not a form.
+ * One card per member (SalesTeam.dc.html) — who they are, how to reach
+ * them, and the switch that puts them on the public site. Editing opens a
+ * drawer (`?edit=`), not a form under the grid.
  *
  * A profile with no back-office account cannot be assigned a lead, so its
- * card says so instead of showing four zeroes that read as bad numbers.
+ * card says so.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ImageOff, Loader2, UserPlus } from "lucide-react";
+import { AlertCircle, Loader2, MessageCircle, Pencil } from "lucide-react";
 import { setSalesPersonVisible } from "@/app/[locale]/admin/(crm)/sales-team/actions";
+import AdminImage from "@/components/admin/ui/AdminImage";
+import Avatar from "@/components/admin/ui/Avatar";
+import LocaleFlags from "@/components/admin/ui/LocaleFlags";
+import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 
 export type TeamCardMember = {
   id: string;
@@ -31,40 +32,42 @@ export type TeamCardMember = {
   /**
    * Linked to an account, but one the lead router will skip — a role below
    * SALES cannot act on a lead, so assigning one would park it where nobody
-   * can change its status. Separate from hasAccount because the stats below
-   * are real history and stay worth showing.
+   * can change its status.
    */
   accountCannotTakeLeads: boolean;
   /** Locale codes their profile is written in. */
   languages: string[];
-  openLeads: number;
-  /** Already formatted, e.g. "1 ชม. 24 น." — null when nothing answered. */
-  responseLabel: string | null;
-  responseIsSlow: boolean;
-  viewings30d: number;
-  closed90d: number;
+  /** No Thai name yet: the Thai site would show the English one. */
+  missingThai: boolean;
+  phone: string;
+  whatsapp: string;
+  email: string | null;
 };
 
 type Props = {
   locale: string;
   members: TeamCardMember[];
-  addHref: string;
+  /** "?edit=" plus an id opens that person's drawer; null for a role that
+   *  may look but not change the roster. */
+  editHrefBase: string | null;
   labels: {
-    openLeads: string;
-    avgResponse: string;
-    viewings30d: string;
-    closed90d: string;
     showOnSite: string;
+    onSite: string;
+    missingThai: string;
     noAccount: string;
     accountCannotTakeLeads: string;
-    noResponses: string;
-    addTitle: string;
-    addBody: string;
+    edit: string;
+    message: string;
     error: string;
   };
 };
 
-export default function SalesTeamCards({ locale, members, addHref, labels }: Props) {
+/**
+ * Centred cards, four across (the v4 mockup): who they are and how to
+ * reach them. The numbers moved to the workload card and the performance
+ * table below, which compare people — a number alone on a card did not.
+ */
+export default function SalesTeamCards({ locale, members, editHrefBase, labels }: Props) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -81,102 +84,104 @@ export default function SalesTeamCards({ locale, members, addHref, labels }: Pro
     });
   };
 
-  const Stat = ({
-    value,
-    label,
-    tone,
-  }: {
-    value: string;
-    label: string;
-    tone?: "normal" | "warn";
-  }) => (
-    <div>
-      <p
-        className={`text-xl font-semibold ${tone === "warn" ? "text-red-700" : "text-primary"}`}
-      >
-        {value}
-      </p>
-      <p className={`text-[11px] ${tone === "warn" ? "text-red-700" : "text-ink-muted"}`}>{label}</p>
-    </div>
-  );
-
   return (
     <>
       {error && (
-        <p className="flex items-center gap-1.5 rounded-xs border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+        <p className="flex items-center gap-1.5 rounded-control border border-adm-danger/30 bg-adm-danger-bg px-4 py-2.5 text-sm text-adm-danger">
           <AlertCircle size={15} aria-hidden />
           {labels.error}
         </p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {members.map((member) => (
-          <div key={member.id} className="admin-card flex flex-col gap-4">
-            <div className="flex items-start gap-3">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xs bg-surface-muted">
-                {member.photoUrl ? (
-                  /* Plain <img>, like every other admin thumbnail — see
-                     ProjectsTable for why next/image is wrong here. */
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={member.photoUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-                ) : (
-                  <ImageOff size={16} className="text-ink-muted" aria-hidden />
-                )}
-              </span>
+        {members.map((member, index) => (
+          <div key={member.id} className="admin-card relative flex flex-col items-center text-center">
+            <span className="admin-mono absolute left-3.5 top-3 text-[11px] text-adm-muted">#{index + 1}</span>
 
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-primary">{member.name}</p>
-                <p className="truncate text-xs text-ink-muted">{member.position}</p>
-                <span className="mt-1.5 flex flex-wrap gap-1">
-                  {member.languages.map((code) => (
-                    <span
-                      key={code}
-                      className="rounded-xs bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-ink-muted"
-                    >
-                      {code}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            </div>
-
-            {member.hasAccount ? (
-              <div className="border-t border-primary/10 pt-3">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                  <Stat value={String(member.openLeads)} label={labels.openLeads} />
-                  <Stat
-                    value={member.responseLabel ?? labels.noResponses}
-                    label={labels.avgResponse}
-                    tone={member.responseIsSlow ? "warn" : "normal"}
-                  />
-                  <Stat value={String(member.viewings30d)} label={labels.viewings30d} />
-                  <Stat value={String(member.closed90d)} label={labels.closed90d} />
-                </div>
-
-                {member.accountCannotTakeLeads && (
-                  <p className="mt-3 text-xs leading-relaxed text-amber-800">
-                    {labels.accountCannotTakeLeads}
-                  </p>
-                )}
-              </div>
+            {member.photoUrl ? (
+              <AdminImage
+                src={member.photoUrl}
+                loading="lazy"
+                iconSize={20}
+                className="mt-2 h-[72px] w-[72px] rounded-full object-cover"
+              />
             ) : (
-              <p className="border-t border-primary/10 pt-3 text-xs leading-relaxed text-ink-muted">
-                {labels.noAccount}
-              </p>
+              <Avatar id={member.id} name={member.name} size="xl" className="mt-2" />
             )}
 
-            <div className="mt-auto flex items-center justify-between gap-3 border-t border-primary/10 pt-3">
-              <span className="text-xs text-ink-muted">{labels.showOnSite}</span>
+            <p className="mt-3 max-w-full truncate text-sm font-semibold text-adm-text">{member.name}</p>
+            <p className="max-w-full truncate text-xs text-adm-muted">{member.position}</p>
+            <span className="mt-2">
+              <LocaleFlags
+                locales={LOCALE_DISPLAY_ORDER.map((code) => ({
+                  locale: code,
+                  state: member.languages.includes(code) ? "complete" : "missing",
+                }))}
+              />
+            </span>
+
+            <div className="mt-3 w-full space-y-1 border-t border-adm-line pt-3 text-left">
+              <p className="admin-mono truncate text-xs text-adm-text">{member.phone}</p>
+              {member.email && <p className="admin-mono truncate text-xs text-adm-muted">{member.email}</p>}
+            </div>
+
+            <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+              {member.isActive && (
+                <span className="rounded-full bg-adm-success-bg px-2 py-0.5 text-[11px] font-medium text-adm-success">
+                  {labels.onSite}
+                </span>
+              )}
+              {member.missingThai && (
+                <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-medium text-adm-warning">
+                  {labels.missingThai}
+                </span>
+              )}
+              {!member.hasAccount && (
+                <span
+                  title={labels.noAccount}
+                  className="rounded-full bg-adm-neutral-bg px-2 py-0.5 text-[11px] text-adm-neutral"
+                >
+                  {labels.noAccount}
+                </span>
+              )}
+              {member.accountCannotTakeLeads && (
+                <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] text-adm-warning">
+                  {labels.accountCannotTakeLeads}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-auto flex w-full items-center gap-1.5 pt-4">
+              {editHrefBase && (
+                <Link href={`${editHrefBase}${member.id}`} scroll={false} className="admin-btn-ghost admin-btn-sm">
+                  <Pencil size={13} aria-hidden />
+                  {labels.edit}
+                </Link>
+              )}
+              {member.whatsapp && (
+                <a
+                  href={`https://wa.me/${member.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${labels.message}: ${member.name}`}
+                  title={labels.message}
+                  className="admin-btn-quiet admin-btn-sm"
+                >
+                  <MessageCircle size={14} aria-hidden />
+                </a>
+              )}
+
               <button
                 type="button"
                 role="switch"
                 aria-checked={member.isActive}
                 aria-label={`${labels.showOnSite}: ${member.name}`}
-                disabled={pending}
+                title={labels.showOnSite}
+                disabled={pending || !editHrefBase}
                 onClick={() => toggle(member)}
                 className={[
-                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50",
-                  member.isActive ? "bg-emerald-500" : "bg-primary/20",
+                  "relative ml-auto inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50",
+                  member.isActive ? "bg-adm-success" : "bg-adm-text/20",
                 ].join(" ")}
               >
                 <span
@@ -185,23 +190,12 @@ export default function SalesTeamCards({ locale, members, addHref, labels }: Pro
                     member.isActive ? "translate-x-[18px]" : "translate-x-[3px]",
                   ].join(" ")}
                 >
-                  {busyId === member.id && (
-                    <Loader2 size={12} className="animate-spin text-primary" aria-hidden />
-                  )}
+                  {busyId === member.id && <Loader2 size={12} className="animate-spin text-adm-band" aria-hidden />}
                 </span>
               </button>
             </div>
           </div>
         ))}
-
-        <Link
-          href={addHref}
-          className="flex flex-col items-center justify-center gap-2 rounded-xs border border-dashed border-primary/25 p-6 text-center transition-colors hover:border-primary/40"
-        >
-          <UserPlus size={22} className="text-ink-muted" aria-hidden />
-          <span className="text-sm font-medium text-primary">{labels.addTitle}</span>
-          <span className="text-xs leading-relaxed text-ink-muted">{labels.addBody}</span>
-        </Link>
       </div>
     </>
   );

@@ -84,19 +84,58 @@ export type InboxItem = {
   href: string | null;
 };
 
-/** Oldest first. The longest wait is the one most likely to have already
- *  cost something, which is the whole of this inbox's ordering rule.
- *  Undated rows (content gaps) go last: a customer who has waited a day
- *  outranks a missing Thai FAQ answer that has waited for nobody. */
+/**
+ * Who has waited longest, in tiers: leads already past the response SLA,
+ * then the other unassigned leads, then appointments nobody closed, then
+ * content. Oldest first inside a tier.
+ *
+ * Tiers rather than one oldest-first list: a three-week-old appointment
+ * that is only a status nobody set would otherwise sit above a lead that
+ * arrived this morning and has a person waiting on a call. Content goes
+ * last — a missing Thai FAQ answer has waited for nobody.
+ */
+function inboxTier(item: InboxItem): number {
+  if (item.kind === "lead") return item.late ? 0 : 1;
+  return item.kind === "appointment" ? 2 : 3;
+}
+
 export function sortInbox(items: readonly InboxItem[]): InboxItem[] {
   return [...items].sort((a, b) => {
+    const tier = inboxTier(a) - inboxTier(b);
+    if (tier !== 0) return tier;
     if (a.since === null || b.since === null) {
       if (a.since !== b.since) return a.since === null ? 1 : -1;
-    } else if (a.since !== b.since) {
-      return a.since.localeCompare(b.since);
+      // Undated rows (content groups) keep the order they came in —
+      // groupContentGaps already put the largest first. Sort is stable.
+      return 0;
     }
+    if (a.since !== b.since) return a.since.localeCompare(b.since);
     return a.key.localeCompare(b.key);
   });
+}
+
+/** How many rows the inbox shows before "see all" (the v4 mockup's six). */
+export const INBOX_VISIBLE = 6;
+
+/**
+ * Content gaps, one row per content type rather than per record.
+ *
+ * Per record, fifteen house types without Thai filled the inbox and pushed
+ * the one waiting customer below the fold — the inbox is for what to do
+ * next, and "translate the house types" is one job however many rows it
+ * covers. Largest first; the translation report has the per-record list.
+ */
+export function groupContentGaps<S extends string, G extends string>(
+  gaps: readonly { section: S; group: G; label: string }[],
+): { section: S; group: G; count: number; sample: string[] }[] {
+  const bySection = new Map<S, { section: S; group: G; count: number; sample: string[] }>();
+  for (const gap of gaps) {
+    const entry = bySection.get(gap.section) ?? { section: gap.section, group: gap.group, count: 0, sample: [] };
+    entry.count += 1;
+    if (entry.sample.length < 2) entry.sample.push(gap.label);
+    bySection.set(gap.section, entry);
+  }
+  return [...bySection.values()].sort((a, b) => b.count - a.count || a.section.localeCompare(b.section));
 }
 
 export function inboxCounts(items: readonly InboxItem[]): Record<InboxKind | "all", number> {

@@ -16,13 +16,14 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { getMyAppointmentsToday } from "@/lib/appointments";
 import { LeadSource, LeadStatus, Prisma, Role } from "@prisma/client";
 import { isDatabaseOffline } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { can } from "@/lib/permissions";
-import { initialsFrom, intlLocale } from "@/lib/format";
+import { intlLocale } from "@/lib/format";
 import { maskPhone } from "@/lib/contact-mask";
 import { ageParts } from "@/lib/admin/dashboard-model";
 import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
@@ -34,6 +35,7 @@ import {
   getLeadBoardFilterOptions,
   getLeadTableRows,
   getOverdueCount,
+  getScopedOpenLeadCount,
   getUnassignedCount,
   type LeadBoardFilters,
 } from "@/lib/leads-board";
@@ -47,6 +49,7 @@ import type { LeadCardView } from "@/components/admin/LeadBoardCard";
 import LeadDrawer from "@/components/admin/LeadDrawer";
 import LeadDetailView from "@/components/admin/LeadDetailView";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { LEADS_VIEW_COOKIE, resolveLeadsView } from "@/lib/admin/leads-view";
 import { Plus, Users } from "lucide-react";
 import LeadCreateDrawer from "@/components/admin/LeadCreateDrawer";
 
@@ -150,7 +153,7 @@ export default async function AdminLeadsPage(props: Props) {
      counts object through a context. */
   const appointmentsToday = (await getMyAppointmentsToday(session.id)).length;
 
-  const view = searchParams.view === "table" ? "table" : "board";
+  const view = resolveLeadsView(searchParams.view, (await cookies()).get(LEADS_VIEW_COOKIE)?.value);
   const status = parseStatus(searchParams.status);
   const direction: Prisma.SortOrder = searchParams.sort === "oldest" ? "asc" : "desc";
   const source = parseSource(searchParams.source);
@@ -188,12 +191,13 @@ export default async function AdminLeadsPage(props: Props) {
     q: query || undefined,
   };
 
-  const [filterOptions, overdueCount, unassignedCount] = await Promise.all([
+  const [filterOptions, overdueCount, unassignedCount, openLeadCount] = await Promise.all([
     getLeadBoardFilterOptions(),
     // The saved-view counts ignore the assignee and SLA filters they
     // themselves set, so "unassigned · 4" still says 4 while "mine" is on.
     getOverdueCount(session, { ...boardFilters, assignedTo: undefined, overdueOnly: false }),
     getUnassignedCount(session, { ...boardFilters, assignedTo: undefined, overdueOnly: false }),
+    getScopedOpenLeadCount(session),
   ]);
 
   /* SALES may only give a lead to themselves (assignLead enforces it), so
@@ -275,6 +279,13 @@ export default async function AdminLeadsPage(props: Props) {
         range90: t("dashboard.range90"),
         range365: t("dashboard.range365"),
       }}
+      trailing={
+        <LeadViewToggle
+          locale={locale}
+          active={view}
+          labels={{ group: t("leads.viewLabel"), board: t("leads.boardView"), table: t("leads.tableView") }}
+        />
+      }
     />
   );
 
@@ -300,24 +311,17 @@ export default async function AdminLeadsPage(props: Props) {
   const header = (
     <AdminPageHeader
       eyebrow={{ icon: Users, label: "CRM" }}
-      title={t("leads.title")}
-      description={t("leads.subtitle")}
+      title={t("nav.leads")}
+      description={t("leads.headerDescription", { count: openLeadCount })}
       actions={
         <>
-          <div className="flex items-center gap-2.5">
-        <LeadViewToggle
-          locale={locale}
-          active={view}
-          labels={{ board: t("leads.boardView"), table: t("leads.tableView") }}
-        />
-        {/* Carries the current status filter, so the file matches the
-            table rather than always exporting everything. */}
-        <LeadExportButton status={searchParams.status ?? "ALL"} />
-        <Link href={newLeadHref} scroll={false} className="admin-btn">
-          <Plus size={15} aria-hidden />
-          {t("leads.create.button")}
-        </Link>
-      </div>
+          {/* Carries the current status filter, so the file matches the
+              table rather than always exporting everything. */}
+          <LeadExportButton status={searchParams.status ?? "ALL"} />
+          <Link href={newLeadHref} scroll={false} className="admin-btn">
+            <Plus size={15} aria-hidden />
+            {t("leads.create.button")}
+          </Link>
         </>
       }
     />
@@ -333,6 +337,7 @@ export default async function AdminLeadsPage(props: Props) {
       role={session.role}
       groupKey="leads"
       badges={{ appointments: appointmentsToday }}
+      counts={{ pipeline: openLeadCount }}
       carryParams={["project", "assignedTo"]}
     />
   );
@@ -472,7 +477,6 @@ export default async function AdminLeadsPage(props: Props) {
     return {
       id: lead.id,
       name: lead.name,
-      initials: initialsFrom(lead.name),
       // Masked here, on the server: the full number never reaches the
       // browser from a list. See lib/contact-mask.ts.
       maskedPhone: maskPhone(lead.phone),
@@ -515,11 +519,12 @@ export default async function AdminLeadsPage(props: Props) {
           labels={{
             selectAll: t("leads.table.selectAll"),
             customer: t("leads.table.customer"),
-            project: t("leads.project"),
-            source: t("leads.source"),
+            interest: t("leads.table.interest"),
+            channel: t("leads.table.channel"),
             status: t("leads.status"),
             owner: t("leads.table.owner"),
-            received: t("leads.received"),
+            receivedAt: t("leads.table.receivedAt"),
+            pdpaNote: t("leads.table.pdpaNote"),
             assign: t("leads.table.assign"),
             unassign: t("leads.unassigned"),
             noProject: t("leads.noProject"),

@@ -40,7 +40,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Building2, Eye, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Role, type LeadStatus, type ProjectStatus } from "@prisma/client";
 import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
 import {
@@ -58,6 +58,7 @@ import {
   FUNNEL_STAGES,
   ageParts,
   dailySeries,
+  groupContentGaps,
   rankDelta,
   sortInbox,
   type InboxItem,
@@ -76,6 +77,7 @@ import DailyBrief, { type BriefTile } from "@/components/admin/DailyBrief";
 import KpiCard from "@/components/admin/KpiCard";
 import Sparkline from "@/components/admin/Sparkline";
 import WorkInbox from "@/components/admin/WorkInbox";
+import { LEAD_STATUS_DOT, LEAD_STATUS_TEXT } from "@/lib/admin/lead-status-tone";
 import AdminImage from "@/components/admin/ui/AdminImage";
 
 type Props = {
@@ -86,7 +88,6 @@ type Props = {
 /** Window for the leads sparkline and the page-view total. */
 const LEAD_DAYS = 14;
 const VIEW_DAYS = 30;
-const INBOX_CONTENT_TAKE = 12;
 
 /** Which of the 3 greetings to use, in the site's own timezone rather than
  *  the server's — a UTC-hosted server saying "good evening" at Bangkok
@@ -208,7 +209,7 @@ export default async function AdminDashboardPage(props: Props) {
         oldestLeadHours === null
           ? t("dashboard.brief.tiles.leadsNone")
           : t("dashboard.brief.tiles.leadsOldest", { hours: oldestLeadHours }),
-      alert: oldestLeadHours !== null && oldestLeadHours >= RESPONSE_SLA_HOURS,
+      tone: "lead",
     });
     tiles.push({
       key: "overdue",
@@ -216,7 +217,7 @@ export default async function AdminDashboardPage(props: Props) {
       label: t("dashboard.brief.tiles.overdue"),
       value: n(overdue.count),
       hint: overdue.count > 0 ? t("dashboard.brief.tiles.overdueHint") : t("dashboard.brief.tiles.overdueNone"),
-      alert: overdue.count > 0,
+      tone: "overdue",
     });
     if (unassigned.count > 0) sentenceParts.push(t("dashboard.brief.parts.leads", { count: unassigned.count }));
     if (overdue.count > 0) sentenceParts.push(t("dashboard.brief.parts.overdue", { count: overdue.count }));
@@ -228,6 +229,7 @@ export default async function AdminDashboardPage(props: Props) {
       href: `${base}/events`,
       label: t("dashboard.brief.tiles.events"),
       value: n(todayEvents.length),
+      tone: "event",
       hint: !firstEvent
         ? t("dashboard.brief.tiles.eventsNone")
         : firstEvent.capacity === null
@@ -244,6 +246,10 @@ export default async function AdminDashboardPage(props: Props) {
     if (todayEvents.length > 0) sentenceParts.push(t("dashboard.brief.parts.events", { count: todayEvents.length }));
   }
 
+  // "Things to do first": the people waiting — leads nobody owns and
+  // viewings nobody closed. Today's events are on the calendar already.
+  const firstThings = can.leads ? unassigned.count + overdue.count : 0;
+
   const sentence =
     sentenceParts.length > 0
       ? t("dashboard.brief.waiting", { list: sentenceParts.join(" · ") })
@@ -253,6 +259,7 @@ export default async function AdminDashboardPage(props: Props) {
   const contentGaps = (translations?.groups ?? []).flatMap((group) =>
     group.items.filter((item) => item.missingLocales.includes("th")).map((item) => ({ ...item, group: group.group })),
   );
+  const contentGroups = groupContentGaps(contentGaps);
 
   const inboxItems: InboxItem[] = sortInbox([
     ...unassigned.rows.map((lead) => {
@@ -290,16 +297,19 @@ export default async function AdminDashboardPage(props: Props) {
       late: true,
       href: `${base}/appointments`,
     })),
-    ...contentGaps.slice(0, INBOX_CONTENT_TAKE).map((gap) => ({
-      key: `content:${gap.group}:${gap.id}`,
+    ...contentGroups.map((entry) => ({
+      key: `content:${entry.section}`,
       kind: "content" as const,
-      id: gap.id,
-      title: gap.label,
-      detail: t("dashboard.inbox.missingThai"),
+      id: entry.section,
+      title: t("dashboard.inbox.contentGroup", {
+        type: t(`seoTranslations.section.${entry.section}`),
+        count: entry.count,
+      }),
+      detail: entry.sample.join(" · "),
       since: null,
       ageLabel: null,
       late: false,
-      href: `${base}${gap.editHref}`,
+      href: `${base}/publishing/translations?group=${entry.group}`,
     })),
   ]);
 
@@ -356,10 +366,25 @@ export default async function AdminDashboardPage(props: Props) {
       )}
 
       <DailyBrief
-        chip={t("dashboard.brief.chip")}
+        chip={t("dashboard.brief.chipUpdated", {
+          time: new Intl.DateTimeFormat(intlLocale(locale), {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Bangkok",
+          }).format(now),
+        })}
+        dateLabel={new Intl.DateTimeFormat(intlLocale(locale), {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          timeZone: "Asia/Bangkok",
+        }).format(now)}
         greeting={t(`dashboard.${timeOfDayGreetingKey(now)}`, {
           name: session.name,
         })}
+        headline={firstThings > 0 ? t("dashboard.brief.headline", { count: firstThings }) : t("dashboard.brief.headlineClear")}
+        headlineHasWork={firstThings > 0}
         sentence={sentence}
         tiles={tiles}
       />
@@ -368,41 +393,52 @@ export default async function AdminDashboardPage(props: Props) {
       <section aria-label={t("dashboard.kpi.title")} className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <KpiCard
           href={can.leads ? `${base}/leads` : null}
+          icon={Users}
+          tone="info"
           label={t("dashboard.kpi.openLeads")}
           value={n(openLeads)}
           hint={t("dashboard.kpi.openLeadsHint", {
             count: arrivalSeries.reduce((sum, value) => sum + value, 0),
             days: LEAD_DAYS,
           })}
-          visual={<Sparkline values={arrivalSeries} />}
+          sparkline={<Sparkline values={arrivalSeries} />}
         />
         <KpiCard
           href={can.projects ? `${base}/projects` : null}
+          icon={Building2}
+          tone="success"
           label={t("dashboard.kpi.units")}
-          value={`${n(units.available)} / ${n(units.total)}`}
+          value={n(units.available)}
+          unit={`/${n(units.total)}`}
           hint={t("dashboard.kpi.unitsHint", {
             reserved: units.reserved,
             sold: units.sold,
           })}
-          visual={units.total > 0 ? <StockBar {...units} /> : undefined}
+          bar={units.total > 0 ? <StockBar {...units} /> : undefined}
         />
         <KpiCard
           href={can.analytics ? `${base}/analytics` : null}
+          icon={Eye}
+          tone="ocean"
           label={t("dashboard.kpi.pageViews")}
           value={n(viewTotal)}
+          unit={t("dashboard.kpi.viewsUnit")}
           hint={t("dashboard.kpi.pageViewsHint", { days: VIEW_DAYS })}
-          visual={<Sparkline values={viewSeries} />}
+          sparkline={<Sparkline values={viewSeries} />}
         />
         <KpiCard
           href={can.analytics ? `${base}/analytics` : null}
+          icon={ShieldCheck}
+          tone="content"
           label={t("dashboard.kpi.consent")}
-          value={consent.analyticsRate === null ? "—" : `${consent.analyticsRate}%`}
+          value={consent.analyticsRate === null ? "—" : String(consent.analyticsRate)}
+          unit={consent.analyticsRate === null ? undefined : "%"}
           hint={
             consent.analyticsRate === null
               ? t("dashboard.kpi.consentNone")
               : t("dashboard.kpi.consentHint", { total: consent.total })
           }
-          visual={
+          bar={
             consent.analyticsRate === null ? undefined : (
               <span className="block h-1.5 overflow-hidden rounded-full bg-adm-line">
                 <span className="block h-full rounded-full bg-current" style={{ width: `${consent.analyticsRate}%` }} />
@@ -416,23 +452,19 @@ export default async function AdminDashboardPage(props: Props) {
           would otherwise leave its slot as a hole. */}
       <div className="grid grid-flow-dense grid-cols-12 items-start gap-4">
         {inboxKinds.length > 0 && (
-          <Card
-            className="col-span-12 xl:col-span-8"
-            title={t("dashboard.inbox.title")}
-            flush
-          >
+          <section aria-label={t("dashboard.inbox.title")} className="admin-card col-span-12 overflow-hidden p-0! xl:col-span-8">
             <WorkInbox
               locale={locale}
               items={inboxItems}
               totals={{
                 lead: unassigned.count,
                 appointment: overdue.count,
-                content: contentGaps.length,
+                content: contentGroups.length,
               }}
               kinds={inboxKinds}
               currentUserId={session.id}
             />
-          </Card>
+          </section>
         )}
 
         {can.leads && (
@@ -447,15 +479,17 @@ export default async function AdminDashboardPage(props: Props) {
                 return (
                   <li key={stage}>
                     <Link href={`${base}/leads?status=${stage}`} className="group block">
-                      <span className="mb-1 flex items-baseline justify-between gap-3 text-xs">
-                        <span className="truncate text-ink group-hover:text-primary-500">
+                      <span className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
+                        <span className="truncate text-adm-text group-hover:text-adm-accent-ink">
                           {t(`leadStatus.${stage}` as never)}
                         </span>
-                        <span className="tabular-nums text-ink-muted">{n(count)}</span>
+                        <span className="admin-mono text-xs tabular-nums text-adm-muted">{n(count)}</span>
                       </span>
-                      <span className="block h-2 overflow-hidden rounded-full bg-adm-line">
+                      <span className="block h-2 rounded-full bg-adm-text/6">
+                        {/* The glow is the bar's own colour (currentColor),
+                            so each stage lights up in its status hue. */}
                         <span
-                          className="block h-full rounded-full bg-adm-info"
+                          className={`block h-full rounded-full ${LEAD_STATUS_DOT[stage]} ${LEAD_STATUS_TEXT[stage]} shadow-[0_0_12px_currentColor]`}
                           style={{ width: `${(count / funnelMax) * 100}%` }}
                         />
                       </span>
@@ -464,6 +498,15 @@ export default async function AdminDashboardPage(props: Props) {
                 );
               })}
             </ul>
+            {/* Every lead still NEW: the pipeline has not been worked yet,
+                which is the useful thing to say about an otherwise empty
+                funnel. */}
+            {FUNNEL_STAGES.every((stage) => stage === "NEW" || !(funnel[stage] ?? 0)) && (funnel.NEW ?? 0) > 0 && (
+              <p className="mt-4 flex items-start gap-2 border-t border-adm-line pt-3 text-xs text-adm-muted">
+                <Sparkles size={14} aria-hidden className="mt-px shrink-0 text-adm-accent-ink" />
+                {t("dashboard.funnel.allNew")}
+              </p>
+            )}
           </Card>
         )}
 
@@ -480,40 +523,41 @@ export default async function AdminDashboardPage(props: Props) {
           flush
         >
           {stock.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-ink-muted">{t("dashboard.stock.empty")}</p>
+            <p className="px-5 py-8 text-center text-sm text-adm-muted">{t("dashboard.stock.empty")}</p>
           ) : (
-            <ul className="divide-y divide-adm-line">
-              {stock.map((project) => (
+            /* Mini project cards, three across — the photo is what tells
+               the projects apart at a glance, more than the name. */
+            <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+              {stock.slice(0, 3).map((project) => (
                 <li key={project.id}>
                   <MaybeLink
                     href={can.projects ? `${base}/projects/${project.id}/units` : null}
-                    className="flex items-center gap-4 px-5 py-3"
+                    className="block overflow-hidden rounded-[12px] border border-adm-line"
                   >
-                    <span className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-surface-muted">
-                      <AdminImage
-                        src={project.imageUrl}
-                        loading="lazy"
-                        iconSize={16}
-                        className="h-full w-full object-cover"
-                      />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium text-ink">{localName(project)}</span>
+                    <AdminImage
+                      src={project.imageUrl}
+                      loading="lazy"
+                      className="block h-[92px] w-full object-cover"
+                    />
+                    <span className="block p-3">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-adm-text">{localName(project)}</span>
                         <ProjectStatusPill
                           status={project.status as ProjectStatus}
                           label={t(`projectStatus.${project.status}` as never)}
                         />
                       </span>
-                      <span className="mt-1.5 block">
+                      <span className="mt-2.5 block">
                         <StockBar {...project} />
                       </span>
-                    </span>
-                    <span className="shrink-0 text-xs tabular-nums text-ink-muted">
-                      {t("dashboard.inventory.freeOfTotal", {
-                        free: n(project.available),
-                        total: n(project.total),
-                      })}
+                      <span className="mt-2 block text-xs text-adm-muted">
+                        {t.rich("dashboard.stock.cardLine", {
+                          free: n(project.available),
+                          total: n(project.total),
+                          types: project.unitTypes,
+                          b: (chunks) => <b className="font-semibold text-adm-text">{chunks}</b>,
+                        })}
+                      </span>
                     </span>
                   </MaybeLink>
                 </li>
@@ -660,7 +704,7 @@ function MaybeLink({ href, className, children }: { href: string | null; classNa
 function StockBar({ available, reserved, sold, total }: { available: number; reserved: number; sold: number; total: number }) {
   const pct = (value: number) => `${(value / total) * 100}%`;
   return (
-    <span aria-hidden className="flex h-1.5 overflow-hidden rounded-full bg-adm-line">
+    <span aria-hidden className="flex h-2.5 overflow-hidden rounded-full bg-adm-line">
       <span className="bg-adm-success" style={{ width: pct(available) }} />
       <span className="bg-adm-fill" style={{ width: pct(reserved) }} />
       <span className="bg-primary-500" style={{ width: pct(sold) }} />

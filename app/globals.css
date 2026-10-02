@@ -106,6 +106,13 @@
   --color-adm-rail-hover: var(--adm-rail-hover);
   --color-adm-rail-active: var(--adm-rail-active);
   --color-adm-live: var(--adm-live);
+  --color-adm-content: var(--adm-content);
+  --color-adm-brief-text: var(--adm-brief-text);
+  --color-adm-brief-dim: var(--adm-brief-dim);
+  --color-adm-sand-hi: var(--adm-sand-hi);
+  --color-adm-sand-deep: var(--adm-sand-deep);
+  --color-adm-ocean-hi: var(--adm-ocean-hi);
+  --color-adm-ocean: var(--adm-ocean);
   --color-adm-aurora-1: var(--adm-aurora-1);
   --color-adm-aurora-3: var(--adm-aurora-3);
   --color-adm-info: var(--adm-info);
@@ -808,6 +815,20 @@
   --adm-rail-active: rgba(232, 179, 132, 0.18);
   --adm-rail-glow: rgba(232, 179, 132, 0.7);
   --adm-live: #5fc79a;
+  /* The daily brief band (DailyBrief.tsx) — navy into ocean, with its
+     own text greys and the sand/ocean highlights the tiles use. */
+  --adm-brief-1: #083551;
+  --adm-brief-2: #123a50;
+  --adm-brief-3: #1c4e69;
+  --adm-brief-text: #b5c6d1;
+  --adm-brief-dim: #7f98a8;
+  --adm-sand-hi: #edc199;
+  --adm-sand-deep: #dd9758;
+  --adm-ocean-hi: #8fb5cc;
+  /* Ocean as a foreground on the page (the page-views KPI). */
+  --adm-ocean: #296682;
+  /* Content work (inbox rows, the consent KPI): the mockup's deep ocean. */
+  --adm-content: #1c4e69;
 
   /* The haze behind the page column (.admin-aurora): ocean top-left, sand
      top-right, deep navy low right. Faint in light, stronger in dark. */
@@ -1083,6 +1104,58 @@
   }
 }
 
+/* The daily brief: navy-to-ocean band with a light running round its
+   edge — a conic ring masked to 1px, turned by animating --adm-a (an
+   @property, so the angle interpolates instead of jumping). */
+@property --adm-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.admin-brief {
+  position: relative;
+  isolation: isolate;
+  border-radius: 22px;
+  background: linear-gradient(120deg, var(--adm-brief-1), var(--adm-brief-2) 55%, var(--adm-brief-3));
+}
+.admin-brief::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--adm-a),
+    transparent 0 70%,
+    var(--adm-fill) 82%,
+    var(--adm-ocean-hi) 92%,
+    transparent
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: adm-spin 7s linear infinite;
+}
+@keyframes adm-spin {
+  to {
+    --adm-a: 360deg;
+  }
+}
+.admin-grad-text {
+  background: linear-gradient(90deg, var(--adm-sand-hi), var(--adm-sand-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-brief::before {
+    animation: none;
+  }
+}
+
 @keyframes adm-rise {
   from {
     opacity: 0;
@@ -1180,6 +1253,11 @@
   --adm-on-strong: #0d2635;
   --adm-band: #041d2c;
   --adm-band-2: #0a3a58;
+  --adm-content: #8fb5cc;
+  --adm-ocean: #8fb5cc;
+  --adm-brief-1: #052538;
+  --adm-brief-2: #083551;
+  --adm-brief-3: #0f4562;
   --adm-aurora-o1: 0.38;
   --adm-aurora-o2: 0.26;
   --adm-aurora-o3: 0.22;

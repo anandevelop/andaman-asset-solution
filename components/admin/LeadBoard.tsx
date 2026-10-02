@@ -65,11 +65,11 @@ function Column({ column, leadHrefBase }: { column: LeadBoardColumn; leadHrefBas
   const { setNodeRef, isOver } = useDroppable({ id: column.status });
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
-      <div className="mb-2.5 flex items-center gap-2 px-0.5">
+    <div className="flex w-72 shrink-0 flex-col rounded-[14px] bg-adm-text/3 p-2">
+      <div className="mb-2 flex items-center gap-2 px-1.5 pt-1">
         <span className={`h-2 w-2 shrink-0 rounded-full ${column.dotClassName}`} aria-hidden />
-        <h2 className="text-[13px] font-semibold text-primary">{column.label}</h2>
-        <span className="ml-auto rounded-xs bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-ink-muted">
+        <h2 className="text-[13px] font-semibold text-adm-text">{column.label}</h2>
+        <span className="admin-mono ml-auto rounded-full bg-adm-text/6 px-1.5 py-0.5 text-[11px] tabular-nums text-adm-muted">
           {column.cards.length}
         </span>
       </div>
@@ -77,8 +77,8 @@ function Column({ column, leadHrefBase }: { column: LeadBoardColumn; leadHrefBas
       <div
         ref={setNodeRef}
         className={[
-          "flex min-h-[120px] flex-1 flex-col gap-2.5 rounded-xs p-1 transition-colors",
-          isOver ? "bg-accent-50/60 ring-1 ring-inset ring-accent-400/40" : "",
+          "flex min-h-[120px] flex-1 flex-col gap-2 rounded-[10px] border border-transparent p-0.5 transition-colors",
+          isOver ? "border-adm-fill! bg-adm-fill/6" : "",
         ].join(" ")}
       >
         {column.cards.map((card) => (
@@ -159,13 +159,16 @@ export default function LeadBoard({ locale, columns: initialColumns, leadHrefBas
   return (
     <div>
       {error && (
-        <p className="mb-3 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mb-3 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {errorLabel}
         </p>
       )}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      {/* A fixed id: dnd-kit otherwise numbers its aria-describedby from a
+          module counter that the server and the browser do not share, and
+          every render of this page was a hydration mismatch. */}
+      <DndContext id="lead-board" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {columns.map((column) => (
             <Column key={column.status} column={column} leadHrefBase={leadHrefBase} />

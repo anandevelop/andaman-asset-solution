@@ -1,9 +1,9 @@
 /**
  * components/admin/ProjectHubTabs.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The project workspace's header: a photo band with the project's name,
- * tagline, status and public address, and under it the tab strip every
- * project route shares.
+ * The project workspace's header: a band with the project's name, tagline,
+ * status and public address over its photo, and under it the tab strip
+ * every project route shares.
  *
  * One project's edit surface is a set of separate routes rather than one
  * mockup-style single-page tab set — each already has its own data
@@ -157,40 +157,52 @@ export default async function ProjectHubTabs({ locale, projectId, active }: Prop
 
   return (
     <div className="space-y-4">
-      <Link
-        href={`/${locale}/admin/projects`}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-      >
-        <ArrowLeft size={14} aria-hidden />
-        {t("projects.title")}
-      </Link>
-
-      {/* The band: the project's own photo under a navy wash, so white type
-          reads on any image. */}
-      <header className="relative overflow-hidden rounded-card bg-adm-band text-white">
-        <AdminImage src={image} iconSize={64} className="absolute inset-0 h-full w-full object-cover opacity-45" />
-        <div className="absolute inset-0 bg-linear-to-r from-adm-band via-adm-band/80 to-transparent" aria-hidden />
-        <div className="relative flex flex-wrap items-end justify-between gap-4 px-5 py-6 sm:px-6">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              {project && (
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_TONE[project.status]}`}
-                >
-                  {t(`projectStatus.${project.status}` as never)}
-                </span>
-              )}
-              {project && (
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white">
-                  {project.isPublished ? t("common.published") : t("common.draft")}
-                </span>
-              )}
-            </div>
-            <h1 className="mt-2 text-2xl font-semibold leading-tight sm:text-3xl">{name}</h1>
-            {tagline && <p className="mt-1 max-w-2xl text-sm text-white/75">{tagline}</p>}
-            {publicPath && <p className="admin-mono mt-2 text-xs text-white/60">{publicPath}</p>}
+      {/* The band (v4 round two): light on the left where the words are,
+          the project's photo fading in from the right — so the heading is
+          the page's own text colour, not white on a navy wash. */}
+      <header className="admin-card relative flex min-h-[180px] overflow-hidden p-0!">
+        {image && (
+          <AdminImage
+            src={image}
+            className="absolute inset-y-0 right-0 h-full w-[60%] object-cover [mask-image:linear-gradient(90deg,transparent,#000_45%)]"
+          />
+        )}
+        <span
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(90deg,var(--adm-solid)_20%,transparent_75%)]"
+        />
+        <div className="relative flex min-w-0 flex-col justify-center gap-2 px-6 py-5">
+          <Link
+            href={`/${locale}/admin/projects`}
+            className="inline-flex w-fit items-center gap-1.5 text-xs text-adm-muted hover:text-adm-accent-ink"
+          >
+            <ArrowLeft size={13} aria-hidden />
+            {t("projects.allProjects")}
+          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {project && (
+              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_TONE[project.status]}`}>
+                {t(`projectStatus.${project.status}` as never)}
+              </span>
+            )}
+            {project && (
+              <span
+                className={[
+                  "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                  project.isPublished ? "bg-adm-success-bg text-adm-success" : "bg-adm-neutral-bg text-adm-neutral",
+                ].join(" ")}
+              >
+                {project.isPublished ? t("common.published") : t("common.draft")}
+              </span>
+            )}
+            {publicPath && (
+              <span className="admin-mono rounded-full bg-adm-text/6 px-2.5 py-0.5 text-[11px] text-adm-muted">
+                {publicPath}
+              </span>
+            )}
           </div>
-
+          <h1 className="text-[26px] font-semibold leading-tight text-adm-text sm:text-[30px]">{name}</h1>
+          {tagline && <p className="max-w-xl text-sm text-adm-muted">{tagline}</p>}
         </div>
       </header>
 

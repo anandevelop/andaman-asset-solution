@@ -65,6 +65,8 @@ export type ProjectListRow = {
   id: string;
   slug: string;
   name: string;
+  /** The card's second line; null when no locale in the chain has one. */
+  tagline: string | null;
   location: string;
   thumbnailUrl: string | null;
   propertyType: PropertyType;
@@ -312,6 +314,7 @@ export async function getAdminProjectList(
           id: project.id,
           slug: project.slug,
           name,
+          tagline: getTranslation(project.translations, locale)?.tagline || null,
           location: project.location,
           thumbnailUrl: project.heroImageUrl,
           propertyType: project.propertyType,

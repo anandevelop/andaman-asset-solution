@@ -12,13 +12,14 @@ import {
   FUNNEL_STAGES,
   ageParts,
   dailySeries,
+  groupContentGaps,
   inboxCounts,
   rankDelta,
   sortInbox,
   type InboxItem,
 } from "@/lib/admin/dashboard-model";
 
-const item = (key: string, kind: InboxItem["kind"], since: string | null): InboxItem => ({
+const item = (key: string, kind: InboxItem["kind"], since: string | null, late = false): InboxItem => ({
   key,
   kind,
   id: key,
@@ -26,18 +27,31 @@ const item = (key: string, kind: InboxItem["kind"], since: string | null): Inbox
   detail: null,
   since,
   ageLabel: null,
-  late: false,
+  late,
   href: null,
 });
 
 describe("sortInbox", () => {
-  it("puts the longest wait first", () => {
+  it("puts the longest wait first within a kind", () => {
     const sorted = sortInbox([
       item("b", "lead", "2026-09-29T10:00:00.000Z"),
-      item("a", "appointment", "2026-09-28T10:00:00.000Z"),
+      item("a", "lead", "2026-09-28T10:00:00.000Z"),
       item("c", "lead", "2026-09-30T01:00:00.000Z"),
     ]);
     expect(sorted.map((row) => row.key)).toEqual(["a", "b", "c"]);
+  });
+
+  it("orders overdue leads, then other leads, then appointments, then content", () => {
+    // The appointment is the oldest row, and still comes after every lead:
+    // a lead has a person waiting on a call, an unclosed appointment is a
+    // status nobody set.
+    const sorted = sortInbox([
+      item("gap", "content", null),
+      item("appt", "appointment", "2026-09-01T00:00:00.000Z", true),
+      item("fresh", "lead", "2026-09-30T09:00:00.000Z"),
+      item("late", "lead", "2026-09-29T09:00:00.000Z", true),
+    ]);
+    expect(sorted.map((row) => row.key)).toEqual(["late", "fresh", "appt", "gap"]);
   });
 
   it("puts undated content gaps after every customer who is waiting", () => {
@@ -58,6 +72,28 @@ describe("sortInbox", () => {
     const input = [item("b", "lead", "2026-09-30T00:00:00.000Z"), item("a", "lead", "2026-09-29T00:00:00.000Z")];
     sortInbox(input);
     expect(input.map((row) => row.key)).toEqual(["b", "a"]);
+  });
+});
+
+describe("sortInbox and content groups", () => {
+  it("keeps undated content rows in the order given (largest group first)", () => {
+    const sorted = sortInbox([item("content:unitTypes", "content", null), item("content:awards", "content", null)]);
+    expect(sorted.map((row) => row.key)).toEqual(["content:unitTypes", "content:awards"]);
+  });
+});
+
+describe("groupContentGaps", () => {
+  it("makes one row per content type, largest first, with up to two examples", () => {
+    const gaps = [
+      { section: "faq", group: "staticPages", label: "FAQ 1" },
+      { section: "unitTypes", group: "projects", label: "Type A" },
+      { section: "unitTypes", group: "projects", label: "Type B" },
+      { section: "unitTypes", group: "projects", label: "Type C" },
+    ];
+    expect(groupContentGaps(gaps)).toEqual([
+      { section: "unitTypes", group: "projects", count: 3, sample: ["Type A", "Type B"] },
+      { section: "faq", group: "staticPages", count: 1, sample: ["FAQ 1"] },
+    ]);
   });
 });
 

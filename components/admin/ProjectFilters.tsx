@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProjectStatus, PropertyType } from "@prisma/client";
 import FilterChip from "@/components/admin/ui/FilterChip";
@@ -31,6 +31,8 @@ type Props = {
   incompleteOnly: boolean;
   incompleteCount: number;
   resultCount: number;
+  /** At the far right — the cards/table switch. */
+  trailing?: ReactNode;
   typeLabels: Record<PropertyType, string>;
   statusLabels: Record<ProjectStatus, string>;
   labels: {
@@ -70,6 +72,7 @@ export default function ProjectFilters({
   incompleteOnly,
   incompleteCount,
   resultCount,
+  trailing,
   typeLabels,
   statusLabels,
   labels,
@@ -201,6 +204,7 @@ export default function ProjectFilters({
       />
 
       {pending && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
+      {trailing && <span className="ml-auto">{trailing}</span>}
     </div>
   );
 }
