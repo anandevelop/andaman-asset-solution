@@ -165,10 +165,12 @@ test.describe("Signing out", () => {
     await signIn(page);
     await expect(page).toHaveURL(/\/en\/admin/);
 
-    await page.getByRole("button", { name: "Sign out" }).first().click();
+    // Sign-out lives in the account menu at the foot of the rail.
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
 
     /*
-      signOut({ callbackUrl }) in AdminSidebar.tsx does a real full-page
+      signOut({ callbackUrl }) in AccountMenu.tsx does a real full-page
       navigation to that URL, not a client-side one — NextAuth posts to
       /api/auth/signout and then sends the browser there itself. The click
       above only waits for the event to dispatch, not for that navigation

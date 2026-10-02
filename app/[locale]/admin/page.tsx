@@ -40,7 +40,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowRight, ArrowDown, ArrowUp, ImageOff } from "lucide-react";
+import { ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
 import { Role, type LeadStatus, type ProjectStatus } from "@prisma/client";
 import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
 import {
@@ -76,6 +76,7 @@ import DailyBrief, { type BriefTile } from "@/components/admin/DailyBrief";
 import KpiCard from "@/components/admin/KpiCard";
 import Sparkline from "@/components/admin/Sparkline";
 import WorkInbox from "@/components/admin/WorkInbox";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -175,7 +176,9 @@ export default async function AdminDashboardPage(props: Props) {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const relative = new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: "auto" });
+  const relative = new Intl.RelativeTimeFormat(intlLocale(locale), {
+    numeric: "auto",
+  });
   const ago = (at: Date) => {
     const { unit, value } = ageParts(at, now);
     return relative.format(-value, unit);
@@ -274,7 +277,9 @@ export default async function AdminDashboardPage(props: Props) {
       id: appointment.id,
       title: appointment.lead?.name ?? t("dashboard.inbox.noCustomer"),
       detail: [
-        t("dashboard.inbox.appointmentDue", { when: dateFormat.format(appointment.scheduledAt) }),
+        t("dashboard.inbox.appointmentDue", {
+          when: dateFormat.format(appointment.scheduledAt),
+        }),
         appointment.project ? localName(appointment.project) : null,
       ]
         .filter(Boolean)
@@ -352,7 +357,9 @@ export default async function AdminDashboardPage(props: Props) {
 
       <DailyBrief
         chip={t("dashboard.brief.chip")}
-        greeting={t(`dashboard.${timeOfDayGreetingKey(now)}`, { name: session.name })}
+        greeting={t(`dashboard.${timeOfDayGreetingKey(now)}`, {
+          name: session.name,
+        })}
         sentence={sentence}
         tiles={tiles}
       />
@@ -373,7 +380,10 @@ export default async function AdminDashboardPage(props: Props) {
           href={can.projects ? `${base}/projects` : null}
           label={t("dashboard.kpi.units")}
           value={`${n(units.available)} / ${n(units.total)}`}
-          hint={t("dashboard.kpi.unitsHint", { reserved: units.reserved, sold: units.sold })}
+          hint={t("dashboard.kpi.unitsHint", {
+            reserved: units.reserved,
+            sold: units.sold,
+          })}
           visual={units.total > 0 ? <StockBar {...units} /> : undefined}
         />
         <KpiCard
@@ -414,7 +424,11 @@ export default async function AdminDashboardPage(props: Props) {
             <WorkInbox
               locale={locale}
               items={inboxItems}
-              totals={{ lead: unassigned.count, appointment: overdue.count, content: contentGaps.length }}
+              totals={{
+                lead: unassigned.count,
+                appointment: overdue.count,
+                content: contentGaps.length,
+              }}
               kinds={inboxKinds}
               currentUserId={session.id}
             />
@@ -476,15 +490,12 @@ export default async function AdminDashboardPage(props: Props) {
                     className="flex items-center gap-4 px-5 py-3"
                   >
                     <span className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-surface-muted">
-                      {project.imageUrl ? (
-                        /* Plain <img>, like every other admin thumbnail:
-                           next/image refuses any host missing from
-                           remotePatterns and would take the row with it. */
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={project.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-                      ) : (
-                        <ImageOff size={16} aria-hidden className="text-ink-muted" />
-                      )}
+                      <AdminImage
+                        src={project.imageUrl}
+                        loading="lazy"
+                        iconSize={16}
+                        className="h-full w-full object-cover"
+                      />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
@@ -499,7 +510,10 @@ export default async function AdminDashboardPage(props: Props) {
                       </span>
                     </span>
                     <span className="shrink-0 text-xs tabular-nums text-ink-muted">
-                      {t("dashboard.inventory.freeOfTotal", { free: n(project.available), total: n(project.total) })}
+                      {t("dashboard.inventory.freeOfTotal", {
+                        free: n(project.available),
+                        total: n(project.total),
+                      })}
                     </span>
                   </MaybeLink>
                 </li>

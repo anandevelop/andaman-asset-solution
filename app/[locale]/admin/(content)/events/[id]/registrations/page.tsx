@@ -35,6 +35,7 @@ import TablePagination from "@/components/admin/TablePagination";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import StatusPill from "@/components/admin/ui/StatusPill";
 import { zoneEyebrow } from "@/lib/admin/nav";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -142,11 +143,8 @@ export default async function AdminEventRegistrationsPage(props: Props) {
       <section className="admin-card">
         <div className="flex flex-col gap-5 lg:flex-row">
           {event.coverImageUrl && (
-            /* Plain <img>, like every other admin thumbnail. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <AdminImage
               src={event.coverImageUrl}
-              alt=""
               className="h-32 w-full shrink-0 rounded-xs bg-surface-muted object-cover lg:w-56"
             />
           )}

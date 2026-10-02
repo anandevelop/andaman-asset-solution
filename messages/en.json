@@ -1930,7 +1930,10 @@
       "title": "Your account",
       "contactHint": "Ask a super admin to change your name, email address or role.",
       "changePassword": "Change your password",
-      "changePasswordHint": "You will stay signed in on this device."
+      "changePasswordHint": "You will stay signed in on this device.",
+      "menu": "Account menu",
+      "densityComfortable": "Comfortable",
+      "densityCompact": "Compact"
     },
     "upload": {
       "choose": "Choose a file",
@@ -3499,7 +3502,7 @@
       "theme": "Colour theme",
       "themeDark": "Switch to dark mode",
       "themeLight": "Switch to light mode",
-      "searchOrCommand": "Search or type a command",
+      "searchOrCommand": "Search leads, projects, news — or type a command",
       "liveVisitors": "{count, plural, one {# person} other {# people}} on the site",
       "drawer": {
         "close": "Close",
@@ -3834,7 +3837,8 @@
           "frequent": "Take me to a page I use often"
         }
       }
-    }
+    },
+    "backOffice": "BACK OFFICE"
   },
   "legalPage": {
     "tableOfContents": "Table of contents",

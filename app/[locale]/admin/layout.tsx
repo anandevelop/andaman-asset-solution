@@ -146,7 +146,19 @@ export default async function AdminLayout(props: Props) {
       <SpotlightTracker />
       {/* data-admin-root switches on the back office's denser type and
           spacing scale — see "Back-office density" in globals.css. */}
-      <div data-admin-root className="min-h-screen bg-surface text-sm text-ink lg:flex">
+      <div data-admin-root className="isolate min-h-screen bg-surface text-sm text-ink lg:flex">
+        {/* The haze and grid behind everything (globals.css, .admin-aurora).
+            `isolate` above is what lets -z-10 sit over the root's own
+            background instead of under it. The rail is opaque, so only the
+            page column shows them. */}
+        <div aria-hidden data-admin-chrome className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+          <div className="admin-aurora absolute inset-0">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="admin-grid absolute inset-0" />
+        </div>
         {/*
           `display: contents` so this wrapper is invisible to layout — the
           sidebar stays the flex item it has always been — while giving the
@@ -182,27 +194,26 @@ export default async function AdminLayout(props: Props) {
               labels={{
                 search: t("search"),
                 searchLeads: t("leads.searchPlaceholder"),
-                language: t("topbar.language"),
                 notifications: t("topbar.notifications"),
               }}
             />
           </div>
 
           {/*
-            Full width, gutters only — no max-width.
+            Gutters of 26/28/80 and a 1440px measure, as in the v4 mockup.
 
-            It used to be max-w-6xl (1152px), which on the 1800px-wide
-            screens this back office is actually worked on left roughly
-            200px of empty surface down each side and squeezed the tables
-            that need the room most: the leads board, the units grid, the
-            article list with its two number columns, and every three-column
-            settings screen. Admin work here is tables and side-by-side
-            panels, not prose, so the reading-width argument for a cap does
-            not apply; the components that *are* prose carry their own
-            max-w-2xl/3xl and keep it.
+            It was once max-w-6xl (1152px), which on the 1800px screens this
+            back office is worked on left ~200px of empty surface down each
+            side and squeezed the tables that need the room most — the leads
+            board, the units grid, three-column settings. Then it was no cap
+            at all, which on a 2560px monitor stretched a single-field form
+            across the whole screen. 1440 fits every table at full width.
+            Prose components carry their own max-w-2xl/3xl and keep it.
           */}
-          <div data-admin-page className="w-full min-w-0 px-4 py-5 sm:px-6 lg:px-7 lg:py-6">
-            {children}
+          <div className="w-full min-w-0 px-4 pb-20 pt-5 sm:px-6 lg:px-7 lg:pt-[26px]">
+            <div data-admin-page className="mx-auto w-full min-w-0 max-w-[1440px]">
+              {children}
+            </div>
           </div>
         </div>
 

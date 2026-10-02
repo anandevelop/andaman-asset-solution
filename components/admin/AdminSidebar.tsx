@@ -3,7 +3,7 @@
 /**
  * components/admin/AdminSidebar.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * Sidebar navigation, identity block and sign-out.
+ * Sidebar navigation, environment chip and the account menu.
  *
  * Client-side because it needs `usePathname()` for the active state and a
  * mobile disclosure. The user object is passed down from the server layout
@@ -23,12 +23,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { LogOut, Menu, Search, UserCog, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { activeItemKey, visibleNav, type NavItem } from "@/lib/admin/nav";
-import { initialsFrom } from "@/lib/format";
+import AccountMenu from "@/components/admin/AccountMenu";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
 import { toggleRail, useDisplayPref } from "@/lib/admin/use-display-pref";
 import { isTypingTarget } from "@/lib/admin/keyboard";
@@ -43,20 +42,19 @@ export type AdminEnvironment = {
 
 type Props = {
   locale: string;
-  user: { name: string; email: string; role: Role };
+  user: { id: string; name: string; email: string; role: Role };
   counts: AdminNavCounts;
   environment: AdminEnvironment;
 };
 
 const ENV_DOT: Record<AdminEnvironment["kind"], string> = {
-  production: "bg-emerald-400",
-  staging: "bg-amber-400",
-  development: "bg-white/40",
+  production: "bg-adm-live",
+  staging: "bg-adm-warning",
+  development: "bg-adm-rail-dim",
 };
 
 export default function AdminSidebar({ locale, user, counts, environment }: Props) {
   const t = useTranslations("admin");
-  const tAuth = useTranslations("auth");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const rail = useDisplayPref("rail");
@@ -83,8 +81,6 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
      hand-written check here used to carry a special case for. */
   const activeKey = activeItemKey(pathname, base);
 
-  const initials = initialsFrom(user.name);
-
   /* `onRail` is the desktop rail, which can collapse; the phone drawer
      never does, so it must not pick up the collapsed styles from a
      preference set on a laptop. */
@@ -107,8 +103,8 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
           "relative flex h-9 items-center gap-[11px] rounded-[10px] px-[10px] text-[13px] transition-colors",
           onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
           active
-            ? "bg-linear-to-r from-adm-fill/15 to-transparent font-medium text-white before:absolute before:-left-[10px] before:top-2 before:bottom-2 before:w-[3px] before:rounded-r-[3px] before:bg-adm-fill"
-            : "text-white/65 hover:bg-white/5 hover:text-white",
+            ? "bg-linear-to-r from-adm-rail-active to-transparent font-medium text-adm-rail-hi before:absolute before:-left-[10px] before:top-2 before:bottom-2 before:w-[3px] before:rounded-r-[3px] before:bg-adm-fill before:shadow-[0_0_12px_var(--adm-rail-glow)]"
+            : "text-adm-rail-text hover:bg-adm-rail-hover hover:text-adm-rail-hi",
         ].join(" ")}
       >
         <Icon size={18} strokeWidth={1.75} aria-hidden className="shrink-0" />
@@ -117,7 +113,7 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
           <>
             <span
               className={[
-                "ml-auto min-w-5 shrink-0 rounded-full bg-adm-fill px-[6px] py-[3px] text-center text-[11px] font-semibold leading-none text-adm-on-fill",
+                "ml-auto flex h-[18px] min-w-5 shrink-0 items-center justify-center rounded-[9px] bg-adm-fill px-[6px] text-[11px] font-semibold leading-none text-adm-on-fill",
                 onRail ? "rail-collapsed:hidden" : "",
               ].join(" ")}
             >
@@ -128,7 +124,7 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
             {onRail && (
               <span
                 aria-hidden
-                className="absolute left-[38px] top-[7px] hidden h-[7px] w-[7px] rounded-full bg-adm-fill rail-collapsed:block"
+                className="absolute left-[30px] top-[7px] hidden h-[7px] w-[7px] rounded-full bg-adm-fill rail-collapsed:block"
               />
             )}
           </>
@@ -154,12 +150,12 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
         {groups.map((group, index) => (
           <div key={group.key} className={index > 0 ? "mt-[14px]" : undefined}>
             {index > 0 && onRail && (
-              <span className="mx-[10px] mb-[8px] hidden h-px bg-white/10 rail-collapsed:block" aria-hidden />
+              <span className="mx-[10px] mb-[8px] hidden h-px bg-adm-rail-line rail-collapsed:block" aria-hidden />
             )}
             {group.labelKey && (
               <p
                 className={[
-                  "mb-[6px] px-[10px] text-[10.5px] font-medium tracking-[0.06em] text-white/60",
+                  "mx-[10px] mb-[6px] text-[10.5px] font-medium tracking-[0.06em] text-adm-rail-dim",
                   onRail ? "rail-collapsed:hidden" : "",
                 ].join(" ")}
               >
@@ -184,7 +180,7 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
         setOpen(false);
         window.dispatchEvent(new Event("admin:open-search"));
       }}
-      className="flex items-center gap-2.5 rounded-[10px] border border-white/10 px-3 py-2 text-xs text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
+      className="flex items-center gap-2.5 rounded-[10px] border border-adm-rail-line px-3 py-2 text-xs text-adm-rail-text transition-colors hover:bg-adm-rail-hover hover:text-adm-rail-hi"
     >
       <Search size={15} strokeWidth={1.75} aria-hidden className="shrink-0" />
       <span className="flex-1 text-left">{t("search")}</span>
@@ -193,67 +189,41 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
 
   const renderEnvironment = (onRail: boolean) => (
     <div
+      title={environment.host ?? undefined}
       className={[
-        "flex items-center gap-2 whitespace-nowrap rounded-[10px] border border-white/10 px-2.5 py-1.5 text-[11.5px] text-white/60",
-        onRail ? "mx-3 mt-3 rail-collapsed:hidden" : "",
+        "flex min-w-0 items-center gap-2 whitespace-nowrap rounded-[10px] border border-adm-rail-line px-2.5 py-[7px] text-xs text-adm-rail-text",
+        onRail ? "mx-3 mb-2.5 mt-0.5 rail-collapsed:hidden" : "",
       ].join(" ")}
     >
-      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${ENV_DOT[environment.kind]}`} />
-      <span className="font-medium text-white">{environment.label}</span>
-      {environment.host && (
-        <>
-          <span aria-hidden>·</span>
-          <span className="truncate">{environment.host}</span>
-        </>
-      )}
+      <span aria-hidden className="relative flex h-1.5 w-1.5 shrink-0">
+        {environment.kind === "production" && (
+          <span className="absolute inset-0 rounded-full bg-adm-live opacity-70 motion-safe:animate-ping" />
+        )}
+        <span className={`relative h-1.5 w-1.5 rounded-full ${ENV_DOT[environment.kind]}`} />
+      </span>
+      <span className="truncate">
+        {environment.label}
+        {environment.host && (
+          <>
+            {" · "}
+            <span className="font-medium text-adm-rail-hi">{environment.host}</span>
+          </>
+        )}
+      </span>
     </div>
   );
 
+  /* The footer is the account menu — account, density, language, sign
+     out. Sign-out used to be a row of its own here; the v4 rail has none,
+     and settings about you sit behind your name (AccountMenu.tsx). */
   const renderIdentity = (onRail: boolean) => (
-    <div className="border-t border-white/10 px-[10px] py-[10px]">
-      {/* The identity block doubles as the link to your own account — the
-          first place people look to change their password. */}
-      <Link
-        href={`${base}/account`}
-        onClick={() => setOpen(false)}
-        title={onRail && collapsed ? user.name : undefined}
-        className={[
-          "flex items-center gap-[10px] rounded-[10px] px-[6px] py-[6px] transition-colors hover:bg-white/5",
-          onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
-        ].join(" ")}
-      >
-        <span
-          aria-hidden
-          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-adm-fill text-[11px] font-semibold text-adm-on-fill"
-        >
-          {initials || "·"}
-        </span>
-        <div className={["min-w-0 flex-1", onRail ? "rail-collapsed:hidden" : ""].join(" ")}>
-          <p className="truncate text-[12.5px] font-medium leading-tight text-white">{user.name}</p>
-          <p className="truncate text-[11px] leading-tight text-white/55">
-            {t(`roles.${user.role}` as never)}
-          </p>
-        </div>
-        <UserCog
-          size={15}
-          className={["shrink-0 text-white/40", onRail ? "rail-collapsed:hidden" : ""].join(" ")}
-          aria-hidden
-        />
-      </Link>
-
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
-        title={onRail && collapsed ? tAuth("signOut") : undefined}
-        aria-label={tAuth("signOut")}
-        className={[
-          "mt-[4px] flex h-9 w-full items-center gap-[11px] rounded-[10px] px-[10px] text-[13px] text-white/60 transition-colors hover:bg-white/5 hover:text-white",
-          onRail ? "rail-collapsed:justify-center rail-collapsed:px-0" : "",
-        ].join(" ")}
-      >
-        <LogOut size={18} strokeWidth={1.75} aria-hidden className="shrink-0" />
-        <span className={onRail ? "rail-collapsed:hidden" : undefined}>{tAuth("signOut")}</span>
-      </button>
+    <div className="border-t border-adm-rail-line p-2.5">
+      <AccountMenu
+        locale={locale}
+        user={user}
+        compactCapable={onRail}
+        onNavigate={() => setOpen(false)}
+      />
     </div>
   );
 
@@ -262,7 +232,7 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
       {/* Mobile bar */}
       <div
         data-admin-sidebar
-        className="flex h-[52px] items-center justify-between border-b border-white/10 bg-adm-band px-4 lg:hidden"
+        className="flex h-[52px] items-center justify-between border-b border-adm-rail-line bg-adm-band px-4 lg:hidden"
       >
         <Link href={base} className="inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -304,35 +274,38 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
           identity block below are pinned, and sign-out is always on screen. */}
       <aside
         data-admin-sidebar
-        className="hidden w-[248px] shrink-0 flex-col overflow-hidden bg-adm-band transition-[width] duration-200 ease-out motion-reduce:transition-none rail-collapsed:w-[68px] lg:sticky lg:top-0 lg:flex lg:h-screen"
+        className="hidden w-[248px] shrink-0 flex-col overflow-hidden border-r border-adm-rail-edge bg-adm-band transition-[width] duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none rail-collapsed:w-[68px] lg:sticky lg:top-0 lg:flex lg:h-screen"
       >
-        {/* 60px, the topbar's height, so the two hairlines meet in one line. */}
-        <div className="flex h-[60px] shrink-0 items-center border-b border-white/10 px-4 rail-collapsed:justify-center rail-collapsed:px-0">
-          <Link href={base} title={t("brand")} className="flex items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-white.png"
-              alt="Andaman Asset Solution Co., Ltd."
-              width={895}
-              height={120}
-              className="h-[20px] w-auto rail-collapsed:hidden"
-            />
-            {/* The mark alone, when there is no room for the wordmark. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/icon-192.png"
-              alt=""
+        {/* 60px, the topbar's height, so the two hairlines meet in one line.
+            The mark is drawn, not the 192px app icon: at 34px the icon's
+            own padding made it read as a smaller square than the mockup's. */}
+        <div className="flex h-[60px] shrink-0 items-center px-4 rail-collapsed:justify-center rail-collapsed:px-0">
+          <Link href={base} title={t("brand")} className="flex min-w-0 items-center gap-2.5">
+            <span
               aria-hidden
-              width={192}
-              height={192}
-              className="hidden h-8 w-8 rounded-[10px] rail-collapsed:block"
-            />
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-linear-to-br from-adm-fill-2 to-adm-fill text-[15px] font-bold text-adm-band"
+            >
+              A
+            </span>
+            <span className="min-w-0 rail-collapsed:hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-white.png"
+                alt="Andaman Asset Solution Co., Ltd."
+                width={895}
+                height={120}
+                className="block h-[13px] w-auto"
+              />
+              <span className="mt-1 block text-[10.5px] tracking-[0.08em] text-adm-rail-text">
+                {t("backOffice")}
+              </span>
+            </span>
           </Link>
         </div>
 
         {renderEnvironment(true)}
 
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-[10px] py-[10px] [scrollbar-color:rgba(255,255,255,0.15)_transparent] [scrollbar-width:thin]">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-[10px] py-[10px] [scrollbar-color:var(--adm-rail-line)_transparent] [scrollbar-width:thin]">
           {renderNav("rail")}
         </div>
 

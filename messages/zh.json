@@ -1930,7 +1930,10 @@
       "title": "您的账户",
       "contactHint": "如需修改姓名、邮箱或角色，请联系超级管理员。",
       "changePassword": "修改密码",
-      "changePasswordHint": "修改后您在此设备上仍将保持登录状态。"
+      "changePasswordHint": "修改后您在此设备上仍将保持登录状态。",
+      "menu": "账户菜单",
+      "densityComfortable": "舒适",
+      "densityCompact": "紧凑"
     },
     "upload": {
       "choose": "选择文件",
@@ -3499,7 +3502,7 @@
       "theme": "颜色主题",
       "themeDark": "切换到深色模式",
       "themeLight": "切换到浅色模式",
-      "searchOrCommand": "搜索或输入命令",
+      "searchOrCommand": "搜索客户、项目、新闻，或输入命令",
       "liveVisitors": "{count} 人正在浏览网站",
       "drawer": {
         "close": "关闭",
@@ -3834,7 +3837,8 @@
           "frequent": "带我去常用页面"
         }
       }
-    }
+    },
+    "backOffice": "BACK OFFICE"
   },
   "legalPage": {
     "tableOfContents": "目录",

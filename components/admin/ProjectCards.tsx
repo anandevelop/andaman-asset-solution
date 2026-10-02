@@ -16,9 +16,9 @@
  */
 
 import Link from "next/link";
-import { ImageOff } from "lucide-react";
 import type { ProjectStatus } from "@prisma/client";
 import type { UnitTally } from "@/lib/admin/project-list";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 export type ProjectCardView = {
   id: string;
@@ -69,14 +69,7 @@ export default function ProjectCards({
             className="admin-card group block overflow-hidden p-0! transition-[transform,border-color] hover:-translate-y-0.5 hover:border-adm-line-strong motion-reduce:hover:translate-y-0"
           >
             <span className="relative block aspect-[16/9] bg-surface-muted">
-              {card.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail, see ProjectsTable
-                <img src={card.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full items-center justify-center">
-                  <ImageOff size={28} aria-hidden className="text-ink-muted" />
-                </span>
-              )}
+              <AdminImage src={card.imageUrl} loading="lazy" iconSize={28} className="h-full w-full object-cover" />
               {/* A solid chip, not text on the photo: any photo can sit
                   behind it and the label still reads. */}
               <span className="absolute left-3 top-3 flex gap-1.5">
@@ -108,9 +101,24 @@ export default function ProjectCards({
 
               {card.units.kind === "counted" && card.units.total > 0 && (
                 <span aria-hidden className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-adm-line">
-                  <span className="bg-adm-success" style={{ width: `${(card.units.available / card.units.total) * 100}%` }} />
-                  <span className="bg-adm-fill" style={{ width: `${(card.units.reserved / card.units.total) * 100}%` }} />
-                  <span className="bg-primary-500" style={{ width: `${(card.units.sold / card.units.total) * 100}%` }} />
+                  <span
+                    className="bg-adm-success"
+                    style={{
+                      width: `${(card.units.available / card.units.total) * 100}%`,
+                    }}
+                  />
+                  <span
+                    className="bg-adm-fill"
+                    style={{
+                      width: `${(card.units.reserved / card.units.total) * 100}%`,
+                    }}
+                  />
+                  <span
+                    className="bg-primary-500"
+                    style={{
+                      width: `${(card.units.sold / card.units.total) * 100}%`,
+                    }}
+                  />
                 </span>
               )}
 

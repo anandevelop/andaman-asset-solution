@@ -51,15 +51,21 @@ import {
   EyeOff,
   GripVertical,
   HardHat,
-  ImageOff,
   Loader2,
   Pencil,
 } from "lucide-react";
 import { bulkSetPublished, reorderProjects } from "@/app/[locale]/admin/(catalog)/projects/actions";
 import SaveToast from "@/components/admin/SaveToast";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 export type UnitTallyView =
-  | { kind: "counted"; available: number; reserved: number; sold: number; total: number }
+  | {
+      kind: "counted";
+      available: number;
+      reserved: number;
+      sold: number;
+      total: number;
+    }
   | { kind: "notEntered"; total: number }
   | { kind: "none" };
 
@@ -243,7 +249,9 @@ export default function ProjectsTable({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const allSelected = ordered.length > 0 && selected.size === ordered.length;
@@ -531,23 +539,13 @@ export default function ProjectsTable({
                       <td className="admin-td">
                         <div className="flex items-center gap-3">
                           <span className="relative flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xs bg-surface-muted">
-                            {row.thumbnailUrl ? (
-                              /* Plain <img>, like every other admin
-                                 thumbnail (MediaLibrary, ImageUploader):
-                                 next/image would refuse any host missing
-                                 from remotePatterns and take the row down
-                                 with it, for a 56px preview nobody
-                                 downloads twice. */
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={row.thumbnailUrl}
-                                alt=""
-                                loading="lazy"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <ImageOff size={14} className="text-ink-muted" aria-label={labels.noImage} />
-                            )}
+                            <AdminImage
+                              src={row.thumbnailUrl}
+                              alt={row.thumbnailUrl ? "" : labels.noImage}
+                              loading="lazy"
+                              iconSize={14}
+                              className="h-full w-full object-cover"
+                            />
                           </span>
 
                           <span className="min-w-0 max-w-[200px]">

@@ -256,7 +256,7 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
     const q = query.trim().toLowerCase();
     return q ? all.filter((row) => row.label.toLowerCase().includes(q)) : all;
     // runInPlace only closes the palette; t and the flag are what change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [t, query, copilotEnabled]);
 
   /* The sections in the order they are drawn — which is also the order

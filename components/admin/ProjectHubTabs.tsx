@@ -41,9 +41,10 @@
 import { cache } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, ExternalLink, ImageOff } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import AdminImage from "@/components/admin/ui/AdminImage";
 import AdminTabs from "@/components/admin/ui/AdminTabs";
 import Segmented from "@/components/admin/ui/Segmented";
 import { safeQuery } from "@/lib/db";
@@ -167,12 +168,7 @@ export default async function ProjectHubTabs({ locale, projectId, active }: Prop
       {/* The band: the project's own photo under a navy wash, so white type
           reads on any image. */}
       <header className="relative overflow-hidden rounded-card bg-adm-band text-white">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail, see ProjectsTable
-          <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
-        ) : (
-          <ImageOff size={64} aria-hidden className="absolute right-6 top-1/2 -translate-y-1/2 text-white/10" />
-        )}
+        <AdminImage src={image} iconSize={64} className="absolute inset-0 h-full w-full object-cover opacity-45" />
         <div className="absolute inset-0 bg-linear-to-r from-adm-band via-adm-band/80 to-transparent" aria-hidden />
         <div className="relative flex flex-wrap items-end justify-between gap-4 px-5 py-6 sm:px-6">
           <div className="min-w-0">

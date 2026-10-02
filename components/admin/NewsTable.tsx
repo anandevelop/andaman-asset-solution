@@ -24,18 +24,10 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  AlertTriangle,
-  CalendarClock,
-  Eye,
-  EyeOff,
-  ImageIcon,
-  Loader2,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { AlertTriangle, CalendarClock, Eye, EyeOff, Loader2, Pencil, Trash2 } from "lucide-react";
 import type { ArticleRow, LocaleState } from "@/lib/admin/news-list";
 import { bulkSetPublished, bulkDeleteArticles } from "@/app/[locale]/admin/(content)/news/actions";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 type Props = {
   locale: string;
@@ -279,20 +271,11 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
 
                   <td className="admin-td">
                     <div className="flex items-center gap-3">
-                      {row.coverImageUrl ? (
-                        /* Plain <img>: admin thumbnails never go through
-                           next/image — see the note in MediaLibrary. */
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={row.coverImageUrl}
-                          alt=""
-                          className="h-11 w-16 shrink-0 rounded-xs bg-surface-muted object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-xs bg-surface-muted text-ink-muted/50">
-                          <ImageIcon size={15} aria-hidden />
-                        </span>
-                      )}
+                      <AdminImage
+                        src={row.coverImageUrl}
+                        iconSize={15}
+                        className="h-11 w-16 shrink-0 rounded-xs bg-surface-muted object-cover"
+                      />
 
                       {/* Capped and truncated: an untruncated slug pushes
                           the two number columns off the right-hand edge,

@@ -104,7 +104,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
             navigation to a download is a navigation the router cannot
             complete. The export endpoint itself did not move with this
             page — only the button that points at it. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        { }
         <a href="/api/admin/seo/translations/export" className="admin-btn-ghost" download>
           <Download size={16} aria-hidden />
           {t("seoTranslations.exportCsv")}

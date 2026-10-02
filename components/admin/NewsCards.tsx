@@ -14,9 +14,9 @@
  */
 
 import Link from "next/link";
-import { ImageIcon } from "lucide-react";
 import type { ArticleRow, LocaleState } from "@/lib/admin/news-list";
 import ProgressRing from "@/components/admin/ui/ProgressRing";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 const STATUS_TONE: Record<ArticleRow["status"], string> = {
   published: "bg-adm-success-bg text-adm-success",
@@ -63,14 +63,7 @@ export default function NewsCards({
             className="admin-card group block h-full overflow-hidden p-0! transition-[transform,border-color] hover:-translate-y-0.5 hover:border-adm-line-strong motion-reduce:hover:translate-y-0"
           >
             <span className="relative block aspect-[16/9] bg-surface-muted">
-              {row.coverImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail
-                <img src={row.coverImageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full items-center justify-center">
-                  <ImageIcon size={26} aria-hidden className="text-ink-muted" />
-                </span>
-              )}
+              <AdminImage src={row.coverImageUrl} loading="lazy" iconSize={26} className="h-full w-full object-cover" />
               <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
                 <span className="rounded-full bg-adm-solid px-2.5 py-0.5 text-[11px] font-medium text-ink">
                   {row.category ?? labels.noCategory}

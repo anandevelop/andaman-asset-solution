@@ -98,6 +98,16 @@
   --color-adm-on-fill: var(--adm-on-fill);
   --color-adm-band: var(--adm-band);
   --color-adm-band-2: var(--adm-band-2);
+  --color-adm-rail-text: var(--adm-rail-text);
+  --color-adm-rail-dim: var(--adm-rail-dim);
+  --color-adm-rail-hi: var(--adm-rail-hi);
+  --color-adm-rail-line: var(--adm-rail-line);
+  --color-adm-rail-edge: var(--adm-rail-edge);
+  --color-adm-rail-hover: var(--adm-rail-hover);
+  --color-adm-rail-active: var(--adm-rail-active);
+  --color-adm-live: var(--adm-live);
+  --color-adm-aurora-1: var(--adm-aurora-1);
+  --color-adm-aurora-3: var(--adm-aurora-3);
   --color-adm-info: var(--adm-info);
 
   --color-adm-success: var(--adm-success);
@@ -787,6 +797,29 @@
   --adm-radius-card: 16px;
   --adm-radius-control: 10px;
 
+  /* The rail (AdminSidebar) is navy in both themes, so its text and lines
+     are fixed values rather than following --adm-text. */
+  --adm-rail-text: #9db0bd;
+  --adm-rail-dim: #6b8596;
+  --adm-rail-hi: #e4ebf0;
+  --adm-rail-line: rgba(207, 224, 234, 0.1);
+  --adm-rail-edge: rgba(207, 224, 234, 0.08);
+  --adm-rail-hover: rgba(228, 235, 240, 0.06);
+  --adm-rail-active: rgba(232, 179, 132, 0.18);
+  --adm-rail-glow: rgba(232, 179, 132, 0.7);
+  --adm-live: #5fc79a;
+
+  /* The haze behind the page column (.admin-aurora): ocean top-left, sand
+     top-right, deep navy low right. Faint in light, stronger in dark. */
+  --adm-aurora-1: #296682;
+  --adm-aurora-2: #c47b3a;
+  --adm-aurora-3: #123a50;
+  --adm-aurora-o1: 0.16;
+  --adm-aurora-o2: 0.16;
+  --adm-aurora-o3: 0.16;
+  --adm-omni-a: #e8b384;
+  --adm-omni-b: #296682;
+
   /* Avatar gradients — the mockup's five, one per hash bucket (Avatar.tsx). */
   --adm-av-sand-1: #f3d5b3;
   --adm-av-sand-2: #e8b384;
@@ -968,6 +1001,88 @@
   background-color: color-mix(in srgb, var(--adm-text) 4%, transparent);
 }
 
+/* Aurora and grid (the mockup's .aurora / .grid-bg): two fixed layers
+   behind the page column, never in front of anything — admin/layout.tsx
+   puts them in an isolated root at z -1. Static under reduced motion. */
+.admin-aurora > span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  animation: adm-drift 26s ease-in-out infinite alternate;
+}
+.admin-aurora > span:nth-child(1) {
+  width: 620px;
+  height: 620px;
+  left: -160px;
+  top: -220px;
+  background: var(--adm-aurora-1);
+  opacity: var(--adm-aurora-o1);
+}
+.admin-aurora > span:nth-child(2) {
+  width: 520px;
+  height: 520px;
+  right: -120px;
+  top: -180px;
+  background: var(--adm-aurora-2);
+  opacity: var(--adm-aurora-o2);
+  animation-delay: -9s;
+}
+.admin-aurora > span:nth-child(3) {
+  width: 560px;
+  height: 560px;
+  right: 18%;
+  bottom: -320px;
+  background: var(--adm-aurora-3);
+  opacity: var(--adm-aurora-o3);
+  animation-delay: -17s;
+}
+@keyframes adm-drift {
+  to {
+    transform: translate(40px, 30px) scale(1.08);
+  }
+}
+.admin-grid {
+  background-image:
+    linear-gradient(var(--adm-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--adm-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0, #000, transparent 70%);
+  opacity: 0.35;
+}
+
+/* The search field's moving hairline: a gradient ring drawn in the
+   border box and masked out of the padding box, so the field itself keeps
+   its own background. */
+.admin-omni {
+  position: relative;
+}
+.admin-omni::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--adm-omni-a), var(--adm-omni-b), transparent, var(--adm-omni-a)) 0 0 / 200% 100%;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.55;
+  animation: adm-omni 5s linear infinite;
+}
+@keyframes adm-omni {
+  to {
+    background-position: 200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-aurora > span,
+  .admin-omni::before {
+    animation: none;
+  }
+}
+
 @keyframes adm-rise {
   from {
     opacity: 0;
@@ -1065,6 +1180,9 @@
   --adm-on-strong: #0d2635;
   --adm-band: #041d2c;
   --adm-band-2: #0a3a58;
+  --adm-aurora-o1: 0.38;
+  --adm-aurora-o2: 0.26;
+  --adm-aurora-o3: 0.22;
   --adm-info: #8fb5cc;
 
   --adm-success: #5fc79a;

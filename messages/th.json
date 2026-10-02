@@ -1930,7 +1930,10 @@
       "title": "บัญชีของคุณ",
       "contactHint": "หากต้องการเปลี่ยนชื่อ อีเมล หรือสิทธิ์ กรุณาแจ้งผู้ดูแลสูงสุด",
       "changePassword": "เปลี่ยนรหัสผ่าน",
-      "changePasswordHint": "คุณจะยังคงเข้าสู่ระบบอยู่บนอุปกรณ์นี้"
+      "changePasswordHint": "คุณจะยังคงเข้าสู่ระบบอยู่บนอุปกรณ์นี้",
+      "menu": "เมนูบัญชี",
+      "densityComfortable": "สบายตา",
+      "densityCompact": "กะทัดรัด"
     },
     "upload": {
       "choose": "เลือกไฟล์",
@@ -3499,8 +3502,8 @@
       "theme": "ธีมสี",
       "themeDark": "เปลี่ยนเป็นโหมดมืด",
       "themeLight": "เปลี่ยนเป็นโหมดสว่าง",
-      "searchOrCommand": "ค้นหา หรือพิมพ์คำสั่ง",
-      "liveVisitors": "{count} คนกำลังดูเว็บ",
+      "searchOrCommand": "ค้นหาลีด โครงการ ข่าว หรือพิมพ์คำสั่ง",
+      "liveVisitors": "{count} คนบนเว็บ",
       "drawer": {
         "close": "ปิด",
         "important": "สำคัญ",
@@ -3834,7 +3837,8 @@
           "frequent": "พาไปหน้าที่ใช้บ่อย"
         }
       }
-    }
+    },
+    "backOffice": "BACK OFFICE"
   },
   "legalPage": {
     "tableOfContents": "สารบัญ",

@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { CalendarDays, Pencil, Plus, Users } from "lucide-react";
+import { Pencil, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -22,6 +22,7 @@ import { translationCompleteness } from "@/lib/admin/translated-form";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -95,16 +96,16 @@ export default async function AdminEventsPage(props: Props) {
         actions={
           <>
             {/* Hidden below ADMIN because ../new/page.tsx guards at
-            requireAdmin(locale, Role.ADMIN). The button follows the page,
-            not the other way round: widening the page to match the button
-            would hand every editor the ability to create events, which is
-            a permissions change, not a UI fix. */}
-        {canCreate && (
-          <Link href={`/${locale}/admin/events/new`} className="admin-btn">
-            <Plus size={16} aria-hidden />
-            {t("events.new")}
-          </Link>
-        )}
+                requireAdmin(locale, Role.ADMIN). The button follows the
+                page, not the other way round: widening the page to match
+                the button would hand every editor the ability to create
+                events, which is a permissions change, not a UI fix. */}
+            {canCreate && (
+              <Link href={`/${locale}/admin/events/new`} className="admin-btn">
+                <Plus size={16} aria-hidden />
+                {t("events.new")}
+              </Link>
+            )}
           </>
         }
       />
@@ -142,14 +143,12 @@ export default async function AdminEventsPage(props: Props) {
                 className={`admin-card flex flex-col gap-4 p-3! sm:flex-row sm:items-center ${isPast ? "opacity-60" : ""}`}
               >
                 <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden rounded-[12px] bg-surface-muted sm:w-44">
-                  {event.coverImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail
-                    <img src={event.coverImageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="flex h-full items-center justify-center">
-                      <CalendarDays size={24} aria-hidden className="text-ink-muted" />
-                    </span>
-                  )}
+                  <AdminImage
+                    src={event.coverImageUrl}
+                    loading="lazy"
+                    iconSize={24}
+                    className="h-full w-full object-cover"
+                  />
                   {isLive && (
                     <span className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-white">
                       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" />
@@ -194,7 +193,9 @@ export default async function AdminEventsPage(props: Props) {
                     <span aria-hidden className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-adm-line">
                       <span
                         className={`block h-full rounded-full ${full ? "bg-adm-warning" : "bg-adm-info"}`}
-                        style={{ width: `${Math.min(100, (booked / event.capacity) * 100)}%` }}
+                        style={{
+                          width: `${Math.min(100, (booked / event.capacity) * 100)}%`,
+                        }}
                       />
                     </span>
                   )}

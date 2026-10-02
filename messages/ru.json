@@ -1930,7 +1930,10 @@
       "title": "Ваша учётная запись",
       "contactHint": "Попросите супер-администратора изменить ваше имя, email или роль.",
       "changePassword": "Сменить пароль",
-      "changePasswordHint": "Вы останетесь в системе на этом устройстве."
+      "changePasswordHint": "Вы останетесь в системе на этом устройстве.",
+      "menu": "Меню учётной записи",
+      "densityComfortable": "Просторно",
+      "densityCompact": "Компактно"
     },
     "upload": {
       "choose": "Выбрать файл",
@@ -3499,7 +3502,7 @@
       "theme": "Цветовая тема",
       "themeDark": "Тёмная тема",
       "themeLight": "Светлая тема",
-      "searchOrCommand": "Поиск или команда",
+      "searchOrCommand": "Поиск лидов, проектов, новостей — или команда",
       "liveVisitors": "{count, plural, one {# человек} few {# человека} many {# человек} other {# человека}} на сайте",
       "drawer": {
         "close": "Закрыть",
@@ -3834,7 +3837,8 @@
           "frequent": "Открой часто используемую страницу"
         }
       }
-    }
+    },
+    "backOffice": "BACK OFFICE"
   },
   "legalPage": {
     "tableOfContents": "Содержание",

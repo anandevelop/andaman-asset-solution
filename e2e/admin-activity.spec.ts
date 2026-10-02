@@ -89,7 +89,9 @@ test.describe("The activity log", () => {
     await signIn(page, visitor.email);
     await expect(page).toHaveURL(/\/en\/admin/);
 
-    await page.getByRole("button", { name: "Sign out" }).first().click();
+    // Sign-out lives in the account menu at the foot of the rail.
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
 
     // signOut() navigates the whole page rather than routing client-side;
     // see the note in admin-login.spec.ts. Waiting for it here keeps the

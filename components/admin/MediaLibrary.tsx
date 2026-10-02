@@ -42,6 +42,7 @@ import { locales, LOCALE_DISPLAY_ORDER } from "@/i18n";
 import { deleteMedia, getMediaUsage, updateMediaMeta } from "@/app/[locale]/admin/(content)/media/actions";
 import MediaUploadButton from "@/components/admin/MediaUploadButton";
 import type { MediaUsageRef } from "@/lib/media-usage";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 export type MediaItem = {
   id: string;
@@ -359,10 +360,8 @@ export default function MediaLibrary({
                       <FileText size={30} strokeWidth={1.4} aria-hidden />
                     </div>
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <AdminImage
                       src={item.url}
-                      alt=""
                       width={item.width ?? undefined}
                       height={item.height ?? undefined}
                       className="block h-auto min-h-16 w-full object-cover"
@@ -533,8 +532,7 @@ function MediaDetail({
             <FileText size={32} strokeWidth={1.4} aria-hidden />
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.url} alt="" className="h-full w-full object-cover" />
+          <AdminImage src={item.url} className="h-full w-full object-cover" />
         )}
       </div>
 

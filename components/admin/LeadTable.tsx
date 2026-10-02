@@ -21,12 +21,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LeadStatus } from "@prisma/client";
-import { Download, ImageOff, UserPlus, X } from "lucide-react";
+import { Download, UserPlus, X } from "lucide-react";
 import { assignLead, bulkUpdateLeads } from "@/app/[locale]/admin/(crm)/leads/actions";
 import { LEAD_STATUS_DOT } from "@/lib/admin/lead-status-tone";
 import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
 import PopoverMenu from "@/components/admin/PopoverMenu";
 import { showUndoToast } from "@/components/admin/UndoToast";
+import AdminImage from "@/components/admin/ui/AdminImage";
 
 export type LeadRowView = {
   id: string;
@@ -125,7 +126,10 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
       showUndoToast({
         message:
           result.refused.length > 0
-            ? t("bulk.partial", { changed: result.changed.length, refused: result.refused.length })
+            ? t("bulk.partial", {
+                changed: result.changed.length,
+                refused: result.refused.length,
+              })
             : t("bulk.done", { count: result.changed.length }),
         onUndo: async () => {
           const reverted = await bulkUpdateLeads(
@@ -187,7 +191,10 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
             onSelect={(assignedToId) =>
               applyBulk(
                 selectedRows.map((row) => ({ id: row.id, assignedToId })),
-                selectedRows.map((row) => ({ id: row.id, assignedToId: row.assignee?.id ?? "" })),
+                selectedRows.map((row) => ({
+                  id: row.id,
+                  assignedToId: row.assignee?.id ?? "",
+                })),
               )
             }
           />
@@ -202,7 +209,10 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
             }))}
             onSelect={(status) =>
               applyBulk(
-                selectedRows.map((row) => ({ id: row.id, status: status as LeadStatus })),
+                selectedRows.map((row) => ({
+                  id: row.id,
+                  status: status as LeadStatus,
+                })),
                 selectedRows.map((row) => ({ id: row.id, status: row.status })),
               )
             }
@@ -312,12 +322,12 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                     {row.projectName ? (
                       <span className="flex items-center gap-2">
                         <span className="flex h-7 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-surface-muted">
-                          {row.projectImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail, see ProjectsTable
-                            <img src={row.projectImage} alt="" loading="lazy" className="h-full w-full object-cover" />
-                          ) : (
-                            <ImageOff size={12} aria-hidden className="text-ink-muted" />
-                          )}
+                          <AdminImage
+                            src={row.projectImage}
+                            loading="lazy"
+                            iconSize={12}
+                            className="h-full w-full object-cover"
+                          />
                         </span>
                         <span className="truncate">{row.projectName}</span>
                       </span>
