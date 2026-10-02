@@ -3771,7 +3771,16 @@
       "previewUnpublished": "This project is not published, so it has no public page to preview yet.",
       "previewNote": "The real public page. It updates a moment after you save.",
       "confirmDiscard": "Discard your unsaved changes to this language?",
-      "serpTitle": "In Google"
+      "serpTitle": "In Google",
+      "sections": {
+        "identity": "Name and tagline",
+        "story": "About the project",
+        "search": "How Google shows it"
+      },
+      "publishTitle": "Publishing",
+      "status": "Status",
+      "lastSaved": "Last edited",
+      "languagesLabel": "Languages"
     },
     "pageSeo": {
       "tab": "SEO",

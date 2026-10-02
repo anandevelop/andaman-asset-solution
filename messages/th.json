@@ -3771,7 +3771,16 @@
       "previewUnpublished": "โครงการนี้ยังไม่เผยแพร่ จึงยังไม่มีหน้าเว็บจริงให้ดูตัวอย่าง",
       "previewNote": "หน้าเว็บจริง จะอัปเดตหลังกดบันทึกสักครู่",
       "confirmDiscard": "ยกเลิกการแก้ไขภาษานี้ที่ยังไม่ได้บันทึกใช่หรือไม่",
-      "serpTitle": "บน Google"
+      "serpTitle": "บน Google",
+      "sections": {
+        "identity": "ชื่อและคำโปรย",
+        "story": "รายละเอียดโครงการ",
+        "search": "การแสดงผลบน Google"
+      },
+      "publishTitle": "สถานะการเผยแพร่",
+      "status": "สถานะ",
+      "lastSaved": "แก้ไขล่าสุด",
+      "languagesLabel": "ภาษา"
     },
     "pageSeo": {
       "tab": "SEO",

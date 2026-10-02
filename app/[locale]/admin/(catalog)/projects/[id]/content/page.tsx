@@ -28,6 +28,7 @@ import ProjectContentEditor, {
   type LanguageTab,
 } from "@/components/admin/ProjectContentEditor";
 import { CONTENT_FIELDS } from "@/lib/project-content";
+import { intlLocale } from "@/lib/format";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -117,6 +118,15 @@ export default async function AdminProjectContentPage(props: Props) {
       ? requested
       : "en";
 
+  // When any language of this copy last changed — the publish card's line.
+  const lastSaved = rows.reduce<Date | null>((latest, row) => {
+    const at = row.updatedAt instanceof Date ? row.updatedAt : null;
+    return at && (!latest || at > latest) ? at : latest;
+  }, null);
+  const lastSavedLabel = lastSaved
+    ? new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(lastSaved)
+    : null;
+
   const languages: LanguageTab[] = LOCALE_DISPLAY_ORDER.map((code) => ({
     locale: code,
     label: LOCALE_LABELS[code],
@@ -151,7 +161,20 @@ export default async function AdminProjectContentPage(props: Props) {
         languages={languages}
         siteOrigin={siteConfig.url}
         isPublished={project.isPublished}
+        lastSavedLabel={lastSavedLabel}
         labels={{
+          sections: {
+            identity: t("projectContent.sections.identity"),
+            story: t("projectContent.sections.story"),
+            search: t("projectContent.sections.search"),
+          },
+          publishTitle: t("projectContent.publishTitle"),
+          status: t("projectContent.status"),
+          published: t("common.published"),
+          draft: t("common.draft"),
+          lastSaved: t("projectContent.lastSaved"),
+          languagesLabel: t("projectContent.languagesLabel"),
+          viewPage: t("projects.viewSite"),
           sectionTitle: t("projectContent.sectionTitle"),
           sourceNote: t("projectContent.sourceNote"),
           targetNote: t("projectContent.targetNote"),

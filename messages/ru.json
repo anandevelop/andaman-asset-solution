@@ -3771,7 +3771,16 @@
       "previewUnpublished": "Проект не опубликован, публичной страницы для просмотра пока нет.",
       "previewNote": "Реальная публичная страница. Обновится вскоре после сохранения.",
       "confirmDiscard": "Отменить несохранённые изменения для этого языка?",
-      "serpTitle": "В Google"
+      "serpTitle": "В Google",
+      "sections": {
+        "identity": "Название и слоган",
+        "story": "О проекте",
+        "search": "Как это покажет Google"
+      },
+      "publishTitle": "Публикация",
+      "status": "Статус",
+      "lastSaved": "Последнее изменение",
+      "languagesLabel": "Языки"
     },
     "pageSeo": {
       "tab": "SEO",

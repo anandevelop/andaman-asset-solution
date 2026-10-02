@@ -3771,7 +3771,16 @@
       "previewUnpublished": "该项目尚未发布，暂无公开页面可预览。",
       "previewNote": "真实的公开页面，保存后稍等片刻即会更新。",
       "confirmDiscard": "确定放弃该语言未保存的修改吗？",
-      "serpTitle": "在 Google 中"
+      "serpTitle": "在 Google 中",
+      "sections": {
+        "identity": "名称与标语",
+        "story": "项目介绍",
+        "search": "在 Google 上的显示"
+      },
+      "publishTitle": "发布状态",
+      "status": "状态",
+      "lastSaved": "最后编辑",
+      "languagesLabel": "语言"
     },
     "pageSeo": {
       "tab": "SEO",

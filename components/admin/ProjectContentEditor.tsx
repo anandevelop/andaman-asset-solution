@@ -38,7 +38,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { saveProjectContent } from "@/app/[locale]/admin/(catalog)/projects/[id]/content/actions";
-import { CONTENT_FIELDS, META_LIMITS, type ContentField } from "@/lib/project-content";
+import { CONTENT_FIELDS, CONTENT_SECTIONS as SECTIONS, META_LIMITS, type ContentField } from "@/lib/project-content";
 import SerpPreview from "@/components/admin/seo/SerpPreview";
 
 export type ContentValues = Record<ContentField, string>;
@@ -65,7 +65,18 @@ type Props = {
   /** Public origin for the preview iframe, e.g. https://andamanassetsolution.com */
   siteOrigin: string;
   isPublished: boolean;
+  /** "23 ก.ย. 21:08" — when any language of this copy last changed. */
+  lastSavedLabel: string | null;
   labels: {
+    /** Numbered section cards (v4): 01 identity, 02 story, 03 search. */
+    sections: { identity: string; story: string; search: string };
+    publishTitle: string;
+    status: string;
+    published: string;
+    draft: string;
+    lastSaved: string;
+    languagesLabel: string;
+    viewPage: string;
     sectionTitle: string;
     sourceNote: string;
     targetNote: string;
@@ -118,6 +129,7 @@ export default function ProjectContentEditor({
   languages,
   siteOrigin,
   isPublished,
+  lastSavedLabel,
   labels,
 }: Props) {
   const router = useRouter();
@@ -351,128 +363,191 @@ export default function ProjectContentEditor({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-        {/* ── Field pairs ────────────────────────────────────────────── */}
-        <section className="admin-card p-0!">
-          <div className="grid grid-cols-2 gap-4 border-b border-adm-line px-4 py-3">
-            <h2 className="text-sm font-semibold text-adm-text">{labels.sectionTitle}</h2>
-            <p className="text-xs text-adm-muted">
-              {languages.find((l) => l.locale === target)?.label} · {labels.targetNote}
-            </p>
-          </div>
+        {/* ── Field pairs, in numbered section cards (v4) ────────────── */}
+        <div className="min-w-0 space-y-4">
+          {SECTIONS.map((section, sectionIndex) => (
+            <section key={section.key} className="admin-card p-0!">
+              <div className="grid grid-cols-2 items-center gap-4 border-b border-adm-line px-4 py-3">
+                <h2 className="flex items-center gap-2.5 text-sm font-semibold text-adm-text">
+                  <span className="admin-mono rounded-[6px] bg-adm-text/6 px-1.5 py-0.5 text-[11px] font-medium text-adm-muted">
+                    {String(sectionIndex + 1).padStart(2, "0")}
+                  </span>
+                  {labels.sections[section.key]}
+                </h2>
+                {sectionIndex === 0 && (
+                  <p className="text-xs text-adm-muted">
+                    {languages.find((l) => l.locale === target)?.label} · {labels.targetNote}
+                  </p>
+                )}
+              </div>
 
-          <div className="space-y-5 p-4">
-            {CONTENT_FIELDS.map((field) => {
-              const sourceText = sourceValues[field];
-              const targetText = values[field];
-              const missing = sourceText.trim().length > 0 && targetText.trim().length === 0;
+              <div className="space-y-5 p-4">
+                {section.fields.map((field) => {
+                  const sourceText = sourceValues[field];
+                  const targetText = values[field];
+                  const missing = sourceText.trim().length > 0 && targetText.trim().length === 0;
 
-              return (
-                <div key={field}>
-                  <label
-                    htmlFor={`content-${field}`}
-                    className="admin-label flex items-center gap-1"
-                  >
-                    {labels.fields[field]}
-                    {field === "name" && <span className="text-adm-danger">*</span>}
-                  </label>
+                  return (
+                    <div key={field}>
+                      <label
+                        htmlFor={`content-${field}`}
+                        className="admin-label flex items-center gap-1"
+                      >
+                        {labels.fields[field]}
+                        {field === "name" && <span className="text-adm-danger">*</span>}
+                      </label>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Source: read-only on purpose — this pane is the thing
-                        being translated from, and editing it here would be
-                        editing a different language than the one selected. */}
-                    {MULTILINE.includes(field) ? (
-                      <textarea
-                        readOnly
-                        value={sourceText}
-                        rows={field === "description" ? 4 : 3}
-                        aria-label={`${labels.fields[field]} (${source})`}
-                        className="admin-textarea min-h-0! cursor-default bg-adm-text/4 text-adm-muted"
-                      />
-                    ) : (
-                      <input
-                        readOnly
-                        value={sourceText}
-                        aria-label={`${labels.fields[field]} (${source})`}
-                        className="admin-input cursor-default bg-adm-text/4 text-adm-muted"
-                      />
-                    )}
-
-                    <div>
-                      {MULTILINE.includes(field) ? (
-                        <textarea
-                          id={`content-${field}`}
-                          value={targetText}
-                          onChange={(event) => setField(field, event.target.value)}
-                          rows={field === "description" ? 4 : 3}
-                          className={`admin-textarea min-h-0! ${missing ? "border-adm-danger/30" : ""}`}
-                        />
-                      ) : (
-                        <input
-                          id={`content-${field}`}
-                          value={targetText}
-                          onChange={(event) => setField(field, event.target.value)}
-                          className={`admin-input ${missing ? "border-adm-danger/30" : ""}`}
-                        />
-                      )}
-
-                      <div className="mt-1 flex items-start justify-between gap-3">
-                        {missing ? (
-                          <button
-                            type="button"
-                            onClick={() => copyField(field)}
-                            className="text-left text-xs text-adm-danger hover:underline"
-                          >
-                            {labels.untranslated} — {labels.copyFromSource}
-                          </button>
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Source: read-only on purpose — this pane is the thing
+                            being translated from, and editing it here would be
+                            editing a different language than the one selected. */}
+                        {MULTILINE.includes(field) ? (
+                          <textarea
+                            readOnly
+                            value={sourceText}
+                            rows={field === "description" ? 4 : 3}
+                            aria-label={`${labels.fields[field]} (${source})`}
+                            className="admin-textarea min-h-0! cursor-default bg-adm-text/4 text-adm-muted"
+                          />
                         ) : (
-                          <span />
+                          <input
+                            readOnly
+                            value={sourceText}
+                            aria-label={`${labels.fields[field]} (${source})`}
+                            className="admin-input cursor-default bg-adm-text/4 text-adm-muted"
+                          />
                         )}
 
-                        {isMeta(field) && (
-                          <span
-                            className={`shrink-0 text-xs tabular-nums ${
-                              targetText.length > META_LIMITS[field]
-                                ? "font-semibold text-adm-danger"
-                                : "text-adm-muted"
-                            }`}
-                          >
-                            {targetText.length} / {META_LIMITS[field]}
-                          </span>
-                        )}
+                        <div>
+                          {MULTILINE.includes(field) ? (
+                            <textarea
+                              id={`content-${field}`}
+                              value={targetText}
+                              onChange={(event) => setField(field, event.target.value)}
+                              rows={field === "description" ? 4 : 3}
+                              className={`admin-textarea min-h-0! ${missing ? "border-adm-danger/30" : ""}`}
+                            />
+                          ) : (
+                            <input
+                              id={`content-${field}`}
+                              value={targetText}
+                              onChange={(event) => setField(field, event.target.value)}
+                              className={`admin-input ${missing ? "border-adm-danger/30" : ""}`}
+                            />
+                          )}
+
+                          <div className="mt-1 flex items-start justify-between gap-3">
+                            {missing ? (
+                              <button
+                                type="button"
+                                onClick={() => copyField(field)}
+                                className="text-left text-xs text-adm-danger hover:underline"
+                              >
+                                {labels.untranslated} — {labels.copyFromSource}
+                              </button>
+                            ) : (
+                              <span />
+                            )}
+
+                            {isMeta(field) && (
+                              <span
+                                className={`shrink-0 text-xs tabular-nums ${
+                                  targetText.length > META_LIMITS[field]
+                                    ? "font-semibold text-adm-danger"
+                                    : "text-adm-muted"
+                                }`}
+                              >
+                                {targetText.length} / {META_LIMITS[field]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-adm-line px-4 py-3">
-            <button
-              type="button"
-              onClick={save}
-              disabled={pending || !isDirty}
-              className="admin-btn py-2! text-sm"
-            >
-              {pending ? (
-                <Loader2 size={14} className="animate-spin" aria-hidden />
-              ) : (
-                <Check size={14} aria-hidden />
-              )}
-              {isPublished ? labels.saveGoesLive : labels.save}
-            </button>
-
-            {savedAt && !isDirty && (
-              <span className="flex items-center gap-1.5 text-xs text-adm-success">
-                <Check size={13} aria-hidden />
-                {labels.savedJustNow}
-              </span>
-            )}
-          </div>
-        </section>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
 
         {/* ── Live preview ───────────────────────────────────────────── */}
         <div className="space-y-4 xl:sticky xl:top-[124px] xl:self-start">
+        {/* ── Publish card (v4): where this copy stands, and the two
+            things to do with it. Save is here as well as in the unsaved
+            bar, so it is in the same place whether anything changed. */}
+        <section className="admin-card space-y-3">
+          <h2 className="text-sm font-semibold text-adm-text">{labels.publishTitle}</h2>
+          <dl className="space-y-2 text-[13px]">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-adm-muted">{labels.status}</dt>
+              <dd>
+                <span
+                  className={[
+                    "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-medium",
+                    isPublished ? "bg-adm-success-bg text-adm-success" : "bg-adm-neutral-bg text-adm-neutral",
+                  ].join(" ")}
+                >
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {isPublished ? labels.published : labels.draft}
+                </span>
+              </dd>
+            </div>
+            {lastSavedLabel && (
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-adm-muted">{labels.lastSaved}</dt>
+                <dd className="tabular-nums text-adm-text">{lastSavedLabel}</dd>
+              </div>
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-adm-muted">{labels.languagesLabel}</dt>
+              <dd className="flex gap-1">
+                {languages.map((language) => (
+                  <span
+                    key={language.locale}
+                    title={`${language.percent}%`}
+                    className={[
+                      "rounded-[5px] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase",
+                      language.percent >= 100
+                        ? "bg-adm-success-bg text-adm-success"
+                        : language.percent > 0
+                          ? "bg-adm-warning-bg text-adm-warning"
+                          : "bg-adm-text/6 text-adm-muted line-through",
+                    ].join(" ")}
+                  >
+                    {language.locale}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          </dl>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {isPublished ? (
+              <a
+                href={`/${target}/projects/${projectSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="admin-btn-ghost justify-center"
+              >
+                {labels.viewPage}
+              </a>
+            ) : (
+              <span />
+            )}
+            <button type="button" onClick={save} disabled={pending || !isDirty} className="admin-btn justify-center">
+              {pending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Check size={14} aria-hidden />}
+              {isPublished ? labels.saveGoesLive : labels.save}
+            </button>
+          </div>
+          {savedAt && !isDirty && (
+            <p className="flex items-center gap-1.5 text-xs text-adm-success">
+              <Check size={13} aria-hidden />
+              {labels.savedJustNow}
+            </p>
+          )}
+        </section>
+
         {/* How Google would show this language, from what is typed now —
             unsaved edits included, which is the point: the meta fields'
             length limits only mean something next to the result they cut. */}

@@ -26,5 +26,14 @@ export const CONTENT_FIELDS = [
 
 export type ContentField = (typeof CONTENT_FIELDS)[number];
 
+/** The fields grouped into the content tab's numbered cards (v4: 01 name
+ *  and tagline, 02 the story, 03 how Google shows it). Together they are
+ *  CONTENT_FIELDS, each once — tests/project-content-sections.test.ts. */
+export const CONTENT_SECTIONS: { key: "identity" | "story" | "search"; fields: ContentField[] }[] = [
+  { key: "identity", fields: ["name", "tagline"] },
+  { key: "story", fields: ["description", "conceptDesign", "aboutThisProject"] },
+  { key: "search", fields: ["metaTitle", "metaDescription"] },
+];
+
 /** Limits the counters count against — Google truncates around here. */
 export const META_LIMITS = { metaTitle: 60, metaDescription: 160 } as const;
