@@ -106,7 +106,7 @@ export default async function AdminNewsPage(props: Props) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="admin-section-title">{t("news.section")}</p>
-          <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("news.title")}</h1>
+          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("news.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("news.subtitle")}</p>
         </div>
 

@@ -214,7 +214,7 @@ export default function AdminTopbar({
       <button
         type="button"
         onClick={() => applyDisplayPref("density", density === "compact" ? "comfortable" : "compact")}
-        aria-pressed={density === "comfortable"}
+        aria-pressed={density === "compact"}
         title={density === "compact" ? t("topbar.densityComfortable") : t("topbar.densityCompact")}
         aria-label={t("topbar.density")}
         className={iconButton}

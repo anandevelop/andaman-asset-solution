@@ -134,7 +134,7 @@ export default function LeadExportButton({ status }: Props) {
         type="button"
         onClick={download}
         disabled={busy}
-        className="admin-btn py-2!"
+        className="admin-btn-ghost"
       >
         {busy ? (
           <Loader2 size={14} className="animate-spin" aria-hidden />

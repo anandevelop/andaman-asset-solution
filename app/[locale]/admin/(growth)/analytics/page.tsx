@@ -187,7 +187,7 @@ export default async function AdminAnalyticsPage(props: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="admin-section-title">{t("nav.analytics")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
+          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
             <BarChart3 size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
             {t("analytics.title")}
           </h1>

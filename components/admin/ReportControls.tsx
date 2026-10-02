@@ -188,7 +188,7 @@ export default function ReportControls({
           <button
             type="button"
             onClick={() => window.print()}
-            className="admin-btn w-full lg:w-auto"
+            className="admin-btn-ghost w-full lg:w-auto"
           >
             <Printer size={15} aria-hidden />
             {labels.print}

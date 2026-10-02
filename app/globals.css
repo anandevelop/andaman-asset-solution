@@ -92,6 +92,9 @@
   --color-adm-muted: var(--adm-muted);
   --color-adm-accent-ink: var(--adm-accent-ink);
   --color-adm-fill: var(--adm-fill);
+  --color-adm-fill-2: var(--adm-fill-2);
+  --color-adm-strong: var(--adm-strong);
+  --color-adm-on-strong: var(--adm-on-strong);
   --color-adm-on-fill: var(--adm-on-fill);
   --color-adm-band: var(--adm-band);
   --color-adm-band-2: var(--adm-band-2);
@@ -748,7 +751,13 @@
   --adm-muted: #516573;
   --adm-accent-ink: #9c602c;
   --adm-fill: #e8b384;
+  /* The light end of the primary button's sand gradient. */
+  --adm-fill-2: #f3d5b3;
   --adm-on-fill: #0d2635;
+  /* A strong secondary inside light cards (admin-btn-navy): navy here,
+     sand in the dark theme, where a navy button would vanish. */
+  --adm-strong: #083551;
+  --adm-on-strong: #ffffff;
   --adm-band: #083551;
   /* The far end of the band's gradient (the daily brief). */
   --adm-band-2: #123a50;
@@ -779,7 +788,18 @@
    do not jitter as a live number ticks. On body, not the layout div, so
    portalled modals and menus get it too. */
 :root:has([data-admin-root]) body {
+  font-size: 14px;
+  line-height: 1.55;
   font-variant-numeric: tabular-nums;
+}
+
+/* Headings take their colour from where they sit. The base layer paints
+   every h1–h4 text-primary, which is right for the public site and wrong
+   on the admin's navy surfaces: the daily brief's greeting was #083551 on
+   the #083551 band — in the DOM, invisible on screen. Unlayered, so it
+   wins over @layer base; a heading that wants a colour says so. */
+:root:has([data-admin-root]) :is(h1, h2, h3, h4) {
+  color: inherit;
 }
 
 /* A native checkbox or radio with rounded-xs would come out a circle at
@@ -797,25 +817,31 @@
 
   Tailwind 4 resolves every text-*, spacing and rounded-* utility through a
   CSS variable, so the whole admin is re-scaled here rather than in ~80
-  component files: 13px body, a 10% tighter spacing unit, 6px corners.
-  Scoped with :has([data-admin-root]) on the root — not on the layout div —
-  so AdminModal's portal (rendered into <body>, outside the layout) gets
-  the same scale. The public site never renders data-admin-root and is
-  untouched.
+  component files. Scoped with :has([data-admin-root]) on the root — not on
+  the layout div — so AdminModal's portal (rendered into <body>, outside
+  the layout) gets the same scale. The public site never renders
+  data-admin-root and is untouched.
 
-  data-admin-density="comfortable" on <html> (the topbar toggle) restores
-  the site's own scale for anyone who finds 13px too small.
+  THE DEFAULT IS THE V4 MOCKUP'S SCALE
+
+  14px body, 25px page title (text-2xl), 30px brief greeting (text-3xl),
+  Tailwind's own 4px spacing unit. Phase 1 made a tighter scale the default
+  (13px body, a 10% smaller spacing unit, 19px titles), and round two of
+  the v4 review traced most of "it looks smaller and denser than the
+  mockup" to exactly that. It is still there, as the opt-in
+  data-admin-density="compact" on <html> (the density toggle), for anyone
+  who wants more on screen.
 */
 :root:has([data-admin-root]) {
   --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
-  --text-lg: 0.9375rem;
-  --text-xl: 1.0625rem;
-  --text-2xl: 1.1875rem;
-  --text-3xl: 1.375rem;
-  --text-4xl: 1.625rem;
-  --spacing: 0.225rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.5625rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --spacing: 0.25rem;
   /* rounded-xs is what ~450 admin controls, rows and popovers already
      carry, so it takes the control radius rather than every one of them
      being renamed. Cards use rounded-card. */
@@ -825,16 +851,16 @@
   --tracking-widest2: 0.14em;
 }
 
-:root[data-admin-density="comfortable"]:has([data-admin-root]) {
-  --text-xs: 0.8125rem;
-  --text-sm: 0.875rem;
-  --text-base: 0.9375rem;
-  --text-lg: 1rem;
-  --text-xl: 1.125rem;
-  --text-2xl: 1.3125rem;
-  --text-3xl: 1.5rem;
-  --text-4xl: 1.875rem;
-  --spacing: 0.25rem;
+:root[data-admin-density="compact"]:has([data-admin-root]) {
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1.0625rem;
+  --text-2xl: 1.1875rem;
+  --text-3xl: 1.375rem;
+  --text-4xl: 1.625rem;
+  --spacing: 0.225rem;
 }
 
 /* Tracked capitals are a Latin device. Thai has no case, and the same
@@ -987,6 +1013,8 @@
   --adm-text: #e4ebf0;
   --adm-muted: #9db0bd;
   --adm-accent-ink: #e8b384;
+  --adm-strong: #e8b384;
+  --adm-on-strong: #0d2635;
   --adm-band: #041d2c;
   --adm-band-2: #0a3a58;
   --adm-info: #8fb5cc;
@@ -1148,19 +1176,6 @@
     background-color: var(--color-surface-raised);
   }
 
-  /* The primary action turns gold, as in the CI's dark treatments: a navy
-     button on a near-black page has nothing to stand out with. */
-  & .admin-btn {
-    border-color: var(--adm-fill);
-    background-color: var(--adm-fill);
-    color: var(--adm-on-fill);
-  }
-
-  & .admin-btn:hover {
-    border-color: #edc199;
-    background-color: #edc199;
-  }
-
   /* Navy text on a gold chip (the sidebar's queue counts) — text-primary
      is light in this theme, which on gold would all but disappear. */
   & .bg-accent.text-primary {
@@ -1200,26 +1215,63 @@
   @apply rounded-card border border-adm-line bg-adm-panel p-5;
 }
 
+/*
+  ── Buttons (v4 round two) ──────────────────────────────────────────────
+  The primary action is sand in both themes, as in the mockup: create,
+  save, book. Before this it was navy in light, which made "export CSV"
+  look like the page's main action and every "create" look secondary.
+
+    admin-btn         sand gradient — the one thing this screen is for
+    admin-btn-navy    strong secondary inside a light card (call a lead)
+    admin-btn-ghost   outlined — export, date range, view page, edit
+    admin-btn-quiet   no chrome — icon-only and tertiary actions
+    admin-btn-danger  delete
+    admin-btn-sm      size modifier for row actions; combine with any above
+*/
 @utility admin-btn {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
-      border border-primary bg-primary px-3.5 py-1.5 text-sm font-medium text-white
-      transition-colors hover:border-primary-700 hover:bg-primary-700
-      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+  @apply inline-flex min-h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px]
+      border-0 bg-[linear-gradient(135deg,var(--adm-fill-2),var(--adm-fill))] px-[13px] text-[13px]
+      font-medium text-adm-on-fill transition-[filter] hover:brightness-104
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-adm-info
+      disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility admin-btn-navy {
+  @apply inline-flex min-h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px]
+      border-0 bg-adm-strong px-[13px] text-[13px] font-medium text-adm-on-strong
+      transition-[filter] hover:brightness-110
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-adm-fill
       disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 @utility admin-btn-ghost {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
-      border border-adm-line-strong bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-ink
-      transition-colors hover:border-primary/30 hover:bg-surface-muted
-      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
-      disabled:opacity-60;
+  @apply inline-flex min-h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px]
+      border border-adm-line-strong bg-adm-panel px-[13px] text-[13px] font-medium text-adm-text
+      transition-colors hover:border-[color-mix(in_srgb,var(--adm-text)_30%,transparent)]
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-adm-info
+      disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility admin-btn-quiet {
+  @apply inline-flex min-h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px]
+      border-0 bg-transparent px-[13px] text-[13px] font-medium text-adm-muted
+      transition-colors hover:bg-adm-text/6 hover:text-adm-text
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-adm-info
+      disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 @utility admin-btn-danger {
-  @apply inline-flex min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-control
-      border border-red-200 bg-surface-raised px-3.5 py-1.5 text-sm font-medium text-red-700
-      transition-colors hover:border-red-300 hover:bg-red-50 disabled:opacity-60;
+  @apply inline-flex min-h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px]
+      border border-adm-danger/35 bg-transparent px-[13px] text-[13px] font-medium text-adm-danger
+      transition-colors hover:bg-adm-danger-bg
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-adm-danger
+      disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+/* Important so it wins over whichever button utility it is combined with,
+   whatever order Tailwind emits them in. */
+@utility admin-btn-sm {
+  @apply min-h-7! rounded-lg! px-2.5! text-xs!;
 }
 
 @utility admin-th {

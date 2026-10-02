@@ -635,7 +635,7 @@ export default function NewsForm({
 
         <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-primary sm:text-3xl">{headerTitle}</h1>
+            <h1 className="text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{headerTitle}</h1>
             {live && (
               <Link
                 href={live.href}

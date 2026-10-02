@@ -91,7 +91,7 @@ export default async function EditUserPage(props: Props) {
           {t("users.title")}
         </Link>
 
-        <h1 className="mt-3 text-2xl font-semibold text-primary sm:text-3xl">
+        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
           {user.name}
         </h1>
         <p className="mt-1 text-sm text-ink-muted">{user.email}</p>

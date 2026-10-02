@@ -135,7 +135,7 @@ export default async function AdminReportsPage(props: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
           <p className="admin-section-title">{t("nav.reports")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
+          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
             <FileText
               size={22}
               strokeWidth={1.75}

@@ -57,7 +57,7 @@ export default async function AdminFaqsPage(props: Props) {
     <div className="space-y-8">
       <header>
         <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
           {t("faqs.title")}
         </h1>
         <p className="mt-2 text-sm text-ink-muted">{t("faqs.subtitle")}</p>

@@ -16,7 +16,7 @@ export default function PhasePlaceholder({ section, title, body }: Props) {
     <div className="space-y-8">
       <header>
         <p className="admin-section-title">{section}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{title}</h1>
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{title}</h1>
       </header>
 
       <div className="admin-card flex flex-col items-center gap-3 py-14 text-center">

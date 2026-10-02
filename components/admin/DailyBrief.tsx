@@ -42,7 +42,7 @@ export default function DailyBrief({
       <span className="inline-flex items-center rounded-full bg-adm-fill px-2.5 py-0.5 text-[11px] font-semibold text-adm-on-fill">
         {chip}
       </span>
-      <h1 className="mt-3 text-2xl font-semibold leading-tight">{greeting}</h1>
+      <h1 className="mt-3 text-3xl font-semibold leading-tight text-white">{greeting}</h1>
       <p className="mt-1.5 max-w-3xl text-sm text-white/75">{sentence}</p>
 
       {tiles.length > 0 && (

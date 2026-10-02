@@ -244,7 +244,7 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
           runInPlace(() =>
             applyDisplayPref(
               "density",
-              document.documentElement.dataset.adminDensity === "comfortable" ? "compact" : "comfortable",
+              document.documentElement.dataset.adminDensity === "compact" ? "comfortable" : "compact",
             ),
           ),
       },

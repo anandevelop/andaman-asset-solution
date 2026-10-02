@@ -78,7 +78,7 @@ export default async function EditEBrochurePage(props: Props) {
           {t("eBrochures.title")}
         </Link>
 
-        <h1 className="mt-3 text-2xl font-semibold text-primary sm:text-3xl">
+        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
           {t("eBrochures.editTitle")}
         </h1>
 

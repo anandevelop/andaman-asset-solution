@@ -89,7 +89,7 @@ export default async function AdminEventsPage(props: Props) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="admin-section-title">{t("brand")}</p>
-          <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
             {t("events.title")}
           </h1>
           <p className="mt-2 text-sm text-ink-muted">{t("events.subtitle")}</p>

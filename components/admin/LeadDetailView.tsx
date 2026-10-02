@@ -377,7 +377,7 @@ export default async function LeadDetailView({
         <div className="flex flex-wrap items-center gap-2.5">
           <Heading
             id={isDrawer ? "lead-drawer-title" : undefined}
-            className={isDrawer ? "text-xl font-semibold text-ink" : "text-2xl font-semibold text-ink sm:text-3xl"}
+            className={isDrawer ? "text-xl font-semibold text-ink" : "text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text"}
           >
             {lead.name}
           </Heading>

@@ -20,7 +20,11 @@
  */
 
 export const DISPLAY_PREFS = {
-  density: { storageKey: "admin-density", dataKey: "adminDensity", values: ["compact", "comfortable"] },
+  /* Comfortable first, so it is the default (no attribute): the v4
+     mockup's scale. Compact became opt-in in round two — a browser that
+     stored "compact" keeps it; one that stored "comfortable" now simply
+     matches the default. */
+  density: { storageKey: "admin-density", dataKey: "adminDensity", values: ["comfortable", "compact"] },
   theme: { storageKey: "admin-theme", dataKey: "adminTheme", values: ["light", "dark"] },
   /* The rail's width. It was React state in AdminSidebar, read from
      storage after mount — so a collapsed rail painted wide for a frame on

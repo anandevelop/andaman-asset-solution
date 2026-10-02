@@ -45,7 +45,7 @@ export default async function AdminSeoLayout({ children, params }: Props) {
     <div className="space-y-6">
       <header>
         <p className="admin-section-title">{t("nav.seo")}</p>
-        <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold text-primary sm:text-3xl">
+        <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
           <Search size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
           {t("seo.title")}
         </h1>

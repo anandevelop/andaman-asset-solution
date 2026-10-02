@@ -46,7 +46,7 @@ export default async function AdminPagesLayout({ children, params }: Props) {
     <div className="space-y-6">
       <header>
         <p className="admin-section-title">{t("pages.section")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("pages.title")}</h1>
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("pages.title")}</h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-muted">{t("pages.subtitle")}</p>
       </header>
 

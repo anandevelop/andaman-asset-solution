@@ -288,7 +288,7 @@ export default async function AdminAppointmentsPage(props: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="admin-section-title">{t("eyebrow")}</p>
-          <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("title")}</h1>
+          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("title")}</h1>
         </div>
         <AppointmentCreateForm
           locale={locale}

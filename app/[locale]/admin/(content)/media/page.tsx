@@ -40,7 +40,7 @@ export default async function AdminMediaPage(props: Props) {
     <div className="space-y-6">
       <header>
         <p className="admin-section-title">{t("nav.media")}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-primary sm:text-3xl">{t("media.title")}</h1>
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("media.title")}</h1>
         <p className="mt-2 text-sm text-ink-muted">{t("media.subtitle")}</p>
       </header>
 
