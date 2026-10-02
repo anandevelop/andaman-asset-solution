@@ -457,16 +457,24 @@ const nextConfig = {
         source: "/api/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
-      {
-        // Hashed filenames — safe to cache permanently.
-        source: "/_next/static/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
+      // Hashed filenames — safe to cache permanently, in a production build
+      // only. Under `next dev` Turbopack keeps one name per chunk and
+      // rewrites its contents in place, so `immutable` told the browser to
+      // keep the stylesheet from whenever it first loaded: new classes
+      // shipped and the admin rendered without them, even after a reload.
+      ...(process.env.NODE_ENV === "production"
+        ? [
+            {
+              source: "/_next/static/:path*",
+              headers: [
+                {
+                  key: "Cache-Control",
+                  value: "public, max-age=31536000, immutable",
+                },
+              ],
+            },
+          ]
+        : []),
     ];
   },
 };
