@@ -20,6 +20,8 @@ import { hasRole } from "@/lib/role-rank";
 import { isDatabaseOffline } from "@/lib/db";
 import { getMediaLibrary } from "@/lib/media";
 import MediaLibrary from "@/components/admin/MediaLibrary";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -38,11 +40,11 @@ export default async function AdminMediaPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="admin-section-title">{t("nav.media")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("media.title")}</h1>
-        <p className="mt-2 text-sm text-ink-muted">{t("media.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "media")}
+        title={t("media.title")}
+        description={t("media.subtitle")}
+      />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

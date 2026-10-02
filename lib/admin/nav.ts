@@ -723,3 +723,21 @@ export function activeItemKey(pathname: string, base: string): string | null {
 
   return best?.key ?? null;
 }
+
+/**
+ * A page header's eyebrow: the nav zone the page sits in, with the page's
+ * own nav icon (AdminPageHeader). From this table rather than written per
+ * page, so a page moved between zones relabels itself.
+ *
+ * `t` is the admin translator; the zone label is admin.navGroups.<zone>.
+ */
+export function zoneEyebrow(
+  t: (key: string) => string,
+  itemKey: string,
+): { icon: LucideIcon; label: string } | null {
+  for (const group of ADMIN_NAV) {
+    const item = group.items.find((candidate) => candidate.key === itemKey);
+    if (item) return { icon: item.icon, label: group.labelKey ? t(`navGroups.${group.labelKey}`) : "" };
+  }
+  return null;
+}

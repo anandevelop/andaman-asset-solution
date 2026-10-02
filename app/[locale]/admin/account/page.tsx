@@ -14,6 +14,7 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { changeOwnPassword } from "@/app/[locale]/admin/(system)/users/actions";
 import PasswordForm from "@/components/admin/PasswordForm";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -35,12 +36,9 @@ export default async function AdminAccountPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("account.title")}
-        </h1>
-      </header>
+      {/* Not a nav item, so no zone eyebrow: your own account is reached
+          from the rail's footer, not the menu. */}
+      <AdminPageHeader title={t("account.title")} />
 
       <section className="admin-card">
         <dl className="grid gap-4 sm:grid-cols-3">

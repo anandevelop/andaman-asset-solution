@@ -13,7 +13,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
+
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
@@ -23,6 +23,8 @@ import UserForm from "@/components/admin/UserForm";
 import PasswordForm from "@/components/admin/PasswordForm";
 import DeleteUserForm from "@/components/admin/DeleteUserForm";
 import ResetTwoFactorForm from "@/components/admin/ResetTwoFactorForm";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -82,20 +84,12 @@ export default async function EditUserPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/users`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("users.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {user.name}
-        </h1>
-        <p className="mt-1 text-sm text-ink-muted">{user.email}</p>
-      </header>
+      <AdminPageHeader
+        back={{ href: `/${locale}/admin/users`, label: t("users.title") }}
+        eyebrow={zoneEyebrow((key) => t(key as never), "users")}
+        title={user.name}
+        description={user.email}
+      />
 
       {/*
         The only degrading read on this page is the sales-profile list, and

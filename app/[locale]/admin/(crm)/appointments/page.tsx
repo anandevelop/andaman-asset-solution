@@ -29,7 +29,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { AppointmentStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -57,6 +57,7 @@ import AppointmentRescheduleInput from "@/components/admin/AppointmentReschedule
 import AppointmentCreateForm from "@/components/admin/AppointmentCreateForm";
 import PageTabs from "@/components/admin/PageTabs";
 import WorkInbox from "@/components/admin/WorkInbox";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -285,12 +286,12 @@ export default async function AdminAppointmentsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("eyebrow")}</p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("title")}</h1>
-        </div>
-        <AppointmentCreateForm
+      <AdminPageHeader
+        eyebrow={{ icon: Users, label: "CRM" }}
+        title={t("title")}
+        actions={
+          <>
+            <AppointmentCreateForm
           locale={locale}
           // Masked: a picker is a list, and lists do not print phone
           // numbers (lib/contact-mask.ts). Enough is left to tell two
@@ -316,7 +317,9 @@ export default async function AdminAppointmentsPage(props: Props) {
             error: t("createError"),
           }}
         />
-      </header>
+          </>
+        }
+      />
 
       <PageTabs
         locale={locale}

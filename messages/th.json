@@ -708,7 +708,8 @@
       "translationComplete": "แปลแล้ว",
       "translationMissing": "ยังไม่ได้แปล",
       "today": "วันนี้",
-      "yesterday": "เมื่อวาน"
+      "yesterday": "เมื่อวาน",
+      "clearFilter": "ล้างตัวกรอง"
     },
     "dateTime": {
       "open": "เลือกวันและเวลา",

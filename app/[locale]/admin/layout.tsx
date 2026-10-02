@@ -43,6 +43,7 @@ import CommandK from "@/components/admin/CommandK";
 import { UndoToaster } from "@/components/admin/UndoToast";
 import CopilotPanel from "@/components/admin/CopilotPanel";
 import KeyboardShortcuts from "@/components/admin/KeyboardShortcuts";
+import SpotlightTracker from "@/components/admin/ui/SpotlightTracker";
 import { isCopilotEnabled } from "@/lib/admin/copilot";
 
 export const metadata: Metadata = {
@@ -142,6 +143,7 @@ export default async function AdminLayout(props: Props) {
       <CommandK locale={locale} role={user.role} copilotEnabled={copilot} />
       <UndoToaster />
       <KeyboardShortcuts locale={locale} role={user.role} />
+      <SpotlightTracker />
       {/* data-admin-root switches on the back office's denser type and
           spacing scale — see "Back-office density" in globals.css. */}
       <div data-admin-root className="min-h-screen bg-surface text-sm text-ink lg:flex">

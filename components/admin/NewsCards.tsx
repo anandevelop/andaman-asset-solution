@@ -16,7 +16,7 @@
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 import type { ArticleRow, LocaleState } from "@/lib/admin/news-list";
-import ProgressRing from "@/components/admin/ProgressRing";
+import ProgressRing from "@/components/admin/ui/ProgressRing";
 
 const STATUS_TONE: Record<ArticleRow["status"], string> = {
   published: "bg-adm-success-bg text-adm-success",
@@ -91,10 +91,7 @@ export default function NewsCards({
                   {row.seoScore === null ? (
                     <span>{labels.seoNone}</span>
                   ) : (
-                    <>
-                      <ProgressRing share={row.seoScore / 100} size={20} />
-                      <span className="tabular-nums text-ink">{row.seoScore}</span>
-                    </>
+                    <ProgressRing value={row.seoScore} size="sm" label={`${labels.seo} ${row.seoScore}`} />
                   )}
                 </span>
                 <span className="tabular-nums">

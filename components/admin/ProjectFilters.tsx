@@ -18,7 +18,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProjectStatus, PropertyType } from "@prisma/client";
-import { Loader2, Search, X } from "lucide-react";
+import FilterChip from "@/components/admin/ui/FilterChip";
+import { ArrowDownUp, CircleDot, Globe, Home, Languages, Loader2, Search } from "lucide-react";
 
 type Props = {
   locale: string;
@@ -50,6 +51,8 @@ type Props = {
     sortRecent: string;
     sortName: string;
     sortUnitsLeft: string;
+    /** The ✕ on an active chip. */
+    clearFilter: string;
   };
 };
 
@@ -123,124 +126,81 @@ export default function ProjectFilters({
     return () => clearTimeout(timer);
   }, [search, activeSearch]);
 
-  /* `w-auto!` matters: admin-input is w-full, and a flex-wrap row of
-     full-width items puts every control on its own line. */
-  const selectClass = "admin-input w-auto! max-w-[220px] py-2! text-sm";
-
+  /* Search, then the filters as chips (FilterChip): dashed while they
+     filter nothing, sand with an ✕ once they do. Each writes the same URL
+     parameter its <select> did — see push above. */
   return (
-    <div className="flex flex-wrap items-center gap-2.5">
-      <div className="relative flex min-w-[260px] flex-1 items-center sm:max-w-md">
-        <Search size={15} className="absolute left-3 text-ink-muted" aria-hidden />
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex min-w-[240px] flex-1 items-center sm:max-w-sm">
+        <Search size={15} className="absolute left-3 text-adm-muted" aria-hidden />
         <input
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={labels.searchPlaceholder}
           aria-label={labels.searchPlaceholder}
-          className="admin-input py-2! pl-9! pr-28! text-sm"
+          className="admin-input h-8 pl-9! pr-24!"
         />
-        <span className="pointer-events-none absolute right-3 border-l border-primary/10 pl-3 text-xs text-ink-muted">
+        <span className="pointer-events-none absolute right-3 border-l border-adm-line pl-3 text-xs text-adm-muted">
           {labels.resultCount}
         </span>
       </div>
 
-      <select
-        aria-label={labels.type}
-        value={activeType}
-        onChange={(event) => push.current({ type: event.target.value })}
-        className={selectClass}
-      >
-        <option value="ALL">
-          {labels.type}: {labels.all}
-        </option>
-        {Object.values(PropertyType).map((type) => (
-          <option key={type} value={type}>
-            {labels.type}: {typeLabels[type]}
-          </option>
-        ))}
-      </select>
+      <FilterChip
+        label={labels.type}
+        icon={Home}
+        options={Object.values(PropertyType).map((type) => ({ value: type, label: typeLabels[type] }))}
+        value={activeType === "ALL" ? null : activeType}
+        onSelect={(value) => push.current({ type: value })}
+        onClear={() => push.current({ type: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.status}
+        icon={CircleDot}
+        options={Object.values(ProjectStatus).map((status) => ({ value: status, label: statusLabels[status] }))}
+        value={activeStatus === "ALL" ? null : activeStatus}
+        onSelect={(value) => push.current({ status: value })}
+        onClear={() => push.current({ status: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.published}
+        icon={Globe}
+        options={[
+          { value: "PUBLISHED", label: labels.publishedOnly },
+          { value: "DRAFT", label: labels.draftOnly },
+        ]}
+        value={activePublished === "ALL" ? null : activePublished}
+        onSelect={(value) => push.current({ published: value })}
+        onClear={() => push.current({ published: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      {/* A toggle rather than a list: on or off, with how many it leaves. */}
+      <FilterChip
+        label={incompleteCount > 0 ? `${labels.incomplete} · ${incompleteCount}` : labels.incomplete}
+        icon={Languages}
+        options={[{ value: "true", label: labels.incomplete }]}
+        value={incompleteOnly ? "true" : null}
+        onSelect={() => push.current({ incomplete: "true" })}
+        onClear={() => push.current({ incomplete: "false" })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.sort}
+        icon={ArrowDownUp}
+        options={[
+          { value: "recent", label: labels.sortRecent },
+          { value: "name", label: labels.sortName },
+          { value: "unitsLeft", label: labels.sortUnitsLeft },
+        ]}
+        value={activeSort === "custom" ? null : activeSort}
+        onSelect={(value) => push.current({ sort: value })}
+        onClear={() => push.current({ sort: "custom" })}
+        clearLabel={labels.clearFilter}
+      />
 
-      <select
-        aria-label={labels.status}
-        value={activeStatus}
-        onChange={(event) => push.current({ status: event.target.value })}
-        className={selectClass}
-      >
-        <option value="ALL">
-          {labels.status}: {labels.all}
-        </option>
-        {Object.values(ProjectStatus).map((status) => (
-          <option key={status} value={status}>
-            {labels.status}: {statusLabels[status]}
-          </option>
-        ))}
-      </select>
-
-      <select
-        aria-label={labels.published}
-        value={activePublished}
-        onChange={(event) => push.current({ published: event.target.value })}
-        className={selectClass}
-      >
-        <option value="ALL">
-          {labels.published}: {labels.all}
-        </option>
-        <option value="PUBLISHED">
-          {labels.published}: {labels.publishedOnly}
-        </option>
-        <option value="DRAFT">
-          {labels.published}: {labels.draftOnly}
-        </option>
-      </select>
-
-      {/* Same shape as the leads board's overdue chip: a toggle that also
-          reports how many rows turning it on would leave. */}
-      <button
-        type="button"
-        onClick={() => push.current({ incomplete: incompleteOnly ? "false" : "true" })}
-        aria-pressed={incompleteOnly}
-        className={[
-          "flex items-center gap-1.5 rounded-xs border px-3 py-2 text-sm font-medium transition-colors",
-          incompleteOnly
-            ? "border-accent/50 bg-accent/10 text-accent-800"
-            : "border-primary/15 bg-surface-raised text-ink-muted hover:border-accent/40 hover:text-accent-800",
-        ].join(" ")}
-      >
-        {labels.incomplete}
-        {incompleteCount > 0 && (
-          <span
-            className={[
-              "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
-              incompleteOnly ? "bg-accent text-white" : "bg-accent/15 text-accent-800",
-            ].join(" ")}
-          >
-            {incompleteCount}
-          </span>
-        )}
-        {incompleteOnly && <X size={13} aria-hidden />}
-      </button>
-
-      <select
-        aria-label={labels.sort}
-        value={activeSort}
-        onChange={(event) => push.current({ sort: event.target.value })}
-        className={`${selectClass} ml-auto`}
-      >
-        <option value="custom">
-          {labels.sort}: {labels.sortCustom}
-        </option>
-        <option value="recent">
-          {labels.sort}: {labels.sortRecent}
-        </option>
-        <option value="name">
-          {labels.sort}: {labels.sortName}
-        </option>
-        <option value="unitsLeft">
-          {labels.sort}: {labels.sortUnitsLeft}
-        </option>
-      </select>
-
-      {pending && <Loader2 size={16} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
     </div>
   );
 }

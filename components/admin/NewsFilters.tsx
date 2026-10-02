@@ -17,7 +17,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, X } from "lucide-react";
+import FilterChip from "@/components/admin/ui/FilterChip";
+import { ArrowDownUp, CircleDot, Languages, Loader2, Search, Tag, UserRound } from "lucide-react";
 
 type Props = {
   locale: string;
@@ -119,12 +120,14 @@ export default function NewsFilters({
     return () => clearTimeout(timer);
   }, [search, activeSearch]);
 
+  /* Search, then the filters as chips (FilterChip): dashed until they
+     narrow something. Same URL parameters as the <select>s they replace. */
   return (
-    <div className="flex flex-wrap items-center gap-2.5">
+    <div className="flex flex-wrap items-center gap-2">
       <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
         <Search
           size={15}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-muted"
           aria-hidden
         />
         <input
@@ -133,108 +136,76 @@ export default function NewsFilters({
           onChange={(event) => setSearch(event.target.value)}
           placeholder={labels.searchPlaceholder}
           aria-label={labels.searchPlaceholder}
-          className="admin-input py-2! pl-9 pr-8 text-sm"
+          className="admin-input h-8 pl-9! pr-8!"
         />
         {pending && (
           <Loader2
             size={14}
-            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-ink-muted"
+            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-adm-muted"
             aria-hidden
           />
         )}
       </div>
 
-      <label className="sr-only" htmlFor="news-category">
-        {labels.category}
-      </label>
-      <select
-        id="news-category"
-        value={activeCategory}
-        onChange={(event) => push.current({ category: event.target.value })}
-        className="admin-input w-auto! py-2! text-sm"
-      >
-        <option value="ALL">
-          {labels.category}: {labels.all}
-        </option>
-        {categories.map((category) => (
-          <option key={category} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
-
-      <label className="sr-only" htmlFor="news-status">
-        {labels.status}
-      </label>
-      <select
-        id="news-status"
-        value={activeStatus}
-        onChange={(event) => push.current({ status: event.target.value })}
-        className="admin-input w-auto! py-2! text-sm"
-      >
-        <option value="ALL">
-          {labels.status}: {labels.all}
-        </option>
-        <option value="published">{labels.statusPublished}</option>
-        <option value="inReview">{labels.statusInReview}</option>
-        <option value="scheduled">{labels.statusScheduled}</option>
-        <option value="draft">{labels.statusDraft}</option>
-      </select>
-
-      <label className="sr-only" htmlFor="news-author">
-        {labels.author}
-      </label>
-      <select
-        id="news-author"
-        value={activeAuthor}
-        onChange={(event) => push.current({ author: event.target.value })}
-        className="admin-input w-auto! py-2! text-sm"
-      >
-        <option value="ALL">
-          {labels.author}: {labels.everyone}
-        </option>
-        {authors.map((author) => (
-          <option key={author.id} value={author.id}>
-            {author.name}
-          </option>
-        ))}
-      </select>
-
+      <FilterChip
+        label={labels.category}
+        icon={Tag}
+        options={categories.map((category) => ({ value: category, label: category }))}
+        value={activeCategory === "ALL" ? null : activeCategory}
+        onSelect={(value) => push.current({ category: value })}
+        onClear={() => push.current({ category: null })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.status}
+        icon={CircleDot}
+        options={[
+          { value: "published", label: labels.statusPublished },
+          { value: "inReview", label: labels.statusInReview },
+          { value: "scheduled", label: labels.statusScheduled },
+          { value: "draft", label: labels.statusDraft },
+        ]}
+        value={activeStatus === "ALL" ? null : activeStatus}
+        onSelect={(value) => push.current({ status: value })}
+        onClear={() => push.current({ status: null })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.author}
+        icon={UserRound}
+        options={authors.map((author) => ({ value: author.id, label: author.name }))}
+        value={activeAuthor === "ALL" ? null : activeAuthor}
+        onSelect={(value) => push.current({ author: value })}
+        onClear={() => push.current({ author: null })}
+        clearLabel={labels.clearFilter}
+      />
       {/* Only offered when there is something to filter to. A chip reading
           "incomplete 0" is a control that does nothing. */}
       {incompleteCount > 0 && (
-        <button
-          type="button"
-          onClick={() => push.current({ incomplete: incompleteOnly ? null : "1" })}
-          aria-pressed={incompleteOnly}
-          className={[
-            "flex items-center gap-2 rounded-xs border px-3 py-2 text-sm transition-colors",
-            incompleteOnly
-              ? "border-amber-300 bg-amber-50 font-medium text-amber-900"
-              : "border-primary/15 text-ink-muted hover:text-primary",
-          ].join(" ")}
-        >
-          {labels.incomplete}
-          {incompleteOnly && <X size={13} aria-label={labels.clearFilter} />}
-        </button>
+        <FilterChip
+          label={labels.incomplete}
+          icon={Languages}
+          options={[{ value: "1", label: labels.incomplete }]}
+          value={incompleteOnly ? "1" : null}
+          onSelect={() => push.current({ incomplete: "1" })}
+          onClear={() => push.current({ incomplete: null })}
+          clearLabel={labels.clearFilter}
+        />
       )}
-
-      <div className="ml-auto flex items-center gap-2">
-        <label className="text-sm text-ink-muted" htmlFor="news-sort">
-          {labels.sort}
-        </label>
-        <select
-          id="news-sort"
-          value={activeSort}
-          onChange={(event) => push.current({ sort: event.target.value })}
-          className="admin-input w-auto! py-2! text-sm"
-        >
-          <option value="views">{labels.sortViews}</option>
-          <option value="leads">{labels.sortLeads}</option>
-          <option value="recent">{labels.sortRecent}</option>
-          <option value="title">{labels.sortTitle}</option>
-        </select>
-      </div>
+      {/* Views is the default order, so the chip is "off" there. */}
+      <FilterChip
+        label={labels.sort}
+        icon={ArrowDownUp}
+        options={[
+          { value: "leads", label: labels.sortLeads },
+          { value: "recent", label: labels.sortRecent },
+          { value: "title", label: labels.sortTitle },
+        ]}
+        value={activeSort === "views" ? null : activeSort}
+        onSelect={(value) => push.current({ sort: value })}
+        onClear={() => push.current({ sort: null })}
+        clearLabel={labels.clearFilter}
+      />
     </div>
   );
 }

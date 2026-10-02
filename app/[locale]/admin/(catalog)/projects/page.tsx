@@ -39,6 +39,8 @@ import PageTabs from "@/components/admin/PageTabs";
 import ProjectFilters from "@/components/admin/ProjectFilters";
 import ProjectsTable, { type ProjectTableRow } from "@/components/admin/ProjectsTable";
 import TablePagination from "@/components/admin/TablePagination";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type SearchParams = {
   q?: string;
@@ -217,16 +219,13 @@ export default async function AdminProjectsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("nav.projects")}</p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-            {t("projects.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">{t("projects.subtitle")}</p>
-        </div>
-
-        {/* Hidden below ADMIN because ../new/page.tsx guards at
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
+        title={t("projects.title")}
+        description={t("projects.subtitle")}
+        actions={
+          <>
+            {/* Hidden below ADMIN because ../new/page.tsx guards at
             requireAdmin(locale, Role.ADMIN). The button follows the page,
             not the other way round: widening the page to match the button
             would hand every editor the ability to create developments, which is
@@ -237,7 +236,9 @@ export default async function AdminProjectsPage(props: Props) {
             {t("projects.new")}
           </Link>
         )}
-      </header>
+          </>
+        }
+      />
 
       {/* The three cross-project lists. Progress and E-brochures used to be
           sidebar rows of their own; their per-project halves are tabs of
@@ -302,6 +303,7 @@ export default async function AdminProjectsPage(props: Props) {
           sortRecent: t("projects.filters.sortRecent"),
           sortName: t("projects.filters.sortName"),
           sortUnitsLeft: t("projects.filters.sortUnitsLeft"),
+          clearFilter: t("common.clearFilter"),
         }}
       />
 

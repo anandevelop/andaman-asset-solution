@@ -708,7 +708,8 @@
       "translationComplete": "已翻译",
       "translationMissing": "尚未翻译",
       "today": "今天",
-      "yesterday": "昨天"
+      "yesterday": "昨天",
+      "clearFilter": "清除筛选"
     },
     "dateTime": {
       "open": "选择日期和时间",

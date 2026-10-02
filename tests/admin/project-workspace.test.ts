@@ -44,7 +44,9 @@ describe("the workspace tabs", () => {
 
     expect(hrefs.length).toBeGreaterThan(5);
     for (const href of hrefs) {
-      expect(href, href).toMatch(/^\$\{base\}\//);
+      // `${base}/…`, or `${base}${segment}` for the segmented steps, whose
+      // segments carry their own leading slash (asserted further down).
+      expect(href, href).toMatch(/^\$\{base\}(\/|\$\{step\.segment\}$)/);
     }
 
     expect(tabs).toContain("const base = `/${locale}/admin/projects/${projectId}`");

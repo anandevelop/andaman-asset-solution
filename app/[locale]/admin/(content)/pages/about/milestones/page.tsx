@@ -22,6 +22,8 @@ import { hasRole } from "@/lib/role-rank";
 import { formatYear } from "@/lib/format";
 import { createMilestone, deleteMilestone, updateMilestone } from "./actions";
 import MilestoneForm from "@/components/admin/MilestoneForm";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 /** From this year the timeline draws stops in sand: the current run of
  *  developments. One constant, so moving the line is a one-word edit. */
@@ -62,13 +64,11 @@ export default async function AdminMilestonesPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("milestones.title")}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">{t("milestones.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
+        title={t("milestones.title")}
+        description={t("milestones.subtitle")}
+      />
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

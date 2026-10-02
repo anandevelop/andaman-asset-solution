@@ -19,6 +19,8 @@ import { createMissionPrinciple, deleteMissionPrinciple, updateMissionPrinciple 
 import MissionPrincipleForm from "@/components/admin/MissionPrincipleForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
@@ -53,13 +55,11 @@ export default async function AdminMissionPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("mission.title")}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">{t("mission.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
+        title={t("mission.title")}
+        description={t("mission.subtitle")}
+      />
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

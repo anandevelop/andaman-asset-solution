@@ -44,6 +44,8 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft, ExternalLink, ImageOff } from "lucide-react";
 import type { ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import AdminTabs from "@/components/admin/ui/AdminTabs";
+import Segmented from "@/components/admin/ui/Segmented";
 import { safeQuery } from "@/lib/db";
 
 /** The route a page is — which also decides the highlighted tab. */
@@ -193,69 +195,40 @@ export default async function ProjectHubTabs({ locale, projectId, active }: Prop
             {publicPath && <p className="admin-mono mt-2 text-xs text-white/60">{publicPath}</p>}
           </div>
 
-          {project?.isPublished && publicPath && (
-            <Link
-              href={publicPath}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-control bg-white/15 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25"
-            >
-              <ExternalLink size={14} aria-hidden />
-              {t("projects.viewSite")}
-            </Link>
-          )}
         </div>
       </header>
 
       {/* Sticky under the 60px topbar: on a long form the tabs are still
-          one click away. */}
-      <nav
-        aria-label={t("projects.hubLabel")}
-        className="sticky top-[60px] z-20 -mx-1 flex gap-1 overflow-x-auto border-b border-adm-line bg-adm-bg/90 px-1 backdrop-blur-md"
-      >
-        {tabs.map((tab) => {
-          const current = tab.key === activeTab;
-          return (
-            <Link
-              key={tab.key}
-              href={tab.href}
-              aria-current={current ? "page" : undefined}
-              className={[
-                "relative shrink-0 whitespace-nowrap px-3.5 py-3 text-sm transition-colors",
-                current
-                  ? "font-semibold text-ink after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:rounded-full after:bg-adm-fill"
-                  : "text-ink-muted hover:text-ink",
-              ].join(" ")}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
+          one click away. The live page is the row's last item, as in the
+          mockup, rather than a button on the band. */}
+      <div className="sticky top-[60px] z-20 -mx-1 bg-adm-bg/90 px-1 backdrop-blur-md">
+        <AdminTabs
+          className="mb-0!"
+          label={t("projects.hubLabel")}
+          tabs={tabs.map((tab) => ({ ...tab, active: tab.key === activeTab }))}
+          trailing={
+            project?.isPublished && publicPath ? (
+              <Link href={publicPath} target="_blank" rel="noreferrer" className="admin-btn-quiet admin-btn-sm">
+                <ExternalLink size={13} aria-hidden />
+                {t("projects.viewSite")}
+              </Link>
+            ) : undefined
+          }
+        />
+      </div>
 
       {subnav && (
         /* A segmented control, not a second tab bar: two rows of tabs read
            as two peer levels. */
-        <nav
-          aria-label={tabs.find((tab) => tab.key === activeTab)?.label}
-          className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5"
-        >
-          {subnav.map((step) => (
-            <Link
-              key={step.key}
-              href={`${base}${step.segment}`}
-              aria-current={step.key === active ? "page" : undefined}
-              className={[
-                "rounded-[8px] px-3.5 py-1.5 text-[13px] transition-colors",
-                step.key === active
-                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                  : "text-ink-muted hover:text-ink",
-              ].join(" ")}
-            >
-              {t(step.labelKey as never)}
-            </Link>
-          ))}
-        </nav>
+        <Segmented
+          label={tabs.find((tab) => tab.key === activeTab)?.label ?? ""}
+          active={active}
+          items={subnav.map((step) => ({
+            key: step.key,
+            label: t(step.labelKey as never),
+            href: `${base}${step.segment}`,
+          }))}
+        />
       )}
     </div>
   );

@@ -33,6 +33,8 @@ import { getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import PageTabs from "@/components/admin/PageTabs";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -44,11 +46,11 @@ export default async function AdminPagesLayout({ children, params }: Props) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="admin-section-title">{t("pages.section")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("pages.title")}</h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-muted">{t("pages.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
+        title={t("pages.title")}
+        description={t("pages.subtitle")}
+      />
 
       <PageTabs locale={locale} role={session.role} groupKey="pages" baseHref="/pages" />
 

@@ -22,7 +22,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import AuditDetailPanel, { type AuditEntryView } from "@/components/admin/AuditDetailPanel";
-import { History } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -37,6 +36,8 @@ import {
   isFailedAuth,
 } from "@/lib/audit/events";
 import { intlLocale } from "@/lib/format";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 /** Entries are written constantly; a cached page would be a stale one. */
 export const dynamic = "force-dynamic";
@@ -269,13 +270,11 @@ export default async function AdminActivityPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-3">
-        <History className="mt-1 h-5 w-5 text-primary" aria-hidden />
-        <div>
-          <h1 className="text-xl font-semibold text-ink">{t("activity.title")}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink/70">{t("activity.subtitle")}</p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "activity")}
+        title={t("activity.title")}
+        description={t("activity.subtitle")}
+      />
 
       {/* A plain GET form: the selections land in the query string, so a
           filtered view can be sent to someone, the back button works, and

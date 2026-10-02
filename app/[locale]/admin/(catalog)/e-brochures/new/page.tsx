@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
+
 import { requireAdmin } from "@/lib/admin/guard";
 import { getBrochureProjectOptions } from "@/lib/brochures";
 import { parseEditingLocale } from "@/lib/admin/translated-form";
 import { createBrochure } from "../actions";
 import EBrochureForm, { EMPTY_BROCHURE } from "@/components/admin/EBrochureForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -37,19 +39,11 @@ export default async function NewEBrochurePage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/e-brochures`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("eBrochures.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("eBrochures.newTitle")}
-        </h1>
-      </header>
+      <AdminPageHeader
+        back={{ href: `/${locale}/admin/e-brochures`, label: t("eBrochures.title") }}
+        eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
+        title={t("eBrochures.newTitle")}
+      />
 
       <LanguageTabs
         active={lang}

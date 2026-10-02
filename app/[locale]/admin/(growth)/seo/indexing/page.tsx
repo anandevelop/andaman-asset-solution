@@ -64,7 +64,7 @@ export default async function AdminSeoIndexingPage(props: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="admin-label mb-0">{t("seo.indexing.title")}</h1>
+        <h2 className="admin-label mb-0">{t("seo.indexing.title")}</h2>
         <p className="admin-hint">{t("seo.indexing.subtitle", { days: crawl.windowDays })}</p>
       </div>
 

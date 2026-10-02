@@ -46,6 +46,8 @@ import LeadBoard, { type LeadBoardColumn } from "@/components/admin/LeadBoard";
 import type { LeadCardView } from "@/components/admin/LeadBoardCard";
 import LeadDrawer from "@/components/admin/LeadDrawer";
 import LeadDetailView from "@/components/admin/LeadDetailView";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { Users } from "lucide-react";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -251,6 +253,7 @@ export default async function AdminLeadsPage(props: Props) {
         viewSla: t("leads.views.sla"),
         search: t("leads.searchPlaceholder"),
         clearSearch: t("leads.clearSearch"),
+        clearFilter: t("common.clearFilter"),
         status: t("leads.filterStatus"),
         sort: t("leads.sort"),
         all: t("common.all"),
@@ -270,16 +273,13 @@ export default async function AdminLeadsPage(props: Props) {
   );
 
   const header = (
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("leads.title")}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">{t("leads.subtitle")}</p>
-      </div>
-
-      <div className="flex items-center gap-2.5">
+    <AdminPageHeader
+      eyebrow={{ icon: Users, label: "CRM" }}
+      title={t("leads.title")}
+      description={t("leads.subtitle")}
+      actions={
+        <>
+          <div className="flex items-center gap-2.5">
         <LeadViewToggle
           locale={locale}
           active={view}
@@ -289,7 +289,9 @@ export default async function AdminLeadsPage(props: Props) {
             table rather than always exporting everything. */}
         <LeadExportButton status={searchParams.status ?? "ALL"} />
       </div>
-    </header>
+        </>
+      }
+    />
   );
 
   /* The same strip the appointments calendar draws — see

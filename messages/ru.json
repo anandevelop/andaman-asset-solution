@@ -708,7 +708,8 @@
       "translationComplete": "Переведено",
       "translationMissing": "Ещё не переведено",
       "today": "Сегодня",
-      "yesterday": "Вчера"
+      "yesterday": "Вчера",
+      "clearFilter": "Сбросить фильтр"
     },
     "dateTime": {
       "open": "Выберите дату и время",

@@ -14,7 +14,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, ShieldCheck, ShieldAlert, History } from "lucide-react";
+import { ShieldCheck, ShieldAlert, History } from "lucide-react";
 import QRCode from "qrcode";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -34,6 +34,7 @@ import { intlLocale } from "@/lib/format";
 import { confirmTwoFactor, disableTwoFactor, regenerateRecoveryCodes } from "./actions";
 import TwoFactorSetup from "@/components/admin/TwoFactorSetup";
 import TwoFactorManage from "@/components/admin/TwoFactorManage";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -111,20 +112,11 @@ export default async function SecurityPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/account`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("account.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("security.title")}
-        </h1>
-        <p className="mt-1 text-sm text-ink-muted">{t("security.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        back={{ href: `/${locale}/admin/account`, label: t("account.title") }}
+        title={t("security.title")}
+        description={t("security.subtitle")}
+      />
 
       {/* An empty sign-in history during an outage would read as "nobody
           has signed in", which on a security page is the alarming

@@ -708,7 +708,8 @@
       "translationComplete": "Translated",
       "translationMissing": "Not translated yet",
       "today": "Today",
-      "yesterday": "Yesterday"
+      "yesterday": "Yesterday",
+      "clearFilter": "Clear filter"
     },
     "dateTime": {
       "open": "Choose a date and time",

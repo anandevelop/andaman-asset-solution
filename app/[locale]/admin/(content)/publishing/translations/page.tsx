@@ -40,7 +40,7 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { LOCALE_DISPLAY_ORDER } from "@/i18n";
-import ProgressRing from "@/components/admin/ProgressRing";
+import ProgressRing from "@/components/admin/ui/ProgressRing";
 import {
   getTranslationStatusReport,
   translationLocaleTotals,
@@ -126,7 +126,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
           const share = row.total === 0 ? 1 : have / row.total;
           return (
             <div key={row.locale} className="admin-card flex items-center gap-4">
-              <ProgressRing share={share} size={52} />
+              <ProgressRing value={share * 100} size="md" showValue={false} />
               <div className="min-w-0">
                 <p className="text-xs text-ink-muted">{LOCALE_NATIVE_NAMES[row.locale] ?? row.locale}</p>
                 <p className="text-2xl font-semibold tabular-nums text-ink">{Math.round(share * 100)}%</p>
@@ -175,7 +175,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
                       {LOCALE_DISPLAY_ORDER.map((code) => (
                         <td key={code} className="admin-td">
                           <span className="flex items-center justify-center gap-2">
-                            <ProgressRing share={row.have[code] / row.total} />
+                            <ProgressRing value={(row.have[code] / row.total) * 100} size="sm" showValue={false} />
                             <span className="text-xs tabular-nums text-ink-muted">
                               {row.have[code]} / {row.total}
                             </span>

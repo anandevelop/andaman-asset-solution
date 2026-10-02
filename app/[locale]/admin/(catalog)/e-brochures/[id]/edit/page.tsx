@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -17,6 +17,8 @@ import EBrochureForm, { type EBrochureValues } from "@/components/admin/EBrochur
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import SaveToast from "@/components/admin/SaveToast";
 import PublishingRevisionPanel from "@/components/admin/PublishingRevisionPanel";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -69,30 +71,19 @@ export default async function EditEBrochurePage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <Link
-          href={`/${locale}/admin/e-brochures`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-        >
-          <ArrowLeft size={14} aria-hidden />
-          {t("eBrochures.title")}
-        </Link>
-
-        <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("eBrochures.editTitle")}
-        </h1>
-
-        {brochure.isPublished && (
-          <Link
-            href={`/${locale}/e-brochure/${brochure.slug}`}
-            target="_blank"
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-          >
-            <ExternalLink size={14} aria-hidden />
-            /e-brochure/{brochure.slug}
-          </Link>
-        )}
-      </header>
+      <AdminPageHeader
+        back={{ href: `/${locale}/admin/e-brochures`, label: t("eBrochures.title") }}
+        eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
+        title={t("eBrochures.editTitle")}
+        actions={
+          brochure.isPublished ? (
+            <Link href={`/${locale}/e-brochure/${brochure.slug}`} target="_blank" className="admin-btn-ghost admin-btn-sm">
+              <ExternalLink size={13} aria-hidden />
+              /e-brochure/{brochure.slug}
+            </Link>
+          ) : undefined
+        }
+      />
 
       {searchParams.created && (
         <SaveToast tone="success" token="created">

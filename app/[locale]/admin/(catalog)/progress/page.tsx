@@ -22,6 +22,8 @@ import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { formatMonthYear } from "@/lib/format";
 import PageTabs from "@/components/admin/PageTabs";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -70,12 +72,10 @@ export default async function AdminProgressIndexPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("progress.title")}
-        </h1>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
+        title={t("progress.title")}
+      />
 
       {/* The three cross-project lists. Progress and E-brochures used to be
           sidebar rows of their own; their per-project halves are tabs of

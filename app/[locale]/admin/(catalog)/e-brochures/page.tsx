@@ -9,6 +9,8 @@ import { hasRole } from "@/lib/role-rank";
 import { translationCompleteness } from "@/lib/admin/translated-form";
 import PageTabs from "@/components/admin/PageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -56,22 +58,21 @@ export default async function AdminEBrochuresPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("brand")}</p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-            {t("eBrochures.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">{t("eBrochures.subtitle")}</p>
-        </div>
-
-        {canWrite && (
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "projects")}
+        title={t("eBrochures.title")}
+        description={t("eBrochures.subtitle")}
+        actions={
+          <>
+            {canWrite && (
           <Link href={`/${locale}/admin/e-brochures/new`} className="admin-btn">
             <Plus size={16} aria-hidden />
             {t("eBrochures.new")}
           </Link>
         )}
-      </header>
+          </>
+        }
+      />
 
       {/* The three cross-project lists. Progress and E-brochures used to be
           sidebar rows of their own; their per-project halves are tabs of

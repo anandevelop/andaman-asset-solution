@@ -28,10 +28,11 @@
 
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
-import { Search } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import PageTabs from "@/components/admin/PageTabs";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -43,14 +44,11 @@ export default async function AdminSeoLayout({ children, params }: Props) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="admin-section-title">{t("nav.seo")}</p>
-        <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          <Search size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
-          {t("seo.title")}
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-muted">{t("seo.hubSubtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "seo")}
+        title={t("seo.title")}
+        description={t("seo.hubSubtitle")}
+      />
 
       <PageTabs locale={locale} role={session.role} groupKey="seo" baseHref="/seo" />
 

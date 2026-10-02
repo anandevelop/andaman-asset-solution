@@ -19,11 +19,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { Role } from "@prisma/client";
 import { tabBase, visibleTabs } from "@/lib/admin/nav";
+import AdminTabs from "@/components/admin/ui/AdminTabs";
 
 export default function PageTabs({
   locale,
@@ -31,6 +31,7 @@ export default function PageTabs({
   groupKey,
   baseHref,
   badges,
+  counts,
   carryParams,
 }: {
   locale: string;
@@ -50,6 +51,9 @@ export default function PageTabs({
   /** Live counts by tab key. Zero and undefined both render nothing: an
    *  empty queue is not news, same rule as the sidebar's own badges. */
   badges?: Partial<Record<string, number>>;
+  /** Plain muted totals after a label ("รายชื่อผู้สนใจ 4"), shown even at 0 —
+   *  they describe the tab, they are not a call to act. */
+  counts?: Partial<Record<string, number>>;
   /**
    * Query parameters to carry across when switching tab.
    *
@@ -83,39 +87,22 @@ export default function PageTabs({
   const query = carried.toString();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-ink/10" aria-label={t(`${groupKey}.label` as never)}>
-      {tabs.map(({ key, segment }) => {
+    <AdminTabs
+      label={t(`${groupKey}.label` as never)}
+      tabs={tabs.map(({ key, segment }) => {
         const href = `/${locale}/admin${base}${segment}`;
-
-        /* Prefix match so a child route keeps its tab lit — the segment ""
-           case is exact for the same reason the dashboard is in
-           activeItemKey: as a prefix it would match every sibling. */
-        const active =
-          segment === "" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-
-        const count = badges?.[key] ?? 0;
-
-        return (
-          <Link
-            key={key}
-            href={query ? `${href}?${query}` : href}
-            aria-current={active ? "page" : undefined}
-            className={[
-              "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors",
-              active
-                ? "border-primary font-semibold text-primary"
-                : "border-transparent text-ink-muted hover:text-primary",
-            ].join(" ")}
-          >
-            {t(`${groupKey}.${key}` as never)}
-            {count > 0 && (
-              <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary">
-                {count > 99 ? "99+" : count}
-              </span>
-            )}
-          </Link>
-        );
+        return {
+          key,
+          href: query ? `${href}?${query}` : href,
+          label: t(`${groupKey}.${key}` as never),
+          /* Prefix match so a child route keeps its tab lit — the segment ""
+             case is exact for the same reason the dashboard is in
+             activeItemKey: as a prefix it would match every sibling. */
+          active: segment === "" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`),
+          count: counts?.[key],
+          badge: badges?.[key],
+        };
       })}
-    </nav>
+    />
   );
 }

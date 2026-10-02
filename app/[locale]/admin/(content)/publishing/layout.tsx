@@ -29,6 +29,8 @@ import { getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import PageTabs from "@/components/admin/PageTabs";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -36,15 +38,18 @@ export default async function AdminPublishingLayout({ children, params }: Props)
   const { locale } = await params;
 
   const session = await requireAdmin(locale, Role.VIEWER);
-  const t = await getTranslations({ locale, namespace: "admin.publishing" });
+  const [t, tAdmin] = await Promise.all([
+    getTranslations({ locale, namespace: "admin.publishing" }),
+    getTranslations({ locale, namespace: "admin" }),
+  ]);
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="admin-section-title">{t("eyebrow")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("title")}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => tAdmin(key as never), "publishing")}
+        title={t("title")}
+        description={t("subtitle")}
+      />
 
       <PageTabs locale={locale} role={session.role} groupKey="publishing" baseHref="/publishing" />
 

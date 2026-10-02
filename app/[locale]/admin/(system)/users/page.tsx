@@ -19,6 +19,8 @@ import { AUTH_LOGIN } from "@/lib/audit/events";
 import { PERMISSION_MATRIX, CAPABILITIES, ROLE_ORDER } from "@/lib/permissions";
 import { createUser } from "./actions";
 import UserForm from "@/components/admin/UserForm";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -97,13 +99,11 @@ export default async function AdminUsersPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{t("brand")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("users.title")}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">{t("users.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "users")}
+        title={t("users.title")}
+        description={t("users.subtitle")}
+      />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

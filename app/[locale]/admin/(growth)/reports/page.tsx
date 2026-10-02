@@ -35,7 +35,6 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { FileText } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
@@ -59,6 +58,8 @@ import ReportNoteEditor from "@/components/admin/ReportNoteEditor";
 import ReportScheduleCard from "@/components/admin/ReportScheduleCard";
 import AlertRulesCard from "@/components/admin/AlertRulesCard";
 import { saveReportNote, sendTestReport, toggleAlertRule } from "./actions";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -132,23 +133,11 @@ export default async function AdminReportsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
-        <div>
-          <p className="admin-section-title">{t("nav.reports")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-            <FileText
-              size={22}
-              strokeWidth={1.75}
-              className="text-accent-700"
-              aria-hidden
-            />
-            {t("reports.title")}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-            {t("reports.subtitle")}
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader className="print:hidden"
+        eyebrow={zoneEyebrow((key) => t(key as never), "reports")}
+        title={t("reports.title")}
+        description={t("reports.subtitle")}
+      />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 print:hidden">

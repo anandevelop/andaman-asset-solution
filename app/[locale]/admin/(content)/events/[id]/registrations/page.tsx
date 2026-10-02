@@ -18,7 +18,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, CalendarDays, MapPin, Pencil } from "lucide-react";
+import { CalendarDays, MapPin, Pencil } from "lucide-react";
 import { EventStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -32,6 +32,9 @@ import {
 import RegistrationDesk, { type RegistrationView } from "@/components/admin/RegistrationDesk";
 import RegistrationFilters from "@/components/admin/RegistrationFilters";
 import TablePagination from "@/components/admin/TablePagination";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import StatusPill from "@/components/admin/ui/StatusPill";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -123,13 +126,17 @@ export default async function AdminEventRegistrationsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <Link
-        href={`/${locale}/admin/events`}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
-      >
-        <ArrowLeft size={14} aria-hidden />
-        {t("events.title")}
-      </Link>
+      <AdminPageHeader
+        back={{ href: `/${locale}/admin/events`, label: t("events.title") }}
+        eyebrow={zoneEyebrow((key) => t(key as never), "events")}
+        title={title}
+        titleAddon={
+          <StatusPill
+            tone={event.isPublished ? "success" : "neutral"}
+            label={event.isPublished ? t("common.published") : t("common.draft")}
+          />
+        }
+      />
 
       {/* ── The room ─────────────────────────────────────────────────── */}
       <section className="admin-card">
@@ -145,20 +152,8 @@ export default async function AdminEventRegistrationsPage(props: Props) {
           )}
 
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl font-semibold text-primary sm:text-2xl">{title}</h1>
-              <span
-                className={
-                  event.isPublished
-                    ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                    : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                }
-              >
-                {event.isPublished ? t("common.published") : t("common.draft")}
-              </span>
-            </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-ink-muted">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-ink-muted">
               <span className="flex items-center gap-1.5">
                 <CalendarDays size={14} aria-hidden />
                 {dateFormat.format(event.startsAt)} · {timeFormat.format(event.startsAt)}

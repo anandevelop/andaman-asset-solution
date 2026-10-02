@@ -33,6 +33,8 @@ import NewsFilters from "@/components/admin/NewsFilters";
 import NewsTable from "@/components/admin/NewsTable";
 import NewsCards from "@/components/admin/NewsCards";
 import TablePagination from "@/components/admin/TablePagination";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -103,14 +105,13 @@ export default async function AdminNewsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("news.section")}</p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{t("news.title")}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("news.subtitle")}</p>
-        </div>
-
-        {/* Hidden below EDITOR because ./new/page.tsx guards at that
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "news")}
+        title={t("news.title")}
+        description={t("news.subtitle")}
+        actions={
+          <>
+            {/* Hidden below EDITOR because ./new/page.tsx guards at that
             minimum — the button follows the page, same reasoning as the
             projects and events "New" links. */}
         {canWrite && (
@@ -119,7 +120,9 @@ export default async function AdminNewsPage(props: Props) {
             {t("news.new")}
           </Link>
         )}
-      </header>
+          </>
+        }
+      />
 
       {isDatabaseOffline() && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

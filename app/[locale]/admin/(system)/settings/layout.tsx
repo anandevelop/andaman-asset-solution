@@ -31,6 +31,8 @@ import { siteConfig } from "@/config/site";
 import SettingsNav from "@/components/admin/SettingsNav";
 import ConnectionStatusCard from "@/components/admin/ConnectionStatusCard";
 import PrivacyStatusCard from "@/components/admin/PrivacyStatusCard";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -50,13 +52,11 @@ export default async function AdminSettingsLayout({ children, params }: Props) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="admin-section-title">{t("settings.section")}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-          {t("settings.title")}
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-muted">{t("settings.subtitle")}</p>
-      </header>
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "settings")}
+        title={t("settings.title")}
+        description={t("settings.subtitle")}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
         <SettingsNav

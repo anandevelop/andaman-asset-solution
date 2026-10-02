@@ -13,9 +13,10 @@
  * `assignedTo` and `overdue` parameters the filters already had, so a view
  * and a hand-set filter can never disagree about what they mean.
  *
- * CHIPS are dashed while they filter nothing and turn solid when they do,
- * so a glance at the toolbar says whether the list is narrowed — the thing
- * a row of identical selects failed to say.
+ * CHIPS (FilterChip) are dashed while they filter nothing and turn solid
+ * sand when they do, with an ✕ that clears them — so a glance at the
+ * toolbar says whether the list is narrowed, which a row of identical
+ * selects failed to say.
  *
  * Shared by the board and the table. Status and sort are table-only: the
  * board's columns already are the status filter, and a board has no single
@@ -26,7 +27,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { LeadSource, LeadStatus } from "@prisma/client";
-import { ChevronDown, Loader2, Search, X } from "lucide-react";
+import Segmented from "@/components/admin/ui/Segmented";
+import FilterChip from "@/components/admin/ui/FilterChip";
+import { ArrowDownUp, Building2, CircleDot, Clock, Filter, Loader2, Search, UserRound, X } from "lucide-react";
 
 type SavedView = "all" | "mine" | "unassigned" | "sla";
 
@@ -59,6 +62,8 @@ type Props = {
     viewSla: string;
     search: string;
     clearSearch: string;
+    /** The ✕ on an active filter chip. */
+    clearFilter: string;
     status: string;
     sort: string;
     all: string;
@@ -173,213 +178,121 @@ export default function LeadFilters(props: Props) {
     },
   ];
 
-  /* Dashed until it narrows something. `w-auto!`: admin-input is w-full,
-     which would stack the chips one per line. */
-  const chip = (active: boolean) =>
-    [
-      "h-8 w-auto! max-w-[220px] cursor-pointer appearance-none rounded-full border py-0 pl-3 pr-7 text-[12.5px] transition-colors",
-      active
-        ? "border-solid border-adm-info bg-adm-status-info-bg font-medium text-adm-status-info"
-        : "border-dashed border-adm-line-strong bg-transparent text-ink-muted hover:border-adm-info hover:text-ink",
-    ].join(" ");
+  const sourceOptions = Object.values(LeadSource).map((source) => ({ value: source, label: props.sourceLabels[source] }));
+  const rangeOptions = [
+    { value: "7", label: labels.range7 },
+    { value: "30", label: labels.range30 },
+    { value: "90", label: labels.range90 },
+    { value: "365", label: labels.range365 },
+  ];
 
+  /* One row, wrapping on narrow screens: saved views and chip filters on
+     the left, search on the right (the mockup's toolbar). Every chip writes
+     the same URL parameter its <select> did. */
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div
-          role="group"
-          aria-label={labels.views}
-          className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5"
-        >
-          {views.map((item) => {
-            const selected = savedView === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => setParam(item.params)}
-                className={[
-                  "flex h-7 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] transition-colors",
-                  selected
-                    ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                    : "text-ink-muted hover:text-ink",
-                ].join(" ")}
-              >
-                {item.label}
-                {item.count !== undefined && item.count > 0 && (
-                  <span
-                    className={[
-                      "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
-                      item.key === "sla"
-                        ? "bg-adm-danger-bg text-adm-danger"
-                        : "bg-adm-fill text-adm-on-fill",
-                    ].join(" ")}
-                  >
-                    {item.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <label className="relative ml-auto flex min-w-[220px] flex-1 items-center sm:max-w-[320px]">
-          <span className="sr-only">{labels.search}</span>
-          <Search
-            size={15}
-            aria-hidden
-            className="pointer-events-none absolute left-3 text-ink-muted"
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={labels.search}
-            className="admin-input h-9 pl-9! pr-8!"
-          />
-          {query && (
-            <button
-              type="button"
-              aria-label={labels.clearSearch}
-              onClick={() => setQuery("")}
-              className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-full text-ink-muted hover:bg-primary/5"
-            >
-              <X size={13} aria-hidden />
-            </button>
-          )}
-        </label>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Chip>
-          <select
-            aria-label={labels.project}
-            value={props.activeProject}
-            onChange={(event) => setParam({ project: event.target.value })}
-            className={chip(props.activeProject !== "ALL")}
-          >
-            <option value="ALL">{labels.project}</option>
-            {props.projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </Chip>
-
-        <Chip>
-          <select
-            aria-label={labels.source}
-            value={props.activeSource}
-            onChange={(event) => setParam({ source: event.target.value })}
-            className={chip(props.activeSource !== "ALL")}
-          >
-            <option value="ALL">{labels.source}</option>
-            {Object.values(LeadSource).map((source) => (
-              <option key={source} value={source}>
-                {props.sourceLabels[source]}
-              </option>
-            ))}
-          </select>
-        </Chip>
-
-        <Chip>
-          <select
-            aria-label={labels.range}
-            value={props.activeRange}
-            onChange={(event) => setParam({ range: event.target.value })}
-            className={chip(props.activeRange !== "ALL")}
-          >
-            <option value="ALL">
-              {labels.range}: {labels.all}
-            </option>
-            <option value="7">{labels.range7}</option>
-            <option value="30">{labels.range30}</option>
-            <option value="90">{labels.range90}</option>
-            <option value="365">{labels.range365}</option>
-          </select>
-        </Chip>
-
-        {props.canPickAssignee && (
-          <Chip>
-            <select
-              aria-label={labels.assignee}
-              value={savedView ? "ALL" : props.activeAssignee}
-              onChange={(event) =>
-                setParam({ assignedTo: event.target.value, overdue: "false" })
-              }
-              className={chip(savedView === null)}
-            >
-              <option value="ALL">{labels.assignee}</option>
-              {props.assignees.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.name}
-                </option>
-              ))}
-            </select>
-          </Chip>
-        )}
-
-        {view === "table" && (
-          <>
-            <Chip>
-              <select
-                aria-label={labels.status}
-                value={props.activeStatus}
-                onChange={(event) => setParam({ status: event.target.value })}
-                className={chip(props.activeStatus !== "ALL")}
-              >
-                <option value="ALL">{labels.status}</option>
-                {Object.values(LeadStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {props.statusLabels[status]}
-                  </option>
-                ))}
-              </select>
-            </Chip>
-
-            <Chip>
-              <select
-                aria-label={labels.sort}
-                value={props.activeSort}
-                onChange={(event) =>
-                  setParam({
-                    sort: event.target.value === "oldest" ? "oldest" : "newest",
-                  })
-                }
-                className={chip(props.activeSort !== "newest")}
-              >
-                <option value="newest">{labels.newest}</option>
-                <option value="oldest">{labels.oldest}</option>
-              </select>
-            </Chip>
-          </>
-        )}
-
-        {pending && (
-          <Loader2
-            size={16}
-            className="animate-spin text-ink-muted"
-            aria-hidden
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** A native select dressed as a chip — the arrow drawn over it, in the
- *  text colour, since appearance-none removes the browser's own. */
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="relative inline-flex items-center">
-      {children}
-      <ChevronDown
-        size={12}
-        aria-hidden
-        className="pointer-events-none absolute right-2.5 text-current opacity-60"
+    <div className="flex flex-wrap items-center gap-2">
+      <Segmented
+        label={labels.views}
+        active={savedView}
+        onSelect={(key) => {
+          const item = views.find((candidate) => candidate.key === key);
+          if (item) setParam(item.params);
+        }}
+        items={views.map((item) => ({
+          key: item.key,
+          label: item.label,
+          count: item.count !== undefined && item.count > 0 ? item.count : undefined,
+        }))}
       />
-    </span>
+
+      <FilterChip
+        label={labels.project}
+        icon={Building2}
+        options={props.projects.map((project) => ({ value: project.id, label: project.name }))}
+        value={props.activeProject === "ALL" ? null : props.activeProject}
+        onSelect={(value) => setParam({ project: value })}
+        onClear={() => setParam({ project: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      <FilterChip
+        label={labels.source}
+        icon={Filter}
+        options={sourceOptions}
+        value={props.activeSource === "ALL" ? null : props.activeSource}
+        onSelect={(value) => setParam({ source: value })}
+        onClear={() => setParam({ source: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      {props.canPickAssignee && (
+        <FilterChip
+          label={labels.assignee}
+          icon={UserRound}
+          options={props.assignees.map((person) => ({ value: person.id, label: person.name }))}
+          value={savedView ? null : props.activeAssignee}
+          onSelect={(value) => setParam({ assignedTo: value, overdue: "false" })}
+          onClear={() => setParam({ assignedTo: "ALL" })}
+          clearLabel={labels.clearFilter}
+        />
+      )}
+      {/* "Every lead" is range=ALL, written explicitly — see setParam. */}
+      <FilterChip
+        label={labels.range}
+        icon={Clock}
+        options={rangeOptions}
+        value={props.activeRange === "ALL" ? null : props.activeRange}
+        onSelect={(value) => setParam({ range: value })}
+        onClear={() => setParam({ range: "ALL" })}
+        clearLabel={labels.clearFilter}
+      />
+      {view === "table" && (
+        <>
+          <FilterChip
+            label={labels.status}
+            icon={CircleDot}
+            options={Object.values(LeadStatus).map((status) => ({ value: status, label: props.statusLabels[status] }))}
+            value={props.activeStatus === "ALL" ? null : props.activeStatus}
+            onSelect={(value) => setParam({ status: value })}
+            onClear={() => setParam({ status: "ALL" })}
+            clearLabel={labels.clearFilter}
+          />
+          <FilterChip
+            label={labels.sort}
+            icon={ArrowDownUp}
+            options={[
+              { value: "newest", label: labels.newest },
+              { value: "oldest", label: labels.oldest },
+            ]}
+            value={props.activeSort === "oldest" ? "oldest" : null}
+            onSelect={(value) => setParam({ sort: value === "oldest" ? "oldest" : "newest" })}
+            onClear={() => setParam({ sort: "newest" })}
+            clearLabel={labels.clearFilter}
+          />
+        </>
+      )}
+
+      {pending && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
+
+      <label className="relative ml-auto flex min-w-[220px] items-center">
+        <span className="sr-only">{labels.search}</span>
+        <Search size={15} aria-hidden className="pointer-events-none absolute left-3 text-adm-muted" />
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={labels.search}
+          className="admin-input h-8 pl-9! pr-8!"
+        />
+        {query && (
+          <button
+            type="button"
+            aria-label={labels.clearSearch}
+            onClick={() => setQuery("")}
+            className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-full text-adm-muted hover:bg-adm-text/6"
+          >
+            <X size={13} aria-hidden />
+          </button>
+        )}
+      </label>
+    </div>
   );
 }

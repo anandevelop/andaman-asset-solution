@@ -8,16 +8,14 @@
  */
 
 import { Construction } from "lucide-react";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 type Props = { section: string; title: string; body: string };
 
 export default function PhasePlaceholder({ section, title, body }: Props) {
   return (
     <div className="space-y-8">
-      <header>
-        <p className="admin-section-title">{section}</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{title}</h1>
-      </header>
+      <AdminPageHeader eyebrow={{ label: section }} title={title} />
 
       <div className="admin-card flex flex-col items-center gap-3 py-14 text-center">
         <Construction size={28} strokeWidth={1.5} className="text-accent-700" aria-hidden />

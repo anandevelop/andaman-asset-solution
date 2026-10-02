@@ -20,6 +20,8 @@ import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale } from "@/lib/format";
 import { translationCompleteness } from "@/lib/admin/translated-form";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -86,16 +88,13 @@ export default async function AdminEventsPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("brand")}</p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-            {t("events.title")}
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">{t("events.subtitle")}</p>
-        </div>
-
-        {/* Hidden below ADMIN because ../new/page.tsx guards at
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "events")}
+        title={t("events.title")}
+        description={t("events.subtitle")}
+        actions={
+          <>
+            {/* Hidden below ADMIN because ../new/page.tsx guards at
             requireAdmin(locale, Role.ADMIN). The button follows the page,
             not the other way round: widening the page to match the button
             would hand every editor the ability to create events, which is
@@ -106,7 +105,9 @@ export default async function AdminEventsPage(props: Props) {
             {t("events.new")}
           </Link>
         )}
-      </header>
+          </>
+        }
+      />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

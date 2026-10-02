@@ -48,7 +48,6 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { BarChart3 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { can } from "@/lib/permissions";
@@ -74,6 +73,8 @@ import { fetchLiveSnapshot } from "./live-actions";
 import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
 import { displayValue, type VitalKey } from "@/lib/analytics/vitals";
 import DashboardControls from "@/components/admin/DashboardControls";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -184,17 +185,13 @@ export default async function AdminAnalyticsPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="admin-section-title">{t("nav.analytics")}</p>
-          <h1 className="mt-2 flex items-center gap-2.5 text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">
-            <BarChart3 size={22} strokeWidth={1.75} className="text-accent-700" aria-hidden />
-            {t("analytics.title")}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("analytics.subtitle")}</p>
-        </div>
-
-        {/* The dashboard's own header control, moved here with the reports
+      <AdminPageHeader
+        eyebrow={zoneEyebrow((key) => t(key as never), "analytics")}
+        title={t("analytics.title")}
+        description={t("analytics.subtitle")}
+        actions={
+          <>
+            {/* The dashboard's own header control, moved here with the reports
             it scopes. The CSV export travels with the range picker because
             it downloads exactly the selected window — see the component's
             header for why the two are one control and not two. */}
@@ -209,7 +206,9 @@ export default async function AdminAnalyticsPage(props: Props) {
             exportReport: t("dashboard.exportReport"),
           }}
         />
-      </header>
+          </>
+        }
+      />
 
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
