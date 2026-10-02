@@ -960,7 +960,10 @@
           "PROJECT": "The selected project wasn't found",
           "ASSIGNEE": "The selected owner can't take leads",
           "SAVE_FAILED": "Couldn't save — try again"
-        }
+        },
+        "nationality": "Nationality",
+        "nationalityPlaceholder": "Choose a nationality",
+        "nationalityNone": "Not specified"
       },
       "headerDescription": "Enquiries from the website's forms · {count, plural, one {# open lead} other {# open leads}}",
       "viewLabel": "View"

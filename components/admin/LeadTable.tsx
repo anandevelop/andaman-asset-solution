@@ -35,6 +35,8 @@ export type LeadRowView = {
   name: string;
   maskedPhone: string;
   commsLanguage: string | null;
+  /** The customer's nationality as a flag and its name, when known. */
+  nationality: { flagSrc: string | null; label: string } | null;
   projectName: string | null;
   projectImage: string | null;
   sourceLabel: string;
@@ -299,6 +301,17 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                           {row.name}
                         </Link>
                         <span className="flex items-center gap-1.5 text-xs text-adm-muted">
+                          {row.nationality?.flagSrc && (
+                            // eslint-disable-next-line @next/next/no-img-element -- a 14px static flag from /public
+                            <img
+                              src={row.nationality.flagSrc}
+                              alt={row.nationality.label}
+                              title={row.nationality.label}
+                              width={16}
+                              height={11}
+                              className="h-[11px] w-4 shrink-0 rounded-[2px] object-cover ring-1 ring-adm-line"
+                            />
+                          )}
                           <span className="admin-mono">{row.maskedPhone}</span>
                           {row.commsLanguage && (
                             <span className="rounded-full bg-adm-neutral-bg px-1.5 text-[10.5px] uppercase text-adm-neutral">

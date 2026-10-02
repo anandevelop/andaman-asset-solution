@@ -58,6 +58,15 @@ describe("parseAdminLead", () => {
     });
   });
 
+  it("keeps a known nationality as ISO2 and drops anything else", () => {
+    const known = parseAdminLead({ ...base, nationality: "ru" });
+    expect(known.ok && known.data.nationality).toBe("RU");
+    const unknown = parseAdminLead({ ...base, nationality: "XX" });
+    expect(unknown.ok && unknown.data.nationality).toBeNull();
+    const none = parseAdminLead(base);
+    expect(none.ok && none.data.nationality).toBeNull();
+  });
+
   it("requires a name", () => {
     expect(parseAdminLead({ ...base, name: " " })).toMatchObject({ ok: false, errors: { name: "NAME" } });
   });

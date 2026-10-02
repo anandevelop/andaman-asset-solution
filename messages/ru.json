@@ -960,7 +960,10 @@
           "PROJECT": "Проект не найден",
           "ASSIGNEE": "Выбранный ответственный не может принимать лиды",
           "SAVE_FAILED": "Не удалось сохранить — попробуйте ещё раз"
-        }
+        },
+        "nationality": "Гражданство",
+        "nationalityPlaceholder": "Выберите гражданство",
+        "nationalityNone": "Не указано"
       },
       "headerDescription": "Заявки с форм сайта · {count, plural, one {# открытый лид} few {# открытых лида} many {# открытых лидов} other {# открытого лида}}",
       "viewLabel": "Вид"

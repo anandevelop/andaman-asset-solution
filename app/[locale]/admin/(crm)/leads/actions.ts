@@ -660,6 +660,7 @@ export async function createLead(
         projectId: input.projectId,
         source: input.source,
         commsLanguage: input.commsLanguage,
+        nationality: input.nationality,
         assignedToId,
         consentGiven: true,
         consentedAt: new Date(),

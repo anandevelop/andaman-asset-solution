@@ -18,6 +18,7 @@
  */
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -71,7 +72,11 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
   const shown = tab === "important" ? important : entries;
   const unreadTests = tests.filter((row) => !row.read).length;
 
-  return (
+  /* Portalled to <body>: the topbar this opens from has a backdrop blur,
+     and a backdrop-filter makes an element the containing block for its
+     fixed descendants — drawn in place, this "full height" drawer was the
+     topbar's 60px tall and the list under its header never showed. */
+  return createPortal(
     <div className="fixed inset-0 z-[60]" role="presentation">
       <button
         type="button"
@@ -205,6 +210,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

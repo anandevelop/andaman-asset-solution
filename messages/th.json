@@ -960,7 +960,10 @@
           "PROJECT": "ไม่พบโครงการที่เลือก",
           "ASSIGNEE": "ผู้ดูแลที่เลือกใช้งานไม่ได้",
           "SAVE_FAILED": "บันทึกไม่สำเร็จ ลองอีกครั้ง"
-        }
+        },
+        "nationality": "สัญชาติ",
+        "nationalityPlaceholder": "เลือกสัญชาติ",
+        "nationalityNone": "ไม่ระบุ"
       },
       "headerDescription": "ข้อมูลที่ส่งเข้ามาจากฟอร์มบนเว็บไซต์ · {count} ลีดที่ยังเปิดอยู่",
       "viewLabel": "มุมมอง"

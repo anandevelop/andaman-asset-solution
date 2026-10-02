@@ -368,6 +368,8 @@ export type LeadTableRow = {
   name: string;
   phone: string;
   commsLanguage: string | null;
+  /** ISO2 — the table's flag. */
+  nationality: string | null;
   source: LeadSource;
   status: LeadStatus;
   consentGiven: boolean;
@@ -410,6 +412,7 @@ export async function getLeadTableRows(
           name: true,
           phone: true,
           commsLanguage: true,
+          nationality: true,
           source: true,
           status: true,
           consentGiven: true,

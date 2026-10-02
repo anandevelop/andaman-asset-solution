@@ -25,6 +25,8 @@ import { requireCapability } from "@/lib/admin/guard";
 import { can } from "@/lib/permissions";
 import { intlLocale } from "@/lib/format";
 import { maskPhone } from "@/lib/contact-mask";
+import { nationalityLabel } from "@/lib/countries";
+import type { Locale } from "@/i18n";
 import { ageParts } from "@/lib/admin/dashboard-model";
 import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
 import { LEAD_STATUS_DOT } from "@/lib/admin/lead-status-tone";
@@ -481,6 +483,7 @@ export default async function AdminLeadsPage(props: Props) {
       // browser from a list. See lib/contact-mask.ts.
       maskedPhone: maskPhone(lead.phone),
       commsLanguage: lead.commsLanguage,
+      nationality: nationalityLabel(lead.nationality, locale as Locale),
       projectName: projectLabel(lead.project),
       projectImage: lead.project?.imageUrl ?? null,
       sourceLabel: sourceLabels[lead.source],

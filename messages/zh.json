@@ -960,7 +960,10 @@
           "PROJECT": "未找到所选项目",
           "ASSIGNEE": "所选负责人无法接收线索",
           "SAVE_FAILED": "保存失败，请重试"
-        }
+        },
+        "nationality": "国籍",
+        "nationalityPlaceholder": "选择国籍",
+        "nationalityNone": "未指定"
       },
       "headerDescription": "来自网站表单的咨询 · {count} 条未结线索",
       "viewLabel": "视图"

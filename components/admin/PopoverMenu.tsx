@@ -12,10 +12,18 @@
  * focus to the button, arrow keys move through the options, a click
  * anywhere else closes, and the options are menuitemradio with the current
  * one checked.
+ *
+ * The menu is portalled to <body> and positioned from the button's own
+ * rectangle. Drawn in place it was clipped by whatever scrolled around it:
+ * the leads table scrolls sideways inside its card, and the status menu
+ * opened inside that box and was cut off after four rows. It opens upward
+ * when there is not room below, and closes on scroll or resize rather
+ * than drifting away from its button.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Check } from "lucide-react";
 
 export type PopoverOption = { value: string; label: string; dotClassName?: string };
@@ -48,7 +56,9 @@ export default function PopoverMenu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<CSSProperties>({});
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const menuId = useId();
@@ -56,14 +66,41 @@ export default function PopoverMenu({
   useEffect(() => {
     if (!open) return;
     const onDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    };
+    const onMove = (event: Event) => {
+      // Scrolling the menu's own list is not a reason to close it.
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
     // Land on the current choice, as a select does.
-    const current = Math.max(0, options.findIndex((option) => option.value === selected));
+    const current = Math.max(
+      0,
+      options.findIndex((option) => option.value === selected),
+    );
     itemRefs.current[current]?.focus();
-    return () => document.removeEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
+    };
   }, [open, options, selected]);
+
+  /** Where the menu goes: under the button, or over it when the viewport
+   *  has less than the menu's max height (288px) left below. */
+  const place = () => {
+    const box = buttonRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const below = window.innerHeight - box.bottom;
+    const vertical: CSSProperties =
+      below < 300 && box.top > below ? { bottom: window.innerHeight - box.top + 6 } : { top: box.bottom + 6 };
+    const horizontal: CSSProperties = align === "right" ? { right: window.innerWidth - box.right } : { left: box.left };
+    setPosition({ ...vertical, ...horizontal });
+  };
 
   const close = () => {
     setOpen(false);
@@ -99,6 +136,7 @@ export default function PopoverMenu({
         disabled={disabled}
         onClick={(event) => {
           if (interceptClick?.(event)) return;
+          if (!open) place();
           setOpen((value) => !value);
         }}
         className={buttonClassName}
@@ -106,44 +144,46 @@ export default function PopoverMenu({
         {buttonContent}
       </button>
 
-      {open && (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          onKeyDown={onMenuKey}
-          className={[
-            "absolute top-full z-40 mt-1.5 max-h-72 min-w-44 overflow-y-auto rounded-[12px] border border-adm-line bg-adm-solid p-1 shadow-[var(--adm-shadow-float)]",
-            align === "right" ? "right-0" : "left-0",
-          ].join(" ")}
-        >
-          {options.map((option, index) => {
-            const checked = option.value === selected;
-            return (
-              <button
-                key={option.value}
-                ref={(element) => {
-                  itemRefs.current[index] = element;
-                }}
-                type="button"
-                role="menuitemradio"
-                aria-checked={checked}
-                onClick={() => {
-                  close();
-                  if (!checked) onSelect(option.value);
-                }}
-                className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-[13px] text-adm-text transition-colors hover:bg-adm-text/5 focus:bg-adm-text/5 focus:outline-hidden"
-              >
-                {option.dotClassName && (
-                  <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${option.dotClassName}`} />
-                )}
-                <span className="flex-1 truncate">{option.label}</span>
-                {checked && <Check size={14} aria-hidden className="shrink-0 text-adm-info" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            aria-label={label}
+            onKeyDown={onMenuKey}
+            onClick={(event) => event.stopPropagation()}
+            style={position}
+            className="fixed z-[70] max-h-72 min-w-44 overflow-y-auto rounded-[12px] border border-adm-line bg-adm-solid p-1 shadow-[var(--adm-shadow-float)]"
+          >
+            {options.map((option, index) => {
+              const checked = option.value === selected;
+              return (
+                <button
+                  key={option.value}
+                  ref={(element) => {
+                    itemRefs.current[index] = element;
+                  }}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={checked}
+                  onClick={() => {
+                    close();
+                    if (!checked) onSelect(option.value);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-[13px] text-adm-text transition-colors hover:bg-adm-text/5 focus:bg-adm-text/5 focus:outline-hidden"
+                >
+                  {option.dotClassName && (
+                    <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${option.dotClassName}`} />
+                  )}
+                  <span className="flex-1 truncate">{option.label}</span>
+                  {checked && <Check size={14} aria-hidden className="shrink-0 text-adm-info" />}
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

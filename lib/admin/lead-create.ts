@@ -22,6 +22,10 @@
  *    recorded is that confirmation, when it was given and the policy
  *    version in force — and the timeline names the rep who gave it.
  *
+ *  · NATIONALITY is optional, an ISO2 code like the public form's — the
+ *    leads table shows it as a flag. Anything not a known country is
+ *    dropped rather than refused: it is not worth losing the lead over.
+ *
  *  · EMAIL is optional: a walk-in may not have given one. It is stored as
  *    an empty string (the column is NOT NULL), and every reader treats ""
  *    as "none".
@@ -44,6 +48,7 @@ const schema = z.object({
   projectId: z.string().trim().max(40).optional(),
   source: z.enum(LEAD_SOURCES).catch("OTHER"),
   commsLanguage: z.union([z.literal(""), z.enum(COMMS_LANGUAGES)]).catch(""),
+  nationality: z.string().trim().toUpperCase().catch(""),
   message: z.string().trim().max(2000, "MESSAGE"),
   assignedToId: z.string().trim().max(40),
   consent: z.literal("on", { error: "CONSENT" }),
@@ -59,6 +64,8 @@ export type AdminLeadInput = {
   projectId: string | null;
   source: (typeof LEAD_SOURCES)[number];
   commsLanguage: (typeof COMMS_LANGUAGES)[number] | null;
+  /** ISO2, upper-case, or null. */
+  nationality: string | null;
   message: string | null;
   /** null = unassigned; the action decides who may set what. */
   assignedToId: string | null;
@@ -83,6 +90,7 @@ export function parseAdminLead(
     projectId: text("projectId") || undefined,
     source: text("source") || "OTHER",
     commsLanguage: text("commsLanguage"),
+    nationality: text("nationality"),
     message: text("message"),
     assignedToId: text("assignedToId"),
     consent: raw.consent ?? undefined,
@@ -116,6 +124,7 @@ export function parseAdminLead(
       projectId: parsed.data.projectId ?? null,
       source: parsed.data.source,
       commsLanguage: parsed.data.commsLanguage || null,
+      nationality: parsed.data.nationality && isKnownIso2(parsed.data.nationality) ? parsed.data.nationality : null,
       message: parsed.data.message || null,
       assignedToId: parsed.data.assignedToId || null,
     },

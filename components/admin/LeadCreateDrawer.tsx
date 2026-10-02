@@ -57,6 +57,7 @@ export default function LeadCreateDrawer({
     status: "idle",
   });
   const [phoneCountry, setPhoneCountry] = useState("TH");
+  const [nationality, setNationality] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const close = () => router.replace(closeHref, { scroll: false });
@@ -141,6 +142,27 @@ export default function LeadCreateDrawer({
                 <input id="lead-phone" name="phone" type="tel" required className="admin-input" autoComplete="off" />
               </div>
               {fieldError("phone")}
+            </div>
+
+            <div>
+              <label htmlFor="lead-nationality" className="admin-label">
+                {t("nationality")}
+              </label>
+              {/* The public form's own picker, so the code stored is the
+                  same ISO2 and the leads table can draw the same flag. */}
+              <CountrySelect
+                id="lead-nationality"
+                variant="nationality"
+                value={nationality}
+                onChange={setNationality}
+                locale={locale as Locale}
+                placeholder={t("nationalityPlaceholder")}
+                searchPlaceholder={t("countrySearch")}
+                noneLabel={t("nationalityNone")}
+                noResultsLabel={t("countryNone")}
+                aria-label={t("nationality")}
+              />
+              <input type="hidden" name="nationality" value={nationality ?? ""} />
             </div>
 
             <div>
