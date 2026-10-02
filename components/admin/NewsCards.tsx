@@ -20,11 +20,11 @@ import ProgressRing from "@/components/admin/ui/ProgressRing";
 import AdminImage from "@/components/admin/ui/AdminImage";
 import LocaleFlags from "@/components/admin/ui/LocaleFlags";
 
-const STATUS_TONE: Record<ArticleRow["status"], string> = {
-  published: "bg-adm-success-bg text-adm-success",
-  scheduled: "bg-adm-status-info-bg text-adm-status-info",
-  inReview: "bg-adm-warning-bg text-adm-warning",
-  draft: "bg-adm-neutral-bg text-adm-neutral",
+const STATUS_INK: Record<ArticleRow["status"], string> = {
+  published: "text-adm-success",
+  scheduled: "text-adm-status-info",
+  inReview: "text-adm-warning",
+  draft: "text-adm-muted",
 };
 
 const FLAG_STATE: Record<LocaleState, "complete" | "partial" | "missing"> = {
@@ -73,7 +73,12 @@ export default function NewsCards({
                     {row.category}
                   </span>
                 )}
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_TONE[row.status]}`}>
+                {/* Solid, like the category chip: a tinted pill over a photo
+                    took the photo's colour and read as nothing. */}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full bg-adm-solid px-2.5 py-0.5 text-[11px] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.12)] ${STATUS_INK[row.status]}`}
+                >
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
                   {labels.status[row.status]}
                 </span>
               </span>

@@ -114,6 +114,20 @@ export function MonthlyLeadsChart({
   );
 }
 
+/** The value over a bar, or nothing for a zero: thirty "0"s along the
+ *  axis drowned the few days that had traffic. */
+function TrendValueLabel(props: { x?: number | string; y?: number | string; width?: number | string; value?: unknown }) {
+  const { x = 0, y = 0, width = 0, value } = props;
+  // An empty <g>, not null: recharts types the label renderer as always
+  // returning an element.
+  if (!value) return <g />;
+  return (
+    <text x={Number(x) + Number(width) / 2} y={Number(y) - 5} textAnchor="middle" fontSize={11} fill="var(--adm-muted)">
+      {String(value)}
+    </text>
+  );
+}
+
 /** One series over time — the page-view trend, and anything else this
  *  admin ever needs a plain day-by-day bar for. */
 export function TrendChart({
@@ -161,7 +175,7 @@ export function TrendChart({
             fill="url(#adm-trend-fill)"
             radius={[6, 6, 0, 0]}
             maxBarSize={44}
-            label={{ position: "top", fontSize: 11, fill: "var(--adm-muted)" }}
+            label={TrendValueLabel}
           />
         </BarChart>
       </ResponsiveContainer>

@@ -1118,6 +1118,15 @@
   border-radius: 22px;
   background: linear-gradient(120deg, var(--adm-brief-1), var(--adm-brief-2) 55%, var(--adm-brief-3));
 }
+/* Dark: navy glass lit from two corners — ocean top-left, sand top-right
+   — instead of the flat gradient, which on a navy page read as a hole. */
+:root[data-admin-theme="dark"] .admin-brief {
+  background:
+    radial-gradient(600px circle at 0% 0%, color-mix(in srgb, var(--adm-aurora-1) 45%, transparent), transparent 60%),
+    radial-gradient(520px circle at 100% 0%, color-mix(in srgb, var(--adm-aurora-2) 30%, transparent), transparent 60%),
+    color-mix(in srgb, var(--adm-band-2) 55%, transparent);
+  backdrop-filter: blur(12px);
+}
 .admin-brief::before {
   content: "";
   position: absolute;
