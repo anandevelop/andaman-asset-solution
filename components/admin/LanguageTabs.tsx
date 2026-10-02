@@ -111,8 +111,8 @@ export default function LanguageTabs({ active, completeness, completeLabel, miss
             className={[
               "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
               isActive
-                ? "border-primary bg-primary text-white"
-                : "border-primary/15 bg-white text-ink/70 hover:border-primary/30",
+                ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                : "border-adm-line-strong bg-adm-solid text-adm-text/70 hover:border-adm-line-strong",
             ].join(" ")}
           >
             {LOCALE_LABELS[lang]}
@@ -122,13 +122,13 @@ export default function LanguageTabs({ active, completeness, completeLabel, miss
               <Check
                 size={12}
                 aria-hidden
-                className={isActive ? "text-white" : "text-emerald-600"}
+                className={isActive ? "text-white" : "text-adm-success"}
               />
             ) : (
               <AlertTriangle
                 size={12}
                 aria-hidden
-                className={isActive ? "text-white/80" : "text-amber-500"}
+                className={isActive ? "text-white/80" : "text-adm-warning"}
               />
             )}
           </Link>

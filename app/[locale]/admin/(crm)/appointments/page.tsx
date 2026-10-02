@@ -68,11 +68,11 @@ type Props = {
 const DAY_MS = 24 * 60 * 60_000;
 
 const STATUS_BORDER: Record<AppointmentStatus, string> = {
-  REQUESTED: "border-amber-300 bg-amber-50",
-  CONFIRMED: "border-emerald-300 bg-emerald-50",
-  COMPLETED: "border-primary/15 bg-surface-muted",
-  CANCELLED: "border-primary/10 bg-white opacity-60",
-  NO_SHOW: "border-red-300 bg-red-50",
+  REQUESTED: "border-adm-warning/30 bg-adm-warning-bg",
+  CONFIRMED: "border-adm-success/30 bg-adm-success-bg",
+  COMPLETED: "border-adm-line-strong bg-adm-text/4",
+  CANCELLED: "border-adm-line bg-adm-solid opacity-60",
+  NO_SHOW: "border-adm-danger/30 bg-adm-danger-bg",
 };
 
 function dayKey(date: Date): string {
@@ -257,10 +257,10 @@ export default async function AdminAppointmentsPage(props: Props) {
     function renderCard(a: AppointmentCard) {
     return (
       <div key={a.id} className={`rounded-xs border p-2 text-[11px] leading-snug ${STATUS_BORDER[a.status]}`}>
-        <p className="font-semibold text-primary">
+        <p className="font-semibold text-adm-text">
           {timeFmt.format(a.scheduledAt)} {a.customerName ?? t("noLeadLinked")}
         </p>
-        <p className="text-ink-muted">
+        <p className="text-adm-muted">
           {a.projectName ?? t("noProject")}
           {a.assignedToName ? ` · ${a.assignedToName}` : ""}
         </p>
@@ -273,7 +273,7 @@ export default async function AdminAppointmentsPage(props: Props) {
             assignees={assigneeOptions}
             unassignedLabel={t("unassigned")}
             errorLabel={t("assignError")}
-            className="rounded-xs border border-primary/15 bg-white px-1.5 py-1 text-[10.5px] text-ink"
+            className="rounded-xs border border-adm-line-strong bg-adm-solid px-1.5 py-1 text-[10.5px] text-adm-text"
           />
           <AppointmentRescheduleInput
             locale={locale}
@@ -337,14 +337,14 @@ export default async function AdminAppointmentsPage(props: Props) {
       {/* A filter carried in from the leads table narrows this page
           silently otherwise — the week just looks emptier than it is. */}
       {filtered && (
-        <p className="flex flex-wrap items-center gap-2 rounded-xs border border-primary/10 bg-surface-muted/60 px-4 py-2.5 text-sm text-ink-muted">
+        <p className="flex flex-wrap items-center gap-2 rounded-xs border border-adm-line bg-adm-text/4 px-4 py-2.5 text-sm text-adm-muted">
           {t("filteredNotice", {
             shown: visibleAppointments.length,
             total: weekAppointments.length,
           })}
           <Link
             href={`/${locale}/admin/appointments?week=${toWeekParam(weekStart)}`}
-            className="font-medium text-accent-700 hover:text-accent-800"
+            className="font-medium text-adm-accent-ink hover:text-adm-accent-ink"
           >
             {t("clearFilter")}
           </Link>
@@ -352,14 +352,14 @@ export default async function AdminAppointmentsPage(props: Props) {
       )}
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {tRoot("common.offline")}
         </p>
       )}
 
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Month | week. */}
-        <div role="group" aria-label={t("viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+        <div role="group" aria-label={t("viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-adm-bg p-0.5">
           {(["month", "week"] as const).map((option) => (
             <Link
               key={option}
@@ -368,8 +368,8 @@ export default async function AdminAppointmentsPage(props: Props) {
               className={[
                 "flex h-7 items-center rounded-[8px] px-3 text-[12.5px] transition-colors",
                 view === option
-                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                  : "text-ink-muted hover:text-ink",
+                  ? "bg-adm-solid font-medium text-adm-text shadow-[0_0_0_1px_var(--adm-line)]"
+                  : "text-adm-muted hover:text-adm-text",
               ].join(" ")}
             >
               {option === "month" ? t("viewMonth") : t("viewWeek")}
@@ -385,7 +385,7 @@ export default async function AdminAppointmentsPage(props: Props) {
             <Link href={monthHref(addMonths(monthStart, 1))} aria-label={t("nextMonth")} className="admin-btn-ghost px-2 py-1.5">
               <ChevronRight size={14} aria-hidden />
             </Link>
-            <span className="text-sm font-semibold text-ink">{monthLabel}</span>
+            <span className="text-sm font-semibold text-adm-text">{monthLabel}</span>
             <Link href={`/${locale}/admin/appointments`} className="admin-btn-ghost px-2.5 py-1.5 text-xs">
               {t("today")}
             </Link>
@@ -398,7 +398,7 @@ export default async function AdminAppointmentsPage(props: Props) {
           <Link href={`/${locale}/admin/appointments?view=week&week=${nextWeek}`} className="admin-btn-ghost px-2 py-1.5">
             <ChevronRight size={14} aria-hidden />
           </Link>
-          <span className="text-sm font-semibold text-primary">{weekLabel}</span>
+          <span className="text-sm font-semibold text-adm-text">{weekLabel}</span>
           <Link href={`/${locale}/admin/appointments?view=week&week=${thisWeek}`} className="admin-btn-ghost px-2.5 py-1.5 text-xs">
             {t("today")}
           </Link>
@@ -411,7 +411,7 @@ export default async function AdminAppointmentsPage(props: Props) {
           <div className="admin-card overflow-hidden p-0!">
             <div className="grid grid-cols-7 border-b border-adm-line">
               {weeks[0].map(({ date }) => (
-                <div key={monthDayKey(date)} className="px-2 py-2 text-center text-[11px] text-ink-muted">
+                <div key={monthDayKey(date)} className="px-2 py-2 text-center text-[11px] text-adm-muted">
                   {weekdayFmt.format(date)}
                 </div>
               ))}
@@ -434,7 +434,7 @@ export default async function AdminAppointmentsPage(props: Props) {
                       key={key}
                       className={[
                         "min-h-[104px] border-b border-r border-adm-line p-1.5 [&:nth-child(7n)]:border-r-0",
-                        inMonth ? "" : "bg-surface/60",
+                        inMonth ? "" : "bg-adm-bg/60",
                       ].join(" ")}
                     >
                       <span
@@ -443,8 +443,8 @@ export default async function AdminAppointmentsPage(props: Props) {
                           isToday
                             ? "bg-adm-fill font-semibold text-adm-on-fill"
                             : inMonth
-                              ? "text-ink"
-                              : "text-ink-muted/60",
+                              ? "text-adm-text"
+                              : "text-adm-muted/60",
                         ].join(" ")}
                       >
                         {date.getUTCDate()}
@@ -475,7 +475,7 @@ export default async function AdminAppointmentsPage(props: Props) {
                           ),
                         )}
                         {hidden > 0 && (
-                          <span className="px-1.5 text-[10.5px] text-ink-muted">{t("moreOnDay", { count: hidden })}</span>
+                          <span className="px-1.5 text-[10.5px] text-adm-muted">{t("moreOnDay", { count: hidden })}</span>
                         )}
                       </div>
                     </div>
@@ -486,15 +486,15 @@ export default async function AdminAppointmentsPage(props: Props) {
           </div>
         ) : (
         <div className="admin-card overflow-hidden p-0!">
-          <div className="grid grid-cols-7 divide-x divide-primary/5 border-b border-primary/10 bg-surface-muted">
+          <div className="grid grid-cols-7 divide-x divide-adm-line border-b border-adm-line bg-adm-text/4">
             {days.map((d) => {
               const isToday = dayKey(d) === todayKey;
               return (
                 <div key={dayKey(d)} className="flex flex-col items-center gap-0.5 px-1 py-2">
-                  <span className="text-[10px] text-ink-muted">{dayFmt.format(d)}</span>
+                  <span className="text-[10px] text-adm-muted">{dayFmt.format(d)}</span>
                   <span
                     className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                      isToday ? "bg-primary text-white" : "text-primary"
+                      isToday ? "bg-adm-strong text-adm-on-strong" : "text-adm-text"
                     }`}
                   >
                     {d.getUTCDate()}
@@ -511,7 +511,7 @@ export default async function AdminAppointmentsPage(props: Props) {
               return (
                 <div key={dayKey(d)} className="flex min-h-[80px] flex-col gap-1.5">
                   {dayAppointments.length === 0 ? (
-                    <p className="pt-1 text-center text-[10px] text-ink-muted/60">—</p>
+                    <p className="pt-1 text-center text-[10px] text-adm-muted/60">—</p>
                   ) : (
                     dayAppointments.map(renderCard)
                   )}
@@ -528,7 +528,7 @@ export default async function AdminAppointmentsPage(props: Props) {
               inbox — one component, so the two cannot drift. */}
           <section className="admin-card overflow-hidden p-0!">
             <div className="flex items-center gap-2 border-b border-adm-line px-3.5 py-2.5">
-              <h2 className="text-sm font-semibold text-ink">{t("needsAction")}</h2>
+              <h2 className="text-sm font-semibold text-adm-text">{t("needsAction")}</h2>
               {overdue.count > 0 && (
                 <span className="ml-auto rounded-full bg-adm-danger-bg px-2 text-xs font-semibold tabular-nums text-adm-danger">
                   {overdue.count}
@@ -546,19 +546,19 @@ export default async function AdminAppointmentsPage(props: Props) {
           </section>
 
           <section className="admin-card p-0!">
-            <div className="flex items-center gap-2 border-b border-primary/10 px-3.5 py-2.5 text-red-700">
+            <div className="flex items-center gap-2 border-b border-adm-line px-3.5 py-2.5 text-adm-danger">
               <AlertCircle size={14} aria-hidden />
               <h2 className="text-xs font-semibold uppercase tracking-wide">{t("unassignedQueue")}</h2>
               <span className="ml-auto text-sm font-bold">{unassigned.length}</span>
             </div>
             <div className="flex flex-col gap-2 p-3">
               {unassigned.length === 0 ? (
-                <p className="text-xs text-ink-muted">{t("unassignedEmpty")}</p>
+                <p className="text-xs text-adm-muted">{t("unassignedEmpty")}</p>
               ) : (
                 unassigned.map((a) => (
-                  <div key={a.id} className="rounded-xs border border-red-200 bg-white p-2.5 text-[11px]">
-                    <p className="font-semibold text-primary">{a.customerName ?? t("noLeadLinked")}</p>
-                    <p className="text-ink-muted">
+                  <div key={a.id} className="rounded-xs border border-adm-danger/30 bg-adm-solid p-2.5 text-[11px]">
+                    <p className="font-semibold text-adm-text">{a.customerName ?? t("noLeadLinked")}</p>
+                    <p className="text-adm-muted">
                       {dateRangeFmt.format(a.scheduledAt)} {timeFmt.format(a.scheduledAt)} ·{" "}
                       {a.projectName ?? t("noProject")}
                     </p>
@@ -585,16 +585,16 @@ export default async function AdminAppointmentsPage(props: Props) {
           </section>
 
           <section className="admin-card p-0!">
-            <div className="border-b border-primary/10 px-3.5 py-2.5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("todayLabel")}</h2>
+            <div className="border-b border-adm-line px-3.5 py-2.5">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-adm-muted">{t("todayLabel")}</h2>
             </div>
             <div className="flex flex-col gap-1.5 p-3">
               {todayAppointments.length === 0 ? (
-                <p className="text-xs text-ink-muted">{t("todayEmpty")}</p>
+                <p className="text-xs text-adm-muted">{t("todayEmpty")}</p>
               ) : (
                 todayAppointments.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 text-[11.5px]">
-                    <span className="w-11 shrink-0 font-semibold text-primary">{timeFmt.format(a.scheduledAt)}</span>
+                    <span className="w-11 shrink-0 font-semibold text-adm-text">{timeFmt.format(a.scheduledAt)}</span>
                     <span className="flex-1 truncate">{a.customerName ?? t("noLeadLinked")}</span>
                   </div>
                 ))
@@ -603,24 +603,24 @@ export default async function AdminAppointmentsPage(props: Props) {
           </section>
 
           <section className="admin-card p-0!">
-            <div className="border-b border-primary/10 px-3.5 py-2.5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("workloadLabel")}</h2>
+            <div className="border-b border-adm-line px-3.5 py-2.5">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-adm-muted">{t("workloadLabel")}</h2>
             </div>
             <div className="flex flex-col gap-2 p-3">
               {workload.length === 0 ? (
-                <p className="text-xs text-ink-muted">{t("workloadEmpty")}</p>
+                <p className="text-xs text-adm-muted">{t("workloadEmpty")}</p>
               ) : (
                 (() => {
                   const max = Math.max(1, ...workload.map((w) => w.count));
                   return workload.map((w) => (
                     <div key={w.id}>
                       <div className="flex items-center justify-between text-[11.5px]">
-                        <span className="text-ink">{w.name}</span>
-                        <span className="text-ink-muted">{t("appointmentCount", { count: w.count })}</span>
+                        <span className="text-adm-text">{w.name}</span>
+                        <span className="text-adm-muted">{t("appointmentCount", { count: w.count })}</span>
                       </div>
-                      <div className="mt-1 h-[5px] overflow-hidden rounded-full bg-surface-muted">
+                      <div className="mt-1 h-[5px] overflow-hidden rounded-full bg-adm-text/4">
                         <div
-                          className="h-full rounded-full bg-primary"
+                          className="h-full rounded-full bg-adm-strong"
                           style={{ width: `${Math.round((w.count / max) * 100)}%` }}
                         />
                       </div>

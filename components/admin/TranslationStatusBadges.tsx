@@ -36,8 +36,8 @@ export default function TranslationStatusBadges({
           className={[
             "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
             completeness[lang]
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-surface-muted text-ink-muted",
+              ? "bg-adm-success-bg text-adm-success"
+              : "bg-adm-text/4 text-adm-muted",
           ].join(" ")}
         >
           {LOCALE_LABELS[lang]}

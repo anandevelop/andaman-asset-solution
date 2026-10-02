@@ -39,10 +39,10 @@ type Labels = {
 };
 
 function changeDisplay(change: number | null): { text: string; className: string } {
-  if (change === null) return { text: "—", className: "text-ink-muted" };
-  if (change > 0) return { text: `▲ ${change}`, className: "text-emerald-700" };
-  if (change < 0) return { text: `▼ ${Math.abs(change)}`, className: "text-red-700" };
-  return { text: "–", className: "text-ink-muted" };
+  if (change === null) return { text: "—", className: "text-adm-muted" };
+  if (change > 0) return { text: `▲ ${change}`, className: "text-adm-success" };
+  if (change < 0) return { text: `▼ ${Math.abs(change)}`, className: "text-adm-danger" };
+  return { text: "–", className: "text-adm-muted" };
 }
 
 export default function KeywordLibraryTable({ rows, locale, labels }: { rows: KeywordRow[]; locale: string; labels: Labels }) {
@@ -56,9 +56,9 @@ export default function KeywordLibraryTable({ rows, locale, labels }: { rows: Ke
 
   return (
     <section className="admin-card overflow-hidden p-0!">
-      <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
+      <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
         <div className="relative flex items-center">
-          <Search size={14} className="absolute left-2.5 text-ink-muted" aria-hidden />
+          <Search size={14} className="absolute left-2.5 text-adm-muted" aria-hidden />
           <input
             type="search"
             value={query}
@@ -73,7 +73,7 @@ export default function KeywordLibraryTable({ rows, locale, labels }: { rows: Ke
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr className="border-b border-primary/10 bg-surface-muted">
+            <tr className="border-b border-adm-line bg-adm-text/4">
               <th className="admin-th">{labels.keyword}</th>
               <th className="admin-th">{labels.locale}</th>
               <th className="admin-th">{labels.searchVolume}</th>
@@ -88,28 +88,28 @@ export default function KeywordLibraryTable({ rows, locale, labels }: { rows: Ke
             {filtered.map((row) => {
               const change = changeDisplay(row.change);
               return (
-                <tr key={row.id} className="border-b border-primary/5 text-sm last:border-b-0">
-                  <td className="admin-td font-medium text-ink">{row.phrase}</td>
-                  <td className="admin-td uppercase text-ink-muted">{row.locale}</td>
+                <tr key={row.id} className="border-b border-adm-line text-sm last:border-b-0">
+                  <td className="admin-td font-medium text-adm-text">{row.phrase}</td>
+                  <td className="admin-td uppercase text-adm-muted">{row.locale}</td>
                   <td className="admin-td tabular-nums">{row.searchVolume ?? labels.noValue}</td>
                   <td className="admin-td tabular-nums">{row.difficulty ?? labels.noValue}</td>
                   <td className="admin-td tabular-nums">{row.currentRank ?? labels.noValue}</td>
                   <td className={`admin-td tabular-nums font-medium ${change.className}`}>{change.text}</td>
                   <td className="admin-td">
                     {row.matchedPages.length === 0 ? (
-                      <span className="text-ink-muted">{labels.noPages}</span>
+                      <span className="text-adm-muted">{labels.noPages}</span>
                     ) : (
                       <ul className="space-y-0.5">
                         {row.matchedPages.map((page) => (
                           <li key={`${page.contentType}:${page.contentId}:${page.locale}`}>
                             <Link
                               href={`/${locale}${ADMIN_EDIT_HREF[page.contentType](page.contentId)}`}
-                              className="text-accent-700 hover:underline"
+                              className="text-adm-accent-ink hover:underline"
                             >
                               {page.title}
                             </Link>
                             {page.isPrimary && (
-                              <span className="ml-1 rounded-xs bg-primary/5 px-1.5 py-0.5 text-[10px] font-semibold text-ink-muted">
+                              <span className="ml-1 rounded-xs bg-adm-text/5 px-1.5 py-0.5 text-[10px] font-semibold text-adm-muted">
                                 {labels.primaryBadge}
                               </span>
                             )}

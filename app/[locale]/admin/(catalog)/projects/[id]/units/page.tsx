@@ -308,7 +308,7 @@ export default async function AdminUnitsPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -318,8 +318,8 @@ export default async function AdminUnitsPage(props: Props) {
           creates a lead tied to the unit automatically. Informational
           only: there is no per-project override, since the policy is
           site-wide by design. */}
-      <p className="flex items-start gap-2.5 rounded-xs border border-accent/30 bg-accent-50/60 px-4 py-3 text-sm text-ink">
-        <Info size={16} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+      <p className="flex items-start gap-2.5 rounded-xs border border-adm-fill/30 bg-adm-fill/15 px-4 py-3 text-sm text-adm-text">
+        <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("units.pricePolicyNote")}
       </p>
 
@@ -329,7 +329,7 @@ export default async function AdminUnitsPage(props: Props) {
           {/* Phases, when the project releases in stages — the tiles and
               the counts are one phase at a time, as the plan was. */}
           {phaseGroups.length > 1 && (
-            <nav aria-label={t("units.phaseLabel")} className="inline-flex flex-wrap rounded-[10px] border border-adm-line bg-surface p-0.5">
+            <nav aria-label={t("units.phaseLabel")} className="inline-flex flex-wrap rounded-[10px] border border-adm-line bg-adm-bg p-0.5">
               {phaseGroups.map((group) => {
                 const current = group === activeGroup;
                 return (
@@ -341,8 +341,8 @@ export default async function AdminUnitsPage(props: Props) {
                     className={[
                       "rounded-[8px] px-3 py-1 text-[12.5px] transition-colors",
                       current
-                        ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                        : "text-ink-muted hover:text-ink",
+                        ? "bg-adm-solid font-medium text-adm-text shadow-[0_0_0_1px_var(--adm-line)]"
+                        : "text-adm-muted hover:text-adm-text",
                     ].join(" ")}
                   >
                     {phaseLabelFor(group.phase)} · {group.units.length}
@@ -353,7 +353,7 @@ export default async function AdminUnitsPage(props: Props) {
           )}
 
           {phaseUnits.length === 0 ? (
-            <p className="py-8 text-center text-sm text-ink-muted">{t("units.empty")}</p>
+            <p className="py-8 text-center text-sm text-adm-muted">{t("units.empty")}</p>
           ) : (
             <UnitTileBoard
               locale={locale}
@@ -382,16 +382,16 @@ export default async function AdminUnitsPage(props: Props) {
           <section className="admin-card flex items-center gap-4">
             <AvailabilityRing available={counts.available} total={counts.available + counts.reserved + counts.sold} />
             <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-xs">
-              <dt className="text-ink-muted">{statusLabels.AVAILABLE}</dt>
+              <dt className="text-adm-muted">{statusLabels.AVAILABLE}</dt>
               <dd className="text-right font-semibold tabular-nums text-adm-success">{counts.available}</dd>
-              <dt className="text-ink-muted">{statusLabels.RESERVED}</dt>
+              <dt className="text-adm-muted">{statusLabels.RESERVED}</dt>
               <dd className="text-right font-semibold tabular-nums text-adm-warning">{counts.reserved}</dd>
-              <dt className="text-ink-muted">{statusLabels.SOLD}</dt>
+              <dt className="text-adm-muted">{statusLabels.SOLD}</dt>
               <dd className="text-right font-semibold tabular-nums text-adm-neutral">{counts.sold}</dd>
               {counts.unreleased > 0 && (
                 <>
-                  <dt className="text-ink-muted">{t("units.unreleased")}</dt>
-                  <dd className="text-right font-semibold tabular-nums text-ink-muted">{counts.unreleased}</dd>
+                  <dt className="text-adm-muted">{t("units.unreleased")}</dt>
+                  <dd className="text-right font-semibold tabular-nums text-adm-muted">{counts.unreleased}</dd>
                 </>
               )}
             </dl>
@@ -403,20 +403,20 @@ export default async function AdminUnitsPage(props: Props) {
             href={`/${locale}/admin/projects/${project.id}/site-plan`}
             className="admin-card group block overflow-hidden p-0! transition-colors hover:border-adm-line-strong"
           >
-            <span className="flex h-28 items-center justify-center overflow-hidden bg-surface-muted">
+            <span className="flex h-28 items-center justify-center overflow-hidden bg-adm-text/4">
               {project.masterPlanImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail, see ProjectsTable
                 <img src={project.masterPlanImageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
-                <MapIcon size={28} aria-hidden className="text-ink-muted" />
+                <MapIcon size={28} aria-hidden className="text-adm-muted" />
               )}
             </span>
             <span className="block px-4 py-3">
-              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-ink">
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-adm-text">
                 {t("sitePlan.title")}
-                <ArrowRight size={14} aria-hidden className="text-ink-muted transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight size={14} aria-hidden className="text-adm-muted transition-transform group-hover:translate-x-0.5" />
               </span>
-              <span className="mt-0.5 block text-xs text-ink-muted">
+              <span className="mt-0.5 block text-xs text-adm-muted">
                 {t("units.tiles.traced", { traced: phaseUnits.length - untracedCount, total: phaseUnits.length })}
               </span>
             </span>
@@ -543,9 +543,9 @@ function AvailabilityRing({ available, total }: { available: number; total: numb
           strokeDasharray={`${share * circumference} ${circumference}`}
         />
       </svg>
-      <span className="absolute text-sm font-semibold tabular-nums text-ink">
+      <span className="absolute text-sm font-semibold tabular-nums text-adm-text">
         {available}
-        <span className="text-[10px] font-normal text-ink-muted">/{total}</span>
+        <span className="text-[10px] font-normal text-adm-muted">/{total}</span>
       </span>
     </span>
   );

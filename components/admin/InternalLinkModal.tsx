@@ -125,13 +125,13 @@ export default function InternalLinkModal({
           />
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-ink">
+        <div className="flex flex-wrap gap-4 text-sm text-adm-text">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={newTab}
               onChange={(event) => setNewTab(event.target.checked)}
-              className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             {t("newTabLabel")}
           </label>
@@ -140,7 +140,7 @@ export default function InternalLinkModal({
               type="checkbox"
               checked={nofollow}
               onChange={(event) => setNofollow(event.target.checked)}
-              className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             {t("nofollowLabel")}
           </label>
@@ -153,7 +153,7 @@ export default function InternalLinkModal({
           <div className="relative">
             <Search
               size={14}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-muted"
               aria-hidden
             />
             {/* Autofocus is deliberate: opening the modal without landing
@@ -170,11 +170,11 @@ export default function InternalLinkModal({
           </div>
 
           {query.trim().length >= MIN_QUERY_LENGTH && (
-            <ul className="mt-2 max-h-56 divide-y divide-primary/5 overflow-y-auto rounded-xs border border-primary/10">
+            <ul className="mt-2 max-h-56 divide-y divide-adm-line overflow-y-auto rounded-xs border border-adm-line">
               {isPending ? (
-                <li className="px-3 py-2 text-xs text-ink-muted">{t("searching")}</li>
+                <li className="px-3 py-2 text-xs text-adm-muted">{t("searching")}</li>
               ) : results.length === 0 ? (
-                <li className="px-3 py-2 text-xs text-ink-muted">{t("noResults")}</li>
+                <li className="px-3 py-2 text-xs text-adm-muted">{t("noResults")}</li>
               ) : (
                 results.map((hit) => (
                   <li key={`${hit.type}-${hit.id}`}>
@@ -182,10 +182,10 @@ export default function InternalLinkModal({
                       type="button"
                       onClick={() => pick(hit.path, true)}
                       disabled={!canInsert}
-                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition-colors hover:bg-adm-text/5 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <span className="font-medium text-ink">{hit.title}</span>
-                      <span className="text-xs text-ink-muted">
+                      <span className="font-medium text-adm-text">{hit.title}</span>
+                      <span className="text-xs text-adm-muted">
                         {hit.path} · {t(`type.${hit.type}`)}
                       </span>
                     </button>
@@ -196,7 +196,7 @@ export default function InternalLinkModal({
           )}
         </div>
 
-        <div className="border-t border-primary/10 pt-4">
+        <div className="border-t border-adm-line pt-4">
           <label className="admin-label" htmlFor="link-manual-url">
             {t("manualUrlLabel")}
           </label>

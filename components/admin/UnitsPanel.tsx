@@ -148,13 +148,13 @@ export default function UnitsPanel({
     <section className="admin-card space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-2">
-          <h2 className="text-sm font-semibold text-primary">{labels.title}</h2>
-          <span className="text-xs text-ink-muted">{labels.subtitle}</span>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.title}</h2>
+          <span className="text-xs text-adm-muted">{labels.subtitle}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex items-center">
-            <Search size={14} className="absolute left-2.5 text-ink-muted" aria-hidden />
+            <Search size={14} className="absolute left-2.5 text-adm-muted" aria-hidden />
             <input
               type="search"
               value={query}
@@ -197,9 +197,9 @@ export default function UnitsPanel({
       </div>
 
       {importing && (
-        <div className="space-y-3 rounded-xs border border-primary/10 bg-surface-muted/50 p-4">
-          <p className="text-sm text-primary">{labels.csvIntro}</p>
-          <p className="font-mono text-xs text-ink-muted">{labels.csvColumns}</p>
+        <div className="space-y-3 rounded-xs border border-adm-line bg-adm-text/4 p-4">
+          <p className="text-sm text-adm-text">{labels.csvIntro}</p>
+          <p className="font-mono text-xs text-adm-muted">{labels.csvColumns}</p>
 
           <div className="flex items-center gap-3">
             <input
@@ -228,14 +228,14 @@ export default function UnitsPanel({
           </div>
 
           {importResult && !importResult.ok && (
-            <p className="flex items-center gap-1.5 text-xs text-red-700">
+            <p className="flex items-center gap-1.5 text-xs text-adm-danger">
               <AlertCircle size={13} aria-hidden />
               {labels.csvReasons[importResult.error] ?? labels.csvError}
             </p>
           )}
 
           {importResult?.ok && importResult.skipped.length === 0 && (
-            <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+            <p className="flex items-center gap-1.5 text-xs text-adm-success">
               <Check size={13} aria-hidden />
               {tCsv("created", { count: importResult.created })} ·{" "}
               {tCsv("updated", { count: importResult.updated })}
@@ -244,11 +244,11 @@ export default function UnitsPanel({
 
           {importResult?.ok && importResult.skipped.length > 0 && (
             <div className="space-y-1.5">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-red-700">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-adm-danger">
                 <AlertCircle size={13} aria-hidden />
                 {labels.csvSkippedTitle} — {labels.csvNothingApplied}
               </p>
-              <ul className="space-y-0.5 text-xs text-ink-muted">
+              <ul className="space-y-0.5 text-xs text-adm-muted">
                 {importResult.skipped.slice(0, 20).map((row) => (
                   <li key={`${row.line}-${row.unitNumber}`}>
                     <span className="font-mono">#{row.line}</span> {row.unitNumber} —{" "}
@@ -262,7 +262,7 @@ export default function UnitsPanel({
       )}
 
       {adding && (
-        <div className="rounded-xs border border-primary/10 bg-surface-muted/50 p-4">
+        <div className="rounded-xs border border-adm-line bg-adm-text/4 p-4">
           <UnitForm
             action={saveAction}
             unit={null}
@@ -275,13 +275,13 @@ export default function UnitsPanel({
       )}
 
       {rows.length === 0 ? (
-        <p className="py-8 text-center text-sm text-ink-muted">{labels.empty}</p>
+        <p className="py-8 text-center text-sm text-adm-muted">{labels.empty}</p>
       ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-ink-muted">{labels.noMatches}</p>
+        <p className="py-8 text-center text-sm text-adm-muted">{labels.noMatches}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse">
-            <thead className="border-b border-primary/10">
+            <thead className="border-b border-adm-line">
               <tr>
                 <th className="admin-th">{labels.columnUnit}</th>
                 <th className="admin-th">{labels.columnType}</th>
@@ -294,31 +294,31 @@ export default function UnitsPanel({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {filtered.map((row) => (
                 <tr
                   key={row.id}
                   onClick={() => select(row.id)}
                   className={`cursor-pointer transition-colors ${
-                    row.id === selectedUnitId ? "bg-accent/6" : "hover:bg-surface-muted/60"
+                    row.id === selectedUnitId ? "bg-adm-fill/6" : "hover:bg-adm-text/4"
                   }`}
                 >
-                  <td className="admin-td font-medium text-primary">
+                  <td className="admin-td font-medium text-adm-text">
                     {row.unitNumber}
                     {!row.releasedForSale && (
-                      <span className="ml-2 rounded-xs border border-dashed border-primary/30 px-1.5 py-0.5 text-[11px] text-ink-muted">
+                      <span className="ml-2 rounded-xs border border-dashed border-adm-line-strong px-1.5 py-0.5 text-[11px] text-adm-muted">
                         {labels.notReleased}
                       </span>
                     )}
                   </td>
-                  <td className="admin-td whitespace-nowrap text-ink-muted">{row.typeLabel ?? labels.none}</td>
-                  <td className="admin-td whitespace-nowrap text-ink-muted">
+                  <td className="admin-td whitespace-nowrap text-adm-muted">{row.typeLabel ?? labels.none}</td>
+                  <td className="admin-td whitespace-nowrap text-adm-muted">
                     {row.livingAreaLabel ?? labels.none}
                   </td>
-                  <td className="admin-td whitespace-nowrap text-ink-muted">
+                  <td className="admin-td whitespace-nowrap text-adm-muted">
                     {row.landAreaLabel ?? labels.none}
                   </td>
-                  <td className="admin-td whitespace-nowrap text-ink-muted">
+                  <td className="admin-td whitespace-nowrap text-adm-muted">
                     {row.facingLabel ?? labels.none}
                   </td>
 
@@ -336,19 +336,19 @@ export default function UnitsPanel({
                     {row.leadId && row.leadName ? (
                       <Link
                         href={`/${locale}/admin/leads/${row.leadId}`}
-                        className="text-sm text-accent-700 hover:text-accent-800"
+                        className="text-sm text-adm-accent-ink hover:text-adm-accent-ink"
                       >
                         {row.leadName}
                       </Link>
                     ) : (
-                      <span className="text-ink-muted">{labels.none}</span>
+                      <span className="text-adm-muted">{labels.none}</span>
                     )}
                   </td>
 
-                  <td className="admin-td max-w-[150px] text-xs text-ink-muted">
+                  <td className="admin-td max-w-[150px] text-xs text-adm-muted">
                     <span className="block whitespace-nowrap">{row.lastEditedLabel}</span>
                     {row.lastEditedBy && (
-                      <span className="block truncate text-ink-muted/80" title={row.lastEditedBy}>
+                      <span className="block truncate text-adm-muted/80" title={row.lastEditedBy}>
                         {row.lastEditedBy}
                       </span>
                     )}

@@ -181,20 +181,20 @@ export default async function AdminSeoDefaultsPage(props: Props) {
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("settings.seo.title")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.seo.subtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("settings.seo.title")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("settings.seo.subtitle")}</p>
       </header>
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {/* How long a change takes to show up is the first thing anyone asks
           after saving, and every answer here is "not immediately". */}
-      <p className="flex items-start gap-2.5 rounded-xs border border-primary/10 bg-surface-muted/60 px-4 py-3 text-sm text-ink-muted">
-        <Info size={16} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+      <p className="flex items-start gap-2.5 rounded-xs border border-adm-line bg-adm-text/4 px-4 py-3 text-sm text-adm-muted">
+        <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.seo.scopeNote")}
       </p>
 

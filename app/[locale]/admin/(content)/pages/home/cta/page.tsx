@@ -102,7 +102,7 @@ export default async function AdminCtaPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -116,8 +116,8 @@ export default async function AdminCtaPage(props: Props) {
 
       {blocks.length === 0 && (
         <section className="admin-card">
-          <h2 className="text-base font-semibold text-primary">{t("cta.importTitle")}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("cta.importBody")}</p>
+          <h2 className="text-base font-semibold text-adm-text">{t("cta.importTitle")}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-adm-muted">{t("cta.importBody")}</p>
           <div className="mt-5">
             <fieldset disabled={!canWrite} className="contents">
               <CtaImportButton action={importCtaFileCopy.bind(null, locale)} />
@@ -128,8 +128,8 @@ export default async function AdminCtaPage(props: Props) {
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("cta.newTitle")}
         </h2>
 
@@ -154,10 +154,10 @@ export default async function AdminCtaPage(props: Props) {
           <section key={block.id} className="admin-card">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-base font-semibold text-primary">{block.name}</h2>
+                <h2 className="text-base font-semibold text-adm-text">{block.name}</h2>
                 <TranslationStatusBadges completeness={completeness} />
                 {block.isDefault && (
-                  <span className="rounded-xs bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                  <span className="rounded-xs bg-adm-text/10 px-2 py-1 text-xs font-medium text-adm-text">
                     {t("cta.defaultBadge")}
                   </span>
                 )}
@@ -166,8 +166,8 @@ export default async function AdminCtaPage(props: Props) {
               <span
                 className={
                   block.isActive
-                    ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                    : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                    ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                    : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                 }
               >
                 {block.isActive ? t("cta.active") : t("cta.inactive")}
@@ -209,8 +209,8 @@ export default async function AdminCtaPage(props: Props) {
       {/* ── Where each one appears ──────────────────────────────────── */}
       {blocks.length > 0 && (
         <section className="admin-card">
-          <h2 className="text-base font-semibold text-primary">{t("cta.placementsTitle")}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-ink-muted">{t("cta.placementsBody")}</p>
+          <h2 className="text-base font-semibold text-adm-text">{t("cta.placementsTitle")}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-adm-muted">{t("cta.placementsBody")}</p>
 
           <div className="mt-5">
             <fieldset disabled={!canWrite} className="contents">

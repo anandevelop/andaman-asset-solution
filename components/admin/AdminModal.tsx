@@ -94,17 +94,17 @@ export default function AdminModal({ open, onClose, titleId, title, closeLabel, 
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className={`relative w-full rounded-xs bg-white p-6 shadow-cardHover ${className ?? "max-w-lg"}`}
+        className={`relative w-full rounded-xs bg-adm-solid p-6 shadow-cardHover ${className ?? "max-w-lg"}`}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 id={titleId} className="text-sm font-semibold text-primary">
+          <h2 id={titleId} className="text-sm font-semibold text-adm-text">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="shrink-0 text-ink-muted transition-colors hover:text-primary"
+            className="shrink-0 text-adm-muted transition-colors hover:text-adm-text"
           >
             <X size={18} aria-hidden />
           </button>

@@ -35,7 +35,7 @@ export default async function MobileTabBar({ locale, active }: Props) {
   ];
 
   return (
-    <nav className="sticky bottom-0 z-10 flex border-t border-primary/10 bg-white pb-[max(env(safe-area-inset-bottom),8px)]">
+    <nav className="sticky bottom-0 z-10 flex border-t border-adm-line bg-adm-solid pb-[max(env(safe-area-inset-bottom),8px)]">
       {tabs.map(({ key, href, icon: Icon, label }) => {
         const isTabActive = key === active;
         return (
@@ -45,7 +45,7 @@ export default async function MobileTabBar({ locale, active }: Props) {
             aria-current={isTabActive ? "page" : undefined}
             className={[
               "flex min-h-[48px] flex-1 flex-col items-center justify-center gap-1 pt-2 text-[10.5px]",
-              isTabActive ? "font-semibold text-primary" : "text-ink-muted",
+              isTabActive ? "font-semibold text-adm-text" : "text-adm-muted",
             ].join(" ")}
           >
             <Icon size={20} strokeWidth={1.7} aria-hidden />

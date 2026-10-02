@@ -122,7 +122,7 @@ export default async function SecurityPage(props: Props) {
           has signed in", which on a security page is the alarming
           misreading of the two. */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -131,7 +131,7 @@ export default async function SecurityPage(props: Props) {
       {!enabled && mandatory && searchParams.setup === "1" && (
         <div
           role="alert"
-          className="flex items-start gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="flex items-start gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning"
         >
           <ShieldAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
           <span>{t("security.required", { role: t(`roles.${actor.role}` as never) })}</span>
@@ -142,14 +142,14 @@ export default async function SecurityPage(props: Props) {
         <div className="mb-5 flex items-start gap-3">
           <ShieldCheck
             size={20}
-            className={enabled ? "mt-0.5 shrink-0 text-emerald-600" : "mt-0.5 shrink-0 text-ink-muted"}
+            className={enabled ? "mt-0.5 shrink-0 text-adm-success" : "mt-0.5 shrink-0 text-adm-muted"}
             aria-hidden
           />
           <div>
-            <h2 className="text-base font-semibold text-primary">
+            <h2 className="text-base font-semibold text-adm-text">
               {enabled ? t("security.statusOn") : t("security.statusOff")}
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">
+            <p className="mt-1 text-sm text-adm-muted">
               {enabled
                 ? t("security.remaining", { count: remaining })
                 : t("security.statusOffHint")}
@@ -174,19 +174,19 @@ export default async function SecurityPage(props: Props) {
 
       <section className="admin-card">
         <div className="mb-5 flex items-start gap-3">
-          <History size={20} className="mt-0.5 shrink-0 text-ink-muted" aria-hidden />
+          <History size={20} className="mt-0.5 shrink-0 text-adm-muted" aria-hidden />
           <div>
-            <h2 className="text-base font-semibold text-primary">
+            <h2 className="text-base font-semibold text-adm-text">
               {t("security.recentActivityTitle")}
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">{t("security.recentActivitySubtitle")}</p>
+            <p className="mt-1 text-sm text-adm-muted">{t("security.recentActivitySubtitle")}</p>
           </div>
         </div>
 
         {recentActivity.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("security.recentActivityEmpty")}</p>
+          <p className="text-sm text-adm-muted">{t("security.recentActivityEmpty")}</p>
         ) : (
-          <ul className="divide-y divide-primary/5">
+          <ul className="divide-y divide-adm-line">
             {recentActivity.map((entry) => {
               const failed = isFailedAuth(entry.action);
 
@@ -194,23 +194,23 @@ export default async function SecurityPage(props: Props) {
                 <li key={entry.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-sm">
                   <time
                     dateTime={entry.createdAt.toISOString()}
-                    className="w-44 shrink-0 text-ink-muted"
+                    className="w-44 shrink-0 text-adm-muted"
                   >
                     {activityFormatter.format(entry.createdAt)}
                   </time>
 
-                  <span className={failed ? "font-medium text-red-700" : "font-medium text-ink"}>
+                  <span className={failed ? "font-medium text-adm-danger" : "font-medium text-adm-text"}>
                     {activityActionLabels[entry.action] ?? entry.action}
                   </span>
 
                   {failed && (
-                    <span className="rounded-xs bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                    <span className="rounded-xs bg-adm-danger-bg px-2 py-0.5 text-xs font-medium text-adm-danger">
                       {t("activity.unverified")}
                     </span>
                   )}
 
                   {entry.ipAddress && (
-                    <span className="font-mono text-xs text-ink-muted">{entry.ipAddress}</span>
+                    <span className="font-mono text-xs text-adm-muted">{entry.ipAddress}</span>
                   )}
                 </li>
               );

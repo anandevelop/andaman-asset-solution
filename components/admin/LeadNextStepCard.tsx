@@ -100,8 +100,8 @@ export default function LeadNextStepCard({
 
       {headline && (
         <>
-          <p className="mt-1.5 text-sm font-semibold text-ink">{headline}</p>
-          {detail && <p className="mt-0.5 text-xs text-ink-muted">{detail}</p>}
+          <p className="mt-1.5 text-sm font-semibold text-adm-text">{headline}</p>
+          {detail && <p className="mt-0.5 text-xs text-adm-muted">{detail}</p>}
         </>
       )}
 

@@ -93,7 +93,7 @@ function Field({
       {children}
       {hint && !error && <p className="admin-hint">{hint}</p>}
       {error && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {error}
         </p>
@@ -322,16 +322,16 @@ export default function EventForm({
             previewHint={t("projects.seoPreviewHint")}
           />
 
-          <label className="flex items-start gap-3 text-sm text-ink">
+          <label className="flex items-start gap-3 text-sm text-adm-text">
             <input
               type="checkbox"
               name="noIndex"
               defaultChecked={values.noIndex}
-              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             <span>
               {t("projects.noIndex")}
-              <span className="mt-0.5 block text-xs text-ink-muted">
+              <span className="mt-0.5 block text-xs text-adm-muted">
                 {t("projects.noIndexHint")} · {lang.toUpperCase()}
               </span>
             </span>
@@ -340,12 +340,12 @@ export default function EventForm({
 
         {/* ── Publication ───────────────────────────────────────────── */}
         <section className="admin-card">
-          <label className="flex items-start gap-3 text-sm text-ink">
+          <label className="flex items-start gap-3 text-sm text-adm-text">
             <input
               type="checkbox"
               name="isPublished"
               defaultChecked={values.isPublished}
-              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             <span>{t("events.publish")}</span>
           </label>
@@ -361,7 +361,7 @@ export default function EventForm({
       </form>
 
       {onDelete && (
-        <form action={onDelete} className="mt-10 border-t border-primary/10 pt-6">
+        <form action={onDelete} className="mt-10 border-t border-adm-line pt-6">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

@@ -107,16 +107,16 @@ export default async function AdminUsersPage(props: Props) {
       />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {/* ── Existing accounts ───────────────────────────────────────── */}
       {users.length > 0 && (
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
           <table className="w-full min-w-[840px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 <th className="admin-th">{t("users.name")}</th>
                 <th className="admin-th">{t("users.role")}</th>
@@ -129,7 +129,7 @@ export default async function AdminUsersPage(props: Props) {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {users.map((user) => (
                 <tr
                   key={user.id}
@@ -168,7 +168,7 @@ export default async function AdminUsersPage(props: Props) {
 
                   {/* Empty means unscoped — the whole company, not
                       nothing. See User.scopedProjects. */}
-                  <td className="admin-td max-w-[220px] truncate text-xs text-ink-muted">
+                  <td className="admin-td max-w-[220px] truncate text-xs text-adm-muted">
                     {user.scopedProjects.length > 0
                       ? user.scopedProjects
                           .map((project) => (locale === "th" ? project.nameTh : project.nameEn))
@@ -178,7 +178,7 @@ export default async function AdminUsersPage(props: Props) {
 
                   {/* Unlinked is the common case and not a fault — an em
                       dash, not a warning. */}
-                  <td className="admin-td max-w-[180px] truncate text-xs text-ink-muted">
+                  <td className="admin-td max-w-[180px] truncate text-xs text-adm-muted">
                     {user.salesPerson
                       ? locale === "th"
                         ? user.salesPerson.nameTh
@@ -188,19 +188,19 @@ export default async function AdminUsersPage(props: Props) {
 
                   <td className="admin-td whitespace-nowrap text-xs">
                     {user.totpEnabledAt ? (
-                      <span className="flex items-center gap-1.5 text-emerald-700">
+                      <span className="flex items-center gap-1.5 text-adm-success">
                         <ShieldCheck size={13} aria-hidden />
                         {t("users.twoFactorOn")}
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-red-700">
+                      <span className="flex items-center gap-1.5 text-adm-danger">
                         <AlertCircle size={13} aria-hidden />
                         {t("users.twoFactorOff")}
                       </span>
                     )}
                   </td>
 
-                  <td className="admin-td whitespace-nowrap text-xs text-ink-muted">
+                  <td className="admin-td whitespace-nowrap text-xs text-adm-muted">
                     {lastSignInBy.has(user.id)
                       ? relativeTime(locale, lastSignInBy.get(user.id) as Date)
                       : t("users.neverSignedIn")}
@@ -210,8 +210,8 @@ export default async function AdminUsersPage(props: Props) {
                     <span
                       className={
                         user.isActive
-                          ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                          : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                          ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                          : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                       }
                     >
                       {user.isActive ? t("users.active") : t("users.disabled")}
@@ -221,7 +221,7 @@ export default async function AdminUsersPage(props: Props) {
                   <td className="admin-td whitespace-nowrap text-right">
                     <Link
                       href={`/${locale}/admin/users/${user.id}/edit`}
-                      className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
+                      className="inline-flex items-center gap-1.5 text-sm text-adm-accent-ink hover:text-adm-accent-ink"
                     >
                       <Pencil size={14} aria-hidden />
                       {t("common.edit")}
@@ -239,14 +239,14 @@ export default async function AdminUsersPage(props: Props) {
           guards call — so this cannot describe a rule the app does not
           actually enforce. */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-primary/10 px-4 py-3">
-          <h2 className="text-sm font-semibold text-primary">{t("users.matrix.title")}</h2>
-          <p className="text-xs text-ink-muted">{t("users.matrix.sourceNote")}</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-adm-line px-4 py-3">
+          <h2 className="text-sm font-semibold text-adm-text">{t("users.matrix.title")}</h2>
+          <p className="text-xs text-adm-muted">{t("users.matrix.sourceNote")}</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 <th className="admin-th">{t("users.matrix.capability")}</th>
                 {ROLE_ORDER.map((role) => (
@@ -257,10 +257,10 @@ export default async function AdminUsersPage(props: Props) {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {CAPABILITIES.map((capability) => (
                 <tr key={capability}>
-                  <td className="admin-td text-primary">
+                  <td className="admin-td text-adm-text">
                     {t(`users.matrix.capabilities.${capability}` as never)}
                   </td>
 
@@ -270,16 +270,16 @@ export default async function AdminUsersPage(props: Props) {
                     return (
                       <td key={role} className="admin-td text-center">
                         {grant === true ? (
-                          <span className="inline-flex h-5 w-6 items-center justify-center rounded-xs bg-emerald-50 text-emerald-700">
+                          <span className="inline-flex h-5 w-6 items-center justify-center rounded-xs bg-adm-success-bg text-adm-success">
                             ✓
                           </span>
                         ) : grant === false ? (
-                          <span className="text-ink-muted/50">—</span>
+                          <span className="text-adm-muted/50">—</span>
                         ) : (
                           /* Allowed, but narrower than a plain yes — the
                              string names how, and the narrowing is enforced
                              in the query or the gate it refers to. */
-                          <span className="inline-block rounded-xs bg-accent/15 px-2 py-1 text-[11px] font-medium text-accent-800">
+                          <span className="inline-block rounded-xs bg-adm-fill/15 px-2 py-1 text-[11px] font-medium text-adm-accent-ink">
                             {t(`users.matrix.limit.${grant}` as never)}
                           </span>
                         )}
@@ -295,8 +295,8 @@ export default async function AdminUsersPage(props: Props) {
 
       {/* ── Create ──────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("users.newTitle")}
         </h2>
 

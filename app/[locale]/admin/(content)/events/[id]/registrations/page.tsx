@@ -145,13 +145,13 @@ export default async function AdminEventRegistrationsPage(props: Props) {
           {event.coverImageUrl && (
             <AdminImage
               src={event.coverImageUrl}
-              className="h-32 w-full shrink-0 rounded-xs bg-surface-muted object-cover lg:w-56"
+              className="h-32 w-full shrink-0 rounded-xs bg-adm-text/4 object-cover lg:w-56"
             />
           )}
 
           <div className="min-w-0 flex-1">
 
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-ink-muted">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-adm-muted">
               <span className="flex items-center gap-1.5">
                 <CalendarDays size={14} aria-hidden />
                 {dateFormat.format(event.startsAt)} · {timeFormat.format(event.startsAt)}
@@ -172,7 +172,7 @@ export default async function AdminEventRegistrationsPage(props: Props) {
                     <span
                       key={code}
                       className={`rounded-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
-                        filled ? "bg-primary text-white" : "bg-surface-muted text-ink-muted/70"
+                        filled ? "bg-adm-strong text-adm-on-strong" : "bg-adm-text/4 text-adm-muted/70"
                       }`}
                     >
                       {code}
@@ -186,7 +186,7 @@ export default async function AdminEventRegistrationsPage(props: Props) {
                 lib/admin/event-registrations.ts. */}
             <div className="mt-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-sm text-ink">
+                <p className="text-sm text-adm-text">
                   {view.seats.capacity === null
                     ? t("events.seats.noCapacity", { taken: view.seats.taken })
                     : t("events.seats.taken", {
@@ -196,7 +196,7 @@ export default async function AdminEventRegistrationsPage(props: Props) {
                 </p>
                 {view.seats.free !== null && (
                   <p
-                    className={`text-sm font-semibold ${view.seats.free === 0 ? "text-red-700" : "text-accent-800"}`}
+                    className={`text-sm font-semibold ${view.seats.free === 0 ? "text-adm-danger" : "text-adm-accent-ink"}`}
                   >
                     {view.seats.free === 0
                       ? t("events.seats.full")
@@ -205,23 +205,23 @@ export default async function AdminEventRegistrationsPage(props: Props) {
                 )}
               </div>
 
-              <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-surface-muted">
-                <span className="bg-emerald-500" style={{ width: pct(view.seats.confirmed) }} />
-                <span className="bg-accent" style={{ width: pct(view.seats.pending) }} />
+              <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-adm-text/4">
+                <span className="bg-adm-success" style={{ width: pct(view.seats.confirmed) }} />
+                <span className="bg-adm-fill" style={{ width: pct(view.seats.pending) }} />
               </div>
 
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-ink-muted">
+              <div className="mt-2 flex flex-wrap gap-4 text-xs text-adm-muted">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-xs bg-emerald-500" aria-hidden />
+                  <span className="h-2.5 w-2.5 rounded-xs bg-adm-success" aria-hidden />
                   {t("events.seats.confirmed", { count: view.seats.confirmed })}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-xs bg-accent" aria-hidden />
+                  <span className="h-2.5 w-2.5 rounded-xs bg-adm-fill" aria-hidden />
                   {t("events.seats.pending", { count: view.seats.pending })}
                 </span>
                 {view.seats.free !== null && (
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-xs bg-surface-muted" aria-hidden />
+                    <span className="h-2.5 w-2.5 rounded-xs bg-adm-text/4" aria-hidden />
                     {t("events.seats.empty", { count: view.seats.free })}
                   </span>
                 )}
@@ -229,15 +229,15 @@ export default async function AdminEventRegistrationsPage(props: Props) {
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 lg:w-56 lg:border-l lg:border-primary/10 lg:pl-5">
+          <div className="flex shrink-0 flex-col gap-3 lg:w-56 lg:border-l lg:border-adm-line lg:pl-5">
             <div className="flex gap-6">
               <div>
-                <p className="text-2xl font-semibold text-primary">{view.total}</p>
-                <p className="text-xs text-ink-muted">{t("events.registrationCount")}</p>
+                <p className="text-2xl font-semibold text-adm-text">{view.total}</p>
+                <p className="text-xs text-adm-muted">{t("events.registrationCount")}</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-primary">{view.leadCount}</p>
-                <p className="text-xs text-ink-muted">{t("events.leadsCreated")}</p>
+                <p className="text-2xl font-semibold text-adm-text">{view.leadCount}</p>
+                <p className="text-xs text-adm-muted">{t("events.leadsCreated")}</p>
               </div>
             </div>
 
@@ -253,7 +253,7 @@ export default async function AdminEventRegistrationsPage(props: Props) {
       </section>
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}

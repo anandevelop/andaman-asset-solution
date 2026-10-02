@@ -68,12 +68,12 @@ export default async function AdminAboutStoryPage(props: Props) {
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("settings.company.title")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.company.subtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("settings.company.title")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("settings.company.subtitle")}</p>
       </header>
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}

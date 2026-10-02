@@ -77,7 +77,7 @@ export function MonthlyLeadsChart({
 
   if (!hasData) {
     return (
-      <p className="flex h-[260px] items-center justify-center text-sm text-ink-muted">
+      <p className="flex h-[260px] items-center justify-center text-sm text-adm-muted">
         {labels.empty}
       </p>
     );
@@ -127,7 +127,7 @@ export function TrendChart({
 
   if (!hasData) {
     return (
-      <p className="flex h-[260px] items-center justify-center text-sm text-ink-muted">
+      <p className="flex h-[260px] items-center justify-center text-sm text-adm-muted">
         {labels.empty}
       </p>
     );
@@ -178,7 +178,7 @@ export function LeadSourceChart({
 }) {
   if (data.length === 0) {
     return (
-      <p className="flex h-[260px] items-center justify-center text-sm text-ink-muted">
+      <p className="flex h-[260px] items-center justify-center text-sm text-adm-muted">
         {emptyLabel}
       </p>
     );

@@ -87,22 +87,22 @@ export default async function AdminPagesHomePage(props: Props) {
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("homeBuilder.title")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("homeBuilder.subtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("homeBuilder.title")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("homeBuilder.subtitle")}</p>
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
         <section className="admin-card overflow-hidden p-0!">
-          <div className="border-b border-primary/10 px-5 py-4">
-            <h3 className="text-sm font-semibold text-primary">{t("homeBuilder.orderTitle")}</h3>
-            <p className="mt-1 text-xs leading-relaxed text-ink-muted">{t("homeBuilder.orderHint")}</p>
+          <div className="border-b border-adm-line px-5 py-4">
+            <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.orderTitle")}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-adm-muted">{t("homeBuilder.orderHint")}</p>
           </div>
 
-          <ol className="divide-y divide-primary/5">
+          <ol className="divide-y divide-adm-line">
             {rows.map(({ outline, state, index }) => (
               <li
                 key={outline.key}
-                className={`px-5 py-3.5 ${state && !state.isVisible ? "bg-surface-muted/40" : ""}`}
+                className={`px-5 py-3.5 ${state && !state.isVisible ? "bg-adm-text/4" : ""}`}
               >
                 <div className="flex items-start gap-3">
                   {/* Reorder controls, or the reason there are none. */}
@@ -114,7 +114,7 @@ export default async function AdminPagesHomePage(props: Props) {
                             type="submit"
                             disabled={index === 0}
                             aria-label={t("homeBuilder.moveUp")}
-                            className="rounded-xs p-1 text-ink-muted hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-30"
+                            className="rounded-xs p-1 text-adm-muted hover:bg-adm-text/4 disabled:cursor-not-allowed disabled:opacity-30"
                           >
                             <ArrowUp size={14} aria-hidden />
                           </button>
@@ -124,7 +124,7 @@ export default async function AdminPagesHomePage(props: Props) {
                             type="submit"
                             disabled={index === lastIndex}
                             aria-label={t("homeBuilder.moveDown")}
-                            className="rounded-xs p-1 text-ink-muted hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-30"
+                            className="rounded-xs p-1 text-adm-muted hover:bg-adm-text/4 disabled:cursor-not-allowed disabled:opacity-30"
                           >
                             <ArrowDown size={14} aria-hidden />
                           </button>
@@ -136,7 +136,7 @@ export default async function AdminPagesHomePage(props: Props) {
                          empty gap where the arrows are on every other row. */
                       <span
                         title={t("homeBuilder.fixedPosition")}
-                        className="mt-1.5 text-ink-muted/40"
+                        className="mt-1.5 text-adm-muted/40"
                       >
                         <Lock size={13} aria-hidden />
                         <span className="sr-only">{t("homeBuilder.fixedPosition")}</span>
@@ -145,15 +145,15 @@ export default async function AdminPagesHomePage(props: Props) {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-ink">
+                    <p className="text-sm font-medium text-adm-text">
                       {t(`homeBuilder.sections.${outline.labelKey}` as never)}
                     </p>
 
                     {/* Who owns the content, or where it comes from. */}
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                       {outline.editors.length === 0 ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                          <Sparkles size={12} aria-hidden className="text-accent-700" />
+                        <span className="inline-flex items-center gap-1.5 text-xs text-adm-muted">
+                          <Sparkles size={12} aria-hidden className="text-adm-accent-ink" />
                           {t(`homeBuilder.auto.${outline.autoKey}` as never)}
                         </span>
                       ) : (
@@ -161,7 +161,7 @@ export default async function AdminPagesHomePage(props: Props) {
                           <Link
                             key={editor.href}
                             href={`/${locale}/admin${editor.href}`}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-accent-700 hover:text-accent-800 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink hover:underline"
                           >
                             {t(`homeBuilder.editor.${editor.labelKey}` as never)}
                             <ArrowUpRight size={11} aria-hidden />
@@ -180,12 +180,12 @@ export default async function AdminPagesHomePage(props: Props) {
                           aria-label={
                             state.isVisible ? t("homeBuilder.hideSection") : t("homeBuilder.showSection")
                           }
-                          className="flex shrink-0 items-center gap-1.5 rounded-xs px-2 py-1.5 text-xs text-ink-muted hover:bg-surface-muted"
+                          className="flex shrink-0 items-center gap-1.5 rounded-xs px-2 py-1.5 text-xs text-adm-muted hover:bg-adm-text/4"
                         >
                           {state.isVisible ? (
                             <>
-                              <Eye size={15} className="text-emerald-700" aria-hidden />
-                              <span className="hidden text-emerald-800 sm:inline">
+                              <Eye size={15} className="text-adm-success" aria-hidden />
+                              <span className="hidden text-adm-success sm:inline">
                                 {t("homeBuilder.visible")}
                               </span>
                             </>
@@ -199,7 +199,7 @@ export default async function AdminPagesHomePage(props: Props) {
                       </form>
                     </fieldset>
                   ) : (
-                    <span className="shrink-0 px-2 py-1.5 text-xs text-ink-muted/60">
+                    <span className="shrink-0 px-2 py-1.5 text-xs text-adm-muted/60">
                       {t("homeBuilder.always")}
                     </span>
                   )}
@@ -216,8 +216,8 @@ export default async function AdminPagesHomePage(props: Props) {
             either end. It changes the instant a row moves, where the
             iframe below needs a reload and a scroll to show the same. */}
         <section className="admin-card space-y-3">
-          <h3 className="text-sm font-semibold text-ink">{t("homeBuilder.wireframeTitle")}</h3>
-          <ol className="mx-auto flex max-w-[260px] flex-col gap-1.5 rounded-[12px] border border-adm-line bg-surface p-2">
+          <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.wireframeTitle")}</h3>
+          <ol className="mx-auto flex max-w-[260px] flex-col gap-1.5 rounded-[12px] border border-adm-line bg-adm-bg p-2">
             {rows
               .filter(({ state }) => !state || state.isVisible)
               .map(({ outline, state }) => (
@@ -226,7 +226,7 @@ export default async function AdminPagesHomePage(props: Props) {
                   className={[
                     "flex items-center justify-center rounded-[6px] px-2 text-center text-[10px] leading-tight",
                     state
-                      ? "h-7 bg-adm-line text-ink-muted"
+                      ? "h-7 bg-adm-line text-adm-muted"
                       : outline.key === HERO_ROW.key
                         ? "h-16 bg-adm-band text-white/80"
                         : "h-10 bg-adm-band-2 text-white/80",
@@ -240,9 +240,9 @@ export default async function AdminPagesHomePage(props: Props) {
         </section>
 
         <section className="admin-card flex flex-col p-0!">
-          <div className="border-b border-primary/10 px-5 py-4">
-            <h3 className="text-sm font-semibold text-primary">{t("homeBuilder.previewTitle")}</h3>
-            <p className="mt-1 text-xs text-ink-muted">{t("homeBuilder.previewHint")}</p>
+          <div className="border-b border-adm-line px-5 py-4">
+            <h3 className="text-sm font-semibold text-adm-text">{t("homeBuilder.previewTitle")}</h3>
+            <p className="mt-1 text-xs text-adm-muted">{t("homeBuilder.previewHint")}</p>
           </div>
 
           {/* The real homepage route, not a mockup — a saved reorder or

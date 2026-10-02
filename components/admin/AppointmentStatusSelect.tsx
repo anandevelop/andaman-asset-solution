@@ -43,7 +43,7 @@ export default function AppointmentStatusSelect({ locale, id, value, labels, cla
       onChange={onChange}
       disabled={pending}
       onClick={(e) => e.stopPropagation()}
-      className={className ?? "rounded-xs border border-primary/15 bg-white px-1.5 py-1 text-[10.5px] text-ink"}
+      className={className ?? "rounded-xs border border-adm-line-strong bg-adm-solid px-1.5 py-1 text-[10.5px] text-adm-text"}
     >
       {Object.entries(labels).map(([key, label]) => (
         <option key={key} value={key}>

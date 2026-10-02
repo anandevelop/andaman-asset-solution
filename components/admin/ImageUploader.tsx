@@ -264,14 +264,14 @@ function SortableImage({
         // Lift the dragged tile above its neighbours.
         zIndex: isDragging ? 10 : undefined,
       }}
-      className={`group relative h-24 w-32 overflow-hidden rounded-xs border bg-surface-muted ${
+      className={`group relative h-24 w-32 overflow-hidden rounded-xs border bg-adm-text/4 ${
         isDragging
-          ? "border-accent opacity-90 shadow-cardHover"
-          : "border-primary/10"
+          ? "border-adm-fill opacity-90 shadow-cardHover"
+          : "border-adm-line"
       }`}
     >
       {broken ? (
-        <span className="flex h-full w-full items-center justify-center text-ink-muted">
+        <span className="flex h-full w-full items-center justify-center text-adm-muted">
           <ImageOff size={16} aria-hidden />
         </span>
       ) : isVideo ? (
@@ -623,7 +623,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setShowLibrary(true)}
-            className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-xs text-adm-muted transition-colors hover:text-adm-text"
           >
             <FolderOpen size={12} aria-hidden />
             {t("pickFromLibrary")}
@@ -632,7 +632,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setShowManual((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-xs text-adm-muted transition-colors hover:text-adm-text"
           >
             <Link2 size={12} aria-hidden />
             {showManual ? t("hideUrl") : t("pasteUrl")}
@@ -676,8 +676,8 @@ export default function ImageUploader({
         }}
         className={`rounded-xs border border-dashed px-5 py-6 text-center transition-colors ${
           dragging
-            ? "border-accent bg-accent/6"
-            : "border-primary/20 bg-surface-muted/40"
+            ? "border-adm-fill bg-adm-fill/6"
+            : "border-adm-line-strong bg-adm-text/4"
         }`}
       >
         <input
@@ -693,15 +693,15 @@ export default function ImageUploader({
         <UploadCloud
           size={22}
           strokeWidth={1.5}
-          className="mx-auto text-ink-muted"
+          className="mx-auto text-adm-muted"
           aria-hidden
         />
 
-        <p className="mt-2 text-sm text-ink">
+        <p className="mt-2 text-sm text-adm-text">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="font-medium text-accent-700 underline underline-offset-2"
+            className="font-medium text-adm-accent-ink underline underline-offset-2"
           >
             {t("choose")}
           </button>{" "}
@@ -715,7 +715,7 @@ export default function ImageUploader({
       {hint && <p className="admin-hint">{hint}</p>}
 
       {error && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {error}
         </p>
@@ -748,17 +748,17 @@ export default function ImageUploader({
       {uploads.length > 0 && (
         <ul className="mt-4 space-y-2">
           {uploads.map((upload) => (
-            <li key={upload.id} className="rounded-xs border border-primary/10 px-3 py-2">
+            <li key={upload.id} className="rounded-xs border border-adm-line px-3 py-2">
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="truncate text-ink">{upload.name}</span>
+                <span className="truncate text-adm-text">{upload.name}</span>
 
                 {upload.error ? (
-                  <span className="flex shrink-0 items-center gap-1 text-red-700">
+                  <span className="flex shrink-0 items-center gap-1 text-adm-danger">
                     <AlertCircle size={12} aria-hidden />
                     {upload.error}
                   </span>
                 ) : (
-                  <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-ink-muted">
+                  <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-adm-muted">
                     <Loader2 size={12} className="animate-spin" aria-hidden />
                     {upload.progress}%
                   </span>
@@ -772,10 +772,10 @@ export default function ImageUploader({
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label={upload.name}
-                  className="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/10"
+                  className="mt-2 h-1 w-full overflow-hidden rounded-full bg-adm-text/10"
                 >
                   <div
-                    className="h-full bg-accent transition-[width] duration-200"
+                    className="h-full bg-adm-fill transition-[width] duration-200"
                     style={{ width: `${upload.progress}%` }}
                   />
                 </div>
@@ -787,7 +787,7 @@ export default function ImageUploader({
                   onClick={() =>
                     setUploads((u) => u.filter((item) => item.id !== upload.id))
                   }
-                  className="mt-1 text-xs text-ink-muted underline"
+                  className="mt-1 text-xs text-adm-muted underline"
                 >
                   {t("dismiss")}
                 </button>
@@ -803,9 +803,9 @@ export default function ImageUploader({
           {urls.map((url) => (
             <li
               key={url}
-              className="flex items-center gap-3 rounded-xs border border-primary/10 bg-surface-muted/50 px-3 py-2.5"
+              className="flex items-center gap-3 rounded-xs border border-adm-line bg-adm-text/4 px-3 py-2.5"
             >
-              <FileText size={18} className="shrink-0 text-accent-700" aria-hidden />
+              <FileText size={18} className="shrink-0 text-adm-accent-ink" aria-hidden />
 
               {/* A PDF has no thumbnail worth rendering, so the useful
                   affordance is opening it to check the right file landed. */}
@@ -813,7 +813,7 @@ export default function ImageUploader({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-w-0 flex-1 truncate font-mono text-xs text-accent-700 hover:underline"
+                className="min-w-0 flex-1 truncate font-mono text-xs text-adm-accent-ink hover:underline"
               >
                 {url.split("/").pop()}
               </a>
@@ -822,7 +822,7 @@ export default function ImageUploader({
                 type="button"
                 onClick={() => remove(url)}
                 aria-label={t("remove")}
-                className="shrink-0 text-ink-muted transition-colors hover:text-red-600"
+                className="shrink-0 text-adm-muted transition-colors hover:text-adm-danger"
               >
                 <Trash2 size={14} aria-hidden />
               </button>

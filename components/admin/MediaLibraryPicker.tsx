@@ -39,7 +39,7 @@ export default function MediaLibraryPicker({ open, locale, loadingLabel, onSelec
   }, [open]);
 
   if (loading || !library) {
-    return <p className="py-10 text-center text-sm text-ink-muted">{loadingLabel}</p>;
+    return <p className="py-10 text-center text-sm text-adm-muted">{loadingLabel}</p>;
   }
 
   return (

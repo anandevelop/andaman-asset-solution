@@ -33,7 +33,7 @@ export default function MobileClaimLeadButton({ locale, leadId, userId, label }:
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="flex min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-xs bg-primary px-3.5 text-xs font-medium text-white disabled:opacity-60"
+      className="flex min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-xs bg-adm-strong px-3.5 text-xs font-medium text-adm-on-strong disabled:opacity-60"
     >
       {pending && <Loader2 size={13} className="animate-spin" aria-hidden />}
       {label}

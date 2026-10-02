@@ -32,7 +32,7 @@ function Button({ label, confirmLabel }: { label: string; confirmLabel: string }
       onClick={(event) => {
         if (!window.confirm(confirmLabel)) event.preventDefault();
       }}
-      className="admin-btn border-red-200 text-red-700 hover:bg-red-50"
+      className="admin-btn border-adm-danger/30 text-adm-danger hover:bg-adm-danger-bg"
     >
       {pending ? (
         <Loader2 size={15} className="animate-spin" aria-hidden />

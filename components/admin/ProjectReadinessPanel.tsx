@@ -35,8 +35,8 @@ const TAB_SEGMENT: Record<ReadinessTab, string> = {
 };
 
 const FILL_TONE: Record<string, string> = {
-  complete: "bg-emerald-600",
-  partial: "bg-amber-500",
+  complete: "bg-adm-success",
+  partial: "bg-adm-warning",
   missing: "bg-red-500/70",
 };
 
@@ -59,13 +59,13 @@ export default async function ProjectReadinessPanel({
   return (
     <aside className="admin-card space-y-4 xl:sticky xl:top-[68px] xl:self-start">
       <div>
-        <h2 className="text-sm font-semibold text-primary">{t("projects.readiness.title")}</h2>
-        <p className="mt-1 text-xs text-ink-muted">
+        <h2 className="text-sm font-semibold text-adm-text">{t("projects.readiness.title")}</h2>
+        <p className="mt-1 text-xs text-adm-muted">
           {t("projects.readiness.summary", { passed: readiness.passed, total })}
         </p>
         {/* Says what the list is not, where somebody would otherwise assume
             a failing row is why their publish switch is refusing them. */}
-        <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+        <p className="mt-2 text-[11px] leading-relaxed text-adm-muted">
           {t("projects.readiness.adviceNote")}
         </p>
       </div>
@@ -83,27 +83,27 @@ export default async function ProjectReadinessPanel({
             <li key={check.key}>
               <Link
                 href={`${base}${TAB_SEGMENT[check.tab]}`}
-                className="group flex items-center gap-2.5 rounded-xs px-2 py-1.5 transition-colors hover:bg-surface-muted"
+                className="group flex items-center gap-2.5 rounded-xs px-2 py-1.5 transition-colors hover:bg-adm-text/4"
               >
                 <span
                   aria-hidden
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-                    check.ok ? "bg-emerald-600 text-white" : "bg-amber-100 text-amber-700"
+                    check.ok ? "bg-adm-success text-adm-on-strong" : "bg-adm-warning-bg text-adm-warning"
                   }`}
                 >
                   {check.ok ? <Check size={11} strokeWidth={3} /> : <Minus size={11} strokeWidth={3} />}
                 </span>
 
-                <span className={`flex-1 text-xs ${check.ok ? "text-ink-muted" : "font-medium text-ink"}`}>
+                <span className={`flex-1 text-xs ${check.ok ? "text-adm-muted" : "font-medium text-adm-text"}`}>
                   {t(`projects.readiness.check.${check.key}` as never)}
-                  {count && <span className="ml-1.5 tabular-nums text-ink-muted">{count}</span>}
+                  {count && <span className="ml-1.5 tabular-nums text-adm-muted">{count}</span>}
                 </span>
 
                 {!check.ok && (
                   <ChevronRight
                     size={13}
                     aria-hidden
-                    className="shrink-0 text-ink-muted/50 transition-colors group-hover:text-primary"
+                    className="shrink-0 text-adm-muted/50 transition-colors group-hover:text-adm-text"
                   />
                 )}
               </Link>
@@ -114,19 +114,19 @@ export default async function ProjectReadinessPanel({
 
       {/* The four locales as bars rather than a fifth checklist row: the
           row above says how many are complete, this says which. */}
-      <div className="space-y-1.5 border-t border-primary/10 pt-3.5">
+      <div className="space-y-1.5 border-t border-adm-line pt-3.5">
         {readiness.localeFills.map((entry) => (
           <div key={entry.locale} className="flex items-center gap-2">
-            <span className="w-14 shrink-0 text-[11px] text-ink-muted">
+            <span className="w-14 shrink-0 text-[11px] text-adm-muted">
               {LOCALE_NATIVE_NAMES[entry.locale] ?? entry.locale}
             </span>
-            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/5">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-adm-text/5">
               <span
                 className={`block h-full rounded-full ${FILL_TONE[entry.fill]}`}
                 style={{ width: entry.fill === "complete" ? "100%" : entry.fill === "partial" ? "55%" : "8%" }}
               />
             </span>
-            <span className="w-16 shrink-0 text-right text-[10.5px] text-ink-muted">
+            <span className="w-16 shrink-0 text-right text-[10.5px] text-adm-muted">
               {t(`projects.readiness.fill.${entry.fill}` as never)}
             </span>
           </div>

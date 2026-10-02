@@ -138,16 +138,16 @@ type Props = {
 };
 
 const STATUS_TONE: Record<ProjectTableRow["status"], string> = {
-  UPCOMING: "bg-accent/15 text-accent-800",
-  UNDER_CONSTRUCTION: "bg-sky-50 text-sky-800",
-  READY_TO_MOVE_IN: "bg-emerald-50 text-emerald-800",
-  SOLD_OUT: "bg-surface-muted text-ink-muted",
+  UPCOMING: "bg-adm-fill/15 text-adm-accent-ink",
+  UNDER_CONSTRUCTION: "bg-adm-status-info-bg text-adm-status-info",
+  READY_TO_MOVE_IN: "bg-adm-success-bg text-adm-success",
+  SOLD_OUT: "bg-adm-text/4 text-adm-muted",
 };
 
 const FILL_TONE: Record<"complete" | "partial" | "missing", string> = {
-  complete: "bg-primary text-white",
-  partial: "bg-accent/25 text-accent-800",
-  missing: "bg-surface-muted text-ink-muted/70",
+  complete: "bg-adm-strong text-adm-on-strong",
+  partial: "bg-adm-fill/25 text-adm-accent-ink",
+  missing: "bg-adm-text/4 text-adm-muted/70",
 };
 
 /** The bar under the availability figure: available, then reserved, then
@@ -159,12 +159,12 @@ function UnitBar({ units, label }: { units: UnitTallyView; label: string }) {
 
   return (
     <span
-      className="flex h-1.5 w-20 overflow-hidden rounded-full bg-surface-muted"
+      className="flex h-1.5 w-20 overflow-hidden rounded-full bg-adm-text/4"
       role="img"
       aria-label={label}
     >
-      <span className="bg-emerald-500" style={{ width: percent(units.available) }} />
-      <span className="bg-accent" style={{ width: percent(units.reserved) }} />
+      <span className="bg-adm-success" style={{ width: percent(units.available) }} />
+      <span className="bg-adm-fill" style={{ width: percent(units.reserved) }} />
       <span className="bg-primary/25" style={{ width: percent(units.sold) }} />
     </span>
   );
@@ -205,7 +205,7 @@ function SortableRow({
           <button
             type="button"
             aria-label={`${dragLabel}: ${row.name}`}
-            className="cursor-grab text-ink-muted hover:text-primary active:cursor-grabbing"
+            className="cursor-grab text-adm-muted hover:text-adm-text active:cursor-grabbing"
             {...attributes}
             {...listeners}
           >
@@ -377,7 +377,7 @@ export default function ProjectsTable({
     <>
       {/* ── Bulk bar ───────────────────────────────────────────────── */}
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xs bg-primary px-4 py-3 text-white">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xs bg-adm-strong px-4 py-3 text-adm-on-strong">
           <span className="text-sm font-semibold">{tBulk("selected", { count: selected.size })}</span>
 
           <button
@@ -444,7 +444,7 @@ export default function ProjectsTable({
       )}
 
       {reordering && (
-        <p className="rounded-xs border border-accent/30 bg-accent/[0.07] px-4 py-2.5 text-xs text-accent-800">
+        <p className="rounded-xs border border-adm-fill/30 bg-accent/[0.07] px-4 py-2.5 text-xs text-adm-accent-ink">
           {labels.reorderHint}
         </p>
       )}
@@ -471,13 +471,13 @@ export default function ProjectsTable({
       )}
 
       {/* ── Table ──────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+      <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
         {/* A fixed id: dnd-kit otherwise numbers its aria-describedby from a
           module counter that the server and the browser do not share, and
           every render of this page was a hydration mismatch. */}
       <DndContext id="projects-table" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <table className="w-full min-w-[1040px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 {reordering && <th className="admin-th w-8" />}
                 <th className="admin-th w-10">
@@ -491,7 +491,7 @@ export default function ProjectsTable({
                     }}
                     onChange={toggleAll}
                     aria-label={labels.selectAll}
-                    className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+                    className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
                   />
                 </th>
                 <th className="admin-th">{labels.columnProject}</th>
@@ -510,7 +510,7 @@ export default function ProjectsTable({
               items={ordered.map((row) => row.id)}
               strategy={verticalListSortingStrategy}
             >
-              <tbody className="divide-y divide-primary/5">
+              <tbody className="divide-y divide-adm-line">
                 {ordered.map((row) => {
                   const isSelected = selected.has(row.id);
                   const inWorkflow = row.contentStatus !== "PUBLISHED";
@@ -523,10 +523,10 @@ export default function ProjectsTable({
                       dragLabel={labels.dragRow}
                       className={`transition-colors ${
                         isSelected
-                          ? "bg-accent/5"
+                          ? "bg-adm-fill/5"
                           : inWorkflow
-                            ? "bg-accent/3 hover:bg-accent/6"
-                            : "hover:bg-surface-muted/60"
+                            ? "bg-adm-fill/3 hover:bg-adm-fill/6"
+                            : "hover:bg-adm-text/4"
                       }`}
                     >
                       <td className="admin-td">
@@ -535,13 +535,13 @@ export default function ProjectsTable({
                           checked={isSelected}
                           onChange={() => toggleRow(row.id)}
                           aria-label={`${labels.selectRow}: ${row.name}`}
-                          className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+                          className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
                         />
                       </td>
 
                       <td className="admin-td">
                         <div className="flex items-center gap-3">
-                          <span className="relative flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xs bg-surface-muted">
+                          <span className="relative flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xs bg-adm-text/4">
                             <AdminImage
                               src={row.thumbnailUrl}
                               alt={row.thumbnailUrl ? "" : labels.noImage}
@@ -555,19 +555,19 @@ export default function ProjectsTable({
                             <span className="flex flex-wrap items-center gap-1.5">
                               <Link
                                 href={`/${locale}/admin/projects/${row.id}/edit`}
-                                className="font-medium text-primary hover:text-accent-800"
+                                className="font-medium text-adm-text hover:text-adm-accent-ink"
                               >
                                 {row.name}
                               </Link>
                               {inWorkflow && (
-                                <span className="rounded-xs bg-accent/20 px-1.5 py-0.5 text-[11px] font-semibold text-accent-800">
+                                <span className="rounded-xs bg-adm-fill/20 px-1.5 py-0.5 text-[11px] font-semibold text-adm-accent-ink">
                                   {row.contentStatus === "DRAFT"
                                     ? labels.draftBadge
                                     : labels.reviewBadge}
                                 </span>
                               )}
                             </span>
-                            <span className="mt-0.5 block truncate font-mono text-xs text-ink-muted">
+                            <span className="mt-0.5 block truncate font-mono text-xs text-adm-muted">
                               /projects/{row.slug}
                               {inWorkflow && !row.isPublished && ` · ${labels.awaitingReview}`}
                             </span>
@@ -579,11 +579,11 @@ export default function ProjectsTable({
                           Don-Cherngtalay, Phuket)"); left unbounded they
                           push the language and publish columns off the
                           right edge on a laptop. */}
-                      <td className="admin-td max-w-[150px] truncate text-ink-muted" title={row.location}>
+                      <td className="admin-td max-w-[150px] truncate text-adm-muted" title={row.location}>
                         {row.location}
                       </td>
 
-                      <td className="admin-td whitespace-nowrap text-ink-muted">{row.typeLabel}</td>
+                      <td className="admin-td whitespace-nowrap text-adm-muted">{row.typeLabel}</td>
 
                       <td className="admin-td whitespace-nowrap">
                         <span
@@ -597,12 +597,12 @@ export default function ProjectsTable({
                         {row.units.kind === "counted" ? (
                           <span className="flex items-center gap-2">
                             <UnitBar units={row.units} label={row.unitsLabel} />
-                            <span className="text-xs tabular-nums text-ink-muted">
+                            <span className="text-xs tabular-nums text-adm-muted">
                               {row.units.available} / {row.units.total}
                             </span>
                           </span>
                         ) : (
-                          <span className="text-xs text-ink-muted/70">{row.unitsLabel}</span>
+                          <span className="text-xs text-adm-muted/70">{row.unitsLabel}</span>
                         )}
                       </td>
 
@@ -629,17 +629,17 @@ export default function ProjectsTable({
                           onClick={() => runPublish([row.id], !row.isPublished, row.id)}
                           className={[
                             "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50",
-                            row.isPublished ? "bg-emerald-500" : "bg-primary/20",
+                            row.isPublished ? "bg-adm-success" : "bg-adm-text/20",
                           ].join(" ")}
                         >
                           <span
                             className={[
-                              "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform",
+                              "inline-block h-3.5 w-3.5 transform rounded-full bg-adm-solid shadow-xs transition-transform",
                               row.isPublished ? "translate-x-[18px]" : "translate-x-[3px]",
                             ].join(" ")}
                           >
                             {busyRow === row.id && (
-                              <Loader2 size={14} className="animate-spin text-primary" aria-hidden />
+                              <Loader2 size={14} className="animate-spin text-adm-text" aria-hidden />
                             )}
                           </span>
                         </button>
@@ -648,10 +648,10 @@ export default function ProjectsTable({
                       {/* Time above name rather than one long line: the
                           editor's full name is what makes this column the
                           widest one otherwise. */}
-                      <td className="admin-td max-w-[130px] text-xs text-ink-muted">
+                      <td className="admin-td max-w-[130px] text-xs text-adm-muted">
                         <span className="block whitespace-nowrap">{row.lastEditedLabel}</span>
                         {row.lastEditedBy && (
-                          <span className="block truncate text-ink-muted/80" title={row.lastEditedBy}>
+                          <span className="block truncate text-adm-muted/80" title={row.lastEditedBy}>
                             {row.lastEditedBy}
                           </span>
                         )}
@@ -662,7 +662,7 @@ export default function ProjectsTable({
                           <Link
                             href={`/${locale}/admin/projects/${row.id}/progress`}
                             aria-label={`${labels.progress}: ${row.name}`}
-                            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+                            className="inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text"
                           >
                             <HardHat size={14} aria-hidden />
                             {row.progressCount}
@@ -670,7 +670,7 @@ export default function ProjectsTable({
 
                           <Link
                             href={`/${locale}/admin/projects/${row.id}/edit`}
-                            className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
+                            className="inline-flex items-center gap-1.5 text-sm text-adm-accent-ink hover:text-adm-accent-ink"
                           >
                             <Pencil size={14} aria-hidden />
                             {labels.edit}

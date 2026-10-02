@@ -46,7 +46,7 @@ export default function RevealContact({
 
   if (value) {
     return (
-      <a href={`${field === "email" ? "mailto" : "tel"}:${value}`} className="admin-mono text-primary-500 hover:underline">
+      <a href={`${field === "email" ? "mailto" : "tel"}:${value}`} className="admin-mono text-adm-info hover:underline">
         {value}
       </a>
     );
@@ -54,12 +54,12 @@ export default function RevealContact({
 
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <span className="admin-mono text-ink">{masked}</span>
+      <span className="admin-mono text-adm-text">{masked}</span>
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => revealThen(leadId, field, setValue, labels.failed))}
-        className="inline-flex items-center gap-1 rounded-full border border-adm-line-strong px-2 py-0.5 text-[11px] font-medium text-ink-muted transition-colors hover:border-adm-info hover:text-adm-info disabled:opacity-60"
+        className="inline-flex items-center gap-1 rounded-full border border-adm-line-strong px-2 py-0.5 text-[11px] font-medium text-adm-muted transition-colors hover:border-adm-info hover:text-adm-info disabled:opacity-60"
       >
         {pending ? <Loader2 size={11} className="animate-spin" aria-hidden /> : <Eye size={11} aria-hidden />}
         {labels.show}

@@ -70,14 +70,14 @@ export default function ReportScheduleCard({
 
       <dl className="mt-3 space-y-2 text-sm">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-ink-muted">
+          <dt className="text-xs uppercase tracking-wide text-adm-muted">
             {labels.recipients}
           </dt>
-          <dd className="mt-0.5 text-ink">
+          <dd className="mt-0.5 text-adm-text">
             {!emailConfigured ? (
-              <span className="text-ink-muted">{labels.notConfigured}</span>
+              <span className="text-adm-muted">{labels.notConfigured}</span>
             ) : recipients.length === 0 ? (
-              <span className="text-ink-muted">{labels.noRecipients}</span>
+              <span className="text-adm-muted">{labels.noRecipients}</span>
             ) : (
               <span className="break-all">{recipients.join(", ")}</span>
             )}
@@ -85,17 +85,17 @@ export default function ReportScheduleCard({
         </div>
 
         <div>
-          <dt className="text-xs uppercase tracking-wide text-ink-muted">
+          <dt className="text-xs uppercase tracking-wide text-adm-muted">
             {labels.lastSent}
           </dt>
           <dd className="mt-0.5">
             {lastSent === null ? (
-              <span className="text-ink-muted">{labels.neverSent}</span>
+              <span className="text-adm-muted">{labels.neverSent}</span>
             ) : (
-              <span className={lastSent.ok ? "text-ink" : "text-red-700"}>
+              <span className={lastSent.ok ? "text-adm-text" : "text-adm-danger"}>
                 {lastSent.at} · {lastSent.ok ? labels.succeeded : labels.failed}
                 {lastSent.error && (
-                  <span className="text-ink-muted"> — {lastSent.error}</span>
+                  <span className="text-adm-muted"> — {lastSent.error}</span>
                 )}
               </span>
             )}
@@ -106,7 +106,7 @@ export default function ReportScheduleCard({
       <p className="admin-hint mt-3">{labels.noScheduler}</p>
 
       {noteIsDraft && (
-        <p className="mt-3 rounded-xs border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="mt-3 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3 py-2 text-xs text-adm-warning">
           {labels.draftWarning}
         </p>
       )}
@@ -131,12 +131,12 @@ export default function ReportScheduleCard({
       </button>
 
       {result?.ok && (
-        <p className="mt-2 text-xs text-emerald-700">{labels.sentOk}</p>
+        <p className="mt-2 text-xs text-adm-success">{labels.sentOk}</p>
       )}
       {result && !result.ok && (
         // Verbatim: an administrator is standing here, and "Invalid login"
         // or "ECONNREFUSED" is something they can act on.
-        <p className="mt-2 text-xs text-red-700">
+        <p className="mt-2 text-xs text-adm-danger">
           {labels.failed} — {result.error}
         </p>
       )}

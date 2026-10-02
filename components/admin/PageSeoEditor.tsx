@@ -206,7 +206,7 @@ export default function PageSeoEditor({
       {/* ── Settings ─────────────────────────────────────────────────── */}
       <section className="admin-card space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-primary">{labels.sectionTitle}</h2>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.sectionTitle}</h2>
 
           <div className="flex gap-1.5">
             {perLocale.map((row) => {
@@ -220,12 +220,12 @@ export default function PageSeoEditor({
                   className={[
                     "rounded-xs border px-3 py-1.5 text-sm font-medium transition-colors",
                     row.locale === active
-                      ? "border-primary bg-primary text-white"
+                      ? "border-adm-text bg-adm-strong text-adm-on-strong"
                       : draft.title.trim() && draft.description.trim()
-                        ? "border-primary/15 text-ink-muted hover:text-primary"
+                        ? "border-adm-line-strong text-adm-muted hover:text-adm-text"
                         : // Incomplete languages are called out here rather
                           // than only in the checklist above.
-                          "border-red-300 text-red-700",
+                          "border-adm-danger/30 text-adm-danger",
                   ].join(" ")}
                 >
                   {row.label}
@@ -237,20 +237,20 @@ export default function PageSeoEditor({
 
         <div>
           <label className="admin-label" htmlFor="seo-keyword">
-            {labels.keywords} <span className="font-normal text-ink-muted">· {labels.keywordsHint}</span>
+            {labels.keywords} <span className="font-normal text-adm-muted">· {labels.keywordsHint}</span>
           </label>
           <div className="flex flex-wrap items-center gap-2">
             {current.keywords.map((keyword) => (
               <span
                 key={keyword}
-                className="flex items-center gap-1.5 rounded-xs bg-surface-muted px-2.5 py-1.5 text-sm text-ink"
+                className="flex items-center gap-1.5 rounded-xs bg-adm-text/4 px-2.5 py-1.5 text-sm text-adm-text"
               >
                 {keyword}
                 <button
                   type="button"
                   onClick={() => patch({ keywords: current.keywords.filter((k) => k !== keyword) })}
                   aria-label={`${labels.keywords}: ${keyword}`}
-                  className="text-ink-muted hover:text-red-600"
+                  className="text-adm-muted hover:text-adm-danger"
                 >
                   <X size={12} aria-hidden />
                 </button>
@@ -318,8 +318,8 @@ export default function PageSeoEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="admin-label">{labels.url}</p>
-            <p className="admin-input bg-surface-muted/60 font-mono text-sm text-ink-muted">
-              /{active}/projects/<span className="font-semibold text-primary">{slug}</span>
+            <p className="admin-input bg-adm-text/4 font-mono text-sm text-adm-muted">
+              /{active}/projects/<span className="font-semibold text-adm-text">{slug}</span>
             </p>
             <p className="admin-hint">{labels.urlHint}</p>
           </div>
@@ -398,9 +398,9 @@ export default function PageSeoEditor({
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-4 border-t border-primary/10 pt-4">
+        <div className="flex items-start justify-between gap-4 border-t border-adm-line pt-4">
           <div>
-            <p className="text-sm font-medium text-primary">{labels.noIndex}</p>
+            <p className="text-sm font-medium text-adm-text">{labels.noIndex}</p>
             <p className="admin-hint">{labels.noIndexHint}</p>
           </div>
           <button
@@ -411,12 +411,12 @@ export default function PageSeoEditor({
             onClick={() => patch({ noIndex: !current.noIndex })}
             className={[
               "relative mt-1 inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-              current.noIndex ? "bg-primary/20" : "bg-emerald-500",
+              current.noIndex ? "bg-adm-text/20" : "bg-adm-success",
             ].join(" ")}
           >
             <span
               className={[
-                "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform",
+                "inline-block h-3.5 w-3.5 transform rounded-full bg-adm-solid shadow-xs transition-transform",
                 current.noIndex ? "translate-x-[3px]" : "translate-x-[18px]",
               ].join(" ")}
             />
@@ -434,14 +434,14 @@ export default function PageSeoEditor({
           </button>
 
           {status === "saved" && (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-700">
+            <span className="flex items-center gap-1.5 text-xs text-adm-success">
               <Check size={13} aria-hidden />
               {labels.saved}
             </span>
           )}
 
           {status === "error" && (
-            <span className="flex items-center gap-1.5 text-xs text-red-700">
+            <span className="flex items-center gap-1.5 text-xs text-adm-danger">
               <AlertCircle size={13} aria-hidden />
               {errorKey === "CANONICAL_NOT_ABSOLUTE" ? labels.canonicalNotAbsolute : labels.error}
             </span>
@@ -452,12 +452,12 @@ export default function PageSeoEditor({
       {/* ── Previews ─────────────────────────────────────────────────── */}
       <div className="space-y-4">
         <section className="admin-card space-y-4">
-          <h2 className="text-sm font-semibold text-primary">{labels.serpTitle}</h2>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.serpTitle}</h2>
 
           {serpRows.map((row) => (
             <SerpPreview
               key={row.locale}
-              className="rounded-xs border border-primary/10 p-3.5"
+              className="rounded-xs border border-adm-line p-3.5"
               displayPath={`${siteOrigin.replace(/^https?:\/\//, "")} › ${row.locale} › projects`}
               title={row.title.trim() || labels.serpEmpty}
               description={row.description.trim() || labels.serpEmpty}
@@ -467,26 +467,26 @@ export default function PageSeoEditor({
         </section>
 
         <section className="admin-card space-y-3">
-          <h2 className="text-sm font-semibold text-primary">{labels.shareTitle}</h2>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.shareTitle}</h2>
 
-          <div className="overflow-hidden rounded-xs border border-primary/10">
+          <div className="overflow-hidden rounded-xs border border-adm-line">
             {shareImage ? (
               /* Plain <img>, like every other admin preview. */
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={shareImage} alt="" className="h-40 w-full bg-surface-muted object-cover" />
+              <img src={shareImage} alt="" className="h-40 w-full bg-adm-text/4 object-cover" />
             ) : (
-              <div className="flex h-40 items-center justify-center bg-surface-muted text-ink-muted">
+              <div className="flex h-40 items-center justify-center bg-adm-text/4 text-adm-muted">
                 <ImageIcon size={20} aria-hidden />
               </div>
             )}
-            <div className="bg-surface-muted/60 px-3.5 py-2.5">
-              <p className="text-[11px] uppercase tracking-wide text-ink-muted">
+            <div className="bg-adm-text/4 px-3.5 py-2.5">
+              <p className="text-[11px] uppercase tracking-wide text-adm-muted">
                 {siteOrigin.replace(/^https?:\/\//, "")}
               </p>
-              <p className="mt-0.5 truncate text-sm font-semibold text-primary">
+              <p className="mt-0.5 truncate text-sm font-semibold text-adm-text">
                 {current.title.trim() || labels.serpEmpty}
               </p>
-              <p className="line-clamp-2 text-xs text-ink-muted">
+              <p className="line-clamp-2 text-xs text-adm-muted">
                 {current.description.trim() || labels.serpEmpty}
               </p>
             </div>
@@ -494,22 +494,22 @@ export default function PageSeoEditor({
         </section>
 
         <section className="admin-card space-y-3">
-          <h2 className="text-sm font-semibold text-primary">{labels.structuredTitle}</h2>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.structuredTitle}</h2>
 
           <ul className="space-y-2">
             {structuredData.map((entry) => (
               <li key={entry.type} className="flex items-baseline justify-between gap-3">
                 <span className="flex items-center gap-2 text-sm">
                   {entry.emitted ? (
-                    <Check size={14} className="text-emerald-600" aria-hidden />
+                    <Check size={14} className="text-adm-success" aria-hidden />
                   ) : (
-                    <X size={14} className="text-ink-muted/60" aria-hidden />
+                    <X size={14} className="text-adm-muted/60" aria-hidden />
                   )}
-                  <span className={entry.emitted ? "text-primary" : "text-ink-muted/70"}>
+                  <span className={entry.emitted ? "text-adm-text" : "text-adm-muted/70"}>
                     {entry.type}
                   </span>
                 </span>
-                <span className="text-right text-xs text-ink-muted">
+                <span className="text-right text-xs text-adm-muted">
                   {entry.emitted ? entry.detail : labels.notEmitted}
                 </span>
               </li>

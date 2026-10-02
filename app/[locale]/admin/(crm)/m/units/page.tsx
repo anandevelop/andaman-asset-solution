@@ -48,13 +48,13 @@ export default async function MobileUnitsPage(props: Props) {
           {/* An empty list during an outage reads as "you have no leads",
             which is the wrong and more alarming of the two meanings. */}
         {isDatabaseOffline() && (
-          <p className="rounded-xs border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+          <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-2.5 text-sm text-adm-warning">
             {tRoot("common.offline")}
           </p>
         )}
 
         {projects.length === 0 && (
-          <p className="rounded-xs border border-dashed border-primary/20 bg-white p-4 text-center text-sm text-ink-muted">
+          <p className="rounded-xs border border-dashed border-adm-line-strong bg-adm-solid p-4 text-center text-sm text-adm-muted">
             {tUnits("empty")}
           </p>
         )}
@@ -62,7 +62,7 @@ export default async function MobileUnitsPage(props: Props) {
           <Link
             key={project.id}
             href={`/${locale}/admin/m/units?project=${project.id}`}
-            className="flex min-h-[52px] items-center rounded-xs border border-primary/10 bg-white px-3.5 py-2.5 text-sm font-medium text-primary"
+            className="flex min-h-[52px] items-center rounded-xs border border-adm-line bg-adm-solid px-3.5 py-2.5 text-sm font-medium text-adm-text"
           >
             {locale === "th" ? project.nameTh : project.nameEn}
           </Link>
@@ -120,12 +120,12 @@ export default async function MobileUnitsPage(props: Props) {
       {/* An empty list during an outage reads as "you have no leads",
           which is the wrong and more alarming of the two meanings. */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-2.5 text-sm text-adm-warning">
           {tRoot("common.offline")}
         </p>
       )}
 
-      <div className="flex gap-4 px-1 text-xs text-ink-muted">
+      <div className="flex gap-4 px-1 text-xs text-adm-muted">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-[1px]" style={{ backgroundColor: "#1f7a5c" }} aria-hidden />
           {statusLabels.AVAILABLE} {counts.AVAILABLE}
@@ -141,7 +141,7 @@ export default async function MobileUnitsPage(props: Props) {
       </div>
 
       {units.length === 0 ? (
-        <p className="rounded-xs border border-dashed border-primary/20 bg-white p-4 text-center text-sm text-ink-muted">
+        <p className="rounded-xs border border-dashed border-adm-line-strong bg-adm-solid p-4 text-center text-sm text-adm-muted">
           {tUnits("empty")}
         </p>
       ) : (

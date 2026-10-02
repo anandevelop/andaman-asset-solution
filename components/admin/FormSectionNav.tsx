@@ -56,8 +56,8 @@ export default function FormSectionNav({ sections, label }: { sections: FormSect
           className={[
             "flex h-8 items-center rounded-[6px] px-2.5 text-[12.5px] transition-colors",
             active === section.id
-              ? "bg-surface-raised font-medium text-ink shadow-[0_1px_2px_rgba(8,53,81,0.08)] ring-1 ring-primary/10"
-              : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+              ? "bg-adm-solid font-medium text-adm-text shadow-[0_1px_2px_rgba(8,53,81,0.08)] ring-1 ring-adm-info/10"
+              : "text-adm-muted hover:bg-adm-text/4 hover:text-adm-text",
           ].join(" ")}
         >
           {section.label}

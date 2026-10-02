@@ -26,24 +26,24 @@ export default async function AdminPrivacySettingsPage(props: Props) {
   const overview = await getPdpaOverview();
 
   const renderSummary = (title: string, summary: ConsentSourceSummary) => (
-    <div className="rounded-xs border border-primary/10 bg-white p-5">
-      <h3 className="text-sm font-semibold text-primary">{title}</h3>
+    <div className="rounded-xs border border-adm-line bg-adm-solid p-5">
+      <h3 className="text-sm font-semibold text-adm-text">{title}</h3>
       <dl className="mt-3 space-y-2 text-sm">
         <div className="flex items-center justify-between">
-          <dt className="text-ink-muted">{t("settings.privacy.total")}</dt>
-          <dd className="font-medium text-ink">{summary.total}</dd>
+          <dt className="text-adm-muted">{t("settings.privacy.total")}</dt>
+          <dd className="font-medium text-adm-text">{summary.total}</dd>
         </div>
         <div className="flex items-center justify-between">
-          <dt className="text-ink-muted">{t("settings.privacy.consented")}</dt>
-          <dd className="font-medium text-emerald-700">{summary.consented}</dd>
+          <dt className="text-adm-muted">{t("settings.privacy.consented")}</dt>
+          <dd className="font-medium text-adm-success">{summary.consented}</dd>
         </div>
         <div className="flex items-center justify-between">
-          <dt className="text-ink-muted">{t("settings.privacy.notConsented")}</dt>
-          <dd className="font-medium text-ink">{summary.notConsented}</dd>
+          <dt className="text-adm-muted">{t("settings.privacy.notConsented")}</dt>
+          <dd className="font-medium text-adm-text">{summary.notConsented}</dd>
         </div>
         <div className="flex items-center justify-between">
-          <dt className="text-ink-muted">{t("settings.privacy.outdatedVersion")}</dt>
-          <dd className={summary.outdatedVersion > 0 ? "font-medium text-accent-700" : "font-medium text-ink"}>
+          <dt className="text-adm-muted">{t("settings.privacy.outdatedVersion")}</dt>
+          <dd className={summary.outdatedVersion > 0 ? "font-medium text-adm-accent-ink" : "font-medium text-adm-text"}>
             {summary.outdatedVersion}
           </dd>
         </div>
@@ -54,18 +54,18 @@ export default async function AdminPrivacySettingsPage(props: Props) {
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("settings.privacy.title")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.privacy.subtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("settings.privacy.title")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("settings.privacy.subtitle")}</p>
       </header>
 
       <section className="admin-card">
         <div className="flex items-start gap-3">
-          <ShieldCheck size={20} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+          <ShieldCheck size={20} className="mt-0.5 shrink-0 text-adm-success" aria-hidden />
           <div>
-            <h2 className="text-base font-semibold text-primary">
+            <h2 className="text-base font-semibold text-adm-text">
               {t("settings.privacy.policyVersionTitle")}
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">
+            <p className="mt-1 text-sm text-adm-muted">
               {t("settings.privacy.policyVersionValue", { version: overview.currentPolicyVersion })}
             </p>
           </div>
@@ -86,18 +86,18 @@ export default async function AdminPrivacySettingsPage(props: Props) {
         {renderSummary(t("settings.privacy.eventsTitle"), overview.eventRegistrations)}
       </div>
 
-      <p className="flex items-start gap-2.5 rounded-xs border border-primary/10 bg-surface-muted/60 px-4 py-3 text-sm text-ink-muted">
-        <Info size={16} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+      <p className="flex items-start gap-2.5 rounded-xs border border-adm-line bg-adm-text/4 px-4 py-3 text-sm text-adm-muted">
+        <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.privacy.scopeNote")}
       </p>
 
       <Link
         href={`/${locale}/admin/leads`}
-        className="flex items-center justify-between gap-3 rounded-xs border border-primary/10 bg-white px-5 py-4 text-sm transition-colors hover:bg-primary-900/2"
+        className="flex items-center justify-between gap-3 rounded-xs border border-adm-line bg-adm-solid px-5 py-4 text-sm transition-colors hover:bg-adm-text/2"
       >
         <span>
-          <span className="block font-medium text-primary">{t("settings.privacy.manageRequestsTitle")}</span>
-          <span className="mt-0.5 block text-ink-muted">{t("settings.privacy.manageRequestsHint")}</span>
+          <span className="block font-medium text-adm-text">{t("settings.privacy.manageRequestsTitle")}</span>
+          <span className="mt-0.5 block text-adm-muted">{t("settings.privacy.manageRequestsHint")}</span>
         </span>
       </Link>
     </div>

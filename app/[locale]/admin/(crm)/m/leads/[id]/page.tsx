@@ -107,7 +107,7 @@ export default async function MobileLeadDetailPage(props: Props) {
       {/* An empty list during an outage reads as "you have no leads",
           which is the wrong and more alarming of the two meanings. */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-2.5 text-sm text-adm-warning">
           {tRoot("common.offline")}
         </p>
       )}
@@ -115,29 +115,29 @@ export default async function MobileLeadDetailPage(props: Props) {
       <div className="flex gap-2 px-1">
         <a
           href={`tel:${lead.phone}`}
-          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs bg-primary text-sm font-medium text-white"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs bg-adm-strong text-sm font-medium text-adm-on-strong"
         >
           <Phone size={14} aria-hidden />
           {t("detail.call")}
         </a>
         <a
           href={`mailto:${lead.email}`}
-          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-primary/20 text-sm font-medium text-primary"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text"
         >
           <Mail size={14} aria-hidden />
           {t("detail.email")}
         </a>
         <a
           href={`/${locale}/admin/appointments`}
-          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-primary/20 text-sm font-medium text-primary"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text"
         >
           <CalendarPlus size={14} aria-hidden />
           {t("detail.schedule")}
         </a>
       </div>
 
-      <div className="space-y-3 rounded-xs border border-primary/10 bg-white p-3.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("detail.note")}</p>
+      <div className="space-y-3 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-adm-muted">{t("detail.note")}</p>
         <LeadNoteForm
           locale={locale}
           leadId={lead.id}
@@ -147,8 +147,8 @@ export default async function MobileLeadDetailPage(props: Props) {
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-xs border border-primary/10 bg-white p-3.5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+      <div className="flex items-center justify-between gap-3 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-adm-muted">
           {tRoot("leadDetail.followUpTitle")}
         </span>
         <LeadFollowUpInput
@@ -161,20 +161,20 @@ export default async function MobileLeadDetailPage(props: Props) {
       </div>
 
       {lead.message && (
-        <div className="space-y-1 rounded-xs border border-primary/10 bg-white p-3.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{tRoot("leadDetail.message")}</p>
-          <p className="text-sm text-primary">{lead.message}</p>
+        <div className="space-y-1 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-adm-muted">{tRoot("leadDetail.message")}</p>
+          <p className="text-sm text-adm-text">{lead.message}</p>
         </div>
       )}
 
-      <div className="space-y-3 rounded-xs border border-primary/10 bg-white p-3.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{tRoot("leadDetail.notesTitle")}</p>
-        {lead.notes.length === 0 && <p className="text-xs text-ink-muted">{tRoot("leadDetail.noNotes")}</p>}
+      <div className="space-y-3 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-adm-muted">{tRoot("leadDetail.notesTitle")}</p>
+        {lead.notes.length === 0 && <p className="text-xs text-adm-muted">{tRoot("leadDetail.noNotes")}</p>}
         <div className="space-y-3">
           {lead.notes.map((note) => (
-            <div key={note.id} className="border-l-2 border-primary/15 pl-3">
-              <p className="text-sm text-primary">{note.body}</p>
-              <p className="mt-1 text-[11px] text-ink-muted">
+            <div key={note.id} className="border-l-2 border-adm-line-strong pl-3">
+              <p className="text-sm text-adm-text">{note.body}</p>
+              <p className="mt-1 text-[11px] text-adm-muted">
                 {dateFormat.format(note.createdAt)} · {note.author?.name ?? "—"}
               </p>
             </div>

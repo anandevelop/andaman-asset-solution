@@ -35,7 +35,7 @@ export default function AppointmentRescheduleInput({ locale, id, value, label }:
           e.stopPropagation();
           setOpen(true);
         }}
-        className="text-[11px] font-medium text-accent-700 hover:underline"
+        className="text-[11px] font-medium text-adm-accent-ink hover:underline"
       >
         {label}
       </button>
@@ -48,7 +48,7 @@ export default function AppointmentRescheduleInput({ locale, id, value, label }:
         type="datetime-local"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="rounded-xs border border-primary/15 px-1.5 py-1 text-[11px]"
+        className="rounded-xs border border-adm-line-strong px-1.5 py-1 text-[11px]"
       />
       <button
         type="button"

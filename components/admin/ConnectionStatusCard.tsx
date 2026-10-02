@@ -25,8 +25,8 @@ import { sendTestEmail } from "@/app/[locale]/admin/(system)/settings/actions";
 import type { HealthRow, HealthState } from "@/lib/admin/system-health";
 
 const DOT: Record<HealthState, string> = {
-  ok: "bg-emerald-500",
-  attention: "bg-amber-500",
+  ok: "bg-adm-success",
+  attention: "bg-adm-warning",
   off: "bg-ink-muted/35",
 };
 
@@ -68,7 +68,7 @@ export default function ConnectionStatusCard({
 
   return (
     <section className="admin-card space-y-4">
-      <h2 className="text-sm font-semibold text-primary">{title}</h2>
+      <h2 className="text-sm font-semibold text-adm-text">{title}</h2>
 
       <ul className="space-y-3.5">
         {rows.map((row) => (
@@ -79,23 +79,23 @@ export default function ConnectionStatusCard({
             />
 
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary">{names[row.key]}</p>
+              <p className="text-sm font-medium text-adm-text">{names[row.key]}</p>
               <p
                 className={`mt-0.5 text-xs leading-relaxed ${
-                  row.state === "off" ? "text-ink-muted" : "text-ink-muted"
+                  row.state === "off" ? "text-adm-muted" : "text-adm-muted"
                 }`}
               >
                 {details[row.key]}
               </p>
 
               {row.state === "off" && row.envVar && (
-                <p className="mt-1 text-xs text-ink-muted/80">
+                <p className="mt-1 text-xs text-adm-muted/80">
                   {labels.setVia} <code className="font-mono">{row.envVar}</code>
                 </p>
               )}
 
               {row.key === "storage" && row.state === "ok" && (
-                <p className="mt-1 text-xs text-ink-muted/80">{labels.storageNote}</p>
+                <p className="mt-1 text-xs text-adm-muted/80">{labels.storageNote}</p>
               )}
             </div>
 
@@ -130,7 +130,7 @@ export default function ConnectionStatusCard({
         <p
           className={[
             "flex items-start gap-2 rounded-xs px-3 py-2.5 text-xs leading-relaxed",
-            result.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800",
+            result.ok ? "bg-adm-success-bg text-adm-success" : "bg-adm-danger-bg text-adm-danger",
           ].join(" ")}
         >
           {result.ok ? (

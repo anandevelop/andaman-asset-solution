@@ -53,8 +53,8 @@ export default function CopilotPanel({ locale }: { locale: string }) {
           <Sparkles size={16} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-ink">{t("title")}</p>
-          <p className="truncate text-[11px] text-ink-muted">
+          <p className="text-sm font-semibold text-adm-text">{t("title")}</p>
+          <p className="truncate text-[11px] text-adm-muted">
             {active ? tNav(active as never) : t("contextDefault")}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default function CopilotPanel({ locale }: { locale: string }) {
           type="button"
           onClick={toggleCopilot}
           aria-label={t("close")}
-          className="flex h-8 w-8 items-center justify-center rounded-[10px] text-ink-muted hover:bg-primary/5 hover:text-ink"
+          className="flex h-8 w-8 items-center justify-center rounded-[10px] text-adm-muted hover:bg-adm-text/5 hover:text-adm-text"
         >
           <X size={16} aria-hidden />
         </button>
@@ -78,7 +78,7 @@ export default function CopilotPanel({ locale }: { locale: string }) {
         </div>
 
         <div>
-          <p className="mb-2 text-[11.5px] font-medium text-ink-muted">{t("suggestionsTitle")}</p>
+          <p className="mb-2 text-[11.5px] font-medium text-adm-muted">{t("suggestionsTitle")}</p>
           <ul className="flex flex-wrap gap-1.5">
             {COPILOT_SUGGESTIONS[context].map((key) => (
               <li key={key}>
@@ -87,7 +87,7 @@ export default function CopilotPanel({ locale }: { locale: string }) {
                 <button
                   type="button"
                   disabled
-                  className="rounded-full border border-adm-line-strong px-3 py-1.5 text-left text-xs text-ink-muted disabled:cursor-not-allowed"
+                  className="rounded-full border border-adm-line-strong px-3 py-1.5 text-left text-xs text-adm-muted disabled:cursor-not-allowed"
                 >
                   {t(`suggest.${context}.${key}` as never)}
                 </button>
@@ -96,7 +96,7 @@ export default function CopilotPanel({ locale }: { locale: string }) {
           </ul>
         </div>
 
-        <p className="text-[11px] leading-relaxed text-ink-muted">{t("rules")}</p>
+        <p className="text-[11px] leading-relaxed text-adm-muted">{t("rules")}</p>
       </div>
 
       <div className="border-t border-adm-line p-3">
@@ -106,7 +106,7 @@ export default function CopilotPanel({ locale }: { locale: string }) {
             disabled
             rows={1}
             placeholder={t("inputPlaceholder")}
-            className="min-h-6 flex-1 resize-none bg-transparent text-sm text-ink placeholder:text-ink-muted/70 focus:outline-hidden disabled:cursor-not-allowed"
+            className="min-h-6 flex-1 resize-none bg-transparent text-sm text-adm-text placeholder:text-adm-muted/70 focus:outline-hidden disabled:cursor-not-allowed"
           />
           <button
             type="button"

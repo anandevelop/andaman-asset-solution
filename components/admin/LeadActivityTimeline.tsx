@@ -39,12 +39,12 @@ const ICONS: Record<TimelineItem["icon"], typeof MessageSquare> = {
 };
 
 const ICON_TONE: Record<TimelineItem["icon"], string> = {
-  note: "bg-primary/10 text-primary",
-  call: "bg-emerald-100 text-emerald-700",
-  email: "bg-sky-100 text-sky-700",
-  system: "bg-accent/20 text-accent-700",
-  appointment: "bg-emerald-100 text-emerald-700",
-  entered: "bg-surface-muted text-ink-muted",
+  note: "bg-adm-text/10 text-adm-text",
+  call: "bg-adm-success-bg text-adm-success",
+  email: "bg-adm-status-info-bg text-adm-status-info",
+  system: "bg-adm-fill/20 text-adm-accent-ink",
+  appointment: "bg-adm-success-bg text-adm-success",
+  entered: "bg-adm-text/4 text-adm-muted",
 };
 
 export default function LeadActivityTimeline({
@@ -55,7 +55,7 @@ export default function LeadActivityTimeline({
   emptyLabel: string;
 }) {
   if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-ink-muted">{emptyLabel}</p>;
+    return <p className="py-6 text-center text-sm text-adm-muted">{emptyLabel}</p>;
   }
 
   return (
@@ -71,11 +71,11 @@ export default function LeadActivityTimeline({
               <Icon size={14} strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1 pb-1">
-              <p className="text-sm leading-relaxed text-ink">
-                <span className="font-medium text-primary">{item.title}</span>
+              <p className="text-sm leading-relaxed text-adm-text">
+                <span className="font-medium text-adm-text">{item.title}</span>
                 {item.body && <> — &ldquo;{item.body}&rdquo;</>}
               </p>
-              <p className="mt-0.5 text-xs text-ink-muted">
+              <p className="mt-0.5 text-xs text-adm-muted">
                 {item.meta ? `${item.meta} · ${item.timeLabel}` : item.timeLabel}
               </p>
             </div>

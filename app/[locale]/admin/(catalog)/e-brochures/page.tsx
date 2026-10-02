@@ -82,19 +82,19 @@ export default async function AdminEBrochuresPage(props: Props) {
       <PageTabs locale={locale} role={session.role} groupKey="projects" />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {brochures.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("eBrochures.empty")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 <th className="admin-th">{t("eBrochures.brochureTitle")}</th>
                 <th className="admin-th">{t("eBrochures.project")}</th>
@@ -104,7 +104,7 @@ export default async function AdminEBrochuresPage(props: Props) {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {brochures.map((brochure) => {
                 const completeness = translationCompleteness(
                   brochure.translations,
@@ -121,14 +121,14 @@ export default async function AdminEBrochuresPage(props: Props) {
                 return (
                   <tr
                     key={brochure.id}
-                    className="transition-colors hover:bg-surface-muted/60"
+                    className="transition-colors hover:bg-adm-text/4"
                   >
                     <td className="admin-td">
-                      <p className="font-medium text-primary">{title}</p>
-                      <p className="mt-0.5 text-xs text-ink-muted">/{brochure.slug}</p>
+                      <p className="font-medium text-adm-text">{title}</p>
+                      <p className="mt-0.5 text-xs text-adm-muted">/{brochure.slug}</p>
                     </td>
 
-                    <td className="admin-td text-ink-muted">
+                    <td className="admin-td text-adm-muted">
                       {brochure.project?.nameEn ?? t("common.none")}
                     </td>
 
@@ -138,11 +138,11 @@ export default async function AdminEBrochuresPage(props: Props) {
 
                     <td className="admin-td">
                       {brochure.isPublished ? (
-                        <span className="inline-flex rounded-xs bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                        <span className="inline-flex rounded-xs bg-adm-success-bg px-2 py-0.5 text-xs font-medium text-adm-success">
                           {t("common.published")}
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-xs bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-muted">
+                        <span className="inline-flex rounded-xs bg-adm-text/4 px-2 py-0.5 text-xs font-medium text-adm-muted">
                           {t("common.draft")}
                         </span>
                       )}
@@ -152,7 +152,7 @@ export default async function AdminEBrochuresPage(props: Props) {
                       <div className="flex items-center gap-4">
                         <Link
                           href={`/${locale}/admin/e-brochures/${brochure.id}/edit`}
-                          className="inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-800"
+                          className="inline-flex items-center gap-1.5 text-sm text-adm-accent-ink hover:text-adm-accent-ink"
                         >
                           <Pencil size={14} aria-hidden />
                           {t("common.edit")}
@@ -162,7 +162,7 @@ export default async function AdminEBrochuresPage(props: Props) {
                           <Link
                             href={`/${locale}/e-brochure/${brochure.slug}`}
                             target="_blank"
-                            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+                            className="inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text"
                           >
                             <ExternalLink size={14} aria-hidden />
                             {t("eBrochures.viewLive")}

@@ -173,12 +173,12 @@ export default async function EditEventPage(props: Props) {
       {canSeeRegistrations && (
       <section className="admin-card">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-primary">
-            <Users size={16} className="text-accent-700" aria-hidden />
+          <h2 className="flex items-center gap-2 text-base font-semibold text-adm-text">
+            <Users size={16} className="text-adm-accent-ink" aria-hidden />
             {t("events.registrations")}
           </h2>
 
-          <p className="text-sm text-ink-muted">
+          <p className="text-sm text-adm-muted">
             {event.capacity === null
               ? t("events.seatsBooked", { booked })
               : t("events.seatsBookedOf", { booked, capacity: event.capacity })}
@@ -186,13 +186,13 @@ export default async function EditEventPage(props: Props) {
         </div>
 
         {registrations.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-muted">
+          <p className="py-6 text-center text-sm text-adm-muted">
             {t("events.noRegistrations")}
           </p>
         ) : (
           <div className="-mx-6 overflow-x-auto px-6">
             <table className="w-full min-w-[720px] border-collapse">
-              <thead className="border-b border-primary/10">
+              <thead className="border-b border-adm-line">
                 <tr>
                   <th className="admin-th">{t("leads.name")}</th>
                   <th className="admin-th">{t("events.agency")}</th>
@@ -202,48 +202,48 @@ export default async function EditEventPage(props: Props) {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-primary/5">
+              <tbody className="divide-y divide-adm-line">
                 {registrations.map((registration) => (
                   <tr key={registration.id}>
                     <td className="admin-td">
-                      <p className="font-medium text-primary">{registration.name}</p>
+                      <p className="font-medium text-adm-text">{registration.name}</p>
                       {registration.notes && (
-                        <p className="mt-1 max-w-xs text-xs leading-relaxed text-ink-muted">
+                        <p className="mt-1 max-w-xs text-xs leading-relaxed text-adm-muted">
                           {registration.notes}
                         </p>
                       )}
                       {!registration.consentGiven && (
-                        <p className="mt-1 text-xs font-medium text-red-700">
+                        <p className="mt-1 text-xs font-medium text-adm-danger">
                           {t("leads.consent")}: {t("common.no")}
                         </p>
                       )}
                     </td>
 
-                    <td className="admin-td whitespace-nowrap text-ink-muted">
+                    <td className="admin-td whitespace-nowrap text-adm-muted">
                       {registration.agencyName ?? "—"}
                     </td>
 
                     <td className="admin-td whitespace-nowrap">
                       <a
                         href={`mailto:${registration.email}`}
-                        className="block text-accent-700 hover:underline"
+                        className="block text-adm-accent-ink hover:underline"
                       >
                         {registration.email}
                       </a>
                       <a
                         href={`tel:${registration.phone}`}
-                        className="mt-0.5 block text-xs text-ink-muted hover:underline"
+                        className="mt-0.5 block text-xs text-adm-muted hover:underline"
                       >
                         {registration.phone}
                       </a>
                       {registration.whatsapp && (
-                        <p className="mt-0.5 text-xs text-ink-muted">
+                        <p className="mt-0.5 text-xs text-adm-muted">
                           WhatsApp: {registration.whatsapp}
                         </p>
                       )}
                     </td>
 
-                    <td className="admin-td whitespace-nowrap text-xs text-ink-muted">
+                    <td className="admin-td whitespace-nowrap text-xs text-adm-muted">
                       <time dateTime={registration.createdAt.toISOString()}>
                         {dateFormat.format(registration.createdAt)}
                       </time>

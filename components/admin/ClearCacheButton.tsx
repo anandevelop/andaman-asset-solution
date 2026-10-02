@@ -48,7 +48,7 @@ export default function ClearCacheButton({ action, label, successLabel, errorLab
         {label}
       </button>
       {done && (
-        <span className="flex items-center gap-1.5 text-sm text-emerald-700">
+        <span className="flex items-center gap-1.5 text-sm text-adm-success">
           <CheckCircle2 size={14} aria-hidden />
           {successLabel}
         </span>

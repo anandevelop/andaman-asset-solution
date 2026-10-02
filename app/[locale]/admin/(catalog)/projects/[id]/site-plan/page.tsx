@@ -59,14 +59,14 @@ export default async function AdminSitePlanPage(props: Props) {
     <div className="space-y-8">
       <ProjectHubTabs locale={locale} projectId={project.id} active="sitePlan" />
 
-      <p className="max-w-2xl text-sm text-ink-muted">{t("sitePlan.hint")}</p>
+      <p className="max-w-2xl text-sm text-adm-muted">{t("sitePlan.hint")}</p>
 
       {!project.masterPlanImageUrl ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("sitePlan.noImage")}
         </div>
       ) : units.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("units.empty")}
         </div>
       ) : (

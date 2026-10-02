@@ -253,7 +253,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                     if (element) element.indeterminate = selected.size > 0 && !allSelected;
                   }}
                   onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((row) => row.id)))}
-                  className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+                  className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
                 />
               </th>
               <th className="admin-th">{labels.customer}</th>
@@ -283,7 +283,7 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
                       aria-label={t("table.select", { name: row.name })}
                       checked={isSelected}
                       onChange={() => toggle(row.id)}
-                      className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+                      className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
                     />
                   </td>
 

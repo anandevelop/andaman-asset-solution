@@ -245,15 +245,15 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
         aria-expanded={open}
         className="admin-input flex w-full items-center justify-between gap-3 text-left"
       >
-        <span className={display ? "" : "text-ink-muted"}>{display ?? t("dateTime.empty")}</span>
-        <CalendarDays size={16} className="shrink-0 text-ink-muted" aria-hidden />
+        <span className={display ? "" : "text-adm-muted"}>{display ?? t("dateTime.empty")}</span>
+        <CalendarDays size={16} className="shrink-0 text-adm-muted" aria-hidden />
       </button>
 
       {open && (
         <div
           role="dialog"
           aria-label={t("dateTime.open")}
-          className={`absolute left-0 z-30 w-[19rem] max-w-[calc(100vw-2.5rem)] rounded-xs border border-primary/15 bg-surface-raised p-3 shadow-lg ${
+          className={`absolute left-0 z-30 w-[19rem] max-w-[calc(100vw-2.5rem)] rounded-xs border border-adm-line-strong bg-adm-solid p-3 shadow-lg ${
             dropUp ? "bottom-full mb-1" : "top-full mt-1"
           }`}
         >
@@ -262,20 +262,20 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
               type="button"
               onClick={() => shiftView(-1)}
               aria-label={t("dateTime.previousMonth")}
-              className="rounded-xs p-1.5 text-ink-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className="rounded-xs p-1.5 text-adm-muted transition-colors hover:bg-adm-text/5 hover:text-adm-text"
             >
               <ChevronLeft size={16} aria-hidden />
             </button>
             {/* aria-live so arrowing across a month boundary is announced —
                 otherwise the grid silently becomes a different month. */}
-            <p aria-live="polite" className="text-sm font-medium text-primary">
+            <p aria-live="polite" className="text-sm font-medium text-adm-text">
               {monthLabel}
             </p>
             <button
               type="button"
               onClick={() => shiftView(1)}
               aria-label={t("dateTime.nextMonth")}
-              className="rounded-xs p-1.5 text-ink-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className="rounded-xs p-1.5 text-adm-muted transition-colors hover:bg-adm-text/5 hover:text-adm-text"
             >
               <ChevronRight size={16} aria-hidden />
             </button>
@@ -283,7 +283,7 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
 
           <div className="mt-2 grid grid-cols-7 gap-0.5" aria-hidden>
             {weekdays.map((w, i) => (
-              <span key={i} className="py-1 text-center text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+              <span key={i} className="py-1 text-center text-[10px] font-medium uppercase tracking-wide text-adm-muted">
                 {w}
               </span>
             ))}
@@ -313,11 +313,11 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
                   className={[
                     "rounded-xs py-1.5 text-sm transition-colors",
                     isSelected
-                      ? "bg-primary font-medium text-white"
+                      ? "bg-adm-strong font-medium text-adm-on-strong"
                       : outside
-                        ? "text-ink-muted/50 hover:bg-primary/5"
-                        : "text-ink hover:bg-primary/5",
-                    !isSelected && isToday ? "ring-1 ring-inset ring-accent" : "",
+                        ? "text-adm-muted/50 hover:bg-adm-text/5"
+                        : "text-adm-text hover:bg-adm-text/5",
+                    !isSelected && isToday ? "ring-1 ring-inset ring-adm-fill" : "",
                   ].join(" ")}
                 >
                   {day.getDate()}
@@ -330,7 +330,7 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
               localizes from the browser language exactly like the calendar
               this component exists to replace. 24-hour and numeric reads
               the same in both admin locales. */}
-          <div className="mt-3 flex items-center gap-2 border-t border-primary/10 pt-3">
+          <div className="mt-3 flex items-center gap-2 border-t border-adm-line pt-3">
             <span className="admin-label mb-0 shrink-0">{t("dateTime.time")}</span>
             <select
               aria-label={t("dateTime.hour")}
@@ -342,7 +342,7 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
                 <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
               ))}
             </select>
-            <span aria-hidden className="text-ink-muted">:</span>
+            <span aria-hidden className="text-adm-muted">:</span>
             <select
               aria-label={t("dateTime.minute")}
               value={selected ? selected.getMinutes() : 0}
@@ -362,7 +362,7 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
                 setValue("");
                 setFocusedDay(null);
               }}
-              className="text-xs font-medium text-ink-muted transition-colors hover:text-primary"
+              className="text-xs font-medium text-adm-muted transition-colors hover:text-adm-text"
             >
               {t("dateTime.clear")}
             </button>
@@ -373,7 +373,7 @@ export default function DateTimeField({ id, name, defaultValue = "", className =
                 commit(now);
                 setFocusedDay(now);
               }}
-              className="text-xs font-medium text-accent-700 transition-colors hover:text-accent-800"
+              className="text-xs font-medium text-adm-accent-ink transition-colors hover:text-adm-accent-ink"
             >
               {t("dateTime.now")}
             </button>

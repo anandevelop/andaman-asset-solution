@@ -113,13 +113,13 @@ export default async function AdminEventsPage(props: Props) {
       />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {ordered.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("events.empty")}
         </div>
       ) : (
@@ -163,8 +163,8 @@ export default async function AdminEventsPage(props: Props) {
                       {event.isPublished ? t("common.published") : t("common.draft")}
                     </span>
                     {isLive && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-white">
-                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-adm-on-strong">
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-adm-solid motion-safe:animate-pulse" />
                         {t("events.live")}
                       </span>
                     )}

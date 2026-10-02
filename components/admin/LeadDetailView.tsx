@@ -115,7 +115,7 @@ export default async function LeadDetailView({
   // a hidden or missing lead must not 404 the whole pipeline behind it —
   // a stale ?lead= link gets a one-line message in the panel instead.
   const notHere = (
-    <p className="px-5 py-10 text-center text-sm text-ink-muted">{t("leadDrawer.notFound")}</p>
+    <p className="px-5 py-10 text-center text-sm text-adm-muted">{t("leadDrawer.notFound")}</p>
   );
 
   if (!lead) {
@@ -377,7 +377,7 @@ export default async function LeadDetailView({
         <div className="flex flex-wrap items-center gap-2.5">
           <Heading
             id={isDrawer ? "lead-drawer-title" : undefined}
-            className={isDrawer ? "text-xl font-semibold text-ink" : "text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text"}
+            className={isDrawer ? "text-xl font-semibold text-adm-text" : "text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text"}
           >
             {lead.name}
           </Heading>
@@ -407,14 +407,14 @@ export default async function LeadDetailView({
         </div>
         {/* id · source · date, as in the mockup, then how long it has been
             in the pipeline and since anyone touched it. */}
-        <p className="mt-1.5 text-xs text-ink-muted">
+        <p className="mt-1.5 text-xs text-adm-muted">
           <span className="admin-mono">#{lead.id.slice(-6)}</span>
           {" · "}
           {t(`leadSource.${lead.source}` as never)}
           {" · "}
           {dateFormat.format(lead.createdAt)}
         </p>
-        <p className="mt-0.5 text-xs text-ink-muted">
+        <p className="mt-0.5 text-xs text-adm-muted">
           {t("leadDetail.inPipeline", { days: pipelineDays })}
           {" · "}
           {t("leadDetail.lastTouched", { ago: agoLabel(lastTouchedAt) })}
@@ -452,9 +452,9 @@ export default async function LeadDetailView({
      RevealContact and lib/contact-mask.ts. */
   const contact = (
     <section className="admin-card space-y-3">
-      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.contactInfo")}</h2>
+      <h2 className="text-sm font-semibold text-adm-text">{t("leadDetail.contactInfo")}</h2>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
-        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.email")}</dt>
+        <dt className="text-xs leading-6 text-adm-muted">{t("leadDetail.email")}</dt>
         <dd>
           {/* A hand-entered lead may have no email (lib/admin/lead-create.ts);
               there is nothing to mask or reveal then. */}
@@ -466,7 +466,7 @@ export default async function LeadDetailView({
             <span className="admin-mono">{maskEmail(lead.email)}</span>
           )}
         </dd>
-        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.phone")}</dt>
+        <dt className="text-xs leading-6 text-adm-muted">{t("leadDetail.phone")}</dt>
         <dd>
           {canContact ? (
             <RevealContact leadId={lead.id} field="phone" masked={maskPhone(lead.phone)} labels={revealLabels} />
@@ -476,8 +476,8 @@ export default async function LeadDetailView({
         </dd>
         {nationality && (
           <>
-            <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.nationality")}</dt>
-            <dd className="flex items-center gap-1.5 text-ink">
+            <dt className="text-xs leading-6 text-adm-muted">{t("leadDetail.nationality")}</dt>
+            <dd className="flex items-center gap-1.5 text-adm-text">
               {nationality.flagSrc && (
                 // eslint-disable-next-line @next/next/no-img-element -- tiny flag sprite, see CountrySelect.tsx
                 <img
@@ -493,20 +493,20 @@ export default async function LeadDetailView({
         )}
         {localTime && (
           <>
-            <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.localTime")}</dt>
-            <dd className="text-ink">
+            <dt className="text-xs leading-6 text-adm-muted">{t("leadDetail.localTime")}</dt>
+            <dd className="text-adm-text">
               {localTime.offsetLabel} · {localTime.timeLabel}
-              <span className="ml-1.5 text-xs text-ink-muted">({t("leadDetail.localTimeEstimate")})</span>
+              <span className="ml-1.5 text-xs text-adm-muted">({t("leadDetail.localTimeEstimate")})</span>
             </dd>
           </>
         )}
-        <dt className="text-xs leading-6 text-ink-muted">{t("leadDetail.project")}</dt>
-        <dd className="text-ink">{projectLabel ?? t("leadDetail.noProject")}</dd>
+        <dt className="text-xs leading-6 text-adm-muted">{t("leadDetail.project")}</dt>
+        <dd className="text-adm-text">{projectLabel ?? t("leadDetail.noProject")}</dd>
       </dl>
       {lead.message && (
         <div className="border-t border-adm-line pt-3">
-          <p className="text-xs text-ink-muted">{t("leadDetail.message")}</p>
-          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink">{lead.message}</p>
+          <p className="text-xs text-adm-muted">{t("leadDetail.message")}</p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-adm-text">{lead.message}</p>
         </div>
       )}
     </section>
@@ -519,13 +519,13 @@ export default async function LeadDetailView({
         shownAppointment === overdueAppointment ? "border-adm-warning/40!" : "",
       ].join(" ")}
     >
-      <h2 className="text-sm font-semibold text-ink">
+      <h2 className="text-sm font-semibold text-adm-text">
         {shownAppointment === overdueAppointment
           ? t("leadDetail.appointmentOverdue")
           : t("leadDetail.appointmentNext")}
       </h2>
-      <p className="text-sm text-ink">{dateFormat.format(shownAppointment.scheduledAt)}</p>
-      <p className="text-xs text-ink-muted">
+      <p className="text-sm text-adm-text">{dateFormat.format(shownAppointment.scheduledAt)}</p>
+      <p className="text-xs text-adm-muted">
         {[
           shownAppointment.project
             ? locale === "th"
@@ -544,7 +544,7 @@ export default async function LeadDetailView({
 
   const timelineCard = (
     <section className="admin-card space-y-4">
-      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.timelineTitle")}</h2>
+      <h2 className="text-sm font-semibold text-adm-text">{t("leadDetail.timelineTitle")}</h2>
       <LeadActivityTimeline items={timelineItems} emptyLabel={t("leadDetail.timelineEmpty")} />
     </section>
   );
@@ -578,7 +578,7 @@ export default async function LeadDetailView({
 
   const ownership = (
     <section className="admin-card space-y-4">
-      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.ownershipTitle")}</h2>
+      <h2 className="text-sm font-semibold text-adm-text">{t("leadDetail.ownershipTitle")}</h2>
 
       <div>
         <p className="admin-label">{t("leadDetail.assignTitle")}</p>
@@ -637,16 +637,16 @@ export default async function LeadDetailView({
 
   const consent = (
     <section className="admin-card space-y-2">
-      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.consentTitle")}</h2>
-      <p className="text-sm text-ink">
+      <h2 className="text-sm font-semibold text-adm-text">{t("leadDetail.consentTitle")}</h2>
+      <p className="text-sm text-adm-text">
         {lead.consentGiven ? t("leadDetail.consentGiven") : t("leadDetail.consentNotGiven")}
       </p>
       {lead.consentVersion && (
-        <p className="text-xs text-ink-muted">{t("leadDetail.consentVersion", { version: lead.consentVersion })}</p>
+        <p className="text-xs text-adm-muted">{t("leadDetail.consentVersion", { version: lead.consentVersion })}</p>
       )}
-      {lead.consentedAt && <p className="text-xs text-ink-muted">{dateFormat.format(lead.consentedAt)}</p>}
+      {lead.consentedAt && <p className="text-xs text-adm-muted">{dateFormat.format(lead.consentedAt)}</p>}
       {retentionDate && (
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-adm-muted">
           {t("leadDetail.retentionTarget", { date: dateFormat.format(retentionDate) })}
         </p>
       )}
@@ -662,27 +662,27 @@ export default async function LeadDetailView({
 
   const sourceCard = (
     <section className="admin-card space-y-2">
-      <h2 className="text-sm font-semibold text-ink">{t("leadDetail.sourceTitle")}</h2>
-      <p className="text-sm text-ink">{t(`leadSource.${lead.source}` as never)}</p>
+      <h2 className="text-sm font-semibold text-adm-text">{t("leadDetail.sourceTitle")}</h2>
+      <p className="text-sm text-adm-text">{t(`leadSource.${lead.source}` as never)}</p>
 
       {/* Not in the mockup's sidebar, kept because it's real,
           existing functionality (raw campaign attribution) that a
           marketer relies on. */}
       {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
-        <dl className="space-y-1 border-t border-adm-line pt-2 text-xs text-ink-muted">
+        <dl className="space-y-1 border-t border-adm-line pt-2 text-xs text-adm-muted">
           {lead.utmSource && (
             <div>
-              <span className="font-medium text-ink">utm_source:</span> {lead.utmSource}
+              <span className="font-medium text-adm-text">utm_source:</span> {lead.utmSource}
             </div>
           )}
           {lead.utmMedium && (
             <div>
-              <span className="font-medium text-ink">utm_medium:</span> {lead.utmMedium}
+              <span className="font-medium text-adm-text">utm_medium:</span> {lead.utmMedium}
             </div>
           )}
           {lead.utmCampaign && (
             <div>
-              <span className="font-medium text-ink">utm_campaign:</span> {lead.utmCampaign}
+              <span className="font-medium text-adm-text">utm_campaign:</span> {lead.utmCampaign}
             </div>
           )}
         </dl>
@@ -722,7 +722,7 @@ export default async function LeadDetailView({
       <div>
         <Link
           href={`/${locale}/admin/leads`}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
+          className="inline-flex items-center gap-1.5 text-sm text-adm-muted transition-colors hover:text-adm-text"
         >
           <ArrowLeft size={15} aria-hidden />
           {t("leadDetail.back")}

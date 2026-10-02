@@ -179,7 +179,7 @@ function MessagePreview({
 
   if (!rendered) {
     return (
-      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
         <AlertCircle size={13} aria-hidden />
         {errorLabel}
       </p>
@@ -187,15 +187,15 @@ function MessagePreview({
   }
 
   return (
-    <div className="mt-1.5 space-y-0.5 text-xs text-ink-muted">
+    <div className="mt-1.5 space-y-0.5 text-xs text-adm-muted">
       <p>
-        <span className="text-ink/45">{nowLabel}</span> {rendered.now}
+        <span className="text-adm-text/45">{nowLabel}</span> {rendered.now}
       </p>
       {/* Only when the number actually moves the words — on a sentence with
           no {count} in it, a second identical line is noise. */}
       {rendered.counted && (
         <p>
-          <span className="text-ink/45">{thenLabel}</span> {rendered.then}
+          <span className="text-adm-text/45">{thenLabel}</span> {rendered.then}
         </p>
       )}
     </div>
@@ -233,8 +233,8 @@ function ButtonFields({
   const needsHref = kind === "PAGE" || kind === "URL";
 
   return (
-    <fieldset className="rounded-xs border border-primary/10 p-4">
-      <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+    <fieldset className="rounded-xs border border-adm-line p-4">
+      <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-adm-muted">
         {legend}
       </legend>
 
@@ -270,7 +270,7 @@ function ButtonFields({
               className="admin-input"
             />
             {err(`${side}Label`) && (
-              <p className="mt-1.5 text-xs text-red-700">{err(`${side}Label`)}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err(`${side}Label`)}</p>
             )}
           </div>
         )}
@@ -291,7 +291,7 @@ function ButtonFields({
         />
         <p className="admin-hint">{kind === "URL" ? t("hrefUrlHint") : t("hrefPageHint")}</p>
         {err(`${side}Href`) && (
-          <p className="mt-1.5 text-xs text-red-700">{err(`${side}Href`)}</p>
+          <p className="mt-1.5 text-xs text-adm-danger">{err(`${side}Href`)}</p>
         )}
       </div>
 
@@ -364,7 +364,7 @@ export default function SiteCtaForm({
               className="admin-input"
             />
             <p className="admin-hint">{tc("nameHint")}</p>
-            {err("name") && <p className="mt-1.5 text-xs text-red-700">{err("name")}</p>}
+            {err("name") && <p className="mt-1.5 text-xs text-adm-danger">{err("name")}</p>}
           </div>
 
           <div>
@@ -409,7 +409,7 @@ export default function SiteCtaForm({
           />
           <p className="admin-hint">
             {tc("headlineHint")}{" "}
-            <code className="rounded-xs bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-ink">
+            <code className="rounded-xs bg-adm-text/4 px-1.5 py-0.5 font-mono text-[11px] text-adm-text">
               {COUNT_EXAMPLE}
             </code>
           </p>
@@ -421,7 +421,7 @@ export default function SiteCtaForm({
             thenLabel={tc("previewThen")}
             errorLabel={tc("previewError")}
           />
-          {err("title") && <p className="mt-1.5 text-xs text-red-700">{err("title")}</p>}
+          {err("title") && <p className="mt-1.5 text-xs text-adm-danger">{err("title")}</p>}
         </div>
 
         <div>
@@ -444,7 +444,7 @@ export default function SiteCtaForm({
             thenLabel={tc("previewThen")}
             errorLabel={tc("previewError")}
           />
-          {err("subtitle") && <p className="mt-1.5 text-xs text-red-700">{err("subtitle")}</p>}
+          {err("subtitle") && <p className="mt-1.5 text-xs text-adm-danger">{err("subtitle")}</p>}
         </div>
 
         {/* ── Buttons ───────────────────────────────────────────────── */}
@@ -476,27 +476,27 @@ export default function SiteCtaForm({
           hint={tc("imageHint")}
         />
 
-        <div className="space-y-3 border-t border-primary/10 pt-5">
-          <label className="flex items-center gap-3 text-sm text-ink">
+        <div className="space-y-3 border-t border-adm-line pt-5">
+          <label className="flex items-center gap-3 text-sm text-adm-text">
             <input
               type="checkbox"
               name="isActive"
               defaultChecked={values.isActive}
-              className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             {tc("active")}
           </label>
 
-          <label className="flex items-start gap-3 text-sm text-ink">
+          <label className="flex items-start gap-3 text-sm text-adm-text">
             <input
               type="checkbox"
               name="isDefault"
               defaultChecked={values.isDefault}
-              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             <span>
               {tc("isDefault")}
-              <span className="mt-0.5 block text-xs text-ink-muted">{tc("isDefaultHint")}</span>
+              <span className="mt-0.5 block text-xs text-adm-muted">{tc("isDefaultHint")}</span>
             </span>
           </label>
         </div>
@@ -506,9 +506,9 @@ export default function SiteCtaForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={deleteAction} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={deleteAction} className="mt-5 border-t border-adm-line pt-5">
           {deleteLocked ? (
-            <p className="flex items-center gap-2 text-xs text-ink-muted">
+            <p className="flex items-center gap-2 text-xs text-adm-muted">
               <Lock size={13} aria-hidden />
               {tc("deleteLocked")}
             </p>
@@ -517,10 +517,10 @@ export default function SiteCtaForm({
           )}
 
           {!deleteState.ok && deleteState.message === "DEFAULT_LOCKED" && (
-            <p className="mt-3 text-xs text-red-700">{tc("deleteLocked")}</p>
+            <p className="mt-3 text-xs text-adm-danger">{tc("deleteLocked")}</p>
           )}
           {!deleteState.ok && deleteState.message === "SAVE_FAILED" && (
-            <p className="mt-3 text-xs text-red-700">{t("common.error")}</p>
+            <p className="mt-3 text-xs text-adm-danger">{t("common.error")}</p>
           )}
         </form>
       )}

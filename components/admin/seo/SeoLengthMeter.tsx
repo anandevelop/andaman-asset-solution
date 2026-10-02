@@ -46,9 +46,9 @@ export default function SeoLengthMeter({
 
   return (
     <>
-      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-primary/10">
+      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-adm-text/10">
         <div
-          className={`h-full rounded-full transition-[width] ${inRange ? "bg-emerald-600" : "bg-amber-500"}`}
+          className={`h-full rounded-full transition-[width] ${inRange ? "bg-adm-success" : "bg-adm-warning"}`}
           // Past the maximum the bar is full and the colour carries the
           // rest; letting it compute past 100% would overflow the track.
           style={{ width: `${Math.min(100, Math.round((length / max) * 100))}%` }}
@@ -56,8 +56,8 @@ export default function SeoLengthMeter({
       </div>
 
       <div className="mt-1.5 flex items-baseline justify-between gap-3">
-        <p className="text-xs leading-relaxed text-ink-muted">{hint}</p>
-        <p className={`shrink-0 text-xs tabular-nums ${over ? "font-semibold text-amber-700" : "text-ink"}`}>
+        <p className="text-xs leading-relaxed text-adm-muted">{hint}</p>
+        <p className={`shrink-0 text-xs tabular-nums ${over ? "font-semibold text-adm-warning" : "text-adm-text"}`}>
           {/* The bare count, not "23/60": the min–max range is already in
               the hint beside it, and repeating the ceiling would put the
               same number twice on one row. */}

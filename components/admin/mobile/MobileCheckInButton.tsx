@@ -36,7 +36,7 @@ export default function MobileCheckInButton({ locale, appointmentId, label }: Pr
 
   if (done) {
     return (
-      <span className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs bg-emerald-50 text-emerald-800">
+      <span className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs bg-adm-success-bg text-adm-success">
         <Check size={16} aria-hidden />
       </span>
     );
@@ -47,7 +47,7 @@ export default function MobileCheckInButton({ locale, appointmentId, label }: Pr
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-primary/20 text-sm font-medium text-primary disabled:opacity-60"
+      className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text disabled:opacity-60"
     >
       {pending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : label}
     </button>

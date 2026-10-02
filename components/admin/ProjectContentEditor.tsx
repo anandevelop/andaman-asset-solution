@@ -253,7 +253,7 @@ export default function ProjectContentEditor({
     <div className="space-y-4">
       {/* ── Unsaved-work bar ─────────────────────────────────────────── */}
       {isDirty && (
-        <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-xs bg-primary px-4 py-3 text-white shadow-card">
+        <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-xs bg-adm-strong px-4 py-3 text-adm-on-strong shadow-card">
           <TriangleAlert size={16} className="shrink-0 text-accent-200" aria-hidden />
           <span className="text-sm font-medium">
             {tContent("unsavedBar", { count: dirtyFields.length })}
@@ -273,7 +273,7 @@ export default function ProjectContentEditor({
               type="button"
               onClick={save}
               disabled={pending}
-              className="flex items-center gap-1.5 rounded-xs bg-white px-3.5 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-xs bg-adm-solid px-3.5 py-1.5 text-sm font-semibold text-adm-text transition-colors hover:bg-white/90 disabled:opacity-60"
             >
               {pending && <Loader2 size={14} className="animate-spin" aria-hidden />}
               {/* On a live project this button changes the public site, so
@@ -285,14 +285,14 @@ export default function ProjectContentEditor({
       )}
 
       {restored && (
-        <p className="flex items-center gap-2 rounded-xs border border-accent/30 bg-accent-50/70 px-4 py-2.5 text-sm text-accent-800">
+        <p className="flex items-center gap-2 rounded-xs border border-adm-fill/30 bg-adm-fill/15 px-4 py-2.5 text-sm text-adm-accent-ink">
           <RotateCcw size={15} className="shrink-0" aria-hidden />
           {labels.restoredNotice}
         </p>
       )}
 
       {error && (
-        <p className="flex items-center gap-2 rounded-xs border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+        <p className="flex items-center gap-2 rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-2.5 text-sm text-adm-danger">
           <AlertCircle size={15} className="shrink-0" aria-hidden />
           {labels.error}
         </p>
@@ -304,9 +304,9 @@ export default function ProjectContentEditor({
           are visible before anyone opens them. The exact share is in the
           title; the source language is marked rather than scored. */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-xs text-ink-muted">{labels.compareWith}</span>
+        <span className="text-xs text-adm-muted">{labels.compareWith}</span>
 
-        <nav aria-label={labels.compareWith} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
+        <nav aria-label={labels.compareWith} className="inline-flex rounded-[10px] border border-adm-line bg-adm-bg p-0.5">
           {languages.map((language) => {
             const isTarget = language.locale === target;
             const missing = !language.isSource && language.percent < 100;
@@ -319,8 +319,8 @@ export default function ProjectContentEditor({
                 className={[
                   "relative flex items-center gap-1.5 rounded-[8px] px-3 py-1 text-[13px] font-medium uppercase transition-colors",
                   isTarget
-                    ? "bg-adm-solid text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                    : "text-ink-muted hover:text-ink",
+                    ? "bg-adm-solid text-adm-text shadow-[0_0_0_1px_var(--adm-line)]"
+                    : "text-adm-muted hover:text-adm-text",
                 ].join(" ")}
               >
                 {language.label}
@@ -353,9 +353,9 @@ export default function ProjectContentEditor({
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         {/* ── Field pairs ────────────────────────────────────────────── */}
         <section className="admin-card p-0!">
-          <div className="grid grid-cols-2 gap-4 border-b border-primary/10 px-4 py-3">
-            <h2 className="text-sm font-semibold text-primary">{labels.sectionTitle}</h2>
-            <p className="text-xs text-ink-muted">
+          <div className="grid grid-cols-2 gap-4 border-b border-adm-line px-4 py-3">
+            <h2 className="text-sm font-semibold text-adm-text">{labels.sectionTitle}</h2>
+            <p className="text-xs text-adm-muted">
               {languages.find((l) => l.locale === target)?.label} · {labels.targetNote}
             </p>
           </div>
@@ -373,7 +373,7 @@ export default function ProjectContentEditor({
                     className="admin-label flex items-center gap-1"
                   >
                     {labels.fields[field]}
-                    {field === "name" && <span className="text-red-600">*</span>}
+                    {field === "name" && <span className="text-adm-danger">*</span>}
                   </label>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -386,14 +386,14 @@ export default function ProjectContentEditor({
                         value={sourceText}
                         rows={field === "description" ? 4 : 3}
                         aria-label={`${labels.fields[field]} (${source})`}
-                        className="admin-textarea min-h-0! cursor-default bg-surface-muted/60 text-ink-muted"
+                        className="admin-textarea min-h-0! cursor-default bg-adm-text/4 text-adm-muted"
                       />
                     ) : (
                       <input
                         readOnly
                         value={sourceText}
                         aria-label={`${labels.fields[field]} (${source})`}
-                        className="admin-input cursor-default bg-surface-muted/60 text-ink-muted"
+                        className="admin-input cursor-default bg-adm-text/4 text-adm-muted"
                       />
                     )}
 
@@ -404,14 +404,14 @@ export default function ProjectContentEditor({
                           value={targetText}
                           onChange={(event) => setField(field, event.target.value)}
                           rows={field === "description" ? 4 : 3}
-                          className={`admin-textarea min-h-0! ${missing ? "border-red-300" : ""}`}
+                          className={`admin-textarea min-h-0! ${missing ? "border-adm-danger/30" : ""}`}
                         />
                       ) : (
                         <input
                           id={`content-${field}`}
                           value={targetText}
                           onChange={(event) => setField(field, event.target.value)}
-                          className={`admin-input ${missing ? "border-red-300" : ""}`}
+                          className={`admin-input ${missing ? "border-adm-danger/30" : ""}`}
                         />
                       )}
 
@@ -420,7 +420,7 @@ export default function ProjectContentEditor({
                           <button
                             type="button"
                             onClick={() => copyField(field)}
-                            className="text-left text-xs text-red-700 hover:underline"
+                            className="text-left text-xs text-adm-danger hover:underline"
                           >
                             {labels.untranslated} — {labels.copyFromSource}
                           </button>
@@ -432,8 +432,8 @@ export default function ProjectContentEditor({
                           <span
                             className={`shrink-0 text-xs tabular-nums ${
                               targetText.length > META_LIMITS[field]
-                                ? "font-semibold text-red-700"
-                                : "text-ink-muted"
+                                ? "font-semibold text-adm-danger"
+                                : "text-adm-muted"
                             }`}
                           >
                             {targetText.length} / {META_LIMITS[field]}
@@ -447,7 +447,7 @@ export default function ProjectContentEditor({
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-primary/10 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 border-t border-adm-line px-4 py-3">
             <button
               type="button"
               onClick={save}
@@ -463,7 +463,7 @@ export default function ProjectContentEditor({
             </button>
 
             {savedAt && !isDirty && (
-              <span className="flex items-center gap-1.5 text-xs text-emerald-700">
+              <span className="flex items-center gap-1.5 text-xs text-adm-success">
                 <Check size={13} aria-hidden />
                 {labels.savedJustNow}
               </span>
@@ -477,7 +477,7 @@ export default function ProjectContentEditor({
             unsaved edits included, which is the point: the meta fields'
             length limits only mean something next to the result they cut. */}
         <section className="admin-card space-y-2">
-          <h2 className="text-sm font-semibold text-ink">{labels.serpTitle}</h2>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.serpTitle}</h2>
           <SerpPreview
             displayPath={`${serpHost} › ${target} › projects › ${projectSlug}`}
             title={values.metaTitle.trim() || values.name.trim()}
@@ -487,8 +487,8 @@ export default function ProjectContentEditor({
         </section>
 
         <section className="admin-card p-0!">
-          <div className="flex items-center justify-between border-b border-primary/10 px-4 py-3">
-            <h2 className="text-sm font-semibold text-primary">{labels.previewTitle}</h2>
+          <div className="flex items-center justify-between border-b border-adm-line px-4 py-3">
+            <h2 className="text-sm font-semibold text-adm-text">{labels.previewTitle}</h2>
             <div className="flex items-center gap-1">
               {(["desktop", "mobile"] as const).map((option) => (
                 <button
@@ -498,8 +498,8 @@ export default function ProjectContentEditor({
                   aria-pressed={device === option}
                   className={`flex items-center gap-1 rounded-xs border px-2 py-1 text-[11px] font-medium transition-colors ${
                     device === option
-                      ? "border-primary bg-primary text-white"
-                      : "border-primary/15 text-ink-muted hover:text-primary"
+                      ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                      : "border-adm-line-strong text-adm-muted hover:text-adm-text"
                   }`}
                 >
                   {option === "desktop" ? <Monitor size={12} aria-hidden /> : <Smartphone size={12} aria-hidden />}
@@ -512,10 +512,10 @@ export default function ProjectContentEditor({
           {!isPublished ? (
             /* An unpublished project 404s on the public site, so an iframe
                would show an error page rather than a preview. Say why. */
-            <p className="px-4 py-10 text-center text-sm text-ink-muted">{labels.previewUnpublished}</p>
+            <p className="px-4 py-10 text-center text-sm text-adm-muted">{labels.previewUnpublished}</p>
           ) : (
             <div className="space-y-2 p-3">
-              <p className="truncate rounded-xs bg-surface-muted px-2.5 py-1.5 font-mono text-[11px] text-ink-muted">
+              <p className="truncate rounded-xs bg-adm-text/4 px-2.5 py-1.5 font-mono text-[11px] text-adm-muted">
                 {`${siteOrigin}/${target}/projects/${projectSlug}`}
               </p>
               {/* The iframe renders at a real viewport width so the page's
@@ -524,14 +524,14 @@ export default function ProjectContentEditor({
                   size — without it the layout box stays full-size and
                   leaves a screen of empty space under the preview. */}
               <div
-                className="overflow-hidden rounded-xs border border-primary/10 bg-white"
+                className="overflow-hidden rounded-xs border border-adm-line bg-adm-solid"
                 style={{ width: FRAME[device].width * FRAME[device].scale, height: FRAME[device].height * FRAME[device].scale }}
               >
                 <iframe
                   key={previewNonce}
                   src={previewSrc}
                   title={labels.previewTitle}
-                  className="block border-0 bg-white"
+                  className="block border-0 bg-adm-solid"
                   style={{
                     width: FRAME[device].width,
                     height: FRAME[device].height,
@@ -540,7 +540,7 @@ export default function ProjectContentEditor({
                   }}
                 />
               </div>
-              <p className="text-[11px] leading-relaxed text-ink-muted">{labels.previewNote}</p>
+              <p className="text-[11px] leading-relaxed text-adm-muted">{labels.previewNote}</p>
             </div>
           )}
         </section>

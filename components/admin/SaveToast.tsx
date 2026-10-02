@@ -64,8 +64,8 @@ export default function SaveToast({ tone, token, children, duration = 4000 }: Pr
             "fixed right-6 top-6 z-100 flex items-center gap-2 rounded-xs border px-4 py-3",
             "text-sm shadow-lg",
             tone === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-red-200 bg-red-50 text-red-800",
+              ? "border-adm-success/30 bg-adm-success-bg text-adm-success"
+              : "border-adm-danger/30 bg-adm-danger-bg text-adm-danger",
           ].join(" ")}
         >
           {children}

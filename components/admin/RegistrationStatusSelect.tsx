@@ -25,11 +25,11 @@ type Props = {
 };
 
 const TONE: Record<EventStatus, string> = {
-  PENDING: "border-accent-400 bg-accent-50 text-accent-700",
-  CONFIRMED: "border-emerald-300 bg-emerald-50 text-emerald-800",
-  ATTENDED: "border-primary/30 bg-primary/10 text-primary",
-  CANCELLED: "border-primary/10 bg-surface-muted text-ink-muted",
-  NO_SHOW: "border-red-200 bg-red-50 text-red-700",
+  PENDING: "border-accent-400 bg-adm-fill/15 text-adm-accent-ink",
+  CONFIRMED: "border-adm-success/30 bg-adm-success-bg text-adm-success",
+  ATTENDED: "border-adm-line-strong bg-adm-text/10 text-adm-text",
+  CANCELLED: "border-adm-line bg-adm-text/4 text-adm-muted",
+  NO_SHOW: "border-adm-danger/30 bg-adm-danger-bg text-adm-danger",
 };
 
 export default function RegistrationStatusSelect({
@@ -76,7 +76,7 @@ export default function RegistrationStatusSelect({
         onChange={onChange}
         disabled={pending}
         aria-label={labels[current]}
-        className={`rounded-xs border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-hidden focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${TONE[current]}`}
+        className={`rounded-xs border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-hidden focus:ring-1 focus:ring-adm-info/30 disabled:opacity-60 ${TONE[current]}`}
       >
         {Object.values(EventStatus).map((status) => (
           <option key={status} value={status}>
@@ -85,13 +85,13 @@ export default function RegistrationStatusSelect({
         ))}
       </select>
 
-      {pending && <Loader2 size={14} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={14} className="animate-spin text-adm-muted" aria-hidden />}
       {!pending && state === "saved" && (
-        <Check size={14} className="text-emerald-600" aria-hidden />
+        <Check size={14} className="text-adm-success" aria-hidden />
       )}
       {!pending && state === "error" && (
         <span title={errorLabel}>
-          <AlertCircle size={14} className="text-red-600" aria-hidden />
+          <AlertCircle size={14} className="text-adm-danger" aria-hidden />
         </span>
       )}
     </div>

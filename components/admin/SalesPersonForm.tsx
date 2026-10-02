@@ -143,7 +143,7 @@ export default function SalesPersonForm({
               required
               className="admin-input"
             />
-            {err("name") && <p className="mt-1.5 text-xs text-red-700">{err("name")}</p>}
+            {err("name") && <p className="mt-1.5 text-xs text-adm-danger">{err("name")}</p>}
           </div>
 
           <div>
@@ -155,7 +155,7 @@ export default function SalesPersonForm({
               className="admin-input"
             />
             {err("position") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("position")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("position")}</p>
             )}
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function SalesPersonForm({
             />
             <p className="admin-hint">{t("salesTeam.whatsappHint")}</p>
             {err("whatsappNumber") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("whatsappNumber")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("whatsappNumber")}</p>
             )}
           </div>
 
@@ -189,7 +189,7 @@ export default function SalesPersonForm({
             />
             <p className="admin-hint">{t("salesTeam.phoneHint")}</p>
             {err("phoneNumber") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("phoneNumber")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("phoneNumber")}</p>
             )}
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function SalesPersonForm({
               className="admin-input"
             />
             <p className="admin-hint">{t("salesTeam.emailHint")}</p>
-            {err("email") && <p className="mt-1.5 text-xs text-red-700">{err("email")}</p>}
+            {err("email") && <p className="mt-1.5 text-xs text-adm-danger">{err("email")}</p>}
           </div>
 
           <div>
@@ -227,12 +227,12 @@ export default function SalesPersonForm({
           hint={t("salesTeam.photoHint")}
         />
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("salesTeam.active")}
         </label>
@@ -242,7 +242,7 @@ export default function SalesPersonForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

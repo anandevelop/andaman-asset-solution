@@ -36,7 +36,7 @@ export default function MobilePostponeButton({ locale, leadId, label }: Props) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-primary/20 text-sm font-medium text-primary disabled:opacity-60"
+      className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text disabled:opacity-60"
     >
       {pending && <Loader2 size={14} className="animate-spin" aria-hidden />}
       {label}

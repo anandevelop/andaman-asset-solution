@@ -892,7 +892,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         "the editor has to show roughly what a reader will see").
 
         On the wrapper it lost: the wrapper also carries `admin-textarea`,
-        whose `text-sm text-ink` is declared later in globals.css and so
+        whose `text-sm text-adm-text` is declared later in globals.css and so
         beat prose-article's own base at equal specificity. The body was
         rendering at 14px in full-strength ink against the page's 16px at
         ink/75. Here the two are on different elements, and a declaration
@@ -1264,7 +1264,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       <div
         role="toolbar"
         aria-label={toolbarLabels.textStyle}
-        className="sticky top-0 z-20 -mx-1 mb-2 flex flex-wrap gap-1 border-b border-primary/10 bg-surface-raised px-1 py-1.5 lg:top-14"
+        className="sticky top-0 z-20 -mx-1 mb-2 flex flex-wrap gap-1 border-b border-adm-line bg-adm-solid px-1 py-1.5 lg:top-14"
       >
         <select
           aria-label={toolbarLabels.textStyle}
@@ -1299,7 +1299,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           <Pilcrow size={15} aria-hidden />
         </button>
 
-        <span className="mx-1 w-px self-stretch bg-primary/10" />
+        <span className="mx-1 w-px self-stretch bg-adm-text/10" />
 
         <button
           type="button"
@@ -1374,7 +1374,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         >
           <Minus size={15} aria-hidden />
         </button>
-        <span aria-hidden className="mx-1 h-5 w-px self-center bg-primary/15" />
+        <span aria-hidden className="mx-1 h-5 w-px self-center bg-adm-text/15" />
 
         {/* History was always on — StarterKit's undoRedo — with no way to
             reach it but the keyboard. */}
@@ -1444,7 +1444,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           <Quote size={15} aria-hidden />
         </button>
 
-        <span className="mx-1 w-px self-stretch bg-primary/10" />
+        <span className="mx-1 w-px self-stretch bg-adm-text/10" />
 
         <button
           type="button"
@@ -1605,7 +1605,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           !instance.isActive("figure") &&
           !instance.isActive("codeBlock")
         }
-        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+        className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         {([2, 3, 4] as HeadingLevel[]).map((level) => (
           <button
@@ -1622,7 +1622,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           </button>
         ))}
 
-        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-adm-text/15" />
 
         <button
           type="button"
@@ -1683,16 +1683,16 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       <BubbleMenu
         editor={editor}
         shouldShow={({ editor: instance }) => instance.isActive("link")}
-        className="flex max-w-[22rem] items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 pl-2.5 shadow-lg"
+        className="flex max-w-[22rem] items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 pl-2.5 shadow-lg"
       >
         {/* The href, so "where does this go" needs no click to answer —
             the thing that previously required deleting the link to find
             out. */}
-        <span className="truncate text-xs text-ink-muted">
+        <span className="truncate text-xs text-adm-muted">
           {editor.getAttributes("link").href ?? ""}
         </span>
 
-        <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-primary/15" />
+        <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-adm-text/15" />
 
         <button
           type="button"
@@ -1741,7 +1741,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       <BubbleMenu
         editor={editor}
         shouldShow={({ editor: instance }) => instance.isActive("callout")}
-        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+        className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         {CALLOUT_TONES.map((tone) => (
           <button
@@ -1765,7 +1765,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
       <BubbleMenu
         editor={editor}
         shouldShow={({ editor: instance }) => instance.isActive("table")}
-        className="flex items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-lg"
+        className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         <button
           type="button"
@@ -1790,7 +1790,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           <span className="ml-0.5 text-xs">−</span>
         </button>
 
-        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-adm-text/15" />
 
         <button
           type="button"
@@ -1815,7 +1815,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           <span className="ml-0.5 text-xs">−</span>
         </button>
 
-        <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-adm-text/15" />
 
         <button
           type="button"
@@ -1833,7 +1833,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           aria-label={toolbarLabels.tableDelete}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => editor.chain().focus().deleteTable().run()}
-          className={`${toolbarButtonClass(false)} text-red-700`}
+          className={`${toolbarButtonClass(false)} text-adm-danger`}
         >
           <Trash2 size={15} aria-hidden />
         </button>
@@ -1910,7 +1910,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
             },
           ],
         }}
-        className="flex h-6 w-5 cursor-grab items-center justify-center rounded-xs text-ink-muted/60 transition-colors hover:bg-primary/5 hover:text-primary active:cursor-grabbing"
+        className="flex h-6 w-5 cursor-grab items-center justify-center rounded-xs text-adm-muted/60 transition-colors hover:bg-adm-text/5 hover:text-adm-text active:cursor-grabbing"
       >
         <span title={toolbarLabels.dragHandle} aria-label={toolbarLabels.dragHandle} role="button">
           <GripVertical size={14} aria-hidden />
@@ -1923,8 +1923,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 export default RichTextEditor;
 
 function toolbarButtonClass(active: boolean): string {
-  return `inline-flex h-8 w-8 items-center justify-center rounded-xs border text-ink-muted transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary ${
-    active ? "border-primary/40 bg-primary/5 text-primary" : "border-primary/10"
+  return `inline-flex h-8 w-8 items-center justify-center rounded-xs border text-adm-muted transition-colors hover:border-adm-line-strong hover:bg-adm-text/5 hover:text-adm-text ${
+    active ? "border-adm-line-strong bg-adm-text/5 text-adm-text" : "border-adm-line"
   }`;
 }
 

@@ -155,30 +155,30 @@ export default function HeroStorySlideForm({
         <div>
           <span className="admin-label">{t("heroBanner.mediaType")}</span>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-ink">
+            <label className="flex items-center gap-2 text-sm text-adm-text">
               <input
                 type="radio"
                 name="mediaType"
                 value="IMAGE"
                 checked={mediaType === "IMAGE"}
                 onChange={() => setMediaType("IMAGE")}
-                className="h-4 w-4 border-primary/30 text-primary focus:ring-primary/30"
+                className="h-4 w-4 border-adm-line-strong text-adm-text focus:ring-adm-info/30"
               />
               {t("heroBanner.mediaTypeImage")}
             </label>
-            <label className="flex items-center gap-2 text-sm text-ink">
+            <label className="flex items-center gap-2 text-sm text-adm-text">
               <input
                 type="radio"
                 name="mediaType"
                 value="VIDEO"
                 checked={mediaType === "VIDEO"}
                 onChange={() => setMediaType("VIDEO")}
-                className="h-4 w-4 border-primary/30 text-primary focus:ring-primary/30"
+                className="h-4 w-4 border-adm-line-strong text-adm-text focus:ring-adm-info/30"
               />
               {t("heroBanner.mediaTypeVideo")}
             </label>
           </div>
-          {err("mediaType") && <p className="mt-1.5 text-xs text-red-700">{err("mediaType")}</p>}
+          {err("mediaType") && <p className="mt-1.5 text-xs text-adm-danger">{err("mediaType")}</p>}
         </div>
 
         <ImageUploader
@@ -189,7 +189,7 @@ export default function HeroStorySlideForm({
           label={t("heroBanner.media")}
           hint={t("heroBanner.mediaHint")}
         />
-        {err("mediaUrl") && <p className="-mt-3 text-xs text-red-700">{err("mediaUrl")}</p>}
+        {err("mediaUrl") && <p className="-mt-3 text-xs text-adm-danger">{err("mediaUrl")}</p>}
 
         {mediaType === "VIDEO" && (
           <ImageUploader
@@ -215,7 +215,7 @@ export default function HeroStorySlideForm({
             />
             <p className="admin-hint">{t("heroBanner.durationSecondsHint")}</p>
             {err("durationSeconds") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("durationSeconds")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("durationSeconds")}</p>
             )}
           </div>
         )}
@@ -237,7 +237,7 @@ export default function HeroStorySlideForm({
           <label className="admin-label">{`${t("heroBanner.label")} · ${lang.toUpperCase()}`}</label>
           <input name="label" defaultValue={values.label} className="admin-input" />
           <p className="admin-hint">{t("heroBanner.labelHint")}</p>
-          {err("label") && <p className="mt-1.5 text-xs text-red-700">{err("label")}</p>}
+          {err("label") && <p className="mt-1.5 text-xs text-adm-danger">{err("label")}</p>}
         </div>
 
         <div>
@@ -249,7 +249,7 @@ export default function HeroStorySlideForm({
             className="admin-input"
           />
           <p className="admin-hint">{t("heroBanner.captionHint")}</p>
-          {err("caption") && <p className="mt-1.5 text-xs text-red-700">{err("caption")}</p>}
+          {err("caption") && <p className="mt-1.5 text-xs text-adm-danger">{err("caption")}</p>}
         </div>
 
         <div>
@@ -260,7 +260,7 @@ export default function HeroStorySlideForm({
             className="admin-input"
           />
           <p className="admin-hint">{t("heroBanner.taglineHint")}</p>
-          {err("tagline") && <p className="mt-1.5 text-xs text-red-700">{err("tagline")}</p>}
+          {err("tagline") && <p className="mt-1.5 text-xs text-adm-danger">{err("tagline")}</p>}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -271,7 +271,7 @@ export default function HeroStorySlideForm({
               defaultValue={values.ctaLabel}
               className="admin-input"
             />
-            {err("ctaLabel") && <p className="mt-1.5 text-xs text-red-700">{err("ctaLabel")}</p>}
+            {err("ctaLabel") && <p className="mt-1.5 text-xs text-adm-danger">{err("ctaLabel")}</p>}
           </div>
 
           <div>
@@ -283,7 +283,7 @@ export default function HeroStorySlideForm({
               className="admin-input"
             />
             <p className="admin-hint">{t("heroBanner.ctaUrlHint")}</p>
-            {err("ctaUrl") && <p className="mt-1.5 text-xs text-red-700">{err("ctaUrl")}</p>}
+            {err("ctaUrl") && <p className="mt-1.5 text-xs text-adm-danger">{err("ctaUrl")}</p>}
           </div>
         </div>
 
@@ -297,12 +297,12 @@ export default function HeroStorySlideForm({
           />
         </div>
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("heroBanner.active")}
         </label>
@@ -317,7 +317,7 @@ export default function HeroStorySlideForm({
               className="admin-input"
             />
             <p className="admin-hint">{t("heroBanner.startAtHint")}</p>
-            {err("startAt") && <p className="mt-1.5 text-xs text-red-700">{err("startAt")}</p>}
+            {err("startAt") && <p className="mt-1.5 text-xs text-adm-danger">{err("startAt")}</p>}
           </div>
 
           <div>
@@ -329,7 +329,7 @@ export default function HeroStorySlideForm({
               className="admin-input"
             />
             <p className="admin-hint">{t("heroBanner.endAtHint")}</p>
-            {err("endAt") && <p className="mt-1.5 text-xs text-red-700">{err("endAt")}</p>}
+            {err("endAt") && <p className="mt-1.5 text-xs text-adm-danger">{err("endAt")}</p>}
           </div>
         </div>
 
@@ -338,7 +338,7 @@ export default function HeroStorySlideForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

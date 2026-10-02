@@ -58,15 +58,15 @@ export default async function AdminHomeGalleryPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("homeGallery.newTitle")}
         </h2>
 
@@ -80,7 +80,7 @@ export default async function AdminHomeGalleryPage(props: Props) {
 
       {/* ── Existing ────────────────────────────────────────────────── */}
       {photos.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("homeGallery.empty")}
         </div>
       ) : (
@@ -88,13 +88,13 @@ export default async function AdminHomeGalleryPage(props: Props) {
           {photos.map((photo) => (
             <section key={photo.id} className="admin-card">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-primary">{photo.label}</h2>
+                <h2 className="text-base font-semibold text-adm-text">{photo.label}</h2>
 
                 <span
                   className={
                     photo.isActive
-                      ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                      : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                      ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                      : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                   }
                 >
                   {photo.isActive ? t("homeGallery.active") : t("homeGallery.inactive")}

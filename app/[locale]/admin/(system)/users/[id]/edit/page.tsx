@@ -97,14 +97,14 @@ export default async function EditUserPage(props: Props) {
         which would look like a reason to leave this account unlinked.
       */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {/* ── Profile, role, access ───────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 text-base font-semibold text-primary">
+        <h2 className="mb-5 text-base font-semibold text-adm-text">
           {t("users.editTitle")}
         </h2>
 
@@ -130,10 +130,10 @@ export default async function EditUserPage(props: Props) {
 
       {/* ── Password reset ──────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="text-base font-semibold text-primary">
+        <h2 className="text-base font-semibold text-adm-text">
           {t("users.resetPassword")}
         </h2>
-        <p className="mb-5 mt-1 text-sm text-ink-muted">
+        <p className="mb-5 mt-1 text-sm text-adm-muted">
           {isSelf ? t("users.resetOwnHint") : t("users.resetHint")}
         </p>
 
@@ -143,10 +143,10 @@ export default async function EditUserPage(props: Props) {
       {/* ── Two-factor reset ────────────────────────────────────────── */}
       {user.totpEnabledAt && (
         <section className="admin-card">
-          <h2 className="text-base font-semibold text-primary">
+          <h2 className="text-base font-semibold text-adm-text">
             {t("security.resetTitle")}
           </h2>
-          <p className="mb-5 mt-1 text-sm text-ink-muted">
+          <p className="mb-5 mt-1 text-sm text-adm-muted">
             {t("security.resetHint")}
           </p>
 
@@ -160,11 +160,11 @@ export default async function EditUserPage(props: Props) {
 
       {/* ── Delete ──────────────────────────────────────────────────── */}
       {!isSelf && !isLastSuperAdmin && (
-        <section className="admin-card border-red-100">
-          <h2 className="text-base font-semibold text-primary">
+        <section className="admin-card border-adm-danger/30">
+          <h2 className="text-base font-semibold text-adm-text">
             {t("users.deleteTitle")}
           </h2>
-          <p className="mb-5 mt-1 text-sm text-ink-muted">
+          <p className="mb-5 mt-1 text-sm text-adm-muted">
             {authored > 0 ? t("users.deleteHintAuthored") : t("users.deleteHint")}
           </p>
 

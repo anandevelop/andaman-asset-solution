@@ -186,7 +186,7 @@ export default function SalesTeamCards({ locale, members, editHrefBase, labels }
               >
                 <span
                   className={[
-                    "inline-flex h-3.5 w-3.5 transform items-center justify-center rounded-full bg-white shadow-xs transition-transform",
+                    "inline-flex h-3.5 w-3.5 transform items-center justify-center rounded-full bg-adm-solid shadow-xs transition-transform",
                     member.isActive ? "translate-x-[18px]" : "translate-x-[3px]",
                   ].join(" ")}
                 >

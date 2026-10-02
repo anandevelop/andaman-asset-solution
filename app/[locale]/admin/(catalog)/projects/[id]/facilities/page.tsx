@@ -62,7 +62,7 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
         active="facilities"
       />
 
-      <p className="max-w-2xl text-sm text-ink-muted">{t("facilities.subtitle")}</p>
+      <p className="max-w-2xl text-sm text-adm-muted">{t("facilities.subtitle")}</p>
 
       {/* One language selection drives every facility's form on this page —
           see the file comment on LanguageTabs. */}
@@ -75,8 +75,8 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("facilities.newTitle")}
         </h2>
 
@@ -92,7 +92,7 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
 
       {/* ── Existing ────────────────────────────────────────────────── */}
       {facilities.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("facilities.empty")}
         </div>
       ) : (
@@ -105,15 +105,15 @@ export default async function AdminProjectFacilitiesPage(props: Props) {
               <section key={facility.id} className="admin-card">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-base font-semibold text-primary">{facility.nameEn}</h2>
+                    <h2 className="text-base font-semibold text-adm-text">{facility.nameEn}</h2>
                     <TranslationStatusBadges completeness={completeness} />
                   </div>
 
                   <span
                     className={
                       facility.isActive
-                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                        ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                        : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                     }
                   >
                     {facility.isActive ? t("facilities.active") : t("facilities.inactive")}

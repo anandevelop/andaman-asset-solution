@@ -91,12 +91,12 @@ export default function NotificationMatrix({
       onClick={onChange}
       className={[
         "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-        disabled ? "cursor-not-allowed bg-primary/10" : on ? "bg-emerald-500" : "bg-primary/20",
+        disabled ? "cursor-not-allowed bg-adm-text/10" : on ? "bg-adm-success" : "bg-adm-text/20",
       ].join(" ")}
     >
       <span
         className={[
-          "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform",
+          "inline-block h-3.5 w-3.5 transform rounded-full bg-adm-solid shadow-xs transition-transform",
           on && !disabled ? "translate-x-[18px]" : "translate-x-[3px]",
         ].join(" ")}
       />
@@ -108,29 +108,29 @@ export default function NotificationMatrix({
       <section className="admin-card p-0!">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-primary/10 text-xs uppercase tracking-wide text-ink-muted">
+            <tr className="border-b border-adm-line text-xs uppercase tracking-wide text-adm-muted">
               <th className="px-5 py-3 text-left font-medium" />
               <th className="w-28 px-4 py-3 text-center font-medium">
-                <span className={emailConfigured ? "" : "text-ink-muted/60"}>{labels.email}</span>
+                <span className={emailConfigured ? "" : "text-adm-muted/60"}>{labels.email}</span>
               </th>
               <th className="w-28 px-4 py-3 text-center font-medium">{labels.inApp}</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-primary/5">
+          <tbody className="divide-y divide-adm-line">
             {rows.map((row) => {
               const value = prefs[row.key] ?? { email: false, inApp: false };
 
               return (
-                <tr key={row.key} className={row.needsScheduler ? "bg-surface-muted/40" : ""}>
+                <tr key={row.key} className={row.needsScheduler ? "bg-adm-text/4" : ""}>
                   <td className="px-5 py-3.5">
                     <p
-                      className={`text-sm ${row.needsScheduler ? "text-ink-muted" : "text-ink"}`}
+                      className={`text-sm ${row.needsScheduler ? "text-adm-muted" : "text-adm-text"}`}
                     >
                       {row.label}
                     </p>
                     {row.needsScheduler && (
-                      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-amber-800">
+                      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-adm-warning">
                         <AlertTriangle size={11} aria-hidden />
                         {labels.needsScheduler}
                       </p>
@@ -162,13 +162,13 @@ export default function NotificationMatrix({
       </section>
 
       {!emailConfigured && (
-        <p className="flex items-start gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="flex items-start gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
           {labels.emailNotConfigured}
         </p>
       )}
 
-      <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
+      <p className="flex items-start gap-2 text-xs leading-relaxed text-adm-muted">
         <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
         {labels.deliveryNote}
       </p>
@@ -184,14 +184,14 @@ export default function NotificationMatrix({
         </button>
 
         {status === "saved" && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <span className="flex items-center gap-1.5 text-xs text-adm-success">
             <Check size={13} aria-hidden />
             {labels.saved}
           </span>
         )}
 
         {status === "error" && (
-          <span className="flex items-center gap-1.5 text-xs text-red-700">
+          <span className="flex items-center gap-1.5 text-xs text-adm-danger">
             <AlertTriangle size={13} aria-hidden />
             {labels.error}
           </span>

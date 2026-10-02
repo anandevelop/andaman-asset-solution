@@ -229,7 +229,7 @@ function Field({
       {children}
       {hint && !error && <p className="admin-hint">{hint}</p>}
       {error && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {error}
         </p>
@@ -310,7 +310,7 @@ function BodyField({
         <label htmlFor={name} className="admin-label mb-0">
           {label}
         </label>
-        <span className="text-xs tabular-nums text-ink-muted">
+        <span className="text-xs tabular-nums text-adm-muted">
           {value.length.toLocaleString()} · {minutesLabel(minutes)}
         </span>
       </div>
@@ -329,7 +329,7 @@ function BodyField({
       />
 
       {error && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {error}
         </p>
@@ -628,7 +628,7 @@ export default function NewsForm({
   return (
     <>
       <header>
-        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text">
           <ArrowLeft size={14} aria-hidden />
           {backLabel}
         </Link>
@@ -640,7 +640,7 @@ export default function NewsForm({
               <Link
                 href={live.href}
                 target="_blank"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text"
               >
                 <ExternalLink size={14} aria-hidden />
                 {live.path}
@@ -650,7 +650,7 @@ export default function NewsForm({
 
           <div className="flex items-center gap-2.5">
             {statusPillLabel && (
-              <span className="rounded-xs bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
+              <span className="rounded-xs bg-adm-warning-bg px-2 py-1 text-xs font-medium text-adm-warning">
                 {statusPillLabel}
               </span>
             )}
@@ -664,8 +664,8 @@ export default function NewsForm({
               title={focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-xs border transition-colors ${
                 focusMode
-                  ? "border-primary/40 bg-primary/5 text-primary"
-                  : "border-primary/15 text-ink-muted hover:border-primary/30 hover:text-primary"
+                  ? "border-adm-line-strong bg-adm-text/5 text-adm-text"
+                  : "border-adm-line-strong text-adm-muted hover:border-adm-line-strong hover:text-adm-text"
               }`}
             >
               {focusMode ? <Minimize2 size={15} aria-hidden /> : <Maximize2 size={15} aria-hidden />}
@@ -708,7 +708,7 @@ export default function NewsForm({
 
         {/* §7.1: offered, never applied on its own. See lib/admin/news-draft.ts. */}
         {recoverable && (
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xs border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
             <AlertTriangle size={16} className="shrink-0" aria-hidden />
             <span className="flex-1">{t("news.draft.found")}</span>
             <button
@@ -841,7 +841,7 @@ export default function NewsForm({
               </div>
 
               {contentFormat === "MARKDOWN" && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border border-adm-fill/30 bg-adm-fill/5 px-4 py-3 text-sm text-adm-text">
                   <span>{t("news.convertBanner.text")}</span>
                   <button type="button" onClick={convertToRichText} className="admin-btn-ghost shrink-0 text-xs">
                     {t("news.convertBanner.button")}
@@ -889,7 +889,7 @@ export default function NewsForm({
                     <label htmlFor="rich-text-body" className="admin-label mb-0">
                       {lang.toUpperCase()}
                     </label>
-                    <span className="text-xs tabular-nums text-ink-muted">
+                    <span className="text-xs tabular-nums text-adm-muted">
                       {t("news.seo.statsWordsCount", { count: richTextStats.wordCount })} ·{" "}
                       {minutesLabel(richTextStats.readingMinutes)}
                     </span>
@@ -968,7 +968,7 @@ export default function NewsForm({
                     }}
                   />
                   {uploadNotice && (
-                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
+                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-adm-warning">
                       <AlertTriangle size={13} className="mt-0.5 shrink-0" aria-hidden />
                       <span className="flex-1">{uploadNotice}</span>
                       <button
@@ -981,7 +981,7 @@ export default function NewsForm({
                     </p>
                   )}
                   {err("content") && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
                       <AlertCircle size={13} aria-hidden />
                       {err("content")}
                     </p>
@@ -1010,19 +1010,19 @@ export default function NewsForm({
 
                 return (
                   <>
-                    <label className="flex items-start gap-3 text-sm text-ink">
+                    <label className="flex items-start gap-3 text-sm text-adm-text">
                       <input
                         type="checkbox"
                         name="isPublished"
                         defaultChecked={values.isPublished}
                         disabled={wouldBeBlocked && !isAdmin}
-                        className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+                        className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
                       />
                       <span>{t("news.publish")}</span>
                     </label>
 
                     {wouldBeBlocked && (
-                      <div className="flex items-start gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <div className="flex items-start gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
                         <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
                         <div>
                           <p>{t("news.seo.publishBlockedReason", { count: failingChecks.length })}</p>
@@ -1036,15 +1036,15 @@ export default function NewsForm({
                     )}
 
                     {wouldBeBlocked && isAdmin && (
-                      <label className="flex items-start gap-3 text-sm text-ink">
+                      <label className="flex items-start gap-3 text-sm text-adm-text">
                         <input
                           type="checkbox"
                           name="overridePublishGate"
-                          className="mt-0.5 h-4 w-4 rounded-xs border-amber-400 text-amber-600 focus:ring-amber-400/40"
+                          className="mt-0.5 h-4 w-4 rounded-xs border-adm-warning/30 text-adm-warning focus:ring-amber-400/40"
                         />
                         <span>
                           {t("news.seo.overridePublishLabel")}
-                          <span className="mt-0.5 block text-xs text-ink-muted">
+                          <span className="mt-0.5 block text-xs text-adm-muted">
                             {t("news.seo.overridePublishHint")}
                           </span>
                         </span>
@@ -1162,7 +1162,7 @@ export default function NewsForm({
       )}
 
       {onDelete && (
-        <form action={onDelete} className="mt-10 border-t border-primary/10 pt-6">
+        <form action={onDelete} className="mt-10 border-t border-adm-line pt-6">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

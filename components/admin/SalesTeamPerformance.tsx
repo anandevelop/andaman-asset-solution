@@ -55,16 +55,16 @@ export default function SalesTeamPerformance({ rows, hint, slowThreshold, labels
   return (
     <section className="admin-card space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-sm font-semibold text-primary">{labels.title}</h2>
-        <p className="text-xs text-ink-muted">{labels.sourceNote}</p>
+        <h2 className="text-sm font-semibold text-adm-text">{labels.title}</h2>
+        <p className="text-xs text-adm-muted">{labels.sourceNote}</p>
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-6 text-center text-sm text-ink-muted">{labels.empty}</p>
+        <p className="py-6 text-center text-sm text-adm-muted">{labels.empty}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse">
-            <thead className="border-b border-primary/10">
+            <thead className="border-b border-adm-line">
               <tr>
                 <th className="admin-th">{labels.member}</th>
                 <th className="admin-th">{labels.projects}</th>
@@ -76,7 +76,7 @@ export default function SalesTeamPerformance({ rows, hint, slowThreshold, labels
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {rows.map((row) => {
                 const slow = row.fastResponseRate !== null && row.fastResponseRate < slowThreshold;
 
@@ -84,32 +84,32 @@ export default function SalesTeamPerformance({ rows, hint, slowThreshold, labels
                   <tr key={row.id}>
                     <td className="admin-td">
                       <span className="flex items-center gap-2.5">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-adm-strong text-[10px] font-semibold text-adm-on-strong">
                           {initialsFrom(row.name)}
                         </span>
-                        <span className="font-medium text-primary">{row.name}</span>
+                        <span className="font-medium text-adm-text">{row.name}</span>
                       </span>
                     </td>
 
-                    <td className="admin-td max-w-[200px] truncate text-ink-muted" title={row.projects.join(", ")}>
+                    <td className="admin-td max-w-[200px] truncate text-adm-muted" title={row.projects.join(", ")}>
                       {row.projects.length > 0 ? row.projects.join(", ") : labels.noProjects}
                     </td>
 
-                    <td className="admin-td tabular-nums text-ink-muted">{row.leadsReceived}</td>
+                    <td className="admin-td tabular-nums text-adm-muted">{row.leadsReceived}</td>
 
                     <td className="admin-td">
                       {row.fastResponseRate === null ? (
-                        <span className="text-xs text-ink-muted/70">{labels.noData}</span>
+                        <span className="text-xs text-adm-muted/70">{labels.noData}</span>
                       ) : (
                         <span className="flex items-center gap-2">
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-muted">
+                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-adm-text/4">
                             <span
-                              className={`block h-full ${slow ? "bg-red-500" : "bg-emerald-500"}`}
+                              className={`block h-full ${slow ? "bg-adm-danger" : "bg-adm-success"}`}
                               style={{ width: `${row.fastResponseRate}%` }}
                             />
                           </span>
                           <span
-                            className={`text-xs font-semibold tabular-nums ${slow ? "text-red-700" : "text-ink-muted"}`}
+                            className={`text-xs font-semibold tabular-nums ${slow ? "text-adm-danger" : "text-adm-muted"}`}
                           >
                             {row.fastResponseRate}%
                           </span>
@@ -117,12 +117,12 @@ export default function SalesTeamPerformance({ rows, hint, slowThreshold, labels
                       )}
                     </td>
 
-                    <td className="admin-td tabular-nums text-ink-muted">{row.viewings}</td>
-                    <td className="admin-td tabular-nums text-ink-muted">{row.closed}</td>
+                    <td className="admin-td tabular-nums text-adm-muted">{row.viewings}</td>
+                    <td className="admin-td tabular-nums text-adm-muted">{row.closed}</td>
 
-                    <td className="admin-td tabular-nums font-semibold text-emerald-700">
+                    <td className="admin-td tabular-nums font-semibold text-adm-success">
                       {row.conversionRate === null ? (
-                        <span className="font-normal text-ink-muted/70">{labels.noData}</span>
+                        <span className="font-normal text-adm-muted/70">{labels.noData}</span>
                       ) : (
                         `${row.conversionRate}%`
                       )}
@@ -136,7 +136,7 @@ export default function SalesTeamPerformance({ rows, hint, slowThreshold, labels
       )}
 
       {hint && (
-        <p className="rounded-xs border border-accent/30 bg-accent-50/70 px-4 py-2.5 text-sm text-accent-900">
+        <p className="rounded-xs border border-adm-fill/30 bg-adm-fill/15 px-4 py-2.5 text-sm text-adm-accent-ink">
           {hint}
         </p>
       )}

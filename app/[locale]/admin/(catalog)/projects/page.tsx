@@ -271,7 +271,7 @@ export default async function AdminProjectsPage(props: Props) {
       <PageTabs locale={locale} role={session.role} groupKey="projects" counts={{ all: catalogCounts.projects }} />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -320,13 +320,13 @@ export default async function AdminProjectsPage(props: Props) {
       />
 
       {list.truncated && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("projects.filters.truncated")}
         </p>
       )}
 
       {rows.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {/* "Nothing matches" and "nothing exists yet" are different
               problems, and only one of them is solved by clearing a
               filter. */}

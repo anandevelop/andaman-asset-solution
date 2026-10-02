@@ -103,7 +103,7 @@ export default function CompanyProfileForm({
           className="admin-textarea"
         />
         {state.fields?.aboutUs && (
-          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
             <AlertCircle size={13} aria-hidden />
             {state.fields.aboutUs}
           </p>
@@ -111,7 +111,7 @@ export default function CompanyProfileForm({
       </div>
 
       {/* ── Header hero (About page) ──────────────────────────────── */}
-      <div className="border-t border-primary/10 pt-5">
+      <div className="border-t border-adm-line pt-5">
         <p className="admin-section-title">{t("settings.company.heroHeading")}</p>
 
         <div className="mt-4">
@@ -123,13 +123,13 @@ export default function CompanyProfileForm({
             hint={t("settings.company.heroImageHint")}
           />
           {state.fields?.aboutHeroImageUrl && (
-            <p className="mt-1.5 text-xs text-red-700">{state.fields.aboutHeroImageUrl}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{state.fields.aboutHeroImageUrl}</p>
           )}
         </div>
       </div>
 
       {/* ── Story section (About page) ─────────────────────────────── */}
-      <div className="border-t border-primary/10 pt-5">
+      <div className="border-t border-adm-line pt-5">
         <p className="admin-section-title">{t("settings.company.storyHeading")}</p>
 
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -145,7 +145,7 @@ export default function CompanyProfileForm({
               className="admin-input"
             />
             {state.fields?.storyEyebrow && (
-              <p className="mt-1.5 text-xs text-red-700">{state.fields.storyEyebrow}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{state.fields.storyEyebrow}</p>
             )}
           </div>
 
@@ -161,7 +161,7 @@ export default function CompanyProfileForm({
               className="admin-input"
             />
             {state.fields?.storyTitle && (
-              <p className="mt-1.5 text-xs text-red-700">{state.fields.storyTitle}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{state.fields.storyTitle}</p>
             )}
           </div>
         </div>
@@ -175,13 +175,13 @@ export default function CompanyProfileForm({
             hint={t("settings.company.storyImageHint")}
           />
           {state.fields?.storyImageUrl && (
-            <p className="mt-1.5 text-xs text-red-700">{state.fields.storyImageUrl}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{state.fields.storyImageUrl}</p>
           )}
         </div>
       </div>
 
       {/* ── Vision & Mission figures (home page) ───────────────────── */}
-      <div className="border-t border-primary/10 pt-5">
+      <div className="border-t border-adm-line pt-5">
         <p className="admin-section-title">{t("settings.company.statsHeading")}</p>
         <p className="admin-hint mt-1">{t("settings.company.statsHint")}</p>
 
@@ -200,7 +200,7 @@ export default function CompanyProfileForm({
           />
           <p className="admin-hint">{t("settings.company.foundedYearHint")}</p>
           {state.fields?.foundedYear && (
-            <p className="mt-1.5 text-xs text-red-700">{state.fields.foundedYear}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{state.fields.foundedYear}</p>
           )}
         </div>
       </div>

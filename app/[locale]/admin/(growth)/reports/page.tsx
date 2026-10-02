@@ -140,7 +140,7 @@ export default async function AdminReportsPage(props: Props) {
       />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 print:hidden">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning print:hidden">
           {t("common.offline")}
         </p>
       )}

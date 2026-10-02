@@ -82,7 +82,7 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
   if (empty) {
     return (
       <div className="admin-card">
-        <p className="text-sm text-ink">{labels.empty}</p>
+        <p className="text-sm text-adm-text">{labels.empty}</p>
         <p className="admin-hint mt-1">{labels.emptyHint}</p>
       </div>
     );
@@ -95,7 +95,7 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
         <p className="admin-hint">{labels.subtitle}</p>
       </div>
 
-      <p className="flex items-start gap-2 rounded-xs border border-primary/10 bg-primary/5 px-3 py-2 text-xs text-ink-muted">
+      <p className="flex items-start gap-2 rounded-xs border border-adm-line bg-adm-text/5 px-3 py-2 text-xs text-adm-muted">
         <Info size={14} className="mt-0.5 shrink-0" aria-hidden />
         {labels.coverage}
       </p>
@@ -109,9 +109,9 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
 
             <dl className="mt-3 grid gap-3 sm:grid-cols-2">
               {group.figures.map((figure) => (
-                <div key={figure.metric} className="rounded-xs border border-primary/10 px-3 py-2.5">
+                <div key={figure.metric} className="rounded-xs border border-adm-line px-3 py-2.5">
                   <dt className="flex items-baseline justify-between gap-2">
-                    <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                    <span className="text-xs font-medium uppercase tracking-wide text-adm-muted">
                       {figure.metric}
                     </span>
                     {figure.enoughSamples && (
@@ -126,11 +126,11 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
                         {figure.display}
                       </span>
                     ) : (
-                      <span className="text-xs text-ink-muted">{labels.notEnough}</span>
+                      <span className="text-xs text-adm-muted">{labels.notEnough}</span>
                     )}
                   </dd>
-                  <p className="mt-1 text-[11px] text-ink-muted">{figure.samples}</p>
-                  <p className="mt-1 text-[11px] text-ink-muted">
+                  <p className="mt-1 text-[11px] text-adm-muted">{figure.samples}</p>
+                  <p className="mt-1 text-[11px] text-adm-muted">
                     {labels.metricHints[figure.metric]}
                   </p>
                 </div>
@@ -146,7 +146,7 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
 
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+            <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
               <th className="pb-2 font-medium">{labels.pageHeader}</th>
               <th className="pb-2 font-medium">{labels.devices.mobile}/{labels.devices.desktop}</th>
               {["LCP", "INP", "CLS", "TTFB"].map((metric) => (
@@ -158,9 +158,9 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
           </thead>
           <tbody>
             {routes.map((route) => (
-              <tr key={`${route.path}-${route.device}`} className="border-t border-primary/5">
-                <td className="py-2 font-mono text-xs text-ink">{route.path}</td>
-                <td className="py-2 text-xs text-ink-muted">
+              <tr key={`${route.path}-${route.device}`} className="border-t border-adm-line">
+                <td className="py-2 font-mono text-xs text-adm-text">{route.path}</td>
+                <td className="py-2 text-xs text-adm-muted">
                   {labels.devices[route.device as "mobile" | "desktop"] ?? route.device}
                 </td>
                 {route.figures.map((figure) => (
@@ -168,12 +168,12 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
                     {figure.enoughSamples ? (
                       <span className={`tabular-nums ${ratingTone(figure.rating)}`}>
                         {figure.display}
-                        <span className="ml-1 text-[10px] text-ink-muted">
+                        <span className="ml-1 text-[10px] text-adm-muted">
                           {labels.ratings[figure.rating]}
                         </span>
                       </span>
                     ) : (
-                      <span className="text-[11px] text-ink-muted">—</span>
+                      <span className="text-[11px] text-adm-muted">—</span>
                     )}
                   </td>
                 ))}
@@ -191,11 +191,11 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
             {deploys.map((deploy) => (
               <li
                 key={`${deploy.day}-${deploy.commitSha}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary/5 px-3 py-1 text-xs text-ink"
+                className="inline-flex items-center gap-1.5 rounded-full bg-adm-text/5 px-3 py-1 text-xs text-adm-text"
               >
-                <GitCommitHorizontal size={12} className="text-ink-muted" aria-hidden />
+                <GitCommitHorizontal size={12} className="text-adm-muted" aria-hidden />
                 <span className="font-mono">{deploy.commitSha}</span>
-                <span className="text-ink-muted">{deploy.day}</span>
+                <span className="text-adm-muted">{deploy.day}</span>
               </li>
             ))}
           </ul>
@@ -207,7 +207,7 @@ export default function VitalsPanel({ labels, overall, routes, deploys, empty }:
 
 /** Colour is the second signal; the word beside it is the first. */
 function ratingTone(rating: VitalFigureView["rating"]): string {
-  if (rating === "good") return "text-emerald-700";
-  if (rating === "needsImprovement") return "text-amber-700";
-  return "text-red-700";
+  if (rating === "good") return "text-adm-success";
+  if (rating === "needsImprovement") return "text-adm-warning";
+  return "text-adm-danger";
 }

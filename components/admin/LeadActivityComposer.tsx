@@ -150,7 +150,7 @@ export default function LeadActivityComposer({
 
   return (
     <div id="lead-composer" className="admin-card space-y-4 scroll-mt-20">
-      <div className="flex gap-1 border-b border-primary/10 pb-3">
+      <div className="flex gap-1 border-b border-adm-line pb-3">
         {([
           ["NOTE", labels.tabNote],
           ["CALL", labels.tabCall],
@@ -164,7 +164,7 @@ export default function LeadActivityComposer({
             aria-pressed={tab === value}
             className={[
               "rounded-xs px-3 py-1.5 text-xs font-medium transition-colors",
-              tab === value ? "bg-primary text-white" : "text-ink-muted hover:bg-surface-muted",
+              tab === value ? "bg-adm-strong text-adm-on-strong" : "text-adm-muted hover:bg-adm-text/4",
             ].join(" ")}
           >
             {label}
@@ -185,7 +185,7 @@ export default function LeadActivityComposer({
 
           {tab === "CALL" && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-muted">{labels.durationLabel}</span>
+              <span className="text-xs text-adm-muted">{labels.durationLabel}</span>
               <input
                 type="number"
                 min={0}
@@ -194,7 +194,7 @@ export default function LeadActivityComposer({
                 placeholder="0"
                 className="admin-input w-16 py-1.5! text-sm"
               />
-              <span className="text-xs text-ink-muted">{labels.minutes}</span>
+              <span className="text-xs text-adm-muted">{labels.minutes}</span>
               <input
                 type="number"
                 min={0}
@@ -204,7 +204,7 @@ export default function LeadActivityComposer({
                 placeholder="0"
                 className="admin-input w-16 py-1.5! text-sm"
               />
-              <span className="text-xs text-ink-muted">{labels.seconds}</span>
+              <span className="text-xs text-adm-muted">{labels.seconds}</span>
             </div>
           )}
 
@@ -218,7 +218,7 @@ export default function LeadActivityComposer({
               {labels.submit}
             </button>
             {error && (
-              <span className="flex items-center gap-1.5 text-xs text-red-700">
+              <span className="flex items-center gap-1.5 text-xs text-adm-danger">
                 <AlertCircle size={13} aria-hidden />
                 {labels.error}
               </span>
@@ -268,14 +268,14 @@ export default function LeadActivityComposer({
               {labels.appointmentSubmit}
             </button>
             {error && (
-              <span className="flex items-center gap-1.5 text-xs text-red-700">
+              <span className="flex items-center gap-1.5 text-xs text-adm-danger">
                 <AlertCircle size={13} aria-hidden />
                 {labels.error}
               </span>
             )}
             <a
               href={`/${locale}/admin/appointments`}
-              className="ml-auto text-xs text-accent-700 hover:text-accent-800 hover:underline"
+              className="ml-auto text-xs text-adm-accent-ink hover:text-adm-accent-ink hover:underline"
             >
               {labels.appointmentFullLink}
             </a>

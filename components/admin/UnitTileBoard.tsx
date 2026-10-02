@@ -124,7 +124,7 @@ export default function UnitTileBoard({ locale, projectId, projectSlug, groups, 
   return (
     <div className="space-y-5">
       {canWrite && (
-        <p className="text-xs text-ink-muted">{labels.shiftHint}</p>
+        <p className="text-xs text-adm-muted">{labels.shiftHint}</p>
       )}
 
       {selected.length > 0 && (

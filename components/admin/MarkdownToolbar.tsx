@@ -159,7 +159,7 @@ export default function MarkdownToolbar({ textareaRef, value, onChange, labels }
           title={labels[command]}
           aria-label={labels[command]}
           onClick={() => run(command)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-xs border border-primary/10 text-ink-muted transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-xs border border-adm-line text-adm-muted transition-colors hover:border-adm-line-strong hover:bg-adm-text/5 hover:text-adm-text"
         >
           <Icon size={15} aria-hidden />
         </button>

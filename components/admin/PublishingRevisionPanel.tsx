@@ -116,7 +116,7 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-accent-700 hover:text-accent-800"
+          className="inline-flex items-center gap-1 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink"
         >
           {labels.toggle}
           {open ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
@@ -126,7 +126,7 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
-            className="text-xs font-medium text-accent-700 hover:text-accent-800"
+            className="text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink"
           >
             {historyModal.label}
           </button>
@@ -145,20 +145,20 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
       )}
 
       {open && (
-        <div className="mt-2 space-y-4 rounded-xs border border-primary/10 bg-surface-muted p-3.5">
-          {loading && <Loader2 size={16} className="animate-spin text-ink-muted" aria-hidden />}
-          {error && <p className="text-xs text-red-600">{labels.error}</p>}
+        <div className="mt-2 space-y-4 rounded-xs border border-adm-line bg-adm-text/4 p-3.5">
+          {loading && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
+          {error && <p className="text-xs text-adm-danger">{labels.error}</p>}
 
           {!loading && compare && (
             <div>
-              <p className="mb-2 text-xs font-semibold text-primary">{labels.compareTitle}</p>
+              <p className="mb-2 text-xs font-semibold text-adm-text">{labels.compareTitle}</p>
               {compare.revision === null ? (
-                <p className="text-xs text-ink-muted">{labels.noRevisionYet}</p>
+                <p className="text-xs text-adm-muted">{labels.noRevisionYet}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-primary/10 text-left text-ink-muted">
+                      <tr className="border-b border-adm-line text-left text-adm-muted">
                         <th className="py-1 pr-3 font-medium">Locale</th>
                         <th className="py-1 pr-3 font-medium">{labels.publishedLabel}</th>
                         <th className="py-1 font-medium">{labels.currentLabel}</th>
@@ -170,10 +170,10 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
                         const prev = compare.revision?.find((r) => r.locale === loc);
                         const changed = titleOf(prev) !== titleOf(row);
                         return (
-                          <tr key={loc} className="border-b border-primary/5 last:border-0">
-                            <td className="py-1 pr-3 uppercase text-ink-muted">{loc}</td>
-                            <td className="py-1 pr-3 text-ink-muted">{titleOf(prev)}</td>
-                            <td className={`py-1 ${changed ? "font-semibold text-primary" : "text-ink-muted"}`}>
+                          <tr key={loc} className="border-b border-adm-line last:border-0">
+                            <td className="py-1 pr-3 uppercase text-adm-muted">{loc}</td>
+                            <td className="py-1 pr-3 text-adm-muted">{titleOf(prev)}</td>
+                            <td className={`py-1 ${changed ? "font-semibold text-adm-text" : "text-adm-muted"}`}>
                               {titleOf(row)}
                             </td>
                           </tr>
@@ -188,15 +188,15 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
 
           {!loading && (
             <div>
-              <p className="mb-2 text-xs font-semibold text-primary">{labels.historyTitle}</p>
-              {history.length === 0 && <p className="text-xs text-ink-muted">{labels.historyEmpty}</p>}
+              <p className="mb-2 text-xs font-semibold text-adm-text">{labels.historyTitle}</p>
+              {history.length === 0 && <p className="text-xs text-adm-muted">{labels.historyEmpty}</p>}
               <ul className="space-y-1.5">
                 {history.map((item) => (
                   <li key={item.id} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="text-ink-muted">
+                    <span className="text-adm-muted">
                       {new Date(item.createdAt).toLocaleString(locale)} · {item.createdByName ?? "—"}
                       {item.source === "link_opportunity" && (
-                        <span className="ml-1.5 rounded-xs bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                        <span className="ml-1.5 rounded-xs bg-adm-text/4 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-adm-muted">
                           {labels.autoEditBadge}
                         </span>
                       )}
@@ -205,7 +205,7 @@ export default function PublishingRevisionPanel({ locale, type, id, labels, hist
                       type="button"
                       disabled={pending}
                       onClick={() => onRevert(item.id)}
-                      className="shrink-0 font-medium text-accent-700 hover:text-accent-800 disabled:opacity-60"
+                      className="shrink-0 font-medium text-adm-accent-ink hover:text-adm-accent-ink disabled:opacity-60"
                     >
                       {labels.revertAction}
                     </button>

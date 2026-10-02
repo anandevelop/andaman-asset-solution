@@ -94,7 +94,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
   return (
     <div className="space-y-8">
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -167,16 +167,16 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
                   return (
                     <tr key={row.section} className="text-sm">
                       <td className="admin-td">
-                        <Link href={`${base}?group=${group}`} className="font-medium text-ink hover:text-primary-500">
+                        <Link href={`${base}?group=${group}`} className="font-medium text-adm-text hover:text-adm-info">
                           {t(`seoTranslations.section.${row.section}`)}
                         </Link>
-                        <span className="ml-2 text-xs text-ink-muted">{row.total}</span>
+                        <span className="ml-2 text-xs text-adm-muted">{row.total}</span>
                       </td>
                       {LOCALE_DISPLAY_ORDER.map((code) => (
                         <td key={code} className="admin-td">
                           <span className="flex items-center justify-center gap-2">
                             <ProgressRing value={(row.have[code] / row.total) * 100} size="sm" showValue={false} />
-                            <span className="text-xs tabular-nums text-ink-muted">
+                            <span className="text-xs tabular-nums text-adm-muted">
                               {row.have[code]} / {row.total}
                             </span>
                           </span>
@@ -222,7 +222,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
 
       {/* ── Gaps by content type ─────────────────────────────────────── */}
       {totalGaps === 0 ? (
-        <div className="admin-card py-10 text-center text-sm text-ink-muted">
+        <div className="admin-card py-10 text-center text-sm text-adm-muted">
           {t("seoTranslations.allComplete")}
         </div>
       ) : (
@@ -232,11 +232,11 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
 
           return (
             <section key={key} className="admin-card overflow-hidden p-0!">
-              <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-                <h3 className="text-sm font-semibold text-primary">
+              <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
+                <h3 className="text-sm font-semibold text-adm-text">
                   {t(`seoTranslations.group.${key}`)}
                 </h3>
-                <span className="ml-auto text-xs text-ink-muted">
+                <span className="ml-auto text-xs text-adm-muted">
                   {t("seoTranslations.groupCount", { count: group.items.length })}
                 </span>
               </div>
@@ -244,7 +244,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] border-collapse">
                   <thead>
-                    <tr className="border-b border-primary/10 bg-surface-muted">
+                    <tr className="border-b border-adm-line bg-adm-text/4">
                       <th className="admin-th">{t("seoTranslations.table.item")}</th>
                       <th className="admin-th">{t("seoTranslations.table.missing")}</th>
                       <th className="admin-th" />
@@ -254,15 +254,15 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
                     {group.items.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-primary/5 text-sm last:border-b-0"
+                        className="border-b border-adm-line text-sm last:border-b-0"
                       >
-                        <td className="admin-td font-medium text-ink">{item.label}</td>
+                        <td className="admin-td font-medium text-adm-text">{item.label}</td>
                         <td className="admin-td">
                           <div className="flex flex-wrap gap-1.5">
                             {item.missingLocales.map((missingLocale) => (
                               <span
                                 key={missingLocale}
-                                className="rounded-xs bg-red-50 px-2 py-0.5 text-[10.5px] font-semibold text-red-700"
+                                className="rounded-xs bg-adm-danger-bg px-2 py-0.5 text-[10.5px] font-semibold text-adm-danger"
                               >
                                 {LOCALE_NATIVE_NAMES[missingLocale] ?? missingLocale}
                               </span>
@@ -272,7 +272,7 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
                         <td className="admin-td">
                           <Link
                             href={`/${locale}/admin${item.editHref}`}
-                            className="font-medium text-accent-700 hover:underline"
+                            className="font-medium text-adm-accent-ink hover:underline"
                           >
                             {t("seoTranslations.table.fixLink")}
                           </Link>
@@ -300,8 +300,8 @@ function GroupChip({ href, active, label }: { href: string; active: boolean; lab
       className={[
         "rounded-xs border px-3 py-1.5 text-xs font-medium transition-colors",
         active
-          ? "border-primary bg-primary text-white"
-          : "border-primary/15 text-ink-muted hover:border-primary/40 hover:text-primary",
+          ? "border-adm-text bg-adm-strong text-adm-on-strong"
+          : "border-adm-line-strong text-adm-muted hover:border-adm-line-strong hover:text-adm-text",
       ].join(" ")}
     >
       {label}

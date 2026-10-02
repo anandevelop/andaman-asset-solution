@@ -40,7 +40,7 @@ function highlightKeyword(text: string, keyword: string): ReactNode {
 
   return parts.map((part, index) =>
     part.toLowerCase() === trimmed.toLowerCase() ? (
-      <mark key={index} className="rounded-xs bg-accent/25 text-inherit">
+      <mark key={index} className="rounded-xs bg-adm-fill/25 text-inherit">
         {part}
       </mark>
     ) : (
@@ -53,25 +53,25 @@ export default function OgPreviewCard({ title, description, imageUrl, siteUrl, f
   const domain = siteUrl.replace(/^https?:\/\//, "");
 
   return (
-    <div className="rounded-xs border border-primary/10 bg-surface-muted/40 p-4">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-ink-muted">{label}</p>
+    <div className="rounded-xs border border-adm-line bg-adm-text/4 p-4">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-adm-muted">{label}</p>
 
-      <div className="mt-3 max-w-xl overflow-hidden rounded-xs border border-primary/10 bg-white">
-        <div className="relative aspect-[1200/630] w-full bg-primary/5">
+      <div className="mt-3 max-w-xl overflow-hidden rounded-xs border border-adm-line bg-adm-solid">
+        <div className="relative aspect-[1200/630] w-full bg-adm-text/5">
           {imageUrl && (
             <ImageWithSkeleton src={imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 576px" className="object-cover" />
           )}
         </div>
         <div className="p-3">
-          <p className="truncate text-[11px] uppercase tracking-wide text-ink/50">{domain}</p>
-          <p className="mt-1 truncate text-sm font-semibold text-ink">{highlightKeyword(title, focusKeyword)}</p>
-          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-ink/60">
+          <p className="truncate text-[11px] uppercase tracking-wide text-adm-text/50">{domain}</p>
+          <p className="mt-1 truncate text-sm font-semibold text-adm-text">{highlightKeyword(title, focusKeyword)}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-adm-text/60">
             {highlightKeyword(description, focusKeyword)}
           </p>
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-ink-muted">{hint}</p>
+      <p className="mt-3 text-xs text-adm-muted">{hint}</p>
     </div>
   );
 }

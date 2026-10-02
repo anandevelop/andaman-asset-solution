@@ -111,7 +111,7 @@ export default function CtaPlacementTable({ rows, blocks, action }: Props) {
           renders no CTA at all. That is a legal configuration — it is just
           never what somebody meant to do silently. */}
       {!fallback && (
-        <p className="flex items-start gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="flex items-start gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           <TriangleAlert size={15} className="mt-0.5 shrink-0" aria-hidden />
           {tc("noDefaultWarning")}
         </p>
@@ -120,13 +120,13 @@ export default function CtaPlacementTable({ rows, blocks, action }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] text-sm">
           <thead>
-            <tr className="border-b border-primary/10 text-left text-xs uppercase tracking-widest text-ink-muted">
+            <tr className="border-b border-adm-line text-left text-xs uppercase tracking-widest text-adm-muted">
               <th className="pb-2.5 font-medium">{tc("pageColumn")}</th>
               <th className="pb-2.5 font-medium">{tc("showsColumn")}</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-primary/5">
+          <tbody className="divide-y divide-adm-line">
             {rows.map((row) => {
               const key = PATH_KEYS[row.path];
               const name = key ? tc(`paths.${key}`) : row.path;
@@ -134,8 +134,8 @@ export default function CtaPlacementTable({ rows, blocks, action }: Props) {
               return (
                 <tr key={row.path}>
                   <td className="py-2.5 pr-4 align-middle">
-                    <span className="font-medium text-ink">{name}</span>
-                    <span className="ml-2 text-xs text-ink-muted">{row.path}</span>
+                    <span className="font-medium text-adm-text">{name}</span>
+                    <span className="ml-2 text-xs text-adm-muted">{row.path}</span>
                   </td>
 
                   <td className="py-2.5 align-middle">

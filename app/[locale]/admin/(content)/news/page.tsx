@@ -126,7 +126,7 @@ export default async function AdminNewsPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -265,7 +265,7 @@ export default async function AdminNewsPage(props: Props) {
       />
 
       {/* Where the two numbers come from, said once, near them. */}
-      <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
+      <p className="flex items-start gap-2 text-xs leading-relaxed text-adm-muted">
         <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
         <span>
           {t("news.metricsNote", { days: VIEW_WINDOW_DAYS })}

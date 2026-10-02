@@ -61,7 +61,7 @@ export default function AdminLoading() {
           {Array.from({ length: 3 }, (_, index) => (
             <div
               key={index}
-              className="overflow-hidden rounded-xs border border-primary/10 bg-white"
+              className="overflow-hidden rounded-xs border border-adm-line bg-adm-solid"
             >
               <div className={`aspect-4/3 w-full ${shimmer}`} />
 
@@ -71,7 +71,7 @@ export default function AdminLoading() {
                 <div className={`mt-3 h-3 w-full rounded-xs ${shimmer}`} />
                 <div className={`mt-2 h-3 w-5/6 rounded-xs ${shimmer}`} />
 
-                <div className="mt-6 grid grid-cols-2 gap-4 border-t border-primary/10 pt-5">
+                <div className="mt-6 grid grid-cols-2 gap-4 border-t border-adm-line pt-5">
                   <div className={`h-3 w-20 rounded-xs ${shimmer}`} />
                   <div className={`h-3 w-16 rounded-xs ${shimmer}`} />
                 </div>

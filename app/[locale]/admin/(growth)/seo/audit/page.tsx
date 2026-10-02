@@ -87,7 +87,7 @@ export default async function SeoAuditPage(props: Props) {
       </div>
 
       {offline && (
-        <p className="flex items-center gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="flex items-center gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           <DatabaseZap size={16} className="shrink-0" aria-hidden />
           {t("seo.audit.offline")}
         </p>
@@ -95,8 +95,8 @@ export default async function SeoAuditPage(props: Props) {
 
       {!offline && !overview.latest && (
         <div className="admin-card">
-          <p className="flex items-center gap-2 text-sm text-ink">
-            <Clock size={16} className="shrink-0 text-ink-muted" aria-hidden />
+          <p className="flex items-center gap-2 text-sm text-adm-text">
+            <Clock size={16} className="shrink-0 text-adm-muted" aria-hidden />
             {t("seo.audit.neverRun")}
           </p>
           <p className="admin-hint mt-1">{t("seo.audit.neverRunHint")}</p>
@@ -104,7 +104,7 @@ export default async function SeoAuditPage(props: Props) {
       )}
 
       {overview.stale && (
-        <p className="flex items-center gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="flex items-center gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           <AlertTriangle size={16} className="shrink-0" aria-hidden />
           {t("seo.audit.stale", { when: overview.latest?.at.toISOString().slice(0, 10) ?? "" })}
         </p>
@@ -115,7 +115,7 @@ export default async function SeoAuditPage(props: Props) {
           <h3 className="admin-label">{t("seo.audit.rulesTitle")}</h3>
           <p className="admin-hint">{t("seo.audit.rulesHint")}</p>
 
-          <ul className="mt-3 divide-y divide-primary/5">
+          <ul className="mt-3 divide-y divide-adm-line">
             {overview.rules.map((entry) => {
               const active = ruleKey === entry.key;
               return (
@@ -123,7 +123,7 @@ export default async function SeoAuditPage(props: Props) {
                   <Link
                     href={active ? "./audit" : `./audit?rule=${entry.key}`}
                     className={`flex items-center gap-3 px-1 py-2 text-sm transition-colors ${
-                      active ? "bg-primary/5 text-primary" : "text-ink hover:bg-primary/5"
+                      active ? "bg-adm-text/5 text-adm-text" : "text-adm-text hover:bg-adm-text/5"
                     }`}
                   >
                     <span
@@ -133,11 +133,11 @@ export default async function SeoAuditPage(props: Props) {
                     </span>
                     <span className="flex-1">{ruleName(entry.key)}</span>
                     <span
-                      className={`shrink-0 tabular-nums ${entry.count > 0 ? "text-ink" : "text-emerald-700"}`}
+                      className={`shrink-0 tabular-nums ${entry.count > 0 ? "text-adm-text" : "text-adm-success"}`}
                     >
                       {entry.count > 0 ? entry.count : "✓"}
                     </span>
-                    <span className="w-12 shrink-0 text-right text-xs text-ink-muted">
+                    <span className="w-12 shrink-0 text-right text-xs text-adm-muted">
                       {t("seo.audit.weight", { weight: entry.weight })}
                     </span>
                   </Link>
@@ -149,7 +149,7 @@ export default async function SeoAuditPage(props: Props) {
       )}
 
       {ruleKey && (
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-adm-muted">
           {t("seo.audit.filteredBy", { rule: ruleName(ruleKey) })}{" "}
           <Link href="./audit" className="underline">
             {t("seo.audit.clearFilter")}
@@ -200,7 +200,7 @@ export default async function SeoAuditPage(props: Props) {
 }
 
 function severityTone(severity: string): string {
-  if (severity === "critical") return "bg-red-50 text-red-800";
-  if (severity === "warning") return "bg-amber-50 text-amber-800";
-  return "bg-ink/5 text-ink-muted";
+  if (severity === "critical") return "bg-adm-danger-bg text-adm-danger";
+  if (severity === "warning") return "bg-adm-warning-bg text-adm-warning";
+  return "bg-adm-text/5 text-adm-muted";
 }

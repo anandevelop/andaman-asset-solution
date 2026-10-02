@@ -94,7 +94,7 @@ export default function PasswordForm({ action, requireCurrent = false }: Props) 
             className="admin-input max-w-md"
           />
           {err("currentPassword") && (
-            <p className="mt-1.5 text-xs text-red-700">{err("currentPassword")}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{err("currentPassword")}</p>
           )}
         </div>
       )}
@@ -113,7 +113,7 @@ export default function PasswordForm({ action, requireCurrent = false }: Props) 
         />
         <p className="admin-hint">{t("users.passwordHint")}</p>
         {err("password") && (
-          <p className="mt-1.5 text-xs text-red-700">{err("password")}</p>
+          <p className="mt-1.5 text-xs text-adm-danger">{err("password")}</p>
         )}
       </div>
 
@@ -130,7 +130,7 @@ export default function PasswordForm({ action, requireCurrent = false }: Props) 
           className="admin-input max-w-md"
         />
         {err("confirmPassword") && (
-          <p className="mt-1.5 text-xs text-red-700">{err("confirmPassword")}</p>
+          <p className="mt-1.5 text-xs text-adm-danger">{err("confirmPassword")}</p>
         )}
       </div>
 

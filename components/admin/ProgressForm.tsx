@@ -150,7 +150,7 @@ export default function ProgressForm({
 
         <div>
           <label className="admin-label flex items-center gap-1.5">
-            <Youtube size={15} className="text-ink-muted" aria-hidden />
+            <Youtube size={15} className="text-adm-muted" aria-hidden />
             {t("progress.videoUrl")}
           </label>
           <input
@@ -160,7 +160,7 @@ export default function ProgressForm({
             defaultValue={values.videoUrl}
             className="admin-input"
           />
-          <p className="mt-1.5 text-xs text-ink-muted">{t("progress.videoUrlHint")}</p>
+          <p className="mt-1.5 text-xs text-adm-muted">{t("progress.videoUrlHint")}</p>
         </div>
 
         <ImageUploader
@@ -173,12 +173,12 @@ export default function ProgressForm({
           hint={t("progress.imagesHint")}
         />
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isPublished"
             defaultChecked={values.isPublished}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("common.published")}
         </label>
@@ -188,7 +188,7 @@ export default function ProgressForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton confirmLabel={t("common.confirmDelete")} />
         </form>
       )}

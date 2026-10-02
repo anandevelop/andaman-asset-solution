@@ -137,7 +137,7 @@ export default function WhyUsPointForm({
             required
             className="admin-input"
           />
-          {err("title") && <p className="mt-1.5 text-xs text-red-700">{err("title")}</p>}
+          {err("title") && <p className="mt-1.5 text-xs text-adm-danger">{err("title")}</p>}
         </div>
 
         <div>
@@ -149,7 +149,7 @@ export default function WhyUsPointForm({
             required
             className="admin-textarea"
           />
-          {err("body") && <p className="mt-1.5 text-xs text-red-700">{err("body")}</p>}
+          {err("body") && <p className="mt-1.5 text-xs text-adm-danger">{err("body")}</p>}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -175,12 +175,12 @@ export default function WhyUsPointForm({
           </div>
         </div>
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("whyUs.active")}
         </label>
@@ -190,7 +190,7 @@ export default function WhyUsPointForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

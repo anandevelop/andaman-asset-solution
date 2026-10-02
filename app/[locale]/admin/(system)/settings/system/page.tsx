@@ -93,20 +93,20 @@ export default async function AdminSystemSettingsPage(props: Props) {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("settings.groups.system")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.system.subtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("settings.groups.system")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("settings.system.subtitle")}</p>
       </header>
 
       {/* The counts below all read 0 during an outage, which looks like an
           empty database rather than an unreachable one. */}
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       <section className="admin-card space-y-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
           <Database size={15} aria-hidden />
           {t("settings.system.buildTitle")}
         </h3>
@@ -114,9 +114,9 @@ export default async function AdminSystemSettingsPage(props: Props) {
         <dl className="space-y-2 text-sm">
           {facts.map((fact) => (
             <div key={fact.key} className="flex items-baseline justify-between gap-3">
-              <dt className="text-ink-muted">{fact.label}</dt>
+              <dt className="text-adm-muted">{fact.label}</dt>
               <dd
-                className={`font-mono text-xs ${fact.bad ? "font-semibold text-red-700" : "text-primary"}`}
+                className={`font-mono text-xs ${fact.bad ? "font-semibold text-adm-danger" : "text-adm-text"}`}
               >
                 {fact.value}
               </dd>
@@ -128,17 +128,17 @@ export default async function AdminSystemSettingsPage(props: Props) {
       {/* The environment check that instrumentation.ts runs at boot, shown
           where somebody can act on it rather than only in a container log. */}
       <section className="admin-card space-y-3">
-        <h3 className="text-sm font-semibold text-primary">{t("settings.system.envTitle")}</h3>
+        <h3 className="text-sm font-semibold text-adm-text">{t("settings.system.envTitle")}</h3>
 
         {env.fatal.length === 0 && env.warnings.length === 0 ? (
-          <p className="flex items-center gap-2 text-sm text-emerald-800">
+          <p className="flex items-center gap-2 text-sm text-adm-success">
             <CheckCircle2 size={15} aria-hidden />
             {t("settings.system.envOk")}
           </p>
         ) : (
           <ul className="space-y-2 text-sm">
             {env.fatal.map((problem) => (
-              <li key={problem.name} className="flex items-start gap-2 text-red-800">
+              <li key={problem.name} className="flex items-start gap-2 text-adm-danger">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
                 <span>
                   <code className="font-mono text-xs">{problem.name}</code> {problem.detail}
@@ -146,7 +146,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
               </li>
             ))}
             {env.warnings.map((problem) => (
-              <li key={problem.name} className="flex items-start gap-2 text-amber-800">
+              <li key={problem.name} className="flex items-start gap-2 text-adm-warning">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
                 <span>
                   <code className="font-mono text-xs">{problem.name}</code> — {problem.detail}
@@ -158,7 +158,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
       </section>
 
       <section className="admin-card space-y-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
           <HardDrive size={15} aria-hidden />
           {t("settings.system.volumeTitle")}
         </h3>
@@ -166,13 +166,13 @@ export default async function AdminSystemSettingsPage(props: Props) {
         <dl className="space-y-2 text-sm">
           {volumes.map((row) => (
             <div key={row.key} className="flex items-baseline justify-between gap-3">
-              <dt className="text-ink-muted">{row.label}</dt>
-              <dd className="font-medium tabular-nums text-primary">{row.value.toLocaleString()}</dd>
+              <dt className="text-adm-muted">{row.label}</dt>
+              <dd className="font-medium tabular-nums text-adm-text">{row.value.toLocaleString()}</dd>
             </div>
           ))}
-          <div className="flex items-baseline justify-between gap-3 border-t border-primary/10 pt-2">
-            <dt className="text-ink-muted">{t("settings.system.volumeStorage")}</dt>
-            <dd className="font-medium tabular-nums text-primary">
+          <div className="flex items-baseline justify-between gap-3 border-t border-adm-line pt-2">
+            <dt className="text-adm-muted">{t("settings.system.volumeStorage")}</dt>
+            <dd className="font-medium tabular-nums text-adm-text">
               {t("settings.system.gigabytes", { gb: formatGigabytes(health.storageBytes) })}
             </dd>
           </div>
@@ -180,17 +180,17 @@ export default async function AdminSystemSettingsPage(props: Props) {
       </section>
 
       <section className="admin-card space-y-3">
-        <h3 className="text-sm font-semibold text-primary">{t("settings.system.backupTitle")}</h3>
-        <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-muted">
-          <Info size={15} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+        <h3 className="text-sm font-semibold text-adm-text">{t("settings.system.backupTitle")}</h3>
+        <p className="flex items-start gap-2 text-sm leading-relaxed text-adm-muted">
+          <Info size={15} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
           {t("settings.system.backupNote")}
         </p>
       </section>
 
       <section className="admin-card space-y-3">
-        <h3 className="text-sm font-semibold text-primary">{t("settings.system.cacheTitle")}</h3>
-        <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-muted">
-          <Info size={15} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+        <h3 className="text-sm font-semibold text-adm-text">{t("settings.system.cacheTitle")}</h3>
+        <p className="flex items-start gap-2 text-sm leading-relaxed text-adm-muted">
+          <Info size={15} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
           {t("settings.system.cacheNote")}
         </p>
         <ClearCacheButton

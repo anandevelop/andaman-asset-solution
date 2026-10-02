@@ -59,8 +59,8 @@ export default function SettingsNav({
                 className={[
                   "flex items-center gap-2.5 rounded-xs px-3.5 py-2.5 text-sm transition-colors",
                   active
-                    ? "bg-primary font-semibold text-white"
-                    : "text-ink-muted hover:bg-surface-muted hover:text-primary",
+                    ? "bg-adm-strong font-semibold text-adm-on-strong"
+                    : "text-adm-muted hover:bg-adm-text/4 hover:text-adm-text",
                 ].join(" ")}
               >
                 <Icon size={15} aria-hidden />

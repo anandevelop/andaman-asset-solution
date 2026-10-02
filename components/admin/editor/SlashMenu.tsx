@@ -223,10 +223,10 @@ export default function SlashMenu({ editor, items, emptyLabel }: Props) {
       <div
         role="listbox"
         aria-label={emptyLabel}
-        className="max-h-72 w-64 overflow-y-auto rounded-xs border border-primary/15 bg-surface-raised p-1 shadow-card"
+        className="max-h-72 w-64 overflow-y-auto rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-card"
       >
         {matches.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-ink-muted">{emptyLabel}</p>
+          <p className="px-3 py-2 text-xs text-adm-muted">{emptyLabel}</p>
         ) : (
           matches.map((item, index) => {
             const Icon = item.icon;
@@ -245,7 +245,7 @@ export default function SlashMenu({ editor, items, emptyLabel }: Props) {
                 }}
                 onMouseEnter={() => setActive(index)}
                 className={`flex w-full items-center gap-2.5 rounded-xs px-3 py-2 text-left text-sm transition-colors ${
-                  index === active ? "bg-primary/5 text-primary" : "text-ink hover:bg-primary/5"
+                  index === active ? "bg-adm-text/5 text-adm-text" : "text-adm-text hover:bg-adm-text/5"
                 }`}
               >
                 <Icon size={15} aria-hidden />

@@ -122,7 +122,7 @@ function TextSetting({
       {budget !== undefined && (
         <p
           className={`mt-1 text-right text-[11px] tabular-nums ${
-            over ? "text-amber-700" : "text-ink-muted"
+            over ? "text-adm-warning" : "text-adm-muted"
           }`}
         >
           {/* Amber, never red, and the field still saves: over budget means
@@ -187,7 +187,7 @@ export default function SettingsForm({ action, groups, labels }: Props) {
               const badge = (
                 <span
                   className={`text-[10px] uppercase tracking-wide ${
-                    field.overridden ? "text-accent-700" : "text-ink-muted"
+                    field.overridden ? "text-adm-accent-ink" : "text-adm-muted"
                   }`}
                 >
                   {field.overridden ? labels.overridden : labels.usingDefault}
@@ -235,7 +235,7 @@ export default function SettingsForm({ action, groups, labels }: Props) {
                   )}
 
                   {error && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
                       <AlertCircle size={13} aria-hidden />
                       {error}
                     </p>
@@ -250,7 +250,7 @@ export default function SettingsForm({ action, groups, labels }: Props) {
       <div className="flex flex-wrap items-center gap-4">
         <SubmitButton label={labels.save} />
 
-        <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+        <p className="flex items-center gap-1.5 text-xs text-adm-muted">
           <RotateCcw size={12} aria-hidden />
           {t("settings.resetHint")}
         </p>

@@ -99,9 +99,9 @@ type Props = {
 type Transform = { scale: number; positionX: number; positionY: number };
 
 const STATUS_DOT: Record<DrawerUnit["status"], string> = {
-  AVAILABLE: "bg-emerald-500",
-  RESERVED: "bg-amber-500",
-  SOLD: "bg-ink/30",
+  AVAILABLE: "bg-adm-success",
+  RESERVED: "bg-adm-warning",
+  SOLD: "bg-adm-text/30",
 };
 
 const clamp = (n: number) => Math.min(100, Math.max(0, n));
@@ -145,7 +145,7 @@ function ZoomControls({ labels }: { labels: Labels }) {
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
   const buttonClass =
-    "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5";
+    "flex h-9 w-9 items-center justify-center rounded-xs border border-adm-line bg-adm-solid text-adm-text shadow-card transition-colors hover:bg-adm-text/5";
 
   return (
     <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
@@ -333,12 +333,12 @@ export default function SitePlanDrawer({
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       {/* ── Canvas ────────────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <p className="text-sm text-ink-muted">{labels.clickHint}</p>
+        <p className="text-sm text-adm-muted">{labels.clickHint}</p>
 
         <div
           ref={outerRef}
           onClick={handleCanvasClick}
-          className="relative aspect-1754/1241 w-full cursor-crosshair overflow-hidden border border-primary/10 bg-white"
+          className="relative aspect-1754/1241 w-full cursor-crosshair overflow-hidden border border-adm-line bg-adm-solid"
         >
           <TransformWrapper minScale={1} maxScale={8} centerOnInit doubleClick={{ mode: "zoomIn" }}>
             <TransformSync onChange={setTransform} />
@@ -402,7 +402,7 @@ export default function SitePlanDrawer({
                     onPointerDown={handleVertexPointerDown(i)}
                     onClick={(event) => event.stopPropagation()}
                     style={{ left: `${p.x}%`, top: `${p.y}%`, touchAction: "none" }}
-                    className={`absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border border-white bg-accent shadow transition-all duration-150 hover:h-3.5 hover:w-3.5 active:cursor-grabbing ${
+                    className={`absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border border-white bg-adm-fill shadow transition-all duration-150 hover:h-3.5 hover:w-3.5 active:cursor-grabbing ${
                       i === 0 ? "ring-2 ring-primary ring-offset-1" : ""
                     }`}
                   />
@@ -413,7 +413,7 @@ export default function SitePlanDrawer({
         </div>
 
         {localError && (
-          <p className="flex items-center gap-2 text-sm text-red-700">
+          <p className="flex items-center gap-2 text-sm text-adm-danger">
             <AlertCircle size={15} aria-hidden />
             {localError}
           </p>
@@ -444,7 +444,7 @@ export default function SitePlanDrawer({
           )}
         </div>
 
-        <form action={formAction} className="space-y-4 border-t border-primary/10 pt-5">
+        <form action={formAction} className="space-y-4 border-t border-adm-line pt-5">
           <input type="hidden" name="unitId" value={selectedUnitId ?? ""} />
           <input type="hidden" name="shapePoints" value={JSON.stringify(points)} />
 
@@ -475,7 +475,7 @@ export default function SitePlanDrawer({
               )}
             </select>
             {!selectedUnitId && (
-              <p className="mt-1.5 text-xs text-red-700">{labels.selectUnitError}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{labels.selectUnitError}</p>
             )}
           </div>
 
@@ -499,10 +499,10 @@ export default function SitePlanDrawer({
       {/* ── Progress + unit list ──────────────────────────────────────── */}
       <aside className="space-y-4">
         <div className="admin-card">
-          <p className="text-sm font-medium text-primary">{labels.progress}</p>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/10">
+          <p className="text-sm font-medium text-adm-text">{labels.progress}</p>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-adm-text/10">
             <div
-              className="h-full bg-accent"
+              className="h-full bg-adm-fill"
               style={{ width: `${totalCount === 0 ? 0 : (mappedCount / totalCount) * 100}%` }}
             />
           </div>
@@ -519,7 +519,7 @@ export default function SitePlanDrawer({
                   type="button"
                   onClick={() => loadUnit(u.id)}
                   className={`flex w-full items-center justify-between rounded-xs px-2.5 py-2 text-left text-sm transition-colors ${
-                    active ? "bg-accent/10 text-primary" : "text-ink/70 hover:bg-primary/5"
+                    active ? "bg-adm-fill/10 text-adm-text" : "text-adm-text/70 hover:bg-adm-text/5"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -527,12 +527,12 @@ export default function SitePlanDrawer({
                     {u.unitNumber}
                   </span>
                   {isMapped ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                    <span className="flex items-center gap-1 text-xs font-medium text-adm-success">
                       <PenLine size={12} aria-hidden />
                       {labels.edit}
                     </span>
                   ) : (
-                    <span className="text-xs text-ink-muted">—</span>
+                    <span className="text-xs text-adm-muted">—</span>
                   )}
                 </button>
               );
@@ -541,7 +541,7 @@ export default function SitePlanDrawer({
         )}
 
         {mappedCount === totalCount && totalCount > 0 && (
-          <p className="text-sm text-emerald-700">{labels.allMapped}</p>
+          <p className="text-sm text-adm-success">{labels.allMapped}</p>
         )}
       </aside>
     </div>

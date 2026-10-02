@@ -103,7 +103,7 @@ export default function DashboardControls({ currentRange, labels }: Props) {
         <CalendarDays
           size={14}
           strokeWidth={1.7}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-primary"
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-adm-text"
           aria-hidden
         />
         <select
@@ -121,7 +121,7 @@ export default function DashboardControls({ currentRange, labels }: Props) {
         <ChevronDown
           size={12}
           strokeWidth={2}
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-adm-text"
           aria-hidden
         />
       </div>

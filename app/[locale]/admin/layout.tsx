@@ -146,7 +146,7 @@ export default async function AdminLayout(props: Props) {
       <SpotlightTracker />
       {/* data-admin-root switches on the back office's denser type and
           spacing scale — see "Back-office density" in globals.css. */}
-      <div data-admin-root className="isolate min-h-screen bg-surface text-sm text-ink lg:flex">
+      <div data-admin-root className="isolate min-h-screen bg-adm-bg text-sm text-adm-text lg:flex">
         {/* The haze and grid behind everything (globals.css, .admin-aurora).
             `isolate` above is what lets -z-10 sit over the root's own
             background instead of under it. The rail is opaque, so only the

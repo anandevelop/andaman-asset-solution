@@ -86,14 +86,14 @@ export default function ReportView({
 }: Props) {
   return (
     <article className="report-sheet admin-card" id="report-sheet">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-primary/10 pb-4">
+      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-adm-line pb-4">
         <div>
-          <h2 className="text-xl font-semibold text-primary">{labels.title}</h2>
-          <p className="mt-1 text-sm text-ink-muted">
+          <h2 className="text-xl font-semibold text-adm-text">{labels.title}</h2>
+          <p className="mt-1 text-sm text-adm-muted">
             {formatted.periodLabel} · {audienceLabel}
           </p>
         </div>
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-adm-muted">
           {labels.dataUpTo} {formatted.coversUntil}
         </p>
       </header>
@@ -139,7 +139,7 @@ export default function ReportView({
         ) : (
           <table className="mt-3 w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+              <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
                 <th className="pb-2 font-medium">{labels.columnProject}</th>
                 <th className="pb-2 text-right font-medium">
                   {labels.columnClicks}
@@ -157,18 +157,18 @@ export default function ReportView({
             </thead>
             <tbody>
               {data.rows.map((row) => (
-                <tr key={row.key} className="border-t border-primary/5">
-                  <td className="py-2 text-ink">
+                <tr key={row.key} className="border-t border-adm-line">
+                  <td className="py-2 text-adm-text">
                     {row.key === "news" ? labels.newsRow : row.name}
                   </td>
                   {/* Both dashes are phase 4: clicks, and the rate that
                       needs them as its denominator. */}
-                  <td className="py-2 text-right text-ink-muted">—</td>
-                  <td className="py-2 text-right font-medium tabular-nums text-ink">
+                  <td className="py-2 text-right text-adm-muted">—</td>
+                  <td className="py-2 text-right font-medium tabular-nums text-adm-text">
                     {row.googleLeads}
                   </td>
-                  <td className="py-2 text-right text-ink-muted">—</td>
-                  <td className="py-2 text-right tabular-nums text-ink-muted">
+                  <td className="py-2 text-right text-adm-muted">—</td>
+                  <td className="py-2 text-right tabular-nums text-adm-muted">
                     {row.allLeads}
                   </td>
                 </tr>
@@ -207,16 +207,16 @@ export default function ReportView({
         </dl>
       </section>
 
-      <section className="mt-6 border-t border-primary/10 pt-4">
+      <section className="mt-6 border-t border-adm-line pt-4">
         <h3 className="admin-label">
           {labels.notesTitle}
           {data.note.isDraft ? (
-            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-normal text-amber-900">
+            <span className="ml-2 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-normal text-adm-warning">
               {labels.notesDraft}
             </span>
           ) : (
             data.note.editedBy && (
-              <span className="ml-2 text-[11px] font-normal text-ink-muted">
+              <span className="ml-2 text-[11px] font-normal text-adm-muted">
                 {labels.notesEditedBy} {data.note.editedBy}
               </span>
             )
@@ -226,7 +226,7 @@ export default function ReportView({
         {noteBody.trim() === "" ? (
           <p className="admin-hint mt-2">{labels.notesEmpty}</p>
         ) : (
-          <div className="mt-2 space-y-1.5 text-sm text-ink">
+          <div className="mt-2 space-y-1.5 text-sm text-adm-text">
             {noteBody
               .split("\n")
               .filter((line) => line.trim() !== "")
@@ -252,16 +252,16 @@ function Figure({
   muted?: boolean;
 }) {
   return (
-    <div className="rounded-xs border border-primary/10 px-3 py-2.5">
-      <dt className="text-xs uppercase tracking-wide text-ink-muted">
+    <div className="rounded-xs border border-adm-line px-3 py-2.5">
+      <dt className="text-xs uppercase tracking-wide text-adm-muted">
         {label}
       </dt>
       <dd
-        className={`mt-1 ${muted ? "text-xs text-ink-muted" : "text-2xl font-semibold tabular-nums text-ink"}`}
+        className={`mt-1 ${muted ? "text-xs text-adm-muted" : "text-2xl font-semibold tabular-nums text-adm-text"}`}
       >
         {value}
         {delta && (
-          <span className="ml-2 text-xs font-normal text-ink-muted">
+          <span className="ml-2 text-xs font-normal text-adm-muted">
             {delta}
           </span>
         )}

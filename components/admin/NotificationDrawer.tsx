@@ -89,8 +89,8 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
         className="absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col bg-adm-solid shadow-[var(--adm-shadow-float)] outline-hidden motion-safe:animate-[lead-drawer-in_.2s_ease-out]"
       >
         <div className="flex h-[60px] shrink-0 items-center gap-2 border-b border-adm-line px-4">
-          <Bell size={17} aria-hidden className="text-ink-muted" />
-          <h2 className="flex-1 text-sm font-semibold text-ink">{tTop("notifications")}</h2>
+          <Bell size={17} aria-hidden className="text-adm-muted" />
+          <h2 className="flex-1 text-sm font-semibold text-adm-text">{tTop("notifications")}</h2>
           {unreadCount > 0 && (
             <button
               type="button"
@@ -101,7 +101,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
                   router.refresh();
                 })
               }
-              className="text-xs text-ink-muted hover:text-ink hover:underline"
+              className="text-xs text-adm-muted hover:text-adm-text hover:underline"
             >
               {tTop("markAllRead")}
             </button>
@@ -110,7 +110,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
             type="button"
             onClick={onClose}
             aria-label={t("close")}
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-ink-muted hover:bg-primary/5 hover:text-ink"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-adm-muted hover:bg-adm-text/5 hover:text-adm-text"
           >
             <X size={16} aria-hidden />
           </button>
@@ -129,8 +129,8 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
                 className={[
                   "relative flex items-center gap-1.5 px-3 py-2.5 text-[13px]",
                   tab === key
-                    ? "font-semibold text-ink after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:rounded-full after:bg-adm-fill"
-                    : "text-ink-muted hover:text-ink",
+                    ? "font-semibold text-adm-text after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:rounded-full after:bg-adm-fill"
+                    : "text-adm-muted hover:text-adm-text",
                 ].join(" ")}
               >
                 {t(key)}
@@ -146,7 +146,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
 
         <div className="flex-1 overflow-y-auto">
           {shown.length === 0 ? (
-            <p className="px-5 py-10 text-center text-sm text-ink-muted">
+            <p className="px-5 py-10 text-center text-sm text-adm-muted">
               {tab === "important" ? t("emptyImportant") : tTop("noNotifications")}
             </p>
           ) : (
@@ -156,7 +156,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
                   <Link
                     href={row.href ? `/${locale}${row.href}` : `/${locale}/admin`}
                     onClick={onClose}
-                    className={`flex gap-3 px-4 py-3 transition-colors hover:bg-primary/5 ${read ? "" : "bg-adm-fill/10"}`}
+                    className={`flex gap-3 px-4 py-3 transition-colors hover:bg-adm-text/5 ${read ? "" : "bg-adm-fill/10"}`}
                   >
                     <span
                       aria-hidden
@@ -164,15 +164,15 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
                     />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-[13px] font-medium text-ink">{row.title}</span>
+                        <span className="truncate text-[13px] font-medium text-adm-text">{row.title}</span>
                         {count > 1 && (
                           <span className="shrink-0 rounded-full bg-adm-neutral-bg px-1.5 text-[10.5px] font-semibold tabular-nums text-adm-neutral">
                             ×{count}
                           </span>
                         )}
                       </span>
-                      {row.body && <span className="mt-0.5 block truncate text-xs text-ink-muted">{row.body}</span>}
-                      <span className="mt-0.5 block text-[11px] text-ink-muted/80">{row.when}</span>
+                      {row.body && <span className="mt-0.5 block truncate text-xs text-adm-muted">{row.body}</span>}
+                      <span className="mt-0.5 block text-[11px] text-adm-muted/80">{row.when}</span>
                     </span>
                   </Link>
                 </li>
@@ -183,7 +183,7 @@ export default function NotificationDrawer({ locale, notifications, unreadCount,
 
         {/* Test traffic, one line however much of it there is. */}
         {tests.length > 0 && (
-          <div className="flex items-center gap-2.5 border-t border-adm-line px-4 py-3 text-xs text-ink-muted">
+          <div className="flex items-center gap-2.5 border-t border-adm-line px-4 py-3 text-xs text-adm-muted">
             <FlaskConical size={14} aria-hidden className="shrink-0" />
             <span className="flex-1">{t("tests", { count: tests.length, unread: unreadTests })}</span>
             {canClearTests && unreadTests > 0 && (

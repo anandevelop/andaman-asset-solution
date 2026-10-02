@@ -69,14 +69,14 @@ export default async function AdminSeoIndexingPage(props: Props) {
       </div>
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {crawl.empty ? (
         <section className="admin-card">
-          <p className="text-sm text-ink">{t("seo.indexing.empty")}</p>
+          <p className="text-sm text-adm-text">{t("seo.indexing.empty")}</p>
           <p className="admin-hint mt-1">{t("seo.indexing.emptyHint")}</p>
         </section>
       ) : (
@@ -100,7 +100,7 @@ export default async function AdminSeoIndexingPage(props: Props) {
 
             <table className="mt-3 w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+                <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
                   <th className="pb-2 font-medium">{t("seo.indexing.columnBot")}</th>
                   <th className="pb-2 text-right font-medium">{t("seo.indexing.columnHits")}</th>
                   <th className="pb-2 text-right font-medium">{t("seo.indexing.columnPaths")}</th>
@@ -110,21 +110,21 @@ export default async function AdminSeoIndexingPage(props: Props) {
               </thead>
               <tbody>
                 {crawl.activity.map((row) => (
-                  <tr key={row.bot} className="border-t border-primary/5">
+                  <tr key={row.bot} className="border-t border-adm-line">
                     <td className="py-2">
-                      <span className="inline-flex items-center gap-1.5 text-ink">
-                        <Bot size={13} className="text-ink-muted" aria-hidden />
+                      <span className="inline-flex items-center gap-1.5 text-adm-text">
+                        <Bot size={13} className="text-adm-muted" aria-hidden />
                         {row.bot}
                       </span>
                     </td>
-                    <td className="py-2 text-right tabular-nums text-ink">{row.hits}</td>
-                    <td className="py-2 text-right tabular-nums text-ink-muted">{row.paths}</td>
+                    <td className="py-2 text-right tabular-nums text-adm-text">{row.hits}</td>
+                    <td className="py-2 text-right tabular-nums text-adm-muted">{row.paths}</td>
                     <td
-                      className={`py-2 text-right tabular-nums ${row.notFound > 0 ? "text-red-700" : "text-ink-muted"}`}
+                      className={`py-2 text-right tabular-nums ${row.notFound > 0 ? "text-adm-danger" : "text-adm-muted"}`}
                     >
                       {row.notFound}
                     </td>
-                    <td className="py-2 text-right text-xs text-ink-muted">
+                    <td className="py-2 text-right text-xs text-adm-muted">
                       {seenFormat.format(row.lastSeen)}
                     </td>
                   </tr>
@@ -145,7 +145,7 @@ export default async function AdminSeoIndexingPage(props: Props) {
 
               <table className="mt-3 w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+                  <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
                     <th className="pb-2 font-medium">{t("seo.indexing.columnPath")}</th>
                     <th className="pb-2 font-medium">{t("seo.indexing.columnFoundBy")}</th>
                     <th className="pb-2 text-right font-medium">{t("seo.indexing.columnHits")}</th>
@@ -154,10 +154,10 @@ export default async function AdminSeoIndexingPage(props: Props) {
                 </thead>
                 <tbody>
                   {crawl.notFound.map((row) => (
-                    <tr key={row.path} className="border-t border-primary/5">
-                      <td className="py-2 font-mono text-xs text-ink">{row.path}</td>
-                      <td className="py-2 text-xs text-ink-muted">{row.bots.join(", ")}</td>
-                      <td className="py-2 text-right tabular-nums text-ink">{row.hits}</td>
+                    <tr key={row.path} className="border-t border-adm-line">
+                      <td className="py-2 font-mono text-xs text-adm-text">{row.path}</td>
+                      <td className="py-2 text-xs text-adm-muted">{row.bots.join(", ")}</td>
+                      <td className="py-2 text-right tabular-nums text-adm-text">{row.hits}</td>
                       <td className="py-2 text-right">
                         {/*
                           Into the existing redirect form with the path
@@ -167,7 +167,7 @@ export default async function AdminSeoIndexingPage(props: Props) {
                         */}
                         <Link
                           href={`/${locale}/admin/seo/urls?from=${encodeURIComponent(row.path)}`}
-                          className="inline-flex items-center gap-1 text-xs text-primary underline"
+                          className="inline-flex items-center gap-1 text-xs text-adm-text underline"
                         >
                           {t("seo.indexing.addRedirect")}
                           <ExternalLink size={11} aria-hidden />
@@ -189,7 +189,7 @@ export default async function AdminSeoIndexingPage(props: Props) {
                 {crawl.uncrawled.map((path) => (
                   <li
                     key={path}
-                    className="rounded-xs border border-primary/10 px-2 py-1 font-mono text-xs text-ink-muted"
+                    className="rounded-xs border border-adm-line px-2 py-1 font-mono text-xs text-adm-muted"
                   >
                     {path}
                   </li>
@@ -205,10 +205,10 @@ export default async function AdminSeoIndexingPage(props: Props) {
 
 function Step({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
-    <div className="rounded-xs border border-primary/10 px-3 py-2.5">
-      <dt className="text-xs uppercase tracking-wide text-ink-muted">{label}</dt>
+    <div className="rounded-xs border border-adm-line px-3 py-2.5">
+      <dt className="text-xs uppercase tracking-wide text-adm-muted">{label}</dt>
       <dd
-        className={`mt-1 ${muted ? "text-xs text-ink-muted" : "text-2xl font-semibold tabular-nums text-ink"}`}
+        className={`mt-1 ${muted ? "text-xs text-adm-muted" : "text-2xl font-semibold tabular-nums text-adm-text"}`}
       >
         {value}
       </dd>

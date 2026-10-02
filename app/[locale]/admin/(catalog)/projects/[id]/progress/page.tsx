@@ -154,7 +154,7 @@ export default async function AdminProgressPage(props: Props) {
         active="progress"
       />
 
-      <p className="text-sm text-ink-muted">
+      <p className="text-sm text-adm-muted">
           {t("progress.subtitle", { project: projectName })}
         </p>
 
@@ -212,8 +212,8 @@ export default async function AdminProgressPage(props: Props) {
 
       {/* ── Add a month ─────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("progress.addTitle")}
         </h2>
 
@@ -230,7 +230,7 @@ export default async function AdminProgressPage(props: Props) {
 
       {/* ── Existing months ─────────────────────────────────────────── */}
       {updates.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("progress.empty")}
         </div>
       ) : (
@@ -238,15 +238,15 @@ export default async function AdminProgressPage(props: Props) {
           {updates.map((update) => (
             <section key={update.id} className="admin-card">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-primary">
+                <h2 className="text-base font-semibold text-adm-text">
                   {formatMonthYear(locale, update.year, update.month)}
                 </h2>
 
                 <span
                   className={
                     update.isPublished
-                      ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                      : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                      ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                      : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                   }
                 >
                   {update.isPublished ? t("common.published") : t("common.draft")}

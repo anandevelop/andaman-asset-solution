@@ -132,7 +132,7 @@ export default function PopoverMenu({
                   close();
                   if (!checked) onSelect(option.value);
                 }}
-                className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-[13px] text-ink transition-colors hover:bg-primary/5 focus:bg-primary/5 focus:outline-hidden"
+                className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-[13px] text-adm-text transition-colors hover:bg-adm-text/5 focus:bg-adm-text/5 focus:outline-hidden"
               >
                 {option.dotClassName && (
                   <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${option.dotClassName}`} />

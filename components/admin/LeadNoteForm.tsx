@@ -72,7 +72,7 @@ export default function LeadNoteForm({
           {pending && <Loader2 size={14} className="animate-spin" aria-hidden />}
           {submitLabel}
         </button>
-        {error && <span className="text-xs text-red-700">{errorLabel}</span>}
+        {error && <span className="text-xs text-adm-danger">{errorLabel}</span>}
       </div>
     </form>
   );

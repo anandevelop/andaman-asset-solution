@@ -40,7 +40,7 @@ export default function MobileShell({
 }: Props) {
   return (
     <div className="mx-auto flex max-w-md flex-col">
-      <header className="flex items-center gap-3 rounded-xs bg-primary px-4 py-4 text-white">
+      <header className="flex items-center gap-3 rounded-xs bg-adm-strong px-4 py-4 text-adm-on-strong">
         {backHref && (
           <Link
             href={backHref}

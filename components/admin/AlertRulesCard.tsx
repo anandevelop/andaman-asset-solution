@@ -81,7 +81,7 @@ export default function AlertRulesCard({ labels, rules, action }: Props) {
         {pending && (
           <Loader2
             size={13}
-            className="animate-spin text-ink-muted"
+            className="animate-spin text-adm-muted"
             aria-hidden
           />
         )}
@@ -92,21 +92,21 @@ export default function AlertRulesCard({ labels, rules, action }: Props) {
         {rules.map((rule) => (
           <li
             key={rule.kind}
-            className="flex items-start justify-between gap-3 rounded-xs border border-primary/10 px-3 py-2"
+            className="flex items-start justify-between gap-3 rounded-xs border border-adm-line px-3 py-2"
           >
             <div>
-              <p className="text-sm text-ink">{rule.label}</p>
-              <p className="text-xs text-ink-muted">{rule.detail}</p>
+              <p className="text-sm text-adm-text">{rule.label}</p>
+              <p className="text-xs text-adm-muted">{rule.detail}</p>
 
               {rule.awaitingGoogle && (
-                <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-800">
+                <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-adm-warning">
                   <AlertTriangle size={11} aria-hidden />
                   {labels.awaitingGoogle}
                 </p>
               )}
 
               {failed === rule.kind && (
-                <p className="mt-1 text-[11px] text-red-700">{labels.failed}</p>
+                <p className="mt-1 text-[11px] text-adm-danger">{labels.failed}</p>
               )}
             </div>
 

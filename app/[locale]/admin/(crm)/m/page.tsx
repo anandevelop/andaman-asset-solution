@@ -104,35 +104,35 @@ export default async function MobileTodayPage(props: Props) {
       {/* An empty list during an outage reads as "you have no leads",
           which is the wrong and more alarming of the two meanings. */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-2.5 text-sm text-adm-warning">
           {tRoot("common.offline")}
         </p>
       )}
 
       {isEmpty && (
-        <p className="rounded-xs border border-dashed border-primary/20 bg-white p-5 text-center text-sm text-ink-muted">
+        <p className="rounded-xs border border-dashed border-adm-line-strong bg-adm-solid p-5 text-center text-sm text-adm-muted">
           {t("today.empty")}
         </p>
       )}
 
       {overdueLeads.map((lead) => (
-        <div key={lead.id} className="space-y-2 rounded-xs border border-red-200 bg-white p-3.5">
-          <span className="inline-flex w-fit items-center rounded-xs bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700">
+        <div key={lead.id} className="space-y-2 rounded-xs border border-adm-danger/30 bg-adm-solid p-3.5">
+          <span className="inline-flex w-fit items-center rounded-xs bg-adm-danger-bg px-2.5 py-1 text-[11px] font-semibold text-adm-danger">
             {t("today.overdueBy", { hours: hoursOverdue(lead.followUpAt) })}
           </span>
-          <p className="text-sm font-semibold text-primary">{lead.name}</p>
-          {lead.message && <p className="line-clamp-2 text-xs text-ink-muted">{lead.message}</p>}
+          <p className="text-sm font-semibold text-adm-text">{lead.name}</p>
+          {lead.message && <p className="line-clamp-2 text-xs text-adm-muted">{lead.message}</p>}
           <div className="flex gap-2">
             <a
               href={`tel:${lead.phone}`}
-              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs bg-primary text-sm font-medium text-white"
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs bg-adm-strong text-sm font-medium text-adm-on-strong"
             >
               <Phone size={14} aria-hidden />
               {t("today.callNow")}
             </a>
             <Link
               href={`/${locale}/admin/m/leads/${lead.id}`}
-              className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs border border-primary/20 text-sm font-medium text-primary"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text"
             >
               {t("today.openLead")}
             </Link>
@@ -141,19 +141,19 @@ export default async function MobileTodayPage(props: Props) {
       ))}
 
       {todayAppointments.map((appt) => (
-        <div key={appt.id} className="space-y-2 rounded-xs border border-primary/10 bg-white p-3.5">
-          <span className="inline-flex w-fit items-center rounded-xs bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
+        <div key={appt.id} className="space-y-2 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+          <span className="inline-flex w-fit items-center rounded-xs bg-adm-success-bg px-2.5 py-1 text-[11px] font-semibold text-adm-success">
             {t("today.appointmentAt", { time: timeFormat.format(appt.scheduledAt) })}
           </span>
-          <p className="text-sm font-semibold text-primary">{appt.customerName ?? t("today.noCustomer")}</p>
-          <p className="text-xs text-ink-muted">{appt.projectName ?? t("today.noProject")}</p>
+          <p className="text-sm font-semibold text-adm-text">{appt.customerName ?? t("today.noCustomer")}</p>
+          <p className="text-xs text-adm-muted">{appt.projectName ?? t("today.noProject")}</p>
           <div className="flex gap-2">
             {appt.location ? (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(appt.location)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-primary/20 text-sm font-medium text-primary"
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text"
               >
                 <Navigation size={14} aria-hidden />
                 {t("today.directions")}
@@ -167,15 +167,15 @@ export default async function MobileTodayPage(props: Props) {
       ))}
 
       {dueTodayLeads.map((lead) => (
-        <div key={lead.id} className="space-y-2 rounded-xs border border-primary/10 bg-white p-3.5">
-          <span className="inline-flex w-fit items-center rounded-xs bg-accent-50 px-2.5 py-1 text-[11px] font-semibold text-accent-700">
+        <div key={lead.id} className="space-y-2 rounded-xs border border-adm-line bg-adm-solid p-3.5">
+          <span className="inline-flex w-fit items-center rounded-xs bg-adm-fill/15 px-2.5 py-1 text-[11px] font-semibold text-adm-accent-ink">
             {t("today.followUpToday")}
           </span>
-          <p className="text-sm font-semibold text-primary">{lead.name}</p>
+          <p className="text-sm font-semibold text-adm-text">{lead.name}</p>
           <div className="flex gap-2">
             <Link
               href={`/${locale}/admin/m/leads/${lead.id}`}
-              className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs border border-primary/20 text-sm font-medium text-primary"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text"
             >
               {t("today.addNote")}
             </Link>
@@ -187,7 +187,7 @@ export default async function MobileTodayPage(props: Props) {
       {unassignedCount > 0 && (
         <Link
           href={`/${locale}/admin/m/leads`}
-          className="block rounded-xs border border-dashed border-primary/25 bg-white p-3.5 text-center text-sm text-ink-muted"
+          className="block rounded-xs border border-dashed border-adm-line-strong bg-adm-solid p-3.5 text-center text-sm text-adm-muted"
         >
           {t("today.unassignedBanner", { count: unassignedCount })}
         </Link>

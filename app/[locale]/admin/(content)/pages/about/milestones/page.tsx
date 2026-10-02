@@ -69,7 +69,7 @@ export default async function AdminMilestonesPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -98,13 +98,13 @@ export default async function AdminMilestonesPage(props: Props) {
                           milestone.isActive ? "" : "opacity-40",
                         ].join(" ")}
                       />
-                      <span className={`mt-2 block text-sm font-semibold tabular-nums ${recent ? "text-adm-accent-ink" : "text-ink"}`}>
+                      <span className={`mt-2 block text-sm font-semibold tabular-nums ${recent ? "text-adm-accent-ink" : "text-adm-text"}`}>
                         {formatYear(milestone.year)}
                       </span>
-                      <span className="block text-xs leading-snug text-ink group-hover:text-primary-500">
+                      <span className="block text-xs leading-snug text-adm-text group-hover:text-adm-info">
                         {milestone.projectName}
                       </span>
-                      {milestone.brand && <span className="block text-[11px] text-ink-muted">{milestone.brand}</span>}
+                      {milestone.brand && <span className="block text-[11px] text-adm-muted">{milestone.brand}</span>}
                     </a>
                   </li>
                 );
@@ -115,8 +115,8 @@ export default async function AdminMilestonesPage(props: Props) {
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("milestones.newTitle")}
         </h2>
 
@@ -127,7 +127,7 @@ export default async function AdminMilestonesPage(props: Props) {
 
       {/* ── Existing ────────────────────────────────────────────────── */}
       {milestones.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("milestones.empty")}
         </div>
       ) : (
@@ -139,22 +139,22 @@ export default async function AdminMilestonesPage(props: Props) {
             return (
               <div key={milestone.id} id={`milestone-${milestone.id}`} className="scroll-mt-[120px]">
                 {showYearHeading && (
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-accent-700">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-adm-accent-ink">
                     {formatYear(milestone.year)}
                   </p>
                 )}
 
                 <section className="admin-card">
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-base font-semibold text-primary">
+                    <h2 className="text-base font-semibold text-adm-text">
                       {milestone.projectName}
                     </h2>
 
                     <span
                       className={
                         milestone.isActive
-                          ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                          : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
+                          ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
+                          : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
                       }
                     >
                       {milestone.isActive ? t("milestones.active") : t("milestones.inactive")}

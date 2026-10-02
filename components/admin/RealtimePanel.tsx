@@ -159,7 +159,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
 
   if (status === "loading" && !snapshot) {
     return (
-      <div className="admin-card flex items-center gap-2 text-sm text-ink-muted">
+      <div className="admin-card flex items-center gap-2 text-sm text-adm-muted">
         <Loader2 size={15} className="animate-spin" aria-hidden />
         {labels.title}
       </div>
@@ -178,7 +178,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
         <button
           type="button"
           onClick={() => void poll()}
-          className="inline-flex items-center gap-1.5 rounded-xs border border-primary/15 px-3 py-1.5 text-xs text-ink-muted transition-colors hover:border-primary/30 hover:text-primary"
+          className="inline-flex items-center gap-1.5 rounded-xs border border-adm-line-strong px-3 py-1.5 text-xs text-adm-muted transition-colors hover:border-adm-line-strong hover:text-adm-text"
         >
           <RefreshCw size={13} aria-hidden />
           {labels.refresh}
@@ -186,25 +186,25 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
       </div>
 
       {status === "failed" && (
-        <p className="flex items-center gap-2 rounded-xs border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="flex items-center gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3 py-2 text-xs text-adm-warning">
           <WifiOff size={14} className="shrink-0" aria-hidden />
           {snapshot ? labels.stale : labels.failed}
         </p>
       )}
 
       <div className="admin-card">
-        <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
           {labels.activeNow}
         </p>
-        <p className="mt-3 flex items-center gap-3 text-4xl font-semibold tabular-nums text-primary">
-          <Users size={26} className="text-ink-muted" aria-hidden />
+        <p className="mt-3 flex items-center gap-3 text-4xl font-semibold tabular-nums text-adm-text">
+          <Users size={26} className="text-adm-muted" aria-hidden />
           {active}
         </p>
       </div>
 
       {active === 0 ? (
         <div className="admin-card">
-          <p className="text-sm text-ink">{labels.empty}</p>
+          <p className="text-sm text-adm-text">{labels.empty}</p>
           <p className="admin-hint mt-1">{labels.emptyHint}</p>
         </div>
       ) : (
@@ -213,7 +213,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
             <h4 className="admin-label">{labels.pagesTitle}</h4>
             <table className="mt-3 w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+                <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
                   <th className="pb-2 font-medium">{labels.pageHeader}</th>
                   <th className="pb-2 text-right font-medium">{labels.readersHeader}</th>
                   <th className="pb-2 text-right font-medium">{labels.medianDwellHeader}</th>
@@ -221,10 +221,10 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
               </thead>
               <tbody>
                 {snapshot?.pages.map((page) => (
-                  <tr key={page.path} className="border-t border-primary/5">
-                    <td className="py-2 font-mono text-xs text-ink">{page.path}</td>
+                  <tr key={page.path} className="border-t border-adm-line">
+                    <td className="py-2 font-mono text-xs text-adm-text">{page.path}</td>
                     <td className="py-2 text-right tabular-nums">{page.count}</td>
-                    <td className="py-2 text-right tabular-nums text-ink-muted">
+                    <td className="py-2 text-right tabular-nums text-adm-muted">
                       {t("duration", durationParts(page.medianDwellMs))}
                     </td>
                   </tr>
@@ -237,7 +237,7 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
               {snapshot?.byLocale.map((row) => (
                 <li
                   key={row.locale}
-                  className="rounded-full bg-primary/5 px-3 py-1 text-xs text-ink"
+                  className="rounded-full bg-adm-text/5 px-3 py-1 text-xs text-adm-text"
                 >
                   {row.locale.toUpperCase()} · {row.count}
                 </li>
@@ -252,12 +252,12 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
             ) : (
               <ul className="mt-3 space-y-2 text-sm">
                 {feed.map((event) => (
-                  <li key={event.id} className="flex items-baseline gap-2 border-t border-primary/5 pt-2">
+                  <li key={event.id} className="flex items-baseline gap-2 border-t border-adm-line pt-2">
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
                         event.kind === "left"
-                          ? "bg-ink/5 text-ink-muted"
-                          : "bg-emerald-50 text-emerald-800"
+                          ? "bg-adm-text/5 text-adm-muted"
+                          : "bg-adm-success-bg text-adm-success"
                       }`}
                     >
                       {event.kind === "arrived"
@@ -266,8 +266,8 @@ export default function RealtimePanel({ labels, fetchSnapshot }: Props) {
                           ? labels.feedMoved
                           : labels.feedLeft}
                     </span>
-                    <span className="flex-1 truncate font-mono text-xs text-ink">{event.path}</span>
-                    <span className="shrink-0 text-xs text-ink-muted">
+                    <span className="flex-1 truncate font-mono text-xs text-adm-text">{event.path}</span>
+                    <span className="shrink-0 text-xs text-adm-muted">
                       {t("ago", durationParts(Math.max(0, now - event.at)))}
                     </span>
                   </li>

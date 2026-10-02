@@ -50,7 +50,7 @@ function SubmitButton({
       disabled={pending}
       className={
         tone === "danger"
-          ? "admin-btn border-red-200 text-red-700 hover:bg-red-50"
+          ? "admin-btn border-adm-danger/30 text-adm-danger hover:bg-adm-danger-bg"
           : "admin-btn"
       }
     >
@@ -77,7 +77,7 @@ function ErrorBanner({ state }: { state: TwoFactorState }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-xs border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      className="flex items-start gap-2 rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-3 text-sm text-adm-danger"
     >
       <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
       <span>{t(`errors.${state.message}` as never)}</span>
@@ -113,7 +113,7 @@ export default function TwoFactorManage({
       {disabled && (
         <div
           role="status"
-          className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning"
         >
           {mandatory ? t("disabledMandatory") : t("disabledOk")}
         </div>
@@ -122,8 +122,8 @@ export default function TwoFactorManage({
       {/* ── New recovery codes ─────────────────────────────────────── */}
       <form action={regenerate} className="space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-primary">{t("regenTitle")}</h3>
-          <p className="mt-1 text-sm text-ink-muted">{t("regenHint")}</p>
+          <h3 className="text-sm font-semibold text-adm-text">{t("regenTitle")}</h3>
+          <p className="mt-1 text-sm text-adm-muted">{t("regenHint")}</p>
         </div>
 
         <ErrorBanner state={regenState} />
@@ -148,10 +148,10 @@ export default function TwoFactorManage({
       </form>
 
       {/* ── Turn it off ────────────────────────────────────────────── */}
-      <form action={disable} className="space-y-4 border-t border-slate-200 pt-8">
+      <form action={disable} className="space-y-4 border-t border-adm-line pt-8">
         <div>
-          <h3 className="text-sm font-semibold text-primary">{t("disableTitle")}</h3>
-          <p className="mt-1 text-sm text-ink-muted">
+          <h3 className="text-sm font-semibold text-adm-text">{t("disableTitle")}</h3>
+          <p className="mt-1 text-sm text-adm-muted">
             {mandatory ? t("disableHintMandatory") : t("disableHint")}
           </p>
         </div>

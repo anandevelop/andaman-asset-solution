@@ -34,10 +34,10 @@ export default async function AdminNotificationSettingsPage(props: Props) {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-lg font-semibold text-primary">
+        <h2 className="text-lg font-semibold text-adm-text">
           {t("settings.notifications.title")}
         </h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">
           {t("settings.notifications.subtitle")}
         </p>
       </header>

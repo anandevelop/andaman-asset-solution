@@ -184,7 +184,7 @@ export default function MediaLibrary({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative max-w-sm flex-1">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" aria-hidden />
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-muted" aria-hidden />
           <input
             type="search"
             value={query}
@@ -197,7 +197,7 @@ export default function MediaLibrary({
               type="button"
               onClick={() => setQuery("")}
               aria-label={t("searchPlaceholder")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-primary"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-adm-muted hover:text-adm-text"
             >
               <X size={14} aria-hidden />
             </button>
@@ -213,7 +213,7 @@ export default function MediaLibrary({
         <button
           type="button"
           onClick={() => setTypeFilter("missingAlt")}
-          className="flex w-full items-center gap-3 rounded-xs border border-red-200 bg-red-50 px-4 py-2.5 text-left text-sm text-red-800 transition-colors hover:bg-red-100"
+          className="flex w-full items-center gap-3 rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-2.5 text-left text-sm text-adm-danger transition-colors hover:bg-adm-danger-bg"
         >
           <AlertTriangle size={16} className="shrink-0" aria-hidden />
           <span className="flex-1">{t("missingAltBanner", { count: missingAltCount })}</span>
@@ -230,7 +230,7 @@ export default function MediaLibrary({
         <button
           type="button"
           onClick={() => setTypeFilter("legacy")}
-          className="flex w-full items-center gap-3 rounded-xs border border-amber-200 bg-amber-50 px-4 py-2.5 text-left text-sm text-amber-900 transition-colors hover:bg-amber-100"
+          className="flex w-full items-center gap-3 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-2.5 text-left text-sm text-adm-warning transition-colors hover:bg-adm-warning-bg"
         >
           <AlertTriangle size={16} className="shrink-0" aria-hidden />
           <span className="flex-1">{t("legacyHostBanner", { count: legacyHostCount })}</span>
@@ -239,7 +239,7 @@ export default function MediaLibrary({
       )}
 
       {truncated && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-2.5 text-xs text-adm-warning">
           {t("truncatedNotice")}
         </p>
       )}
@@ -252,8 +252,8 @@ export default function MediaLibrary({
             onClick={() => setTypeFilter(key)}
             className={`rounded-xs border px-2.5 py-1 text-xs font-medium transition-colors ${
               typeFilter === key
-                ? "border-primary bg-primary text-white"
-                : "border-primary/15 bg-white text-ink-muted hover:border-primary/30"
+                ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                : "border-adm-line-strong bg-adm-solid text-adm-muted hover:border-adm-line-strong"
             }`}
           >
             {t(`typeFilter.${key}`)}
@@ -273,8 +273,8 @@ export default function MediaLibrary({
             onClick={() => setActiveTag(activeTag === tag ? null : tag)}
             className={`rounded-xs border px-2.5 py-1 text-xs font-medium transition-colors ${
               activeTag === tag
-                ? "border-primary bg-primary text-white"
-                : "border-primary/15 bg-white text-ink-muted hover:border-primary/30"
+                ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                : "border-adm-line-strong bg-adm-solid text-adm-muted hover:border-adm-line-strong"
             }`}
           >
             {tag}
@@ -293,7 +293,7 @@ export default function MediaLibrary({
             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
               typeFilter === "missingAlt"
                 ? "border-adm-warning bg-adm-warning-bg text-adm-warning"
-                : "border-dashed border-adm-line-strong text-ink-muted hover:border-adm-warning hover:text-adm-warning"
+                : "border-dashed border-adm-line-strong text-adm-muted hover:border-adm-warning hover:text-adm-warning"
             }`}
           >
             <AlertTriangle size={11} aria-hidden />
@@ -310,8 +310,8 @@ export default function MediaLibrary({
             onClick={() => setTypeFilter(typeFilter === "unused" ? "all" : "unused")}
             className={`rounded-xs border px-2.5 py-1 text-xs font-medium transition-colors ${
               typeFilter === "unused"
-                ? "border-primary bg-primary text-white"
-                : "border-primary/15 bg-white text-ink-muted hover:border-primary/30"
+                ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                : "border-adm-line-strong bg-adm-solid text-adm-muted hover:border-adm-line-strong"
             }`}
           >
             {t("typeFilter.unused")}
@@ -319,7 +319,7 @@ export default function MediaLibrary({
           </button>
         )}
 
-        <label className="ml-auto flex items-center gap-1.5 text-xs text-ink-muted">
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-adm-muted">
           {t("sortLabel")}
           <select
             value={sort}
@@ -340,7 +340,7 @@ export default function MediaLibrary({
           right edge of the screen. */}
       <div className={onSelect ? "" : "grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]"}>
         {visible.length === 0 ? (
-          <div className="admin-card flex min-h-[200px] flex-col items-center justify-center gap-2 text-center text-sm text-ink-muted">
+          <div className="admin-card flex min-h-[200px] flex-col items-center justify-center gap-2 text-center text-sm text-adm-muted">
             <p>{items.length === 0 ? t("emptyLibrary") : t("emptyFiltered")}</p>
           </div>
         ) : (
@@ -360,7 +360,7 @@ export default function MediaLibrary({
               >
                 <div className={`relative overflow-hidden rounded-[8px] bg-adm-text/5 ${isDocument(item.mimeType) ? "h-28" : ""}`}>
                   {isDocument(item.mimeType) ? (
-                    <div className="flex h-full items-center justify-center text-ink-muted">
+                    <div className="flex h-full items-center justify-center text-adm-muted">
                       <FileText size={30} strokeWidth={1.4} aria-hidden />
                     </div>
                   ) : (
@@ -390,12 +390,12 @@ export default function MediaLibrary({
 
         {!onSelect && (
           <aside className="admin-card p-0! lg:sticky lg:top-4 lg:self-start">
-            <div className="border-b border-primary/10 px-4 py-3">
-              <h2 className="text-sm font-semibold text-primary">{t("detailTitle")}</h2>
+            <div className="border-b border-adm-line px-4 py-3">
+              <h2 className="text-sm font-semibold text-adm-text">{t("detailTitle")}</h2>
             </div>
 
             {!selected ? (
-              <p className="px-4 py-6 text-center text-xs text-ink-muted">{t("detailEmpty")}</p>
+              <p className="px-4 py-6 text-center text-xs text-adm-muted">{t("detailEmpty")}</p>
             ) : (
               <MediaDetail
                 key={selected.id}
@@ -443,7 +443,7 @@ function TileBadges({ item }: { item: MediaItem }) {
 
   return (
     <>
-      <span className="absolute left-1.5 top-1.5 rounded-xs bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-ink shadow-xs">
+      <span className="absolute left-1.5 top-1.5 rounded-xs bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-adm-text shadow-xs">
         {item.usageCount === 0 ? t("unusedTag") : t("usedInTag", { count: item.usageCount })}
       </span>
 
@@ -453,7 +453,7 @@ function TileBadges({ item }: { item: MediaItem }) {
           {t("noAltTag")}
         </span>
       ) : item.isLegacyHost ? (
-        <span className="absolute right-1.5 top-1.5 rounded-xs bg-amber-500 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+        <span className="absolute right-1.5 top-1.5 rounded-xs bg-adm-warning px-1.5 py-0.5 text-[9px] font-semibold text-adm-on-strong">
           {t("legacyHostTag")}
         </span>
       ) : null}
@@ -532,9 +532,9 @@ function MediaDetail({
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3.5">
-      <div className="h-32 overflow-hidden rounded-xs bg-surface-muted">
+      <div className="h-32 overflow-hidden rounded-xs bg-adm-text/4">
         {isDocument(item.mimeType) ? (
-          <div className="flex h-full items-center justify-center text-ink-muted">
+          <div className="flex h-full items-center justify-center text-adm-muted">
             <FileText size={32} strokeWidth={1.4} aria-hidden />
           </div>
         ) : (
@@ -543,8 +543,8 @@ function MediaDetail({
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-primary">{fileName(item.url)}</p>
-        <p className="mt-0.5 text-xs text-ink-muted">
+        <p className="text-sm font-semibold text-adm-text">{fileName(item.url)}</p>
+        <p className="mt-0.5 text-xs text-adm-muted">
           {[
             item.width && item.height ? `${item.width} × ${item.height}` : null,
             formatBytes(item.sizeBytes),
@@ -553,7 +553,7 @@ function MediaDetail({
             .filter(Boolean)
             .join(" · ")}
         </p>
-        <p className="mt-0.5 text-xs text-ink-muted">
+        <p className="mt-0.5 text-xs text-adm-muted">
           {t("uploadedBy", {
             date: new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(
               new Date(item.createdAt),
@@ -565,13 +565,13 @@ function MediaDetail({
 
       {!isDocument(item.mimeType) && (
         <div>
-          <p className="mb-1.5 text-[11px] font-medium text-ink-muted">{t("altTextLabel")}</p>
+          <p className="mb-1.5 text-[11px] font-medium text-adm-muted">{t("altTextLabel")}</p>
           <div className="space-y-1.5">
             {LOCALE_DISPLAY_ORDER.map((l) => (
               <div key={l} className="flex items-center gap-2">
                 <span
                   className={`flex h-[18px] w-7 shrink-0 items-center justify-center rounded-xs text-[8px] font-bold ${
-                    alt[l] ? "bg-primary text-white" : "bg-surface-muted text-ink-muted"
+                    alt[l] ? "bg-adm-strong text-adm-on-strong" : "bg-adm-text/4 text-adm-muted"
                   }`}
                 >
                   {l.toUpperCase()}
@@ -593,9 +593,9 @@ function MediaDetail({
       )}
 
       <div>
-        <p className="mb-1.5 text-[11px] font-medium text-ink-muted">{t("usedInLabel")}</p>
+        <p className="mb-1.5 text-[11px] font-medium text-adm-muted">{t("usedInLabel")}</p>
         {usageLoading ? (
-          <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <p className="flex items-center gap-1.5 text-xs text-adm-muted">
             <Loader2 size={12} className="animate-spin" aria-hidden />
             {t("usageLoading")}
           </p>
@@ -604,18 +604,18 @@ function MediaDetail({
             {usage.map((ref, idx) => (
               <li key={idx} className="flex items-center gap-1.5 text-xs">
                 {ref.href ? (
-                  <Link href={`/${locale}/admin${ref.href}`} className="truncate font-medium text-accent-700 hover:underline">
+                  <Link href={`/${locale}/admin${ref.href}`} className="truncate font-medium text-adm-accent-ink hover:underline">
                     {ref.label}
                   </Link>
                 ) : (
-                  <span className="truncate text-ink">{ref.label}</span>
+                  <span className="truncate text-adm-text">{ref.label}</span>
                 )}
-                <span className="shrink-0 text-ink-muted">· {t(`usageKind.${ref.kind}`)}</span>
+                <span className="shrink-0 text-adm-muted">· {t(`usageKind.${ref.kind}`)}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-ink-muted">{t("usageEmpty")}</p>
+          <p className="text-xs text-adm-muted">{t("usageEmpty")}</p>
         )}
       </div>
 
@@ -633,7 +633,7 @@ function MediaDetail({
       </div>
 
       {inUse ? (
-        <div className="flex items-center gap-2 rounded-xs border border-primary/10 bg-surface-muted px-2.5 py-2 text-[11px] text-ink-muted">
+        <div className="flex items-center gap-2 rounded-xs border border-adm-line bg-adm-text/4 px-2.5 py-2 text-[11px] text-adm-muted">
           <Trash2 size={13} className="shrink-0" aria-hidden />
           {t("deleteBlockedInUse", { count: usage!.length })}
         </div>
@@ -648,7 +648,7 @@ function MediaDetail({
           {t("delete")}
         </button>
       )}
-      {deleteError && <p className="text-xs text-red-600">{deleteError}</p>}
+      {deleteError && <p className="text-xs text-adm-danger">{deleteError}</p>}
     </div>
   );
 }

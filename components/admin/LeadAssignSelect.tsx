@@ -63,7 +63,7 @@ export default function LeadAssignSelect({
         value={current}
         onChange={onChange}
         disabled={pending}
-        className="rounded-xs border border-primary/15 bg-surface-raised px-2.5 py-1.5 text-xs font-medium text-primary transition-colors focus:outline-hidden focus:ring-1 focus:ring-primary/30 disabled:opacity-60"
+        className="rounded-xs border border-adm-line-strong bg-adm-solid px-2.5 py-1.5 text-xs font-medium text-adm-text transition-colors focus:outline-hidden focus:ring-1 focus:ring-adm-info/30 disabled:opacity-60"
       >
         <option value="">{unassignedLabel}</option>
         {assignees.map((person) => (
@@ -73,13 +73,13 @@ export default function LeadAssignSelect({
         ))}
       </select>
 
-      {pending && <Loader2 size={14} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={14} className="animate-spin text-adm-muted" aria-hidden />}
       {!pending && state === "saved" && (
-        <Check size={14} className="text-emerald-600" aria-hidden />
+        <Check size={14} className="text-adm-success" aria-hidden />
       )}
       {!pending && state === "error" && (
         <span title={errorLabel}>
-          <AlertCircle size={14} className="text-red-600" aria-hidden />
+          <AlertCircle size={14} className="text-adm-danger" aria-hidden />
         </span>
       )}
     </div>

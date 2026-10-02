@@ -79,12 +79,12 @@ export default function TwoFactorSetup({ action, qrDataUri, secret }: Props) {
     <div className="space-y-6">
       <ol className="space-y-6">
         <li>
-          <p className="text-sm font-medium text-primary">{t("step1")}</p>
-          <p className="mt-1 text-sm text-ink-muted">{t("step1Hint")}</p>
+          <p className="text-sm font-medium text-adm-text">{t("step1")}</p>
+          <p className="mt-1 text-sm text-adm-muted">{t("step1Hint")}</p>
         </li>
 
         <li>
-          <p className="text-sm font-medium text-primary">{t("step2")}</p>
+          <p className="text-sm font-medium text-adm-text">{t("step2")}</p>
           <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
             <Image
               src={qrDataUri}
@@ -92,11 +92,11 @@ export default function TwoFactorSetup({ action, qrDataUri, secret }: Props) {
               width={200}
               height={200}
               unoptimized
-              className="rounded-xs border border-slate-200 bg-white p-2"
+              className="rounded-xs border border-adm-line bg-adm-solid p-2"
             />
             <div className="min-w-0">
-              <p className="text-sm text-ink-muted">{t("manualHint")}</p>
-              <code className="mt-2 block break-all rounded-xs bg-slate-100 px-3 py-2 font-mono text-sm tracking-wider text-ink">
+              <p className="text-sm text-adm-muted">{t("manualHint")}</p>
+              <code className="mt-2 block break-all rounded-xs bg-adm-text/4 px-3 py-2 font-mono text-sm tracking-wider text-adm-text">
                 {secret}
               </code>
             </div>
@@ -104,13 +104,13 @@ export default function TwoFactorSetup({ action, qrDataUri, secret }: Props) {
         </li>
 
         <li>
-          <p className="text-sm font-medium text-primary">{t("step3")}</p>
+          <p className="text-sm font-medium text-adm-text">{t("step3")}</p>
 
           <form action={formAction} className="mt-3 space-y-4">
             {!state.ok && state.message && (
               <div
                 role="alert"
-                className="flex items-start gap-2 rounded-xs border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                className="flex items-start gap-2 rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-3 text-sm text-adm-danger"
               >
                 <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
                 <span>{t(`errors.${state.message}` as never)}</span>

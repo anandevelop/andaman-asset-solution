@@ -88,13 +88,13 @@ export default async function AdminProjectBrochuresPage(props: Props) {
       <ProjectHubTabs locale={locale} projectId={project.id} active="brochures" />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-muted">{t("eBrochures.subtitle")}</p>
+        <p className="text-sm text-adm-muted">{t("eBrochures.subtitle")}</p>
 
         {canWrite && (
           <Link
@@ -108,13 +108,13 @@ export default async function AdminProjectBrochuresPage(props: Props) {
       </div>
 
       {brochures.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("eBrochures.emptyForProject")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
           <table className="w-full min-w-[640px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 <th className="admin-th">{t("eBrochures.brochureTitle")}</th>
                 <th className="admin-th">{t("common.translationComplete")}</th>
@@ -130,10 +130,10 @@ export default async function AdminProjectBrochuresPage(props: Props) {
                   row.slug;
 
                 return (
-                  <tr key={row.id} className="border-b border-primary/5 text-sm last:border-b-0">
-                    <td className="admin-td font-medium text-primary">
+                  <tr key={row.id} className="border-b border-adm-line text-sm last:border-b-0">
+                    <td className="admin-td font-medium text-adm-text">
                       {title}
-                      <span className="ml-2 font-mono text-xs text-ink-muted">/{row.slug}</span>
+                      <span className="ml-2 font-mono text-xs text-adm-muted">/{row.slug}</span>
                     </td>
                     <td className="admin-td">
                       <TranslationStatusBadges
@@ -144,8 +144,8 @@ export default async function AdminProjectBrochuresPage(props: Props) {
                       <span
                         className={`rounded-xs px-2 py-1 text-[11px] font-semibold ${
                           row.isPublished
-                            ? "bg-emerald-50 text-emerald-800"
-                            : "bg-surface-muted text-ink-muted"
+                            ? "bg-adm-success-bg text-adm-success"
+                            : "bg-adm-text/4 text-adm-muted"
                         }`}
                       >
                         {row.isPublished ? t("common.published") : t("common.draft")}
@@ -155,7 +155,7 @@ export default async function AdminProjectBrochuresPage(props: Props) {
                       <div className="flex items-center justify-end gap-3">
                         <Link
                           href={`/${locale}/admin/e-brochures/${row.id}/edit`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-700 hover:text-accent-800"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink"
                         >
                           <Pencil size={13} aria-hidden />
                           {t("common.edit")}
@@ -165,7 +165,7 @@ export default async function AdminProjectBrochuresPage(props: Props) {
                             href={`/${locale}/e-brochures/${row.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-primary"
+                            className="inline-flex items-center gap-1.5 text-xs text-adm-muted hover:text-adm-text"
                           >
                             <ExternalLink size={13} aria-hidden />
                             {t("eBrochures.viewLive")}

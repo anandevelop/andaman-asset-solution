@@ -91,7 +91,7 @@ export default async function AdminProjectSeoPage(props: Props) {
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -101,26 +101,26 @@ export default async function AdminProjectSeoPage(props: Props) {
           decoration and pushes the two real problems below the fold. */}
       <section className="admin-card">
         {failed.length === 0 ? (
-          <p className="flex items-center gap-2 text-sm text-emerald-800">
+          <p className="flex items-center gap-2 text-sm text-adm-success">
             <Check size={15} aria-hidden />
             {t("pageSeo.allChecksPassed")}
           </p>
         ) : (
           <>
-            <h2 className="text-sm font-semibold text-primary">
+            <h2 className="text-sm font-semibold text-adm-text">
               {t("pageSeo.checklistTitle", { count: failed.length })}
             </h2>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {failed.map((check) => (
                 <li
                   key={`${check.key}:${check.locale ?? "-"}`}
-                  className="flex items-start gap-2 text-sm text-ink"
+                  className="flex items-start gap-2 text-sm text-adm-text"
                 >
-                  <X size={14} className="mt-0.5 shrink-0 text-red-600" aria-hidden />
+                  <X size={14} className="mt-0.5 shrink-0 text-adm-danger" aria-hidden />
                   <span>
                     {t(`pageSeo.checks.${check.key}`)}
                     {check.locale && (
-                      <span className="text-ink-muted"> · {LOCALE_LABELS[check.locale as Locale]}</span>
+                      <span className="text-adm-muted"> · {LOCALE_LABELS[check.locale as Locale]}</span>
                     )}
                   </span>
                 </li>

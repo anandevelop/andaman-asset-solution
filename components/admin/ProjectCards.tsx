@@ -100,7 +100,7 @@ export default function ProjectCards({
               <span
                 className={[
                   "absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-[11px] font-medium shadow-[0_1px_4px_rgba(0,0,0,0.12)]",
-                  card.isPublished ? "bg-adm-success text-white" : "bg-adm-solid text-adm-muted",
+                  card.isPublished ? "bg-adm-success text-adm-on-strong" : "bg-adm-solid text-adm-muted",
                 ].join(" ")}
               >
                 {card.isPublished ? labels.published : labels.draft}

@@ -56,14 +56,14 @@ export default function CtaImportButton({
       <Button label={t("cta.importButton")} />
 
       {!state.ok && state.message === "NOT_EMPTY" && (
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {t("cta.importNotEmpty")}
         </p>
       )}
 
       {!state.ok && state.message === "SAVE_FAILED" && (
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {t("common.error")}
         </p>

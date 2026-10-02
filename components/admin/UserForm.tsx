@@ -152,7 +152,7 @@ export default function UserForm({
             className="admin-input"
           />
           {err("name") && (
-            <p className="mt-1.5 text-xs text-red-700">{err("name")}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{err("name")}</p>
           )}
         </div>
 
@@ -170,7 +170,7 @@ export default function UserForm({
             className="admin-input"
           />
           {err("email") && (
-            <p className="mt-1.5 text-xs text-red-700">{err("email")}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{err("email")}</p>
           )}
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function UserForm({
           defaultValue={values.role}
           onChange={(event) => setRole(event.target.value)}
           disabled={locked}
-          className="admin-input max-w-xs disabled:bg-surface-muted disabled:text-ink-muted"
+          className="admin-input max-w-xs disabled:bg-adm-text/4 disabled:text-adm-muted"
         >
           {ROLES.map((role) => (
             <option key={role} value={role}>
@@ -224,7 +224,7 @@ export default function UserForm({
           </select>
           <p className="admin-hint">{t("users.salesPersonHint")}</p>
           {err("salesPersonId") && (
-            <p className="mt-1.5 text-xs text-red-700">{err("salesPersonId")}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{err("salesPersonId")}</p>
           )}
         </div>
       )}
@@ -244,22 +244,22 @@ export default function UserForm({
           />
           <p className="admin-hint">{t("users.passwordHint")}</p>
           {err("password") && (
-            <p className="mt-1.5 text-xs text-red-700">{err("password")}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{err("password")}</p>
           )}
         </div>
       )}
 
-      <label className="flex items-start gap-3 text-sm text-ink">
+      <label className="flex items-start gap-3 text-sm text-adm-text">
         <input
           type="checkbox"
           name="isActive"
           defaultChecked={values.isActive}
           disabled={locked}
-          className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+          className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
         />
         <span>
           {t("users.isActive")}
-          <span className="mt-0.5 block text-xs text-ink-muted">
+          <span className="mt-0.5 block text-xs text-adm-muted">
             {t("users.isActiveHint")}
           </span>
         </span>

@@ -144,7 +144,7 @@ function Field({
       {children}
       {hint && !error && <p className="admin-hint">{hint}</p>}
       {error && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {error}
         </p>
@@ -529,25 +529,25 @@ export default function ProjectForm({
         <div>
           <span className="admin-label">{t("projects.heroMediaType")}</span>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-ink">
+            <label className="flex items-center gap-2 text-sm text-adm-text">
               <input
                 type="radio"
                 name="heroMediaType"
                 value="IMAGE"
                 checked={heroMediaType === "IMAGE"}
                 onChange={() => setHeroMediaType("IMAGE")}
-                className="h-4 w-4 border-primary/30 text-primary focus:ring-primary/30"
+                className="h-4 w-4 border-adm-line-strong text-adm-text focus:ring-adm-info/30"
               />
               {t("projects.heroMediaTypeImage")}
             </label>
-            <label className="flex items-center gap-2 text-sm text-ink">
+            <label className="flex items-center gap-2 text-sm text-adm-text">
               <input
                 type="radio"
                 name="heroMediaType"
                 value="VIDEO"
                 checked={heroMediaType === "VIDEO"}
                 onChange={() => setHeroMediaType("VIDEO")}
-                className="h-4 w-4 border-primary/30 text-primary focus:ring-primary/30"
+                className="h-4 w-4 border-adm-line-strong text-adm-text focus:ring-adm-info/30"
               />
               {t("projects.heroMediaTypeVideo")}
             </label>
@@ -630,12 +630,12 @@ export default function ProjectForm({
       {/* ── Publication ─────────────────────────────────────────────── */}
       <section id="project-publication" aria-labelledby="project-publication-title" className="admin-card scroll-mt-20 space-y-5">
         <SectionTitle id="project-publication-title">{t("projectForm.sections.publication")}</SectionTitle>
-        <label className="flex items-start gap-3 text-sm text-ink">
+        <label className="flex items-start gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isPublished"
             defaultChecked={values.isPublished}
-            className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           <span>{t("projects.publish")}</span>
         </label>
@@ -672,7 +672,7 @@ export default function ProjectForm({
       {onDelete && (
         <form
           action={onDelete}
-          className="mt-8 border-t border-primary/10 pt-5"
+          className="mt-8 border-t border-adm-line pt-5"
         >
           <DeleteButton
             label={t("common.delete")}
@@ -687,7 +687,7 @@ export default function ProjectForm({
 
 function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="-mt-1 border-b border-primary/5 pb-3 text-sm font-semibold text-ink">
+    <h2 id={id} className="-mt-1 border-b border-adm-line pb-3 text-sm font-semibold text-adm-text">
       {children}
     </h2>
   );

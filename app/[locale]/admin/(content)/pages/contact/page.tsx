@@ -166,13 +166,13 @@ export default async function AdminContactPage(props: Props) {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-lg font-semibold text-primary">{t("settings.groups.contact")}</h2>
-        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("settings.contactSubtitle")}</p>
+        <h2 className="text-lg font-semibold text-adm-text">{t("settings.groups.contact")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-adm-muted">{t("settings.contactSubtitle")}</p>
       </header>
 
       {/* What is NOT editable here matters as much as what is. */}
-      <p className="flex items-start gap-2.5 rounded-xs border border-primary/10 bg-surface-muted/60 px-4 py-3 text-sm text-ink-muted">
-        <Info size={16} className="mt-0.5 shrink-0 text-accent-700" aria-hidden />
+      <p className="flex items-start gap-2.5 rounded-xs border border-adm-line bg-adm-text/4 px-4 py-3 text-sm text-adm-muted">
+        <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.scopeNote")}
       </p>
 

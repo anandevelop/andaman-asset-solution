@@ -458,7 +458,7 @@ export default function UnitTypesWorkspace({
   };
 
   if (!type) {
-    return <p className="admin-card text-sm text-ink-muted">{labels.noRooms}</p>;
+    return <p className="admin-card text-sm text-adm-muted">{labels.noRooms}</p>;
   }
 
   return (
@@ -481,11 +481,11 @@ export default function UnitTypesWorkspace({
       <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
         {/* ── Type list ───────────────────────────────────────────── */}
         <aside className="admin-card h-fit p-0!">
-          <h2 className="border-b border-primary/10 px-4 py-3 text-sm font-semibold text-primary">
+          <h2 className="border-b border-adm-line px-4 py-3 text-sm font-semibold text-adm-text">
             {labels.typeList}
           </h2>
 
-          <ul className="divide-y divide-primary/5">
+          <ul className="divide-y divide-adm-line">
             {orderedTypes.map((candidate, position) => {
               const candidateFloors = floorsByType[candidate.id] ?? [];
               const issues = unitTypeHealth(
@@ -535,20 +535,20 @@ export default function UnitTypesWorkspace({
                     onClick={() => selectType(candidate.id)}
                     aria-pressed={candidate.id === type.id}
                     className={`w-full px-4 py-3 text-left transition-colors ${
-                      candidate.id === type.id ? "bg-surface-muted" : "hover:bg-surface-muted/60"
+                      candidate.id === type.id ? "bg-adm-text/4" : "hover:bg-adm-text/4"
                     }`}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-primary">{candidate.name}</span>
+                      <span className="font-medium text-adm-text">{candidate.name}</span>
                       {/* No floors is not "Ready": there is nothing to check,
                           and nothing on the public page either. */}
                       <span
                         className={`rounded-xs px-1.5 py-0.5 text-[11px] font-medium ${
                           candidateFloors.length === 0
-                            ? "bg-primary/5 text-ink-muted"
+                            ? "bg-adm-text/5 text-adm-muted"
                             : issues === 0
-                              ? "bg-emerald-50 text-emerald-800"
-                              : "bg-amber-50 text-amber-900"
+                              ? "bg-adm-success-bg text-adm-success"
+                              : "bg-adm-warning-bg text-adm-warning"
                         }`}
                       >
                         {candidateFloors.length === 0
@@ -558,7 +558,7 @@ export default function UnitTypesWorkspace({
                             : `${issues} ${labels.issues}`}
                       </span>
                     </span>
-                    <span className="mt-0.5 block text-xs text-ink-muted">
+                    <span className="mt-0.5 block text-xs text-adm-muted">
                       {candidateFloors.length} · {candidate.name}
                     </span>
                   </button>
@@ -570,7 +570,7 @@ export default function UnitTypesWorkspace({
 
         {/* ── Editor ──────────────────────────────────────────────── */}
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-1 border-b border-primary/10">
+          <div className="flex flex-wrap gap-1 border-b border-adm-line">
             {(["details", "floors", "preview"] as const).map((key) => (
               <button
                 key={key}
@@ -579,8 +579,8 @@ export default function UnitTypesWorkspace({
                 aria-pressed={tab === key}
                 className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
                   tab === key
-                    ? "border-accent-700 font-medium text-primary"
-                    : "border-transparent text-ink-muted hover:text-primary"
+                    ? "border-accent-700 font-medium text-adm-text"
+                    : "border-transparent text-adm-muted hover:text-adm-text"
                 }`}
               >
                 {labels.tabs[key]}
@@ -607,7 +607,7 @@ export default function UnitTypesWorkspace({
           */}
           {tab === "floors" && !floor && (
             <div className="admin-card space-y-3 text-sm">
-              <p className="text-ink-muted">{labels.noFloors}</p>
+              <p className="text-adm-muted">{labels.noFloors}</p>
               {canWrite && (
                 <button
                   type="button"
@@ -668,8 +668,8 @@ export default function UnitTypesWorkspace({
 
       {/* ── Save bar ────────────────────────────────────────────── */}
       {canWrite && dirtyTypes.length > 0 && (
-        <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t border-primary/15 bg-surface-raised/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgba(8,53,81,.25)] backdrop-blur">
-          <p className="flex items-center gap-2 text-sm text-amber-900">
+        <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t border-adm-line-strong bg-adm-solid/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgba(8,53,81,.25)] backdrop-blur">
+          <p className="flex items-center gap-2 text-sm text-adm-warning">
             <AlertTriangle size={15} aria-hidden />
             {labels.unsaved}
           </p>
@@ -713,8 +713,8 @@ function DetailsTab({
         a living area has no other way to see what the floors add up to.
       */}
       <p className="admin-card text-sm">
-        <span className="text-ink-muted">{labels.roomTotal}: </span>
-        <span className="font-medium text-primary">
+        <span className="text-adm-muted">{labels.roomTotal}: </span>
+        <span className="font-medium text-adm-text">
           {total.toFixed(2)} {labels.sqm}
         </span>
         <span className="admin-hint mt-1 block">{labels.previewHint}</span>
@@ -738,9 +738,9 @@ function DetailsTab({
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <p className="flex justify-between gap-4 border-b border-primary/5 pb-2">
-      <span className="text-ink-muted">{label}</span>
-      <span className="font-medium text-primary">{value}</span>
+    <p className="flex justify-between gap-4 border-b border-adm-line pb-2">
+      <span className="text-adm-muted">{label}</span>
+      <span className="font-medium text-adm-text">{value}</span>
     </p>
   );
 }
@@ -818,13 +818,13 @@ function PreviewTab({
   // The elevator reads floors[0] unconditionally; the public page never
   // hands it a type without floors, and neither may the preview.
   if (floors.length === 0) {
-    return <p className="admin-card text-sm text-ink-muted">{labels.noFloors}</p>;
+    return <p className="admin-card text-sm text-adm-muted">{labels.noFloors}</p>;
   }
 
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <div className="inline-flex rounded-xs border border-primary/15 p-0.5">
+        <div className="inline-flex rounded-xs border border-adm-line-strong p-0.5">
           {(["desktop", "mobile"] as const).map((key) => (
             <button
               key={key}
@@ -832,7 +832,7 @@ function PreviewTab({
               onClick={() => onWidth(key)}
               aria-pressed={width === key}
               className={`rounded-xs px-2.5 py-1 text-xs transition-colors ${
-                width === key ? "bg-primary font-medium text-white" : "text-ink-muted"
+                width === key ? "bg-adm-strong font-medium text-adm-on-strong" : "text-adm-muted"
               }`}
             >
               {key === "desktop" ? labels.desktop : labels.mobile}
@@ -848,7 +848,7 @@ function PreviewTab({
         "it looked right in the admin".
       */}
       {width === "mobile" ? (
-        <div className="overflow-hidden rounded-xs border border-primary/15" style={{ maxWidth: 380 }}>
+        <div className="overflow-hidden rounded-xs border border-adm-line-strong" style={{ maxWidth: 380 }}>
           <UnitTypesElevator
             projectName={projectName}
             types={[elevatorType]}
@@ -910,7 +910,7 @@ function DesktopFrame({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={outer}
-      className="relative overflow-hidden rounded-xs border border-primary/15"
+      className="relative overflow-hidden rounded-xs border border-adm-line-strong"
       style={{ height: box.height || undefined }}
     >
       {/* Absolute, so its 1280px never becomes the grid column's min-content
@@ -1051,8 +1051,8 @@ function FloorsTab({
               aria-pressed={candidate.key === floor.key}
               className={`flex items-center gap-2 rounded-xs border px-3 py-1.5 text-sm transition-colors ${
                 candidate.key === floor.key
-                  ? "border-accent-700 bg-accent-50 text-primary"
-                  : "border-primary/15 text-ink-muted hover:border-accent-700"
+                  ? "border-accent-700 bg-adm-fill/15 text-adm-text"
+                  : "border-adm-line-strong text-adm-muted hover:border-accent-700"
               }`}
             >
               <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[10px]">
@@ -1061,7 +1061,7 @@ function FloorsTab({
               {candidate.floorName || labels.floorName}
               <span className="text-xs opacity-70">· {candidate.rooms.length}</span>
               {issues > 0 && (
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-adm-warning" />
               )}
             </button>
           );
@@ -1128,7 +1128,7 @@ function FloorsTab({
           {floorHealth.issues.map((issue) => (
             <li
               key={issue.kind}
-              className="rounded-xs bg-amber-50 px-2 py-1 text-xs text-amber-900"
+              className="rounded-xs bg-adm-warning-bg px-2 py-1 text-xs text-adm-warning"
             >
               {labels.issueLabels[issue.kind]}
               {"count" in issue ? ` · ${issue.count}` : ""}
@@ -1191,7 +1191,7 @@ function FloorsTab({
 
           <fieldset>
             <legend className="admin-label">{labels.rotation}</legend>
-            <div className="mt-1 inline-flex rounded-xs border border-primary/15 p-0.5">
+            <div className="mt-1 inline-flex rounded-xs border border-adm-line-strong p-0.5">
               {(["CW", "CCW"] as const).map((value) => (
                 <button
                   key={value}
@@ -1201,8 +1201,8 @@ function FloorsTab({
                   aria-pressed={floor.portraitRotation === value}
                   className={`rounded-xs px-2.5 py-1 text-xs ${
                     floor.portraitRotation === value
-                      ? "bg-primary font-medium text-white"
-                      : "text-ink-muted"
+                      ? "bg-adm-strong font-medium text-adm-on-strong"
+                      : "text-adm-muted"
                   }`}
                 >
                   {value === "CW" ? labels.rotationCw : labels.rotationCcw}
@@ -1213,7 +1213,7 @@ function FloorsTab({
           </fieldset>
 
           {canWrite && (
-            <div className="flex flex-wrap gap-2 border-t border-primary/10 pt-3">
+            <div className="flex flex-wrap gap-2 border-t border-adm-line pt-3">
               <button type="button" onClick={() => moveFloor(-1)} className="admin-btn-ghost">
                 {labels.moveUp}
               </button>
@@ -1225,7 +1225,7 @@ function FloorsTab({
                 onClick={deleteFloor}
                 disabled={floors.length <= 1}
                 title={floors.length <= 1 ? labels.lastFloor : undefined}
-                className="admin-btn-ghost text-red-700 disabled:opacity-40"
+                className="admin-btn-ghost text-adm-danger disabled:opacity-40"
               >
                 <Trash2 size={14} aria-hidden />
                 {labels.deleteFloor}
@@ -1234,7 +1234,7 @@ function FloorsTab({
           )}
 
           {canWrite && (
-            <div className="space-y-3 border-t border-primary/10 pt-3">
+            <div className="space-y-3 border-t border-adm-line pt-3">
               <ImageUploader
                 name={`line-${floor.key}`}
                 prefix="projects"
@@ -1273,8 +1273,8 @@ function FloorsTab({
 
         {/* ── Room table ────────────────────────────────────────── */}
         <section className="admin-card p-0!">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/10 px-4 py-3">
-            <h3 className="text-sm font-semibold text-primary">{labels.roomsHeading}</h3>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-adm-line px-4 py-3">
+            <h3 className="text-sm font-semibold text-adm-text">{labels.roomsHeading}</h3>
             {/*
               Not components/admin/LanguageTabs: that switches language by
               navigating to ?lang=, and a navigation here would throw away
@@ -1296,15 +1296,15 @@ function FloorsTab({
                     title={complete ? labels.translationComplete : labels.translationMissing}
                     className={`flex items-center gap-1 rounded-xs px-2 py-1 text-xs uppercase transition-colors ${
                       code === lang
-                        ? "bg-primary font-medium text-white"
-                        : "text-ink-muted hover:text-primary"
+                        ? "bg-adm-strong font-medium text-adm-on-strong"
+                        : "text-adm-muted hover:text-adm-text"
                     }`}
                   >
                     {code}
                     <span
                       aria-hidden
                       className={`h-1.5 w-1.5 rounded-full ${
-                        complete ? "bg-emerald-500" : "bg-amber-500"
+                        complete ? "bg-adm-success" : "bg-adm-warning"
                       }`}
                     />
                   </button>
@@ -1314,11 +1314,11 @@ function FloorsTab({
           </div>
 
           {floor.rooms.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-muted">{labels.noRooms}</p>
+            <p className="px-4 py-6 text-sm text-adm-muted">{labels.noRooms}</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-primary/10 text-left text-xs uppercase tracking-wide text-ink-muted">
+                <tr className="border-b border-adm-line text-left text-xs uppercase tracking-wide text-adm-muted">
                   <th className="px-3 py-2 font-medium">#</th>
                   <th className="px-3 py-2 font-medium">{labels.roomName}</th>
                   <th className="px-3 py-2 font-medium">{labels.roomArea}</th>
@@ -1327,7 +1327,7 @@ function FloorsTab({
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-primary/5">
+              <tbody className="divide-y divide-adm-line">
                 {floor.rooms.map((room, roomIndex) => {
                   const fallback = (room.names.en ?? "").trim();
                   const value = room.names[lang] ?? "";
@@ -1337,9 +1337,9 @@ function FloorsTab({
                     <tr
                       key={room.key}
                       onClick={() => onSelectRoom(room.key)}
-                      className={room.key === selectedRoom ? "bg-accent-50/60" : ""}
+                      className={room.key === selectedRoom ? "bg-adm-fill/15" : ""}
                     >
-                      <td className="px-3 py-2 tabular-nums text-ink-muted">
+                      <td className="px-3 py-2 tabular-nums text-adm-muted">
                         {String(roomIndex + 1).padStart(2, "0")}
                       </td>
 
@@ -1364,7 +1364,7 @@ function FloorsTab({
                           }
                         />
                         {untranslated && (
-                          <span className="mt-0.5 block text-[11px] text-amber-800">
+                          <span className="mt-0.5 block text-[11px] text-adm-warning">
                             {labels.untranslated}
                           </span>
                         )}
@@ -1399,7 +1399,7 @@ function FloorsTab({
                             type="button"
                             onClick={() => deleteRoom(room.key)}
                             aria-label={labels.deleteRoom}
-                            className="text-ink-muted hover:text-red-700"
+                            className="text-adm-muted hover:text-adm-danger"
                           >
                             <Trash2 size={14} aria-hidden />
                           </button>
@@ -1411,18 +1411,18 @@ function FloorsTab({
               </tbody>
 
               <tfoot>
-                <tr className="border-t border-primary/10 text-xs">
+                <tr className="border-t border-adm-line text-xs">
                   <td />
-                  <td className="px-3 py-2 text-ink-muted">{labels.roomTotal}</td>
-                  <td className="px-3 py-2 font-medium tabular-nums text-primary">
+                  <td className="px-3 py-2 text-adm-muted">{labels.roomTotal}</td>
+                  <td className="px-3 py-2 font-medium tabular-nums text-adm-text">
                     {roomTotal.toFixed(2)}
                   </td>
                   <td colSpan={2} className="px-3 py-2">
                     {difference !== null &&
                       (difference <= 0.6 ? (
-                        <span className="text-emerald-700">{labels.areaMatches}</span>
+                        <span className="text-adm-success">{labels.areaMatches}</span>
                       ) : (
-                        <span className="text-amber-800">
+                        <span className="text-adm-warning">
                           {labels.areaDiffers} {difference.toFixed(2)}
                         </span>
                       ))}
@@ -1464,7 +1464,7 @@ function RoomPhotoCell({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={photoUrl} alt="" loading="lazy" className="h-8 w-12 rounded-xs object-cover" />
       ) : (
-        <span className="grid h-8 w-12 place-items-center rounded-xs bg-surface-muted text-[10px] text-ink-muted">
+        <span className="grid h-8 w-12 place-items-center rounded-xs bg-adm-text/4 text-[10px] text-adm-muted">
           —
         </span>
       )}
@@ -1474,7 +1474,7 @@ function RoomPhotoCell({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="text-xs text-primary underline"
+            className="text-xs text-adm-text underline"
           >
             {labels.pickPhoto}
           </button>
@@ -1483,7 +1483,7 @@ function RoomPhotoCell({
             <button
               type="button"
               onClick={() => onChange(null)}
-              className="text-xs text-ink-muted underline hover:text-red-700"
+              className="text-xs text-adm-muted underline hover:text-adm-danger"
             >
               {labels.clearPhoto}
             </button>

@@ -134,7 +134,7 @@ export default function FaqForm({
             required
             className="admin-input"
           />
-          {err("question") && <p className="mt-1.5 text-xs text-red-700">{err("question")}</p>}
+          {err("question") && <p className="mt-1.5 text-xs text-adm-danger">{err("question")}</p>}
         </div>
 
         <div>
@@ -146,7 +146,7 @@ export default function FaqForm({
             required
             className="admin-textarea font-mono text-xs"
           />
-          {err("answer") && <p className="mt-1.5 text-xs text-red-700">{err("answer")}</p>}
+          {err("answer") && <p className="mt-1.5 text-xs text-adm-danger">{err("answer")}</p>}
         </div>
         <p className="admin-hint -mt-3">{t("faqs.answerHint")}</p>
 
@@ -180,12 +180,12 @@ export default function FaqForm({
           </div>
         </div>
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isPublished"
             defaultChecked={values.isPublished}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("common.published")}
         </label>
@@ -194,7 +194,7 @@ export default function FaqForm({
       </form>
 
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

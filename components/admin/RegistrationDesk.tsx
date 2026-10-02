@@ -112,8 +112,8 @@ export default function RegistrationDesk({
           onClick={() => setCheckInMode((value) => !value)}
           className={
             checkInMode
-              ? "flex items-center gap-1.5 rounded-xs border border-primary/15 px-3 py-2 text-sm font-medium text-ink-muted hover:text-primary"
-              : "flex items-center gap-1.5 rounded-xs bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              ? "flex items-center gap-1.5 rounded-xs border border-adm-line-strong px-3 py-2 text-sm font-medium text-adm-muted hover:text-adm-text"
+              : "flex items-center gap-1.5 rounded-xs bg-adm-success px-3.5 py-2 text-sm font-semibold text-adm-on-strong transition-colors hover:bg-adm-success/90"
           }
         >
           {checkInMode ? <X size={14} aria-hidden /> : <ScanLine size={14} aria-hidden />}
@@ -122,18 +122,18 @@ export default function RegistrationDesk({
       </div>
 
       {error && (
-        <p className="flex items-center gap-1.5 rounded-xs border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+        <p className="flex items-center gap-1.5 rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-2.5 text-sm text-adm-danger">
           <AlertCircle size={15} aria-hidden />
           {labels.error}
         </p>
       )}
 
       {rows.length === 0 ? (
-        <p className="admin-card py-10 text-center text-sm text-ink-muted">{labels.empty}</p>
+        <p className="admin-card py-10 text-center text-sm text-adm-muted">{labels.empty}</p>
       ) : checkInMode ? (
         /* ── Door mode ─────────────────────────────────────────────── */
         <div className="space-y-2">
-          <p className="rounded-xs bg-surface-muted px-4 py-2.5 text-xs text-ink-muted">
+          <p className="rounded-xs bg-adm-text/4 px-4 py-2.5 text-xs text-adm-muted">
             {labels.checkInHint}
           </p>
 
@@ -146,14 +146,14 @@ export default function RegistrationDesk({
               className={[
                 "flex w-full items-center gap-4 rounded-xs border px-4 py-4 text-left transition-colors disabled:opacity-60",
                 row.checkedIn
-                  ? "border-emerald-300 bg-emerald-50"
-                  : "border-primary/10 bg-surface-raised hover:border-primary/25",
+                  ? "border-adm-success/30 bg-adm-success-bg"
+                  : "border-adm-line bg-adm-solid hover:border-adm-line-strong",
               ].join(" ")}
             >
               <span
                 className={[
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                  row.checkedIn ? "bg-emerald-600 text-white" : "border border-primary/20 text-ink-muted",
+                  row.checkedIn ? "bg-adm-success text-adm-on-strong" : "border border-adm-line-strong text-adm-muted",
                 ].join(" ")}
               >
                 {busyId === row.id ? (
@@ -166,15 +166,15 @@ export default function RegistrationDesk({
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-base font-semibold text-primary">{row.name}</span>
-                <span className="block truncate text-xs text-ink-muted">
+                <span className="block truncate text-base font-semibold text-adm-text">{row.name}</span>
+                <span className="block truncate text-xs text-adm-muted">
                   {row.partySize > 1 && `${labels.columnParty} ${row.partySize} · `}
                   {row.phone}
                 </span>
               </span>
 
               <span
-                className={`shrink-0 text-xs font-medium ${row.checkedIn ? "text-emerald-700" : "text-ink-muted"}`}
+                className={`shrink-0 text-xs font-medium ${row.checkedIn ? "text-adm-success" : "text-adm-muted"}`}
               >
                 {row.checkedIn ? labels.arrived : labels.markArrived}
               </span>
@@ -183,9 +183,9 @@ export default function RegistrationDesk({
         </div>
       ) : (
         /* ── Office view ───────────────────────────────────────────── */
-        <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+        <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
           <table className="w-full min-w-[980px] border-collapse">
-            <thead className="border-b border-primary/10 bg-surface-muted">
+            <thead className="border-b border-adm-line bg-adm-text/4">
               <tr>
                 <th className="admin-th">{labels.columnPerson}</th>
                 <th className="admin-th">{labels.columnContact}</th>
@@ -197,38 +197,38 @@ export default function RegistrationDesk({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-primary/5">
+            <tbody className="divide-y divide-adm-line">
               {rows.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-surface-muted/60">
+                <tr key={row.id} className="transition-colors hover:bg-adm-text/4">
                   <td className="admin-td">
                     <span className="flex items-center gap-2">
-                      <span className="font-medium text-primary">{row.name}</span>
+                      <span className="font-medium text-adm-text">{row.name}</span>
                       {row.checkedIn && (
-                        <span className="rounded-xs bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                        <span className="rounded-xs bg-adm-success-bg px-1.5 py-0.5 text-[11px] font-semibold text-adm-success">
                           {labels.arrived}
                         </span>
                       )}
                     </span>
                     {row.agencyName && (
-                      <span className="mt-0.5 block text-xs text-ink-muted">{row.agencyName}</span>
+                      <span className="mt-0.5 block text-xs text-adm-muted">{row.agencyName}</span>
                     )}
                   </td>
 
                   <td className="admin-td text-sm">
-                    <a href={`mailto:${row.email}`} className="text-accent-700 hover:underline">
+                    <a href={`mailto:${row.email}`} className="text-adm-accent-ink hover:underline">
                       {row.email}
                     </a>
-                    <span className="text-ink-muted"> · </span>
-                    <a href={`tel:${row.phone}`} className="text-ink-muted hover:text-primary">
+                    <span className="text-adm-muted"> · </span>
+                    <a href={`tel:${row.phone}`} className="text-adm-muted hover:text-adm-text">
                       {row.phone}
                     </a>
                   </td>
 
-                  <td className="admin-td tabular-nums text-ink-muted">{row.partySize}</td>
+                  <td className="admin-td tabular-nums text-adm-muted">{row.partySize}</td>
 
                   <td className="admin-td">
                     {row.locale && (
-                      <span className="rounded-xs bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold uppercase text-ink-muted">
+                      <span className="rounded-xs bg-adm-text/4 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-adm-muted">
                         {row.locale}
                       </span>
                     )}
@@ -249,18 +249,18 @@ export default function RegistrationDesk({
                     {row.leadId ? (
                       <Link
                         href={`/${locale}/admin/leads/${row.leadId}`}
-                        className="text-accent-700 hover:underline"
+                        className="text-adm-accent-ink hover:underline"
                       >
                         {labels.linkedLead}
                       </Link>
                     ) : (
                       <span className="flex items-center gap-2">
-                        <span className="text-ink-muted/70">{labels.notLinked}</span>
+                        <span className="text-adm-muted/70">{labels.notLinked}</span>
                         <button
                           type="button"
                           onClick={() => convert(row)}
                           disabled={pending}
-                          className="flex items-center gap-1 text-xs font-medium text-accent-700 hover:text-accent-800 disabled:opacity-50"
+                          className="flex items-center gap-1 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink disabled:opacity-50"
                         >
                           {busyId === row.id ? (
                             <Loader2 size={12} className="animate-spin" aria-hidden />
@@ -273,7 +273,7 @@ export default function RegistrationDesk({
                     )}
                   </td>
 
-                  <td className="admin-td whitespace-nowrap text-xs text-ink-muted">
+                  <td className="admin-td whitespace-nowrap text-xs text-adm-muted">
                     {row.registeredAt}
                   </td>
                 </tr>

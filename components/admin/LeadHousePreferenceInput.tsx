@@ -66,13 +66,13 @@ export default function LeadHousePreferenceInput({
         placeholder={placeholder}
         className="admin-input flex-1 py-1.5! text-sm disabled:opacity-60"
       />
-      {pending && <Loader2 size={13} className="shrink-0 animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={13} className="shrink-0 animate-spin text-adm-muted" aria-hidden />}
       {!pending && state === "saved" && (
-        <Check size={13} className="shrink-0 text-emerald-600" aria-hidden />
+        <Check size={13} className="shrink-0 text-adm-success" aria-hidden />
       )}
       {!pending && state === "error" && (
         <span title={errorLabel} className="shrink-0">
-          <AlertCircle size={13} className="text-red-600" aria-hidden />
+          <AlertCircle size={13} className="text-adm-danger" aria-hidden />
         </span>
       )}
     </div>

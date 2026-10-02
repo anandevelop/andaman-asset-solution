@@ -110,8 +110,8 @@ export default function SearchQueryViews({
   if (empty) {
     return (
       <section className="admin-card">
-        <h2 className="text-sm font-semibold text-primary">{labels.title}</h2>
-        <p className="mt-2 text-sm text-ink">{labels.empty}</p>
+        <h2 className="text-sm font-semibold text-adm-text">{labels.title}</h2>
+        <p className="mt-2 text-sm text-adm-text">{labels.empty}</p>
         <p className="admin-hint mt-1">{labels.emptyHint}</p>
       </section>
     );
@@ -121,14 +121,14 @@ export default function SearchQueryViews({
 
   return (
     <section className="admin-card overflow-hidden p-0!">
-      <div className="border-b border-primary/10 px-5 py-3.5">
+      <div className="border-b border-adm-line px-5 py-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <Search size={15} strokeWidth={1.75} className="text-accent-700" aria-hidden />
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+            <Search size={15} strokeWidth={1.75} className="text-adm-accent-ink" aria-hidden />
             {labels.title}
           </h2>
           {dataUpTo && (
-            <span className="text-xs text-ink-muted">
+            <span className="text-xs text-adm-muted">
               {labels.dataUpTo} {dataUpTo}
             </span>
           )}
@@ -138,12 +138,12 @@ export default function SearchQueryViews({
         {/* Non-brand first, and never summed with brand — see the header. */}
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
           <span>
-            <span className="text-ink-muted">{labels.nonBrand}: </span>
-            <span className="font-semibold tabular-nums text-ink">{totals.nonBrandClicks}</span>
+            <span className="text-adm-muted">{labels.nonBrand}: </span>
+            <span className="font-semibold tabular-nums text-adm-text">{totals.nonBrandClicks}</span>
           </span>
           <span>
-            <span className="text-ink-muted">{labels.brand}: </span>
-            <span className="tabular-nums text-ink-muted">{totals.brandClicks}</span>
+            <span className="text-adm-muted">{labels.brand}: </span>
+            <span className="tabular-nums text-adm-muted">{totals.brandClicks}</span>
           </span>
         </div>
 
@@ -156,7 +156,7 @@ export default function SearchQueryViews({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-primary/10 px-5 py-2.5">
+      <div className="flex flex-wrap gap-1 border-b border-adm-line px-5 py-2.5">
         {(["untracked", "tracked", "opportunity"] as const).map((key) => (
           <button
             key={key}
@@ -165,8 +165,8 @@ export default function SearchQueryViews({
             aria-pressed={view === key}
             className={`rounded-xs px-3 py-1.5 text-sm transition-colors ${
               view === key
-                ? "bg-primary font-semibold text-white"
-                : "text-ink-muted hover:text-primary"
+                ? "bg-adm-strong font-semibold text-adm-on-strong"
+                : "text-adm-muted hover:text-adm-text"
             }`}
           >
             {labels.tabs[key]}
@@ -174,17 +174,17 @@ export default function SearchQueryViews({
         ))}
       </div>
 
-      <p className="border-b border-primary/5 px-5 py-2 text-xs text-ink-muted">
+      <p className="border-b border-adm-line px-5 py-2 text-xs text-adm-muted">
         {labels.tabHints[view]}
       </p>
 
       {rows.length === 0 ? (
-        <p className="px-5 py-6 text-sm text-ink-muted">{labels.emptyView}</p>
+        <p className="px-5 py-6 text-sm text-adm-muted">{labels.emptyView}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-primary/10 text-left text-xs uppercase tracking-wide text-ink-muted">
+              <tr className="border-b border-adm-line text-left text-xs uppercase tracking-wide text-adm-muted">
                 <th className="px-5 py-2 font-medium">{labels.columnQuery}</th>
                 <th className="px-3 py-2 text-right font-medium">{labels.columnClicks}</th>
                 <th className="px-3 py-2 text-right font-medium">{labels.columnImpressions}</th>
@@ -198,27 +198,27 @@ export default function SearchQueryViews({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.query} className="border-b border-primary/5 last:border-b-0">
-                  <td className="px-5 py-2.5 text-ink">
+                <tr key={row.query} className="border-b border-adm-line last:border-b-0">
+                  <td className="px-5 py-2.5 text-adm-text">
                     {row.query}
                     {row.isBrand && (
-                      <span className="ml-2 rounded-full bg-primary/5 px-1.5 py-0.5 text-[10px] text-ink-muted">
+                      <span className="ml-2 rounded-full bg-adm-text/5 px-1.5 py-0.5 text-[10px] text-adm-muted">
                         {labels.brand}
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-medium tabular-nums text-ink">
+                  <td className="px-3 py-2.5 text-right font-medium tabular-nums text-adm-text">
                     {row.clicks}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-ink-muted">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-adm-muted">
                     {row.impressions}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-ink-muted">{row.ctr}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-ink-muted">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-adm-muted">{row.ctr}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-adm-muted">
                     {row.position}
                   </td>
                   {view === "opportunity" && (
-                    <td className="px-3 py-2.5 text-right tabular-nums text-emerald-700">
+                    <td className="px-3 py-2.5 text-right tabular-nums text-adm-success">
                       {row.potential}
                     </td>
                   )}
@@ -226,7 +226,7 @@ export default function SearchQueryViews({
                     <td className="px-3 py-2.5 text-right">
                       <a
                         href={`${trackHrefPrefix}${encodeURIComponent(row.query)}`}
-                        className="inline-flex items-center gap-1 text-xs text-primary underline"
+                        className="inline-flex items-center gap-1 text-xs text-adm-text underline"
                       >
                         <Plus size={11} aria-hidden />
                         {labels.track}

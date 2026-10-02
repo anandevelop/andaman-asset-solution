@@ -71,7 +71,7 @@ export default function FormSaveBar({
         {dirty ? unsavedLabel : ""}
       </span>
       <div className="ml-auto flex flex-wrap items-center gap-2">
-        <kbd className="hidden rounded-[6px] border border-adm-line-strong px-1.5 py-0.5 font-mono text-[10.5px] text-ink-muted sm:inline">
+        <kbd className="hidden rounded-[6px] border border-adm-line-strong px-1.5 py-0.5 font-mono text-[10.5px] text-adm-muted sm:inline">
           ⌘S
         </kbd>
         {children}

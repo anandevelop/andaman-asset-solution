@@ -170,7 +170,7 @@ export default function FigureNodeView({
     <NodeViewWrapper
       as="figure"
       data-align={align ?? undefined}
-      className={selected ? "rounded-xs ring-2 ring-accent" : undefined}
+      className={selected ? "rounded-xs ring-2 ring-adm-fill" : undefined}
     >
       {/*
         contentEditable={false} on everything that is not the caption.
@@ -208,9 +208,9 @@ export default function FigureNodeView({
         />
 
         {uploading && (
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-primary/10">
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-adm-text/10">
             <div
-              className="h-full bg-primary transition-all"
+              className="h-full bg-adm-strong transition-all"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -221,13 +221,13 @@ export default function FigureNodeView({
             in; now that alt is editable afterwards, emptying it needs to be
             just as visible as never setting it. */}
         {missingAlt && labels && (
-          <p className="absolute left-2 top-2 rounded-xs bg-amber-500 px-2 py-1 text-[11px] font-medium text-white shadow-card">
+          <p className="absolute left-2 top-2 rounded-xs bg-adm-warning px-2 py-1 text-[11px] font-medium text-adm-on-strong shadow-card">
             {labels.altMissing}
           </p>
         )}
 
         {selected && labels && !uploading && (
-          <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1 rounded-xs border border-primary/15 bg-surface-raised/95 p-1 shadow-lg backdrop-blur-sm">
+          <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid/95 p-1 shadow-lg backdrop-blur-sm">
             {alignOptions.map(({ value, label, icon: Icon }) => (
               <button
                 key={label}
@@ -242,15 +242,15 @@ export default function FigureNodeView({
                 onClick={() => updateAttributes({ align: value })}
                 className={`rounded-xs p-1.5 transition-colors ${
                   align === value
-                    ? "bg-primary text-white"
-                    : "text-ink-muted hover:bg-primary/5 hover:text-primary"
+                    ? "bg-adm-strong text-adm-on-strong"
+                    : "text-adm-muted hover:bg-adm-text/5 hover:text-adm-text"
                 }`}
               >
                 <Icon size={14} aria-hidden />
               </button>
             ))}
 
-            <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+            <span aria-hidden className="mx-0.5 h-4 w-px bg-adm-text/15" />
 
             {widthOptions.map(({ value, label, icon: Icon }) => (
               <button
@@ -264,15 +264,15 @@ export default function FigureNodeView({
                 onClick={() => updateAttributes({ width: value })}
                 className={`rounded-xs p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                   width === value
-                    ? "bg-primary text-white"
-                    : "text-ink-muted hover:bg-primary/5 hover:text-primary"
+                    ? "bg-adm-strong text-adm-on-strong"
+                    : "text-adm-muted hover:bg-adm-text/5 hover:text-adm-text"
                 }`}
               >
                 <Icon size={14} aria-hidden />
               </button>
             ))}
 
-            <span aria-hidden className="mx-0.5 h-4 w-px bg-primary/15" />
+            <span aria-hidden className="mx-0.5 h-4 w-px bg-adm-text/15" />
 
             <button
               type="button"
@@ -285,7 +285,7 @@ export default function FigureNodeView({
                 setAltOpen((open) => !open);
               }}
               className={`rounded-xs p-1.5 transition-colors ${
-                altOpen ? "bg-primary text-white" : "text-ink-muted hover:bg-primary/5 hover:text-primary"
+                altOpen ? "bg-adm-strong text-adm-on-strong" : "text-adm-muted hover:bg-adm-text/5 hover:text-adm-text"
               }`}
             >
               <Type size={14} aria-hidden />
@@ -297,7 +297,7 @@ export default function FigureNodeView({
               aria-label={labels.remove}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => deleteNode()}
-              className="rounded-xs p-1.5 text-red-700 transition-colors hover:bg-red-50"
+              className="rounded-xs p-1.5 text-adm-danger transition-colors hover:bg-adm-danger-bg"
             >
               <Trash2 size={14} aria-hidden />
             </button>
@@ -305,7 +305,7 @@ export default function FigureNodeView({
         )}
 
         {selected && altOpen && labels && (
-          <div className="absolute bottom-14 left-2 w-72 max-w-[calc(100%-1rem)] rounded-xs border border-primary/15 bg-surface-raised p-3 shadow-lg">
+          <div className="absolute bottom-14 left-2 w-72 max-w-[calc(100%-1rem)] rounded-xs border border-adm-line-strong bg-adm-solid p-3 shadow-lg">
             <label htmlFor={`figure-alt-${node.attrs.mediaId ?? "local"}`} className="admin-label">
               {labels.altLabel}
             </label>

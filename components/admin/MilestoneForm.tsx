@@ -127,7 +127,7 @@ export default function MilestoneForm({
             />
             <p className="admin-hint">{t("milestones.projectNameHint")}</p>
             {err("projectName") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("projectName")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("projectName")}</p>
             )}
           </div>
 
@@ -140,7 +140,7 @@ export default function MilestoneForm({
               required
               className="admin-input"
             />
-            {err("year") && <p className="mt-1.5 text-xs text-red-700">{err("year")}</p>}
+            {err("year") && <p className="mt-1.5 text-xs text-adm-danger">{err("year")}</p>}
           </div>
         </div>
 
@@ -149,7 +149,7 @@ export default function MilestoneForm({
             <label className="admin-label">{t("milestones.brand")}</label>
             <input name="brand" defaultValue={values.brand} className="admin-input" />
             <p className="admin-hint">{t("milestones.brandHint")}</p>
-            {err("brand") && <p className="mt-1.5 text-xs text-red-700">{err("brand")}</p>}
+            {err("brand") && <p className="mt-1.5 text-xs text-adm-danger">{err("brand")}</p>}
           </div>
 
           <div>
@@ -171,12 +171,12 @@ export default function MilestoneForm({
           hint={t("milestones.imageHint")}
         />
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("milestones.active")}
         </label>
@@ -186,7 +186,7 @@ export default function MilestoneForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

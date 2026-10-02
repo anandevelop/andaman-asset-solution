@@ -128,7 +128,7 @@ export default function CorporateServiceForm({
               required
               className="admin-input"
             />
-            {err("label") && <p className="mt-1.5 text-xs text-red-700">{err("label")}</p>}
+            {err("label") && <p className="mt-1.5 text-xs text-adm-danger">{err("label")}</p>}
           </div>
 
           <div>
@@ -141,7 +141,7 @@ export default function CorporateServiceForm({
             />
             <p className="admin-hint">{t("corporate.imageAltHint")}</p>
             {err("imageAlt") && (
-              <p className="mt-1.5 text-xs text-red-700">{err("imageAlt")}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{err("imageAlt")}</p>
             )}
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function CorporateServiceForm({
           defaultValue={values.imageUrl}
           label={t("corporate.image")}
         />
-        {err("imageUrl") && <p className="mt-1.5 text-xs text-red-700">{err("imageUrl")}</p>}
+        {err("imageUrl") && <p className="mt-1.5 text-xs text-adm-danger">{err("imageUrl")}</p>}
 
         <div>
           <label className="admin-label">{t("corporate.sortOrder")}</label>
@@ -164,12 +164,12 @@ export default function CorporateServiceForm({
           />
         </div>
 
-        <label className="flex items-center gap-3 text-sm text-ink">
+        <label className="flex items-center gap-3 text-sm text-adm-text">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked={values.isActive}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {t("corporate.active")}
         </label>
@@ -179,7 +179,7 @@ export default function CorporateServiceForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

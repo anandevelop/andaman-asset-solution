@@ -57,15 +57,15 @@ export default async function MobileLeadsPage(props: Props) {
       {/* An empty list during an outage reads as "you have no leads",
           which is the wrong and more alarming of the two meanings. */}
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-2.5 text-sm text-adm-warning">
           {tRoot("common.offline")}
         </p>
       )}
 
       <section className="space-y-2">
-        <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("leads.mine")}</p>
+        <p className="px-1 text-xs font-semibold uppercase tracking-wide text-adm-muted">{t("leads.mine")}</p>
         {mine.length === 0 && (
-          <p className="rounded-xs border border-dashed border-primary/20 bg-white p-4 text-center text-sm text-ink-muted">
+          <p className="rounded-xs border border-dashed border-adm-line-strong bg-adm-solid p-4 text-center text-sm text-adm-muted">
             {t("leads.empty")}
           </p>
         )}
@@ -73,10 +73,10 @@ export default async function MobileLeadsPage(props: Props) {
           <Link
             key={lead.id}
             href={`/${locale}/admin/m/leads/${lead.id}`}
-            className="flex min-h-[56px] items-center gap-3 rounded-xs border border-primary/10 bg-white px-3.5 py-2.5"
+            className="flex min-h-[56px] items-center gap-3 rounded-xs border border-adm-line bg-adm-solid px-3.5 py-2.5"
           >
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-primary">{lead.name}</span>
-            <span className="shrink-0 rounded-xs bg-primary/5 px-2 py-1 text-[11px] font-medium text-primary">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-adm-text">{lead.name}</span>
+            <span className="shrink-0 rounded-xs bg-adm-text/5 px-2 py-1 text-[11px] font-medium text-adm-text">
               {tRoot(`leadStatus.${lead.status}` as never)}
             </span>
           </Link>
@@ -85,13 +85,13 @@ export default async function MobileLeadsPage(props: Props) {
 
       {unassigned.length > 0 && (
         <section className="space-y-2 pt-2">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("leads.unassigned")}</p>
+          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-adm-muted">{t("leads.unassigned")}</p>
           {unassigned.map((lead) => (
             <div
               key={lead.id}
-              className="flex min-h-[56px] items-center gap-3 rounded-xs border border-primary/10 bg-white px-3.5 py-2.5"
+              className="flex min-h-[56px] items-center gap-3 rounded-xs border border-adm-line bg-adm-solid px-3.5 py-2.5"
             >
-              <Link href={`/${locale}/admin/m/leads/${lead.id}`} className="min-w-0 flex-1 truncate text-sm font-medium text-primary">
+              <Link href={`/${locale}/admin/m/leads/${lead.id}`} className="min-w-0 flex-1 truncate text-sm font-medium text-adm-text">
                 {lead.name}
               </Link>
               <MobileClaimLeadButton locale={locale} leadId={lead.id} userId={session.id} label={t("leads.claim")} />

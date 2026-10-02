@@ -514,7 +514,7 @@ export default async function AdminDashboardPage(props: Props) {
           className="col-span-12 xl:col-span-8"
           title={t("dashboard.stock.title")}
           action={
-            <span className="flex items-center gap-3 text-[11px] text-ink-muted">
+            <span className="flex items-center gap-3 text-[11px] text-adm-muted">
               <LegendDot className="bg-adm-success" label={t("dashboard.inventory.available")} />
               <LegendDot className="bg-adm-fill" label={t("dashboard.inventory.reserved")} />
               <LegendDot className="bg-primary-500" label={t("dashboard.inventory.sold")} />
@@ -573,17 +573,17 @@ export default async function AdminDashboardPage(props: Props) {
             action={<ViewAll href={`${base}/analytics`} label={t("dashboard.viewAll")} />}
           >
             <p className="flex items-baseline gap-2">
-              <span className="text-[26px] font-semibold leading-tight tabular-nums text-ink">{n(live.activeCount)}</span>
-              <span className="text-xs text-ink-muted">{t("dashboard.live.people")}</span>
+              <span className="text-[26px] font-semibold leading-tight tabular-nums text-adm-text">{n(live.activeCount)}</span>
+              <span className="text-xs text-adm-muted">{t("dashboard.live.people")}</span>
             </p>
             {live.pages.length === 0 ? (
-              <p className="mt-3 text-xs text-ink-muted">{t("dashboard.live.empty")}</p>
+              <p className="mt-3 text-xs text-adm-muted">{t("dashboard.live.empty")}</p>
             ) : (
               <ul className="mt-3 space-y-1.5">
                 {live.pages.slice(0, 5).map((page) => (
                   <li key={page.path} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="admin-mono truncate text-ink">{page.path}</span>
-                    <span className="shrink-0 tabular-nums text-ink-muted">{n(page.count)}</span>
+                    <span className="admin-mono truncate text-adm-text">{page.path}</span>
+                    <span className="shrink-0 tabular-nums text-adm-muted">{n(page.count)}</span>
                   </li>
                 ))}
               </ul>
@@ -599,18 +599,18 @@ export default async function AdminDashboardPage(props: Props) {
             flush
           >
             {keywords.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-ink-muted">{t("dashboard.keywords.empty")}</p>
+              <p className="px-5 py-8 text-center text-sm text-adm-muted">{t("dashboard.keywords.empty")}</p>
             ) : (
               <ul className="divide-y divide-adm-line">
                 {keywords.map((keyword) => {
                   const delta = rankDelta(keyword.currentRank, keyword.previousRank);
                   return (
                     <li key={keyword.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
-                      <span className="min-w-0 flex-1 truncate text-ink">{keyword.phrase}</span>
+                      <span className="min-w-0 flex-1 truncate text-adm-text">{keyword.phrase}</span>
                       <span className="rounded-full bg-adm-neutral-bg px-2 py-0.5 text-[10.5px] uppercase text-adm-neutral">
                         {keyword.locale}
                       </span>
-                      <span className="w-10 text-right tabular-nums font-medium text-ink">#{keyword.currentRank}</span>
+                      <span className="w-10 text-right tabular-nums font-medium text-adm-text">#{keyword.currentRank}</span>
                       <RankDelta delta={delta} />
                     </li>
                   );
@@ -628,17 +628,17 @@ export default async function AdminDashboardPage(props: Props) {
             flush
           >
             {activity.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-ink-muted">{t("dashboard.activity.empty")}</p>
+              <p className="px-5 py-8 text-center text-sm text-adm-muted">{t("dashboard.activity.empty")}</p>
             ) : (
               <ul className="divide-y divide-adm-line">
                 {activity.map((entry) => (
                   <li key={entry.id} className="flex items-baseline gap-3 px-5 py-2.5 text-sm">
                     <span className="min-w-0 flex-1 truncate">
-                      <span className="font-medium text-ink">{entry.actorName ?? entry.actorEmail}</span>{" "}
-                      <span className="text-ink-muted">{activityVerbs[entry.action] ?? entry.action}</span>{" "}
-                      <span className="text-ink">{entry.recordLabel ?? entry.model}</span>
+                      <span className="font-medium text-adm-text">{entry.actorName ?? entry.actorEmail}</span>{" "}
+                      <span className="text-adm-muted">{activityVerbs[entry.action] ?? entry.action}</span>{" "}
+                      <span className="text-adm-text">{entry.recordLabel ?? entry.model}</span>
                     </span>
-                    <time dateTime={entry.createdAt.toISOString()} className="shrink-0 text-xs text-ink-muted">
+                    <time dateTime={entry.createdAt.toISOString()} className="shrink-0 text-xs text-adm-muted">
                       {ago(entry.createdAt)}
                     </time>
                   </li>
@@ -669,7 +669,7 @@ function Card({
   return (
     <section className={`admin-card overflow-hidden p-0! ${className}`}>
       <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-adm-line px-5 py-2.5">
-        <h2 className="text-sm font-semibold text-ink">{title}</h2>
+        <h2 className="text-sm font-semibold text-adm-text">{title}</h2>
         {action}
       </div>
       <div className={flush ? "pb-2" : "p-5"}>{children}</div>
@@ -679,7 +679,7 @@ function Card({
 
 function ViewAll({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-primary">
+    <Link href={href} className="inline-flex items-center gap-1 text-xs font-medium text-adm-muted hover:text-adm-text">
       {label}
       <ArrowRight size={13} aria-hidden />
     </Link>
@@ -690,7 +690,7 @@ function ViewAll({ href, label }: { href: string; label: string }) {
  *  rule nav.ts applies to the sidebar, so nothing here lands on a denial. */
 function MaybeLink({ href, className, children }: { href: string | null; className: string; children: ReactNode }) {
   return href ? (
-    <Link href={href} className={`${className} transition-colors hover:bg-primary/5`}>
+    <Link href={href} className={`${className} transition-colors hover:bg-adm-text/5`}>
       {children}
     </Link>
   ) : (
@@ -738,7 +738,7 @@ function ProjectStatusPill({ status, label }: { status: ProjectStatus; label: st
 
 function RankDelta({ delta }: { delta: number | null }) {
   if (delta === null || delta === 0) {
-    return <span className="w-10 text-right text-xs text-ink-muted">—</span>;
+    return <span className="w-10 text-right text-xs text-adm-muted">—</span>;
   }
   const up = delta > 0;
   return (

@@ -53,7 +53,7 @@ export default function NewsCards({
   };
 }) {
   if (rows.length === 0) {
-    return <div className="admin-card text-center text-sm text-ink-muted">{labels.empty}</div>;
+    return <div className="admin-card text-center text-sm text-adm-muted">{labels.empty}</div>;
   }
 
   return (

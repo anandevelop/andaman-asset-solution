@@ -122,13 +122,13 @@ export default function MediaUploadButton({ locale, label, onUploaded }: Props) 
       {uploads.length > 0 && (
         <div className="w-64 space-y-1.5">
           {uploads.map((item) => (
-            <div key={item.id} className="rounded-xs border border-primary/10 bg-white px-2.5 py-1.5 text-xs">
-              <p className="truncate text-ink">{item.name}</p>
+            <div key={item.id} className="rounded-xs border border-adm-line bg-adm-solid px-2.5 py-1.5 text-xs">
+              <p className="truncate text-adm-text">{item.name}</p>
               {item.error ? (
-                <p className="text-red-600">{item.error}</p>
+                <p className="text-adm-danger">{item.error}</p>
               ) : (
-                <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface-muted">
-                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${item.progress}%` }} />
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-adm-text/4">
+                  <div className="h-full rounded-full bg-adm-strong transition-all" style={{ width: `${item.progress}%` }} />
                 </div>
               )}
             </div>

@@ -33,14 +33,14 @@ export default function RecoveryCodeList({ codes }: Props) {
   }
 
   return (
-    <div className="rounded-xs border border-emerald-200 bg-emerald-50 p-5">
+    <div className="rounded-xs border border-adm-success/30 bg-adm-success-bg p-5">
       <div className="flex items-start gap-2">
-        <KeyRound size={16} className="mt-0.5 shrink-0 text-emerald-700" aria-hidden />
+        <KeyRound size={16} className="mt-0.5 shrink-0 text-adm-success" aria-hidden />
         <div>
-          <h3 className="text-sm font-semibold text-emerald-900">
+          <h3 className="text-sm font-semibold text-adm-success">
             {t("recoveryTitle")}
           </h3>
-          <p className="mt-1 text-sm text-emerald-800">{t("recoveryHint")}</p>
+          <p className="mt-1 text-sm text-adm-success">{t("recoveryHint")}</p>
         </div>
       </div>
 

@@ -131,7 +131,7 @@ export default function SeoAuditTable({
   }
 
   if (rows.length === 0) {
-    return <p className="admin-card text-sm text-ink-muted">{labels.empty}</p>;
+    return <p className="admin-card text-sm text-adm-muted">{labels.empty}</p>;
   }
 
   return (
@@ -140,7 +140,7 @@ export default function SeoAuditTable({
         <button
           type="button"
           onClick={download}
-          className="inline-flex items-center gap-1.5 rounded-xs border border-primary/15 px-3 py-1.5 text-xs text-ink-muted transition-colors hover:border-primary/30 hover:text-primary"
+          className="inline-flex items-center gap-1.5 rounded-xs border border-adm-line-strong px-3 py-1.5 text-xs text-adm-muted transition-colors hover:border-adm-line-strong hover:text-adm-text"
         >
           <Download size={13} aria-hidden />
           {labels.exportCsv}
@@ -150,7 +150,7 @@ export default function SeoAuditTable({
       <div className="admin-card overflow-x-auto p-0!">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-primary/10 text-left text-xs uppercase tracking-wide text-ink-muted">
+            <tr className="border-b border-adm-line text-left text-xs uppercase tracking-wide text-adm-muted">
               <th className="px-4 py-3 font-medium">{labels.urlHeader}</th>
               <th className="px-4 py-3 text-right font-medium">{labels.scoreHeader}</th>
               <th className="px-4 py-3 font-medium">{labels.issuesHeader}</th>
@@ -159,12 +159,12 @@ export default function SeoAuditTable({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.url} className="border-b border-primary/5 last:border-0 align-top">
-                <td className="px-4 py-3 font-mono text-xs text-ink">{row.url}</td>
+              <tr key={row.url} className="border-b border-adm-line last:border-0 align-top">
+                <td className="px-4 py-3 font-mono text-xs text-adm-text">{row.url}</td>
 
                 <td className="px-4 py-3 text-right">
                   {row.checkedWeight === 0 ? (
-                    <span className="text-xs text-ink-muted">{labels.notChecked}</span>
+                    <span className="text-xs text-adm-muted">{labels.notChecked}</span>
                   ) : (
                     <span className={`font-semibold tabular-nums ${scoreTone(row.score)}`}>
                       {row.score}
@@ -174,7 +174,7 @@ export default function SeoAuditTable({
 
                 <td className="px-4 py-3">
                   {row.failedRules.length === 0 && row.waivedRules.length === 0 ? (
-                    <span className="text-xs text-emerald-700">{labels.clean}</span>
+                    <span className="text-xs text-adm-success">{labels.clean}</span>
                   ) : (
                     <ul className="flex flex-wrap gap-1.5">
                       {row.failedRules.map((key) => (
@@ -187,7 +187,7 @@ export default function SeoAuditTable({
                               setError(false);
                             }}
                             title={labels.waive}
-                            className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] text-red-800 transition-colors hover:bg-red-100"
+                            className="inline-flex items-center gap-1 rounded-full bg-adm-danger-bg px-2 py-0.5 text-[11px] text-adm-danger transition-colors hover:bg-adm-danger-bg"
                           >
                             {labels.ruleNames[key] ?? key}
                             <ShieldOff size={10} aria-hidden />
@@ -204,7 +204,7 @@ export default function SeoAuditTable({
                               })
                             }
                             title={labels.unwaive}
-                            className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink-muted transition-colors hover:bg-ink/10"
+                            className="inline-flex items-center gap-1 rounded-full bg-adm-text/5 px-2 py-0.5 text-[11px] text-adm-muted transition-colors hover:bg-adm-text/10"
                           >
                             {labels.ruleNames[key] ?? key} · {labels.waived}
                             <Undo2 size={10} aria-hidden />
@@ -219,7 +219,7 @@ export default function SeoAuditTable({
                   {row.editHref && (
                     <Link
                       href={row.editHref}
-                      className="inline-flex items-center gap-1 text-xs text-ink-muted hover:text-primary"
+                      className="inline-flex items-center gap-1 text-xs text-adm-muted hover:text-adm-text"
                     >
                       {labels.edit}
                       <ExternalLink size={12} aria-hidden />
@@ -233,10 +233,10 @@ export default function SeoAuditTable({
       </div>
 
       {target && (
-        <div className="admin-card border-amber-200">
+        <div className="admin-card border-adm-warning/30">
           <h4 className="admin-label">{labels.waiveTitle.replace("{rule}", labels.ruleNames[target.ruleKey] ?? target.ruleKey)}</h4>
           <p className="admin-hint">{labels.waiveHint}</p>
-          <p className="mt-2 font-mono text-xs text-ink-muted">{target.url}</p>
+          <p className="mt-2 font-mono text-xs text-adm-muted">{target.url}</p>
 
           <label htmlFor="waiver-reason" className="admin-label mt-4">
             {labels.reasonLabel}
@@ -251,7 +251,7 @@ export default function SeoAuditTable({
           />
 
           {error && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-adm-danger">
               <AlertCircle size={13} aria-hidden />
               {labels.failed}
             </p>
@@ -273,7 +273,7 @@ export default function SeoAuditTable({
             <button
               type="button"
               onClick={() => setTarget(null)}
-              className="text-xs text-ink-muted underline"
+              className="text-xs text-adm-muted underline"
             >
               {labels.cancel}
             </button>
@@ -287,7 +287,7 @@ export default function SeoAuditTable({
 /** Same thresholds the overview's ring uses, so one number never looks
  *  green in one place and amber in another. */
 function scoreTone(score: number): string {
-  if (score >= 80) return "text-emerald-700";
-  if (score >= 60) return "text-amber-700";
-  return "text-red-700";
+  if (score >= 80) return "text-adm-success";
+  if (score >= 60) return "text-adm-warning";
+  return "text-adm-danger";
 }

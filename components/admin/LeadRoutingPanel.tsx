@@ -100,15 +100,15 @@ export default function LeadRoutingPanel({
 
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="flex items-baseline justify-between gap-4 py-1.5">
-      <dt className="shrink-0 text-xs text-ink-muted">{label}</dt>
-      <dd className="text-right text-sm text-primary">{children}</dd>
+      <dt className="shrink-0 text-xs text-adm-muted">{label}</dt>
+      <dd className="text-right text-sm text-adm-text">{children}</dd>
     </div>
   );
 
   return (
     <section className="admin-card space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-primary">{labels.title}</h2>
+        <h2 className="text-sm font-semibold text-adm-text">{labels.title}</h2>
 
         {canEdit && !editing && (
           <button
@@ -117,7 +117,7 @@ export default function LeadRoutingPanel({
               setDraft(rules);
               setEditing(true);
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-accent-700 hover:text-accent-800"
+            className="flex items-center gap-1.5 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink"
           >
             <Pencil size={13} aria-hidden />
             {labels.edit}
@@ -125,8 +125,8 @@ export default function LeadRoutingPanel({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-b border-primary/10 pb-3">
-        <span className="text-sm text-primary">{labels.enabled}</span>
+      <div className="flex items-center justify-between gap-4 border-b border-adm-line pb-3">
+        <span className="text-sm text-adm-text">{labels.enabled}</span>
         <button
           type="button"
           role="switch"
@@ -136,12 +136,12 @@ export default function LeadRoutingPanel({
           onClick={() => setDraft((current) => ({ ...current, enabled: !current.enabled }))}
           className={[
             "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-60",
-            (editing ? draft.enabled : rules.enabled) ? "bg-emerald-500" : "bg-primary/20",
+            (editing ? draft.enabled : rules.enabled) ? "bg-adm-success" : "bg-adm-text/20",
           ].join(" ")}
         >
           <span
             className={[
-              "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform",
+              "inline-block h-3.5 w-3.5 transform rounded-full bg-adm-solid shadow-xs transition-transform",
               (editing ? draft.enabled : rules.enabled) ? "translate-x-[18px]" : "translate-x-[3px]",
             ].join(" ")}
           />
@@ -252,7 +252,7 @@ export default function LeadRoutingPanel({
                 setError(false);
               }}
               disabled={pending}
-              className="flex items-center gap-1 text-xs text-ink-muted hover:text-primary"
+              className="flex items-center gap-1 text-xs text-adm-muted hover:text-adm-text"
             >
               <X size={13} aria-hidden />
               {labels.cancel}
@@ -260,7 +260,7 @@ export default function LeadRoutingPanel({
           </div>
         </div>
       ) : (
-        <dl className="divide-y divide-primary/5">
+        <dl className="divide-y divide-adm-line">
           {/*
             Only rules that still name somebody taking leads. A stored rule
             outlives the account it points at being demoted or unlinked, and
@@ -284,7 +284,7 @@ export default function LeadRoutingPanel({
           </Row>
 
           <Row label={labels.escalate}>
-            <span className="text-ink-muted">
+            <span className="text-adm-muted">
               {labels.escalateValue
                 .replace("{hours}", String(rules.escalateAfterHours))
                 .replace("{name}", nameOf(rules.teamLeadUserId))}
@@ -294,26 +294,26 @@ export default function LeadRoutingPanel({
       )}
 
       {error && (
-        <p className="flex items-center gap-1.5 text-xs text-red-700">
+        <p className="flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {labels.error}
         </p>
       )}
 
       {!rules.enabled && !editing && (
-        <p className="rounded-xs bg-surface-muted px-3 py-2 text-[11px] leading-relaxed text-ink-muted">
+        <p className="rounded-xs bg-adm-text/4 px-3 py-2 text-[11px] leading-relaxed text-adm-muted">
           {labels.disabledNote}
         </p>
       )}
 
       {/* The promise the mockup makes, and the one this can keep. */}
-      <p className="flex items-start gap-2 rounded-xs bg-surface-muted px-3 py-2 text-[11px] leading-relaxed text-ink-muted">
+      <p className="flex items-start gap-2 rounded-xs bg-adm-text/4 px-3 py-2 text-[11px] leading-relaxed text-adm-muted">
         <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
         {labels.auditNote}
       </p>
 
       {!canEdit && (
-        <p className="text-[11px] text-ink-muted">{labels.readOnlyNote}</p>
+        <p className="text-[11px] text-adm-muted">{labels.readOnlyNote}</p>
       )}
     </section>
   );

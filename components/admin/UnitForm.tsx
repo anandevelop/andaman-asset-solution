@@ -108,7 +108,7 @@ export default function UnitForm({
             className="admin-input"
           />
           {numberError && (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-red-700">
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-adm-danger">
               <AlertCircle size={12} aria-hidden />
               {numberError}
             </p>
@@ -225,12 +225,12 @@ export default function UnitForm({
       </div>
 
       <div>
-        <label className="flex items-center gap-2 text-sm text-primary">
+        <label className="flex items-center gap-2 text-sm text-adm-text">
           <input
             type="checkbox"
             name="releasedForSale"
             defaultChecked={unit?.releasedForSale ?? true}
-            className="h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           {labels.released}
         </label>
@@ -261,20 +261,20 @@ export default function UnitForm({
         <SubmitButton label={labels.save} />
 
         {onDone && (
-          <button type="button" onClick={onDone} className="text-sm text-ink-muted hover:text-primary">
+          <button type="button" onClick={onDone} className="text-sm text-adm-muted hover:text-adm-text">
             {labels.cancel}
           </button>
         )}
 
         {state.ok && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <span className="flex items-center gap-1.5 text-xs text-adm-success">
             <Check size={13} aria-hidden />
             {labels.saved}
           </span>
         )}
 
         {!state.ok && state.message === "SAVE_FAILED" && (
-          <span className="flex items-center gap-1.5 text-xs text-red-700">
+          <span className="flex items-center gap-1.5 text-xs text-adm-danger">
             <AlertCircle size={13} aria-hidden />
             {labels.error}
           </span>

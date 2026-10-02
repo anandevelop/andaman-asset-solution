@@ -143,7 +143,7 @@ export default function UnitTypeForm({
             placeholder={t("unitTypes.namePlaceholder")}
             className="admin-input max-w-xs"
           />
-          {err("name") && <p className="mt-1.5 text-xs text-red-700">{err("name")}</p>}
+          {err("name") && <p className="mt-1.5 text-xs text-adm-danger">{err("name")}</p>}
         </div>
 
         <div>
@@ -154,7 +154,7 @@ export default function UnitTypeForm({
             rows={3}
             className="admin-input"
           />
-          {err("description") && <p className="mt-1.5 text-xs text-red-700">{err("description")}</p>}
+          {err("description") && <p className="mt-1.5 text-xs text-adm-danger">{err("description")}</p>}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -168,7 +168,7 @@ export default function UnitTypeForm({
               defaultValue={values.livingAreaSqm}
               className="admin-input"
             />
-            {err("livingAreaSqm") && <p className="mt-1.5 text-xs text-red-700">{err("livingAreaSqm")}</p>}
+            {err("livingAreaSqm") && <p className="mt-1.5 text-xs text-adm-danger">{err("livingAreaSqm")}</p>}
           </div>
           <div>
             <label className="admin-label">{t("unitTypes.bedrooms")}</label>
@@ -180,7 +180,7 @@ export default function UnitTypeForm({
               defaultValue={values.bedrooms}
               className="admin-input"
             />
-            {err("bedrooms") && <p className="mt-1.5 text-xs text-red-700">{err("bedrooms")}</p>}
+            {err("bedrooms") && <p className="mt-1.5 text-xs text-adm-danger">{err("bedrooms")}</p>}
           </div>
           <div>
             <label className="admin-label">{t("unitTypes.bathrooms")}</label>
@@ -192,7 +192,7 @@ export default function UnitTypeForm({
               defaultValue={values.bathrooms}
               className="admin-input"
             />
-            {err("bathrooms") && <p className="mt-1.5 text-xs text-red-700">{err("bathrooms")}</p>}
+            {err("bathrooms") && <p className="mt-1.5 text-xs text-adm-danger">{err("bathrooms")}</p>}
           </div>
           <div>
             <label className="admin-label">{t("unitTypes.totalUnits")}</label>
@@ -204,7 +204,7 @@ export default function UnitTypeForm({
               defaultValue={values.totalUnits}
               className="admin-input"
             />
-            {err("totalUnits") && <p className="mt-1.5 text-xs text-red-700">{err("totalUnits")}</p>}
+            {err("totalUnits") && <p className="mt-1.5 text-xs text-adm-danger">{err("totalUnits")}</p>}
           </div>
         </div>
 
@@ -227,7 +227,7 @@ export default function UnitTypeForm({
         */}
         {!manageFloorPlans && <input type="hidden" name="floorPlansManaged" value="no" />}
 
-        <div hidden={!manageFloorPlans} className="border-t border-primary/10 pt-5">
+        <div hidden={!manageFloorPlans} className="border-t border-adm-line pt-5">
           <p className="admin-label">{t("unitTypes.floorPlansTitle")}</p>
           <p className="admin-hint mb-4">{t("unitTypes.floorPlansHint")}</p>
 
@@ -251,7 +251,7 @@ export default function UnitTypeForm({
 
       {/* Separate form — a nested submit would fire the save action. */}
       {onDelete && (
-        <form action={onDelete} className="mt-5 border-t border-primary/10 pt-5">
+        <form action={onDelete} className="mt-5 border-t border-adm-line pt-5">
           <DeleteButton
             label={t("common.delete")}
             confirmLabel={t("common.confirmDelete")}

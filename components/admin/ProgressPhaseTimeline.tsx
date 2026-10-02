@@ -41,15 +41,15 @@ export default function ProgressPhaseTimeline({
   return (
     <section className="admin-card">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-        <div className="shrink-0 lg:w-48 lg:border-r lg:border-primary/10 lg:pr-6">
-          <p className="text-xs text-ink-muted">{labels.overall}</p>
-          <p className="mt-1 text-4xl font-semibold text-primary">
+        <div className="shrink-0 lg:w-48 lg:border-r lg:border-adm-line lg:pr-6">
+          <p className="text-xs text-adm-muted">{labels.overall}</p>
+          <p className="mt-1 text-4xl font-semibold text-adm-text">
             {overallPercent === null ? "—" : `${overallPercent}%`}
           </p>
           {deltaPercent !== null && deltaPercent !== 0 && (
             <p
               className={`mt-1 text-xs font-medium ${
-                deltaPercent > 0 ? "text-emerald-700" : "text-red-700"
+                deltaPercent > 0 ? "text-adm-success" : "text-adm-danger"
               }`}
             >
               {labels.delta
@@ -57,12 +57,12 @@ export default function ProgressPhaseTimeline({
             </p>
           )}
           {overallPercent === null && (
-            <p className="mt-1 text-xs text-ink-muted">{labels.noData}</p>
+            <p className="mt-1 text-xs text-adm-muted">{labels.noData}</p>
           )}
         </div>
 
         {phases.length === 0 ? (
-          <p className="flex-1 text-sm text-ink-muted">{labels.empty}</p>
+          <p className="flex-1 text-sm text-adm-muted">{labels.empty}</p>
         ) : (
           <ol className="flex flex-1 items-start gap-0 overflow-x-auto">
             {phases.map((phase, index) => {
@@ -76,33 +76,33 @@ export default function ProgressPhaseTimeline({
                         between them, so a phase can sit at either end
                         without a stub of line hanging off it. */}
                     <span
-                      className={`h-0.5 flex-1 ${index === 0 ? "bg-transparent" : done || active ? "bg-emerald-500" : "bg-primary/15"}`}
+                      className={`h-0.5 flex-1 ${index === 0 ? "bg-transparent" : done || active ? "bg-adm-success" : "bg-adm-text/15"}`}
                       aria-hidden
                     />
                     <span
                       className={[
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                         done
-                          ? "bg-emerald-500 text-white"
+                          ? "bg-adm-success text-adm-on-strong"
                           : active
-                            ? "bg-primary text-white"
-                            : "border border-primary/20 bg-surface text-ink-muted",
+                            ? "bg-adm-strong text-adm-on-strong"
+                            : "border border-adm-line-strong bg-adm-bg text-adm-muted",
                       ].join(" ")}
                     >
                       {done ? <Check size={15} aria-hidden /> : phase.percentComplete}
                     </span>
                     <span
-                      className={`h-0.5 flex-1 ${index === phases.length - 1 ? "bg-transparent" : done ? "bg-emerald-500" : "bg-primary/15"}`}
+                      className={`h-0.5 flex-1 ${index === phases.length - 1 ? "bg-transparent" : done ? "bg-adm-success" : "bg-adm-text/15"}`}
                       aria-hidden
                     />
                   </div>
 
                   <p
-                    className={`mt-2 px-1 text-center text-xs font-medium ${active ? "text-primary" : "text-ink-muted"}`}
+                    className={`mt-2 px-1 text-center text-xs font-medium ${active ? "text-adm-text" : "text-adm-muted"}`}
                   >
                     {phase.name}
                   </p>
-                  <p className="px-1 text-center text-[11px] text-ink-muted/80">
+                  <p className="px-1 text-center text-[11px] text-adm-muted/80">
                     {captions[phase.id]}
                   </p>
                 </li>

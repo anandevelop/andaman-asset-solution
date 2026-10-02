@@ -96,7 +96,7 @@ export default function RegistrationFilters({
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <div className="relative flex min-w-[240px] flex-1 items-center sm:max-w-sm">
-        <Search size={15} className="absolute left-3 text-ink-muted" aria-hidden />
+        <Search size={15} className="absolute left-3 text-adm-muted" aria-hidden />
         <input
           type="search"
           value={search}
@@ -144,7 +144,7 @@ export default function RegistrationFilters({
         {labels.exportCsv}
       </a>
 
-      {pending && <Loader2 size={16} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
     </div>
   );
 }

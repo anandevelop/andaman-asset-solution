@@ -62,13 +62,13 @@ export default function KeywordRankImportPanel({ uiLocale, action }: Props) {
   return (
     <section className="admin-card space-y-4">
       <div>
-        <h2 className="text-sm font-semibold text-primary">{t("title")}</h2>
-        <p className="mt-1 text-xs text-ink-muted">{t("intro")}</p>
-        <p className="mt-1 font-mono text-xs text-ink-muted">{t("columns")}</p>
+        <h2 className="text-sm font-semibold text-adm-text">{t("title")}</h2>
+        <p className="mt-1 text-xs text-adm-muted">{t("intro")}</p>
+        <p className="mt-1 font-mono text-xs text-adm-muted">{t("columns")}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-ink">
+        <label className="flex items-center gap-2 text-xs text-adm-text">
           {t("localeLabel")}
           <select
             value={keywordLocale}
@@ -107,7 +107,7 @@ export default function KeywordRankImportPanel({ uiLocale, action }: Props) {
       </div>
 
       {result && !result.ok && (
-        <p className="flex items-center gap-1.5 text-xs text-red-700">
+        <p className="flex items-center gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} aria-hidden />
           {reason(result.error)}
         </p>
@@ -115,14 +115,14 @@ export default function KeywordRankImportPanel({ uiLocale, action }: Props) {
 
       {result?.ok && (
         <div className="space-y-1.5">
-          <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <p className="flex items-center gap-1.5 text-xs text-adm-success">
             <Check size={13} aria-hidden />
             {t("created", { count: result.created })} · {t("updated", { count: result.updated })}
           </p>
           {result.errors.length > 0 && (
             <div className="space-y-0.5">
-              <p className="text-xs font-medium text-amber-800">{t("errorsTitle")}</p>
-              <ul className="space-y-0.5 text-xs text-ink-muted">
+              <p className="text-xs font-medium text-adm-warning">{t("errorsTitle")}</p>
+              <ul className="space-y-0.5 text-xs text-adm-muted">
                 {result.errors.slice(0, 20).map((row, index) => (
                   <li key={index}>
                     {row.line !== undefined && <span className="font-mono">#{row.line}</span>} {row.query} —{" "}

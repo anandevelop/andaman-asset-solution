@@ -18,8 +18,8 @@ export default function PhasePlaceholder({ section, title, body }: Props) {
       <AdminPageHeader eyebrow={{ label: section }} title={title} />
 
       <div className="admin-card flex flex-col items-center gap-3 py-14 text-center">
-        <Construction size={28} strokeWidth={1.5} className="text-accent-700" aria-hidden />
-        <p className="max-w-sm text-sm leading-relaxed text-ink-muted">{body}</p>
+        <Construction size={28} strokeWidth={1.5} className="text-adm-accent-ink" aria-hidden />
+        <p className="max-w-sm text-sm leading-relaxed text-adm-muted">{body}</p>
       </div>
     </div>
   );

@@ -139,7 +139,7 @@ export default async function AdminLeadsPage(props: Props) {
       }}
     >
       <Suspense
-        fallback={<p className="px-5 py-10 text-center text-sm text-ink-muted">{t("leadDrawer.loading")}</p>}
+        fallback={<p className="px-5 py-10 text-center text-sm text-adm-muted">{t("leadDrawer.loading")}</p>}
       >
         <LeadDetailView locale={locale} id={openLeadId} variant="drawer" />
       </Suspense>
@@ -343,17 +343,17 @@ export default async function AdminLeadsPage(props: Props) {
   );
 
   const offlineNotice = offline && (
-    <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
       {t("common.offline")}
     </p>
   );
 
   const unassignedBanner = assignedToUnassigned && (
-    <p className="flex flex-wrap items-center gap-2 rounded-xs border border-accent/30 bg-accent-50/60 px-4 py-3 text-sm text-primary">
+    <p className="flex flex-wrap items-center gap-2 rounded-xs border border-adm-fill/30 bg-adm-fill/15 px-4 py-3 text-sm text-adm-text">
       {t("leads.unassignedOnlyFilter")}
       <Link
         href={`/${locale}/admin/leads${status ? `?status=${status}` : ""}`}
-        className="text-accent-700 underline hover:text-accent-800"
+        className="text-adm-accent-ink underline hover:text-adm-accent-ink"
       >
         {t("common.all")}
       </Link>
@@ -451,7 +451,7 @@ export default async function AdminLeadsPage(props: Props) {
         {filtersUi}
         {offlineNotice}
 
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-adm-muted">
           {t("leads.openCount", { count: board.openCount })}
           {board.lostCount > 0 && ` · ${t("leads.lostCount", { count: board.lostCount })}`}
         </p>
@@ -504,10 +504,10 @@ export default async function AdminLeadsPage(props: Props) {
       {filtersUi}
       {offlineNotice}
 
-      <p className="text-sm text-ink-muted">{t("leads.count", { count: rows.length })}</p>
+      <p className="text-sm text-adm-muted">{t("leads.count", { count: rows.length })}</p>
 
       {rows.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">{t("leads.empty")}</div>
+        <div className="admin-card text-center text-sm text-adm-muted">{t("leads.empty")}</div>
       ) : (
         <LeadTable
           locale={locale}

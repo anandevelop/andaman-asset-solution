@@ -49,13 +49,13 @@ export default function PublishingRowActions({ locale, type, id, contentStatus, 
   }
 
   const btn = "min-h-[32px] rounded-xs px-2.5 text-xs font-medium disabled:opacity-60";
-  const btnPrimary = `${btn} bg-primary text-white`;
-  const btnGhost = `${btn} border border-primary/20 text-primary`;
-  const btnDanger = `${btn} border border-red-300 text-red-700`;
+  const btnPrimary = `${btn} bg-adm-strong text-adm-on-strong`;
+  const btnGhost = `${btn} border border-adm-line-strong text-adm-text`;
+  const btnDanger = `${btn} border border-adm-danger/30 text-adm-danger`;
 
   return (
     <div className="flex items-center gap-2">
-      {pending && <Loader2 size={14} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={14} className="animate-spin text-adm-muted" aria-hidden />}
 
       {contentStatus === ContentStatus.PUBLISHED && (
         <button type="button" disabled={pending} onClick={() => run(() => startDraft(locale, type, id))} className={btnGhost}>

@@ -67,7 +67,7 @@ export default function AuditDetailPanel({ locale, entry, labels }: Props) {
   if (!entry) {
     return (
       <section className="admin-card flex min-h-[240px] items-center justify-center">
-        <p className="text-center text-sm text-ink-muted">{labels.empty}</p>
+        <p className="text-center text-sm text-adm-muted">{labels.empty}</p>
       </section>
     );
   }
@@ -89,28 +89,28 @@ export default function AuditDetailPanel({ locale, entry, labels }: Props) {
 
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="flex items-baseline justify-between gap-4 py-1">
-      <dt className="shrink-0 text-xs text-ink-muted">{label}</dt>
-      <dd className="text-right text-sm text-primary">{children}</dd>
+      <dt className="shrink-0 text-xs text-adm-muted">{label}</dt>
+      <dd className="text-right text-sm text-adm-text">{children}</dd>
     </div>
   );
 
   return (
     <section className="admin-card space-y-4">
-      <h2 className="text-sm font-semibold text-primary">{labels.title}</h2>
+      <h2 className="text-sm font-semibold text-adm-text">{labels.title}</h2>
 
-      <dl className="divide-y divide-primary/5">
+      <dl className="divide-y divide-adm-line">
         <Row label={labels.record}>
           {entry.recordLabel ?? "—"}{" "}
-          <span className="text-xs text-ink-muted">{entry.modelLabel}</span>
+          <span className="text-xs text-adm-muted">{entry.modelLabel}</span>
         </Row>
         <Row label={labels.actor}>
           {entry.actorName}
-          {entry.actorRole && <span className="text-xs text-ink-muted"> · {entry.actorRole}</span>}
+          {entry.actorRole && <span className="text-xs text-adm-muted"> · {entry.actorRole}</span>}
         </Row>
         <Row label={labels.time}>{entry.at}</Row>
         {(entry.ip || entry.userAgent) && (
           <Row label={labels.from}>
-            <span className="text-xs text-ink-muted">
+            <span className="text-xs text-adm-muted">
               {[entry.ip, entry.userAgent].filter(Boolean).join(" · ")}
             </span>
           </Row>
@@ -124,10 +124,10 @@ export default function AuditDetailPanel({ locale, entry, labels }: Props) {
               <p className="admin-label">{change.label}</p>
               {/* Old above new, red then green — the direction a diff is
                   read, and the same order the version panel uses. */}
-              <p className="rounded-xs border border-red-200 bg-red-50/70 px-3 py-2 text-sm text-red-900 line-through decoration-red-300">
+              <p className="rounded-xs border border-adm-danger/30 bg-red-50/70 px-3 py-2 text-sm text-adm-danger line-through decoration-red-300">
                 {change.before || "—"}
               </p>
-              <p className="mt-1 rounded-xs border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-sm text-emerald-900">
+              <p className="mt-1 rounded-xs border border-adm-success/30 bg-emerald-50/70 px-3 py-2 text-sm text-adm-success">
                 {change.after || "—"}
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function AuditDetailPanel({ locale, entry, labels }: Props) {
         </div>
       ) : (
         entry.noValuesReason && (
-          <p className="rounded-xs bg-surface-muted px-3 py-2.5 text-xs leading-relaxed text-ink-muted">
+          <p className="rounded-xs bg-adm-text/4 px-3 py-2.5 text-xs leading-relaxed text-adm-muted">
             {labels.reason[entry.noValuesReason]}
           </p>
         )
@@ -166,21 +166,21 @@ export default function AuditDetailPanel({ locale, entry, labels }: Props) {
       </div>
 
       {done && (
-        <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+        <p className="flex items-center gap-1.5 text-xs text-adm-success">
           <Check size={13} aria-hidden />
           {labels.reverted}
         </p>
       )}
 
       {error && (
-        <p className="flex items-start gap-1.5 text-xs text-red-700">
+        <p className="flex items-start gap-1.5 text-xs text-adm-danger">
           <AlertCircle size={13} className="mt-0.5 shrink-0" aria-hidden />
           {labels.error[error] ?? labels.error.REVERT_FAILED}
         </p>
       )}
 
       {entry.canRevert && (
-        <p className="border-t border-primary/10 pt-3 text-[11px] leading-relaxed text-ink-muted">
+        <p className="border-t border-adm-line pt-3 text-[11px] leading-relaxed text-adm-muted">
           {labels.revertNote}
         </p>
       )}

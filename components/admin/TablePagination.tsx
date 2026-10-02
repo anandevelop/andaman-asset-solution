@@ -86,7 +86,7 @@ export default function TablePagination({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-ink-muted">{labels.showing}</p>
+      <p className="text-sm text-adm-muted">{labels.showing}</p>
 
       <div className="flex items-center gap-2">
         <select
@@ -109,14 +109,14 @@ export default function TablePagination({
             onClick={() => go({ page: String(page - 1) })}
             disabled={pending || page <= 1}
             aria-label={labels.previous}
-            className="rounded-xs border border-primary/15 p-1.5 text-ink-muted transition-colors hover:text-primary disabled:opacity-40"
+            className="rounded-xs border border-adm-line-strong p-1.5 text-adm-muted transition-colors hover:text-adm-text disabled:opacity-40"
           >
             <ChevronLeft size={15} aria-hidden />
           </button>
 
           {pageWindow(page, pageCount).map((value, index) =>
             value === null ? (
-              <span key={`gap-${index}`} className="px-1 text-xs text-ink-muted" aria-hidden>
+              <span key={`gap-${index}`} className="px-1 text-xs text-adm-muted" aria-hidden>
                 …
               </span>
             ) : (
@@ -130,8 +130,8 @@ export default function TablePagination({
                 className={[
                   "min-w-[30px] rounded-xs border px-2 py-1.5 text-xs font-medium tabular-nums transition-colors",
                   value === page
-                    ? "border-primary bg-primary text-white"
-                    : "border-primary/15 text-ink-muted hover:text-primary",
+                    ? "border-adm-text bg-adm-strong text-adm-on-strong"
+                    : "border-adm-line-strong text-adm-muted hover:text-adm-text",
                 ].join(" ")}
               >
                 {value}
@@ -144,7 +144,7 @@ export default function TablePagination({
             onClick={() => go({ page: String(page + 1) })}
             disabled={pending || page >= pageCount}
             aria-label={labels.next}
-            className="rounded-xs border border-primary/15 p-1.5 text-ink-muted transition-colors hover:text-primary disabled:opacity-40"
+            className="rounded-xs border border-adm-line-strong p-1.5 text-adm-muted transition-colors hover:text-adm-text disabled:opacity-40"
           >
             <ChevronRight size={15} aria-hidden />
           </button>

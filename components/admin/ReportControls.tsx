@@ -109,8 +109,8 @@ export default function ReportControls({
                 key={value}
                 className={`flex cursor-pointer items-start gap-2.5 rounded-xs border px-3 py-2 text-sm transition-colors ${
                   audience === value
-                    ? "border-primary/30 bg-primary/5 text-ink"
-                    : "border-primary/10 text-ink-muted hover:border-primary/20"
+                    ? "border-adm-line-strong bg-adm-text/5 text-adm-text"
+                    : "border-adm-line text-adm-muted hover:border-adm-line-strong"
                 }`}
               >
                 <input
@@ -123,7 +123,7 @@ export default function ReportControls({
                 />
                 <span>
                   <span className="block font-medium">{label}</span>
-                  <span className="block text-xs text-ink-muted">{hint}</span>
+                  <span className="block text-xs text-adm-muted">{hint}</span>
                 </span>
               </label>
             ))}
@@ -147,8 +147,8 @@ export default function ReportControls({
                 aria-pressed={period === value}
                 className={`rounded-xs px-3 py-2 text-sm transition-colors ${
                   period === value
-                    ? "bg-primary font-semibold text-white"
-                    : "border border-primary/10 text-ink-muted hover:text-primary"
+                    ? "bg-adm-strong font-semibold text-adm-on-strong"
+                    : "border border-adm-line text-adm-muted hover:text-adm-text"
                 }`}
               >
                 {label}
@@ -166,8 +166,8 @@ export default function ReportControls({
                 aria-pressed={reportLocale === value}
                 className={`rounded-xs px-3 py-2 text-sm uppercase transition-colors ${
                   reportLocale === value
-                    ? "bg-primary font-semibold text-white"
-                    : "border border-primary/10 text-ink-muted hover:text-primary"
+                    ? "bg-adm-strong font-semibold text-adm-on-strong"
+                    : "border border-adm-line text-adm-muted hover:text-adm-text"
                 }`}
               >
                 {value}

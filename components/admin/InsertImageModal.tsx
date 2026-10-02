@@ -113,7 +113,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
           <button
             type="button"
             onClick={() => setStep("pick")}
-            className="text-xs font-medium text-accent-700 hover:underline"
+            className="text-xs font-medium text-adm-accent-ink hover:underline"
           >
             ← {t("backToLibrary")}
           </button>
@@ -123,7 +123,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
             <img src={selected.url} alt="" className="h-28 w-40 shrink-0 rounded-xs object-cover" />
             <div className="flex-1">
               <label className="admin-label" htmlFor="image-alt">
-                {t("altLabel")} <span className="text-red-600">*</span>
+                {t("altLabel")} <span className="text-adm-danger">*</span>
               </label>
               <input
                 id="image-alt"
@@ -199,7 +199,7 @@ export default function InsertImageModal({ open, onClose, locale, onInsert }: Pr
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-primary/10 pt-4">
+          <div className="flex justify-end gap-2 border-t border-adm-line pt-4">
             <button type="button" onClick={onClose} className="admin-btn-ghost">
               {t("cancel")}
             </button>

@@ -63,19 +63,19 @@ export default function LeadFollowUpInput({
         value={current}
         onChange={onChange}
         disabled={pending}
-        className={`rounded-xs border px-2 py-1 text-xs transition-colors focus:outline-hidden focus:ring-1 focus:ring-primary/30 disabled:opacity-60 ${
+        className={`rounded-xs border px-2 py-1 text-xs transition-colors focus:outline-hidden focus:ring-1 focus:ring-adm-info/30 disabled:opacity-60 ${
           isOverdue
-            ? "border-red-300 bg-red-50 text-red-800"
-            : "border-primary/15 bg-surface-raised text-primary"
+            ? "border-adm-danger/30 bg-adm-danger-bg text-adm-danger"
+            : "border-adm-line-strong bg-adm-solid text-adm-text"
         }`}
       />
-      {pending && <Loader2 size={13} className="animate-spin text-ink-muted" aria-hidden />}
+      {pending && <Loader2 size={13} className="animate-spin text-adm-muted" aria-hidden />}
       {!pending && isOverdue && (
-        <span className="text-[11px] font-medium text-red-700">{overdueLabel}</span>
+        <span className="text-[11px] font-medium text-adm-danger">{overdueLabel}</span>
       )}
       {!pending && state === "error" && (
         <span title={errorLabel}>
-          <AlertCircle size={13} className="text-red-600" aria-hidden />
+          <AlertCircle size={13} className="text-adm-danger" aria-hidden />
         </span>
       )}
     </div>

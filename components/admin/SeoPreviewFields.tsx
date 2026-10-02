@@ -130,7 +130,7 @@ export default function SeoPreviewFields({
             max={SEO_LIMITS.title}
             hint={titleLengthHint}
           />
-          {titleError && <p className="mt-1.5 text-xs text-red-700">{titleError}</p>}
+          {titleError && <p className="mt-1.5 text-xs text-adm-danger">{titleError}</p>}
         </div>
 
         <div>
@@ -152,25 +152,25 @@ export default function SeoPreviewFields({
             hint={descriptionLengthHint}
           />
           {descriptionError && (
-            <p className="mt-1.5 text-xs text-red-700">{descriptionError}</p>
+            <p className="mt-1.5 text-xs text-adm-danger">{descriptionError}</p>
           )}
         </div>
       </div>
 
-      <div className="rounded-xs border border-primary/10 bg-surface-muted/40 p-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-muted">
+      <div className="rounded-xs border border-adm-line bg-adm-text/4 p-4">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-adm-muted">
           {previewLabel}
         </p>
 
         <SerpPreview
-          className="mt-3 max-w-xl rounded-xs bg-white p-4"
+          className="mt-3 max-w-xl rounded-xs bg-adm-solid p-4"
           displayPath={displayPath}
           title={title.trim() || fallbackTitle}
           description={description.trim() || fallbackDescription}
           keyword={focusKeyword}
         />
 
-        <p className="mt-3 text-xs text-ink-muted">{previewHint}</p>
+        <p className="mt-3 text-xs text-adm-muted">{previewHint}</p>
       </div>
     </div>
   );

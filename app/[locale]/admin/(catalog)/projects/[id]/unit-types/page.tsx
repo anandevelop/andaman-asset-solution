@@ -165,7 +165,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         type.id,
         <section key={type.id} className="admin-card">
           <div className="mb-5 flex flex-wrap items-center gap-3">
-            <h2 className="text-base font-semibold text-primary">{type.name}</h2>
+            <h2 className="text-base font-semibold text-adm-text">{type.name}</h2>
             <TranslationStatusBadges completeness={completeness} />
           </div>
 
@@ -289,7 +289,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         active="unitTypes"
       />
 
-      <p className="max-w-2xl text-sm text-ink-muted">{t("unitTypes.subtitle")}</p>
+      <p className="max-w-2xl text-sm text-adm-muted">{t("unitTypes.subtitle")}</p>
 
       {/* One language selection drives every unit type's description field
           on this page — see the file comment on LanguageTabs. Hardcoded
@@ -320,10 +320,10 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
             return (
               <li key={type.id} className="admin-card p-4!">
                 <p className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-semibold text-ink">{type.name}</span>
-                  {type.code && <span className="admin-mono text-xs text-ink-muted">{type.code}</span>}
+                  <span className="truncate text-sm font-semibold text-adm-text">{type.name}</span>
+                  {type.code && <span className="admin-mono text-xs text-adm-muted">{type.code}</span>}
                 </p>
-                <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-adm-muted">
                   <Spec icon={BedDouble} value={type.bedrooms} label={t("unitTypes.card.bedrooms")} />
                   <Spec icon={Bath} value={type.bathrooms} label={t("unitTypes.card.bathrooms")} />
                   <Spec
@@ -368,8 +368,8 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
 
       {/* ── Add ─────────────────────────────────────────────────────── */}
       <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
+        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
+          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
           {t("unitTypes.newTitle")}
         </h2>
 
@@ -402,7 +402,7 @@ function Spec({
     <div className="flex items-center gap-1" title={label}>
       <Icon size={13} aria-hidden />
       <dt className="sr-only">{label}</dt>
-      <dd className="tabular-nums text-ink">{value ?? "—"}</dd>
+      <dd className="tabular-nums text-adm-text">{value ?? "—"}</dd>
     </div>
   );
 }

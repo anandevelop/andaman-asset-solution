@@ -280,7 +280,7 @@ export default async function AdminActivityPage(props: Props) {
           filtered view can be sent to someone, the back button works, and
           the page needs no client JavaScript to filter. */}
       <form method="get" className="flex flex-wrap items-end gap-3">
-        <label className="text-xs font-medium text-ink/70">
+        <label className="text-xs font-medium text-adm-text/70">
           <span className="mb-1 block">{t("activity.filterPerson")}</span>
           <select
             name="actor"
@@ -296,7 +296,7 @@ export default async function AdminActivityPage(props: Props) {
           </select>
         </label>
 
-        <label className="text-xs font-medium text-ink/70">
+        <label className="text-xs font-medium text-adm-text/70">
           <span className="mb-1 block">{t("activity.filterType")}</span>
           <select
             name="model"
@@ -321,21 +321,21 @@ export default async function AdminActivityPage(props: Props) {
           warning is more use than a blank one, and the same banner appears
           on every other admin index. */}
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="rounded-xs border border-primary/10 bg-white p-6 text-sm text-ink/60">
+        <p className="rounded-xs border border-adm-line bg-adm-solid p-6 text-sm text-adm-text/60">
           {t("activity.empty")}
         </p>
       ) : (
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="overflow-x-auto rounded-xs border border-primary/10 bg-white">
+          <div className="overflow-x-auto rounded-xs border border-adm-line bg-adm-solid">
             <table className="w-full min-w-208 text-left text-sm">
-              <thead className="border-b border-primary/10 text-xs uppercase tracking-wide text-ink/50">
+              <thead className="border-b border-adm-line text-xs uppercase tracking-wide text-adm-text/50">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">{t("activity.when")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("activity.who")}</th>
@@ -344,59 +344,59 @@ export default async function AdminActivityPage(props: Props) {
                   <th scope="col" className="px-4 py-3 font-medium">{t("activity.fields")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-primary/5">
+              <tbody className="divide-y divide-adm-line">
                 {entries.map((entry) => (
                   <tr
                     key={entry.id}
                     className={`align-top transition-colors ${
-                      selected?.id === entry.id ? "bg-accent/6" : "hover:bg-surface-muted/60"
+                      selected?.id === entry.id ? "bg-adm-fill/6" : "hover:bg-adm-text/4"
                     }`}
                   >
                     {/* The time cell is the row's own link: a plain <a>
                         keeps the selection in the URL, so a particular
                         entry can be sent to someone. */}
-                    <td className="whitespace-nowrap px-4 py-3 text-ink/70">
-                      <Link href={entryHref(entry.id)} className="hover:text-primary">
+                    <td className="whitespace-nowrap px-4 py-3 text-adm-text/70">
+                      <Link href={entryHref(entry.id)} className="hover:text-adm-text">
                         <time dateTime={entry.createdAt.toISOString()}>
                           {formatter.format(entry.createdAt)}
                         </time>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="block text-ink">{entry.actorEmail}</span>
-                      <span className="block text-xs text-ink/50">{actorNote(entry)}</span>
+                      <span className="block text-adm-text">{entry.actorEmail}</span>
+                      <span className="block text-xs text-adm-text/50">{actorNote(entry)}</span>
                       {/* Under the name rather than in a column of its own:
                           it is only ever read together with the person, and a
                           sixth column pushed the table into a horizontal
                           scroll on every laptop. */}
                       {entry.ipAddress && (
-                        <span className="block font-mono text-[11px] text-ink/40">
+                        <span className="block font-mono text-[11px] text-adm-text/40">
                           {entry.ipAddress}
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-ink">
+                    <td className="whitespace-nowrap px-4 py-3 text-adm-text">
                       {actionLabel(entry.action)}
                       {/* "signed in" says it all; "signed in Session" does not. */}
                       {!isAuthEvent(entry.model) && (
-                        <span className="ml-1 text-ink/50">{entry.model}</span>
+                        <span className="ml-1 text-adm-text/50">{entry.model}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-ink/70">
+                    <td className="px-4 py-3 text-adm-text/70">
                       {/* An auth event is about a person, not a row. "no name
                           recorded" would read as a fault; there was never a
                           record to name. */}
                       {isAuthEvent(entry.model) ? (
-                        <span className="text-ink/40">{t("common.none")}</span>
+                        <span className="text-adm-text/40">{t("common.none")}</span>
                       ) : entry.count !== null ? (
                         t("activity.bulk", { count: entry.count })
                       ) : (
                         (entry.recordLabel ?? (
-                          <span className="text-ink/40">{t("activity.noLabel")}</span>
+                          <span className="text-adm-text/40">{t("activity.noLabel")}</span>
                         ))
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-ink/50">
+                    <td className="px-4 py-3 text-xs text-adm-text/50">
                       {entry.changedFields.join(", ")}
                     </td>
                   </tr>
@@ -443,17 +443,17 @@ export default async function AdminActivityPage(props: Props) {
       {pageCount > 1 && (
         <nav className="flex items-center justify-between text-sm" aria-label={t("activity.title")}>
           {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="text-primary hover:underline">
+            <Link href={pageHref(page - 1)} className="text-adm-text hover:underline">
               {t("activity.newer")}
             </Link>
           ) : (
             <span />
           )}
-          <span className="text-ink/50">
+          <span className="text-adm-text/50">
             {page} / {pageCount}
           </span>
           {page < pageCount ? (
-            <Link href={pageHref(page + 1)} className="text-primary hover:underline">
+            <Link href={pageHref(page + 1)} className="text-adm-text hover:underline">
               {t("activity.older")}
             </Link>
           ) : (

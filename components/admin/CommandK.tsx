@@ -339,7 +339,7 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-adm-line px-4 py-3.5">
-          <Search size={17} className="shrink-0 text-ink-muted" aria-hidden />
+          <Search size={17} className="shrink-0 text-adm-muted" aria-hidden />
           <input
             ref={inputRef}
             value={query}
@@ -350,25 +350,25 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
             aria-expanded="true"
             aria-controls="cmdk-list"
             aria-activedescendant={flat.length > 0 ? `cmdk-row-${activeIndex}` : undefined}
-            className="flex-1 border-none bg-transparent text-[15px] text-ink outline-hidden placeholder:text-ink-muted"
+            className="flex-1 border-none bg-transparent text-[15px] text-adm-text outline-hidden placeholder:text-adm-muted"
           />
           {loading ? (
-            <Loader2 size={14} className="animate-spin text-ink-muted" aria-hidden />
+            <Loader2 size={14} className="animate-spin text-adm-muted" aria-hidden />
           ) : (
-            <kbd className="rounded-[6px] border border-adm-line-strong px-1.5 py-0.5 font-mono text-[10px] text-ink-muted">esc</kbd>
+            <kbd className="rounded-[6px] border border-adm-line-strong px-1.5 py-0.5 font-mono text-[10px] text-adm-muted">esc</kbd>
           )}
         </div>
 
         <div id="cmdk-list" role="listbox" className="max-h-[420px] overflow-y-auto py-1.5">
           {flat.length === 0 && (
-            <p className="px-4 py-6 text-center text-sm text-ink-muted">
+            <p className="px-4 py-6 text-center text-sm text-adm-muted">
               {query.trim().length < 2 ? t("hint") : t("empty")}
             </p>
           )}
 
           {sections.map((section) => (
             <div key={section.key} role="group" aria-label={section.label}>
-              <p className="px-4 pb-1 pt-2.5 text-[11px] font-medium text-ink-muted">{section.label}</p>
+              <p className="px-4 pb-1 pt-2.5 text-[11px] font-medium text-adm-muted">{section.label}</p>
               {section.rows.map((row) => {
                 runningIndex += 1;
                 const index = runningIndex;
@@ -384,19 +384,19 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={row.run}
                     className={`mx-1.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-[13px] ${
-                      isActive ? "bg-primary/5" : ""
+                      isActive ? "bg-adm-text/5" : ""
                     }`}
                   >
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${
-                        isActive ? "bg-adm-fill text-adm-on-fill" : "bg-surface text-ink-muted"
+                        isActive ? "bg-adm-fill text-adm-on-fill" : "bg-adm-bg text-adm-muted"
                       }`}
                     >
                       <Icon size={14} aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-ink">{row.label}</span>
-                      {row.sub && <span className="block truncate text-[11px] text-ink-muted">{row.sub}</span>}
+                      <span className="block truncate text-adm-text">{row.label}</span>
+                      {row.sub && <span className="block truncate text-[11px] text-adm-muted">{row.sub}</span>}
                     </span>
                     {row.badge && (
                       <span className="shrink-0 rounded-full bg-adm-neutral-bg px-2 py-0.5 text-[10.5px] font-medium text-adm-neutral">
@@ -410,7 +410,7 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 border-t border-adm-line px-4 py-2 text-[11px] text-ink-muted">
+        <div className="flex flex-wrap items-center gap-4 border-t border-adm-line px-4 py-2 text-[11px] text-adm-muted">
           <Hint keys={["↑", "↓"]} label={t("navigate")} />
           <Hint keys={["↵"]} label={t("select")} />
           <Hint keys={["⌘K", "/"]} label={t("toggle")} />

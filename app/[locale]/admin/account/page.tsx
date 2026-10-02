@@ -44,15 +44,15 @@ export default async function AdminAccountPage(props: Props) {
         <dl className="grid gap-4 sm:grid-cols-3">
           <div>
             <dt className="admin-label">{t("users.name")}</dt>
-            <dd className="text-sm text-ink">{actor.name}</dd>
+            <dd className="text-sm text-adm-text">{actor.name}</dd>
           </div>
           <div>
             <dt className="admin-label">{t("users.email")}</dt>
-            <dd className="text-sm text-ink">{actor.email}</dd>
+            <dd className="text-sm text-adm-text">{actor.email}</dd>
           </div>
           <div>
             <dt className="admin-label">{t("users.role")}</dt>
-            <dd className="text-sm text-ink">{t(`roles.${actor.role}` as never)}</dd>
+            <dd className="text-sm text-adm-text">{t(`roles.${actor.role}` as never)}</dd>
           </div>
         </dl>
         <p className="admin-hint mt-4">{t("account.contactHint")}</p>
@@ -61,10 +61,10 @@ export default async function AdminAccountPage(props: Props) {
       <section className="admin-card">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-primary">
+            <h2 className="text-base font-semibold text-adm-text">
               {t("security.title")}
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">{t("security.cardHint")}</p>
+            <p className="mt-1 text-sm text-adm-muted">{t("security.cardHint")}</p>
           </div>
 
           <Link href={`/${locale}/admin/account/security`} className="admin-btn">
@@ -75,10 +75,10 @@ export default async function AdminAccountPage(props: Props) {
       </section>
 
       <section className="admin-card">
-        <h2 className="text-base font-semibold text-primary">
+        <h2 className="text-base font-semibold text-adm-text">
           {t("account.changePassword")}
         </h2>
-        <p className="mb-5 mt-1 text-sm text-ink-muted">
+        <p className="mb-5 mt-1 text-sm text-adm-muted">
           {t("account.changePasswordHint")}
         </p>
 

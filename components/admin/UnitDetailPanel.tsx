@@ -87,9 +87,9 @@ type Props = {
 };
 
 const STATUS_TONE = {
-  AVAILABLE: "bg-emerald-50 text-emerald-800",
-  RESERVED: "bg-accent/20 text-accent-800",
-  SOLD: "bg-surface-muted text-ink-muted",
+  AVAILABLE: "bg-adm-success-bg text-adm-success",
+  RESERVED: "bg-adm-fill/20 text-adm-accent-ink",
+  SOLD: "bg-adm-text/4 text-adm-muted",
 } as const;
 
 export default function UnitDetailPanel({
@@ -112,7 +112,7 @@ export default function UnitDetailPanel({
   if (!unit) {
     return (
       <section className="admin-card flex min-h-[240px] items-center justify-center">
-        <p className="text-center text-sm text-ink-muted">{labels.empty}</p>
+        <p className="text-center text-sm text-adm-muted">{labels.empty}</p>
       </section>
     );
   }
@@ -152,7 +152,7 @@ export default function UnitDetailPanel({
       value: (
         <Link
           href={`/${locale}/admin/leads/${unit.reservedByLead.id}`}
-          className="font-medium text-accent-700 hover:text-accent-800"
+          className="font-medium text-adm-accent-ink hover:text-adm-accent-ink"
         >
           {unit.reservedByLead.name}
         </Link>
@@ -166,7 +166,7 @@ export default function UnitDetailPanel({
     rows.push({
       label: labels.expires,
       value: (
-        <span className={unit.expiryUrgent ? "font-semibold text-red-700" : "text-primary"}>
+        <span className={unit.expiryUrgent ? "font-semibold text-adm-danger" : "text-adm-text"}>
           {unit.expiryLabel}
         </span>
       ),
@@ -177,14 +177,14 @@ export default function UnitDetailPanel({
     <section className="admin-card space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-primary">
+          <h2 className="text-sm font-semibold text-adm-text">
             {labels.heading} {unit.unitNumber}
           </h2>
           <span className={`rounded-xs px-2 py-0.5 text-xs font-medium ${STATUS_TONE[unit.status]}`}>
             {unit.statusLabel}
           </span>
           {!unit.releasedForSale && (
-            <span className="rounded-xs border border-dashed border-primary/30 px-2 py-0.5 text-xs text-ink-muted">
+            <span className="rounded-xs border border-dashed border-adm-line-strong px-2 py-0.5 text-xs text-adm-muted">
               {labels.notReleased}
             </span>
           )}
@@ -193,7 +193,7 @@ export default function UnitDetailPanel({
         <button
           type="button"
           onClick={() => setEditing((value) => !value)}
-          className="flex items-center gap-1.5 text-xs font-medium text-accent-700 hover:text-accent-800"
+          className="flex items-center gap-1.5 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink"
         >
           {editing ? <X size={13} aria-hidden /> : <Pencil size={13} aria-hidden />}
           {editing ? labels.cancel : labels.edit}
@@ -214,15 +214,15 @@ export default function UnitDetailPanel({
           <dl className="space-y-2.5">
             {rows.map((row) => (
               <div key={row.label} className="flex items-baseline justify-between gap-4">
-                <dt className="shrink-0 text-xs text-ink-muted">{row.label}</dt>
-                <dd className="text-right text-sm text-primary">{row.value}</dd>
+                <dt className="shrink-0 text-xs text-adm-muted">{row.label}</dt>
+                <dd className="text-right text-sm text-adm-text">{row.value}</dd>
               </div>
             ))}
           </dl>
 
           {extendOpen && (
-            <div className="flex items-center gap-2 rounded-xs border border-primary/10 bg-surface-muted/60 p-2.5">
-              <CalendarClock size={14} className="shrink-0 text-ink-muted" aria-hidden />
+            <div className="flex items-center gap-2 rounded-xs border border-adm-line bg-adm-text/4 p-2.5">
+              <CalendarClock size={14} className="shrink-0 text-adm-muted" aria-hidden />
               <input
                 type="date"
                 value={expiry}
@@ -303,13 +303,13 @@ export default function UnitDetailPanel({
           </div>
 
           {error && (
-            <p className="flex items-center gap-1.5 text-xs text-red-700">
+            <p className="flex items-center gap-1.5 text-xs text-adm-danger">
               <AlertCircle size={13} aria-hidden />
               {labels.error}
             </p>
           )}
 
-          <p className="border-t border-primary/10 pt-3 text-xs text-ink-muted">{labels.auditNote}</p>
+          <p className="border-t border-adm-line pt-3 text-xs text-adm-muted">{labels.auditNote}</p>
         </>
       )}
     </section>

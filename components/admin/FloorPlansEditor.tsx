@@ -84,13 +84,13 @@ export default function FloorPlansEditor({ name, slug, initialRows, labels }: Pr
     <div>
       <input type="hidden" name={name} value={serialized} readOnly />
 
-      {rows.length === 0 && <p className="text-sm text-ink-muted">{labels.empty}</p>}
+      {rows.length === 0 && <p className="text-sm text-adm-muted">{labels.empty}</p>}
 
       <div className="space-y-4">
         {rows.map((row) => (
           <div
             key={row.key}
-            className="grid gap-4 border border-primary/10 bg-primary-900/2 p-4 sm:grid-cols-[1fr_auto]"
+            className="grid gap-4 border border-adm-line bg-adm-text/2 p-4 sm:grid-cols-[1fr_auto]"
           >
             <div className="space-y-3">
               <div>
@@ -116,7 +116,7 @@ export default function FloorPlansEditor({ name, slug, initialRows, labels }: Pr
               type="button"
               onClick={() => removeRow(row.key)}
               aria-label={labels.remove}
-              className="inline-flex h-fit items-center gap-1.5 text-xs text-red-700 hover:text-red-800"
+              className="inline-flex h-fit items-center gap-1.5 text-xs text-adm-danger hover:text-adm-danger"
             >
               <Trash2 size={14} aria-hidden />
               {labels.remove}

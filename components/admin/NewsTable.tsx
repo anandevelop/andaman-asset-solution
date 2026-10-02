@@ -68,11 +68,11 @@ type Props = {
 };
 
 const STATE_STYLE: Record<LocaleState, string> = {
-  done: "bg-primary text-white",
+  done: "bg-adm-strong text-adm-on-strong",
   // Amber, not red: a half-done translation is work in progress, and the
   // list is also how a translator finds what to pick up next.
-  partial: "bg-amber-100 text-amber-900",
-  missing: "bg-surface-muted text-ink-muted/70",
+  partial: "bg-adm-warning-bg text-adm-warning",
+  missing: "bg-adm-text/4 text-adm-muted/70",
 };
 
 export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }: Props) {
@@ -133,21 +133,21 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
   };
 
   const statusStyle: Record<ArticleRow["status"], string> = {
-    published: "bg-emerald-50 text-emerald-800",
-    inReview: "bg-amber-50 text-amber-800",
-    scheduled: "bg-accent-50 text-accent-700",
-    draft: "bg-surface-muted text-ink-muted",
+    published: "bg-adm-success-bg text-adm-success",
+    inReview: "bg-adm-warning-bg text-adm-warning",
+    scheduled: "bg-adm-fill/15 text-adm-accent-ink",
+    draft: "bg-adm-text/4 text-adm-muted",
   };
 
   if (rows.length === 0) {
-    return <div className="admin-card text-center text-sm text-ink-muted">{labels.empty}</div>;
+    return <div className="admin-card text-center text-sm text-adm-muted">{labels.empty}</div>;
   }
 
   return (
     <div className="space-y-3">
       {ids.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xs border border-primary/15 bg-primary/3 px-4 py-2.5 text-sm">
-          <span className="font-medium text-primary">
+        <div className="flex flex-wrap items-center gap-3 rounded-xs border border-adm-line-strong bg-primary/3 px-4 py-2.5 text-sm">
+          <span className="font-medium text-adm-text">
             {t("news.selectedCount", { count: ids.length })}
           </span>
 
@@ -179,18 +179,18 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                 run(() => bulkDeleteArticles(locale, ids));
               }
             }}
-            className="admin-btn-ghost py-1.5! text-xs text-red-700"
+            className="admin-btn-ghost py-1.5! text-xs text-adm-danger"
           >
             <Trash2 size={13} aria-hidden />
             {labels.delete}
           </button>
 
-          {pending && <Loader2 size={14} className="animate-spin text-ink-muted" aria-hidden />}
+          {pending && <Loader2 size={14} className="animate-spin text-adm-muted" aria-hidden />}
 
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            className="ml-auto text-xs text-ink-muted underline hover:text-primary"
+            className="ml-auto text-xs text-adm-muted underline hover:text-adm-text"
           >
             {labels.clearSelection}
           </button>
@@ -198,13 +198,13 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
       )}
 
       {error && (
-        <p className="rounded-xs border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <p className="rounded-xs border border-adm-danger/30 bg-adm-danger-bg px-4 py-3 text-sm text-adm-danger">
           {labels.error}
         </p>
       )}
 
       {notice && (
-        <p className="flex flex-wrap items-center gap-2 rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="flex flex-wrap items-center gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           <AlertTriangle size={15} aria-hidden />
           {notice}
           <Link
@@ -216,9 +216,9 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-card border border-adm-line bg-surface-raised">
+      <div className="overflow-x-auto rounded-card border border-adm-line bg-adm-solid">
         <table className="w-full min-w-[1000px] table-fixed border-collapse">
-          <thead className="border-b border-primary/10 bg-surface-muted">
+          <thead className="border-b border-adm-line bg-adm-text/4">
             <tr>
               <th className="w-10 px-4 py-3">
                 <input
@@ -228,7 +228,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                   onChange={() =>
                     setSelected(allSelected ? new Set() : new Set(rows.map((row) => row.id)))
                   }
-                  className="h-4 w-4 rounded-xs border-primary/30"
+                  className="h-4 w-4 rounded-xs border-adm-line-strong"
                 />
               </th>
               {/* Explicit widths, because the two number columns on the
@@ -245,7 +245,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-primary/5">
+          <tbody className="divide-y divide-adm-line">
             {rows.map((row) => {
               const meta = rowMeta[row.id];
               const live = row.status === "published";
@@ -254,7 +254,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                 <tr
                   key={row.id}
                   className={[
-                    "transition-colors hover:bg-surface-muted/60",
+                    "transition-colors hover:bg-adm-text/4",
                     row.status === "inReview" ? "bg-amber-50/40" : "",
                     selected.has(row.id) ? "bg-primary/4" : "",
                   ].join(" ")}
@@ -265,7 +265,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                       checked={selected.has(row.id)}
                       aria-label={`${labels.selectRow}: ${row.title}`}
                       onChange={() => toggle(row.id)}
-                      className="h-4 w-4 rounded-xs border-primary/30"
+                      className="h-4 w-4 rounded-xs border-adm-line-strong"
                     />
                   </td>
 
@@ -274,7 +274,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                       <AdminImage
                         src={row.coverImageUrl}
                         iconSize={15}
-                        className="h-11 w-16 shrink-0 rounded-xs bg-surface-muted object-cover"
+                        className="h-11 w-16 shrink-0 rounded-xs bg-adm-text/4 object-cover"
                       />
 
                       {/* Capped and truncated: an untruncated slug pushes
@@ -284,11 +284,11 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                         <Link
                           href={`/${locale}/admin/news/${row.id}/edit`}
                           title={row.title}
-                          className="block truncate font-medium text-primary hover:underline"
+                          className="block truncate font-medium text-adm-text hover:underline"
                         >
                           {row.title}
                         </Link>
-                        <p className="mt-0.5 truncate font-mono text-xs text-ink-muted">
+                        <p className="mt-0.5 truncate font-mono text-xs text-adm-muted">
                           {live || row.status === "scheduled" ? (
                             <>/news/{row.slug}</>
                           ) : (
@@ -304,11 +304,11 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                     </div>
                   </td>
 
-                  <td className="admin-td text-ink-muted">
+                  <td className="admin-td text-adm-muted">
                     <span className="block truncate">{row.category ?? labels.none}</span>
                   </td>
 
-                  <td className="admin-td text-ink-muted">
+                  <td className="admin-td text-adm-muted">
                     <span className="block truncate">{row.authorName ?? labels.none}</span>
                   </td>
 
@@ -337,7 +337,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                       {statusLabel[row.status]}
                     </span>
                     {meta?.published && (
-                      <p className="mt-1 text-xs text-ink-muted" title={labels.publishedAt}>
+                      <p className="mt-1 text-xs text-adm-muted" title={labels.publishedAt}>
                         {meta.published}
                       </p>
                     )}
@@ -347,20 +347,20 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                       exists. A draft shows a dash, not a zero — zero says
                       "nobody read it", and nobody could have. */}
                   <td className="admin-td px-3! whitespace-nowrap text-right tabular-nums">
-                    {live ? row.views30.toLocaleString() : <span className="text-ink-muted">—</span>}
+                    {live ? row.views30.toLocaleString() : <span className="text-adm-muted">—</span>}
                   </td>
 
                   <td className="admin-td px-3! whitespace-nowrap text-right tabular-nums">
                     {live ? (
                       <span
                         className={
-                          row.leads > 0 ? "font-semibold text-emerald-700" : "text-ink-muted"
+                          row.leads > 0 ? "font-semibold text-adm-success" : "text-adm-muted"
                         }
                       >
                         {row.leads}
                       </span>
                     ) : (
-                      <span className="text-ink-muted">—</span>
+                      <span className="text-adm-muted">—</span>
                     )}
                   </td>
 
@@ -371,7 +371,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                           href={`/${locale}/news/${row.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-ink-muted hover:text-primary"
+                          className="text-adm-muted hover:text-adm-text"
                           title={labels.view}
                         >
                           <Eye size={15} aria-hidden />
@@ -381,7 +381,7 @@ export default function NewsTable({ locale, rows, localeCodes, labels, rowMeta }
                         href={`/${locale}/admin/news/${row.id}/edit`}
                         title={labels.edit}
                         aria-label={`${labels.edit}: ${row.title}`}
-                        className="text-accent-700 hover:text-accent-800"
+                        className="text-adm-accent-ink hover:text-adm-accent-ink"
                       >
                         <Pencil size={15} aria-hidden />
                       </Link>

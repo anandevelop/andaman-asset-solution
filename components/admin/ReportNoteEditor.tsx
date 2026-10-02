@@ -72,12 +72,12 @@ export default function ReportNoteEditor({
         <h3 className="admin-label mb-0">{labels.title}</h3>
 
         {isDraft ? (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-900">
+          <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] text-adm-warning">
             {labels.draftBadge}
           </span>
         ) : (
           editedBy && (
-            <span className="text-[11px] text-ink-muted">
+            <span className="text-[11px] text-adm-muted">
               {labels.editedBy} {editedBy}
             </span>
           )
@@ -109,10 +109,10 @@ export default function ReportNoteEditor({
         )}
 
         {state?.ok && (
-          <span className="text-xs text-emerald-700">{labels.saved}</span>
+          <span className="text-xs text-adm-success">{labels.saved}</span>
         )}
         {state && !state.ok && (
-          <span className="text-xs text-red-700">
+          <span className="text-xs text-adm-danger">
             {state.error === "TOO_LONG" ? labels.tooLong : labels.failed}
           </span>
         )}

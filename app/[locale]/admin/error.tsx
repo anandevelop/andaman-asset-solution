@@ -55,9 +55,9 @@ export default function AdminError({ error, reset }: Props) {
 
   return (
     <div className="admin-card flex flex-col items-center gap-4 py-14 text-center">
-      <AlertTriangle size={28} strokeWidth={1.5} className="text-red-600" aria-hidden />
+      <AlertTriangle size={28} strokeWidth={1.5} className="text-adm-danger" aria-hidden />
 
-      <p className="max-w-md text-sm leading-relaxed text-ink">{message}</p>
+      <p className="max-w-md text-sm leading-relaxed text-adm-text">{message}</p>
 
       <button type="button" onClick={reset} className="admin-btn-ghost">
         <RotateCw size={15} aria-hidden />

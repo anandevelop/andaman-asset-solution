@@ -101,28 +101,28 @@ export default function RevisionHistoryModal({ open, onClose, locale, type, id, 
       className="max-w-xl"
     >
       <div className="space-y-3">
-        <p className="text-xs text-ink-muted">{t("historyModalNote")}</p>
+        <p className="text-xs text-adm-muted">{t("historyModalNote")}</p>
 
-        {loading && <Loader2 size={16} className="animate-spin text-ink-muted" aria-hidden />}
-        {error && <p className="text-xs text-red-600">{tCommon("error")}</p>}
+        {loading && <Loader2 size={16} className="animate-spin text-adm-muted" aria-hidden />}
+        {error && <p className="text-xs text-adm-danger">{tCommon("error")}</p>}
 
-        {!loading && items.length === 0 && <p className="text-xs text-ink-muted">{t("historyEmpty")}</p>}
+        {!loading && items.length === 0 && <p className="text-xs text-adm-muted">{t("historyEmpty")}</p>}
 
         {!loading && items.length > 0 && (
           <ul className="max-h-[60vh] space-y-2.5 overflow-y-auto">
             {items.map((item) => (
-              <li key={item.id} className="flex items-start justify-between gap-3 border-b border-primary/5 pb-2.5 last:border-b-0">
+              <li key={item.id} className="flex items-start justify-between gap-3 border-b border-adm-line pb-2.5 last:border-b-0">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-primary">
-                    <span className="text-ink-muted">v{item.version}</span>
+                  <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-adm-text">
+                    <span className="text-adm-muted">v{item.version}</span>
                     {item.isLive ? t("liveVersion") : t("olderVersion")}
                     {item.source === "link_opportunity" && (
-                      <span className="rounded-xs bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                      <span className="rounded-xs bg-adm-text/4 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-adm-muted">
                         {t("autoEditBadge")}
                       </span>
                     )}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-ink-muted">
+                  <p className="mt-0.5 text-[11px] text-adm-muted">
                     {new Date(item.createdAt).toLocaleString(locale)}
                     {item.createdByName && ` · ${item.createdByName}`}
                     {item.changedFieldCount !== null && ` · ${t("fieldCount", { count: item.changedFieldCount })}`}
@@ -132,7 +132,7 @@ export default function RevisionHistoryModal({ open, onClose, locale, type, id, 
                   type="button"
                   disabled={pending}
                   onClick={() => onRevert(item.id)}
-                  className="shrink-0 text-xs font-medium text-accent-700 hover:text-accent-800 disabled:opacity-60"
+                  className="shrink-0 text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink disabled:opacity-60"
                 >
                   {t("revertAction")}
                 </button>
@@ -141,7 +141,7 @@ export default function RevisionHistoryModal({ open, onClose, locale, type, id, 
           </ul>
         )}
 
-        <p className="rounded-xs bg-surface-muted px-3 py-2 text-[11px] leading-relaxed text-ink-muted">
+        <p className="rounded-xs bg-adm-text/4 px-3 py-2 text-[11px] leading-relaxed text-adm-muted">
           {t("retentionNote", { days: retentionDays })}
         </p>
       </div>

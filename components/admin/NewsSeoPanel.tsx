@@ -130,9 +130,9 @@ type Tab = "seo" | "keywords" | "links" | "settings" | "schema";
 const SCHEMA_TYPES = ["NewsArticle", "BlogPosting", "Report"] as const;
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "text-emerald-700";
-  if (score >= 60) return "text-amber-700";
-  return "text-red-700";
+  if (score >= 80) return "text-adm-success";
+  if (score >= 60) return "text-adm-warning";
+  return "text-adm-danger";
 }
 
 function scoreStroke(score: number): string {
@@ -152,9 +152,9 @@ function scoreStatusKey(score: number): "ready" | "needsWork" | "notReady" {
 }
 
 function densityColor(density: number): string {
-  if (density === 0) return "text-ink-muted";
-  if (density >= 0.8 && density <= 2.5) return "text-emerald-700";
-  return "text-amber-700";
+  if (density === 0) return "text-adm-muted";
+  if (density >= 0.8 && density <= 2.5) return "text-adm-success";
+  return "text-adm-warning";
 }
 
 /** A minimal donut — no charting dependency for one static ring. */
@@ -207,7 +207,7 @@ function ChecklistGroup({ title, checks, wordCount, icon, t }: {
         {checks.map((check) => (
           <li key={check.id} className="flex items-start gap-2 text-sm">
             {icon}
-            <span className="text-ink">{t(`news.seo.checks.${check.id}`, checkArgs(check.id, wordCount))}</span>
+            <span className="text-adm-text">{t(`news.seo.checks.${check.id}`, checkArgs(check.id, wordCount))}</span>
           </li>
         ))}
       </ul>
@@ -417,7 +417,7 @@ export default function NewsSeoPanel({
 
   return (
     <div className="admin-card space-y-5 lg:sticky lg:top-6">
-      <div role="tablist" aria-label={t("projects.seo")} className="flex flex-wrap gap-1 border-b border-primary/10 pb-1">
+      <div role="tablist" aria-label={t("projects.seo")} className="flex flex-wrap gap-1 border-b border-adm-line pb-1">
         {tabs.map(({ id, label }) => (
           <button
             key={id}
@@ -426,7 +426,7 @@ export default function NewsSeoPanel({
             aria-selected={tab === id}
             onClick={() => setTab(id)}
             className={`rounded-t-xs px-3 py-2 text-xs font-medium transition-colors ${
-              tab === id ? "border-b-2 border-primary text-primary" : "text-ink-muted hover:text-primary"
+              tab === id ? "border-b-2 border-adm-text text-adm-text" : "text-adm-muted hover:text-adm-text"
             }`}
           >
             {label}
@@ -442,7 +442,7 @@ export default function NewsSeoPanel({
               <p className={`text-sm font-semibold ${scoreColor(seo.score)}`}>
                 {t(`news.seo.scoreStatus.${scoreStatusKey(seo.score)}`)}
               </p>
-              <p className="text-xs text-ink-muted">{t("news.seo.scoreHint")}</p>
+              <p className="text-xs text-adm-muted">{t("news.seo.scoreHint")}</p>
             </div>
           </div>
 
@@ -458,7 +458,7 @@ export default function NewsSeoPanel({
               className="admin-input"
             />
             {focusKeywordError ? (
-              <p className="mt-1.5 text-xs text-red-700">{focusKeywordError}</p>
+              <p className="mt-1.5 text-xs text-adm-danger">{focusKeywordError}</p>
             ) : (
               <p className="admin-hint">{t("news.seo.focusKeywordHint")}</p>
             )}
@@ -466,7 +466,7 @@ export default function NewsSeoPanel({
               (trackedKeyword.searchVolume !== null ||
                 trackedKeyword.difficulty !== null ||
                 trackedKeyword.currentRank !== null) && (
-                <p className="mt-1.5 text-xs text-ink-muted">
+                <p className="mt-1.5 text-xs text-adm-muted">
                   {[
                     trackedKeyword.searchVolume !== null &&
                       t("news.seo.keywordSearchVolume", { count: trackedKeyword.searchVolume }),
@@ -482,7 +482,7 @@ export default function NewsSeoPanel({
               )}
           </div>
 
-          <div className="space-y-4 border-t border-primary/10 pt-5">
+          <div className="space-y-4 border-t border-adm-line pt-5">
             <SeoPreviewFields
               titleLabel={`${t("projects.metaTitle")} · ${lang.toUpperCase()}`}
               descriptionLabel={`${t("projects.metaDescription")} · ${lang.toUpperCase()}`}
@@ -518,10 +518,10 @@ export default function NewsSeoPanel({
             />
           </div>
 
-          <div className="border-t border-primary/10 pt-5">
+          <div className="border-t border-adm-line pt-5">
             <div className="mb-2 flex items-baseline justify-between">
               <h3 className="admin-section-title">{t("news.seo.checklistTitle")}</h3>
-              <span className="text-xs text-ink-muted">
+              <span className="text-xs text-adm-muted">
                 {t("news.seo.checklistSummary", {
                   passed: passed.length,
                   shouldFix: shouldFix.length,
@@ -536,43 +536,43 @@ export default function NewsSeoPanel({
                 title={t("news.seo.mustFix")}
                 checks={mustFix}
                 wordCount={stats.wordCount}
-                icon={<XCircle size={15} className="mt-0.5 shrink-0 text-red-500" aria-hidden />}
+                icon={<XCircle size={15} className="mt-0.5 shrink-0 text-adm-danger" aria-hidden />}
                 t={t}
               />
               <ChecklistGroup
                 title={t("news.seo.shouldFix")}
                 checks={shouldFix}
                 wordCount={stats.wordCount}
-                icon={<AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-500" aria-hidden />}
+                icon={<AlertTriangle size={15} className="mt-0.5 shrink-0 text-adm-warning" aria-hidden />}
                 t={t}
               />
               <ChecklistGroup
                 title={t("news.seo.passedGroup")}
                 checks={passed}
                 wordCount={stats.wordCount}
-                icon={<CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden />}
+                icon={<CheckCircle2 size={15} className="mt-0.5 shrink-0 text-adm-success" aria-hidden />}
                 t={t}
               />
             </div>
           </div>
 
-          <div className="border-t border-primary/10 pt-5">
+          <div className="border-t border-adm-line pt-5">
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-xs text-ink-muted">{t("news.seo.statsWords")}</dt>
-                <dd className="tabular-nums text-ink">{stats.wordCount.toLocaleString()}</dd>
+                <dt className="text-xs text-adm-muted">{t("news.seo.statsWords")}</dt>
+                <dd className="tabular-nums text-adm-text">{stats.wordCount.toLocaleString()}</dd>
               </div>
               <div>
-                <dt className="text-xs text-ink-muted">{t("news.seo.statsReadingTime")}</dt>
-                <dd className="text-ink">{t("news.readingTime", { minutes: stats.readingMinutes })}</dd>
+                <dt className="text-xs text-adm-muted">{t("news.seo.statsReadingTime")}</dt>
+                <dd className="text-adm-text">{t("news.readingTime", { minutes: stats.readingMinutes })}</dd>
               </div>
               <div>
-                <dt className="text-xs text-ink-muted">{t("news.seo.statsImages")}</dt>
-                <dd className="tabular-nums text-ink">{stats.imageCount}</dd>
+                <dt className="text-xs text-adm-muted">{t("news.seo.statsImages")}</dt>
+                <dd className="tabular-nums text-adm-text">{stats.imageCount}</dd>
               </div>
               <div>
-                <dt className="text-xs text-ink-muted">{t("news.seo.statsAvgSentence")}</dt>
-                <dd className="text-ink">{t("news.seo.statsWordsCount", { count: stats.averageSentenceLength })}</dd>
+                <dt className="text-xs text-adm-muted">{t("news.seo.statsAvgSentence")}</dt>
+                <dd className="text-adm-text">{t("news.seo.statsWordsCount", { count: stats.averageSentenceLength })}</dd>
               </div>
             </dl>
 
@@ -589,14 +589,14 @@ export default function NewsSeoPanel({
                        §6.3 asks for explicitly. Only the wrapper changes. */
                     const row = (
                       <>
-                        <span className="shrink-0 text-xs text-ink-muted">H{heading.level}</span>
+                        <span className="shrink-0 text-xs text-adm-muted">H{heading.level}</span>
                         <span className="truncate">{heading.text}</span>
                         {heading.skipsLevel && (
-                          <AlertTriangle size={12} className="shrink-0 text-amber-600" aria-hidden />
+                          <AlertTriangle size={12} className="shrink-0 text-adm-warning" aria-hidden />
                         )}
                       </>
                     );
-                    const tone = heading.skipsLevel ? "text-amber-700" : "text-ink";
+                    const tone = heading.skipsLevel ? "text-adm-warning" : "text-adm-text";
                     // An FAQ question is a heading but not a section: there
                     // is nothing under it to take along, and what it lives
                     // in is the FAQ list. See HeadingOutlineItem.nested.
@@ -635,7 +635,7 @@ export default function NewsSeoPanel({
                               }
                             : undefined
                         }
-                        className={`rounded-xs ${dropRow === index ? "bg-primary/5 ring-1 ring-primary/30" : ""} ${
+                        className={`rounded-xs ${dropRow === index ? "bg-adm-text/5 ring-1 ring-adm-info/30" : ""} ${
                           dragRow === index ? "opacity-50" : ""
                         }`}
                       >
@@ -644,7 +644,7 @@ export default function NewsSeoPanel({
                             type="button"
                             onClick={() => onSelectHeading(index)}
                             title={movable ? t("news.seo.outlineDragHint") : undefined}
-                            className={`flex w-full items-center gap-1.5 truncate rounded-xs px-1 py-0.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary ${tone} ${
+                            className={`flex w-full items-center gap-1.5 truncate rounded-xs px-1 py-0.5 text-left text-sm transition-colors hover:bg-adm-text/5 hover:text-adm-text ${tone} ${
                               movable ? "cursor-grab active:cursor-grabbing" : ""
                             }`}
                           >
@@ -661,7 +661,7 @@ export default function NewsSeoPanel({
                 </ul>
               )}
               {stats.headings.some((heading) => heading.skipsLevel) && (
-                <p className="mt-2 text-xs text-amber-700">{t("news.seo.outlineWarning")}</p>
+                <p className="mt-2 text-xs text-adm-warning">{t("news.seo.outlineWarning")}</p>
               )}
             </div>
           </div>
@@ -672,7 +672,7 @@ export default function NewsSeoPanel({
         <div className="space-y-4">
           <div className="flex items-baseline justify-between">
             <h3 className="admin-section-title">{t("news.seo.tabKeywords")}</h3>
-            <span className="text-xs text-ink-muted">{t("news.seo.densityTarget")}</span>
+            <span className="text-xs text-adm-muted">{t("news.seo.densityTarget")}</span>
           </div>
 
           {values.focusKeyword.trim() ? (
@@ -698,14 +698,14 @@ export default function NewsSeoPanel({
             <p className="admin-hint">{t("news.seo.densityEmpty")}</p>
           )}
 
-          <div className="border-t border-primary/10 pt-5">
+          <div className="border-t border-adm-line pt-5">
             <div className="flex items-baseline justify-between">
               <label htmlFor="secondaryKeywordsInput" className="admin-label">
                 {t("news.seo.secondaryKeywordsLabel")}
               </label>
               <span
                 className={`text-xs tabular-nums ${
-                  secondaryKeywordCount > MAX_SECONDARY_KEYWORDS ? "text-red-700" : "text-ink-muted"
+                  secondaryKeywordCount > MAX_SECONDARY_KEYWORDS ? "text-adm-danger" : "text-adm-muted"
                 }`}
               >
                 {secondaryKeywordCount}/{MAX_SECONDARY_KEYWORDS}
@@ -724,7 +724,7 @@ export default function NewsSeoPanel({
               locales from this article's own primary-language draft — same
               "admin fills it in manually, no external API yet" scope this
               LSI section below already accepts for keyword suggestions. */}
-          <div className="border-t border-primary/10 pt-5">
+          <div className="border-t border-adm-line pt-5">
             <label htmlFor="lsiTermsInput" className="admin-label">
               {t("news.seo.lsiLabel")}
             </label>
@@ -749,7 +749,7 @@ export default function NewsSeoPanel({
                     {lsiPending && <Loader2 size={12} className="animate-spin" aria-hidden />}
                     {t("common.save")}
                   </button>
-                  {lsiSaved && <span className="text-xs text-emerald-700">{t("common.saved")}</span>}
+                  {lsiSaved && <span className="text-xs text-adm-success">{t("common.saved")}</span>}
                 </div>
                 <p className="admin-hint">
                   {lsiTracked ? t("news.seo.lsiHint") : t("news.seo.lsiHintUntracked")}
@@ -778,14 +778,14 @@ export default function NewsSeoPanel({
                   {links
                     .filter((l) => l.internal)
                     .map((l, index) => (
-                      <li key={index} className="truncate text-sm text-ink">
+                      <li key={index} className="truncate text-sm text-adm-text">
                         {l.target}
                       </li>
                     ))}
                 </ul>
               </div>
 
-              <div className="border-t border-primary/10 pt-4">
+              <div className="border-t border-adm-line pt-4">
                 <h4 className="admin-label">
                   {t("news.seo.linksExternalHeading")} ({links.filter((l) => !l.internal).length})
                 </h4>
@@ -797,19 +797,19 @@ export default function NewsSeoPanel({
                       const checked = typeof entry?.status === "number";
                       const broken = checked && !(entry!.status! >= 200 && entry!.status! < 400);
                       return (
-                        <li key={index} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink">
+                        <li key={index} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-adm-text">
                           <span className="truncate">{l.target}</span>
                           {checked && (
                             <span
                               className={`shrink-0 rounded-xs px-1.5 py-0.5 text-[10px] font-semibold ${
-                                broken ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
+                                broken ? "bg-adm-danger-bg text-adm-danger" : "bg-adm-success-bg text-adm-success"
                               }`}
                             >
                               {entry!.status === 0 ? <AlertTriangle size={10} aria-hidden /> : entry!.status}
                             </span>
                           )}
                           {entry?.checkedAt && (
-                            <span className="shrink-0 text-[11px] text-ink-muted">
+                            <span className="shrink-0 text-[11px] text-adm-muted">
                               {t("news.seo.linksCheckedAt", { when: relativeTime(uiLocale, entry.checkedAt) })}
                             </span>
                           )}
@@ -822,7 +822,7 @@ export default function NewsSeoPanel({
           )}
 
           {/* ── Should link to ───────────────────────────────────────── */}
-          <div className="border-t border-primary/10 pt-4">
+          <div className="border-t border-adm-line pt-4">
             <h4 className="admin-label">
               {t("news.seo.linksOpportunitiesHeading")} ({linkPanel.opportunities.length})
             </h4>
@@ -831,13 +831,13 @@ export default function NewsSeoPanel({
             ) : (
               <ul className="mt-1.5 space-y-2">
                 {linkPanel.opportunities.map((opportunity) => (
-                  <li key={opportunity.id} className="flex items-center justify-between gap-2 text-sm text-ink">
+                  <li key={opportunity.id} className="flex items-center justify-between gap-2 text-sm text-adm-text">
                     <span className="min-w-0 truncate">
-                      <span className="mr-1.5 shrink-0 rounded-xs bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
+                      <span className="mr-1.5 shrink-0 rounded-xs bg-adm-text/5 px-1.5 py-0.5 text-[10px] font-medium text-adm-muted">
                         {t(`news.seo.targetType.${opportunity.targetType}` as never)}
                       </span>
                       {opportunity.targetTitle}{" "}
-                      <span className="text-ink-muted">— “{opportunity.matchedText}”</span>
+                      <span className="text-adm-muted">— “{opportunity.matchedText}”</span>
                     </span>
                     {canAddLink && (
                       <button
@@ -858,11 +858,11 @@ export default function NewsSeoPanel({
                 ))}
               </ul>
             )}
-            {addLinkError && <p className="mt-1.5 text-xs text-red-700">{addLinkError}</p>}
+            {addLinkError && <p className="mt-1.5 text-xs text-adm-danger">{addLinkError}</p>}
           </div>
 
           {/* ── Inbound links ────────────────────────────────────────── */}
-          <div className="border-t border-primary/10 pt-4">
+          <div className="border-t border-adm-line pt-4">
             <h4 className="admin-label">
               {t("news.seo.linksInboundHeading")} ({linkPanel.inboundLinks.length})
             </h4>
@@ -871,10 +871,10 @@ export default function NewsSeoPanel({
             ) : (
               <ul className="mt-1.5 space-y-1">
                 {linkPanel.inboundLinks.map((inbound, index) => (
-                  <li key={index} className="truncate text-sm text-ink">
+                  <li key={index} className="truncate text-sm text-adm-text">
                     {inbound.label}
                     {inbound.anchorText && (
-                      <span className="text-ink-muted"> — “{inbound.anchorText}”</span>
+                      <span className="text-adm-muted"> — “{inbound.anchorText}”</span>
                     )}
                   </li>
                 ))}
@@ -898,22 +898,22 @@ export default function NewsSeoPanel({
             hint={t("news.ogImageHint")}
           />
 
-          <label className="flex items-start gap-3 border-t border-primary/10 pt-5 text-sm text-ink">
+          <label className="flex items-start gap-3 border-t border-adm-line pt-5 text-sm text-adm-text">
             <input
               type="checkbox"
               name="noIndex"
               defaultChecked={noIndexDefaultChecked}
-              className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+              className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
             />
             <span>
               {t("projects.noIndex")}
-              <span className="mt-0.5 block text-xs text-ink-muted">
+              <span className="mt-0.5 block text-xs text-adm-muted">
                 {t("projects.noIndexHint")} · {lang.toUpperCase()}
               </span>
             </span>
           </label>
 
-          <div className="border-t border-primary/10 pt-5">
+          <div className="border-t border-adm-line pt-5">
             <label htmlFor="schemaTypeSelect" className="admin-label">
               {t("news.seo.schemaTypeLabel")}
             </label>
@@ -954,18 +954,18 @@ export default function NewsSeoPanel({
             <p className="admin-hint">{t("news.seo.schemaPreviewHint")}</p>
           </div>
 
-          <p className="text-sm text-ink">
-            <span className="text-ink-muted">{t("news.seo.schemaPreviewType")}: </span>
+          <p className="text-sm text-adm-text">
+            <span className="text-adm-muted">{t("news.seo.schemaPreviewType")}: </span>
             <span className="font-medium">{schemaJsonLd.map((entry) => entry["@type"]).join(" + ")}</span>
           </p>
 
-          <pre className="max-h-96 overflow-auto rounded-xs border border-primary/10 bg-surface-muted/40 p-3 text-xs leading-relaxed text-ink">
+          <pre className="max-h-96 overflow-auto rounded-xs border border-adm-line bg-adm-text/4 p-3 text-xs leading-relaxed text-adm-text">
             {JSON.stringify(schemaJsonLd, null, 2)}
           </pre>
 
-          <div className="border-t border-primary/10 pt-4">
+          <div className="border-t border-adm-line pt-4">
             <h4 className="admin-label">{t("news.seo.breadcrumbTitle")}</h4>
-            <p className="mt-1 truncate text-sm text-ink">
+            <p className="mt-1 truncate text-sm text-adm-text">
               {breadcrumbTrail.map((item) => item.name).join(" › ")}
             </p>
           </div>

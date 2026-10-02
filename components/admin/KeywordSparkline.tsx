@@ -22,7 +22,7 @@ const PADDING = 3;
 
 export default function KeywordSparkline({ points }: { points: { w: number; rank: number }[] }) {
   if (points.length === 0) {
-    return <span className="text-xs text-ink-muted">—</span>;
+    return <span className="text-xs text-adm-muted">—</span>;
   }
 
   const ranks = points.map((p) => p.rank);

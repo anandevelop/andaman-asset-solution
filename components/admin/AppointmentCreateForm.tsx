@@ -103,8 +103,8 @@ export default function AppointmentCreateForm({
   return (
     <div className="admin-card w-full max-w-md space-y-3 p-4!">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-primary">{labels.create}</h3>
-        <button type="button" onClick={() => setOpen(false)} className="text-ink-muted hover:text-primary">
+        <h3 className="text-sm font-semibold text-adm-text">{labels.create}</h3>
+        <button type="button" onClick={() => setOpen(false)} className="text-adm-muted hover:text-adm-text">
           <X size={16} aria-hidden />
         </button>
       </div>
@@ -203,7 +203,7 @@ export default function AppointmentCreateForm({
         </label>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-adm-danger">{error}</p>}
 
       <div className="flex justify-end gap-2">
         <button type="button" onClick={() => setOpen(false)} className="admin-btn-ghost">

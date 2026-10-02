@@ -85,13 +85,13 @@ export default async function AdminProgressIndexPage(props: Props) {
       <PageTabs locale={locale} role={session.role} groupKey="projects" />
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
       {projects.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
+        <div className="admin-card text-center text-sm text-adm-muted">
           {t("projects.empty")}
         </div>
       ) : (
@@ -106,13 +106,13 @@ export default async function AdminProgressIndexPage(props: Props) {
                   className="admin-card flex items-center justify-between gap-4 transition-shadow hover:shadow-cardHover"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-primary">
+                    <p className="font-medium text-adm-text">
                       {locale === "th" ? project.nameTh : project.nameEn}
                     </p>
-                    <p className="mt-0.5 text-xs text-ink-muted">{project.location}</p>
+                    <p className="mt-0.5 text-xs text-adm-muted">{project.location}</p>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-4 text-sm text-ink-muted">
+                  <div className="flex shrink-0 items-center gap-4 text-sm text-adm-muted">
                     <span>
                       {t("progress.imageCount", {
                         count: project._count.progressUpdates,

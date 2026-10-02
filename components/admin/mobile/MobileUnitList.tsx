@@ -33,9 +33,9 @@ type Props = {
 };
 
 const STATUS_CHIP: Record<UnitStatus, string> = {
-  AVAILABLE: "bg-emerald-50 text-emerald-800",
-  RESERVED: "bg-accent-50 text-accent-700",
-  SOLD: "bg-surface-muted text-ink-muted",
+  AVAILABLE: "bg-adm-success-bg text-adm-success",
+  RESERVED: "bg-adm-fill/15 text-adm-accent-ink",
+  SOLD: "bg-adm-text/4 text-adm-muted",
 };
 
 export default function MobileUnitList({
@@ -88,10 +88,10 @@ export default function MobileUnitList({
           key={unit.id}
           type="button"
           onClick={() => open(unit)}
-          className="flex min-h-[56px] w-full items-center gap-3 rounded-xs border border-primary/10 bg-white px-3.5 py-2.5 text-left"
+          className="flex min-h-[56px] w-full items-center gap-3 rounded-xs border border-adm-line bg-adm-solid px-3.5 py-2.5 text-left"
         >
-          <span className="w-14 shrink-0 text-sm font-semibold text-primary">{unit.unitNumber}</span>
-          <span className="min-w-0 flex-1 truncate text-xs text-ink-muted">{unit.typeLabel}</span>
+          <span className="w-14 shrink-0 text-sm font-semibold text-adm-text">{unit.unitNumber}</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-adm-muted">{unit.typeLabel}</span>
           <span className={`shrink-0 rounded-xs px-2.5 py-1 text-[11px] font-semibold ${STATUS_CHIP[unit.status]}`}>
             {statusLabels[unit.status]}
           </span>
@@ -104,15 +104,15 @@ export default function MobileUnitList({
           onClick={close}
         >
           <div
-            className="mx-auto w-full max-w-md rounded-t-2xl bg-white px-5 pb-6 pt-3.5"
+            className="mx-auto w-full max-w-md rounded-t-2xl bg-adm-solid px-5 pb-6 pt-3.5"
             onClick={(event) => event.stopPropagation()}
           >
-            <span className="mx-auto mb-3.5 block h-1 w-9 rounded-full bg-primary/15" />
-            <p className="text-base font-semibold text-primary">
+            <span className="mx-auto mb-3.5 block h-1 w-9 rounded-full bg-adm-text/15" />
+            <p className="text-base font-semibold text-adm-text">
               {sheetLabels.title} {openUnit.unitNumber}
             </p>
 
-            <div className="mt-2.5 divide-y divide-primary/10">
+            <div className="mt-2.5 divide-y divide-adm-line">
               {Object.values(UnitStatus).map((status) => (
                 <label key={status} className="flex min-h-[52px] cursor-pointer items-center gap-3 py-1">
                   <input
@@ -122,19 +122,19 @@ export default function MobileUnitList({
                     onChange={() => setChoice(status)}
                     className="h-5 w-5 accent-primary"
                   />
-                  <span className="flex-1 text-sm text-primary">{statusLabels[status]}</span>
+                  <span className="flex-1 text-sm text-adm-text">{statusLabels[status]}</span>
                 </label>
               ))}
             </div>
 
-            {error && <p className="mt-2 text-xs text-red-600">{sheetLabels.error}</p>}
+            {error && <p className="mt-2 text-xs text-adm-danger">{sheetLabels.error}</p>}
 
             <div className="mt-3 flex gap-2.5">
               <button
                 type="button"
                 onClick={close}
                 disabled={pending}
-                className="flex min-h-[46px] flex-1 items-center justify-center rounded-xs border border-primary/20 text-sm font-medium text-primary disabled:opacity-60"
+                className="flex min-h-[46px] flex-1 items-center justify-center rounded-xs border border-adm-line-strong text-sm font-medium text-adm-text disabled:opacity-60"
               >
                 {sheetLabels.cancel}
               </button>
@@ -142,7 +142,7 @@ export default function MobileUnitList({
                 type="button"
                 onClick={save}
                 disabled={pending}
-                className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-xs bg-primary text-sm font-medium text-white disabled:opacity-60"
+                className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-xs bg-adm-strong text-sm font-medium text-adm-on-strong disabled:opacity-60"
               >
                 {pending && <Loader2 size={14} className="animate-spin" aria-hidden />}
                 {sheetLabels.save}

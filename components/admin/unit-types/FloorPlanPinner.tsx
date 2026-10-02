@@ -125,9 +125,9 @@ export default function FloorPlanPinner({
 
   if (!lineImageUrl) {
     return (
-      <div className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-xs border border-dashed border-primary/20 bg-surface-muted p-8 text-center">
-        <ImageOff size={20} className="text-ink-muted" aria-hidden />
-        <p className="text-sm font-medium text-ink">{labels.noPlan}</p>
+      <div className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-xs border border-dashed border-adm-line-strong bg-adm-text/4 p-8 text-center">
+        <ImageOff size={20} className="text-adm-muted" aria-hidden />
+        <p className="text-sm font-medium text-adm-text">{labels.noPlan}</p>
         <p className="admin-hint max-w-sm">{labels.noPlanHint}</p>
       </div>
     );
@@ -138,7 +138,7 @@ export default function FloorPlanPinner({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-xs border border-primary/15 p-0.5">
+        <div className="inline-flex rounded-xs border border-adm-line-strong p-0.5">
           {(["line", "furnished"] as const).map((view) => {
             const active = (view === "furnished") === furnished;
             const disabled = view === "furnished" && !furnishedImageUrl;
@@ -151,7 +151,7 @@ export default function FloorPlanPinner({
                 onClick={() => setFurnished(view === "furnished")}
                 aria-pressed={active}
                 className={`rounded-xs px-2.5 py-1 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                  active ? "bg-primary font-medium text-white" : "text-ink-muted hover:text-primary"
+                  active ? "bg-adm-strong font-medium text-adm-on-strong" : "text-adm-muted hover:text-adm-text"
                 }`}
               >
                 {view === "line" ? labels.lineView : labels.furnishedView}
@@ -188,7 +188,7 @@ export default function FloorPlanPinner({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         style={{ aspectRatio: `${aspect}`, backgroundImage: `url(${background})` }}
-        className={`relative w-full select-none rounded-xs border border-primary/15 bg-contain bg-center bg-no-repeat ${
+        className={`relative w-full select-none rounded-xs border border-adm-line-strong bg-contain bg-center bg-no-repeat ${
           placing ? "cursor-crosshair" : ""
         }`}
       >
@@ -204,7 +204,7 @@ export default function FloorPlanPinner({
               className={`absolute flex -translate-x-1/2 -translate-y-1/2 touch-none items-center gap-1 whitespace-nowrap rounded-xs border px-1.5 py-0.5 text-[10px] leading-tight shadow-sm transition-colors ${
                 selected
                   ? "z-10 border-accent-700 bg-accent-700 text-white"
-                  : "border-primary/30 bg-white/90 text-primary hover:border-accent-700"
+                  : "border-adm-line-strong bg-white/90 text-adm-text hover:border-accent-700"
               } ${readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
             >
               <span className="tabular-nums opacity-70">
@@ -216,7 +216,7 @@ export default function FloorPlanPinner({
               {!room.hasPhoto && (
                 <span
                   aria-hidden
-                  className="ml-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+                  className="ml-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-adm-warning"
                 />
               )}
             </button>

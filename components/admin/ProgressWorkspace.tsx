@@ -165,36 +165,36 @@ export default function ProgressWorkspace({
       {/* ── The log ──────────────────────────────────────────────────── */}
       <section className="admin-card space-y-4 lg:col-span-3">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold text-primary">{labels.logTitle}</h2>
-          <p className="text-xs text-ink-muted">{labels.logCount}</p>
+          <h2 className="text-sm font-semibold text-adm-text">{labels.logTitle}</h2>
+          <p className="text-xs text-adm-muted">{labels.logCount}</p>
         </div>
 
         {entries.length === 0 ? (
-          <p className="py-8 text-center text-sm text-ink-muted">{labels.empty}</p>
+          <p className="py-8 text-center text-sm text-adm-muted">{labels.empty}</p>
         ) : (
           <div className="space-y-3">
             {entries.map((card) => (
               <article
                 key={card.id}
                 className={`rounded-xs border p-3.5 ${
-                  card.isPublished ? "border-primary/10" : "border-accent/40 bg-accent/4"
+                  card.isPublished ? "border-adm-line" : "border-adm-fill/40 bg-adm-fill/4"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-semibold text-primary">{card.monthLabel}</h3>
+                  <h3 className="font-semibold text-adm-text">{card.monthLabel}</h3>
 
                   {card.percentComplete !== null && (
-                    <span className="rounded-xs bg-surface-muted px-1.5 py-0.5 text-xs font-semibold text-primary">
+                    <span className="rounded-xs bg-adm-text/4 px-1.5 py-0.5 text-xs font-semibold text-adm-text">
                       {card.percentComplete}%
                     </span>
                   )}
 
-                  <span className="text-xs text-ink-muted">
+                  <span className="text-xs text-adm-muted">
                     {card.isPublished ? card.authorLine : labels.draftTag}
                   </span>
 
                   <span className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-ink-muted">{labels.published}</span>
+                    <span className="text-xs text-adm-muted">{labels.published}</span>
                     <button
                       type="button"
                       role="switch"
@@ -204,17 +204,17 @@ export default function ProgressWorkspace({
                       onClick={() => togglePublished(card)}
                       className={[
                         "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50",
-                        card.isPublished ? "bg-emerald-500" : "bg-primary/20",
+                        card.isPublished ? "bg-adm-success" : "bg-adm-text/20",
                       ].join(" ")}
                     >
                       <span
                         className={[
-                          "inline-flex h-3.5 w-3.5 transform items-center justify-center rounded-full bg-white shadow-xs transition-transform",
+                          "inline-flex h-3.5 w-3.5 transform items-center justify-center rounded-full bg-adm-solid shadow-xs transition-transform",
                           card.isPublished ? "translate-x-[18px]" : "translate-x-[3px]",
                         ].join(" ")}
                       >
                         {busyId === card.id && (
-                          <Loader2 size={12} className="animate-spin text-primary" aria-hidden />
+                          <Loader2 size={12} className="animate-spin text-adm-text" aria-hidden />
                         )}
                       </span>
                     </button>
@@ -222,7 +222,7 @@ export default function ProgressWorkspace({
                 </div>
 
                 {card.summary && (
-                  <p className="mt-2 text-sm leading-relaxed text-ink">{card.summary}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-adm-text">{card.summary}</p>
                 )}
 
                 {card.images.length > 0 && (
@@ -235,11 +235,11 @@ export default function ProgressWorkspace({
                         src={url}
                         alt=""
                         loading="lazy"
-                        className="h-20 w-full rounded-xs bg-surface-muted object-cover"
+                        className="h-20 w-full rounded-xs bg-adm-text/4 object-cover"
                       />
                     ))}
                     {card.images.length > 4 && (
-                      <span className="flex h-20 items-center justify-center rounded-xs bg-surface-muted text-sm font-medium text-ink-muted">
+                      <span className="flex h-20 items-center justify-center rounded-xs bg-adm-text/4 text-sm font-medium text-adm-muted">
                         {tp("morePhotos", { count: card.images.length - 4 })}
                       </span>
                     )}
@@ -253,7 +253,7 @@ export default function ProgressWorkspace({
 
       {/* ── The editor ───────────────────────────────────────────────── */}
       <section className="admin-card space-y-4 lg:col-span-2">
-        <h2 className="text-sm font-semibold text-primary">{labels.addTitle}</h2>
+        <h2 className="text-sm font-semibold text-adm-text">{labels.addTitle}</h2>
 
         <div className="grid grid-cols-[1fr_90px] gap-3">
           <div>
@@ -349,8 +349,8 @@ export default function ProgressWorkspace({
         </div>
 
         <label
-          className={`flex items-start gap-2 rounded-xs bg-surface-muted px-3 py-2.5 text-sm ${
-            buyerCount === 0 ? "text-ink-muted" : "text-ink"
+          className={`flex items-start gap-2 rounded-xs bg-adm-text/4 px-3 py-2.5 text-sm ${
+            buyerCount === 0 ? "text-adm-muted" : "text-adm-text"
           }`}
         >
           <input
@@ -358,7 +358,7 @@ export default function ProgressWorkspace({
             checked={notify && buyerCount > 0}
             disabled={buyerCount === 0}
             onChange={(event) => setNotify(event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded-xs border-primary/30 text-primary focus:ring-primary/30"
+            className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
           />
           <span>
             {buyerCount === 0
@@ -388,7 +388,7 @@ export default function ProgressWorkspace({
         </div>
 
         {status === "saved" && (
-          <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <p className="flex items-center gap-1.5 text-xs text-adm-success">
             <Check size={13} aria-hidden />
             {labels.saved}
             {notifiedCount !== null && notifiedCount > 0 &&
@@ -397,7 +397,7 @@ export default function ProgressWorkspace({
         )}
 
         {status === "error" && (
-          <p className="flex items-center gap-1.5 text-xs text-red-700">
+          <p className="flex items-center gap-1.5 text-xs text-adm-danger">
             <AlertCircle size={13} aria-hidden />
             {labels.error}
           </p>

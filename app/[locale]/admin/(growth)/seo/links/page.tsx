@@ -71,11 +71,11 @@ export default async function LinkHealthPage(props: Props) {
       {/* See the keywords tab for why this is an h2 with no back link. */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-2.5 text-lg font-semibold text-primary">
-            <Link2 size={18} strokeWidth={1.75} className="text-accent-700" aria-hidden />
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold text-adm-text">
+            <Link2 size={18} strokeWidth={1.75} className="text-adm-accent-ink" aria-hidden />
             {t("seo.links.title")}
           </h2>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="mt-1 text-sm text-adm-muted">
             {health.lastScan
               ? t("seo.links.lastScanHint", { date: lastScanLabel ?? "" })
               : t("seo.links.neverScanned")}
@@ -99,7 +99,7 @@ export default async function LinkHealthPage(props: Props) {
       </div>
 
       {offline && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
@@ -107,70 +107,70 @@ export default async function LinkHealthPage(props: Props) {
       {/* ── KPIs ─────────────────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
             {t("seo.links.kpiTotalInternalLinks")}
           </p>
-          <p className="mt-4 text-3xl font-semibold tabular-nums text-primary">{health.kpis.totalInternalLinks}</p>
+          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{health.kpis.totalInternalLinks}</p>
         </div>
-        <div className={`admin-card ${health.kpis.orphanCount > 0 ? "border-amber-200" : ""}`}>
+        <div className={`admin-card ${health.kpis.orphanCount > 0 ? "border-adm-warning/30" : ""}`}>
           <p
-            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.orphanCount > 0 ? "text-amber-800" : "text-ink-muted"}`}
+            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.orphanCount > 0 ? "text-adm-warning" : "text-adm-muted"}`}
           >
             {t("seo.links.kpiOrphans")}
           </p>
           <p
-            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.orphanCount > 0 ? "text-amber-800" : "text-primary"}`}
+            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.orphanCount > 0 ? "text-adm-warning" : "text-adm-text"}`}
           >
             {health.kpis.orphanCount}
           </p>
         </div>
-        <div className={`admin-card ${health.kpis.brokenLinkCount > 0 ? "border-red-200" : ""}`}>
+        <div className={`admin-card ${health.kpis.brokenLinkCount > 0 ? "border-adm-danger/30" : ""}`}>
           <p
-            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.brokenLinkCount > 0 ? "text-red-700" : "text-ink-muted"}`}
+            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.brokenLinkCount > 0 ? "text-adm-danger" : "text-adm-muted"}`}
           >
             {t("seo.links.kpiBrokenLinks")}
           </p>
           <p
-            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.brokenLinkCount > 0 ? "text-red-700" : "text-primary"}`}
+            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.brokenLinkCount > 0 ? "text-adm-danger" : "text-adm-text"}`}
           >
             {health.kpis.brokenLinkCount}
           </p>
         </div>
         <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
             {t("seo.links.kpiActiveRedirects")}
           </p>
-          <p className="mt-4 text-3xl font-semibold tabular-nums text-primary">{health.kpis.activeRedirectCount}</p>
+          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{health.kpis.activeRedirectCount}</p>
         </div>
       </div>
 
       {/* ── Broken links ─────────────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="border-b border-primary/10 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-primary">{t("urls.brokenTitle")}</h2>
+        <div className="border-b border-adm-line px-5 py-3.5">
+          <h2 className="text-sm font-semibold text-adm-text">{t("urls.brokenTitle")}</h2>
         </div>
         {health.urlHealth.brokenLinks.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-ink-muted">{t("urls.brokenEmpty")}</p>
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("urls.brokenEmpty")}</p>
         ) : (
           <ul>
             {health.urlHealth.brokenLinks.map((link) => (
-              <li key={link.id} className="border-b border-primary/5 px-5 py-3.5 text-sm last:border-b-0">
-                <p className="flex flex-wrap items-center gap-1.5 text-primary">
-                  <span className="rounded-xs bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+              <li key={link.id} className="border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0">
+                <p className="flex flex-wrap items-center gap-1.5 text-adm-text">
+                  <span className="rounded-xs bg-adm-text/4 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-adm-muted">
                     {sourceLabel[link.source]}
                   </span>
                   {link.sourceLabel && (
                     <span>{link.sourceLabel.startsWith("#") ? ` ${link.sourceLabel}` : `“${link.sourceLabel}”`}</span>
                   )}
-                  <span className="text-ink-muted">→</span>
+                  <span className="text-adm-muted">→</span>
                   <span className="font-mono text-xs">{link.target}</span>
                   {link.adminHref && (
-                    <Link href={`/${locale}${link.adminHref}`} className="ml-auto text-xs font-medium text-accent-700 hover:text-accent-800">
+                    <Link href={`/${locale}${link.adminHref}`} className="ml-auto text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink">
                       {t("seo.issuesFix")}
                     </Link>
                   )}
                 </p>
-                <p className="mt-0.5 text-xs text-ink-muted">{reasonLabel[link.reason]}</p>
+                <p className="mt-0.5 text-xs text-adm-muted">{reasonLabel[link.reason]}</p>
               </li>
             ))}
           </ul>
@@ -179,27 +179,27 @@ export default async function LinkHealthPage(props: Props) {
 
       {/* ── External link status ─────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="border-b border-primary/10 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-primary">{t("seo.links.externalStatusTitle")}</h2>
+        <div className="border-b border-adm-line px-5 py-3.5">
+          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.externalStatusTitle")}</h2>
         </div>
         {health.externalLinks.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-ink-muted">{t("seo.links.externalStatusEmpty")}</p>
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.externalStatusEmpty")}</p>
         ) : (
           <ul>
             {health.externalLinks.map((link, index) => (
               <li
                 key={`${link.fromType}:${link.fromId}:${link.toPath}:${index}`}
-                className="border-b border-primary/5 px-5 py-3.5 text-sm last:border-b-0"
+                className="border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
               >
-                <p className="flex flex-wrap items-center gap-1.5 text-primary">
-                  <span className="rounded-xs bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                <p className="flex flex-wrap items-center gap-1.5 text-adm-text">
+                  <span className="rounded-xs bg-adm-danger-bg px-1.5 py-0.5 text-[10px] font-semibold text-adm-danger">
                     {link.httpStatus === 0 ? t("seo.links.externalStatusUnreachable") : link.httpStatus}
                   </span>
                   <span>{link.sourceLabel.startsWith("#") ? ` ${link.sourceLabel}` : `“${link.sourceLabel}”`}</span>
-                  <span className="text-ink-muted">→</span>
+                  <span className="text-adm-muted">→</span>
                   <span className="font-mono text-xs">{link.toPath}</span>
                   {link.adminHref && (
-                    <Link href={`/${locale}${link.adminHref}`} className="ml-auto text-xs font-medium text-accent-700 hover:text-accent-800">
+                    <Link href={`/${locale}${link.adminHref}`} className="ml-auto text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink">
                       {t("seo.issuesFix")}
                     </Link>
                   )}
@@ -212,22 +212,22 @@ export default async function LinkHealthPage(props: Props) {
 
       {/* ── Orphan pages ─────────────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-          <Unlink size={15} className="text-ink-muted" aria-hidden />
-          <h2 className="text-sm font-semibold text-primary">{t("seo.links.orphansTitle")}</h2>
+        <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
+          <Unlink size={15} className="text-adm-muted" aria-hidden />
+          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.orphansTitle")}</h2>
         </div>
         {health.orphans.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-ink-muted">{t("seo.links.orphansEmpty")}</p>
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.orphansEmpty")}</p>
         ) : (
           <ul>
             {health.orphans.map((orphan) => (
               <li
                 key={`${orphan.contentType}:${orphan.contentId}`}
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/5 px-5 py-3.5 text-sm last:border-b-0"
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
               >
-                <span className="text-ink">{orphan.title}</span>
-                <span className="font-mono text-xs text-ink-muted">{orphan.path}</span>
-                <Link href={`/${locale}${orphan.adminHref}`} className="text-xs font-medium text-accent-700 hover:text-accent-800">
+                <span className="text-adm-text">{orphan.title}</span>
+                <span className="font-mono text-xs text-adm-muted">{orphan.path}</span>
+                <Link href={`/${locale}${orphan.adminHref}`} className="text-xs font-medium text-adm-accent-ink hover:text-adm-accent-ink">
                   {t("seo.issuesFix")}
                 </Link>
               </li>
@@ -238,12 +238,12 @@ export default async function LinkHealthPage(props: Props) {
 
       {/* ── Redirect chains ──────────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-          <AlertTriangle size={15} className="text-ink-muted" aria-hidden />
-          <h2 className="text-sm font-semibold text-primary">{t("seo.links.chainsTitle")}</h2>
+        <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
+          <AlertTriangle size={15} className="text-adm-muted" aria-hidden />
+          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.chainsTitle")}</h2>
         </div>
         {health.chains.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-ink-muted">{t("seo.links.chainsEmpty")}</p>
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.chainsEmpty")}</p>
         ) : (
           <ul>
             {health.chains.map((chain) => {
@@ -252,11 +252,11 @@ export default async function LinkHealthPage(props: Props) {
               return (
                 <li
                   key={root}
-                  className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/5 px-5 py-3.5 text-sm last:border-b-0"
+                  className="flex flex-wrap items-center justify-between gap-3 border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
                 >
-                  <span className="font-mono text-xs text-ink">{sequence.join(" → ")}</span>
+                  <span className="font-mono text-xs text-adm-text">{sequence.join(" → ")}</span>
                   {chain.loop ? (
-                    <span className="text-xs font-medium text-red-700">{t("seo.links.chainLoop")}</span>
+                    <span className="text-xs font-medium text-adm-danger">{t("seo.links.chainLoop")}</span>
                   ) : (
                     <RescanButton
                       action={collapseRedirectChain.bind(null, root)}
@@ -274,33 +274,33 @@ export default async function LinkHealthPage(props: Props) {
 
       {/* ── Link-building opportunities ──────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
-        <div className="flex items-center gap-2 border-b border-primary/10 px-5 py-3.5">
-          <Sparkles size={15} className="text-ink-muted" aria-hidden />
-          <h2 className="text-sm font-semibold text-primary">{t("seo.links.opportunitiesTitle")}</h2>
+        <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
+          <Sparkles size={15} className="text-adm-muted" aria-hidden />
+          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.opportunitiesTitle")}</h2>
         </div>
         {opportunities.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-ink-muted">{t("seo.links.opportunitiesEmpty")}</p>
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.opportunitiesEmpty")}</p>
         ) : (
           <ul>
             {opportunities.map((opportunity) => (
               <li
                 key={opportunity.id}
-                className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/5 px-5 py-3.5 text-sm last:border-b-0"
+                className="flex flex-wrap items-center justify-between gap-3 border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
               >
                 <div className="min-w-0">
-                  <p className="text-ink">
+                  <p className="text-adm-text">
                     <Link
                       href={`/${locale}/admin/news/${opportunity.sourceId}/edit`}
-                      className="font-medium text-primary hover:text-accent-700"
+                      className="font-medium text-adm-text hover:text-adm-accent-ink"
                     >
                       {opportunity.sourceTitle}
                     </Link>{" "}
-                    <span className="text-ink-muted" aria-hidden>
+                    <span className="text-adm-muted" aria-hidden>
                       →
                     </span>{" "}
                     {opportunity.targetTitle}
                   </p>
-                  <p className="mt-0.5 text-xs text-ink-muted">
+                  <p className="mt-0.5 text-xs text-adm-muted">
                     {t("seo.links.opportunityMention", { text: opportunity.matchedText })}
                   </p>
                 </div>

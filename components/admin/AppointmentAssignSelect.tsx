@@ -67,7 +67,7 @@ export default function AppointmentAssignSelect({
         disabled={pending}
         className={
           className ??
-          "rounded-xs border border-primary/15 bg-surface-raised px-2 py-1 text-[11px] font-medium text-primary disabled:opacity-60"
+          "rounded-xs border border-adm-line-strong bg-adm-solid px-2 py-1 text-[11px] font-medium text-adm-text disabled:opacity-60"
         }
       >
         <option value="">{unassignedLabel}</option>
@@ -77,11 +77,11 @@ export default function AppointmentAssignSelect({
           </option>
         ))}
       </select>
-      {pending && <Loader2 size={12} className="animate-spin text-ink-muted" aria-hidden />}
-      {!pending && state === "saved" && <Check size={12} className="text-emerald-600" aria-hidden />}
+      {pending && <Loader2 size={12} className="animate-spin text-adm-muted" aria-hidden />}
+      {!pending && state === "saved" && <Check size={12} className="text-adm-success" aria-hidden />}
       {!pending && state === "error" && (
         <span title={errorLabel}>
-          <AlertCircle size={12} className="text-red-600" aria-hidden />
+          <AlertCircle size={12} className="text-adm-danger" aria-hidden />
         </span>
       )}
     </div>

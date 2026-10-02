@@ -41,23 +41,23 @@ export default function PrivacyStatusCard({
 }) {
   return (
     <section className="admin-card space-y-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-primary">
-        <ShieldCheck size={15} className="text-emerald-700" aria-hidden />
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+        <ShieldCheck size={15} className="text-adm-success" aria-hidden />
         {title}
       </h2>
 
       <dl className="space-y-2.5 text-sm">
         {rows.map((row) => (
           <div key={row.key} className="flex items-baseline justify-between gap-3">
-            <dt className="text-ink-muted">{row.label}</dt>
+            <dt className="text-adm-muted">{row.label}</dt>
             <dd
               className={[
                 "text-right",
                 row.highlight
-                  ? "font-semibold text-accent-700"
+                  ? "font-semibold text-adm-accent-ink"
                   : row.muted
-                    ? "text-ink-muted"
-                    : "font-medium text-primary",
+                    ? "text-adm-muted"
+                    : "font-medium text-adm-text",
               ].join(" ")}
             >
               {row.value}
@@ -66,7 +66,7 @@ export default function PrivacyStatusCard({
         ))}
       </dl>
 
-      <p className="rounded-xs bg-surface-muted/70 px-3.5 py-3 text-xs leading-relaxed text-ink-muted">
+      <p className="rounded-xs bg-adm-text/4 px-3.5 py-3 text-xs leading-relaxed text-adm-muted">
         {note}
       </p>
 
