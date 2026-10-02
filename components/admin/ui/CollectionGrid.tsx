@@ -33,7 +33,9 @@ export type CollectionItem = {
   /** Mono, beside the tag — a year, "#3". */
   meta?: string | null;
   visible: boolean;
-  completeness: CompletenessMap;
+  /** Omitted for an untranslated collection (gallery photos): no flags,
+   *  no missing-Thai pill. */
+  completeness?: CompletenessMap;
 };
 
 export default function CollectionGrid({
@@ -93,19 +95,21 @@ export default function CollectionGrid({
                 >
                   {item.visible ? labels.visible : labels.hidden}
                 </span>
-                {!item.completeness.th && (
+                {item.completeness && !item.completeness.th && (
                   <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-medium text-adm-warning">
                     {labels.missingThai}
                   </span>
                 )}
-                <span className="ml-auto">
-                  <LocaleFlags
-                    locales={LOCALE_DISPLAY_ORDER.map((code) => ({
-                      locale: code,
-                      state: item.completeness[code] ? "complete" : "missing",
-                    }))}
-                  />
-                </span>
+                {item.completeness && (
+                  <span className="ml-auto">
+                    <LocaleFlags
+                      locales={LOCALE_DISPLAY_ORDER.map((code) => ({
+                        locale: code,
+                        state: item.completeness?.[code] ? "complete" : "missing",
+                      }))}
+                    />
+                  </span>
+                )}
               </span>
             </span>
           </Link>

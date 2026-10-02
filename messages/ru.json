@@ -2301,7 +2301,8 @@
         "progress": "Ход строительства",
         "projects": "Проекты",
         "terms": "Условия использования"
-      }
+      },
+      "empty": "Блоков CTA пока нет"
     },
     "whyUs": {
       "title": "Почему мы",
@@ -2476,7 +2477,8 @@
         "title": "Согласие на cookie",
         "subtitle": "{total, plural, =0 {Пока нет решений} one {Записано # решение} few {Записано # решения} many {Записано # решений} other {Записано # решения}}",
         "analytics": "Разрешили аналитические cookie",
-        "marketing": "Разрешили маркетинговые cookie"
+        "marketing": "Разрешили маркетинговые cookie",
+        "total": "Всего решений"
       },
       "localeCompleteness": {
         "title": "Полнота контента на 4 языках",
@@ -3536,7 +3538,10 @@
       "previousMonth": "Предыдущий месяц",
       "nextMonth": "Следующий месяц",
       "moreOnDay": "ещё {count}",
-      "needsAction": "Требует действий"
+      "needsAction": "Требует действий",
+      "viewList": "Список",
+      "listRange": "Ближайшие {days} дней",
+      "listEmpty": "Нет встреч в ближайшие {days} дней"
     },
     "appointmentStatus": {
       "REQUESTED": "Запрошено",

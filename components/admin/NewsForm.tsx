@@ -730,7 +730,10 @@ export default function NewsForm({
 
         <div
           className={`grid gap-6 ${
-            focusMode ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,1fr)_320px]"
+            /* About 8/4 (v4): the writing column takes the room, the SEO
+               rail is wide enough for its checklist without wrapping every
+               line. Focus mode drops the rail entirely. */
+            focusMode ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]"
           }`}
         >
           <div className="space-y-8">
@@ -741,13 +744,16 @@ export default function NewsForm({
                 error={err("title")}
                 label={`${t("news.articleTitle")} · ${lang.toUpperCase()}`}
               >
+                {/* Set like the headline it becomes (v4's canvas): large,
+                    borderless until focused, so the card reads as the
+                    article rather than as a form about it. */}
                 <input
                   id="title"
                   name="title"
                   value={title}
                   onChange={(event) => handleTitleChange(event.target.value)}
                   required
-                  className="admin-input"
+                  className="w-full rounded-[10px] border border-transparent bg-transparent px-2 py-1.5 -mx-2 text-[26px] font-semibold leading-tight text-adm-text transition-colors hover:border-adm-line focus:border-adm-line-strong focus:outline-none sm:text-[28px]"
                 />
               </Field>
 

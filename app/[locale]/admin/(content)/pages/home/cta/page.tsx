@@ -16,35 +16,27 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Megaphone, Plus } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
-import {
-  parseEditingLocale,
-  pickEditingTranslation,
-  translationCompleteness,
-} from "@/lib/admin/translated-form";
+import { parseEditingLocale, pickEditingTranslation, translationCompleteness } from "@/lib/admin/translated-form";
 import { getPublishedProjects } from "@/lib/projects";
 import { CTA_PATHS } from "@/lib/site-cta";
 import { PLACEMENT_DEFAULT, PLACEMENT_HIDDEN } from "@/lib/validations";
-import {
-  createCtaBlock,
-  deleteCtaBlock,
-  importCtaFileCopy,
-  saveCtaPlacements,
-  updateCtaBlock,
-} from "./actions";
+import { createCtaBlock, deleteCtaBlock, importCtaFileCopy, saveCtaPlacements, updateCtaBlock } from "./actions";
 import SiteCtaForm from "@/components/admin/SiteCtaForm";
 import CtaPlacementTable from "@/components/admin/CtaPlacementTable";
 import CtaImportButton from "@/components/admin/CtaImportButton";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import CollectionGrid, { collectionHref } from "@/components/admin/ui/CollectionGrid";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
 export default async function AdminCtaPage(props: Props) {
   const searchParams = await props.searchParams;
@@ -82,9 +74,7 @@ export default async function AdminCtaPage(props: Props) {
 
   const rows = CTA_PATHS.map((path) => ({
     path,
-    value: assigned.has(path)
-      ? (assigned.get(path) ?? PLACEMENT_HIDDEN)
-      : PLACEMENT_DEFAULT,
+    value: assigned.has(path) ? (assigned.get(path) ?? PLACEMENT_HIDDEN) : PLACEMENT_DEFAULT,
   }));
 
   const options = blocks.map((block: any) => ({
@@ -94,11 +84,30 @@ export default async function AdminCtaPage(props: Props) {
     isDefault: block.isDefault,
   }));
 
+  const base = `/${locale}/admin/pages/home/cta`;
+  const href = (edit: string | null) => collectionHref(base, searchParams.lang, edit);
+  // "new" only for a role that can save it; an unknown id opens nothing.
+  const target =
+    searchParams.edit === "new"
+      ? canWrite
+        ? ("new" as const)
+        : null
+      : (blocks.find((block: any) => block.id === searchParams.edit) ?? null);
+  const tr = target && target !== "new" ? pickEditingTranslation<any>(target.translations, lang) : undefined;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdminPageHeader
         title={t("cta.title")}
         description={t("cta.subtitle")}
+        actions={
+          canWrite ? (
+            <Link href={href("new")} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("cta.newTitle")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
@@ -106,13 +115,6 @@ export default async function AdminCtaPage(props: Props) {
           {t("common.offline")}
         </p>
       )}
-
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
-      />
 
       {blocks.length === 0 && (
         <section className="admin-card">
@@ -126,85 +128,27 @@ export default async function AdminCtaPage(props: Props) {
         </section>
       )}
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
-          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
-          {t("cta.newTitle")}
-        </h2>
-
-        <fieldset disabled={!canWrite} className="contents">
-          <SiteCtaForm
-            key={`new-${lang}`}
-            lang={lang}
-            action={createCtaBlock.bind(null, locale)}
-            submitLabel={t("common.create")}
-            projectCount={projects.length}
-            pagePaths={CTA_PATHS}
-          />
-        </fieldset>
-      </section>
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {blocks.map((block: any) => {
-        const completeness = translationCompleteness<any>(block.translations, "title");
-        const editing = pickEditingTranslation<any>(block.translations, lang);
-
-        return (
-          <section key={block.id} className="admin-card">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-base font-semibold text-adm-text">{block.name}</h2>
-                <TranslationStatusBadges completeness={completeness} />
-                {block.isDefault && (
-                  <span className="rounded-xs bg-adm-text/10 px-2 py-1 text-xs font-medium text-adm-text">
-                    {t("cta.defaultBadge")}
-                  </span>
-                )}
-              </div>
-
-              <span
-                className={
-                  block.isActive
-                    ? "rounded-xs bg-adm-success-bg px-2 py-1 text-xs font-medium text-adm-success"
-                    : "rounded-xs bg-adm-text/4 px-2 py-1 text-xs font-medium text-adm-muted"
-                }
-              >
-                {block.isActive ? t("cta.active") : t("cta.inactive")}
-              </span>
-            </div>
-
-            <fieldset disabled={!canWrite} className="contents">
-              <SiteCtaForm
-                key={`${block.id}-${lang}`}
-                lang={lang}
-                action={updateCtaBlock.bind(null, locale, block.id)}
-                onDelete={deleteCtaBlock.bind(null, locale, block.id)}
-                deleteLocked={block.isDefault}
-                values={{
-                  name: block.name,
-                  isActive: block.isActive,
-                  isDefault: block.isDefault,
-                  sortOrder: String(block.sortOrder),
-                  backgroundImageUrl: block.backgroundImageUrl ?? "",
-                  primaryKind: block.primaryKind,
-                  primaryHref: block.primaryHref ?? "",
-                  secondaryKind: block.secondaryKind,
-                  secondaryHref: block.secondaryHref ?? "",
-                  eyebrow: editing?.eyebrow ?? "",
-                  title: editing?.title ?? "",
-                  subtitle: editing?.subtitle ?? "",
-                  primaryLabel: editing?.primaryLabel ?? "",
-                  secondaryLabel: editing?.secondaryLabel ?? "",
-                }}
-                submitLabel={t("common.save")}
-                projectCount={projects.length}
-                pagePaths={CTA_PATHS}
-              />
-            </fieldset>
-          </section>
-        );
-      })}
+      <CollectionGrid
+        columns={2}
+        hasImages
+        items={blocks.map((block: any) => ({
+          id: block.id,
+          href: href(block.id),
+          title: block.name,
+          subtitle: pickEditingTranslation<any>(block.translations, locale)?.title ?? null,
+          imageUrl: block.backgroundImageUrl,
+          tag: block.isDefault ? t("cta.defaultBadge") : null,
+          meta: `#${block.sortOrder}`,
+          visible: block.isActive,
+          completeness: translationCompleteness<any>(block.translations, "title"),
+        }))}
+        labels={{
+          visible: t("cta.active"),
+          hidden: t("cta.inactive"),
+          missingThai: t("common.missingThai"),
+          empty: t("cta.empty"),
+        }}
+      />
 
       {/* ── Where each one appears ──────────────────────────────────── */}
       {blocks.length > 0 && (
@@ -214,14 +158,72 @@ export default async function AdminCtaPage(props: Props) {
 
           <div className="mt-5">
             <fieldset disabled={!canWrite} className="contents">
-              <CtaPlacementTable
-                rows={rows}
-                blocks={options}
-                action={saveCtaPlacements.bind(null, locale)}
-              />
+              <CtaPlacementTable rows={rows} blocks={options} action={saveCtaPlacements.bind(null, locale)} />
             </fieldset>
           </div>
         </section>
+      )}
+
+      {target && (
+        <AdminDrawer
+          title={target === "new" ? t("cta.newTitle") : target.name}
+          icon={<Megaphone size={18} aria-hidden />}
+          closeHref={href(null)}
+          closeLabel={t("leadDrawer.close")}
+          width={640}
+        >
+          <div className="space-y-5">
+            <LanguageTabs
+              active={lang}
+              completeness={
+                target === "new"
+                  ? { en: true, th: true, zh: true, ru: true }
+                  : translationCompleteness<any>(target.translations, "title")
+              }
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
+            <fieldset disabled={!canWrite} className="contents">
+              {target === "new" ? (
+                <SiteCtaForm
+                  key={`new-${lang}`}
+                  lang={lang}
+                  action={createCtaBlock.bind(null, locale)}
+                  submitLabel={t("common.create")}
+                  projectCount={projects.length}
+                  pagePaths={CTA_PATHS}
+                />
+              ) : (
+                <SiteCtaForm
+                  key={`${target.id}-${lang}`}
+                  lang={lang}
+                  action={updateCtaBlock.bind(null, locale, target.id)}
+                  onDelete={deleteCtaBlock.bind(null, locale, target.id)}
+                  deleteLocked={target.isDefault}
+                  values={{
+                    name: target.name,
+                    isActive: target.isActive,
+                    isDefault: target.isDefault,
+                    sortOrder: String(target.sortOrder),
+                    backgroundImageUrl: target.backgroundImageUrl ?? "",
+                    primaryKind: target.primaryKind,
+                    primaryHref: target.primaryHref ?? "",
+                    secondaryKind: target.secondaryKind,
+                    secondaryHref: target.secondaryHref ?? "",
+                    eyebrow: tr?.eyebrow ?? "",
+                    title: tr?.title ?? "",
+                    subtitle: tr?.subtitle ?? "",
+                    primaryLabel: tr?.primaryLabel ?? "",
+                    secondaryLabel: tr?.secondaryLabel ?? "",
+                  }}
+                  submitLabel={t("common.save")}
+                  projectCount={projects.length}
+                  pagePaths={CTA_PATHS}
+                />
+              )}
+            </fieldset>
+          </div>
+        </AdminDrawer>
       )}
     </div>
   );

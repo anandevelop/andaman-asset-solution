@@ -2301,7 +2301,8 @@
         "progress": "工程进度",
         "projects": "项目",
         "terms": "使用条款"
-      }
+      },
+      "empty": "还没有 CTA 区块"
     },
     "whyUs": {
       "title": "为什么选择我们",
@@ -2476,7 +2477,8 @@
         "title": "Cookie 同意情况",
         "subtitle": "{total, plural, =0 {暂无决定记录} other {已记录 # 次决定}}",
         "analytics": "同意分析类 Cookie",
-        "marketing": "同意营销类 Cookie"
+        "marketing": "同意营销类 Cookie",
+        "total": "已记录的选择"
       },
       "localeCompleteness": {
         "title": "四语言内容完整度",
@@ -3536,7 +3538,10 @@
       "previousMonth": "上个月",
       "nextMonth": "下个月",
       "moreOnDay": "另有 {count} 项",
-      "needsAction": "待处理"
+      "needsAction": "待处理",
+      "viewList": "列表",
+      "listRange": "未来 {days} 天",
+      "listEmpty": "未来 {days} 天没有预约"
     },
     "appointmentStatus": {
       "REQUESTED": "待确认",

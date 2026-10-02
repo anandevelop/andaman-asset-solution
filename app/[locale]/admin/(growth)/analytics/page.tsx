@@ -420,6 +420,7 @@ export default async function AdminAnalyticsPage(props: Props) {
           cookieConsentSubtitle: t("reports.cookieConsent.subtitle", { total: cookieStats.total }),
           cookieConsentAnalytics: t("reports.cookieConsent.analytics"),
           cookieConsentMarketing: t("reports.cookieConsent.marketing"),
+          cookieConsentTotal: t("reports.cookieConsent.total"),
         }}
       />
     </div>

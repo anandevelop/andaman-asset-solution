@@ -59,6 +59,7 @@ import PageTabs from "@/components/admin/PageTabs";
 import WorkInbox from "@/components/admin/WorkInbox";
 import { getScopedOpenLeadCount } from "@/lib/leads-board";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import Segmented from "@/components/admin/ui/Segmented";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -66,6 +67,7 @@ type Props = {
 };
 
 const DAY_MS = 24 * 60 * 60_000;
+const LIST_DAYS = 30;
 
 const STATUS_BORDER: Record<AppointmentStatus, string> = {
   REQUESTED: "border-adm-warning/30 bg-adm-warning-bg",
@@ -113,7 +115,12 @@ export default async function AdminAppointmentsPage(props: Props) {
   /* Month first (the v4 calendar), week on request — the week agenda is
      where appointments are edited in place, so it stays one click away
      rather than being replaced. */
-  const view = searchParams.view === "week" ? "week" : "month";
+  const view = searchParams.view === "week" ? "week" : searchParams.view === "list" ? "list" : "month";
+  /* The list view: everything from today for the next LIST_DAYS days, in
+     time order — the "what is coming" question the two grids answer only
+     one screen at a time. */
+  const listFrom = new Date(new Date().setUTCHours(0, 0, 0, 0));
+  const listTo = new Date(listFrom.getTime() + LIST_DAYS * DAY_MS);
   const monthStart = parseMonthParam(searchParams.month);
   const weeks = monthGrid(monthStart);
   const gridFrom = weeks[0][0].date;
@@ -125,7 +132,7 @@ export default async function AdminAppointmentsPage(props: Props) {
   const nextWeek = toWeekParam(new Date(weekStart.getTime() + 7 * DAY_MS));
   const thisWeek = toWeekParam(new Date());
 
-  const [tRoot, t, tStatus, weekAppointments, unassigned, workload, recentLeads, projects, overdue, monthAppointments, monthEvents] = await Promise.all([
+  const [tRoot, t, tStatus, weekAppointments, unassigned, workload, recentLeads, projects, overdue, monthAppointments, monthEvents, listAppointments] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getTranslations({ locale, namespace: "admin.appointments" }),
     getTranslations({ locale, namespace: "admin.appointmentStatus" }),
@@ -155,6 +162,7 @@ export default async function AdminAppointmentsPage(props: Props) {
     getOverdueAppointments(session),
     view === "month" ? getAppointmentsBetween(gridFrom, gridTo) : Promise.resolve([]),
     view === "month" ? getEventsBetween(gridFrom, gridTo) : Promise.resolve([]),
+    view === "list" ? getAppointmentsBetween(listFrom, listTo) : Promise.resolve([]),
   ]);
 
   const offline = isDatabaseOffline();
@@ -230,6 +238,18 @@ export default async function AdminAppointmentsPage(props: Props) {
     };
   });
 
+  // ── List ───────────────────────────────────────────────────────────────
+  const listByDay = [...listAppointments.filter(matchesFilters)]
+    .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+    .reduce<[string, AppointmentCard[]][]>((groups, appointment) => {
+      const key = dayKey(appointment.scheduledAt);
+      const last = groups.at(-1);
+      if (last && last[0] === key) last[1].push(appointment);
+      else groups.push([key, [appointment]]);
+      return groups;
+    }, []);
+  const listDayFmt = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", day: "numeric", month: "short" });
+
   // ── Month grid ─────────────────────────────────────────────────────────
   const monthByDay = new Map<string, AppointmentCard[]>();
   for (const a of monthAppointments.filter(matchesFilters)) {
@@ -294,36 +314,6 @@ export default async function AdminAppointmentsPage(props: Props) {
         eyebrow={{ icon: Users, label: "CRM" }}
         title={tRoot("nav.leads")}
         description={tRoot("leads.headerDescription", { count: openLeadCount })}
-        actions={
-          <>
-            <AppointmentCreateForm
-          locale={locale}
-          // Masked: a picker is a list, and lists do not print phone
-          // numbers (lib/contact-mask.ts). Enough is left to tell two
-          // customers with one name apart.
-          leads={recentLeads.map((l) => ({ id: l.id, label: `${l.name} · ${maskPhone(l.phone)}` }))}
-          projects={projects.map((p) => ({ id: p.id, label: p.nameEn || p.nameTh }))}
-          assignees={assigneeSelectOptions}
-          canAssignOthers={canAssignOthers}
-          labels={{
-            create: t("create"),
-            cancel: tRoot("common.cancel"),
-            save: tRoot("common.save"),
-            lead: t("form.lead"),
-            noLead: t("form.noLead"),
-            project: t("form.project"),
-            noProject: t("noProject"),
-            assignedTo: t("form.assignedTo"),
-            unassigned: t("unassigned"),
-            scheduledAt: t("form.scheduledAt"),
-            duration: t("form.duration"),
-            location: t("form.location"),
-            notes: t("form.notes"),
-            error: t("createError"),
-          }}
-        />
-          </>
-        }
       />
 
       <PageTabs
@@ -358,24 +348,17 @@ export default async function AdminAppointmentsPage(props: Props) {
       )}
 
       <div className="flex flex-wrap items-center gap-2.5">
-        {/* Month | week. */}
-        <div role="group" aria-label={t("viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-adm-bg p-0.5">
-          {(["month", "week"] as const).map((option) => (
-            <Link
-              key={option}
-              href={`/${locale}/admin/appointments${option === "week" ? "?view=week" : ""}`}
-              aria-current={view === option ? "page" : undefined}
-              className={[
-                "flex h-7 items-center rounded-[8px] px-3 text-[12.5px] transition-colors",
-                view === option
-                  ? "bg-adm-solid font-medium text-adm-text shadow-[0_0_0_1px_var(--adm-line)]"
-                  : "text-adm-muted hover:text-adm-text",
-              ].join(" ")}
-            >
-              {option === "month" ? t("viewMonth") : t("viewWeek")}
-            </Link>
-          ))}
-        </div>
+        {/* Week | month | list (v4), then the period's navigation; the
+            new-appointment button at the far right of the same row. */}
+        <Segmented
+          label={t("viewLabel")}
+          active={view}
+          items={[
+            { key: "week", label: t("viewWeek"), href: `/${locale}/admin/appointments?view=week` },
+            { key: "month", label: t("viewMonth"), href: `/${locale}/admin/appointments` },
+            { key: "list", label: t("viewList"), href: `/${locale}/admin/appointments?view=list` },
+          ]}
+        />
 
         {view === "month" ? (
           <>
@@ -390,6 +373,8 @@ export default async function AdminAppointmentsPage(props: Props) {
               {t("today")}
             </Link>
           </>
+        ) : view === "list" ? (
+          <span className="text-sm font-semibold text-adm-text">{t("listRange", { days: LIST_DAYS })}</span>
         ) : (
           <>
           <Link href={`/${locale}/admin/appointments?view=week&week=${prevWeek}`} className="admin-btn-ghost px-2 py-1.5">
@@ -404,6 +389,35 @@ export default async function AdminAppointmentsPage(props: Props) {
           </Link>
           </>
         )}
+
+        <div className="ml-auto">
+          <AppointmentCreateForm
+            locale={locale}
+            // Masked: a picker is a list, and lists do not print phone
+            // numbers (lib/contact-mask.ts). Enough is left to tell two
+            // customers with one name apart.
+            leads={recentLeads.map((l) => ({ id: l.id, label: `${l.name} · ${maskPhone(l.phone)}` }))}
+            projects={projects.map((p) => ({ id: p.id, label: p.nameEn || p.nameTh }))}
+            assignees={assigneeSelectOptions}
+            canAssignOthers={canAssignOthers}
+            labels={{
+              create: t("create"),
+              cancel: tRoot("common.cancel"),
+              save: tRoot("common.save"),
+              lead: t("form.lead"),
+              noLead: t("form.noLead"),
+              project: t("form.project"),
+              noProject: t("noProject"),
+              assignedTo: t("form.assignedTo"),
+              unassigned: t("unassigned"),
+              scheduledAt: t("form.scheduledAt"),
+              duration: t("form.duration"),
+              location: t("form.location"),
+              notes: t("form.notes"),
+              error: t("createError"),
+            }}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
@@ -483,6 +497,23 @@ export default async function AdminAppointmentsPage(props: Props) {
                 })}
               </div>
             </div>
+          </div>
+        ) : view === "list" ? (
+          <div className="admin-card overflow-hidden p-0!">
+            {listByDay.length === 0 ? (
+              <p className="px-5 py-10 text-center text-sm text-adm-muted">{t("listEmpty", { days: LIST_DAYS })}</p>
+            ) : (
+              <ol className="divide-y divide-adm-line">
+                {listByDay.map(([key, dayAppointments]) => (
+                  <li key={key} className="grid gap-3 px-4 py-3 sm:grid-cols-[120px_minmax(0,1fr)]">
+                    <p className={`text-sm font-semibold ${key === todayKey ? "text-adm-accent-ink" : "text-adm-text"}`}>
+                      {listDayFmt.format(dayAppointments[0].scheduledAt)}
+                    </p>
+                    <div className="grid gap-2 md:grid-cols-2">{dayAppointments.map(renderCard)}</div>
+                  </li>
+                ))}
+              </ol>
+            )}
           </div>
         ) : (
         <div className="admin-card overflow-hidden p-0!">

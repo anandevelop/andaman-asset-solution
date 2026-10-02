@@ -2301,7 +2301,8 @@
         "progress": "Construction progress",
         "projects": "Projects",
         "terms": "Terms of use"
-      }
+      },
+      "empty": "No CTA blocks yet"
     },
     "whyUs": {
       "title": "Why Us",
@@ -2476,7 +2477,8 @@
         "title": "Cookie consent",
         "subtitle": "{total, plural, =0 {No decisions yet.} one {# decision recorded.} other {# decisions recorded.}}",
         "analytics": "Allowed analytics cookies",
-        "marketing": "Allowed marketing cookies"
+        "marketing": "Allowed marketing cookies",
+        "total": "Decisions recorded"
       },
       "localeCompleteness": {
         "title": "4-language content completeness",
@@ -3536,7 +3538,10 @@
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "moreOnDay": "+{count} more",
-      "needsAction": "Needs action"
+      "needsAction": "Needs action",
+      "viewList": "List",
+      "listRange": "Next {days} days",
+      "listEmpty": "No appointments in the next {days} days"
     },
     "appointmentStatus": {
       "REQUESTED": "Requested",

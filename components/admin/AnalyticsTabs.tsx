@@ -14,6 +14,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
+import ProgressRing from "@/components/admin/ui/ProgressRing";
 import { MonthlyLeadsChart, LeadSourceChart, TrendChart, type MonthlyPoint, type SourcePoint, type TrendPoint } from "./DashboardCharts";
 import RealtimePanel, { type RealtimeLabels } from "./RealtimePanel";
 import VitalsPanel, {
@@ -148,7 +149,7 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
 
       {tab === "traffic" && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="admin-card">
               <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
                 {labels.totalViews}
@@ -185,25 +186,50 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
             ))}
           </div>
 
-          <section className="admin-card">
-            <h2 className="text-base font-semibold text-adm-text">{labels.trendTitle}</h2>
-            <p className="mb-5 mt-1 text-sm text-adm-muted">{labels.trendSubtitle}</p>
-            <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
-          </section>
+          {/* The trend beside the consent share (v4: 8/12 and 4/12) — the
+              second is the ceiling on the first, so they read together. */}
+          <div className="grid items-start gap-4 xl:grid-cols-12">
+            <section className="admin-card xl:col-span-8">
+              <h2 className="text-base font-semibold text-adm-text">{labels.trendTitle}</h2>
+              <p className="mb-5 mt-1 text-sm text-adm-muted">{labels.trendSubtitle}</p>
+              <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
+            </section>
 
-          <section className="admin-card">
-            <h2 className="text-base font-semibold text-adm-text">{labels.cookieConsentTitle}</h2>
-            <p className="mb-5 mt-1 text-sm text-adm-muted">{labels.cookieConsentSubtitle}</p>
+            <section className="admin-card xl:col-span-4">
+              <h2 className="text-base font-semibold text-adm-text">{labels.cookieConsentTitle}</h2>
+              <p className="mt-1 text-sm text-adm-muted">{labels.cookieConsentSubtitle}</p>
 
-            {traffic.cookieConsent.total === 0 ? (
-              <p className="py-6 text-center text-sm text-adm-muted">{labels.empty}</p>
-            ) : (
-              <div className="space-y-5">
-                <RateRow label={labels.cookieConsentAnalytics} rate={traffic.cookieConsent.analyticsRate} />
-                <RateRow label={labels.cookieConsentMarketing} rate={traffic.cookieConsent.marketingRate} />
-              </div>
-            )}
-          </section>
+              {traffic.cookieConsent.total === 0 ? (
+                <p className="py-6 text-center text-sm text-adm-muted">{labels.empty}</p>
+              ) : (
+                <div className="mt-5 flex items-center gap-5">
+                  <ProgressRing
+                    value={traffic.cookieConsent.analyticsRate ?? 0}
+                    size="lg"
+                    suffix="%"
+                    label={labels.cookieConsentAnalytics}
+                  />
+                  <ul className="min-w-0 flex-1 space-y-2.5 text-[13px]">
+                    <LegendRow
+                      dot="bg-adm-success"
+                      label={labels.cookieConsentAnalytics}
+                      value={`${traffic.cookieConsent.analyticsRate ?? 0}%`}
+                    />
+                    <LegendRow
+                      dot="bg-adm-fill"
+                      label={labels.cookieConsentMarketing}
+                      value={`${traffic.cookieConsent.marketingRate ?? 0}%`}
+                    />
+                    <LegendRow
+                      dot="bg-adm-text/30"
+                      label={labels.cookieConsentTotal}
+                      value={traffic.cookieConsent.total.toLocaleString()}
+                    />
+                  </ul>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       )}
 
@@ -427,25 +453,13 @@ function StatTile({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-/**
- * A labelled percentage with a proportional bar — the cookie-consent
- * card's two rows.
- *
- * `rate` is only null when there are no decisions on record at all, which
- * the caller already handles by not rendering this component in that case
- * (getCookieConsentStats() guards the divide). `?? 0` is keeping
- * TypeScript happy, not a real fallback path.
- */
-function RateRow({ label, rate }: { label: string; rate: number | null }) {
+/** One line of the consent card's legend. */
+function LegendRow({ dot, label, value }: { dot: string; label: string; value: string }) {
   return (
-    <div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-adm-muted">{label}</span>
-        <span className="font-medium tabular-nums text-adm-text">{rate ?? 0}%</span>
-      </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-adm-text/5">
-        <div className="h-full rounded-full bg-accent-700" style={{ width: `${rate ?? 0}%` }} />
-      </div>
-    </div>
+    <li className="flex items-center gap-2">
+      <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+      <span className="min-w-0 flex-1 truncate text-adm-muted">{label}</span>
+      <span className="font-semibold tabular-nums text-adm-text">{value}</span>
+    </li>
   );
 }
