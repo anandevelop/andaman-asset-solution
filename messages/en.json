@@ -1777,6 +1777,17 @@
         "seoNone": "No SEO score yet",
         "views": "views",
         "leads": "leads"
+      },
+      "autosavedAt": "Autosaved {time}",
+      "preview": {
+        "button": "Preview",
+        "title": "Article preview",
+        "close": "Close preview",
+        "device": "Screen size",
+        "desktop": "Desktop",
+        "phone": "Phone",
+        "failed": "Could not render the preview",
+        "untitled": "(No title yet)"
       }
     },
     "eBrochures": {

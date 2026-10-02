@@ -62,6 +62,11 @@ vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({
 const searchInternalLinks = vi.hoisted(() => vi.fn());
 vi.mock("@/app/[locale]/admin/content-link-search-actions", () => ({ searchInternalLinks }));
 
+// The editor's "ดูตัวอย่าง" renders through a server action in the news
+// actions module, which pulls in Prisma and the publishing pipeline.
+const previewArticleBody = vi.hoisted(() => vi.fn(async () => ({ ok: true, html: "<p>preview</p>" })));
+vi.mock("@/app/[locale]/admin/(content)/news/actions", () => ({ previewArticleBody }));
+
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 beforeEach(() => {

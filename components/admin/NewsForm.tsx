@@ -42,7 +42,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import ArticlePreview from "@/components/admin/ArticlePreview";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -54,12 +55,14 @@ import {
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
+  Eye,
   Loader2,
   Maximize2,
   Minimize2,
   Trash2,
 } from "lucide-react";
 import ImageUploader from "@/components/admin/ImageUploader";
+import { intlLocale } from "@/lib/format";
 import MarkdownToolbar from "@/components/admin/MarkdownToolbar";
 import NewsSeoPanel from "@/components/admin/NewsSeoPanel";
 import type { addLinkOpportunity } from "@/app/[locale]/admin/(growth)/seo/links/actions";
@@ -159,6 +162,10 @@ type Props = {
   onDelete?: () => Promise<void>;
   categories: string[];
   submitLabel: string;
+  /** Under the header bar: the language tabs and the revision panel the
+   *  page owns. A slot rather than markup above the form, so the bar is
+   *  the first thing on the page and these sit in one row beneath it. */
+  subbar?: ReactNode;
   /** Whether every site locale already has a title and a body — computed
    *  server-side (lib/admin/news-list.ts's completeness logic is
    *  "server-only") and handed in as a plain boolean for the SEO
@@ -346,6 +353,7 @@ export default function NewsForm({
   onDelete,
   categories,
   submitLabel,
+  subbar,
   languageComplete,
   role,
   linkPanel,
@@ -407,6 +415,12 @@ export default function NewsForm({
     with the server's and React replaces the whole tree.
   */
   const [focusMode, setFocusMode] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  /** The excerpt is an uncontrolled field (see the file comment); read at
+   *  the moment the preview opens. */
+  const [previewExcerpt, setPreviewExcerpt] = useState("");
+  /** When the server autosave last took — shown in the header bar. */
+  const [autosavedAt, setAutosavedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     try {
@@ -513,7 +527,11 @@ export default function NewsForm({
         metaTitle: m0,
         metaDescription: d0,
         focusKeyword: k0,
-      }).catch(() => {
+      })
+        .then((result) => {
+          if (result?.ok) setAutosavedAt(new Date());
+        })
+        .catch(() => {
         // A failed autosave is not worth interrupting anyone over — the
         // localStorage copy above is the layer that has to be reliable.
         // Allow the next tick to try again.
@@ -627,56 +645,98 @@ export default function NewsForm({
 
   return (
     <>
-      <header>
-        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text">
+      {/* The editor's bar (v4): where you came from and what this is on
+          the left; the save state, the preview, focus mode and the save
+          button on the right — one row, rather than a back link, a title,
+          a path and a button stacked down the page. */}
+      <header className="admin-card mb-4 flex flex-wrap items-center gap-x-4 gap-y-3 px-4! py-3!">
+        <Link
+          href={backHref}
+          className="inline-flex shrink-0 items-center gap-1.5 text-[13px] text-adm-muted transition-colors hover:text-adm-text"
+        >
           <ArrowLeft size={14} aria-hidden />
           {backLabel}
         </Link>
-
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight tracking-[-0.01em] text-adm-text">{headerTitle}</h1>
-            {live && (
-              <Link
-                href={live.href}
-                target="_blank"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm text-adm-muted hover:text-adm-text"
-              >
-                <ExternalLink size={14} aria-hidden />
-                {live.path}
-              </Link>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {statusPillLabel && (
-              <span className="rounded-xs bg-adm-warning-bg px-2 py-1 text-xs font-medium text-adm-warning">
-                {statusPillLabel}
-              </span>
-            )}
-            {/* §7.2. In the header rather than beside the body field,
-                because what it changes is the whole page's layout and not
-                anything about the article. */}
-            <button
-              type="button"
-              onClick={toggleFocusMode}
-              aria-pressed={focusMode}
-              title={focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-xs border transition-colors ${
-                focusMode
-                  ? "border-adm-line-strong bg-adm-text/5 text-adm-text"
-                  : "border-adm-line-strong text-adm-muted hover:border-adm-line-strong hover:text-adm-text"
-              }`}
+        <span aria-hidden className="hidden h-5 w-px bg-adm-line sm:block" />
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <h1 className="truncate text-[17px] font-semibold leading-tight text-adm-text">{headerTitle}</h1>
+          {statusPillLabel && (
+            <span className="shrink-0 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-medium text-adm-warning">
+              {statusPillLabel}
+            </span>
+          )}
+          {live && (
+            <Link
+              href={live.href}
+              target="_blank"
+              className="admin-mono hidden min-w-0 items-center gap-1 truncate text-xs text-adm-muted hover:text-adm-text md:inline-flex"
             >
-              {focusMode ? <Minimize2 size={15} aria-hidden /> : <Maximize2 size={15} aria-hidden />}
-              <span className="sr-only">
-                {focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
-              </span>
-            </button>
-            <SubmitButton label={submitLabel} pending={isPending} form="news-form" />
-          </div>
+              <ExternalLink size={12} aria-hidden className="shrink-0" />
+              <span className="truncate">{live.path}</span>
+            </Link>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {autosavedAt && (
+            <span className="hidden text-xs text-adm-muted lg:inline">
+              {t("news.autosavedAt", {
+                time: new Intl.DateTimeFormat(intlLocale(locale), { hour: "2-digit", minute: "2-digit" }).format(
+                  autosavedAt,
+                ),
+              })}
+            </span>
+          )}
+          {/* §7.2. In the bar rather than beside the body field, because
+              what it changes is the whole page's layout and not anything
+              about the article. */}
+          <button
+            type="button"
+            onClick={toggleFocusMode}
+            aria-pressed={focusMode}
+            title={focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}
+            className={`admin-btn-quiet admin-btn-sm ${focusMode ? "bg-adm-text/6 text-adm-text" : ""}`}
+          >
+            {focusMode ? <Minimize2 size={15} aria-hidden /> : <Maximize2 size={15} aria-hidden />}
+            <span className="sr-only">{focusMode ? t("news.focusMode.exit") : t("news.focusMode.enter")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewExcerpt((document.getElementById("excerpt") as HTMLTextAreaElement | null)?.value ?? "");
+              setPreviewOpen(true);
+            }}
+            className="admin-btn-ghost admin-btn-sm"
+          >
+            <Eye size={14} aria-hidden />
+            {t("news.preview.button")}
+          </button>
+          <SubmitButton label={submitLabel} pending={isPending} form="news-form" />
         </div>
       </header>
+
+      {subbar && <div className="mb-5">{subbar}</div>}
+
+      {previewOpen && (
+        <ArticlePreview
+          title={title}
+          excerpt={previewExcerpt}
+          coverImageUrl={coverImageUrl}
+          content={content}
+          format={contentFormat === "HTML" ? "HTML" : "MARKDOWN"}
+          path={`/${lang}/news/${slug}`}
+          onClose={() => setPreviewOpen(false)}
+          labels={{
+            title: t("news.preview.title"),
+            close: t("news.preview.close"),
+            device: t("news.preview.device"),
+            desktop: t("news.preview.desktop"),
+            phone: t("news.preview.phone"),
+            failed: t("news.preview.failed"),
+            untitled: t("news.preview.untitled"),
+          }}
+        />
+      )}
 
       <form id="news-form" action={formAction} className="space-y-8">
         <input type="hidden" name="locale" value={lang} />

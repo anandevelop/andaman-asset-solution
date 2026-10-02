@@ -117,44 +117,13 @@ export default async function EditArticlePage(props: Props) {
   };
 
   return (
-    <div className="space-y-8">
+    <div>
       {searchParams.created && (
         <SaveToast tone="success" token="created">
           <CheckCircle2 size={16} aria-hidden />
           {t("common.saved")}
         </SaveToast>
       )}
-
-      {/* Same panel /admin/publishing shows in its review queue — see the
-          file comment on PublishingRevisionPanel for why this is "compare
-          + history", not a second preview renderer. */}
-      <PublishingRevisionPanel
-        locale={locale}
-        type="NEWS_ARTICLE"
-        id={article.id}
-        labels={{
-          toggle: t("publishing.revision.toggle"),
-          compareTitle: t("publishing.revision.compareTitle"),
-          noRevisionYet: t("publishing.revision.noRevisionYet"),
-          currentLabel: t("publishing.revision.currentLabel"),
-          publishedLabel: t("publishing.revision.publishedLabel"),
-          historyTitle: t("publishing.revision.historyTitle"),
-          historyEmpty: t("publishing.revision.historyEmpty"),
-          revertAction: t("publishing.revision.revertAction"),
-          confirmRevert: t("publishing.revision.confirmRevert"),
-          error: t("common.error"),
-          autoEditBadge: t("publishing.revision.autoEditBadge"),
-        }}
-        historyModal={{ label: t("publishing.revision.fullHistoryButton"), retentionDays: REVISION_RETENTION_DAYS }}
-      />
-
-      <LanguageTabs
-        active={lang}
-        completeness={completeness}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
-        percent={completenessPercent}
-      />
 
       <fieldset disabled={!canWrite} className="contents">
         <NewsForm
@@ -178,6 +147,44 @@ export default async function EditArticlePage(props: Props) {
           articleId={article.id}
           serverUpdatedAt={article.updatedAt.toISOString()}
           autosaveAction={canWrite ? autosaveArticleDraft : undefined}
+          subbar={
+            /* The language being edited on the left, compare/history on
+               the right — the same panel /admin/publishing shows in its
+               review queue (see PublishingRevisionPanel). */
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <LanguageTabs
+                active={lang}
+                completeness={completeness}
+                completeLabel={t("common.translationComplete")}
+                missingLabel={t("common.translationMissing")}
+                percent={completenessPercent}
+              />
+              <div className="min-w-0">
+                <PublishingRevisionPanel
+                  locale={locale}
+                  type="NEWS_ARTICLE"
+                  id={article.id}
+                  labels={{
+                    toggle: t("publishing.revision.toggle"),
+                    compareTitle: t("publishing.revision.compareTitle"),
+                    noRevisionYet: t("publishing.revision.noRevisionYet"),
+                    currentLabel: t("publishing.revision.currentLabel"),
+                    publishedLabel: t("publishing.revision.publishedLabel"),
+                    historyTitle: t("publishing.revision.historyTitle"),
+                    historyEmpty: t("publishing.revision.historyEmpty"),
+                    revertAction: t("publishing.revision.revertAction"),
+                    confirmRevert: t("publishing.revision.confirmRevert"),
+                    error: t("common.error"),
+                    autoEditBadge: t("publishing.revision.autoEditBadge"),
+                  }}
+                  historyModal={{
+                    label: t("publishing.revision.fullHistoryButton"),
+                    retentionDays: REVISION_RETENTION_DAYS,
+                  }}
+                />
+              </div>
+            </div>
+          }
         />
       </fieldset>
     </div>

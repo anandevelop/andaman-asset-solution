@@ -1777,6 +1777,17 @@
         "seoNone": "暂无 SEO 分数",
         "views": "次浏览",
         "leads": "条线索"
+      },
+      "autosavedAt": "已自动保存 {time}",
+      "preview": {
+        "button": "预览",
+        "title": "文章预览",
+        "close": "关闭预览",
+        "device": "屏幕尺寸",
+        "desktop": "电脑",
+        "phone": "手机",
+        "failed": "无法生成预览",
+        "untitled": "（尚无标题）"
       }
     },
     "eBrochures": {

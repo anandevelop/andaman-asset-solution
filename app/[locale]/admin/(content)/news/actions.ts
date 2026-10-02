@@ -24,6 +24,7 @@ import { resolveIsPublished } from "@/lib/publishing-gate";
 import { translationCompleteness } from "@/lib/admin/translated-form";
 import { newsArticleSchema, newsArticleStudioFieldsSchema, fieldErrors } from "@/lib/validations";
 import { sanitizeArticleHtml } from "@/lib/markdown";
+import { renderArticleBody } from "@/lib/article-render";
 import { auditArticle } from "@/lib/article-seo";
 import { recordSeoOverride } from "@/lib/audit/events";
 import { submitForReview, approveAndPublish } from "@/app/[locale]/admin/(content)/publishing/actions";
@@ -660,4 +661,21 @@ export async function autosaveArticleDraft(
     console.error("[autosaveArticleDraft]", error);
     return { ok: false };
   }
+}
+
+/**
+ * The article body as the public page would render it, for the editor's
+ * "ดูตัวอย่าง" — from what is typed now, saved or not. The same pipeline
+ * as app/[locale]/(site)/news/[slug] (renderArticleBody: sanitize, strip
+ * the leading H1, anchor the headings), so the preview cannot show markup
+ * the live page would not. Nothing is stored. Project-card embeds stay as
+ * their fallback link here; the live page swaps them for the card.
+ */
+export async function previewArticleBody(
+  content: string,
+  format: "HTML" | "MARKDOWN",
+): Promise<{ ok: true; html: string } | { ok: false }> {
+  await requireAdminAction(Role.EDITOR);
+  if (content.length > 500_000) return { ok: false };
+  return { ok: true, html: renderArticleBody(content, format === "HTML" ? "HTML" : "MARKDOWN") };
 }
