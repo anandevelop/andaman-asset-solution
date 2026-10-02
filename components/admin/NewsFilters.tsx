@@ -15,16 +15,20 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FilterChip from "@/components/admin/ui/FilterChip";
-import { ArrowDownUp, CircleDot, Languages, Loader2, Search, Tag, UserRound } from "lucide-react";
+import Segmented from "@/components/admin/ui/Segmented";
+import { ArrowDownUp, Languages, Loader2, Search, Tag, UserRound } from "lucide-react";
 
 type Props = {
   locale: string;
   activeSearch: string;
   activeCategory: string;
   activeStatus: string;
+  statusCounts: Record<"all" | "draft" | "inReview" | "scheduled" | "published", number>;
+  /** After the search — the cards/table switch. */
+  trailing?: ReactNode;
   activeAuthor: string;
   activeSort: string;
   incompleteOnly: boolean;
@@ -63,6 +67,8 @@ export default function NewsFilters({
   activeSearch,
   activeCategory,
   activeStatus,
+  statusCounts,
+  trailing,
   activeAuthor,
   activeSort,
   incompleteOnly,
@@ -124,28 +130,22 @@ export default function NewsFilters({
      narrow something. Same URL parameters as the <select>s they replace. */
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
-        <Search
-          size={15}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-muted"
-          aria-hidden
-        />
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={labels.searchPlaceholder}
-          aria-label={labels.searchPlaceholder}
-          className="admin-input h-8 pl-9! pr-8!"
-        />
-        {pending && (
-          <Loader2
-            size={14}
-            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-adm-muted"
-            aria-hidden
-          />
-        )}
-      </div>
+      {/* Status as segments, with counts (v4): the four states are the
+          first thing anyone narrows by, and a chip hid the numbers. */}
+      <Segmented
+        label={labels.status}
+        active={activeStatus === "ALL" ? "ALL" : activeStatus}
+        onSelect={(value) => push.current({ status: value === "ALL" ? null : value })}
+        items={[
+          { key: "ALL", label: labels.all, count: statusCounts.all },
+          { key: "draft", label: labels.statusDraft, count: statusCounts.draft },
+          { key: "inReview", label: labels.statusInReview, count: statusCounts.inReview },
+          ...(statusCounts.scheduled > 0
+            ? [{ key: "scheduled", label: labels.statusScheduled, count: statusCounts.scheduled }]
+            : []),
+          { key: "published", label: labels.statusPublished, count: statusCounts.published },
+        ]}
+      />
 
       <FilterChip
         label={labels.category}
@@ -154,20 +154,6 @@ export default function NewsFilters({
         value={activeCategory === "ALL" ? null : activeCategory}
         onSelect={(value) => push.current({ category: value })}
         onClear={() => push.current({ category: null })}
-        clearLabel={labels.clearFilter}
-      />
-      <FilterChip
-        label={labels.status}
-        icon={CircleDot}
-        options={[
-          { value: "published", label: labels.statusPublished },
-          { value: "inReview", label: labels.statusInReview },
-          { value: "scheduled", label: labels.statusScheduled },
-          { value: "draft", label: labels.statusDraft },
-        ]}
-        value={activeStatus === "ALL" ? null : activeStatus}
-        onSelect={(value) => push.current({ status: value })}
-        onClear={() => push.current({ status: null })}
         clearLabel={labels.clearFilter}
       />
       <FilterChip
@@ -206,6 +192,31 @@ export default function NewsFilters({
         onClear={() => push.current({ sort: null })}
         clearLabel={labels.clearFilter}
       />
+
+      <div className="relative ml-auto min-w-[220px] sm:w-64">
+        <Search
+          size={15}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-muted"
+          aria-hidden
+        />
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={labels.searchPlaceholder}
+          aria-label={labels.searchPlaceholder}
+          className="admin-input h-8 pl-9! pr-8!"
+        />
+        {pending && (
+          <Loader2
+            size={14}
+            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-adm-muted"
+            aria-hidden
+          />
+        )}
+      </div>
+
+      {trailing}
     </div>
   );
 }

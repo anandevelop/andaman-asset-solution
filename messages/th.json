@@ -710,7 +710,8 @@
       "today": "วันนี้",
       "yesterday": "เมื่อวาน",
       "clearFilter": "ล้างตัวกรอง",
-      "translationPartial": "แปลบางส่วน"
+      "translationPartial": "แปลบางส่วน",
+      "missingThai": "ขาดภาษาไทย"
     },
     "dateTime": {
       "open": "เลือกวันและเวลา",
@@ -1871,7 +1872,13 @@
         "undo": "ยกเลิกการเช็คอิน",
         "hint": "แตะที่ชื่อเพื่อเช็คอิน ระบบจะเปลี่ยนสถานะเป็นเข้าร่วมแล้วให้ด้วย"
       },
-      "live": "กำลังจัดอยู่"
+      "live": "กำลังจัดอยู่",
+      "registeredOpen": "ลงทะเบียน {count} คน",
+      "registeredOf": "ลงทะเบียน {count} / {capacity}",
+      "hintCapacity": "รับได้ {capacity} ที่ — ตรวจว่าไม่ได้พิมพ์ผิด",
+      "hintMissingThai": "ยังไม่มีชื่อภาษาไทย — หน้าเว็บภาษาไทยจะแสดงภาษาอังกฤษ",
+      "shareLink": "แชร์ลิงก์",
+      "linkCopied": "คัดลอกลิงก์แล้ว"
     },
     "eventStatus": {
       "PENDING": "รอยืนยัน",
@@ -3240,7 +3247,8 @@
       "missingCount": "ขาด {missing} จาก {total}",
       "matrix": {
         "type": "ประเภทเนื้อหา",
-        "missing": "ที่ขาด"
+        "missing": "ที่ขาด",
+        "title": "ความครบถ้วนของคำแปล"
       },
       "section": {
         "projects": "โครงการ",

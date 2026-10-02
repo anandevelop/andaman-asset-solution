@@ -710,7 +710,8 @@
       "today": "Сегодня",
       "yesterday": "Вчера",
       "clearFilter": "Сбросить фильтр",
-      "translationPartial": "Частично переведено"
+      "translationPartial": "Частично переведено",
+      "missingThai": "Нет тайского"
     },
     "dateTime": {
       "open": "Выберите дату и время",
@@ -1871,7 +1872,13 @@
         "undo": "Отменить отметку",
         "hint": "Нажмите на имя, чтобы отметить приход. Это также отмечает участие."
       },
-      "live": "Идёт сейчас"
+      "live": "Идёт сейчас",
+      "registeredOpen": "Зарегистрировано: {count}",
+      "registeredOf": "Зарегистрировано: {count} / {capacity}",
+      "hintCapacity": "Мест: {capacity} — проверьте, не опечатка ли",
+      "hintMissingThai": "Нет тайского названия — тайский сайт покажет английское",
+      "shareLink": "Поделиться ссылкой",
+      "linkCopied": "Ссылка скопирована"
     },
     "eventStatus": {
       "PENDING": "Ожидание",
@@ -3240,7 +3247,8 @@
       "missingCount": "Не хватает {missing} из {total}",
       "matrix": {
         "type": "Тип контента",
-        "missing": "Не хватает"
+        "missing": "Не хватает",
+        "title": "Полнота переводов"
       },
       "section": {
         "projects": "Проекты",

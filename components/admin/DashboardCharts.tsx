@@ -146,7 +146,23 @@ export function TrendChart({
           />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip {...TOOLTIP_STYLE} cursor={{ fill: "rgba(8,53,81,0.04)" }} />
-          <Bar dataKey="count" name={labels.count} fill={SERIES.total} radius={[2, 2, 0, 0]} />
+          {/* The v4 bar: ocean fading to 30% toward the axis, the value
+              over it, never wider than 44px — five runs drawn as five
+              full-width slabs read as a wall, not a trend. */}
+          <defs>
+            <linearGradient id="adm-trend-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="var(--adm-ocean)" />
+              <stop offset="1" stopColor="var(--adm-ocean)" stopOpacity={0.3} />
+            </linearGradient>
+          </defs>
+          <Bar
+            dataKey="count"
+            name={labels.count}
+            fill="url(#adm-trend-fill)"
+            radius={[6, 6, 0, 0]}
+            maxBarSize={44}
+            label={{ position: "top", fontSize: 11, fill: "var(--adm-muted)" }}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

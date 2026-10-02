@@ -14,9 +14,11 @@
  */
 
 import Link from "next/link";
+import { intlLocale } from "@/lib/format";
 import type { ArticleRow, LocaleState } from "@/lib/admin/news-list";
 import ProgressRing from "@/components/admin/ui/ProgressRing";
 import AdminImage from "@/components/admin/ui/AdminImage";
+import LocaleFlags from "@/components/admin/ui/LocaleFlags";
 
 const STATUS_TONE: Record<ArticleRow["status"], string> = {
   published: "bg-adm-success-bg text-adm-success",
@@ -25,10 +27,10 @@ const STATUS_TONE: Record<ArticleRow["status"], string> = {
   draft: "bg-adm-neutral-bg text-adm-neutral",
 };
 
-const LOCALE_TONE: Record<LocaleState, string> = {
-  done: "bg-adm-success-bg text-adm-success",
-  partial: "bg-adm-warning-bg text-adm-warning",
-  missing: "bg-adm-danger-bg text-adm-danger",
+const FLAG_STATE: Record<LocaleState, "complete" | "partial" | "missing"> = {
+  done: "complete",
+  partial: "partial",
+  missing: "missing",
 };
 
 export default function NewsCards({
@@ -60,50 +62,62 @@ export default function NewsCards({
         <li key={row.id}>
           <Link
             href={`/${locale}/admin/news/${row.id}/edit`}
-            className="admin-card group block h-full overflow-hidden p-0! transition-[transform,border-color] hover:-translate-y-0.5 hover:border-adm-line-strong motion-reduce:hover:translate-y-0"
+            data-spot
+            className="admin-card admin-card-lift group flex h-full flex-col overflow-hidden p-0!"
           >
-            <span className="relative block aspect-[16/9] bg-surface-muted">
+            <span className="relative block h-[150px]">
               <AdminImage src={row.coverImageUrl} loading="lazy" iconSize={26} className="h-full w-full object-cover" />
               <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-                <span className="rounded-full bg-adm-solid px-2.5 py-0.5 text-[11px] font-medium text-ink">
-                  {row.category ?? labels.noCategory}
-                </span>
+                {row.category && (
+                  <span className="rounded-full bg-adm-solid px-2.5 py-0.5 text-[11px] font-medium text-adm-text shadow-[0_1px_4px_rgba(0,0,0,0.12)]">
+                    {row.category}
+                  </span>
+                )}
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_TONE[row.status]}`}>
                   {labels.status[row.status]}
                 </span>
               </span>
             </span>
 
-            <span className="block p-4">
-              <span className="line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary-500">
-                {row.title}
-              </span>
-
-              <span className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
-                <span className="flex items-center gap-1.5" title={labels.seo}>
+            <span className="flex flex-1 flex-col p-4">
+              <span className="flex items-start gap-3">
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 text-[15px] font-semibold leading-[1.4] text-adm-text">{row.title}</span>
+                  {row.subtitle && <span className="mt-0.5 block truncate text-xs text-adm-muted">{row.subtitle}</span>}
+                </span>
+                <span className="shrink-0" title={row.seoScore === null ? labels.seoNone : labels.seo}>
                   {row.seoScore === null ? (
-                    <span>{labels.seoNone}</span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-adm-line-strong text-[10px] text-adm-muted">
+                      SEO
+                    </span>
                   ) : (
-                    <ProgressRing value={row.seoScore} size="sm" label={`${labels.seo} ${row.seoScore}`} />
+                    <ProgressRing value={row.seoScore} label={`${labels.seo} ${row.seoScore}`} />
                   )}
                 </span>
-                <span className="tabular-nums">
-                  {row.views30} {labels.views}
-                </span>
-                <span className={`tabular-nums ${row.leads > 0 ? "font-semibold text-adm-success" : ""}`}>
-                  {row.leads} {labels.leads}
-                </span>
               </span>
 
-              <span className="mt-3 flex gap-1">
-                {localeCodes.map((code) => (
-                  <span
-                    key={code}
-                    className={`rounded-[6px] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase ${LOCALE_TONE[row.localeStates[code as keyof typeof row.localeStates]]}`}
-                  >
-                    {code}
+              <span className="mt-auto flex items-center justify-between gap-3 pt-3">
+                <span className="flex items-center gap-3 text-xs text-adm-muted">
+                  {row.publishedAt && (
+                    <time dateTime={row.publishedAt}>
+                      {new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", year: "numeric" }).format(
+                        new Date(row.publishedAt),
+                      )}
+                    </time>
+                  )}
+                  <span className="tabular-nums">
+                    {row.views30} {labels.views}
                   </span>
-                ))}
+                  <span className={`tabular-nums ${row.leads > 0 ? "font-semibold text-adm-success" : ""}`}>
+                    {row.leads} {labels.leads}
+                  </span>
+                </span>
+                <LocaleFlags
+                  locales={localeCodes.map((code) => ({
+                    locale: code,
+                    state: FLAG_STATE[row.localeStates[code as keyof typeof row.localeStates]],
+                  }))}
+                />
               </span>
             </span>
           </Link>

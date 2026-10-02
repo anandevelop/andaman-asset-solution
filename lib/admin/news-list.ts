@@ -80,6 +80,9 @@ export type ArticleRow = {
   id: string;
   slug: string;
   title: string;
+  /** The English title under a Thai one (the card's second line); null
+   *  when the two are the same or there is no Thai title to sit under. */
+  subtitle: string | null;
   category: string | null;
   authorName: string | null;
   coverImageUrl: string | null;
@@ -115,6 +118,9 @@ export type NewsListView = {
   totalAll: number;
   publishedCount: number;
   draftCount: number;
+  /** Per status across every article, filters ignored — the status
+   *  segments' counts, which say how many each one would show. */
+  statusCounts: Record<ArticleRow["status"] | "all", number>;
   /** Articles short of a full translation, for the filter chip. */
   incompleteCount: number;
   categories: string[];
@@ -132,6 +138,7 @@ export const EMPTY_VIEW: NewsListView = {
   totalAll: 0,
   publishedCount: 0,
   draftCount: 0,
+  statusCounts: { all: 0, draft: 0, inReview: 0, scheduled: 0, published: 0 },
   incompleteCount: 0,
   categories: [],
   authors: [],
@@ -276,6 +283,7 @@ export async function getNewsList(filters: NewsFilters): Promise<NewsListView> {
           // office is worked in Thai, and an article whose Thai title is
           // missing is better shown by its English one than by its id.
           title: article.titleTh || article.titleEn,
+          subtitle: article.titleTh && article.titleEn && article.titleTh !== article.titleEn ? article.titleEn : null,
           category: article.category,
           authorId: article.authorId,
           authorName: article.author?.name ?? null,
@@ -357,6 +365,13 @@ export async function getNewsList(filters: NewsFilters): Promise<NewsListView> {
         */
         publishedCount: matches.filter((row) => row.status === "published").length,
         draftCount: matches.filter((row) => row.status === "draft" || row.status === "inReview").length,
+        statusCounts: {
+          all: all.length,
+          draft: all.filter((row) => row.status === "draft").length,
+          inReview: all.filter((row) => row.status === "inReview").length,
+          scheduled: all.filter((row) => row.status === "scheduled").length,
+          published: all.filter((row) => row.status === "published").length,
+        },
         incompleteCount: all.filter((row) => row.translationIncomplete).length,
         categories: [...categories].sort(),
         authors: [...authors].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)),

@@ -710,7 +710,8 @@
       "today": "Today",
       "yesterday": "Yesterday",
       "clearFilter": "Clear filter",
-      "translationPartial": "Partly translated"
+      "translationPartial": "Partly translated",
+      "missingThai": "No Thai"
     },
     "dateTime": {
       "open": "Choose a date and time",
@@ -1871,7 +1872,13 @@
         "undo": "Undo arrival",
         "hint": "Tap a name to check them in. Checking in also marks them as attended."
       },
-      "live": "Happening now"
+      "live": "Happening now",
+      "registeredOpen": "{count} registered",
+      "registeredOf": "{count} / {capacity} registered",
+      "hintCapacity": "Capacity is {capacity} — check it is not a typo",
+      "hintMissingThai": "No Thai title yet — the Thai site will show English",
+      "shareLink": "Share link",
+      "linkCopied": "Link copied"
     },
     "eventStatus": {
       "PENDING": "Pending",
@@ -3240,7 +3247,8 @@
       "missingCount": "{missing} of {total} missing",
       "matrix": {
         "type": "Content type",
-        "missing": "Missing"
+        "missing": "Missing",
+        "title": "Translation completeness"
       },
       "section": {
         "projects": "Projects",

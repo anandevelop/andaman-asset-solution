@@ -43,7 +43,6 @@ import CtaImportButton from "@/components/admin/CtaImportButton";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
 
@@ -98,7 +97,6 @@ export default async function AdminCtaPage(props: Props) {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("cta.title")}
         description={t("cta.subtitle")}
       />

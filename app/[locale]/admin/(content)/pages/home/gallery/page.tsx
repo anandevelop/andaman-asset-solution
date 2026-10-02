@@ -21,7 +21,6 @@ import {
 } from "./actions";
 import HomeGalleryPhotoForm from "@/components/admin/HomeGalleryPhotoForm";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -54,7 +53,6 @@ export default async function AdminHomeGalleryPage(props: Props) {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("homeGallery.title")}
         description={t("homeGallery.subtitle")}
       />

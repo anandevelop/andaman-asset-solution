@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Pencil, Plus, Users } from "lucide-react";
+import { AlertTriangle, Clock, MapPin, Pencil, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -19,7 +19,9 @@ import { can } from "@/lib/permissions";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { intlLocale } from "@/lib/format";
 import { translationCompleteness } from "@/lib/admin/translated-form";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import LocaleFlags from "@/components/admin/ui/LocaleFlags";
+import CopyLinkButton from "@/components/admin/CopyLinkButton";
+import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
 import AdminImage from "@/components/admin/ui/AdminImage";
@@ -140,24 +142,18 @@ export default async function AdminEventsPage(props: Props) {
             return (
               <li
                 key={event.id}
-                className={`admin-card flex flex-col gap-4 p-3! sm:flex-row sm:items-center ${isPast ? "opacity-60" : ""}`}
+                className="admin-card flex flex-col overflow-hidden p-0! sm:flex-row"
               >
-                <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden rounded-[12px] bg-surface-muted sm:w-44">
+                <span className="relative block h-40 w-full shrink-0 sm:h-auto sm:min-h-[130px] sm:w-[220px]">
                   <AdminImage
                     src={event.coverImageUrl}
                     loading="lazy"
                     iconSize={24}
-                    className="h-full w-full object-cover"
+                    className={`absolute inset-0 h-full w-full object-cover ${isPast ? "opacity-60 grayscale-[40%]" : ""}`}
                   />
-                  {isLive && (
-                    <span className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-white">
-                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" />
-                      {t("events.live")}
-                    </span>
-                  )}
                 </span>
 
-                <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -166,57 +162,101 @@ export default async function AdminEventsPage(props: Props) {
                     >
                       {event.isPublished ? t("common.published") : t("common.draft")}
                     </span>
-                    {isPast && <span className="text-xs text-ink-muted">{t("events.pastLabel")}</span>}
-                    <TranslationStatusBadges completeness={completeness} />
-                  </div>
-                  <Link
-                    href={`/${locale}/admin/events/${event.id}/edit`}
-                    className="mt-1 block truncate text-base font-semibold text-ink hover:text-primary-500"
-                  >
-                    {locale === "th" ? event.titleTh : event.titleEn}
-                  </Link>
-                  <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
-                    <time dateTime={event.startsAt.toISOString()}>{dateFormat.format(event.startsAt)}</time>
-                    {event.location && <span>{event.location}</span>}
-                    <span className="admin-mono">/{event.slug}</span>
-                  </p>
-                </div>
-
-                <div className="w-full shrink-0 sm:w-48">
-                  <p className={`flex items-center gap-1.5 text-sm ${full ? "font-medium text-adm-warning" : "text-ink"}`}>
-                    <Users size={14} aria-hidden />
-                    <span className="tabular-nums">
-                      {event.capacity === null ? booked : `${booked} / ${event.capacity}`}
-                    </span>
-                  </p>
-                  {event.capacity !== null && event.capacity > 0 && (
-                    <span aria-hidden className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-adm-line">
-                      <span
-                        className={`block h-full rounded-full ${full ? "bg-adm-warning" : "bg-adm-info"}`}
-                        style={{
-                          width: `${Math.min(100, (booked / event.capacity) * 100)}%`,
-                        }}
+                    {isLive && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-adm-danger px-2 py-0.5 text-[10.5px] font-semibold text-white">
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" />
+                        {t("events.live")}
+                      </span>
+                    )}
+                    {isPast && (
+                      <span className="rounded-full bg-adm-text/6 px-2 py-0.5 text-[11px] text-adm-muted">
+                        {t("events.pastLabel")}
+                      </span>
+                    )}
+                    <span className="ml-auto">
+                      <LocaleFlags
+                        locales={LOCALE_DISPLAY_ORDER.map((code) => ({
+                          locale: code,
+                          state: completeness[code] ? "complete" : "missing",
+                        }))}
                       />
                     </span>
+                  </div>
+
+                  <Link
+                    href={`/${locale}/admin/events/${event.id}/edit`}
+                    className="truncate text-lg font-semibold leading-snug text-adm-text hover:text-adm-accent-ink"
+                  >
+                    {(locale === "th" ? event.titleTh : event.titleEn) || event.titleEn || event.titleTh}
+                  </Link>
+
+                  <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-adm-muted">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={13} aria-hidden />
+                      <time dateTime={event.startsAt.toISOString()}>{dateFormat.format(event.startsAt)}</time>
+                    </span>
+                    {event.location && (
+                      <span className="inline-flex min-w-0 items-center gap-1">
+                        <MapPin size={13} aria-hidden className="shrink-0" />
+                        <span className="truncate">{event.location}</span>
+                      </span>
+                    )}
+                  </p>
+
+                  <div className="max-w-[320px]">
+                    <p className={`flex items-center gap-1.5 text-xs ${full ? "font-medium text-adm-warning" : "text-adm-muted"}`}>
+                      <Users size={13} aria-hidden />
+                      <span className="tabular-nums">
+                        {event.capacity === null
+                          ? t("events.registeredOpen", { count: booked })
+                          : t("events.registeredOf", { count: booked, capacity: event.capacity })}
+                      </span>
+                    </p>
+                    {event.capacity !== null && event.capacity > 0 && (
+                      <span aria-hidden className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-adm-line">
+                        <span
+                          className={`block h-full rounded-full ${full ? "bg-adm-warning" : "bg-adm-status-info"}`}
+                          style={{ width: `${Math.min(100, (booked / event.capacity) * 100)}%` }}
+                        />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* A hint only when there is something to fix before the
+                      event: a capacity of one is almost always a typo, and a
+                      missing Thai title shows English on the Thai site. */}
+                  {!isPast && ((event.capacity !== null && event.capacity <= 1) || !completeness.th) && (
+                    <p className="flex items-center gap-1.5 text-xs text-adm-warning">
+                      <AlertTriangle size={13} aria-hidden />
+                      {event.capacity !== null && event.capacity <= 1
+                        ? t("events.hintCapacity", { capacity: event.capacity })
+                        : t("events.hintMissingThai")}
+                    </p>
                   )}
-                  <span className="mt-2 flex gap-3">
+
+                  <span className="mt-1 flex flex-wrap gap-2">
                     {/* Registrations are customer data: the link only for
                         a role that page admits (viewCustomerContact). */}
                     {canSeeRegistrations && (
                       <Link
                         href={`/${locale}/admin/events/${event.id}/registrations`}
-                        className="text-xs text-ink-muted hover:text-primary"
+                        className="admin-btn-ghost admin-btn-sm"
                       >
+                        <Users size={13} aria-hidden />
                         {t("events.manageRegistrations")}
                       </Link>
                     )}
-                    <Link
-                      href={`/${locale}/admin/events/${event.id}/edit`}
-                      className="inline-flex items-center gap-1 text-xs text-adm-accent-ink hover:underline"
-                    >
-                      <Pencil size={12} aria-hidden />
+                    <Link href={`/${locale}/admin/events/${event.id}/edit`} className="admin-btn-ghost admin-btn-sm">
+                      <Pencil size={13} aria-hidden />
                       {t("common.edit")}
                     </Link>
+                    {event.isPublished && !isPast && (
+                      <CopyLinkButton
+                        path={`/${locale}/events/${event.slug}`}
+                        label={t("events.shareLink")}
+                        copiedLabel={t("events.linkCopied")}
+                      />
+                    )}
                   </span>
                 </div>
               </li>

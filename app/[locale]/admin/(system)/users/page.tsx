@@ -20,6 +20,7 @@ import { PERMISSION_MATRIX, CAPABILITIES, ROLE_ORDER } from "@/lib/permissions";
 import { createUser } from "./actions";
 import UserForm from "@/components/admin/UserForm";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import Avatar from "@/components/admin/ui/Avatar";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -132,25 +133,35 @@ export default async function AdminUsersPage(props: Props) {
               {users.map((user) => (
                 <tr
                   key={user.id}
-                  className="transition-colors hover:bg-surface-muted/60"
+                  className="transition-colors"
                 >
                   <td className="admin-td">
-                    <p className="flex items-center gap-2 font-medium text-primary">
-                      {user.name}
-                      {user.id === actor.id && (
-                        <span className="rounded-xs bg-accent-50 px-1.5 py-0.5 text-[11px] font-medium text-accent-700">
-                          {t("users.you")}
+                    <span className="flex items-center gap-2.5">
+                      <Avatar id={user.id} name={user.name} />
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2 font-medium text-adm-text">
+                          {user.name}
+                          {user.id === actor.id && (
+                            <span className="rounded-full bg-adm-fill/20 px-1.5 py-0.5 text-[11px] font-medium text-adm-accent-ink">
+                              {t("users.you")}
+                            </span>
+                          )}
                         </span>
-                      )}
-                    </p>
-                    <p className="mt-0.5 text-xs text-ink-muted">{user.email}</p>
+                        <span className="mt-0.5 block text-xs text-adm-muted">{user.email}</span>
+                      </span>
+                    </span>
                   </td>
 
                   <td className="admin-td whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1.5 text-ink-muted">
-                      {user.role === Role.SUPER_ADMIN && (
-                        <ShieldCheck size={14} className="text-accent-700" aria-hidden />
-                      )}
+                    <span
+                      className={[
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-medium",
+                        user.role === Role.SUPER_ADMIN
+                          ? "bg-adm-fill/20 text-adm-accent-ink"
+                          : "bg-adm-status-info-bg text-adm-status-info",
+                      ].join(" ")}
+                    >
+                      {user.role === Role.SUPER_ADMIN && <ShieldCheck size={12} aria-hidden />}
                       {t(`roles.${user.role}` as never)}
                     </span>
                   </td>

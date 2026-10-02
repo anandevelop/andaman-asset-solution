@@ -710,7 +710,8 @@
       "today": "今天",
       "yesterday": "昨天",
       "clearFilter": "清除筛选",
-      "translationPartial": "部分翻译"
+      "translationPartial": "部分翻译",
+      "missingThai": "缺泰文"
     },
     "dateTime": {
       "open": "选择日期和时间",
@@ -1871,7 +1872,13 @@
         "undo": "撤销签到",
         "hint": "点击姓名即可签到，同时会标记为已出席。"
       },
-      "live": "进行中"
+      "live": "进行中",
+      "registeredOpen": "已报名 {count} 人",
+      "registeredOf": "已报名 {count} / {capacity}",
+      "hintCapacity": "名额为 {capacity} — 请确认不是笔误",
+      "hintMissingThai": "尚无泰文标题 — 泰文网站将显示英文",
+      "shareLink": "分享链接",
+      "linkCopied": "链接已复制"
     },
     "eventStatus": {
       "PENDING": "待确认",
@@ -3240,7 +3247,8 @@
       "missingCount": "缺少 {missing} / {total}",
       "matrix": {
         "type": "内容类型",
-        "missing": "缺少"
+        "missing": "缺少",
+        "title": "翻译完整度"
       },
       "section": {
         "projects": "项目",

@@ -119,6 +119,25 @@ async function seed(prisma: PrismaClient) {
   }
 
   /*
+    One corporate service, so the Pages hub's card list has a card to open.
+    admin-viewer-access.spec.ts opens it to check that a VIEWER's form is
+    disabled — with no row, there is no card, and that check would be
+    asserting on nothing (the forms moved into a drawer per item).
+  */
+  await prisma.corporateService.create({
+    data: {
+      imageUrl: "/corporate/design-double-height.webp",
+      sortOrder: 0,
+      translations: {
+        create: [
+          { locale: "en", label: "Construction", imageAlt: "A site under construction" },
+          { locale: "th", label: "ก่อสร้าง", imageAlt: "ไซต์ก่อสร้าง" },
+        ],
+      },
+    },
+  });
+
+  /*
     One unit type with a floor, two room pins and a photo on one of them.
 
     The unit-types workspace and the public section it previews both render

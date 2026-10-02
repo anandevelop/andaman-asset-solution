@@ -30,6 +30,7 @@ import {
   VIEW_WINDOW_DAYS,
 } from "@/lib/admin/news-list";
 import NewsFilters from "@/components/admin/NewsFilters";
+import Segmented from "@/components/admin/ui/Segmented";
 import NewsTable from "@/components/admin/NewsTable";
 import NewsCards from "@/components/admin/NewsCards";
 import TablePagination from "@/components/admin/TablePagination";
@@ -130,32 +131,22 @@ export default async function AdminNewsPage(props: Props) {
         </p>
       )}
 
-      <div className="flex justify-end">
-        <nav aria-label={t("projects.cards.viewLabel")} className="inline-flex rounded-[10px] border border-adm-line bg-surface p-0.5">
-          {(["cards", "table"] as const).map((option) => (
-            <Link
-              key={option}
-              href={layoutHref(option)}
-              aria-current={layout === option ? "page" : undefined}
-              className={[
-                "flex h-7 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] transition-colors",
-                layout === option
-                  ? "bg-adm-solid font-medium text-ink shadow-[0_0_0_1px_var(--adm-line)]"
-                  : "text-ink-muted hover:text-ink",
-              ].join(" ")}
-            >
-              {option === "cards" ? <LayoutGrid size={14} aria-hidden /> : <List size={14} aria-hidden />}
-              {option === "cards" ? t("projects.cards.viewCards") : t("projects.cards.viewTable")}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
       <NewsFilters
         locale={locale}
         activeSearch={filters.search}
         activeCategory={filters.category}
         activeStatus={filters.status}
+        statusCounts={view.statusCounts}
+        trailing={
+          <Segmented
+            label={t("projects.cards.viewLabel")}
+            active={layout}
+            items={[
+              { key: "cards", label: t("projects.cards.viewCards"), icon: <LayoutGrid size={13} aria-hidden />, href: layoutHref("cards") },
+              { key: "table", label: t("projects.cards.viewTable"), icon: <List size={13} aria-hidden />, href: layoutHref("table") },
+            ]}
+          />
+        }
         activeAuthor={filters.author}
         activeSort={filters.sort}
         incompleteOnly={filters.incompleteOnly}

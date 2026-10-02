@@ -8,7 +8,8 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, Compass } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { Role } from "@prisma/client";
@@ -18,19 +19,17 @@ import { parseEditingLocale, pickEditingTranslation, translationCompleteness } f
 import { createMissionPrinciple, deleteMissionPrinciple, updateMissionPrinciple } from "./actions";
 import MissionPrincipleForm from "@/components/admin/MissionPrincipleForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import CollectionGrid, { collectionHref } from "@/components/admin/ui/CollectionGrid";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
 export default async function AdminMissionPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   /* VIEWER may open this page to see what is published; only EDITOR
      and above may submit either form below (canWrite gates both with a
@@ -53,99 +52,108 @@ export default async function AdminMissionPage(props: Props) {
     [] as any[],
   );
 
+  const base = `/${locale}/admin/pages/about/mission`;
+  const href = (edit: string | null) => collectionHref(base, searchParams.lang, edit);
+  // "new" only for a role that can save it; an unknown id opens nothing.
+  const target =
+    searchParams.edit === "new"
+      ? canWrite
+        ? ("new" as const)
+        : null
+      : (principles.find((row: any) => row.id === searchParams.edit) ?? null);
+  const tr = target && target !== "new" ? pickEditingTranslation<any>(target.translations, lang) : undefined;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("mission.title")}
         description={t("mission.subtitle")}
+        actions={
+          canWrite ? (
+            <Link href={href("new")} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("mission.newTitle")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
+      <CollectionGrid
+        columns={3}
+        items={principles.map((row: any) => ({
+          id: row.id,
+          href: href(row.id),
+          title: pickEditingTranslation<any>(row.translations, locale)?.title || row.translations[0]?.title || row.id,
+          subtitle: pickEditingTranslation<any>(row.translations, locale)?.body || null,
+          imageUrl: null,
+          tag: null,
+          meta: `#${row.sortOrder}`,
+          visible: row.isActive,
+          completeness: translationCompleteness<any>(row.translations, "title"),
+        }))}
+        labels={{
+          visible: t("mission.active"),
+          hidden: t("mission.inactive"),
+          missingThai: t("common.missingThai"),
+          empty: t("mission.empty"),
+        }}
       />
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
-          {t("mission.newTitle")}
-        </h2>
-
-        <fieldset disabled={!canWrite} className="contents">
-          <MissionPrincipleForm
-            key={lang}
-            lang={lang}
-            action={createMissionPrinciple.bind(null, locale)}
-            submitLabel={t("common.create")}
-          />
-        </fieldset>
-      </section>
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {principles.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
-          {t("mission.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {principles.map((principle: any) => {
-            const completeness = translationCompleteness<any>(
-              principle.translations,
-              "title",
-            );
-            const editing = pickEditingTranslation<any>(principle.translations, lang);
-
-            return (
-              <section key={principle.id} className="admin-card">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-base font-semibold text-primary">
-                      {editing?.title ?? principle.translations[0]?.title ?? principle.id}
-                    </h2>
-                    <TranslationStatusBadges completeness={completeness} />
-                  </div>
-
-                  <span
-                    className={
-                      principle.isActive
-                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                    }
-                  >
-                    {principle.isActive ? t("mission.active") : t("mission.inactive")}
-                  </span>
-                </div>
-
-                <fieldset disabled={!canWrite} className="contents">
-                  <MissionPrincipleForm
-                    key={lang}
-                    lang={lang}
-                    action={updateMissionPrinciple.bind(null, locale, principle.id)}
-                    onDelete={deleteMissionPrinciple.bind(null, locale, principle.id)}
-                    values={{
-                      icon: principle.icon,
-                      title: editing?.title ?? "",
-                      body: editing?.body ?? "",
-                      isActive: principle.isActive,
-                      sortOrder: String(principle.sortOrder),
-                    }}
-                    submitLabel={t("common.save")}
-                  />
-                </fieldset>
-              </section>
-            );
-          })}
-        </div>
+      {target && (
+        <AdminDrawer
+          title={
+            target === "new"
+              ? t("mission.newTitle")
+              : pickEditingTranslation<any>(target.translations, locale)?.title || t("mission.newTitle")
+          }
+          icon={<Compass size={18} aria-hidden />}
+          closeHref={href(null)}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <div className="space-y-5">
+            <LanguageTabs
+              active={lang}
+              completeness={
+                target === "new"
+                  ? { en: true, th: true, zh: true, ru: true }
+                  : translationCompleteness<any>(target.translations, "title")
+              }
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
+            <fieldset disabled={!canWrite} className="contents">
+              {target === "new" ? (
+                <MissionPrincipleForm
+                  key={lang}
+                  lang={lang}
+                  action={createMissionPrinciple.bind(null, locale)}
+                  submitLabel={t("common.create")}
+                />
+              ) : (
+                <MissionPrincipleForm
+                  key={`${target.id}:${lang}`}
+                  lang={lang}
+                  action={updateMissionPrinciple.bind(null, locale, target.id)}
+                  onDelete={deleteMissionPrinciple.bind(null, locale, target.id)}
+                  values={{
+                    icon: target.icon,
+                    title: tr?.title ?? "",
+                    body: tr?.body ?? "",
+                    isActive: target.isActive,
+                    sortOrder: String(target.sortOrder),
+                  }}
+                  submitLabel={t("common.save")}
+                />
+              )}
+            </fieldset>
+          </div>
+        </AdminDrawer>
       )}
     </div>
   );

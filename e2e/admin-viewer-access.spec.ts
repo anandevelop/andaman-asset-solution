@@ -43,10 +43,15 @@ test.describe("VIEWER in the Website Content zone", () => {
     await expect(page).toHaveURL(/\/en\/admin\/pages\/about\/corporate$/);
     await expect(page.getByRole("heading", { name: "Corporate Services" })).toBeVisible();
 
-    // This form stays in the DOM — <fieldset disabled> is how these pages
-    // gate writes without changing the form components themselves — so the
-    // control is present but must not be usable.
-    const submit = page.getByRole("button", { name: "Create", exact: true });
+    // No "add" for a role that cannot save one. Opening an existing item
+    // shows its form in the drawer, inside <fieldset disabled> — how these
+    // pages gate writes without changing the form components themselves —
+    // so the control is present but must not be usable.
+    await expect(page.getByRole("link", { name: "Add a service" })).toHaveCount(0);
+    const card = page.locator('a[href*="edit="]').first();
+    await expect(card).toBeVisible();
+    await card.click();
+    const submit = page.getByRole("dialog").getByRole("button", { name: "Save", exact: true });
     await expect(submit).toBeVisible();
     await expect(submit).toBeDisabled();
   });
@@ -57,7 +62,7 @@ test.describe("VIEWER in the Website Content zone", () => {
     await page.goto("/en/admin/projects");
     await expect(page).toHaveURL(/\/en\/admin\/projects$/);
     await expect(page.getByRole("heading", { name: "Projects", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "New project" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Create project" })).toHaveCount(0);
   });
 });
 

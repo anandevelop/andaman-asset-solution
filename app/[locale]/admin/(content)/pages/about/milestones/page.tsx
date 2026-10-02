@@ -23,7 +23,6 @@ import { formatYear } from "@/lib/format";
 import { createMilestone, deleteMilestone, updateMilestone } from "./actions";
 import MilestoneForm from "@/components/admin/MilestoneForm";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
 /** From this year the timeline draws stops in sand: the current run of
  *  developments. One constant, so moving the line is a one-word edit. */
@@ -65,7 +64,6 @@ export default async function AdminMilestonesPage(props: Props) {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("milestones.title")}
         description={t("milestones.subtitle")}
       />

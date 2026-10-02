@@ -27,7 +27,8 @@ import { LEAD_PROJECT } from "./fixtures";
 const ACTIVITY = "/en/admin/activity";
 
 /** Forces the English editing tab, so the entry's label is predictable. */
-const FAQS = "/en/admin/pages/faq?lang=en";
+// The add form lives in a drawer opened by ?edit=new (CollectionGrid).
+const FAQS = "/en/admin/pages/faq?lang=en&edit=new";
 
 /** Distinct per run, so a row cannot be confused with an earlier one. */
 const uniqueQuestion = () => `E2E audit probe ${Date.now()}`;
@@ -49,13 +50,13 @@ test.describe("The activity log", () => {
     await page.getByRole("button", { name: "Create", exact: true }).first().click();
 
     /*
-      Wait for the FAQ itself to appear in the list below the form, not for
+      Wait for the FAQ itself to appear in the card list behind the drawer, not for
       the "Saved" toast: the toast dismisses itself after four seconds, so
       asserting on it races a slow action and fails for a reason that has
       nothing to do with the trail. The row appearing means the action
       finished and revalidated, which is the state the next page needs.
     */
-    await expect(page.locator(`input[name="question"][value="${question}"]`)).toHaveCount(1);
+    await expect(page.getByText(question, { exact: true })).toHaveCount(1);
 
     await page.goto(ACTIVITY);
 

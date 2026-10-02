@@ -7,7 +7,8 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, HelpCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { Role } from "@prisma/client";
@@ -18,19 +19,17 @@ import { parseEditingLocale, pickEditingTranslation, translationCompleteness } f
 import { createFaq, deleteFaq, updateFaq } from "./actions";
 import FaqForm from "@/components/admin/FaqForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import CollectionGrid, { collectionHref } from "@/components/admin/ui/CollectionGrid";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
 export default async function AdminFaqsPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   /* VIEWER may open this page to see what is published; only EDITOR
      and above may submit either form below (canWrite gates both with a
@@ -55,109 +54,112 @@ export default async function AdminFaqsPage(props: Props) {
     getFaqCategories(),
   ]);
 
+  const base = `/${locale}/admin/pages/faq`;
+  const href = (edit: string | null) => collectionHref(base, searchParams.lang, edit);
+  // "new" only for a role that can save it; an unknown id opens nothing.
+  const target =
+    searchParams.edit === "new"
+      ? canWrite
+        ? ("new" as const)
+        : null
+      : (faqs.find((row: any) => row.id === searchParams.edit) ?? null);
+  const tr = target && target !== "new" ? pickEditingTranslation<any>(target.translations, lang) : undefined;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("faqs.title")}
         description={t("faqs.subtitle")}
+        actions={
+          canWrite ? (
+            <Link href={href("new")} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("faqs.newTitle")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
-      {/* One language selection drives every FAQ's form on this page —
-          see the file comment on LanguageTabs. */}
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
+      <CollectionGrid
+        columns={2}
+        items={faqs.map((row: any) => ({
+          id: row.id,
+          href: href(row.id),
+          title: (locale === "th" ? row.questionTh : row.questionEn) || row.questionEn,
+          subtitle: null,
+          imageUrl: null,
+          tag: row.category,
+          meta: `#${row.sortOrder}`,
+          visible: row.isPublished,
+          completeness: translationCompleteness<any>(row.translations, "question"),
+        }))}
+        labels={{
+          visible: t("common.published"),
+          hidden: t("common.draft"),
+          missingThai: t("common.missingThai"),
+          empty: t("faqs.empty"),
+        }}
       />
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
-          {t("faqs.newTitle")}
-        </h2>
-
-        <fieldset disabled={!canWrite} className="contents">
-          <FaqForm
-            key={lang}
-            lang={lang}
-            action={createFaq}
-            existingCategories={categories}
-            submitLabel={t("common.create")}
-            formId="faq-new"
-          />
-        </fieldset>
-      </section>
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {faqs.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
-          {t("faqs.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {faqs.map((faq: any) => {
-            const completeness = translationCompleteness<any>(faq.translations, "question");
-            const editing = pickEditingTranslation<any>(faq.translations, lang);
-
-            return (
-              <section key={faq.id} className="admin-card">
-                <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-semibold text-primary">
-                        {locale === "th" ? faq.questionTh : faq.questionEn}
-                      </h2>
-                      <TranslationStatusBadges completeness={completeness} />
-                    </div>
-                    {faq.category && (
-                      <p className="mt-1 text-xs uppercase tracking-wide text-accent-700">
-                        {faq.category}
-                      </p>
-                    )}
-                  </div>
-
-                  <span
-                    className={
-                      faq.isPublished
-                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                    }
-                  >
-                    {faq.isPublished ? t("common.published") : t("common.draft")}
-                  </span>
-                </div>
-
-                <fieldset disabled={!canWrite} className="contents">
-                  <FaqForm
-                    key={lang}
-                    lang={lang}
-                    action={updateFaq.bind(null, faq.id)}
-                    onDelete={deleteFaq.bind(null, faq.id)}
-                    existingCategories={categories}
-                    formId={`faq-${faq.id}`}
-                    values={{
-                      question: editing?.question ?? "",
-                      answer: editing?.answer ?? "",
-                      category: faq.category ?? "",
-                      isPublished: faq.isPublished,
-                      sortOrder: String(faq.sortOrder),
-                    }}
-                    submitLabel={t("common.save")}
-                  />
-                </fieldset>
-              </section>
-            );
-          })}
-        </div>
+      {target && (
+        <AdminDrawer
+          title={
+            target === "new"
+              ? t("faqs.newTitle")
+              : (locale === "th" ? target.questionTh : target.questionEn) || target.questionEn
+          }
+          icon={<HelpCircle size={18} aria-hidden />}
+          closeHref={href(null)}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <div className="space-y-5">
+            <LanguageTabs
+              active={lang}
+              completeness={
+                target === "new"
+                  ? { en: true, th: true, zh: true, ru: true }
+                  : translationCompleteness<any>(target.translations, "question")
+              }
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
+            <fieldset disabled={!canWrite} className="contents">
+              {target === "new" ? (
+                <FaqForm
+                  key={lang}
+                  lang={lang}
+                  action={createFaq}
+                  existingCategories={categories}
+                  submitLabel={t("common.create")}
+                  formId="faq-new"
+                />
+              ) : (
+                <FaqForm
+                  key={`${target.id}:${lang}`}
+                  lang={lang}
+                  action={updateFaq.bind(null, target.id)}
+                  onDelete={deleteFaq.bind(null, target.id)}
+                  existingCategories={categories}
+                  formId={`faq-${target.id}`}
+                  values={{
+                    question: tr?.question ?? "",
+                    answer: tr?.answer ?? "",
+                    category: target.category ?? "",
+                    isPublished: target.isPublished,
+                    sortOrder: String(target.sortOrder),
+                  }}
+                  submitLabel={t("common.save")}
+                />
+              )}
+            </fieldset>
+          </div>
+        </AdminDrawer>
       )}
     </div>
   );

@@ -334,7 +334,11 @@ export default function MediaLibrary({
         </label>
       </div>
 
-      <div className={onSelect ? "" : "grid gap-4 lg:grid-cols-[1fr_320px]"}>
+      {/* minmax(0, 1fr), not 1fr: a bare 1fr track never shrinks below its
+          content's min-content width, and an <img> with width="1080" made
+          the masonry column that wide — pushing the detail panel off the
+          right edge of the screen. */}
+      <div className={onSelect ? "" : "grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]"}>
         {visible.length === 0 ? (
           <div className="admin-card flex min-h-[200px] flex-col items-center justify-center gap-2 text-center text-sm text-ink-muted">
             <p>{items.length === 0 ? t("emptyLibrary") : t("emptyFiltered")}</p>
@@ -350,11 +354,11 @@ export default function MediaLibrary({
                 key={item.id}
                 type="button"
                 onClick={() => (onSelect ? onSelect(item) : setSelectedId(item.id))}
-                className={`mb-3 block w-full break-inside-avoid overflow-hidden rounded-[12px] border bg-surface-raised text-left transition-shadow ${
-                  selectedId === item.id ? "border-adm-info ring-2 ring-adm-info/30" : "border-adm-line hover:shadow-card"
+                className={`mb-3 block w-full break-inside-avoid overflow-hidden rounded-[12px] border bg-adm-solid p-2 text-left transition-shadow ${
+                  selectedId === item.id ? "border-adm-info ring-2 ring-adm-info/30" : "border-adm-line hover:shadow-[var(--adm-card-shadow-hover)]"
                 }`}
               >
-                <div className={`relative bg-surface-muted ${isDocument(item.mimeType) ? "h-28" : ""}`}>
+                <div className={`relative overflow-hidden rounded-[8px] bg-adm-text/5 ${isDocument(item.mimeType) ? "h-28" : ""}`}>
                   {isDocument(item.mimeType) ? (
                     <div className="flex h-full items-center justify-center text-ink-muted">
                       <FileText size={30} strokeWidth={1.4} aria-hidden />
@@ -364,15 +368,17 @@ export default function MediaLibrary({
                       src={item.url}
                       width={item.width ?? undefined}
                       height={item.height ?? undefined}
-                      className="block h-auto min-h-16 w-full object-cover"
+                      // A floor plan is ten times taller than it is wide; past
+                      // 360px it is cropped from the top, where its title is.
+                      className="block h-auto max-h-[360px] min-h-16 w-full object-cover object-top"
                       loading="lazy"
                     />
                   )}
                   <TileBadges item={item} />
                 </div>
-                <div className="px-2 py-1.5">
-                  <p className="truncate text-[11px] font-medium text-ink">{fileName(item.url)}</p>
-                  <p className="text-[10px] text-ink-muted">
+                <div className="px-1 pb-0.5 pt-2">
+                  <p className="admin-mono truncate text-[11px] text-adm-text">{fileName(item.url)}</p>
+                  <p className="text-[10.5px] text-adm-muted">
                     {item.width && item.height ? `${item.width} × ${item.height} · ` : ""}
                     {formatBytes(item.sizeBytes)}
                   </p>

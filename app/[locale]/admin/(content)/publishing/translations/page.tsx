@@ -40,7 +40,7 @@ import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { LOCALE_DISPLAY_ORDER } from "@/i18n";
-import ProgressRing from "@/components/admin/ui/ProgressRing";
+import ProgressRing, { ringTone } from "@/components/admin/ui/ProgressRing";
 import {
   getTranslationStatusReport,
   translationLocaleTotals,
@@ -93,24 +93,6 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-primary">{t("seoTranslations.title")}</h2>
-          <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t("seoTranslations.subtitle")}</p>
-        </div>
-
-        {/* A plain <a>, not next/link: the target is a route handler that
-            answers with a Content-Disposition attachment, and a client-side
-            navigation to a download is a navigation the router cannot
-            complete. The export endpoint itself did not move with this
-            page — only the button that points at it. */}
-        { }
-        <a href="/api/admin/seo/translations/export" className="admin-btn-ghost" download>
-          <Download size={16} aria-hidden />
-          {t("seoTranslations.exportCsv")}
-        </a>
-      </div>
-
       {offline && (
         <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("common.offline")}
@@ -125,15 +107,23 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
           const have = row.total - row.missing;
           const share = row.total === 0 ? 1 : have / row.total;
           return (
-            <div key={row.locale} className="admin-card flex items-center gap-4">
-              <ProgressRing value={share * 100} size="md" showValue={false} />
-              <div className="min-w-0">
-                <p className="text-xs text-ink-muted">{LOCALE_NATIVE_NAMES[row.locale] ?? row.locale}</p>
-                <p className="text-2xl font-semibold tabular-nums text-ink">{Math.round(share * 100)}%</p>
-                <p className="text-xs text-ink-muted">
-                  {t("seoTranslations.missingCount", { missing: row.missing, total: row.total })}
-                </p>
-              </div>
+            <div key={row.locale} className="admin-card">
+              <p className="text-[12.5px] text-adm-muted">{LOCALE_NATIVE_NAMES[row.locale] ?? row.locale}</p>
+              <p className="mt-2 text-[30px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-adm-text">
+                {Math.round(share * 100)}
+                <span className="ml-0.5 text-sm font-normal text-adm-muted">%</span>
+              </p>
+              {/* Coloured by threshold, the same three steps as the rings
+                  in the table below (ProgressRing's ringTone). */}
+              <span aria-hidden className="mt-3 block h-1.5 overflow-hidden rounded-full bg-adm-line">
+                <span
+                  className="block h-full rounded-full"
+                  style={{ width: `${share * 100}%`, background: ringTone(share * 100) }}
+                />
+              </span>
+              <p className="mt-2 text-xs text-adm-muted">
+                {t("seoTranslations.missingCount", { missing: row.missing, total: row.total })}
+              </p>
             </div>
           );
         })}
@@ -147,6 +137,16 @@ export default async function AdminPublishingTranslationsPage(props: Props) {
           rather than a button that would promise one. */}
       {matrix.length > 0 && (
         <section className="admin-card overflow-hidden p-0!">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-adm-line px-[18px] py-3">
+            <h2 className="text-[15px] font-semibold text-adm-text">{t("seoTranslations.matrix.title")}</h2>
+            {/* A plain <a>, not next/link: the target is a route handler that
+                answers with a Content-Disposition attachment, and a client-side
+                navigation to a download is one the router cannot complete. */}
+            <a href="/api/admin/seo/translations/export" className="admin-btn-ghost admin-btn-sm" download>
+              <Download size={14} aria-hidden />
+              {t("seoTranslations.exportCsv")}
+            </a>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[620px] border-collapse">
               <thead className="border-b border-adm-line">

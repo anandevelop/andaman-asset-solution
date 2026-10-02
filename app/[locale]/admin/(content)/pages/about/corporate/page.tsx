@@ -14,7 +14,8 @@
  */
 
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, Briefcase } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { Role } from "@prisma/client";
@@ -24,19 +25,17 @@ import { parseEditingLocale, pickEditingTranslation, translationCompleteness } f
 import { createCorporateService, deleteCorporateService, updateCorporateService } from "./actions";
 import CorporateServiceForm from "@/components/admin/CorporateServiceForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import CollectionGrid, { collectionHref } from "@/components/admin/ui/CollectionGrid";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
-import { zoneEyebrow } from "@/lib/admin/nav";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
 export default async function AdminCorporatePage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   /* VIEWER may open this page to see what is published; only EDITOR
      and above may submit either form below (canWrite gates both with a
@@ -59,96 +58,109 @@ export default async function AdminCorporatePage(props: Props) {
     [] as any[],
   );
 
+  const base = `/${locale}/admin/pages/about/corporate`;
+  const href = (edit: string | null) => collectionHref(base, searchParams.lang, edit);
+  // "new" only for a role that can save it; an unknown id opens nothing.
+  const target =
+    searchParams.edit === "new"
+      ? canWrite
+        ? ("new" as const)
+        : null
+      : (services.find((row: any) => row.id === searchParams.edit) ?? null);
+  const tr = target && target !== "new" ? pickEditingTranslation<any>(target.translations, lang) : undefined;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdminPageHeader
-        eyebrow={zoneEyebrow((key) => t(key as never), "pages")}
         title={t("corporate.title")}
         description={t("corporate.subtitle")}
+        actions={
+          canWrite ? (
+            <Link href={href("new")} scroll={false} className="admin-btn">
+              <Plus size={15} aria-hidden />
+              {t("corporate.newTitle")}
+            </Link>
+          ) : undefined
+        }
       />
 
       {isDatabaseOffline() && (
-        <p className="rounded-xs border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
           {t("common.offline")}
         </p>
       )}
 
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
+      <CollectionGrid
+        columns={3}
+        hasImages
+        items={services.map((row: any) => ({
+          id: row.id,
+          href: href(row.id),
+          title: pickEditingTranslation<any>(row.translations, locale)?.label || row.translations[0]?.label || row.id,
+          subtitle: null,
+          imageUrl: row.imageUrl,
+          tag: null,
+          meta: null,
+          visible: row.isActive,
+          completeness: translationCompleteness<any>(row.translations, "label"),
+        }))}
+        labels={{
+          visible: t("corporate.active"),
+          hidden: t("corporate.inactive"),
+          missingThai: t("common.missingThai"),
+          empty: t("corporate.empty"),
+        }}
       />
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
-          <Plus size={16} className="text-accent-700" aria-hidden />
-          {t("corporate.newTitle")}
-        </h2>
-
-        <fieldset disabled={!canWrite} className="contents">
-          <CorporateServiceForm
-            key={lang}
-            lang={lang}
-            action={createCorporateService.bind(null, locale)}
-            submitLabel={t("common.create")}
-          />
-        </fieldset>
-      </section>
-
-      {/* ── Existing ────────────────────────────────────────────────── */}
-      {services.length === 0 ? (
-        <div className="admin-card text-center text-sm text-ink-muted">
-          {t("corporate.empty")}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {services.map((service: any) => {
-            const completeness = translationCompleteness<any>(service.translations, "label");
-            const editing = pickEditingTranslation<any>(service.translations, lang);
-
-            return (
-              <section key={service.id} className="admin-card">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-base font-semibold text-primary">
-                      {editing?.label ?? service.translations[0]?.label ?? service.id}
-                    </h2>
-                    <TranslationStatusBadges completeness={completeness} />
-                  </div>
-
-                  <span
-                    className={
-                      service.isActive
-                        ? "rounded-xs bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800"
-                        : "rounded-xs bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted"
-                    }
-                  >
-                    {service.isActive ? t("corporate.active") : t("corporate.inactive")}
-                  </span>
-                </div>
-
-                <fieldset disabled={!canWrite} className="contents">
-                  <CorporateServiceForm
-                    key={lang}
-                    lang={lang}
-                    action={updateCorporateService.bind(null, locale, service.id)}
-                    onDelete={deleteCorporateService.bind(null, locale, service.id)}
-                    values={{
-                      label: editing?.label ?? "",
-                      imageAlt: editing?.imageAlt ?? "",
-                      imageUrl: service.imageUrl,
-                      isActive: service.isActive,
-                      sortOrder: String(service.sortOrder),
-                    }}
-                    submitLabel={t("common.save")}
-                  />
-                </fieldset>
-              </section>
-            );
-          })}
-        </div>
+      {target && (
+        <AdminDrawer
+          title={
+            target === "new"
+              ? t("corporate.newTitle")
+              : pickEditingTranslation<any>(target.translations, locale)?.label || t("corporate.newTitle")
+          }
+          icon={<Briefcase size={18} aria-hidden />}
+          closeHref={href(null)}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <div className="space-y-5">
+            <LanguageTabs
+              active={lang}
+              completeness={
+                target === "new"
+                  ? { en: true, th: true, zh: true, ru: true }
+                  : translationCompleteness<any>(target.translations, "label")
+              }
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
+            <fieldset disabled={!canWrite} className="contents">
+              {target === "new" ? (
+                <CorporateServiceForm
+                  key={lang}
+                  lang={lang}
+                  action={createCorporateService.bind(null, locale)}
+                  submitLabel={t("common.create")}
+                />
+              ) : (
+                <CorporateServiceForm
+                  key={`${target.id}:${lang}`}
+                  lang={lang}
+                  action={updateCorporateService.bind(null, locale, target.id)}
+                  onDelete={deleteCorporateService.bind(null, locale, target.id)}
+                  values={{
+                    label: tr?.label ?? "",
+                    imageAlt: tr?.imageAlt ?? "",
+                    imageUrl: target.imageUrl,
+                    isActive: target.isActive,
+                    sortOrder: String(target.sortOrder),
+                  }}
+                  submitLabel={t("common.save")}
+                />
+              )}
+            </fieldset>
+          </div>
+        </AdminDrawer>
       )}
     </div>
   );
