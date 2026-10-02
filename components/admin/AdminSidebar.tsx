@@ -155,7 +155,10 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
             {group.labelKey && (
               <p
                 className={[
-                  "mx-[10px] mb-[6px] text-[10.5px] font-medium tracking-[0.06em] text-adm-rail-dim",
+                  // rail-text, not the mockup's dimmer #6B8596: that is 3.3:1 on
+                  // the navy at 10.5px, under the 4.5:1 the a11y spec holds
+                  // every admin screen to.
+                  "mx-[10px] mb-[6px] text-[10.5px] font-medium tracking-[0.06em] text-adm-rail-text",
                   onRail ? "rail-collapsed:hidden" : "",
                 ].join(" ")}
               >

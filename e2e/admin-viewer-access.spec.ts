@@ -61,7 +61,7 @@ test.describe("VIEWER in the Website Content zone", () => {
 
     await page.goto("/en/admin/projects");
     await expect(page).toHaveURL(/\/en\/admin\/projects$/);
-    await expect(page.getByRole("heading", { name: "Projects", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Projects & units", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Create project" })).toHaveCount(0);
   });
 });
