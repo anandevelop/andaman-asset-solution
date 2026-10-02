@@ -48,7 +48,10 @@ export default function AdminPageHeader({
   const Icon = eyebrow?.icon;
   return (
     <header className={`mb-5 flex flex-wrap items-end gap-4 ${className}`}>
-      <div className="min-w-0 flex-1">
+      {/* A basis, not just flex-1: with min-w-0 alone the title column
+          shrank to a word per line on a phone instead of letting the
+          actions wrap below it. */}
+      <div className="min-w-0 flex-1 basis-[18rem]">
         {back && (
           <Link
             href={back.href}
