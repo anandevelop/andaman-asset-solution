@@ -135,7 +135,14 @@ export default async function AdminCtaPage(props: Props) {
           id: block.id,
           href: href(block.id),
           title: block.name,
-          subtitle: pickEditingTranslation<any>(block.translations, locale)?.title ?? null,
+          // A title can be an ICU template ("{count, plural, …}" — the
+          // projects block counts them on the public page); shown raw it is
+          // noise, so such a card falls back to the block's eyebrow line.
+          subtitle: ((title: string | undefined, eyebrow: string | undefined) =>
+            title && !title.includes("{") ? title : eyebrow || null)(
+            pickEditingTranslation<any>(block.translations, locale)?.title,
+            pickEditingTranslation<any>(block.translations, locale)?.eyebrow,
+          ),
           imageUrl: block.backgroundImageUrl,
           tag: block.isDefault ? t("cta.defaultBadge") : null,
           meta: `#${block.sortOrder}`,
