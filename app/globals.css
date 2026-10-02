@@ -2315,3 +2315,46 @@
     margin: 14mm;
   }
 }
+
+/*
+  ── Sign-in page (app/[locale]/login) ──────────────────────────────────────
+  The stepper's fill, a filled code box's pop and the card's shake on a
+  refused code. All three are decoration; none plays under reduced motion.
+*/
+@keyframes login-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes login-pop {
+  50% {
+    transform: scale(1.08);
+  }
+}
+@keyframes login-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+.login-fill {
+  transform-origin: left;
+  animation: login-fill 0.5s ease both;
+}
+.login-pop {
+  animation: login-pop 0.18s ease;
+}
+.login-shake {
+  animation: login-shake 0.4s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-fill,
+  .login-pop,
+  .login-shake {
+    animation: none;
+  }
+}

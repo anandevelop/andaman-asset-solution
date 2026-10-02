@@ -5,16 +5,22 @@
  * Navbar/Footer — a signed-out staff member should see a door, not a
  * showroom. middleware.ts bounces an already-authenticated visitor to
  * /admin before this ever renders.
+ *
+ * Layout (redesign, `Claude outputs/admin-login-redesign.md`): the wave
+ * backdrop behind everything, a top bar with the logo and a language
+ * menu, the card centred, three facts about the back office's security
+ * under it, and the way back to the site with the build stamp at the foot.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
-import { siteConfig } from "@/config/site";
+import { ArrowLeft, Globe } from "lucide-react";
+import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
+import LoginBackdrop from "@/components/admin/login/LoginBackdrop";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -88,56 +94,87 @@ export default async function LoginPage(props: Props) {
   const callbackUrl =
     raw.startsWith("/") && !raw.startsWith("//") ? raw : `/${locale}/admin`;
 
+  const notes = [t("note2fa"), t("noteSession"), t("noteAudit")];
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-primary px-5 py-16">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link href={`/${locale}`} className="inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo.png"
-              alt="Andaman Asset Solution Co., Ltd."
-              width={220}
-              height={44}
-              className="h-10 w-auto brightness-0 invert"
-            />
-          </Link>
+    <main className="relative flex min-h-screen flex-col bg-[#041d2c] text-white">
+      <LoginBackdrop />
+
+      <header className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-10 sm:py-6">
+        <Link href={`/${locale}`} className="inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-white.png"
+            alt="Andaman Asset Solution Co., Ltd."
+            width={895}
+            height={120}
+            className="h-6 w-auto sm:h-7"
+          />
+        </Link>
+
+        {/* A plain <details>: no script needed to open it, and each link
+            carries callbackUrl so a language change does not lose where
+            the sign-in was headed. */}
+        <details className="group relative">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium uppercase text-white/85 transition-colors hover:bg-white/10 [&::-webkit-details-marker]:hidden">
+            <Globe size={14} aria-hidden />
+            {locale}
+            <span className="sr-only">{t("language")}</span>
+          </summary>
+          <ul className="absolute right-0 top-full mt-2 min-w-28 overflow-hidden rounded-xl bg-surface-raised py-1 text-ink shadow-[0_20px_50px_-20px_rgba(0,0,0,.6)]">
+            {LOCALE_DISPLAY_ORDER.map((code) => (
+              <li key={code}>
+                <Link
+                  href={`/${code}/login?callbackUrl=${encodeURIComponent(callbackUrl.replace(/^\/[a-z]{2}(?=\/)/, `/${code}`))}`}
+                  aria-current={code === locale ? "true" : undefined}
+                  hrefLang={code}
+                  className={`block px-4 py-2 text-sm uppercase transition-colors hover:bg-primary/5 ${code === locale ? "font-semibold text-primary" : ""}`}
+                >
+                  {code}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </header>
+
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-start px-4 pb-6 pt-10 sm:justify-center sm:pt-4">
+        <div className="w-full max-w-[432px] rounded-[18px] bg-surface-raised px-[18px] py-[22px] text-ink shadow-[0_30px_80px_-24px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,.06)] sm:rounded-[20px] sm:p-8">
+          <AuthProvider>
+            <LoginForm callbackUrl={callbackUrl} />
+          </AuthProvider>
         </div>
 
-        <div className="rounded-xs bg-surface-raised p-8 shadow-card sm:p-10">
-          <p className="eyebrow">{siteConfig.shortName}</p>
-          <h1 className="mt-2 text-2xl font-semibold text-primary">
-            {t("signInTitle")}
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            {t("signInSubtitle")}
-          </p>
-
-          <div className="mt-8">
-            <AuthProvider>
-              <LoginForm callbackUrl={callbackUrl} />
-            </AuthProvider>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Link
-            href={`/${locale}`}
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-accent"
-          >
-            <ArrowLeft size={15} aria-hidden />
-            {t("backToSite")}
-          </Link>
-
-          {/*
-            Same white/60 as the link above, deliberately. Anything fainter
-            drops under 4.5:1 against this navy — white/50 measures 4.35 —
-            and the axe scan over this page would fail on it. Not
-            translated because there is nothing here to translate.
-          */}
-          <p className="mt-6 font-mono text-xs text-white/60">{buildStamp()}</p>
-        </div>
+        <ul className="mt-[18px] flex flex-wrap justify-center gap-x-[18px] gap-y-2 text-xs text-[#9fbccd]">
+          {notes.map((note) => (
+            <li key={note} className="flex items-center gap-1.5">
+              <span aria-hidden className="text-accent">
+                ●
+              </span>
+              {note}
+            </li>
+          ))}
+        </ul>
       </div>
+
+      <footer className="relative z-10 pb-8 text-center">
+        <Link
+          href={`/${locale}`}
+          className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-accent"
+        >
+          <ArrowLeft size={15} aria-hidden />
+          {t("backToSite")}
+        </Link>
+
+        {/*
+          white/70, deliberately. Anything fainter than /60 drops under 4.5:1
+          against this navy — white/50 measures 4.35 — and the axe scan over
+          this page would fail on it; the lighter waves behind it are why
+          this sits a step above that floor. Not translated because there
+          is nothing here to translate.
+        */}
+        <p className="mt-3 font-mono text-xs text-white/70">build · {buildStamp()}</p>
+      </footer>
     </main>
   );
 }

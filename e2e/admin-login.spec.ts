@@ -22,6 +22,7 @@ import {
   LOGIN,
   alertBanner,
   currentCode,
+  nextAccount,
   signIn,
   submitCredentials,
   waitForNextStep,
@@ -357,3 +358,106 @@ test.describe("Signed upload URLs", () => {
     expect((await response.json()).error).toBe("TWO_FACTOR_SETUP_REQUIRED");
   });
 });
+
+/*
+  The two-step card (redesign): the code step replaces the credentials
+  step, the code goes in six boxes over one input, and the sixth digit
+  submits by itself. What these pin down is the part that can quietly
+  break sign-in rather than just look different: one request per code,
+  however it arrives.
+*/
+test.describe("The two-step sign-in card", () => {
+  /** Credentials accepted, code step showing. */
+  async function toCodeStep(page: import("@playwright/test").Page) {
+    await page.goto(LOGIN);
+    await submitCredentials(page, nextAccount().email, ADMIN.password);
+    await expect(page.getByLabel("Authentication code")).toBeAttached();
+  }
+
+  /** Counts sign-in posts from here on. */
+  function countPosts(page: import("@playwright/test").Page) {
+    const counter = { n: 0 };
+    page.on("request", (request) => {
+      if (request.method() === "POST" && request.url().includes("/api/auth/callback/credentials")) counter.n++;
+    });
+    return counter;
+  }
+
+  test("a pasted code fills the boxes and is sent once", async ({ page }) => {
+    await toCodeStep(page);
+    const posts = countPosts(page);
+
+    // fill() sets the whole value in one input event, as a paste does.
+    await page.getByLabel("Authentication code").fill(await currentCode());
+    await page.waitForURL((url) => !url.pathname.endsWith("/login"), { timeout: 10_000 }).catch(() => {});
+
+    expect(posts.n).toBe(1);
+  });
+
+  test("six typed digits and then Enter still send the code once", async ({ page }) => {
+    await toCodeStep(page);
+    const posts = countPosts(page);
+
+    await page.getByLabel("Authentication code").focus();
+    await page.keyboard.type(await currentCode());
+    await page.keyboard.press("Enter");
+    await page.waitForURL((url) => !url.pathname.endsWith("/login"), { timeout: 10_000 }).catch(() => {});
+
+    // Without the guard the auto-submit and the Enter both post, and the
+    // second is refused as a replay of the first.
+    expect(posts.n).toBe(1);
+  });
+
+  test("a pasted recovery code switches the field to recovery mode", async ({ page }) => {
+    await toCodeStep(page);
+    const posts = countPosts(page);
+
+    await page.getByLabel("Authentication code").fill("A3F9K-2QMXP");
+
+    await expect(page.getByLabel("Authentication code")).toHaveValue("A3F9K-2QMXP");
+    await expect(page.getByRole("button", { name: "Use the authenticator app instead" })).toBeVisible();
+    // No auto-submit in recovery mode: nothing is sent until Enter/Verify.
+    expect(posts.n).toBe(0);
+  });
+
+  test("changing account goes back to step one and keeps the email", async ({ page }) => {
+    const account = nextAccount();
+    await page.goto(LOGIN);
+    await submitCredentials(page, account.email, ADMIN.password);
+    await expect(page.getByLabel("Authentication code")).toBeAttached();
+
+    await page.getByRole("button", { name: "Use a different account" }).click();
+
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByLabel("Email address")).toHaveValue(account.email);
+    await expect(page.getByLabel("Password")).toHaveValue("");
+    await expect(page.getByLabel("Password")).toBeFocused();
+  });
+
+  test("fits a 390px phone: no sideways scroll, six boxes on one row", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await toCodeStep(page);
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+    const tops = await page
+      .locator("#totp ~ div > span")
+      .evaluateAll((boxes) => boxes.map((box) => Math.round(box.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(6);
+    expect(new Set(tops).size).toBe(1);
+  });
+
+  test("the backdrop holds still under reduced motion", async ({ page }) => {
+    // The suite already runs with reducedMotion: "reduce"; said again here
+    // so the test does not depend on that default.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(LOGIN);
+    const canvas = page.locator("canvas[data-login-backdrop]");
+    await expect(canvas).toBeAttached();
+
+    const frame = () => canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
+    const first = await frame();
+    await page.waitForTimeout(600);
+    expect(await frame()).toBe(first);
+  });
+});
+
