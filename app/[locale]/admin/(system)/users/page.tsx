@@ -8,7 +8,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AlertCircle, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { AlertCircle, Pencil, Plus, ShieldCheck, UserPlus } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
@@ -20,19 +20,22 @@ import { PERMISSION_MATRIX, CAPABILITIES, ROLE_ORDER } from "@/lib/permissions";
 import { createUser } from "./actions";
 import UserForm from "@/components/admin/UserForm";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
 import Avatar from "@/components/admin/ui/Avatar";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string }> };
 
 export default async function AdminUsersPage(props: Props) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
 
   const {
     locale
   } = params;
 
   const actor = await requireAdmin(locale, Role.SUPER_ADMIN);
+  const base = `/${locale}/admin/users`;
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -104,6 +107,12 @@ export default async function AdminUsersPage(props: Props) {
         eyebrow={zoneEyebrow((key) => t(key as never), "users")}
         title={t("users.title")}
         description={t("users.subtitle")}
+        actions={
+          <Link href={`${base}?new=1`} scroll={false} className="admin-btn">
+            <Plus size={15} aria-hidden />
+            {t("users.newTitle")}
+          </Link>
+        }
       />
 
       {offline && (
@@ -293,23 +302,27 @@ export default async function AdminUsersPage(props: Props) {
         </div>
       </section>
 
-      {/* ── Create ──────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
-          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
-          {t("users.newTitle")}
-        </h2>
-
-        <UserForm
-          action={createUser.bind(null, locale)}
-          mode="create"
-          salesPeople={salesPeople.map((person) => ({
-            id: person.id,
-            name: locale === "th" ? person.nameTh : person.nameEn,
-          }))}
-          submitLabel={t("common.create")}
-        />
-      </section>
+      {/* ── Create, in a drawer (?new=1) ───────────────────────────────
+          A form under the table was the v4 review's "inline add form":
+          reachable only by scrolling past every account. */}
+      {searchParams.new === "1" && (
+        <AdminDrawer
+          title={t("users.newTitle")}
+          icon={<UserPlus size={18} aria-hidden />}
+          closeHref={base}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <UserForm
+            action={createUser.bind(null, locale)}
+            mode="create"
+            salesPeople={salesPeople.map((person) => ({
+              id: person.id,
+              name: locale === "th" ? person.nameTh : person.nameEn,
+            }))}
+            submitLabel={t("common.create")}
+          />
+        </AdminDrawer>
+      )}
     </div>
   );
 }

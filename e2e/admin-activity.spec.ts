@@ -74,7 +74,8 @@ test.describe("The activity log", () => {
     await expect(entry).toHaveCount(1);
     await expect(entry).toContainText(account.email);
     await expect(entry).toContainText("created");
-    await expect(entry).toContainText("Faq");
+    // The record type by its readable name (admin.auditModels), not "Faq".
+    await expect(entry).toContainText("FAQ");
 
     // Field names, not values — the answer text must not be here.
     await expect(entry).toContainText("questionEn");
@@ -121,7 +122,9 @@ test.describe("The activity log", () => {
     await expect(theirs.filter({ hasText: "signed in" }).locator("time")).toHaveCount(1);
 
     // An auth entry is about a person; it must not claim to be about a row.
+    // Neither the raw model name nor its readable label (admin.auditModels).
     await expect(theirs.filter({ hasText: "signed in" })).not.toContainText("Session");
+    await expect(theirs.filter({ hasText: "signed in" })).not.toContainText("Sign-in session");
   });
 
   test("records a failed sign-in without dressing it up as the person", async ({

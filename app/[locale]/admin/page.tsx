@@ -40,6 +40,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { auditModelLabel, type AuditModelLabels } from "@/lib/admin/audit-model-label";
 import { ArrowDown, ArrowRight, ArrowUp, Building2, Eye, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Role, type LeadStatus, type ProjectStatus } from "@prisma/client";
 import { RESPONSE_SLA_HOURS } from "@/lib/dashboard-queue";
@@ -135,6 +136,10 @@ export default async function AdminDashboardPage(props: Props) {
   };
 
   const t = await getTranslations({ locale, namespace: "admin" });
+
+  // Readable names for AuditLog.model — see lib/admin/audit-model-label.ts.
+
+  const modelLabels = t.raw("auditModels") as AuditModelLabels;
   const now = new Date();
 
   const [
@@ -636,7 +641,7 @@ export default async function AdminDashboardPage(props: Props) {
                     <span className="min-w-0 flex-1 truncate">
                       <span className="font-medium text-adm-text">{entry.actorName ?? entry.actorEmail}</span>{" "}
                       <span className="text-adm-muted">{activityVerbs[entry.action] ?? entry.action}</span>{" "}
-                      <span className="text-adm-text">{entry.recordLabel ?? entry.model}</span>
+                      <span className="text-adm-text">{entry.recordLabel ?? auditModelLabel(entry.model, modelLabels)}</span>
                     </span>
                     <time dateTime={entry.createdAt.toISOString()} className="shrink-0 text-xs text-adm-muted">
                       {ago(entry.createdAt)}

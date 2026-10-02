@@ -21,6 +21,7 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { auditModelLabel, type AuditModelLabels } from "@/lib/admin/audit-model-label";
 import AuditDetailPanel, { type AuditEntryView } from "@/components/admin/AuditDetailPanel";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -62,6 +63,10 @@ export default async function AdminActivityPage(props: Props) {
   await requireAdmin(locale, Role.SUPER_ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });
+
+  // Readable names for AuditLog.model — see lib/admin/audit-model-label.ts.
+
+  const modelLabels = t.raw("auditModels") as AuditModelLabels;
   // Field labels are already written for the publishing screen; one
   // vocabulary for "which field changed" across the admin, not two.
   const tPublishing = await getTranslations({ locale, namespace: "admin.publishing" });
@@ -166,7 +171,7 @@ export default async function AdminActivityPage(props: Props) {
     actorId: string | null;
   }) =>
     [
-      entry.actorRole,
+      entry.actorRole ? t(`roles.${entry.actorRole}` as never) : null,
       isFailedAuth(entry.action)
         ? t("activity.unverified")
         : // The account can be gone; the entry is not.
@@ -230,10 +235,10 @@ export default async function AdminActivityPage(props: Props) {
         return {
           id: selected.id,
           recordLabel: selected.recordLabel,
-          modelLabel: selected.model,
+          modelLabel: auditModelLabel(selected.model, modelLabels),
           actionLabel: actionLabels[selected.action] ?? selected.action,
           actorName: selected.actorEmail,
-          actorRole: selected.actorRole,
+          actorRole: selected.actorRole ? t(`roles.${selected.actorRole}` as never) : null,
           at: formatter.format(selected.createdAt),
           ip: selected.ipAddress,
           userAgent: null,
@@ -306,7 +311,7 @@ export default async function AdminActivityPage(props: Props) {
             <option value="">{t("activity.allTypes")}</option>
             {types.map((type) => (
               <option key={type.model} value={type.model}>
-                {type.model}
+                {auditModelLabel(type.model, modelLabels)}
               </option>
             ))}
           </select>
@@ -379,7 +384,7 @@ export default async function AdminActivityPage(props: Props) {
                       {actionLabel(entry.action)}
                       {/* "signed in" says it all; "signed in Session" does not. */}
                       {!isAuthEvent(entry.model) && (
-                        <span className="ml-1 text-adm-text/50">{entry.model}</span>
+                        <span className="ml-1 text-adm-text/50">{auditModelLabel(entry.model, modelLabels)}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-adm-text/70">

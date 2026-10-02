@@ -87,9 +87,8 @@ for (const locale of ["en", "th"] as const) {
 
 test("the sales-profile field follows the role being chosen", async ({ page }) => {
   await signInFresh(page);
-  await page.goto("/en/admin/users");
-
-  // The create form at the foot of the page, whose role defaults to EDITOR.
+  // The create form, in its drawer (?new=1); its role defaults to EDITOR.
+  await page.goto("/en/admin/users?new=1");
   const role = page.locator("#role");
   const salesProfile = page.locator("#salesPersonId");
 
