@@ -36,12 +36,18 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          # Stop at the first failing command. Without this the step was
-          # green whatever happened on the server: on 2026-10-03 the run for
-          # b6f741c "succeeded" while the old container kept serving
-          # e6552c9, because a failed pull went unnoticed.
-          script_stop: true
           envs: EXPECTED_COMMIT
+          # `set -eu` is what stops the script at the first failing command.
+          # Without it the step was green whatever happened on the server: on
+          # 2026-10-03 the run for b6f741c "succeeded" while the old container
+          # kept serving e6552c9, because a failed pull went unnoticed.
+          #
+          # Not `script_stop: true`, which was tried alongside it and failed
+          # every deploy since. It appends an "exit if $? is non-zero" check
+          # after *every line*, blind to shell syntax, so the wait loop's
+          # `[ "$LIVE" = "$EXPECTED_COMMIT" ] && break` — false on the first
+          # pass, by design — ended the script with exit 1 and no message.
+          # `set -e` understands that a failed test inside `&&` is not an error.
           script: |
             set -eu
             cd /opt/app
