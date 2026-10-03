@@ -28,22 +28,42 @@ jobs:
     steps:
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          # The commit CI just built and pushed as :latest.
+          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
+          # Stop at the first failing command. Without this the step was
+          # green whatever happened on the server: on 2026-10-03 the run for
+          # b6f741c "succeeded" while the old container kept serving
+          # e6552c9, because a failed pull went unnoticed.
+          script_stop: true
+          envs: EXPECTED_COMMIT
           script: |
+            set -eu
             cd /opt/app
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
-            # Wait for the app to answer (up to ~60s) — the purge below is a
-            # request to the container that was just started.
-            for i in $(seq 1 30); do
-              curl -fsS http://127.0.0.1/api/health >/dev/null && break
+            # Wait (up to ~90s) for the app to answer AS THE NEW BUILD:
+            # /api/health reports the commit it was built from, so a
+            # container that never restarted is caught here, not by a
+            # person noticing the site has not changed.
+            LIVE=""
+            for i in $(seq 1 45); do
+              LIVE=$(curl -fsS http://127.0.0.1/api/health 2>/dev/null | grep -o '"commit":"[0-9a-f]*"' | cut -d'"' -f4 || true)
+              [ "$LIVE" = "$EXPECTED_COMMIT" ] && break
               sleep 2
             done
+            if [ "$LIVE" != "$EXPECTED_COMMIT" ]; then
+              echo "::error::server is running '${LIVE:-nothing}', expected $EXPECTED_COMMIT"
+              docker compose -f docker-compose.prod.yml ps
+              exit 1
+            fi
+            echo "live: $LIVE"
 
             # Belt and braces on top of not prerendering at build time: purge
             # the ISR cache of every public page in every locale, plus the
