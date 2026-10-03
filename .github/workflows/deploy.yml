@@ -45,6 +45,17 @@ jobs:
           script: |
             set -eu
             cd /opt/app
+
+            # Make room first. Every deploy pulls a new ~1 GB image and
+            # nothing ever removed the old ones, until on 2026-10-03 the
+            # pull failed with "no space left on device". `image prune -a`
+            # only removes images no container uses — the running app and
+            # postgres keep theirs — and the build cache goes too. Volumes
+            # are never touched: the database lives in one.
+            docker image prune -af
+            docker builder prune -af || true
+            df -h / | tail -1
+
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
