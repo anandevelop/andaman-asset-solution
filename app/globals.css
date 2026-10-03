@@ -2358,3 +2358,53 @@
     animation: none;
   }
 }
+
+/*
+  Sign-in, dark theme. The same switch as the back office (DISPLAY_PREFS.
+  theme, "admin-theme" in storage), so the two always match; the root
+  layout's boot script sets the attribute before paint, so there is no
+  light flash. Scoped to the card rather than borrowing data-admin-root,
+  which would also pull in the back office's denser type. The palette is
+  the redesign spec's: navy glass, light text, sand primary and focus.
+*/
+:root[data-admin-theme="dark"] .login-card {
+  --color-surface-raised: rgba(4, 29, 44, 0.55);
+  --color-ink: #e9f1f6;
+  --color-ink-muted: #9db6c6;
+  --color-primary: #e9f1f6;
+  background: rgba(4, 29, 44, 0.62);
+  box-shadow:
+    0 30px 80px -24px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(143, 181, 204, 0.18);
+  backdrop-filter: blur(20px);
+}
+:root[data-admin-theme="dark"] .login-card .login-field {
+  border-color: rgba(143, 181, 204, 0.35);
+}
+:root[data-admin-theme="dark"] .login-card .login-field:focus,
+:root[data-admin-theme="dark"] .login-card .login-field.border-primary-500 {
+  border-color: #e8b384;
+  box-shadow: 0 0 0 4px rgba(232, 179, 132, 0.18);
+}
+:root[data-admin-theme="dark"] .login-card .login-primary {
+  background: #e8b384;
+  color: #0d2635;
+  box-shadow: 0 8px 20px -10px rgba(232, 179, 132, 0.6);
+}
+:root[data-admin-theme="dark"] .login-card .login-primary:hover {
+  background: #f0c39b;
+}
+:root[data-admin-theme="dark"] .login-card .login-soft {
+  background: rgba(143, 181, 204, 0.08);
+}
+:root[data-admin-theme="dark"] .login-card .login-error {
+  background: rgba(240, 138, 128, 0.14);
+  color: #f6b0a8;
+}
+:root[data-admin-theme="dark"] .login-card .login-warn {
+  background: rgba(240, 192, 120, 0.14);
+  color: #f0c078;
+}
+:root[data-admin-theme="dark"] .login-card .login-link {
+  color: #e8b384;
+}

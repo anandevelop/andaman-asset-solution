@@ -90,7 +90,7 @@ export default function CodeInput({
           placeholder="A3F9K-2QMXP"
           disabled={state === "locked"}
           className={[
-            "h-[52px] w-full rounded-xl border-[1.5px] bg-surface-raised px-4 text-center font-mono text-lg uppercase tracking-[.14em] text-ink outline-none transition-[border-color,box-shadow] focus:border-primary-500 focus:shadow-[0_0_0_4px_rgba(41,102,130,.22)] disabled:opacity-45",
+            "login-field h-[52px] w-full rounded-xl border-[1.5px] bg-surface-raised px-4 text-center font-mono text-lg uppercase tracking-[.14em] text-ink outline-none transition-[border-color,box-shadow] focus:border-primary-500 focus:shadow-[0_0_0_4px_rgba(41,102,130,.22)] disabled:opacity-45",
             state === "error" ? "border-[#b3261e]" : "border-[rgba(41,102,130,.35)]",
           ].join(" ")}
         />
@@ -128,7 +128,7 @@ export default function CodeInput({
             <span
               key={index}
               className={[
-                "grid aspect-[3/4] max-w-[52px] flex-1 place-items-center rounded-xl border-[1.5px] font-mono text-[21px] font-medium text-ink transition-[border-color,box-shadow,background-color] sm:text-2xl",
+                "login-field grid aspect-[3/4] max-w-[52px] flex-1 place-items-center rounded-xl border-[1.5px] font-mono text-[21px] font-medium text-ink transition-[border-color,box-shadow,background-color] sm:text-2xl",
                 state === "success"
                   ? "border-[#17663f] bg-[#e6f4ec] text-[#17663f]"
                   : state === "error"

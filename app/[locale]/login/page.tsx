@@ -21,22 +21,17 @@ import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
 import LoginBackdrop from "@/components/admin/login/LoginBackdrop";
+import LoginThemeToggle from "@/components/admin/login/LoginThemeToggle";
 
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ callbackUrl?: string }>;
 };
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
@@ -81,9 +76,7 @@ export default async function LoginPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
@@ -91,9 +84,9 @@ export default async function LoginPage(props: Props) {
   // Only accept same-origin relative paths — an attacker-supplied absolute
   // URL here would turn the login form into an open redirect.
   const raw = searchParams.callbackUrl ?? "";
-  const callbackUrl =
-    raw.startsWith("/") && !raw.startsWith("//") ? raw : `/${locale}/admin`;
+  const callbackUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : `/${locale}/admin`;
 
+  const tAdmin = await getTranslations({ locale, namespace: "admin" });
   const notes = [t("note2fa"), t("noteSession"), t("noteAudit")];
 
   return (
@@ -115,31 +108,34 @@ export default async function LoginPage(props: Props) {
         {/* A plain <details>: no script needed to open it, and each link
             carries callbackUrl so a language change does not lose where
             the sign-in was headed. */}
-        <details className="group relative">
-          <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium uppercase text-white/85 transition-colors hover:bg-white/10 [&::-webkit-details-marker]:hidden">
-            <Globe size={14} aria-hidden />
-            {locale}
-            <span className="sr-only">{t("language")}</span>
-          </summary>
-          <ul className="absolute right-0 top-full mt-2 min-w-28 overflow-hidden rounded-xl bg-surface-raised py-1 text-ink shadow-[0_20px_50px_-20px_rgba(0,0,0,.6)]">
-            {LOCALE_DISPLAY_ORDER.map((code) => (
-              <li key={code}>
-                <Link
-                  href={`/${code}/login?callbackUrl=${encodeURIComponent(callbackUrl.replace(/^\/[a-z]{2}(?=\/)/, `/${code}`))}`}
-                  aria-current={code === locale ? "true" : undefined}
-                  hrefLang={code}
-                  className={`block px-4 py-2 text-sm uppercase transition-colors hover:bg-primary/5 ${code === locale ? "font-semibold text-primary" : ""}`}
-                >
-                  {code}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <div className="flex items-center gap-2">
+          <details className="group relative">
+            <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium uppercase text-white/85 transition-colors hover:bg-white/10 [&::-webkit-details-marker]:hidden">
+              <Globe size={14} aria-hidden />
+              {locale}
+              <span className="sr-only">{t("language")}</span>
+            </summary>
+            <ul className="absolute right-0 top-full mt-2 min-w-28 overflow-hidden rounded-xl bg-surface-raised py-1 text-ink shadow-[0_20px_50px_-20px_rgba(0,0,0,.6)]">
+              {LOCALE_DISPLAY_ORDER.map((code) => (
+                <li key={code}>
+                  <Link
+                    href={`/${code}/login?callbackUrl=${encodeURIComponent(callbackUrl.replace(/^\/[a-z]{2}(?=\/)/, `/${code}`))}`}
+                    aria-current={code === locale ? "true" : undefined}
+                    hrefLang={code}
+                    className={`block px-4 py-2 text-sm uppercase transition-colors hover:bg-primary/5 ${code === locale ? "font-semibold text-primary" : ""}`}
+                  >
+                    {code}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <LoginThemeToggle labels={{ dark: tAdmin("topbar.themeDark"), light: tAdmin("topbar.themeLight") }} />
+        </div>
       </header>
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-start px-4 pb-6 pt-10 sm:justify-center sm:pt-4">
-        <div className="w-full max-w-[432px] rounded-[18px] bg-surface-raised px-[18px] py-[22px] text-ink shadow-[0_30px_80px_-24px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,.06)] sm:rounded-[20px] sm:p-8">
+        <div className="login-card w-full max-w-[432px] rounded-[18px] bg-surface-raised px-[18px] py-[22px] text-ink shadow-[0_30px_80px_-24px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,.06)] sm:rounded-[20px] sm:p-8">
           <AuthProvider>
             <LoginForm callbackUrl={callbackUrl} />
           </AuthProvider>

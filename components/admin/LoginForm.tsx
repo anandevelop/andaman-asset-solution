@@ -55,7 +55,7 @@ function greetingKey(hour: number) {
 }
 
 const FIELD =
-  "peer h-[52px] w-full rounded-xl border border-[rgba(41,102,130,.35)] bg-surface-raised pb-1.5 pl-3.5 pr-11 pt-5 text-[15px] text-ink outline-none transition-[border-color,box-shadow] focus:border-primary-500 focus:shadow-[0_0_0_4px_rgba(41,102,130,.22)]";
+  "login-field peer h-[52px] w-full rounded-xl border border-[rgba(41,102,130,.35)] bg-surface-raised pb-1.5 pl-3.5 pr-11 pt-5 text-[15px] text-ink outline-none transition-[border-color,box-shadow] focus:border-primary-500 focus:shadow-[0_0_0_4px_rgba(41,102,130,.22)]";
 const FLOAT_LABEL =
   "pointer-events-none absolute left-3.5 top-4 text-sm text-ink-muted transition-all duration-200 peer-focus:top-1.5 peer-focus:text-[11px] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[11px]";
 
@@ -208,7 +208,7 @@ export default function LoginForm({ callbackUrl }: Props) {
   const alert = error && (
     <div
       role="alert"
-      className="mb-4 flex items-start gap-2 rounded-[10px] bg-[#fdeceb] px-3 py-2.5 text-[13px] text-[#b3261e]"
+      className="login-error mb-4 flex items-start gap-2 rounded-[10px] bg-[#fdeceb] px-3 py-2.5 text-[13px] text-[#b3261e]"
     >
       <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
       <span>{error}</span>
@@ -238,7 +238,7 @@ export default function LoginForm({ callbackUrl }: Props) {
         {step === "credentials" ? (
           <>
             <p className="min-h-5 text-[13px] text-ink-muted">{greeting}</p>
-            <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.01em] text-primary">{t("signInTitle")}</h1>
+            <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.01em] text-ink">{t("signInTitle")}</h1>
             <p className="mb-[22px] mt-1 text-[13px] leading-relaxed text-ink-muted">{t("signInSubtitle")}</p>
 
             {alert}
@@ -295,7 +295,7 @@ export default function LoginForm({ callbackUrl }: Props) {
                 non-empty alert as a sign-in error. */}
             <p aria-live="polite" className="min-h-0 text-xs text-[#8a5a00]">
               {capsLock && (
-                <span className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#fff4e0] px-2.5 py-1.5">
+                <span className="login-warn mt-2 flex items-center gap-1.5 rounded-lg bg-[#fff4e0] px-2.5 py-1.5">
                   <TriangleAlert size={13} aria-hidden />
                   {t("capsLockOn")}
                 </span>
@@ -307,7 +307,7 @@ export default function LoginForm({ callbackUrl }: Props) {
             <button
               type="submit"
               disabled={pending}
-              className="relative flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary text-[14.5px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(8,53,81,.8)] transition-[background-color,transform] hover:bg-[#0b4468] active:scale-[.985] disabled:opacity-60"
+              className="login-primary relative flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary text-[14.5px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(8,53,81,.8)] transition-[background-color,transform] hover:bg-[#0b4468] active:scale-[.985] disabled:opacity-60"
             >
               {pending ? (
                 <>
@@ -334,9 +334,9 @@ export default function LoginForm({ callbackUrl }: Props) {
               <ArrowLeft size={14} aria-hidden />
               {t("changeAccount")}
             </button>
-            <h1 className="text-2xl font-semibold tracking-[-0.01em] text-primary">{t("codeStepTitle")}</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.01em] text-ink">{t("codeStepTitle")}</h1>
 
-            <p className="mb-4 mt-3 flex items-center gap-2 rounded-xl bg-primary/[.04] px-3 py-2.5 text-[13px] text-ink-muted">
+            <p className="login-soft mb-4 mt-3 flex items-center gap-2 rounded-xl bg-primary/[.04] px-3 py-2.5 text-[13px] text-ink-muted">
               <CheckCircle2 size={15} aria-hidden className="shrink-0 text-[#17663f]" />
               <span className="min-w-0 truncate">
                 {t("passwordAccepted")} · <b className="font-medium text-ink">{email}</b>
@@ -385,7 +385,7 @@ export default function LoginForm({ callbackUrl }: Props) {
             <button
               type="submit"
               aria-busy={pending}
-              className="relative flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary text-[14.5px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(8,53,81,.8)] transition-[background-color,transform] hover:bg-[#0b4468] active:scale-[.985] aria-busy:opacity-80"
+              className="login-primary relative flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary text-[14.5px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(8,53,81,.8)] transition-[background-color,transform] hover:bg-[#0b4468] active:scale-[.985] aria-busy:opacity-80"
             >
               {pending && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {t("verify")}
@@ -401,7 +401,7 @@ export default function LoginForm({ callbackUrl }: Props) {
                   if (codeState !== "locked") setCodeState("idle");
                   requestAnimationFrame(() => codeRef.current?.focus());
                 }}
-                className="text-[#7a4a1d] underline-offset-2 hover:underline"
+                className="login-link text-[#7a4a1d] underline-offset-2 hover:underline"
               >
                 {codeMode === "totp" ? t("useRecoveryCode") : t("useAuthenticator")}
               </button>
