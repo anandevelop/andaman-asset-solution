@@ -62,8 +62,20 @@ jobs:
             docker builder prune -af || true
             df -h / | tail -1
 
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            COMPOSE="docker compose -f docker-compose.prod.yml"
+            $COMPOSE pull
+            $COMPOSE up -d
+
+            # Both requests below are made from inside the app container, to
+            # the server's own port. They used to go to http://127.0.0.1 on
+            # the host, which on the real server is Caddy, not the app — the
+            # server's compose file has a TLS proxy the one in this repo does
+            # not — and Caddy, routing by hostname, gave a bare IP nothing.
+            # The a96efd4 deploy failed that way with the new container up
+            # and healthy. Asking the container directly works whatever sits
+            # in front of it. The image is node:alpine: node is there, curl
+            # is not.
+            in_app() { $COMPOSE exec -T app node -e "$1"; }
 
             # Wait (up to ~90s) for the app to answer AS THE NEW BUILD:
             # /api/health reports the commit it was built from, so a
@@ -71,28 +83,35 @@ jobs:
             # person noticing the site has not changed.
             LIVE=""
             for i in $(seq 1 45); do
-              LIVE=$(curl -fsS http://127.0.0.1/api/health 2>/dev/null | grep -o '"commit":"[0-9a-f]*"' | cut -d'"' -f4 || true)
+              LIVE=$(in_app "fetch('http://127.0.0.1:3000/api/health').then(r => r.json()).then(j => console.log(j.commit || ''), () => {})" 2>/dev/null || true)
               [ "$LIVE" = "$EXPECTED_COMMIT" ] && break
               sleep 2
             done
             if [ "$LIVE" != "$EXPECTED_COMMIT" ]; then
+              # ssh-action prefixes every line with "out: ", so GitHub never
+              # turns this into an annotation — it is for the log reader.
               echo "::error::server is running '${LIVE:-nothing}', expected $EXPECTED_COMMIT"
-              docker compose -f docker-compose.prod.yml ps
+              $COMPOSE ps
+              $COMPOSE logs --tail=40 app || true
               exit 1
             fi
             echo "live: $LIVE"
 
             # Belt and braces on top of not prerendering at build time: purge
             # the ISR cache of every public page in every locale, plus the
-            # site-settings tag. Any failure here only warns — a good deploy
-            # must never turn red because the purge did.
-            SECRET=$(grep -E '^REVALIDATE_SECRET=' .env | cut -d= -f2- | tr -d '"')
-            if [ -n "$SECRET" ]; then
-              curl -fsS -X POST http://127.0.0.1/api/revalidate \
-                -H "Content-Type: application/json" \
-                -H "x-revalidate-secret: $SECRET" \
-                -d '{"paths":["/","/projects","/news","/events","/about","/achievements","/e-brochure","/contact","/progress"],"tags":["site-settings"]}' \
-                || echo "::warning::post-deploy revalidate failed"
-            else
-              echo "::warning::REVALIDATE_SECRET not set on server — skipped cache purge"
-            fi
+            # site-settings tag. REVALIDATE_SECRET comes from the container's
+            # own environment, the same value the route checks. Any failure
+            # here only warns — a good deploy must never turn red because the
+            # purge did.
+            in_app "
+              const secret = process.env.REVALIDATE_SECRET;
+              if (!secret) { console.log('::warning::REVALIDATE_SECRET not set on server — skipped cache purge'); process.exit(0); }
+              fetch('http://127.0.0.1:3000/api/revalidate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-revalidate-secret': secret },
+                body: JSON.stringify({
+                  paths: ['/', '/projects', '/news', '/events', '/about', '/achievements', '/e-brochure', '/contact', '/progress'],
+                  tags: ['site-settings'],
+                }),
+              }).then(r => console.log('revalidate:', r.status));
+            " || echo "::warning::post-deploy revalidate failed"
