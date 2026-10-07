@@ -125,7 +125,7 @@ const th: TermsContent = {
     {
       heading: "9. ความเป็นส่วนตัว",
       body: [
-        `เราประมวลผลข้อมูลส่วนบุคคลที่เก็บรวบรวมผ่านเว็บไซต์นี้ตามที่ระบุไว้ในนโยบายความเป็นส่วนตัว (${siteConfig.legal.privacyPolicyPath}) ของเรา การรับทราบนโยบายความเป็นส่วนตัวไม่ถือเป็นการให้ความยินยอมสำหรับการประมวลผลที่ต้องได้รับความยินยอมแยกต่างหาก`,
+        `เราประมวลผลข้อมูลส่วนบุคคลที่เก็บรวบรวมผ่านเว็บไซต์นี้ตามที่ระบุไว้ในนโยบายความเป็นส่วนตัวของเรา การรับทราบนโยบายความเป็นส่วนตัวไม่ถือเป็นการให้ความยินยอมสำหรับการประมวลผลที่ต้องได้รับความยินยอมแยกต่างหาก`,
       ],
     },
     {
@@ -174,14 +174,14 @@ const en: TermsContent = {
     {
       heading: "3. Not an offer or a binding sale contract",
       body: [
-        "Content on this website — including prices, floor plans, unit sizes, photographs, renderings and estimated completion dates — is provided for general informational purposes only and may be updated for future transactions. Updates do not alter existing contractual rights or exclude any legal effect of advertising or representations under applicable law.",
+        "Content on this website, including prices, floor plans, unit sizes, photographs, renderings and estimated completion dates, is provided for general informational purposes only and may be updated for future transactions. Updates do not alter existing contractual rights or exclude any legal effect of advertising or representations under applicable law.",
         "Viewing this website or submitting an enquiry does not, by itself, create a reservation or sale and purchase agreement. A separate agreement governs the transaction, subject to applicable law. Nothing in these Terms excludes any legal effect of advertising or representations, or any consumer rights, under applicable law.",
       ],
     },
     {
       heading: "4. Intellectual property",
       body: [
-        "All content on this website — including text, photographs, logos, graphics and video — is the property of the Company or its licensors and is protected by applicable intellectual property laws. You may not copy, reproduce, modify or use it for commercial purposes without our prior written consent.",
+        "All content on this website, including text, photographs, logos, graphics and video, is the property of the Company or its licensors and is protected by applicable intellectual property laws. You may not copy, reproduce, modify or use it for commercial purposes without our prior written consent.",
       ],
     },
     {
@@ -214,7 +214,7 @@ const en: TermsContent = {
     {
       heading: "9. Privacy",
       body: [
-        `We process personal data collected through this website as described in our Privacy Policy (${siteConfig.legal.privacyPolicyPath}). Acknowledging the Privacy Policy does not constitute consent to processing that requires separate consent.`,
+        `We process personal data collected through this website as described in our Privacy Policy. Acknowledging the Privacy Policy does not constitute consent to processing that requires separate consent.`,
       ],
     },
     {
@@ -303,7 +303,7 @@ const zh: TermsContent = {
     {
       heading: "9. 隐私",
       body: [
-        `我们按照本公司隐私政策（${siteConfig.legal.privacyPolicyPath}）中所述方式处理通过本网站收集的个人数据。知悉隐私政策并不构成对需另行取得同意之处理活动的同意。`,
+        `我们按照本公司隐私政策中所述方式处理通过本网站收集的个人数据。知悉隐私政策并不构成对需另行取得同意之处理活动的同意。`,
       ],
     },
     {
@@ -359,7 +359,7 @@ const ru: TermsContent = {
     {
       heading: "4. Интеллектуальная собственность",
       body: [
-        "Всё содержимое настоящего веб-сайта — тексты, фотографии, логотипы, графика и видео — является собственностью Компании или её лицензиаров и охраняется применимым законодательством об интеллектуальной собственности. Копирование, воспроизведение, изменение или использование в коммерческих целях без предварительного письменного согласия Компании запрещено.",
+        "Всё содержимое настоящего веб-сайта, включая тексты, фотографии, логотипы, графику и видео, является собственностью Компании или её лицензиаров и охраняется применимым законодательством об интеллектуальной собственности. Копирование, воспроизведение, изменение или использование в коммерческих целях без предварительного письменного согласия Компании запрещено.",
       ],
     },
     {
@@ -392,7 +392,7 @@ const ru: TermsContent = {
     {
       heading: "9. Конфиденциальность",
       body: [
-        `Мы обрабатываем персональные данные, собираемые через настоящий веб-сайт, в соответствии с нашей Политикой конфиденциальности (${siteConfig.legal.privacyPolicyPath}). Ознакомление с Политикой конфиденциальности не означает согласия на обработку, для которой требуется отдельное согласие.`,
+        `Мы обрабатываем персональные данные, собираемые через настоящий веб-сайт, в соответствии с нашей Политикой конфиденциальности. Ознакомление с Политикой конфиденциальности не означает согласия на обработку, для которой требуется отдельное согласие.`,
       ],
     },
     {

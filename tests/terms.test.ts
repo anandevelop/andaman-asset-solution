@@ -49,4 +49,14 @@ describe("terms of service", () => {
     expect(english).not.toContain("subject to change without notice");
     expect(english).not.toContain("which forms part of these Terms");
   });
+
+  it("shows no bare URL path and no em dash in any section", () => {
+    // Both asked out by the client on 2026-10-07: "(/privacy-policy)" read
+    // as a broken link on a phone, and the dashes as clutter.
+    for (const locale of locales) {
+      const text = JSON.stringify(termsOfService[locale].sections);
+      expect(text, locale).not.toContain("/privacy-policy");
+      expect(text, locale).not.toContain("—");
+    }
+  });
 });
