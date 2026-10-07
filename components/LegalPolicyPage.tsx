@@ -52,6 +52,9 @@ export type LegalPolicyContent = {
   contactIntro: string;
   lastUpdatedLabel: string;
   versionLabel: string;
+  /** A page-specific number for the contact block, in place of the company
+   *  line from config/site.ts. Only the terms set one (see content/terms.ts). */
+  contactPhone?: { tel: string; display: string };
 };
 
 type LegalPageStrings = {
@@ -262,10 +265,10 @@ export default function LegalPolicyPage({
                   <Phone size={16} className="shrink-0 text-accent-700" />
                   <dd>
                     <a
-                      href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`}
+                      href={`tel:${(content.contactPhone?.tel ?? siteConfig.contact.phone).replace(/\s/g, "")}`}
                       className="text-ink/70 underline hover:text-primary"
                     >
-                      {siteConfig.contact.phoneDisplay}
+                      {content.contactPhone?.display ?? siteConfig.contact.phoneDisplay}
                     </a>
                   </dd>
                 </div>
