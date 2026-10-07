@@ -198,7 +198,14 @@ export const siteConfig = {
   legal: {
     privacyPolicyPath: "/privacy-policy",
     termsPath: "/terms",
-    consentVersion: "privacy-policy-v1",
+    consentVersion: "privacy-policy-v2",
+    /*
+      The number in the contact block of /privacy-policy and /terms. Not
+      contact.phone: the 2026-10-07 legal reviews of both pages asked for
+      this number there, and only there — the footer, contact page and
+      structured data keep the company line.
+    */
+    contactPhone: { tel: "+66953089559", display: "+66 95 308 9559" },
   },
 } as const;
 

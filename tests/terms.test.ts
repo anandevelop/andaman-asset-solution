@@ -13,11 +13,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  TERMS_CONTACT_PHONE,
-  TERMS_OF_SERVICE_VERSION,
-  termsOfService,
-} from "@/content/terms";
+import { siteConfig } from "@/config/site";
+import { TERMS_OF_SERVICE_VERSION, termsOfService } from "@/content/terms";
 
 const locales = Object.keys(termsOfService) as (keyof typeof termsOfService)[];
 
@@ -34,9 +31,9 @@ describe("terms of service", () => {
   it("carries one version and one contact number across every locale", () => {
     for (const locale of locales) {
       expect(termsOfService[locale].version).toBe(TERMS_OF_SERVICE_VERSION);
-      expect(termsOfService[locale].contactPhone).toEqual(TERMS_CONTACT_PHONE);
+      expect(termsOfService[locale].contactPhone).toEqual(siteConfig.legal.contactPhone);
     }
-    expect(TERMS_CONTACT_PHONE.tel).toBe("+66953089559");
+    expect(siteConfig.legal.contactPhone.tel).toBe("+66953089559");
   });
 
   it("is titled Terms & Conditions, as the footer links it", () => {

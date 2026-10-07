@@ -38,6 +38,8 @@ export type LegalPolicySection = {
   heading: string;
   body?: string[];
   bullets?: string[];
+  /** Paragraphs after the list — a note that qualifies the list as a whole. */
+  after?: string[];
 };
 
 /** Structurally satisfied by both PolicyContent (content/privacy-policy.ts)
@@ -229,6 +231,12 @@ export default function LegalPolicyPage({
                     ))}
                   </ul>
                 )}
+
+                {section.after?.map((paragraph, j) => (
+                  <p key={j} className="mt-4 text-sm leading-relaxed text-ink/70">
+                    {paragraph}
+                  </p>
+                ))}
               </section>
             </Reveal>
           ))}

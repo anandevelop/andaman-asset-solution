@@ -25,9 +25,10 @@
  * Section 11 now promises a new version number and date on every change,
  * so the bump below is not optional.
  *
- * The phone is TERMS_CONTACT_PHONE rather than the company line in
- * config/site.ts because the review asked for a different number on this
- * page only. The privacy policy, footer and contact page are unchanged.
+ * The phone is siteConfig.legal.contactPhone rather than the company line:
+ * the reviews of this page and the privacy policy both asked for a
+ * different number in their contact blocks only. The footer and contact
+ * page are unchanged.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -40,9 +41,6 @@ export type TermsSection = {
   /** Rendered as a bulleted list. */
   bullets?: string[];
 };
-
-/** The number in this page's own contact block; see the header. */
-export const TERMS_CONTACT_PHONE = { tel: "+66953089559", display: "+66 95 308 9559" };
 
 export type TermsContent = {
   version: string;
@@ -144,7 +142,7 @@ const th: TermsContent = {
       ],
     },
   ],
-  contactPhone: TERMS_CONTACT_PHONE,
+  contactPhone: siteConfig.legal.contactPhone,
   contactHeading: "ติดต่อเรา",
   contactIntro: "หากมีข้อสงสัยเกี่ยวกับข้อกำหนดฉบับนี้ กรุณาติดต่อ:",
 };
@@ -233,7 +231,7 @@ const en: TermsContent = {
       ],
     },
   ],
-  contactPhone: TERMS_CONTACT_PHONE,
+  contactPhone: siteConfig.legal.contactPhone,
   contactHeading: "Contact us",
   contactIntro: "If you have questions about these Terms, please contact:",
 };
@@ -322,7 +320,7 @@ const zh: TermsContent = {
       ],
     },
   ],
-  contactPhone: TERMS_CONTACT_PHONE,
+  contactPhone: siteConfig.legal.contactPhone,
   contactHeading: "联系我们",
   contactIntro: "如对本条款有任何疑问，请通过以下方式联系我们：",
 };
@@ -411,7 +409,7 @@ const ru: TermsContent = {
       ],
     },
   ],
-  contactPhone: TERMS_CONTACT_PHONE,
+  contactPhone: siteConfig.legal.contactPhone,
   contactHeading: "Свяжитесь с нами",
   contactIntro: "По вопросам, связанным с настоящими Условиями, пожалуйста, свяжитесь с нами:",
 };
