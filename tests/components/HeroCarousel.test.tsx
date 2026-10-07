@@ -2,12 +2,12 @@
  * tests/components/HeroCarousel.test.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The homepage hero. jsdom has no layout and paints nothing, so what is
- * checked here is the behaviour that does not depend on either: the window's
- * arithmetic, which headline size a caption gets, the rail and its
+ * checked here is the behaviour that does not depend on either: the fade's
+ * curve, which headline size a caption gets, the rail and its
  * accessibility contract, the lock while a change is in flight, what is
  * mounted when (three layers at most, the next one only after the first has
  * loaded), and what the reduced-motion and off-screen paths refuse to run.
- * What the window LOOKS like is a browser's business, and was checked in one.
+ * What the fade LOOKS like is a browser's business, and was checked in one.
  *
  * Fake timers throughout: the component is driven by setTimeout and
  * requestAnimationFrame, and the fake clock advances both together, so
@@ -23,7 +23,7 @@
 
 import type { CSSProperties } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import HeroCarousel, { headlineTier, windowInsets } from "@/components/HeroCarousel";
+import HeroCarousel, { fadeOpacity, headlineTier } from "@/components/HeroCarousel";
 import type { HeroStorySlide } from "@/lib/hero-story";
 import { act, fireEvent, render, screen, within } from "./render";
 
@@ -117,11 +117,11 @@ function tick(ms: number) {
   });
 }
 
-function media({ reduced = false, wide = false } = {}) {
+function media({ reduced = false } = {}) {
   vi.spyOn(window, "matchMedia").mockImplementation(
     (query: string) =>
       ({
-        matches: query.includes("prefers-reduced-motion") ? reduced : query.includes("min-width") && wide,
+        matches: query.includes("prefers-reduced-motion") && reduced,
         media: query,
         onchange: null,
         addListener: () => {},
@@ -150,47 +150,36 @@ function headline(container: HTMLElement) {
 beforeEach(() => {
   vi.useFakeTimers();
   media();
-  // jsdom logs "not implemented" for every getContext; a canvas with no
-  // context is what the dust already tolerates.
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
 });
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("windowInsets", () => {
-  it("starts as a 4% × 8% slot in the middle, and ends fully open", () => {
-    expect(windowInsets(0)).toEqual({ v: 46, h: 48 });
-    expect(windowInsets(1)).toEqual({ v: 0, h: 0 });
+describe("fadeOpacity", () => {
+  it("starts fully transparent and ends fully opaque", () => {
+    expect(fadeOpacity(0)).toBe(0);
+    expect(fadeOpacity(1)).toBe(1);
   });
 
-  it("is full height before it starts to widen", () => {
-    // 0.35 is where the vertical stage ends; the horizontal one has run for
-    // 0.05 of its 0.7 and has barely begun.
-    const { v, h } = windowInsets(0.35);
-    expect(v).toBe(0);
-    expect(h).toBeGreaterThan(47.9);
+  it("is half way at the midpoint, and symmetric about it", () => {
+    expect(fadeOpacity(0.5)).toBeCloseTo(0.5, 9);
+    expect(fadeOpacity(0.2)).toBeCloseTo(1 - fadeOpacity(0.8), 9);
   });
 
-  it("does not move sideways at all until k = 0.3", () => {
-    expect(windowInsets(0.1).h).toBe(48);
-    expect(windowInsets(0.3).h).toBe(48);
+  it("eases in: the first tenth of the time is far less than a tenth of the fade", () => {
+    expect(fadeOpacity(0.1)).toBeLessThan(0.03);
   });
 
-  it("is half open at the midpoint of the horizontal stage", () => {
-    expect(windowInsets(0.65).h).toBeCloseTo(24, 6);
-  });
-
-  it("never closes again: neither inset ever grows", () => {
-    let last = windowInsets(0);
-
+  it("only ever brightens, and stays in range past either end", () => {
+    let last = fadeOpacity(0);
     for (let k = 0.01; k <= 1; k += 0.01) {
-      const next = windowInsets(k);
-      expect(next.v).toBeLessThanOrEqual(last.v + 1e-9);
-      expect(next.h).toBeLessThanOrEqual(last.h + 1e-9);
+      const next = fadeOpacity(k);
+      expect(next).toBeGreaterThanOrEqual(last - 1e-9);
       last = next;
     }
+    expect(fadeOpacity(-1)).toBe(0);
+    expect(fadeOpacity(2)).toBe(1);
   });
 });
 
@@ -404,18 +393,18 @@ describe("HeroCarousel", () => {
   });
 
   describe("changing slide", () => {
-    it("moves to the clicked slide at once and locks until the window has opened", () => {
+    it("moves to the clicked slide at once and locks until the fade has finished", () => {
       setup();
 
       fireEvent.click(railButtons()[1]);
       expect(current()).toBe(1);
 
-      // A second click while the window is opening is ignored.
+      // A second click while the fade is running is ignored.
       tick(700);
       fireEvent.click(railButtons()[2]);
       expect(current()).toBe(1);
 
-      tick(900); // 1600ms in: the 1500ms window has closed
+      tick(900); // 1600ms in: the 1500ms fade has finished
       fireEvent.click(railButtons()[2]);
       expect(current()).toBe(2);
     });
@@ -428,26 +417,41 @@ describe("HeroCarousel", () => {
     });
 
     it("clicking the slide already showing does nothing", () => {
-      const { container } = setup();
+      setup();
 
       fireEvent.click(railButtons()[0]);
       expect(current()).toBe(0);
-      // No window opened for it, so no frame, and no lock to wait out.
-      expect(container.querySelector("[class*='rgba(243,213,179,0.95)']")).toBeNull();
+      // No fade started for it, so no lock to wait out.
       fireEvent.click(railButtons()[1]);
       expect(current()).toBe(1);
     });
 
-    it("draws the sand frame only while the window is opening", () => {
-      const { container } = setup();
-      const frame = () => container.querySelector("[class*='rgba(243,213,179,0.95)']");
+    it("fades the incoming slide in from transparent, and leaves no opacity behind", () => {
+      setup();
+      tick(3000);
 
-      expect(frame()).toBeNull();
+      const second = screen.getAllByTestId("hero-image")[1].parentElement!;
       fireEvent.click(railButtons()[1]);
-      expect(frame()).not.toBeNull();
+      expect(second.style.opacity).toBe("0");
 
-      tick(1600);
-      expect(frame()).toBeNull();
+      tick(750);
+      expect(Number(second.style.opacity)).toBeGreaterThan(0.3);
+      expect(Number(second.style.opacity)).toBeLessThan(0.7);
+
+      tick(850);
+      expect(second.style.opacity).toBe("");
+    });
+
+    it("draws no frame, box or edge around the incoming slide", () => {
+      // The "window" this replaced drew a glowing sand border that opened
+      // with the slide; the client asked for it to go (2026-10-07).
+      const { container } = setup();
+      tick(3000);
+
+      fireEvent.click(railButtons()[1]);
+      tick(300);
+      expect(container.querySelector("[class*='border-[rgba(243']")).toBeNull();
+      expect(container.querySelector("[style*='clip-path']")).toBeNull();
     });
 
     it("swaps the top-left label at 400ms and the copy at 500ms", () => {
@@ -514,8 +518,8 @@ describe("HeroCarousel", () => {
       expect(current()).toBe(1);
     });
 
-    it("queues an auto-advance that arrives mid-window, rather than losing it", () => {
-      // An admin can set a slide to 1s, shorter than the 1.5s window. If the
+    it("queues an auto-advance that arrives mid-fade, rather than losing it", () => {
+      // An admin can set a slide to 1s, shorter than the 1.5s fade. If the
       // advance were dropped, nothing would ever bring the bar's animationend
       // back and the carousel would sit on that slide for good.
       setup();
@@ -527,7 +531,7 @@ describe("HeroCarousel", () => {
       fireEvent.animationEnd(bar);
       expect(current()).toBe(1);
 
-      tick(1200); // the window closes and the queued advance runs
+      tick(1200); // the fade finishes and the queued advance runs
       expect(current()).toBe(2);
     });
   });
@@ -570,7 +574,7 @@ describe("HeroCarousel", () => {
       expect(screen.getAllByTestId("hero-image")).toHaveLength(2);
     });
 
-    it("never has a third image, and never a second before the window", () => {
+    it("never has a third image, and never a second before the fade", () => {
       setup([1, 2, 3, 4, 5].map((n) => slide(n)));
 
       tick(3000);
@@ -593,7 +597,7 @@ describe("HeroCarousel", () => {
       expect(screen.getAllByTestId("hero-image")).toContain(second);
     });
 
-    it("holds three layers at most while a window is opening", () => {
+    it("holds three layers at most while a fade is running", () => {
       setup([1, 2, 3, 4].map((n) => slide(n)));
       tick(3000);
 
@@ -604,20 +608,22 @@ describe("HeroCarousel", () => {
       expect(screen.getAllByTestId("hero-image")).toHaveLength(2);
     });
 
-    it("gives the outgoing layer its shrink and the incoming its clip", () => {
+    it("leaves the outgoing layer still beneath the incoming one", () => {
+      // It used to shrink to scale(.96); under a plain fade that reads as the
+      // picture jumping back.
       setup();
       tick(3000);
 
       const [first, second] = screen.getAllByTestId("hero-image");
       fireEvent.click(railButtons()[1]);
 
-      expect(first.parentElement!.style.transform).toBe("scale(0.96)");
-      expect(first.parentElement!.style.transition).toContain("1500ms");
+      expect(first.parentElement!.style.transform).toBe("");
+      expect(first.parentElement!.style.opacity).toBe("");
       expect(second.parentElement).toHaveClass("z-[2]");
       expect(first.parentElement).toHaveClass("z-[1]");
     });
 
-    it("runs the zoom-out for the hold time plus the window, and not on the hidden next layer", () => {
+    it("runs the zoom-out for the hold time plus the fade, and not on the hidden next layer", () => {
       setup([slide(1, { durationSeconds: 4 }), slide(2)]);
       tick(3000);
 
@@ -660,7 +666,7 @@ describe("HeroCarousel", () => {
       expect(current()).toBe(1);
     });
 
-    it("ignores a video's ended event once it has gone under the window", () => {
+    it("ignores a video's ended event once it has gone under the fade", () => {
       const { container } = setup(VIDEOS);
       tick(3000);
 
@@ -676,7 +682,7 @@ describe("HeroCarousel", () => {
     });
 
     it("parks a video that has been left mid-way at the start when it goes back to next", () => {
-      // Clicked away from at 3s of 10s: the layer under the window keeps
+      // Clicked away from at 3s of 10s: the layer under the fade keeps
       // playing, and comes back round as `next`. Without a reset, its turn
       // would resume at 3s instead of starting over.
       const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
@@ -688,7 +694,7 @@ describe("HeroCarousel", () => {
 
       fireEvent.click(railButtons()[1]);
       const [first] = Array.from(container.querySelectorAll("video"));
-      expect(pause).not.toHaveBeenCalled(); // still under the window: keep playing
+      expect(pause).not.toHaveBeenCalled(); // still under the fade: keep playing
 
       tick(1600);
       expect(first.isConnected).toBe(true);
@@ -708,17 +714,18 @@ describe("HeroCarousel", () => {
   });
 
   describe("under prefers-reduced-motion", () => {
-    beforeEach(() => media({ reduced: true, wide: true }));
+    beforeEach(() => media({ reduced: true }));
 
-    it("changes slide instantly, with no lock and no frame", () => {
-      const { container } = setup();
+    it("changes slide instantly, with no lock and no fade", () => {
+      setup();
+      tick(3000);
 
+      const second = screen.getAllByTestId("hero-image")[1].parentElement!;
       fireEvent.click(railButtons()[1]);
       expect(current()).toBe(1);
+      expect(second.style.opacity).toBe("");
       fireEvent.click(railButtons()[2]);
       expect(current()).toBe(2);
-
-      expect(container.querySelector("[class*='rgba(243,213,179,0.95)']")).toBeNull();
     });
 
     it("swaps the copy immediately rather than after the fade", () => {
@@ -751,59 +758,17 @@ describe("HeroCarousel", () => {
       expect(current()).toBe(0);
     });
 
-    it("renders neither the dust canvas nor the glint", () => {
-      const { container } = setup();
-
-      expect(container.querySelector("canvas")).toBeNull();
-      expect(container.querySelector("[style*='hero-glint']")).toBeNull();
-    });
   });
 
   describe("the decoration", () => {
-    const cores = (n: number) =>
-      vi.spyOn(navigator, "hardwareConcurrency", "get").mockReturnValue(n);
-
-    it("draws the dust only on a wide screen with more than four cores", () => {
-      media({ wide: true });
-      cores(8);
-      const { container, unmount } = setup();
-      expect(container.querySelector("canvas")).not.toBeNull();
-      unmount();
-
-      media({ wide: true });
-      cores(4);
-      const four = setup();
-      expect(four.container.querySelector("canvas")).toBeNull();
-      four.unmount();
-
-      media({ wide: false });
-      cores(16);
-      const narrow = setup();
-      expect(narrow.container.querySelector("canvas")).toBeNull();
-    });
-
-    it("renders the glint as a transform-animated strip, with no blend mode", () => {
+    it("has no dust canvas and no sweeping light", () => {
+      // Both were taken out at the client's request (2026-10-07): the hero
+      // should read as quiet, and the motes and the light strip read as busy.
       const { container } = setup();
-      const glint = container.querySelector<HTMLElement>("[style*='hero-glint']")!;
+      tick(3000);
 
-      expect(glint).not.toBeNull();
-      expect(glint.style.animation).toContain("7s");
-      expect(glint.style.mixBlendMode).toBe("");
-      expect(glint.closest("[aria-hidden]")).not.toBeNull();
-    });
-
-    it("is all aria-hidden and unclickable", () => {
-      media({ wide: true });
-      cores(8);
-      const { container } = setup();
-
-      for (const el of [
-        container.querySelector("canvas")!,
-        container.querySelector("[style*='hero-glint']")!.parentElement!,
-      ]) {
-        expect(el).toHaveAttribute("aria-hidden");
-        expect(el).toHaveClass("pointer-events-none");
-      }
+      expect(container.querySelector("canvas")).toBeNull();
+      expect(container.querySelector("[style*='hero-glint']")).toBeNull();
     });
 
     it("shows the scroll cue for up to three slides and not for four", () => {
@@ -815,118 +780,38 @@ describe("HeroCarousel", () => {
       expect(screen.queryByText("Scroll")).not.toBeInTheDocument();
     });
 
-    describe("the dust loop", () => {
-      let observe: (isIntersecting: boolean) => void;
-      let clearRect: ReturnType<typeof vi.fn>;
-      let arc: ReturnType<typeof vi.fn>;
+    it("pauses the scroll cue's drip while the hero is off screen", () => {
+      // An observer that reports what the test tells it to, in place of
+      // tests/setup.ts's inert one. Only the hero's own is driven: next/link
+      // makes observers of its own (rootMargin, for prefetching), and the
+      // hero asks for `threshold: 0`.
       const RealObserver = window.IntersectionObserver;
+      const heroCallbacks: IntersectionObserverCallback[] = [];
 
-      beforeEach(() => {
-        media({ wide: true });
-        cores(8);
-
-        // An observer that reports what the test tells it to, in place of
-        // tests/setup.ts's inert one. Only the hero's own is driven: next/link
-        // makes observers of its own (rootMargin, for prefetching), and the
-        // hero asks for `threshold: 0`.
-        const heroCallbacks: IntersectionObserverCallback[] = [];
-
-        class Observer {
-          constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
-            if (options?.threshold === 0) heroCallbacks.push(callback);
-          }
-          observe() {}
-          unobserve() {}
-          disconnect() {}
+      class Observer {
+        constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          if (options?.threshold === 0) heroCallbacks.push(callback);
         }
-        window.IntersectionObserver = Observer as unknown as typeof IntersectionObserver;
-        observe = (isIntersecting) =>
-          heroCallbacks.forEach((cb) =>
-            cb([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver),
-          );
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      }
+      window.IntersectionObserver = Observer as unknown as typeof IntersectionObserver;
 
-        clearRect = vi.fn();
-        arc = vi.fn();
-        vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
-          clearRect,
-          arc,
-          beginPath: vi.fn(),
-          fill: vi.fn(),
-          fillStyle: "",
-          globalAlpha: 1,
-        } as unknown as CanvasRenderingContext2D);
-        vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1920);
-        vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(800);
-      });
-
-      afterEach(() => {
-        window.IntersectionObserver = RealObserver;
-      });
-
-      it("draws at most 70 motes a frame", () => {
-        setup();
-        tick(100);
-
-        expect(clearRect).toHaveBeenCalled();
-        expect(arc.mock.calls.length / clearRect.mock.calls.length).toBe(70);
-      });
-
-      it("stops when the hero scrolls out of view, and resumes when it returns", () => {
-        setup();
-        tick(100);
-        expect(clearRect.mock.calls.length).toBeGreaterThan(0);
-
-        act(() => observe(false));
-        const frozen = clearRect.mock.calls.length;
-        tick(500);
-        expect(clearRect.mock.calls.length).toBe(frozen);
-
-        act(() => observe(true));
-        tick(100);
-        expect(clearRect.mock.calls.length).toBeGreaterThan(frozen);
-      });
-
-      it("pauses the glint and the scroll cue's drip alongside it", () => {
+      try {
         const { container } = setup();
-        const glint = container.querySelector<HTMLElement>("[style*='hero-glint']")!;
         const drip = container.querySelector<HTMLElement>("[style*='hero-scroll-drip']")!;
+        expect(drip.style.animationPlayState).toBe("running");
 
-        expect(glint.style.animationPlayState).toBe("running");
-
-        act(() => observe(false));
-        expect(glint.style.animationPlayState).toBe("paused");
+        act(() =>
+          heroCallbacks.forEach((cb) =>
+            cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver),
+          ),
+        );
         expect(drip.style.animationPlayState).toBe("paused");
-      });
-
-      it("stops when the tab is hidden", () => {
-        setup();
-        tick(100);
-
-        Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
-        act(() => {
-          document.dispatchEvent(new Event("visibilitychange"));
-        });
-        const frozen = clearRect.mock.calls.length;
-        tick(500);
-        expect(clearRect.mock.calls.length).toBe(frozen);
-
-        Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
-        act(() => {
-          document.dispatchEvent(new Event("visibilitychange"));
-        });
-        tick(100);
-        expect(clearRect.mock.calls.length).toBeGreaterThan(frozen);
-      });
-
-      it("stops for good on unmount", () => {
-        const { unmount } = setup();
-        tick(100);
-
-        unmount();
-        const frozen = clearRect.mock.calls.length;
-        tick(500);
-        expect(clearRect.mock.calls.length).toBe(frozen);
-      });
+      } finally {
+        window.IntersectionObserver = RealObserver;
+      }
     });
   });
 });

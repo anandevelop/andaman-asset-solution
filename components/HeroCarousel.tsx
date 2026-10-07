@@ -7,26 +7,31 @@
  * /admin/pages/home/hero — schema, S3, the admin form and lib/hero-story.ts
  * are all unchanged; only this presentation layer is new).
  *
- * THE SLIDE CHANGE IS A "WINDOW"
+ * THE SLIDE CHANGE IS A CROSSFADE
  *
- * A narrow vertical slot with a sand edge appears mid-frame and opens like a
- * sliding door onto the next slide, over 1500ms (`windowInsets` below is the
- * mockup's own formula, not an approximation). It is driven by
- * requestAnimationFrame writing `clip-path` and the frame's edges straight to
+ * The next slide fades in over the one on screen, over 1500ms, eased at both
+ * ends. Nothing else moves. It used to be a "window": a narrow slot with a
+ * glowing sand edge that opened like a sliding door, with dust motes drifting
+ * up the frame and a light strip sweeping across it every 7s. The client
+ * asked on 2026-10-07 for all three to go — the hero should read as quiet and
+ * expensive, and the light and the box read as busy.
+ *
+ * The fade is driven by requestAnimationFrame writing `opacity` straight to
  * the DOM: nothing about it goes through React state, so a re-render during
  * the 1.5s (the video progress bar ticks one) cannot fight it. Only the
- * layer being opened is clipped — never a `filter`, never a blur on the media.
+ * incoming layer's opacity changes — never a `filter`, never a blur on the
+ * media.
  *
  * At most three layers exist at once, all keyed on slide.id so a slide keeps
  * the same DOM element as its role changes (next → current → previous):
  *
- *   previous  shrinks to scale(.96) beneath the opening window and keeps
- *             playing, so a <video> is not restarted when it goes under
+ *   previous  stays where it is beneath the fade and keeps playing, so a
+ *             <video> is not restarted when it goes under
  *   current   the slide on screen
  *   next      hidden with `visibility`, never `display:none` — next/image
  *             will not fetch an image that has no box
  *
- * The next layer exists so the window never opens onto an empty frame. It
+ * The next layer exists so the fade never starts from an empty frame. It
  * mounts only after the first slide has loaded: an eager second image in the
  * initial HTML would compete with the LCP image for the same bandwidth. And
  * it is a real <ImageWithSkeleton> rather than `new Image().src = url` —
@@ -35,7 +40,7 @@
  * preloads metadata and its poster only, never the file.
  *
  * Ken Burns is a slow zoom OUT (1.14 → 1.02) that runs for the slide's hold
- * time plus the window, so it is still moving while the next slide opens. No
+ * time plus the fade, so it is still moving while the next slide fades in. No
  * parallax follows the pointer — the client asked for that to go.
  *
  * COPY
@@ -54,13 +59,8 @@
  *
  * WHAT COSTS NOTHING WHEN NOBODY IS LOOKING
  *
- * One IntersectionObserver feeds both decorations. The glint is a single
- * skewed strip moved with `transform` — the mockup animated
- * `background-position` under `mix-blend-mode`, which repaints the whole hero
- * every frame for as long as the page is open. The dust canvas exists only at
- * ≥768px on machines reporting more than four cores, and its loop stops when
- * the hero scrolls out or the tab is hidden. Neither renders at all under
- * prefers-reduced-motion.
+ * An IntersectionObserver pauses the scroll cue's drip while the hero is off
+ * screen.
  *
  * REDUCED MOTION AND AUTO-ADVANCE
  *
@@ -71,9 +71,9 @@
  * "01 / 03" after 14s, against a change every 5s otherwise). Reduced motion
  * now advances on a timer instead, and the change is instant.
  *
- * A change requested while the window is still opening is dropped when it
+ * A change requested while a fade is still running is dropped when it
  * comes from a click, and queued when it comes from the timer: an admin may
- * set a slide to 1s, shorter than the window, and a dropped auto-advance
+ * set a slide to 1s, shorter than the fade, and a dropped auto-advance
  * would leave the carousel stopped for good.
  * ─────────────────────────────────────────────────────────────────────────
  */
@@ -94,41 +94,28 @@ import { ArrowRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import type { HeroStorySlide } from "@/lib/hero-story";
 
-/** The window opens over this long; the old layer shrinks and the outgoing
- *  Ken Burns keeps running for the same span. */
-const WINDOW_MS = 1500;
+/** The next slide fades in over this long, and the outgoing Ken Burns keeps
+ *  running for the same span. */
+const FADE_MS = 1500;
 /** Copy leaves at once and the next slide's copy is swapped in here. */
 const COPY_SWAP_MS = 500;
 /** The top-left label changes text a little earlier than the copy does. */
 const LABEL_SWAP_MS = 400;
-
-/** Where the window starts: 4% wide, 8% tall, dead centre. Same numbers
- *  `windowInsets(0)` returns, so the first painted frame is the first frame
- *  of the animation and not a flash of the whole new slide. */
-const WINDOW_START_CLIP = "inset(46% 48% 46% 48%)";
 
 /** Legibility over sky and white walls, where most of these frames put type.
  *  rgba(4,29,44) is primary-900. */
 const TEXT_SHADOW = "[text-shadow:0_1px_8px_rgba(4,29,44,0.75)]";
 
 /**
- * The window's insets at progress k ∈ [0, 1], as percentages.
- *
- * `v` is the top and bottom inset, `h` the left and right. The slot rises to
- * full height first (0 → 0.35, ease-out), then opens sideways (0.30 → 1,
- * ease-in-out) — the two overlap a little so it never stalls between them.
- * Taken verbatim from the mockup's `win.frame`.
+ * The incoming layer's opacity at progress k ∈ [0, 1]: a sine ease-in-out,
+ * so the new picture neither appears with a jump nor lands with one. Gentler
+ * than a cubic, which spends too long near the ends and then hurries through
+ * the middle — on a full-screen photograph that hurry is what reads as a
+ * flash.
  */
-export function windowInsets(k: number): { v: number; h: number } {
-  const a = Math.min(k / 0.35, 1);
-  const b = Math.max((k - 0.3) / 0.7, 0);
-  const easeOut = 1 - Math.pow(1 - a, 3);
-  const easeInOut = b < 0.5 ? 4 * b * b * b : 1 - Math.pow(-2 * b + 2, 3) / 2;
-
-  return {
-    v: (46 - 46 * easeOut) * (1 - easeInOut),
-    h: 48 - 48 * easeInOut,
-  };
+export function fadeOpacity(k: number): number {
+  const t = Math.max(0, Math.min(k, 1));
+  return (1 - Math.cos(Math.PI * t)) / 2;
 }
 
 /**
@@ -200,8 +187,6 @@ function useMediaQuery(query: string): boolean {
     () => false,
   );
 }
-
-const noSubscription = () => () => {};
 
 /** The plain static hero shown when there are no active slides at all. */
 type FallbackHero = {
@@ -276,14 +261,6 @@ function Carousel({
   const count = slides.length;
 
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const wide = useMediaQuery("(min-width: 768px)");
-  // Four cores or fewer is a phone or an old laptop: the dust would cost more
-  // than it is worth. A browser that does not say is given the benefit.
-  const capable = useSyncExternalStore(
-    noSubscription,
-    () => (navigator.hardwareConcurrency ?? 8) > 4,
-    () => false,
-  );
 
   const [index, setIndex] = useState(0);
   const [transition, setTransition] = useState<Transition | null>(null);
@@ -296,7 +273,6 @@ function Carousel({
   const [inView, setInView] = useState(true);
 
   const sectionRef = useRef<HTMLElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
   const layerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   // Refs, not state, for what a timer or animation callback must read fresh.
   const indexRef = useRef(0);
@@ -321,7 +297,7 @@ function Carousel({
       setIndex(next);
 
       if (reduced) {
-        // No window, no fade: the new slide and its copy are simply there.
+        // No fade at all: the new slide and its copy are simply there.
         setCopyIndex(next);
         setLabelIndex(next);
         setCopyPhase("in");
@@ -356,7 +332,7 @@ function Carousel({
   }, [goTo]);
 
   /** Timer / progress-bar / video-ended: go on to the next slide, or queue it
-   *  if the window is still opening (see the header). */
+   *  if a fade is still running (see the header). */
   const advance = useCallback(() => {
     if (count < 2) return;
 
@@ -368,17 +344,15 @@ function Carousel({
     goTo(indexRef.current + 1);
   }, [count, goTo]);
 
-  // ── The window ───────────────────────────────────────────────────────────
+  // ── The fade ─────────────────────────────────────────────────────────────
   useLayoutEffect(() => {
     if (!transition) return;
 
     const layer = layerRefs.current[slides[transition.to].id];
-    const frame = frameRef.current;
     let raf = 0;
 
     const finish = () => {
-      if (layer) layer.style.clipPath = "";
-      if (frame) frame.style.opacity = "0";
+      if (layer) layer.style.opacity = "";
       busyRef.current = false;
       setTransition(null);
 
@@ -393,31 +367,12 @@ function Carousel({
       return () => cancelAnimationFrame(raf);
     }
 
-    const width = layer.offsetWidth;
-    const height = layer.offsetHeight;
-
     const paint = (k: number) => {
-      const { v, h } = windowInsets(k);
-
-      layer.style.clipPath = `inset(${v}% ${h}% ${v}% ${h}%)`;
-
-      if (frame) {
-        // The frame sits on the window's edge, but it is placed with a
-        // transform and sized with width/height from a fixed origin — never
-        // with top/left/right/bottom. Those are layout: the browser counts
-        // every frame of them as a layout shift, on every slide change, for
-        // as long as the page is open.
-        const x = (h / 100) * width;
-        const y = (v / 100) * height;
-        frame.style.transform = `translate(${x}px, ${y}px)`;
-        frame.style.width = `${width - 2 * x}px`;
-        frame.style.height = `${height - 2 * y}px`;
-        // Solid until the very end, then gone with the last of the opening.
-        frame.style.opacity = String(k < 0.88 ? 1 : (1 - k) / 0.12);
-      }
+      layer.style.opacity = String(fadeOpacity(k));
     };
 
-    // Before the first paint, so the frame is never seen unplaced.
+    // Before the first paint, so the new slide is never seen at full strength
+    // for a frame before the fade begins.
     paint(0);
 
     const t0 = performance.now();
@@ -425,7 +380,7 @@ function Carousel({
     const step = (now: number) => {
       // The rAF timestamp is the frame's start, which can be a hair before
       // the moment this effect read the clock.
-      const k = Math.max(0, Math.min((now - t0) / WINDOW_MS, 1));
+      const k = Math.max(0, Math.min((now - t0) / FADE_MS, 1));
       paint(k);
 
       if (k < 1) raf = requestAnimationFrame(step);
@@ -515,7 +470,6 @@ function Carousel({
 
   const copySlide = slides[copyIndex];
   const labelSlide = slides[labelIndex];
-  const showDust = wide && capable && !reduced;
   // Past four slides the rail gives up its descriptions and shares the width.
   const compactRail = count > 4;
 
@@ -550,44 +504,15 @@ function Carousel({
         );
       })}
 
-      {/* The window's sand edge. Rendered only while one is opening; its
-          size and position are written by the animation loop above, not by
-          props. Invisible until that first write. */}
-      {transition && !reduced && (
-        <div
-          ref={frameRef}
-          aria-hidden
-          className="pointer-events-none absolute top-0 left-0 z-[3] border border-[rgba(243,213,179,0.95)] opacity-0 shadow-[0_0_24px_rgba(232,179,132,0.35)]"
-        />
-      )}
-
       {/*
         Shaped to the copy, not a wash — see the .hero-scrim comment in
         app/globals.css for the measurements and for why the earlier
         versions had to go. One overlay above every layer rather than one per
-        slide, so it does not open with the window. The second layer is `sm`
+        slide, so it does not fade with the slide. The second layer is `sm`
         and up only: it is the corner ellipse under the left-aligned copy.
       */}
       <div className="hero-scrim pointer-events-none absolute inset-0 z-[3]" />
       <div className="hero-scrim-side pointer-events-none absolute inset-0 z-[3] hidden sm:block" />
-
-      {/* ── Decoration (all aria-hidden, none of it clickable) ───────────── */}
-      {!reduced && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-[4] overflow-hidden">
-          <div
-            className="absolute -top-[20%] left-0 h-[140%] w-[45%] will-change-transform"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(243,213,179,0.22) 50%, transparent)",
-              transform: "translateX(-60%) skewX(-14deg)",
-              animation: "hero-glint 7s ease-in-out infinite",
-              animationPlayState: inView ? "running" : "paused",
-            }}
-          />
-        </div>
-      )}
-
-      {showDust && <HeroDust active={inView} />}
 
       {/* ── Slide label ───────────────────────────────────────────────
           Which development is on screen, credited above the pitch rather
@@ -722,8 +647,8 @@ function Carousel({
 }
 
 /**
- * One layer of the stack: the slide's media, and how it sits in the window
- * animation for its current role.
+ * One layer of the stack: the slide's media, and how it sits in the fade for
+ * its current role.
  *
  * The layer element is the same one from the moment it mounts as `next` to
  * the moment it is dropped as `previous` (Carousel keys it on slide.id), so
@@ -741,7 +666,7 @@ function SlideLayer({
 }: {
   slide: HeroStorySlide;
   role: LayerRole;
-  /** This layer is the one the window is opening right now. */
+  /** This layer is the one fading in right now. */
   opening: boolean;
   /** First slide only — the LCP image. */
   priority: boolean;
@@ -754,7 +679,7 @@ function SlideLayer({
 
   // A video is on screen from the top or not at all. One arriving as `next`
   // has loaded but not started; one going round again may have been left
-  // mid-way by a click (the layer under the window keeps playing, and with
+  // mid-way by a click (the layer under the fade keeps playing, and with
   // two slides it comes straight back as `next`), where play() would carry on
   // from wherever it stopped. So `next` parks it at the start, and only
   // `current` plays.
@@ -770,19 +695,14 @@ function SlideLayer({
     }
   }, [role]);
 
+  // The outgoing layer is left alone: it used to sink to scale(.96) beneath
+  // the window, and under a plain fade that shrink reads as the picture
+  // jumping back. The incoming one starts transparent, the same value the
+  // fade's first frame writes, so it never shows at full strength first.
   const layerStyle: CSSProperties =
-    role === "previous"
-      ? {
-          // Sinks a little as the window opens over it, which gives the
-          // change some depth.
-          transform: "scale(0.96)",
-          transition: "transform 1500ms cubic-bezier(0.65, 0, 0.35, 1)",
-        }
-      : role === "current" && opening
-        ? { clipPath: WINDOW_START_CLIP, willChange: "clip-path" }
-        : {};
+    role === "current" && opening ? { opacity: 0, willChange: "opacity" } : {};
 
-  // Zoom-out for the slide's hold time plus the window. It is on the
+  // Zoom-out for the slide's hold time plus the fade. It is on the
   // outgoing layer too, so the picture keeps moving while it is covered; it
   // is off for `next`, so it starts when the slide becomes visible.
   const zoomStyle: CSSProperties =
@@ -790,7 +710,7 @@ function SlideLayer({
       ? { transformOrigin: "60% 55%" }
       : {
           animationName: "hero-zoom-out",
-          animationDuration: `${Math.max(slide.durationSeconds, 1) + WINDOW_MS / 1000}s`,
+          animationDuration: `${Math.max(slide.durationSeconds, 1) + FADE_MS / 1000}s`,
           animationTimingFunction: "cubic-bezier(0.33, 0, 0.2, 1)",
           animationFillMode: "forwards",
           transformOrigin: "60% 55%",
@@ -817,7 +737,7 @@ function SlideLayer({
           loop={false}
           className="h-full w-full object-cover"
           // Only the slide on screen may end the slide or move its bar: the
-          // one going under the window is still playing, and its ticks would
+          // one going under the fade is still playing, and its ticks would
           // otherwise overwrite the new slide's progress.
           onEnded={role === "current" ? onAdvance : undefined}
           onTimeUpdate={
@@ -1008,116 +928,6 @@ function RailBar({
         onAnimationEnd={state === "current" && slide.mediaType === "IMAGE" ? onEnded : undefined}
       />
     </span>
-  );
-}
-
-type Particle = { x: number; y: number; r: number; v: number; a: number };
-
-/**
- * Sand-coloured motes drifting up the frame.
- *
- * The parent decides whether this exists at all (wide screen, enough cores,
- * no reduced motion). What it decides here is when to draw: the loop runs
- * only while `active` (the hero is on screen) and the tab is visible, and is
- * cancelled otherwise — a canvas repainting for a page nobody is looking at
- * is the cost this component exists to avoid.
- *
- * Sized to its own box, capped at 2× pixel density, at most 70 motes.
- */
-function HeroDust({ active }: { active: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const build = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const width = canvas.clientWidth;
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(canvas.clientHeight * dpr);
-
-      particlesRef.current = Array.from({ length: Math.min(70, Math.round(width / 22)) }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: (Math.random() * 1.4 + 0.4) * dpr,
-        v: (Math.random() * 0.25 + 0.05) * dpr,
-        a: Math.random() * Math.PI * 2,
-      }));
-    };
-
-    build();
-
-    let debounce = 0;
-    const onResize = () => {
-      window.clearTimeout(debounce);
-      debounce = window.setTimeout(build, 200);
-    };
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      window.clearTimeout(debounce);
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !active) return;
-
-    let raf = 0;
-    let running = false;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // accent-200. One fill colour, with the alpha set per mote — a fresh
-      // rgba() string per mote per frame is seventy parses a frame.
-      ctx.fillStyle = "rgb(243, 213, 179)";
-
-      for (const p of particlesRef.current) {
-        p.y -= p.v;
-        p.a += 0.01;
-        p.x += Math.sin(p.a) * 0.3;
-        if (p.y < -5) p.y = canvas.height + 5;
-
-        ctx.globalAlpha = 0.25 + 0.35 * Math.abs(Math.sin(p.a));
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      raf = requestAnimationFrame(draw);
-    };
-
-    const start = () => {
-      if (running || document.hidden) return;
-      running = true;
-      raf = requestAnimationFrame(draw);
-    };
-
-    const stop = () => {
-      running = false;
-      cancelAnimationFrame(raf);
-    };
-
-    const onVisibility = () => (document.hidden ? stop() : start());
-    document.addEventListener("visibilitychange", onVisibility);
-    start();
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      stop();
-    };
-  }, [active]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-[5] h-full w-full opacity-80"
-    />
   );
 }
 

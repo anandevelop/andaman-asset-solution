@@ -1653,22 +1653,6 @@
     }
   }
 
-  /* HeroCarousel's sunlight glint: one skewed strip crossing the frame every
-   7s, resting off screen for the last 40% of the cycle. Moved with
-   `transform` only, on its own layer — the mockup animated
-   `background-position` under `mix-blend-mode`, which repaints the whole
-   hero every frame for as long as the page is open. The component pauses it
-   (animation-play-state) while the hero is off screen. */
-  @keyframes hero-glint {
-    0% {
-      transform: translateX(-60%) skewX(-14deg);
-    }
-    60%,
-    100% {
-      transform: translateX(260%) skewX(-14deg);
-    }
-  }
-
   /* The bead that runs down the "Scroll" cue's line (HeroCarousel, xl and up).
    The bead is 40% of the line's height and starts at top: -40%, so running
    to top: 100% is a 140% trip — 350% of its own height, which is what the
