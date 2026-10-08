@@ -5,8 +5,11 @@
  *
  * Only the details that change without a deploy live here: phone number,
  * LINE OA, sales office address, the Meta Pixel ID and the Google Search
- * Console verification code. Brand copy, SEO defaults and legal paths
- * stay in config/site.ts, where a change is reviewable in a pull request.
+ * Console verification code — and the /projects banner, whose every key
+ * defaults to "" so that an untouched banner keeps the copy in messages/
+ * and the first project's photograph. Brand copy, SEO defaults and legal
+ * paths stay in config/site.ts, where a change is reviewable in a pull
+ * request.
  *
  * The merge is one-directional and total: config/site.ts is always the
  * fallback, so an empty settings table, an unreachable database, or a
@@ -76,6 +79,25 @@ export const SETTING_KEYS = [
   "analytics.metaPixelId",
   "analytics.gaMeasurementId",
   "analytics.googleSiteVerification",
+  /* The banner atop /projects, edited at /admin/pages/projects. Empty is
+     the default and means "the built-in": projects.eyebrow/title/subtitle
+     from messages/, and the first published project's photograph with its
+     name as the caption. The figures and the shortcut bar are counted from
+     the projects and are not editable. */
+  "projectsHero.imageUrl",
+  "projectsHero.imageCaption",
+  "projectsHero.eyebrowTh",
+  "projectsHero.eyebrowEn",
+  "projectsHero.eyebrowZh",
+  "projectsHero.eyebrowRu",
+  "projectsHero.titleTh",
+  "projectsHero.titleEn",
+  "projectsHero.titleZh",
+  "projectsHero.titleRu",
+  "projectsHero.subtitleTh",
+  "projectsHero.subtitleEn",
+  "projectsHero.subtitleZh",
+  "projectsHero.subtitleRu",
 ] as const;
 
 /**
@@ -91,6 +113,7 @@ export const IMAGE_SETTING_KEYS = [
   "branding.faviconUrl",
   "branding.logoUrl",
   "branding.ogImageUrl",
+  "projectsHero.imageUrl",
 ] as const satisfies readonly SettingKey[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -160,6 +183,14 @@ export type SiteSettings = {
      *  tag — just the code, not the whole tag. */
     googleSiteVerification: string;
   };
+  /** Each field "" when not overridden — see SETTING_KEYS. */
+  projectsHero: {
+    imageUrl: string;
+    imageCaption: string;
+    eyebrow: { th: string; en: string; zh: string; ru: string };
+    title: { th: string; en: string; zh: string; ru: string };
+    subtitle: { th: string; en: string; zh: string; ru: string };
+  };
 };
 
 /** config/site.ts flattened into the same key space, as the fallback. */
@@ -209,6 +240,20 @@ export function defaultSettings(): Record<SettingKey, string> {
     "analytics.metaPixelId": process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "",
     "analytics.gaMeasurementId": process.env.NEXT_PUBLIC_GA_ID ?? "",
     "analytics.googleSiteVerification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
+    "projectsHero.imageUrl": "",
+    "projectsHero.imageCaption": "",
+    "projectsHero.eyebrowTh": "",
+    "projectsHero.eyebrowEn": "",
+    "projectsHero.eyebrowZh": "",
+    "projectsHero.eyebrowRu": "",
+    "projectsHero.titleTh": "",
+    "projectsHero.titleEn": "",
+    "projectsHero.titleZh": "",
+    "projectsHero.titleRu": "",
+    "projectsHero.subtitleTh": "",
+    "projectsHero.subtitleEn": "",
+    "projectsHero.subtitleZh": "",
+    "projectsHero.subtitleRu": "",
   };
 }
 
@@ -369,6 +414,28 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       metaPixelId: values["analytics.metaPixelId"],
       gaMeasurementId: values["analytics.gaMeasurementId"],
       googleSiteVerification: values["analytics.googleSiteVerification"],
+    },
+    projectsHero: {
+      imageUrl: values["projectsHero.imageUrl"],
+      imageCaption: values["projectsHero.imageCaption"],
+      eyebrow: {
+        th: values["projectsHero.eyebrowTh"],
+        en: values["projectsHero.eyebrowEn"],
+        zh: values["projectsHero.eyebrowZh"],
+        ru: values["projectsHero.eyebrowRu"],
+      },
+      title: {
+        th: values["projectsHero.titleTh"],
+        en: values["projectsHero.titleEn"],
+        zh: values["projectsHero.titleZh"],
+        ru: values["projectsHero.titleRu"],
+      },
+      subtitle: {
+        th: values["projectsHero.subtitleTh"],
+        en: values["projectsHero.subtitleEn"],
+        zh: values["projectsHero.subtitleZh"],
+        ru: values["projectsHero.subtitleRu"],
+      },
     },
   };
 }

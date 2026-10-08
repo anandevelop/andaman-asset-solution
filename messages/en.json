@@ -657,6 +657,20 @@
       "subtitle": "The standing pages of the public site, section by section · a section's order lives on the Home tab, its words on the section's own",
       "contact": {
         "addressGroup": "Address & opening hours · {lang}"
+      },
+      "projectsHero": {
+        "heading": "Projects page banner",
+        "intro": "The banner at the top of the public Projects page: its photograph, the caption in its corner, and its text in each language. The figures and the shortcuts to each project are counted from the projects themselves.",
+        "blankNote": "Every field is optional. A blank field uses the built-in: the text shown in grey, and the photograph of the first project in the list.",
+        "imageGroup": "Background image",
+        "image": "Background image",
+        "imageHint": "A wide landscape photograph, at least 2400 px across. Remove it to go back to the first project's photograph.",
+        "caption": "Image caption",
+        "captionHint": "Shown in the bottom-right corner, usually the project in the photograph. Leave blank for no caption on an uploaded image.",
+        "textGroup": "Text · {lang}",
+        "eyebrow": "Eyebrow",
+        "title": "Heading",
+        "subtitle": "Subheading"
       }
     },
     "tabs": {
@@ -665,7 +679,8 @@
         "home": "Home",
         "about": "About us",
         "contact": "Contact",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "projects": "Projects"
       },
       "pagesAbout": {
         "label": "About page section",

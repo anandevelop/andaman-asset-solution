@@ -1653,6 +1653,39 @@ const imageSetting = (extensions: RegExp, message: string) =>
     );
 
 const RASTER_EXT = /\.(png|jpe?g|webp|avif)(\?.*)?$/i;
+
+/**
+ * True for a /public path or a URL on our own media host — the hosts
+ * next/image is configured to serve (next.config.js, remotePatterns).
+ *
+ * For an image setting that is drawn through next/image, as the /projects
+ * banner is. The paste-a-URL box would otherwise accept a link to any site,
+ * and next/image throws on a host it was not told about: the whole page
+ * returns a 500, in every language, until someone clears the field. That
+ * was reproduced before this check existed. The brand assets above are not
+ * held to it because none of them goes through next/image.
+ *
+ * The origin alias is the same rule next.config.js applies: uploads made
+ * before the CDN name was configured still point at the bare Spaces host.
+ * NEXT_PUBLIC_MEDIA_DOMAIN is read literally so it is inlined at build
+ * time — see the note in lib/env.ts.
+ */
+export function isOwnMediaUrl(value: string): boolean {
+  if (value.startsWith("/") && !value.startsWith("//")) return true;
+
+  const domain = (process.env.NEXT_PUBLIC_MEDIA_DOMAIN ?? "")
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
+  if (!domain) return false;
+
+  const hosts = [domain, domain.replace(".cdn.digitaloceanspaces.com", ".digitaloceanspaces.com")];
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && hosts.includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
 const ICON_EXT = /\.(png|ico)(\?.*)?$/i;
 
 /** Decimal degrees within ±`limit`. Stored as a string, like every other
@@ -1683,6 +1716,10 @@ export const META_TITLE_MAX = 120;
 export const META_DESCRIPTION_MAX = 320;
 
 export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> = {
+  "projectsHero.imageUrl": imageSetting(RASTER_EXT, "Use a PNG, JPEG, WebP or AVIF image").refine(
+    isOwnMediaUrl,
+    "Upload the photo here rather than linking to another site",
+  ),
   "contact.phone": z
     .string()
     .regex(/^[0-9+()\-\s]{6,20}$/, "Enter a valid phone number"),

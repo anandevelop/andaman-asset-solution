@@ -174,6 +174,10 @@ export const NAV_TAB_GROUPS = {
        to ADMIN with a disabled fieldset, exactly as settings did. */
     { key: "contact", segment: "/contact", roles: ROLE_SETS.CONTENT },
     { key: "faq", segment: "/faq", roles: ROLE_SETS.CONTENT },
+    /* The /projects listing page's banner — the page itself, not the
+       projects in it, which stay under the Projects rail item. Read-only
+       below ADMIN, like contact: both save through updateSettings. */
+    { key: "projects", segment: "/projects", roles: ROLE_SETS.CONTENT },
   ],
   pagesAbout: [
     /* First, because it is the top of the public page and the thing

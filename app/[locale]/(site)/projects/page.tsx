@@ -43,6 +43,8 @@ import {
 } from "@/lib/project-filters";
 import { PROPERTY_TYPES, PROJECT_STATUSES } from "@/lib/validations";
 import { robotsMetadata } from "@/lib/indexing";
+import { getSiteSettings } from "@/lib/settings";
+import { resolveProjectsHero } from "@/lib/projects-hero";
 
 /*
   One hour for the unfiltered page. Filtered views read searchParams, which
@@ -90,7 +92,7 @@ export default async function ProjectsPage(props: Props) {
 
   const filters = parseProjectFilters(searchParams);
 
-  const [t, tNav, projects, facets, portfolio, allProjects] = await Promise.all([
+  const [t, tNav, projects, facets, portfolio, allProjects, settings] = await Promise.all([
     getTranslations("projects"),
     getTranslations("nav"),
     getPublishedProjects(locale, filters),
@@ -105,6 +107,8 @@ export default async function ProjectsPage(props: Props) {
       zero on the canonical one, where it's the same call as above.
     */
     getPublishedProjects(locale),
+    // The banner's editable copy and photo (/admin/pages/projects).
+    getSiteSettings(),
   ]);
 
   const filtered = hasActiveFilters(filters);
@@ -112,7 +116,18 @@ export default async function ProjectsPage(props: Props) {
   // The first published project by the sortOrder the team curated — the
   // same order getPublishedProjects returns by default — lends the hero its
   // photograph, and the credit badge names it, so the two cannot disagree.
+  // Unless an editor has uploaded a photograph of their own; see below.
   const heroProject = allProjects[0] ?? null;
+
+  // What an editor saved at /admin/pages/projects, field by field, over the
+  // built-in copy and that first project's photograph.
+  const hero = resolveProjectsHero(settings.projectsHero, locale, {
+    eyebrow: t("eyebrow"),
+    title: t("title"),
+    subtitle: t("subtitle"),
+    creditSuffix: t("hero.imageCredit"),
+    project: heroProject,
+  });
 
   const heroStats = [
     {
@@ -184,22 +199,11 @@ export default async function ProjectsPage(props: Props) {
           copy rather than at the top of the frame. */}
       <ProjectsHero
         breadcrumb={<Breadcrumb items={trail} tone="onImage" />}
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        subtitle={t("subtitle")}
-        image={
-          heroProject?.heroImageUrl
-            ? {
-                url: heroProject.heroImageUrl,
-                alt: `${heroProject.name} — ${heroProject.location}`,
-              }
-            : null
-        }
-        credit={
-          heroProject?.heroImageUrl
-            ? { name: heroProject.name, suffix: t("hero.imageCredit") }
-            : null
-        }
+        eyebrow={hero.eyebrow}
+        title={hero.title}
+        subtitle={hero.subtitle}
+        image={hero.image}
+        credit={hero.credit}
         stats={heroStats}
         shortcuts={shortcuts}
         shortcutsLabel={t("hero.shortcutsLabel")}
