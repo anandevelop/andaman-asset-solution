@@ -36,6 +36,9 @@ import { formatNumber } from "@/lib/format";
 import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 import { robotsMetadata } from "@/lib/indexing";
+import EditableSection from "@/components/edit/EditableSection";
+import EditTarget from "@/components/edit/EditTarget";
+import { ITEM_EDIT_HREF, projectSectionLinks } from "@/lib/edit-mode";
 
 // Every slug is resolved on demand (nothing is prerendered at build — see
 // app/[locale]/layout.tsx), cached by ISR after its first request, and one
@@ -367,8 +370,12 @@ export default async function ProjectPage(props: Props) {
     { name: project.name, path: `/projects/${project.slug}` },
   ]);
 
+  // Where each band's "Edit" pill goes — see lib/edit-mode.ts.
+  const editLinks = projectSectionLinks(project.id);
+
   return (
     <>
+      <EditTarget labelKey="projectOverview" href={ITEM_EDIT_HREF.project(project.id)} />
       {/*
         RealEstateListing extends Place, so address/geo describe the
         development itself. No `offers` block — the site doesn't publish
@@ -455,6 +462,7 @@ export default async function ProjectPage(props: Props) {
           height (not h-screen/100vh) so mobile Safari's collapsing address
           bar doesn't leave a gap the moment the page settles. Desktop's
           sm:h-[88vh] is untouched — its stat card sits well clear already. */}
+      <EditableSection links={editLinks.hero}>
       <section className="relative flex h-dvh min-h-[560px] w-full items-end overflow-hidden sm:h-[88vh]">
         {heroIsVideo ? (
           <video
@@ -625,6 +633,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
 
       {/* ── Stat bar (overlaps the Hero's bottom edge) ──────────────────
           Pulled up on top of the photo/video by the negative top margin,
@@ -645,6 +654,7 @@ export default async function ProjectPage(props: Props) {
           full-width text block when there's no image, so a project seeded
           before this field existed still renders without a layout gap. ── */}
       {project.conceptDesign && (
+        <EditableSection links={editLinks.narrative}>
         <section className="container-luxe py-20 sm:py-28">
           {project.conceptDesignImageUrl ? (
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -684,6 +694,7 @@ export default async function ProjectPage(props: Props) {
             </Reveal>
           )}
         </section>
+        </EditableSection>
       )}
 
       {/* ── About This Project (conditional — not every Sale Kit has one) ──
@@ -692,6 +703,7 @@ export default async function ProjectPage(props: Props) {
           split sections don't repeat the same left/right rhythm. Same
           text-only fallback when there's no image. ────────────────────── */}
       {project.aboutThisProject && (
+        <EditableSection links={editLinks.narrative}>
         <section className="bg-primary-900/3 py-20 sm:py-28">
           <div className="container-luxe">
             {project.aboutThisProjectImageUrl ? (
@@ -733,6 +745,7 @@ export default async function ProjectPage(props: Props) {
             )}
           </div>
         </section>
+        </EditableSection>
       )}
 
       {/* ── Facilities — photo wall (Land & Houses reference) ──────────
@@ -758,6 +771,7 @@ export default async function ProjectPage(props: Props) {
           which would make the section noticeably taller than every other
           section on the page for no benefit. */}
       {facilities.length > 0 && (
+        <EditableSection links={editLinks.facilities}>
         <section className="container-luxe py-20 sm:py-28">
           <Reveal>
             <p className="eyebrow">{t(`status.${project.status}` as any)}</p>
@@ -780,6 +794,7 @@ export default async function ProjectPage(props: Props) {
             )}
           </div>
         </section>
+        </EditableSection>
       )}
 
       {/* ── Special Features section removed from the public page by
@@ -791,6 +806,7 @@ export default async function ProjectPage(props: Props) {
 
       {/* ── Gallery ──────────────────────────────────────────────────── */}
       {villaImages.length > 0 && (
+        <EditableSection links={editLinks.gallery}>
         <section className="container-luxe pb-20 sm:pb-28">
           <Reveal>
             <h2 className="text-2xl font-light text-primary sm:text-3xl">
@@ -814,6 +830,7 @@ export default async function ProjectPage(props: Props) {
             />
           </div>
         </section>
+        </EditableSection>
       )}
 
       {/* ── Unit Types ───────────────────────────────────────────────
@@ -823,6 +840,7 @@ export default async function ProjectPage(props: Props) {
           format there would either duplicate the locale's number rules or
           travel as a template — see components/unit-types/types.ts. */}
       {elevatorTypes.length > 0 && (
+        <EditableSection links={editLinks.unitTypes}>
         <UnitTypesElevator
           projectName={project.name}
           types={elevatorTypes}
@@ -845,10 +863,12 @@ export default async function ProjectPage(props: Props) {
             floorSelector: ut("floorSelector"),
           }}
         />
+        </EditableSection>
       )}
 
       {/* ── Site Plan + Unit Status ──────────────────────────────────── */}
       {(project.masterPlanImageUrl || units.length > 0) && (
+        <EditableSection links={editLinks.sitePlan}>
         <section id="site-plan" className="scroll-mt-24 container-luxe py-20 sm:py-28">
           <Reveal>
             <p className="eyebrow">{t("sitePlanEyebrow")}</p>
@@ -917,6 +937,7 @@ export default async function ProjectPage(props: Props) {
             </div>
           )}
         </section>
+        </EditableSection>
       )}
 
       {/* ── Location & Map ──────────────────────────────────────────── */}
@@ -930,6 +951,7 @@ export default async function ProjectPage(props: Props) {
           endpoint takes a lat/lng pair, not an arbitrary share link);
           mapViewUrl/mapDirectionsUrl always resolve to something once
           there's a location — see the computation above. */}
+      <EditableSection links={editLinks.location}>
       <section className="py-20 sm:py-28">
         <div className="container-luxe">
           <Reveal>
@@ -963,9 +985,11 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
 
       {/* ── Construction progress (from ProjectProgress) ─────────────── */}
       {/* id targeted by /progress — scroll-mt clears the sticky navbar. */}
+      <EditableSection links={editLinks.progress}>
       <section id="progress" className="scroll-mt-24 bg-primary-900/3 py-20 sm:py-28">
         <div className="container-luxe">
           <Reveal>
@@ -989,6 +1013,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
 
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
       {/*

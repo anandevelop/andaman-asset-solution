@@ -91,8 +91,9 @@ export const siteConfig = {
    * entry answers "how do I reach your office from my flight", and the two
    * are measured from different places.
    */
+  // The name is messages' map.airportName, so it reads in each language
+  // and can be changed at /admin/pages/copy; only the pin lives here.
   airport: {
-    name: "Phuket International Airport",
     latitude: 8.1132,
     longitude: 98.3169,
   },

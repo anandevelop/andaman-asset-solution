@@ -162,7 +162,8 @@
     "corporateAwards": "企业荣誉",
     "propertyAwards": "项目荣誉",
     "awardsCount": "{count, plural, other {# 项荣誉}}",
-    "empty": "获奖信息将在公布后发布于此。"
+    "empty": "获奖信息将在公布后发布于此。",
+    "heroCaption": "The Victory — Cherngtalay, Phuket"
   },
   "contact": {
     "eyebrow": "联系我们",
@@ -210,7 +211,8 @@
     "gettingHere": "如何前往",
     "visitProjects": "参观我们的项目",
     "noteDrive": "从项目出发的驾车时间。点按地点查看路线。",
-    "noteStraight": "距离为从办公室出发的直线距离。点按查看驾车路线。"
+    "noteStraight": "距离为从办公室出发的直线距离。点按查看驾车路线。",
+    "airportName": "普吉国际机场"
   },
   "progress": {
     "eyebrow": "施工进度",
@@ -674,6 +676,93 @@
         "eyebrow": "标题上方小字",
         "title": "标题",
         "subtitle": "副标题"
+      },
+      "copy": {
+        "heading": "网站文案",
+        "intro": "Every heading, button label and line of text on the public site, all four languages in one row. Each box shows what visitors see now; change it and save.",
+        "searchLabel": "Search copy",
+        "searchPlaceholder": "Type words as they read on the site, in any language",
+        "sections": "Site sections",
+        "results": "{count, plural, one {# string matches} other {# strings match}} “{query}”.",
+        "truncated": "Showing the first {count}.",
+        "defaultWas": "Default:",
+        "placeholders": "{list} filled in by the site. Move it, don't translate it",
+        "errors": {
+          "syntax": "This is not valid message syntax. Check that every curly bracket is closed.",
+          "unknownArgument": "{name} cannot be used in this text. Only the values listed under the box are available.",
+          "unknownTag": "The {name} tag cannot be used in this text.",
+          "some": "Not saved: some fields need fixing first."
+        },
+        "ns": {
+          "nav": "Navigation",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "progress": "Progress",
+          "news": "News",
+          "events": "Events",
+          "eBrochure": "E-Brochure",
+          "achievements": "Achievements",
+          "awards": "Awards",
+          "salesTeam": "Sales team",
+          "contact": "Contact",
+          "leadForm": "Enquiry form",
+          "map": "Map",
+          "footer": "Footer",
+          "common": "Buttons & common words",
+          "chatButtons": "Chat buttons",
+          "cookieConsent": "Cookie banner",
+          "legalPage": "Legal pages",
+          "achievementsPage": "Achievements page (text)",
+          "privacyPolicy": "Privacy policy",
+          "terms": "Terms of use"
+        },
+        "editSectionHeading": "Edit this section's heading and text",
+        "legalNote": "You can change the wording here, but the version and effective date stay as they are. For a substantive change to the policy, ask a developer to bump the version too: customers' PDPA consent is recorded against it.",
+        "pickTip": "Spotted something while browsing the site? Press “Edit text” in the bar at the top of the site, then click the words.",
+        "general": "General",
+        "primaryLanguage": "Source language",
+        "viewOnSite": "View this section on the site",
+        "empty": "Nothing matches this filter.",
+        "changedCount": "{count, plural, one {# string edited} other {# strings edited}}",
+        "reviewRow": "Thai changed. Check the other languages",
+        "useDefault": "Use default",
+        "unsaved": "{count, plural, one {# change} other {# changes}} not saved",
+        "discard": "Discard changes",
+        "saveAndPublish": "Save and publish",
+        "savedCount": "{count, plural, one {# change} other {# changes}} saved. The site is updated.",
+        "filter": {
+          "label": "Filter by status",
+          "all": "All",
+          "edited": "Edited",
+          "review": "Needs review"
+        },
+        "status": {
+          "default": "Default",
+          "edited": "Edited",
+          "unsaved": "Not saved",
+          "willReset": "Will use the default",
+          "review": "Check against the Thai"
+        },
+        "groups": {
+          "everywhere": "On every page",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "newsEvents": "News · Events",
+          "contact": "Contact",
+          "legal": "Policies"
+        },
+        "kinds": {
+          "heading": "Heading",
+          "eyebrow": "Eyebrow",
+          "button": "Button / link",
+          "placeholder": "Field placeholder",
+          "message": "Message",
+          "label": "Label",
+          "paragraph": "Paragraph",
+          "text": "Text"
+        }
       }
     },
     "tabs": {
@@ -683,7 +772,8 @@
         "about": "关于我们",
         "contact": "联系我们",
         "faq": "常见问题",
-        "projects": "项目"
+        "projects": "项目",
+        "copy": "网站文案"
       },
       "pagesAbout": {
         "label": "关于我们板块",
@@ -4019,5 +4109,79 @@
     "needHelp": "需要帮助？",
     "needHelpBody": "如果您对个人数据有任何疑问，我们的团队很乐意为您提供帮助。",
     "contactCta": "联系我们"
+  },
+  "editMode": {
+    "bar": {
+      "label": "网站编辑栏",
+      "viewingAs": "当前身份：<b>{role}</b>",
+      "toggle": "显示编辑按钮",
+      "editPage": "编辑此页",
+      "reorder": "调整版块顺序",
+      "dashboard": "进入后台",
+      "pickText": "编辑文字",
+      "pickTextOn": "正在选择文字 · 按 Esc 退出",
+      "pickTextHint": "点击页面上的文字，即可编辑四种语言"
+    },
+    "editLabel": "编辑{name}",
+    "editItem": "编辑此项",
+    "editors": {
+      "homePage": "首页",
+      "heroSlides": "首页横幅",
+      "aboutStory": "公司故事",
+      "homeGallery": "图片栏",
+      "aboutMission": "愿景与使命",
+      "aboutCorporate": "企业信息",
+      "aboutAwards": "奖项",
+      "aboutWhyUs": "选择我们的理由",
+      "aboutMilestones": "发展历程",
+      "faq": "常见问题",
+      "closingCta": "底部号召栏",
+      "contactPage": "联系页面",
+      "projectsBanner": "项目页横幅",
+      "projects": "项目",
+      "news": "新闻",
+      "events": "活动",
+      "brochures": "电子手册",
+      "progress": "工程进度",
+      "siteCopy": "页面文字",
+      "projectOverview": "项目信息",
+      "projectContent": "项目文案",
+      "projectFacilities": "配套设施",
+      "projectUnitTypes": "户型",
+      "projectSitePlan": "总平面图",
+      "projectUnits": "房源状态",
+      "article": "此新闻",
+      "event": "此活动",
+      "brochure": "此电子手册"
+    },
+    "picker": {
+      "hint": "点击页面上的任意文字进行编辑 · 按 Esc 退出",
+      "title": "编辑文字",
+      "close": "关闭",
+      "loading": "正在查找这段文字…",
+      "notFound": "这段文字无法在此编辑",
+      "failedLookup": "查找失败，请重试",
+      "notFoundHint": "它可能是项目、新闻或活动内容，或是图片的一部分。请使用该版块的“编辑…”按钮。",
+      "matches": "这段文字用在多个位置，请选择要编辑的一处。",
+      "primaryLanguage": "源语言",
+      "status": {
+        "default": "默认",
+        "edited": "已修改",
+        "unsaved": "未保存"
+      },
+      "useDefault": "使用默认",
+      "placeholders": "{list} 由网站自动填入，可移动位置，请勿翻译",
+      "previewNote": "本页会实时预览您输入的内容，保存后访客才会看到。",
+      "openInAdmin": "在后台打开",
+      "cancel": "取消",
+      "save": "保存",
+      "saving": "正在保存…",
+      "saveFailed": "保存失败，请重试",
+      "errors": {
+        "syntax": "文本格式无效，请检查花括号是否成对。",
+        "unknownArgument": "此文本中不能使用 {name}。",
+        "unknownTag": "此文本中不能使用 {name} 标签。"
+      }
+    }
   }
 }

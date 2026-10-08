@@ -19,6 +19,9 @@ import { getSiteSettings } from "@/lib/settings";
 import { getCtaMounts } from "@/lib/site-cta";
 import PageViewBeacon from "@/components/PageViewBeacon";
 import WebVitalsBeacon from "@/components/WebVitalsBeacon";
+import EditModeProvider from "@/components/edit/EditModeProvider";
+import EditableSection from "@/components/edit/EditableSection";
+import { SITE_CTA_LINKS } from "@/lib/edit-mode";
 
 type Props = {
   children: React.ReactNode;
@@ -114,52 +117,63 @@ export default async function SiteLayout({ children, params }: Props) {
           Navbar carries its own print:hidden directly on its <header> now,
           not a wrapping <div> here — see the comment on that element for
           why a same-height wrapper silently breaks its `sticky` behaviour. */}
-      <Navbar
-        phone={settings.contact.phone}
-        phoneDisplay={settings.contact.phoneDisplay}
-        whatsapp={settings.contact.whatsapp}
-        logoUrl={settings.branding.logoUrl}
-      />
+      {/*
+        Everything from here down sits inside the edit-mode provider: it
+        draws the editors-only admin bar above the navbar and lets each
+        <EditableSection> on the page show its "Edit" pill. It decides in
+        the browser, after hydration, so the cached HTML every visitor
+        receives is identical — see lib/edit-mode.ts.
+      */}
+      <EditModeProvider locale={locale}>
+        <Navbar
+          phone={settings.contact.phone}
+          phoneDisplay={settings.contact.phoneDisplay}
+          whatsapp={settings.contact.whatsapp}
+          logoUrl={settings.branding.logoUrl}
+        />
 
-      {/* tabIndex={-1} so the skip link can actually move focus here.
-          Without it the browser scrolls but focus stays in the header, and
-          the next Tab drops the user back at the top of the nav. */}
-      <main id="main" tabIndex={-1} className="focus:outline-hidden">
-        {children}
+        {/* tabIndex={-1} so the skip link can actually move focus here.
+            Without it the browser scrolls but focus stays in the header, and
+            the next Tab drops the user back at the top of the nav. */}
+        <main id="main" tabIndex={-1} className="focus:outline-hidden">
+          {children}
+
+          <div className="print:hidden">
+            {/* "Our Sales" — mounted once here rather than per-page so it
+                appears at the bottom of every public page, not just /about and
+                /contact (its original two homes; see the removed imports in
+                those page files). It fetches and renders nothing itself when
+                there's no active sales team, so it's safe to mount
+                unconditionally site-wide. */}
+            <SalesTeamSection />
+
+            {/* The closing invitation, below "Our Sales" and immediately above
+                the footer. Mounted here rather than on the home page because
+                the order is decided here: a section inside `children` can only
+                ever land above the sales strip.
+
+                Every editable block is mounted, each behind the routes it was
+                assigned at /admin/pages/home/cta, and RouteGate drops all but the one
+                this page matches. It has to be done this way round: a layout
+                is never told which page it is wrapping, and reading the path
+                from headers() to pick a single block server-side would make
+                every route dynamic. The gate's check runs during server
+                rendering too, so the HTML still contains exactly one band.
+                See lib/site-cta.ts. */}
+            {mounts.map(({ key, only, except, block, variant }) => (
+              <RouteGate key={key} only={only} except={except}>
+                <EditableSection links={SITE_CTA_LINKS}>
+                  <SiteCta block={block} variant={variant} />
+                </EditableSection>
+              </RouteGate>
+            ))}
+          </div>
+        </main>
 
         <div className="print:hidden">
-          {/* "Our Sales" — mounted once here rather than per-page so it
-              appears at the bottom of every public page, not just /about and
-              /contact (its original two homes; see the removed imports in
-              those page files). It fetches and renders nothing itself when
-              there's no active sales team, so it's safe to mount
-              unconditionally site-wide. */}
-          <SalesTeamSection />
-
-          {/* The closing invitation, below "Our Sales" and immediately above
-              the footer. Mounted here rather than on the home page because
-              the order is decided here: a section inside `children` can only
-              ever land above the sales strip.
-
-              Every editable block is mounted, each behind the routes it was
-              assigned at /admin/pages/home/cta, and RouteGate drops all but the one
-              this page matches. It has to be done this way round: a layout
-              is never told which page it is wrapping, and reading the path
-              from headers() to pick a single block server-side would make
-              every route dynamic. The gate's check runs during server
-              rendering too, so the HTML still contains exactly one band.
-              See lib/site-cta.ts. */}
-          {mounts.map(({ key, only, except, block, variant }) => (
-            <RouteGate key={key} only={only} except={except}>
-              <SiteCta block={block} variant={variant} />
-            </RouteGate>
-          ))}
+          <Footer />
         </div>
-      </main>
-
-      <div className="print:hidden">
-        <Footer />
-      </div>
+      </EditModeProvider>
 
       {/*
         Mounted only inside the public site group, not the root layout —

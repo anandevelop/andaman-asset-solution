@@ -28,6 +28,7 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import AdminDrawer from "@/components/admin/ui/AdminDrawer";
 import CollectionGrid, { collectionHref } from "@/components/admin/ui/CollectionGrid";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import SectionCopyLink from "@/components/admin/SectionCopyLink";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ lang?: string; edit?: string }> };
 
@@ -83,6 +84,8 @@ export default async function AdminCorporatePage(props: Props) {
           ) : undefined
         }
       />
+
+      <SectionCopyLink locale={locale} prefix="home.corporate." lang={searchParams.lang} />
 
       {isDatabaseOffline() && (
         <p className="rounded-control border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">

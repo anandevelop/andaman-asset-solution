@@ -28,6 +28,8 @@ import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { truncate } from "@/lib/markdown-text";
 import { intlLocale } from "@/lib/format";
 import { robotsMetadata } from "@/lib/indexing";
+import EditTarget from "@/components/edit/EditTarget";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 export const dynamicParams = true;
 export const revalidate = 120;
@@ -147,6 +149,7 @@ export default async function EventPage(props: Props) {
 
   return (
     <>
+      <EditTarget labelKey="event" href={ITEM_EDIT_HREF.event(event.id)} />
       <JsonLd
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}

@@ -1,4 +1,4 @@
-const withNextIntl = require("next-intl/plugin")("./i18n.ts");
+const withNextIntl = require("next-intl/plugin")("./i18n-request.ts");
 
 /**
  * The media host is where every uploaded asset is served from — currently a

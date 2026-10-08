@@ -94,17 +94,17 @@ describe("the menu each role sees", () => {
     SUPER_ADMIN: {
       rail: ["activity", "analytics", "clubAgents", "clubPartners", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
     ADMIN: {
       rail: ["analytics", "clubAgents", "clubPartners", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
     EDITOR: {
       rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing", "salesTeam"],
       drawerExtra: [],
-      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations"],
+      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations"],
     },
     SALES: {
       rail: ["clubAgents", "clubPartners", "clubResidents", "dashboard", "leads", "salesTeam"],
@@ -114,7 +114,7 @@ describe("the menu each role sees", () => {
     VIEWER: {
       rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing"],
       drawerExtra: [],
-      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects"],
+      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects"],
     },
   };
 
@@ -243,6 +243,7 @@ describe("the Pages hub", () => {
       "/contact",
       "/faq",
       "/projects",
+      "/copy",
     ]);
     /* Home has no strip: it drew an order list and three editors as peers,
        which is what kept the order list from being a picture of the page.

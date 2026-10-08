@@ -155,7 +155,7 @@ export default async function ContactPage(props: Props) {
       items: [
         {
           id: "airport",
-          name: airport.name,
+          name: tMap("airportName"),
           distanceKm: office
             ? haversineKm(office, { lat: airport.latitude, lng: airport.longitude })
             : null,

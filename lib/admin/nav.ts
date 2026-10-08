@@ -181,6 +181,10 @@ export const NAV_TAB_GROUPS = {
        projects in it, which stay under the Projects rail item. Read-only
        below ADMIN, like contact: both save through updateSettings. */
     { key: "projects", segment: "/projects", roles: ROLE_SETS.CONTENT },
+    /* Every remaining string of the public site — the headings, eyebrows
+       and labels around the content the tabs above edit. Last, because it
+       is the fallback when no section editor has the field. */
+    { key: "copy", segment: "/copy", roles: ROLE_SETS.CONTENT },
   ],
   pagesAbout: [
     /* First, because it is the top of the public page and the thing

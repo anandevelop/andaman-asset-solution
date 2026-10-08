@@ -27,6 +27,8 @@ import JsonLd from "@/components/JsonLd";
 import { siteConfig } from "@/config/site";
 import { getBrochureBySlug } from "@/lib/brochures";
 import { DatabaseUnavailableError, isDatabaseOffline } from "@/lib/db";
+import EditTarget from "@/components/edit/EditTarget";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 export const revalidate = 3600;
 
@@ -98,6 +100,7 @@ export default async function EBrochurePage(props: Props) {
 
   return (
     <>
+      <EditTarget labelKey="brochure" href={ITEM_EDIT_HREF.brochure(brochure.id)} />
       <JsonLd
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}

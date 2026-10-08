@@ -2247,6 +2247,27 @@ model SiteSetting {
   @@map("site_settings")
 }
 
+/// An admin's replacement for one string of the public site's copy, in one
+/// language — `key` is the dotted message path ("home.corporate.title").
+///
+/// messages/<locale>.json stays the default and the only place a key can
+/// come into existence; i18n.ts lays these rows over it and ignores any
+/// whose key the JSON no longer has. Deleting the row restores the default.
+/// See lib/site-copy-core.ts for which namespaces are editable and why an
+/// override may not invent placeholders.
+model SiteCopy {
+  id     String @id @default(cuid())
+  locale String
+  key    String
+  value  String @db.Text
+
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, key])
+  @@map("site_copy")
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // MEDIA LIBRARY
 // ─────────────────────────────────────────────────────────────────────────

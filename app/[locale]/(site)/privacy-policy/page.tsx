@@ -10,6 +10,8 @@ import LegalPolicyPage from "@/components/LegalPolicyPage";
 import { getPrivacyPolicy } from "@/content/privacy-policy";
 import { intlLocale } from "@/lib/format";
 import { robotsMetadata } from "@/lib/indexing";
+import { withCopyOverrides } from "@/lib/site-copy";
+import { getSiteSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -24,7 +26,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     locale
   } = params;
 
-  const policy = getPrivacyPolicy(locale);
+  const policy = await withCopyOverrides("privacyPolicy", getPrivacyPolicy(locale), locale);
 
   return {
     title: policy.title,
@@ -43,7 +45,7 @@ export default async function PrivacyPolicyPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const policy = getPrivacyPolicy(locale);
+  const policy = await withCopyOverrides("privacyPolicy", getPrivacyPolicy(locale), locale);
 
   const effectiveDate = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
@@ -51,10 +53,11 @@ export default async function PrivacyPolicyPage(props: Props) {
     year: "numeric",
   }).format(new Date(policy.effectiveDate));
 
-  const [tNav, tFooter, tLegal] = await Promise.all([
+  const [tNav, tFooter, tLegal, { contact }] = await Promise.all([
     getTranslations("nav"),
     getTranslations("footer"),
     getTranslations("legalPage"),
+    getSiteSettings(),
   ]);
 
   /*
@@ -82,6 +85,7 @@ export default async function PrivacyPolicyPage(props: Props) {
           eyebrowIcon={<ShieldCheck size={14} />}
           eyebrowLabel="PDPA"
           content={policy}
+          contact={contact}
           effectiveDateFormatted={effectiveDate}
           strings={{
             tableOfContents: tLegal("tableOfContents"),

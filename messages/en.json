@@ -162,7 +162,8 @@
     "corporateAwards": "Corporate Awards",
     "propertyAwards": "Property Awards",
     "awardsCount": "{count, plural, one {# award} other {# awards}}",
-    "empty": "Awards will be published here as they are announced."
+    "empty": "Awards will be published here as they are announced.",
+    "heroCaption": "The Victory — Cherngtalay, Phuket"
   },
   "contact": {
     "eyebrow": "Contact",
@@ -210,7 +211,8 @@
     "gettingHere": "Getting here",
     "visitProjects": "Visit our projects",
     "noteDrive": "Drive times from the project. Tap a place to see the route.",
-    "noteStraight": "Distances are straight-line from the office. Tap for the driving route."
+    "noteStraight": "Distances are straight-line from the office. Tap for the driving route.",
+    "airportName": "Phuket International Airport"
   },
   "progress": {
     "eyebrow": "Construction Progress",
@@ -674,6 +676,93 @@
         "eyebrow": "Eyebrow",
         "title": "Heading",
         "subtitle": "Subheading"
+      },
+      "copy": {
+        "heading": "Site copy",
+        "intro": "Every heading, button label and line of text on the public site, all four languages in one row. Each box shows what visitors see now; change it and save.",
+        "searchLabel": "Search copy",
+        "searchPlaceholder": "Type words as they read on the site, in any language",
+        "sections": "Site sections",
+        "results": "{count, plural, one {# string matches} other {# strings match}} “{query}”.",
+        "truncated": "Showing the first {count}.",
+        "defaultWas": "Default:",
+        "placeholders": "{list} filled in by the site. Move it, don't translate it",
+        "errors": {
+          "syntax": "This is not valid message syntax. Check that every curly bracket is closed.",
+          "unknownArgument": "{name} cannot be used in this text. Only the values listed under the box are available.",
+          "unknownTag": "The {name} tag cannot be used in this text.",
+          "some": "Not saved: some fields need fixing first."
+        },
+        "ns": {
+          "nav": "Navigation",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "progress": "Progress",
+          "news": "News",
+          "events": "Events",
+          "eBrochure": "E-Brochure",
+          "achievements": "Achievements",
+          "awards": "Awards",
+          "salesTeam": "Sales team",
+          "contact": "Contact",
+          "leadForm": "Enquiry form",
+          "map": "Map",
+          "footer": "Footer",
+          "common": "Buttons & common words",
+          "chatButtons": "Chat buttons",
+          "cookieConsent": "Cookie banner",
+          "legalPage": "Legal pages",
+          "achievementsPage": "Achievements page (text)",
+          "privacyPolicy": "Privacy policy",
+          "terms": "Terms of use"
+        },
+        "editSectionHeading": "Edit this section's heading and text",
+        "legalNote": "You can change the wording here, but the version and effective date stay as they are. For a substantive change to the policy, ask a developer to bump the version too: customers' PDPA consent is recorded against it.",
+        "pickTip": "Spotted something while browsing the site? Press “Edit text” in the bar at the top of the site, then click the words.",
+        "general": "General",
+        "primaryLanguage": "Source language",
+        "viewOnSite": "View this section on the site",
+        "empty": "Nothing matches this filter.",
+        "changedCount": "{count, plural, one {# string edited} other {# strings edited}}",
+        "reviewRow": "Thai changed. Check the other languages",
+        "useDefault": "Use default",
+        "unsaved": "{count, plural, one {# change} other {# changes}} not saved",
+        "discard": "Discard changes",
+        "saveAndPublish": "Save and publish",
+        "savedCount": "{count, plural, one {# change} other {# changes}} saved. The site is updated.",
+        "filter": {
+          "label": "Filter by status",
+          "all": "All",
+          "edited": "Edited",
+          "review": "Needs review"
+        },
+        "status": {
+          "default": "Default",
+          "edited": "Edited",
+          "unsaved": "Not saved",
+          "willReset": "Will use the default",
+          "review": "Check against the Thai"
+        },
+        "groups": {
+          "everywhere": "On every page",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "newsEvents": "News · Events",
+          "contact": "Contact",
+          "legal": "Policies"
+        },
+        "kinds": {
+          "heading": "Heading",
+          "eyebrow": "Eyebrow",
+          "button": "Button / link",
+          "placeholder": "Field placeholder",
+          "message": "Message",
+          "label": "Label",
+          "paragraph": "Paragraph",
+          "text": "Text"
+        }
       }
     },
     "tabs": {
@@ -683,7 +772,8 @@
         "about": "About us",
         "contact": "Contact",
         "faq": "FAQ",
-        "projects": "Projects"
+        "projects": "Projects",
+        "copy": "Site copy"
       },
       "pagesAbout": {
         "label": "About page section",
@@ -4019,5 +4109,79 @@
     "needHelp": "Need help?",
     "needHelpBody": "If you have questions about your personal data, our team is happy to help.",
     "contactCta": "Contact us"
+  },
+  "editMode": {
+    "bar": {
+      "label": "Site editor bar",
+      "viewingAs": "Viewing as <b>{role}</b>",
+      "toggle": "Show edit buttons",
+      "editPage": "Edit this page",
+      "reorder": "Reorder sections",
+      "dashboard": "Back office",
+      "pickText": "Edit text",
+      "pickTextOn": "Picking text · Esc to stop",
+      "pickTextHint": "Click words on the page to edit them in all four languages"
+    },
+    "editLabel": "Edit {name}",
+    "editItem": "Edit this item",
+    "editors": {
+      "homePage": "home page",
+      "heroSlides": "hero banner",
+      "aboutStory": "our story",
+      "homeGallery": "photo strip",
+      "aboutMission": "vision & mission",
+      "aboutCorporate": "corporate",
+      "aboutAwards": "awards",
+      "aboutWhyUs": "why us",
+      "aboutMilestones": "milestones",
+      "faq": "FAQ",
+      "closingCta": "closing CTA",
+      "contactPage": "contact page",
+      "projectsBanner": "projects banner",
+      "projects": "projects",
+      "news": "news",
+      "events": "events",
+      "brochures": "e-brochures",
+      "progress": "progress",
+      "siteCopy": "page text",
+      "projectOverview": "project details",
+      "projectContent": "project copy",
+      "projectFacilities": "facilities",
+      "projectUnitTypes": "unit types",
+      "projectSitePlan": "site plan",
+      "projectUnits": "unit status",
+      "article": "this article",
+      "event": "this event",
+      "brochure": "this e-brochure"
+    },
+    "picker": {
+      "hint": "Click any text on the page to edit it · Esc to stop",
+      "title": "Edit text",
+      "close": "Close",
+      "loading": "Finding this text…",
+      "notFound": "This text can't be edited here",
+      "failedLookup": "Couldn't look up this text. Try again.",
+      "notFoundHint": "It may be project, news or event content, or part of an image. Use that section's “Edit…” button instead.",
+      "matches": "This text is used in more than one place. Pick the one to edit.",
+      "primaryLanguage": "Source language",
+      "status": {
+        "default": "Default",
+        "edited": "Edited",
+        "unsaved": "Not saved"
+      },
+      "useDefault": "Use default",
+      "placeholders": "{list} filled in by the site. Move it, don't translate it",
+      "previewNote": "This page previews what you type. Visitors see it once you save.",
+      "openInAdmin": "Open in back office",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "saveFailed": "Couldn't save. Try again.",
+      "errors": {
+        "syntax": "This is not valid message syntax. Check that every curly bracket is closed.",
+        "unknownArgument": "{name} cannot be used in this text.",
+        "unknownTag": "The {name} tag cannot be used in this text."
+      }
+    }
   }
 }

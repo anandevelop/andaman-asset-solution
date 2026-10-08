@@ -54,6 +54,8 @@ import { getMissionPrinciples } from "@/lib/mission-principles";
 import { formatNumber, formatYear } from "@/lib/format";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 import type { SectionIcon } from "@prisma/client";
+import EditableSection from "@/components/edit/EditableSection";
+import { ABOUT_SECTION_LINKS } from "@/lib/edit-mode";
 
 export const revalidate = 3600;
 
@@ -170,6 +172,7 @@ export default async function AboutPage(props: Props) {
           storyImageUrl below — deliberately a different photo, since a
           fresh install showing the same picture twice one screen apart
           would look like a bug. */}
+      <EditableSection links={ABOUT_SECTION_LINKS.hero}>
       <section className="relative flex h-[70vh] min-h-[480px] w-full items-end overflow-hidden sm:h-[80vh]">
         <ImageWithSkeleton
           src={companyProfile?.aboutHeroImageUrl || "/gallery/trinity-village/pool-garden.webp"}
@@ -202,6 +205,7 @@ export default async function AboutPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
 
       {/* Development-only, like every other page that reads the database:
           during an outage the stat bar below claims zero projects and
@@ -226,6 +230,7 @@ export default async function AboutPage(props: Props) {
       </section>
 
       {/* ── Story ────────────────────────────────────────────────────── */}
+      <EditableSection links={ABOUT_SECTION_LINKS.story}>
       <section className="container-luxe grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <div className="flex h-full flex-col justify-center">
@@ -263,9 +268,11 @@ export default async function AboutPage(props: Props) {
           </div>
         </Reveal>
       </section>
+      </EditableSection>
 
       {/* ── Principles ───────────────────────────────────────────────── */}
       {principles.length > 0 && (
+        <EditableSection links={ABOUT_SECTION_LINKS.principles}>
         <section className="bg-primary-900/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
@@ -307,6 +314,7 @@ export default async function AboutPage(props: Props) {
             </div>
           </div>
         </section>
+        </EditableSection>
       )}
 
       {/* ── Timeline ─────────────────────────────────────────────────── */}
@@ -314,6 +322,7 @@ export default async function AboutPage(props: Props) {
           soft-hidden, or a fresh clone before /admin/pages/about/milestones has any
           rows) reads as broken, not as "nothing to see yet". */}
       {milestones.length > 0 && (
+        <EditableSection links={ABOUT_SECTION_LINKS.timeline}>
         <section className="container-luxe py-20 sm:py-28">
           <Reveal>
             <p className="eyebrow">{t("timeline.eyebrow")}</p>
@@ -439,6 +448,7 @@ export default async function AboutPage(props: Props) {
             </Link>
           </Reveal>
         </section>
+        </EditableSection>
       )}
 
       {/* No closing CTA here. This page ends with the site-wide one

@@ -40,6 +40,8 @@ import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import ArticleBody from "@/components/ArticleBody";
 import { robotsMetadata } from "@/lib/indexing";
+import EditTarget from "@/components/edit/EditTarget";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 export const dynamicParams = true;
 
@@ -152,6 +154,7 @@ export default async function ArticlePage(props: Props) {
 
   return (
     <>
+      <EditTarget labelKey="article" href={ITEM_EDIT_HREF.article(article.id)} />
       <JsonLd
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}

@@ -36,16 +36,17 @@ import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getAwards, type Award } from "@/lib/awards";
 import { getAchievementsContent } from "@/content/achievements";
+import { withCopyOverrides } from "@/lib/site-copy";
 
 // Real development photography (public/gallery/**), not stock imagery —
 // same photo sets the project pages themselves use. Only 3 of the 5
 // projects (residence-prime, trinity-village, victory) have a photographed
 // gallery; victory/cover.webp doubles as this page's banner because
 // The Victory is one of the two named winners in the narrative copy below.
-// Project names are proper nouns, same convention as content/company-timeline.ts
-// — not run through i18n.
+// The caption is achievements.heroCaption: still the same proper nouns in
+// every language by default, but in messages so /admin/pages/copy can
+// change it with the photo's subject.
 const HERO_IMAGE = "/gallery/victory/cover.webp";
-const HERO_CAPTION = "The Victory — Cherngtalay, Phuket";
 const NARRATIVE_IMAGE_1 = "/gallery/residence-prime/living-double-height.webp";
 const NARRATIVE_IMAGE_2 = "/gallery/victory/the-victory3.webp";
 
@@ -124,7 +125,7 @@ export default async function AchievementsPage(props: Props) {
     getAwards(locale),
   ]);
 
-  const content = getAchievementsContent(locale);
+  const content = await withCopyOverrides("achievementsPage", getAchievementsContent(locale), locale);
 
   const awardsCount = awards.length;
   const latestYear = awards.length > 0 ? Math.max(...awards.map((a) => a.year)) : null;
@@ -184,7 +185,7 @@ export default async function AchievementsPage(props: Props) {
               <div className="relative aspect-video w-full overflow-hidden rounded-xs shadow-card sm:aspect-21/8">
                 <ImageWithSkeleton
                   src={HERO_IMAGE}
-                  alt={HERO_CAPTION}
+                  alt={t("heroCaption")}
                   fill
                   priority
                   sizes="100vw"
@@ -192,7 +193,7 @@ export default async function AchievementsPage(props: Props) {
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-primary-900/75 via-primary-900/10 to-transparent" />
                 <p className="absolute bottom-4 left-4 text-xs text-white/85 sm:bottom-6 sm:left-6 sm:text-sm">
-                  {HERO_CAPTION}
+                  {t("heroCaption")}
                 </p>
               </div>
             </Reveal>

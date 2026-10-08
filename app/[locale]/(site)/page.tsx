@@ -59,6 +59,10 @@ import { getHeroStorySlides } from "@/lib/hero-story";
 import { getSiteSettings } from "@/lib/settings";
 import { getWhyUsPoints } from "@/lib/home-content";
 import { getOrderedVisibleSectionKeys, type HomeSectionKey } from "@/lib/home-sections";
+import { HERO_ROW, outlineFor } from "@/lib/home-outline";
+import { HOME_AUTO_SECTION_LINKS, ITEM_EDIT_HREF, type EditLink } from "@/lib/edit-mode";
+import EditableSection from "@/components/edit/EditableSection";
+import EditableItem from "@/components/edit/EditableItem";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
 import { projectCtaKey, projectSignalLabel } from "@/lib/project-card-labels";
@@ -225,6 +229,7 @@ export default async function HomePage(props: Props) {
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((project, index) => (
               <Reveal key={project.id} delay={index * 0.1}>
+                <EditableItem href={ITEM_EDIT_HREF.project(project.id)}>
                 <FeaturedProjectCard
                   project={project}
                   locale={locale}
@@ -237,6 +242,7 @@ export default async function HomePage(props: Props) {
                     signal: projectSignalLabel(project.signal, tProjects as never, locale),
                   }}
                 />
+                </EditableItem>
               </Reveal>
             ))}
           </div>
@@ -293,6 +299,7 @@ export default async function HomePage(props: Props) {
       nextEvent && (
         <section className="container-luxe py-20 sm:py-24">
           <Reveal>
+            <EditableItem href={ITEM_EDIT_HREF.event(nextEvent.id)}>
             <Link
               href={`/${locale}/events/${nextEvent.slug}`}
               className="group grid overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.1fr_1fr]"
@@ -351,6 +358,7 @@ export default async function HomePage(props: Props) {
                 </span>
               </div>
             </Link>
+            </EditableItem>
           </Reveal>
         </section>
       ),
@@ -381,6 +389,7 @@ export default async function HomePage(props: Props) {
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {articles.map((article, index) => (
               <Reveal key={article.id} delay={index * 0.1}>
+                <EditableItem href={ITEM_EDIT_HREF.article(article.id)}>
                 <Link
                   href={`/${locale}/news/${article.slug}`}
                   className="group flex h-full flex-col overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
@@ -417,6 +426,7 @@ export default async function HomePage(props: Props) {
                     </p>
                   </div>
                 </Link>
+                </EditableItem>
               </Reveal>
             ))}
           </div>
@@ -449,6 +459,7 @@ export default async function HomePage(props: Props) {
     <>
       {/* ── Hero (carousel, falls back to a static hero when there are no
           active slides — see components/HeroCarousel.tsx) ──────────────── */}
+      <EditableSection links={HERO_ROW.editors}>
       <HeroCarousel
         slides={heroSlides}
         fallback={{
@@ -468,6 +479,7 @@ export default async function HomePage(props: Props) {
         eyebrow={t("hero.eyebrow")}
         scrollLabel={t("hero.scroll")}
       />
+      </EditableSection>
 
       {isDatabaseOffline() && (
         <div className="container-luxe pt-10">
@@ -477,11 +489,24 @@ export default async function HomePage(props: Props) {
 
       {/* ── Admin-ordered sections (see /admin/pages/home) ──────────────────── */}
       {sectionKeys.map((key) => (
-        <Fragment key={key}>{SECTION_RENDERERS[key]()}</Fragment>
+        <Fragment key={key}>
+          <EditableSection links={sectionEditLinks(key)}>{SECTION_RENDERERS[key]()}</EditableSection>
+        </Fragment>
       ))}
 
     </>
   );
+}
+
+/**
+ * Where a home section's "Edit" pill goes: the screen lib/home-outline.ts
+ * names as its owner, or — for the three sections filled automatically
+ * from published rows, which the outline deliberately gives no editor —
+ * the list screen those rows are published from.
+ */
+function sectionEditLinks(key: HomeSectionKey): EditLink[] {
+  const editors = outlineFor(key)?.editors ?? [];
+  return editors.length > 0 ? editors : (HOME_AUTO_SECTION_LINKS[key] ?? []);
 }
 
 /**

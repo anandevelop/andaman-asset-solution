@@ -21,7 +21,8 @@
  * order to follow, which is what the row of four is for.
  *
  * The tiles are DB-backed (CorporateService, /admin/pages/about/corporate); the
- * section's eyebrow and body stay static messages/*.json copy.
+ * section's eyebrow, heading and body are messages/*.json copy that can be
+ * overridden per language at /admin/pages/copy (linked from that tab).
  *
  * The heading counts. `home.corporate.title` is an ICU plural keyed on how
  * many services are actually active, so it reads "Four things we do

@@ -162,7 +162,8 @@
     "corporateAwards": "Корпоративные награды",
     "propertyAwards": "Награды проектов",
     "awardsCount": "{count, plural, one {# награда} few {# награды} many {# наград} other {# награды}}",
-    "empty": "Награды будут опубликованы здесь по мере объявления."
+    "empty": "Награды будут опубликованы здесь по мере объявления.",
+    "heroCaption": "The Victory — Cherngtalay, Phuket"
   },
   "contact": {
     "eyebrow": "Контакты",
@@ -210,7 +211,8 @@
     "gettingHere": "Как добраться",
     "visitProjects": "Посетите наши проекты",
     "noteDrive": "Время в пути от проекта. Нажмите на место, чтобы увидеть маршрут.",
-    "noteStraight": "Расстояния указаны по прямой от офиса. Нажмите, чтобы построить маршрут."
+    "noteStraight": "Расстояния указаны по прямой от офиса. Нажмите, чтобы построить маршрут.",
+    "airportName": "Международный аэропорт Пхукета"
   },
   "progress": {
     "eyebrow": "Ход строительства",
@@ -674,6 +676,93 @@
         "eyebrow": "Надзаголовок",
         "title": "Заголовок",
         "subtitle": "Подзаголовок"
+      },
+      "copy": {
+        "heading": "Тексты сайта",
+        "intro": "Every heading, button label and line of text on the public site, all four languages in one row. Each box shows what visitors see now; change it and save.",
+        "searchLabel": "Search copy",
+        "searchPlaceholder": "Type words as they read on the site, in any language",
+        "sections": "Site sections",
+        "results": "{count, plural, one {# string matches} other {# strings match}} “{query}”.",
+        "truncated": "Showing the first {count}.",
+        "defaultWas": "Default:",
+        "placeholders": "{list} filled in by the site. Move it, don't translate it",
+        "errors": {
+          "syntax": "This is not valid message syntax. Check that every curly bracket is closed.",
+          "unknownArgument": "{name} cannot be used in this text. Only the values listed under the box are available.",
+          "unknownTag": "The {name} tag cannot be used in this text.",
+          "some": "Not saved: some fields need fixing first."
+        },
+        "ns": {
+          "nav": "Navigation",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "progress": "Progress",
+          "news": "News",
+          "events": "Events",
+          "eBrochure": "E-Brochure",
+          "achievements": "Achievements",
+          "awards": "Awards",
+          "salesTeam": "Sales team",
+          "contact": "Contact",
+          "leadForm": "Enquiry form",
+          "map": "Map",
+          "footer": "Footer",
+          "common": "Buttons & common words",
+          "chatButtons": "Chat buttons",
+          "cookieConsent": "Cookie banner",
+          "legalPage": "Legal pages",
+          "achievementsPage": "Achievements page (text)",
+          "privacyPolicy": "Privacy policy",
+          "terms": "Terms of use"
+        },
+        "editSectionHeading": "Edit this section's heading and text",
+        "legalNote": "You can change the wording here, but the version and effective date stay as they are. For a substantive change to the policy, ask a developer to bump the version too: customers' PDPA consent is recorded against it.",
+        "pickTip": "Spotted something while browsing the site? Press “Edit text” in the bar at the top of the site, then click the words.",
+        "general": "General",
+        "primaryLanguage": "Source language",
+        "viewOnSite": "View this section on the site",
+        "empty": "Nothing matches this filter.",
+        "changedCount": "{count, plural, one {# string edited} other {# strings edited}}",
+        "reviewRow": "Thai changed. Check the other languages",
+        "useDefault": "Use default",
+        "unsaved": "{count, plural, one {# change} other {# changes}} not saved",
+        "discard": "Discard changes",
+        "saveAndPublish": "Save and publish",
+        "savedCount": "{count, plural, one {# change} other {# changes}} saved. The site is updated.",
+        "filter": {
+          "label": "Filter by status",
+          "all": "All",
+          "edited": "Edited",
+          "review": "Needs review"
+        },
+        "status": {
+          "default": "Default",
+          "edited": "Edited",
+          "unsaved": "Not saved",
+          "willReset": "Will use the default",
+          "review": "Check against the Thai"
+        },
+        "groups": {
+          "everywhere": "On every page",
+          "home": "Home",
+          "about": "About",
+          "projects": "Projects",
+          "newsEvents": "News · Events",
+          "contact": "Contact",
+          "legal": "Policies"
+        },
+        "kinds": {
+          "heading": "Heading",
+          "eyebrow": "Eyebrow",
+          "button": "Button / link",
+          "placeholder": "Field placeholder",
+          "message": "Message",
+          "label": "Label",
+          "paragraph": "Paragraph",
+          "text": "Text"
+        }
       }
     },
     "tabs": {
@@ -683,7 +772,8 @@
         "about": "О нас",
         "contact": "Контакты",
         "faq": "Вопросы и ответы",
-        "projects": "Проекты"
+        "projects": "Проекты",
+        "copy": "Тексты сайта"
       },
       "pagesAbout": {
         "label": "Блок страницы «О нас»",
@@ -4019,5 +4109,79 @@
     "needHelp": "Нужна помощь?",
     "needHelpBody": "Если у вас есть вопросы о ваших персональных данных, наша команда готова помочь.",
     "contactCta": "Связаться с нами"
+  },
+  "editMode": {
+    "bar": {
+      "label": "Панель редактора сайта",
+      "viewingAs": "Вы вошли как <b>{role}</b>",
+      "toggle": "Показать кнопки правки",
+      "editPage": "Изменить страницу",
+      "reorder": "Порядок разделов",
+      "dashboard": "В админку",
+      "pickText": "Изменить текст",
+      "pickTextOn": "Выбор текста · Esc — выйти",
+      "pickTextHint": "Нажмите на текст на странице, чтобы изменить его на всех четырёх языках"
+    },
+    "editLabel": "Изменить: {name}",
+    "editItem": "Изменить элемент",
+    "editors": {
+      "homePage": "главная",
+      "heroSlides": "главный баннер",
+      "aboutStory": "история компании",
+      "homeGallery": "фотолента",
+      "aboutMission": "видение и миссия",
+      "aboutCorporate": "о компании",
+      "aboutAwards": "награды",
+      "aboutWhyUs": "почему мы",
+      "aboutMilestones": "вехи",
+      "faq": "FAQ",
+      "closingCta": "блок призыва",
+      "contactPage": "контакты",
+      "projectsBanner": "баннер проектов",
+      "projects": "проекты",
+      "news": "новости",
+      "events": "события",
+      "brochures": "e-брошюры",
+      "progress": "ход строительства",
+      "siteCopy": "текст страницы",
+      "projectOverview": "данные проекта",
+      "projectContent": "тексты проекта",
+      "projectFacilities": "инфраструктура",
+      "projectUnitTypes": "типы домов",
+      "projectSitePlan": "генплан",
+      "projectUnits": "статус юнитов",
+      "article": "эта статья",
+      "event": "это событие",
+      "brochure": "эта брошюра"
+    },
+    "picker": {
+      "hint": "Нажмите на любой текст на странице, чтобы изменить его · Esc — выйти",
+      "title": "Изменить текст",
+      "close": "Закрыть",
+      "loading": "Ищем этот текст…",
+      "notFound": "Этот текст нельзя изменить здесь",
+      "failedLookup": "Не удалось найти текст. Попробуйте ещё раз.",
+      "notFoundHint": "Возможно, это данные проекта, новости или события либо часть изображения. Используйте кнопку «Изменить…» этого блока.",
+      "matches": "Этот текст используется в нескольких местах. Выберите нужное.",
+      "primaryLanguage": "Исходный язык",
+      "status": {
+        "default": "По умолчанию",
+        "edited": "Изменено",
+        "unsaved": "Не сохранено"
+      },
+      "useDefault": "Вернуть по умолчанию",
+      "placeholders": "{list} подставляется сайтом. Можно переместить, но не переводить",
+      "previewNote": "Страница показывает предварительный вид. Посетители увидят изменения после сохранения.",
+      "openInAdmin": "Открыть в админке",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "saving": "Сохранение…",
+      "saveFailed": "Не удалось сохранить. Попробуйте ещё раз.",
+      "errors": {
+        "syntax": "Неверный формат текста. Проверьте, что все фигурные скобки закрыты.",
+        "unknownArgument": "{name} нельзя использовать в этом тексте.",
+        "unknownTag": "Тег {name} нельзя использовать в этом тексте."
+      }
+    }
   }
 }

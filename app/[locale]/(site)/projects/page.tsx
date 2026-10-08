@@ -45,6 +45,9 @@ import { PROPERTY_TYPES, PROJECT_STATUSES } from "@/lib/validations";
 import { robotsMetadata } from "@/lib/indexing";
 import { getSiteSettings } from "@/lib/settings";
 import { resolveProjectsHero } from "@/lib/projects-hero";
+import EditableSection from "@/components/edit/EditableSection";
+import EditableItem from "@/components/edit/EditableItem";
+import { ITEM_EDIT_HREF, PAGE_EDIT_LINKS } from "@/lib/edit-mode";
 
 /*
   One hour for the unfiltered page. Filtered views read searchParams, which
@@ -197,6 +200,7 @@ export default async function ProjectsPage(props: Props) {
           Breadcrumb is an async server component and the hero is a client
           one; tone="onImage" for the same reason it sits down with the
           copy rather than at the top of the frame. */}
+      <EditableSection links={[PAGE_EDIT_LINKS["/projects"]]}>
       <ProjectsHero
         breadcrumb={<Breadcrumb items={trail} tone="onImage" />}
         eyebrow={hero.eyebrow}
@@ -208,6 +212,7 @@ export default async function ProjectsPage(props: Props) {
         shortcuts={shortcuts}
         shortcutsLabel={t("hero.shortcutsLabel")}
       />
+      </EditableSection>
 
       {/* ── Filters ──────────────────────────────────────────────────── */}
       {/* Hidden with fewer than two projects: a filter bar over a single
@@ -270,6 +275,7 @@ export default async function ProjectsPage(props: Props) {
                 id={`project-${project.slug}`}
                 className="scroll-mt-24"
               >
+                <EditableItem href={ITEM_EDIT_HREF.project(project.id)}>
                 <FeaturedProjectCard
                   project={project}
                   locale={locale}
@@ -287,6 +293,7 @@ export default async function ProjectsPage(props: Props) {
                     signal: projectSignalLabel(project.signal, t as never, locale),
                   }}
                 />
+                </EditableItem>
               </Reveal>
             ))}
           </div>

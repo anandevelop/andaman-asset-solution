@@ -73,6 +73,14 @@ type Props = {
   eyebrowIcon: ReactNode;
   eyebrowLabel: string;
   content: LegalPolicyContent;
+  /**
+   * The address and email as edited in /admin (lib/settings.ts), not
+   * config/site.ts's committed defaults. These read siteConfig directly
+   * until the address or email changed in the admin and every page showed
+   * the new one except the two a data subject reads to find out where to
+   * send a PDPA request.
+   */
+  contact: { email: string; address: Record<Locale, string> };
   effectiveDateFormatted: string;
   strings: LegalPageStrings;
 };
@@ -97,6 +105,7 @@ export default function LegalPolicyPage({
   eyebrowIcon,
   eyebrowLabel,
   content,
+  contact,
   effectiveDateFormatted,
   strings,
 }: Props) {
@@ -255,17 +264,17 @@ export default function LegalPolicyPage({
                   <dd className="text-ink/70">
                     {siteConfig.legalName}
                     <br />
-                    {siteConfig.contact.address[locale as Locale] ?? siteConfig.contact.address.en}
+                    {contact.address[locale as Locale] ?? contact.address.en}
                   </dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail size={16} className="shrink-0 text-accent-700" />
                   <dd>
                     <a
-                      href={`mailto:${siteConfig.contact.email}`}
+                      href={`mailto:${contact.email}`}
                       className="text-ink/70 underline hover:text-primary"
                     >
-                      {siteConfig.contact.email}
+                      {contact.email}
                     </a>
                   </dd>
                 </div>
