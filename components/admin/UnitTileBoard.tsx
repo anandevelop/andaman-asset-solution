@@ -46,12 +46,15 @@ const TONE: Record<UnitStatus, string> = {
   AVAILABLE: "border-adm-success/30 bg-adm-success/12 text-adm-success",
   RESERVED: "border-adm-warning/30 bg-adm-warning/12 text-adm-warning",
   SOLD: "border-adm-line bg-adm-text/5 text-adm-muted",
+  /* Handed over — the house has an ANDAMAN CLUB resident. */
+  TRANSFERRED: "border-adm-info/30 bg-adm-info/10 text-adm-info",
 };
 
 const DOT: Record<UnitStatus, string> = {
   AVAILABLE: "bg-adm-success",
   RESERVED: "bg-adm-warning",
   SOLD: "bg-adm-neutral",
+  TRANSFERRED: "bg-adm-info",
 };
 
 const DETAIL = "__detail";

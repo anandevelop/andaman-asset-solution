@@ -649,7 +649,10 @@
       "media": "媒体库",
       "mobileView": "移动端视图",
       "publishing": "审核与发布",
-      "reports": "报告"
+      "reports": "报告",
+      "clubResidents": "Units & residents",
+      "clubPartners": "Privileges & partners",
+      "clubAgents": "Co-agents"
     },
     "pages": {
       "section": "网站内容",
@@ -1370,7 +1373,8 @@
       "statusOptions": {
         "AVAILABLE": "可售",
         "RESERVED": "已预订",
-        "SOLD": "已售"
+        "SOLD": "已售",
+        "TRANSFERRED": "Transferred"
       },
       "mapped": "已标注",
       "notMapped": "未标注",

@@ -31,6 +31,7 @@ export const STATIC_PATHS = [
   "/",
   "/about",
   "/achievements",
+  "/agent/register",
   "/contact",
   "/e-brochure",
   "/events",

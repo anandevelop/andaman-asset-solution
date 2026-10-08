@@ -649,7 +649,10 @@
       "media": "Медиатека",
       "mobileView": "Мобильный режим",
       "publishing": "Проверка и публикация",
-      "reports": "Отчёты"
+      "reports": "Отчёты",
+      "clubResidents": "Units & residents",
+      "clubPartners": "Privileges & partners",
+      "clubAgents": "Co-agents"
     },
     "pages": {
       "section": "Контент сайта",
@@ -1370,7 +1373,8 @@
       "statusOptions": {
         "AVAILABLE": "Доступно",
         "RESERVED": "Забронировано",
-        "SOLD": "Продано"
+        "SOLD": "Продано",
+        "TRANSFERRED": "Transferred"
       },
       "mapped": "Размечено",
       "notMapped": "Не размечено",

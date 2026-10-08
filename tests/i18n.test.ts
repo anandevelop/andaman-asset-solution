@@ -17,10 +17,29 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import en from "../messages/en.json";
-import th from "../messages/th.json";
-import zh from "../messages/zh.json";
-import ru from "../messages/ru.json";
+import enBase from "../messages/en.json";
+import thBase from "../messages/th.json";
+import zhBase from "../messages/zh.json";
+import ruBase from "../messages/ru.json";
+
+/**
+ * ANDAMAN CLUB strings live in messages/club/<part>.<locale>.json and are
+ * merged in by i18n.ts at runtime (one top-level namespace per part), so
+ * the checks below see the same tree the app does.
+ */
+function withClub(base: object, locale: string): object {
+  const dir = join(process.cwd(), "messages", "club");
+  const merged: Record<string, unknown> = { ...base };
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(`.${locale}.json`)).sort()) {
+    Object.assign(merged, JSON.parse(readFileSync(join(dir, file), "utf8")));
+  }
+  return merged;
+}
+
+const en = withClub(enBase, "en");
+const th = withClub(thBase, "th");
+const zh = withClub(zhBase, "zh");
+const ru = withClub(ruBase, "ru");
 
 type Messages = { [key: string]: string | Messages };
 

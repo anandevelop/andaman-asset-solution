@@ -40,7 +40,7 @@ export type UnitTableRow = {
   livingAreaLabel: string | null;
   landAreaLabel: string | null;
   facingLabel: string | null;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
   releasedForSale: boolean;
   leadId: string | null;
   leadName: string | null;
@@ -55,7 +55,7 @@ type Props = {
   rows: UnitTableRow[];
   selectedUnitId: string | null;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
   saveAction: (state: UnitFormState, formData: FormData) => Promise<UnitFormState>;
   labels: {
     title: string;

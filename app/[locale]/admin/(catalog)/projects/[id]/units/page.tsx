@@ -105,6 +105,7 @@ export default async function AdminUnitsPage(props: Props) {
     AVAILABLE: t("units.statusOptions.AVAILABLE"),
     RESERVED: t("units.statusOptions.RESERVED"),
     SOLD: t("units.statusOptions.SOLD"),
+    TRANSFERRED: t("units.statusOptions.TRANSFERRED"),
   };
 
   const areaLabels = {

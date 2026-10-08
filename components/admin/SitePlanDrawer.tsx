@@ -60,7 +60,7 @@ type ShapePoint = { x: number; y: number };
 export type DrawerUnit = {
   id: string;
   unitNumber: string;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
   shapePoints: ShapePoint[] | null;
 };
 
@@ -102,6 +102,7 @@ const STATUS_DOT: Record<DrawerUnit["status"], string> = {
   AVAILABLE: "bg-adm-success",
   RESERVED: "bg-adm-warning",
   SOLD: "bg-adm-text/30",
+  TRANSFERRED: "bg-adm-info",
 };
 
 const clamp = (n: number) => Math.min(100, Math.max(0, n));

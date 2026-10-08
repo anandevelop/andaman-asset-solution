@@ -15,8 +15,8 @@ import type { UnitStatusFormState } from "@/app/[locale]/admin/(catalog)/project
 
 type Props = {
   action: (state: UnitStatusFormState, formData: FormData) => Promise<UnitStatusFormState>;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
-  labels: { AVAILABLE: string; RESERVED: string; SOLD: string };
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
+  labels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
 };
 
 const INITIAL: UnitStatusFormState = { ok: false };
@@ -30,12 +30,16 @@ export default function UnitStatusSelect({ action, status, labels }: Props) {
       <select
         name="status"
         defaultValue={status}
+        /* A transferred house belongs to ANDAMAN CLUB now (Units & residents);
+           its status is changed by a resale there, never from this select. */
+        disabled={status === "TRANSFERRED"}
         onChange={() => formRef.current?.requestSubmit()}
         className="rounded-xs border border-adm-line-strong bg-adm-solid px-2.5 py-1.5 text-xs text-adm-text focus:border-adm-line-strong focus:outline-hidden focus:ring-1 focus:ring-adm-info/20"
       >
         <option value="AVAILABLE">{labels.AVAILABLE}</option>
         <option value="RESERVED">{labels.RESERVED}</option>
         <option value="SOLD">{labels.SOLD}</option>
+        {status === "TRANSFERRED" && <option value="TRANSFERRED">{labels.TRANSFERRED ?? "TRANSFERRED"}</option>}
       </select>
     </form>
   );

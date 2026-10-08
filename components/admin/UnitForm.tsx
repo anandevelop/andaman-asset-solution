@@ -24,7 +24,7 @@ export type UnitFormValues = {
   id: string;
   unitNumber: string;
   unitTypeId: string | null;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
   landAreaSqm: number | null;
   facing: string | null;
   viewLabel: string | null;
@@ -39,7 +39,7 @@ type Props = {
   /** Null when creating. */
   unit: UnitFormValues | null;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
   onDone?: () => void;
   labels: {
     unitNumber: string;

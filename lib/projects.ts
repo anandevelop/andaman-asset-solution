@@ -918,7 +918,8 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     unitTypeBedrooms: u.unitType?.bedrooms ?? null,
     unitTypeBathrooms: u.unitType?.bathrooms ?? null,
     unitTypeLivingAreaSqm: toNumber(u.unitType?.livingAreaSqm ?? null),
-    status: u.status as UnitStatus,
+    // A transferred house is simply "sold" to the public site plan.
+    status: (u.status === "TRANSFERRED" ? "SOLD" : u.status) as UnitStatus,
     shapePoints: (u.shapePoints as ShapePoint[] | null) ?? null,
     positionXPercent: toNumber(u.positionXPercent),
     positionYPercent: toNumber(u.positionYPercent),

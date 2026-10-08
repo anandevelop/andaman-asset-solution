@@ -1,0 +1,243 @@
+{
+  "clubResidents": {
+    "title": "Units & residents",
+    "subtitle": "Every unit's status, buyer details and the house codes residents use for the portal",
+    "noProjects": "No project has a card code (rp / tv / vc) yet — run scripts/seed-club.ts or set Project.cardCode first",
+    "zip": "Download card QR ({count, plural, one {# home} other {# homes}})",
+    "zipHint": "QR codes of every handed-over home in this project · PNG + SVG + manifest.csv",
+    "projectTabs": "Projects",
+    "filterLabel": "Filter by status",
+    "views": { "label": "View", "map": "Unit map", "list": "Residents" },
+    "status": { "AVAILABLE": "Available", "RESERVED": "Reserved", "SOLD": "Under contract", "TRANSFERRED": "Transferred · resident" },
+    "statusShort": { "all": "All", "AVAILABLE": "Available", "RESERVED": "Reserved", "SOLD": "Contract", "TRANSFERRED": "Transferred" },
+    "board": {
+      "millions": "{value} M",
+      "millionsShort": "{value} M",
+      "from": "from {price}",
+      "otherUnits": "Other units",
+      "expiring": "Reservation expiring",
+      "empty": "This project has no units yet"
+    },
+    "unit": {
+      "title": "Unit",
+      "price": "Price",
+      "land": "Land",
+      "facing": "Facing / view",
+      "type": "House type",
+      "sqm": "{value} sq m",
+      "bedrooms": "{count, plural, one {# bedroom} other {# bedrooms}}"
+    },
+    "summary": {
+      "units": "Units",
+      "sold": "Sold",
+      "value": "Reserved + sold value",
+      "portal": "Residents on the portal",
+      "cards": "Cards handed over",
+      "homes": "{x}/{y} homes",
+      "waiting": "{count} waiting"
+    },
+    "search": {
+      "title": "Find by house code",
+      "placeholder": "e.g. RP-R12-8K4Q",
+      "submit": "Search",
+      "hint": "For when a resident calls in or shows their card",
+      "found": "{unit} · {owner} — open",
+      "notFound": "No such code · codes from a reissued card no longer work"
+    },
+    "table": {
+      "unit": "Unit",
+      "resident": "Resident",
+      "purpose": "Use",
+      "transferDate": "Transferred",
+      "houseCode": "House code",
+      "showCodes": "Show codes",
+      "hideCodes": "Hide codes",
+      "card": "Card",
+      "partners": "Partner benefits",
+      "portal": "Portal",
+      "empty": "No transferred units in this project yet",
+      "noEmail": "No e-mail",
+      "household": "+{count} in household",
+      "partnersUsable": "{count} usable",
+      "partnersTotal": "{count, plural, one {# partner} other {# partners}}",
+      "neverLoggedIn": "Never signed in",
+      "today": "Today",
+      "daysAgo": "{count, plural, one {# day ago} other {# days ago}}"
+    },
+    "cardStatus": { "NONE": "Not printed", "PRINTED": "Printed · to hand over", "HANDED": "Handed over" },
+    "purpose": { "own": "Own home", "second": "Second home", "holiday": "Holiday home", "rent": "Rental" },
+    "common": { "save": "Save", "cancel": "Cancel", "close": "Close" },
+    "errors": {
+      "generic": "That didn't work — please try again",
+      "forbidden": "Your account can't do this",
+      "invalid": "Invalid data",
+      "notFound": "Not found — it may have changed; refresh the page",
+      "alreadyResident": "This unit already has a resident",
+      "notSold": "Only units under contract can be transferred",
+      "noCardCode": "This project has no card code (cardCode), so no card can be issued",
+      "emailIsMember": "This e-mail already belongs to a household member",
+      "noEmail": "The resident has no e-mail yet — add one first",
+      "membersFull": "At most 2 household members",
+      "emailTaken": "This e-mail is already used in this home",
+      "field": {
+        "invalid": "Invalid data",
+        "ownerName": "Enter the owner's name",
+        "nationality": "Nationality is a 2-letter code, e.g. TH, RU",
+        "phone": "Enter a valid phone number",
+        "email": "Enter a valid e-mail (used for sign-in codes)",
+        "transferDate": "Pick the transfer date",
+        "purpose": "Pick the use",
+        "handedTo": "Enter who received the card",
+        "handedAt": "Pick the handover date",
+        "method": "Pick how it was handed over",
+        "name": "Enter the full name",
+        "relation": "Pick the relation",
+        "documentsChecked": "Confirm the transfer documents were checked"
+      }
+    },
+    "phone": {
+      "reveal": "Show",
+      "revealHint": "Show the full number · this is logged",
+      "logged": "Logged",
+      "loggedHint": "Viewing this number was recorded in the access log"
+    },
+    "resident": {
+      "title": "Resident",
+      "noEmailPortal": "No e-mail · can't use the portal",
+      "editEmail": "Edit e-mail",
+      "addEmail": "Add e-mail",
+      "emailHint": "Receives the sign-in codes for the portal",
+      "emailNotifyOld": "the old address will be notified",
+      "previousOwners": "Previous owners"
+    },
+    "members": {
+      "title": "Household members",
+      "add": "Add member",
+      "remove": "Remove",
+      "addedBy": "added by {name} {date}",
+      "namePlaceholder": "Full name",
+      "hint": "The owner may add a spouse, family or a property manager — 2 people. They share the card but get codes at their own e-mail; removing someone signs their devices out at once."
+    },
+    "relations": { "spouse": "Spouse", "child": "Child", "family": "Family", "manager": "Property manager" },
+    "card": {
+      "title": "Resident card & portal access",
+      "none": "No active card",
+      "stepIssued": "QR issued",
+      "stepPrinted": "Printed",
+      "stepHanded": "With the owner",
+      "handedInfo": "Handed over {date} · to {to} · {method} · recorded by {by}",
+      "printedInfo": "Printed {date} · not handed over yet",
+      "notPrinted": "Card not printed yet",
+      "markPrinted": "Mark as printed",
+      "downloadPng": "Download QR (PNG)",
+      "pngHint": "1200 px PNG with quiet zone · print at 25 mm or larger",
+      "svgHint": "Vector file, 40 mm",
+      "preview": "Card preview",
+      "sendBackup": "Send backup code",
+      "backupSent": "Backup house code sent to {email}",
+      "reissue": "Lost card · reissue",
+      "reissueConfirm": "Issue card no. {next}? The current QR and house code stop working at once and every device is signed out.",
+      "reissueYes": "Yes, reissue",
+      "reissueAdminOnly": "Only Admins can reissue cards",
+      "factRandom": "Random 20-character link, unguessable · no house number in it",
+      "factOtp": "A scan needs an e-mail code sent to {email}",
+      "factOtpMore": "+ {count} more household e-mails",
+      "factNoEmail": "No e-mail yet · the resident can't receive codes; add one above before handing the card over",
+      "factNoExpiry": "The QR never expires · valid until a new card is issued",
+      "factVersion": "Card no. {version} · issued {date}",
+      "factRevoked": "{count} revoked",
+      "factHouseCode": "Backup house code"
+    },
+    "handover": {
+      "open": "Record handover",
+      "receiver": "Received by",
+      "date": "Handover date",
+      "method": "Method",
+      "idNote": "The receiver must be the owner or someone they named · check their ID at handover but don't record its number",
+      "methods": { "office": "Collected at the sales office", "home": "Delivered to the house", "post": "Sent by EMS post" }
+    },
+    "print": {
+      "title": "Print file preview · {project} · card no. {version}",
+      "front": "Front",
+      "back": "Back",
+      "notes": {
+        "noOwner": "No owner name, house number or house code on the card — whoever finds a lost one can't tell which house it opens",
+        "privateLink": "The QR is a random per-house link and needs an e-mail code before anything is shown",
+        "reissue": "If it's lost, “reissue” makes this QR useless at once"
+      }
+    },
+    "devices": {
+      "title": "Remembered devices",
+      "signOutAll": "Sign out all",
+      "signOut": "Sign out",
+      "empty": "No verified devices yet",
+      "meta": "First verified {first} · last used {last} · re-verify by {until}"
+    },
+    "log": {
+      "title": "Access log",
+      "empty": "No activity yet",
+      "kinds": {
+        "SCAN": "Card QR scanned · status page",
+        "SCAN_REVOKED": "A revoked card was scanned",
+        "OTP_SENT": "Resident requested a sign-in code",
+        "OTP_OK": "Sign-in code verified",
+        "OTP_FAIL": "Wrong sign-in code",
+        "OTP_LOCK": "5 wrong codes · locked for 15 minutes",
+        "TRUSTED_LOGIN": "Signed in on a remembered device",
+        "CODE_LOGIN": "Signed in with the backup house code",
+        "REISSUE": "New card issued · old QR disabled",
+        "SIGN_OUT_ALL": "All devices signed out",
+        "SIGN_OUT_DEVICE": "One device signed out",
+        "QR_DOWNLOAD": "QR file downloaded for printing",
+        "EMAIL_CHANGED": "Sign-in e-mail changed · old address notified",
+        "PHONE_REVEALED": "Full phone number viewed (PDPA log)",
+        "MEMBER_ADDED": "Household member added · owner and member e-mailed",
+        "MEMBER_REMOVED": "Household member removed · their devices signed out",
+        "CARD_PRINTED": "Card printed",
+        "CARD_HANDED": "Card handed to the owner",
+        "RESALE": "Owner changed · new card · devices and per-house benefits reset"
+      }
+    },
+    "buyer": { "title": "Buyer", "unknown": "No customer linked to this unit" },
+    "reserved": {
+      "title": "Reserved by",
+      "expires": "Reservation expires {date} ({days, plural, one {# day} other {# days}} left) — the sale contract must be signed before then",
+      "overdue": "Reservation expired {date} ({days, plural, one {# day} other {# days}} overdue)"
+    },
+    "transfer": {
+      "open": "Record transfer & issue house code",
+      "title": "Record ownership transfer",
+      "explain": "Once the transfer is done, record it here — the house code and the QR for card no. 1 are issued automatically",
+      "note": "After saving, use “Download QR (PNG)” to print the card · you can save without an e-mail, but the resident can't use the portal until one is added",
+      "submit": "Record transfer"
+    },
+    "form": {
+      "ownerName": "Owner name *",
+      "nationality": "Nationality",
+      "transferDate": "Transfer date",
+      "phone": "Phone *",
+      "emailOptional": "E-mail (for sign-in codes)",
+      "emailRequired": "E-mail (for sign-in codes) *",
+      "emailHint": "The e-mail confirms it's the resident when they scan the card",
+      "purpose": "Use"
+    },
+    "resale": {
+      "open": "Resale / change owner",
+      "adminOnly": "Only Admins can change the owner",
+      "subtitle": "{project} · {unit} · current owner {owner}",
+      "newOwner": "New owner",
+      "automatic": "Done automatically",
+      "effects": {
+        "card": "Card no. {next} issued · QR no. {current} and the old house code stop working at once",
+        "devices": "{count, plural, one {# device} other {# devices}} of the previous owner signed out",
+        "benefits": "Partner benefits reset to the project default",
+        "overrides": "({count} per-house changes cleared)",
+        "pending": "{count} pending requests cancelled",
+        "pdpa": "The previous owner's name and dates are kept as history · their phone, e-mail, household, devices and access log are deleted (PDPA)",
+        "download": "After saving, use “Download QR (PNG)” to print the new owner's card"
+      },
+      "documents": "I checked the transfer documents (title deed) and the previous owner returned the card or reported it lost",
+      "submit": "Save new owner"
+    }
+  }
+}

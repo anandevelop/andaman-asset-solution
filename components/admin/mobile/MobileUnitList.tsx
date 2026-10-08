@@ -36,6 +36,7 @@ const STATUS_CHIP: Record<UnitStatus, string> = {
   AVAILABLE: "bg-adm-success-bg text-adm-success",
   RESERVED: "bg-adm-fill/15 text-adm-accent-ink",
   SOLD: "bg-adm-text/4 text-adm-muted",
+  TRANSFERRED: "bg-adm-info-bg text-adm-info",
 };
 
 export default function MobileUnitList({

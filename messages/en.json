@@ -649,7 +649,10 @@
       "media": "Media",
       "mobileView": "Mobile view",
       "publishing": "Review & publish",
-      "reports": "Reports"
+      "reports": "Reports",
+      "clubResidents": "Units & residents",
+      "clubPartners": "Privileges & partners",
+      "clubAgents": "Co-agents"
     },
     "pages": {
       "section": "Website content",
@@ -1370,7 +1373,8 @@
       "statusOptions": {
         "AVAILABLE": "Available",
         "RESERVED": "Reserved",
-        "SOLD": "Sold"
+        "SOLD": "Sold",
+        "TRANSFERRED": "Transferred"
       },
       "mapped": "Mapped",
       "notMapped": "Not mapped",

@@ -125,7 +125,9 @@ describe("every static page reaches the sitemap", () => {
     between "index it" and "it is policy", rather than silently appending a
     name to make the suite green.
   */
-  const UNINDEXED = ["/privacy-policy", "/terms"];
+  // /agent/register: an invite form reached from a sales person's link,
+  // noindex like the ANDAMAN CLUB pages.
+  const UNINDEXED = ["/privacy-policy", "/terms", "/agent/register"];
 
   it("finds the pages it is supposed to be checking", () => {
     // A walker that returns nothing would make the assertion below pass

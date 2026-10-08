@@ -649,7 +649,10 @@
       "media": "คลังสื่อ",
       "mobileView": "โหมดมือถือ",
       "publishing": "ตรวจและเผยแพร่",
-      "reports": "รายงาน"
+      "reports": "รายงาน",
+      "clubResidents": "ยูนิต & ลูกบ้าน",
+      "clubPartners": "สิทธิพิเศษ & พาร์ทเนอร์",
+      "clubAgents": "เอเจนซี่ / Co-agent"
     },
     "pages": {
       "section": "เนื้อหาเว็บไซต์",
@@ -1370,7 +1373,8 @@
       "statusOptions": {
         "AVAILABLE": "ว่าง",
         "RESERVED": "จองแล้ว",
-        "SOLD": "ขายแล้ว"
+        "SOLD": "ขายแล้ว",
+        "TRANSFERRED": "โอนแล้ว"
       },
       "mapped": "วาดแล้ว",
       "notMapped": "ยังไม่วาด",

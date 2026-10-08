@@ -97,6 +97,7 @@ export default async function MobileUnitsPage(props: Props) {
     AVAILABLE: tUnits("statusOptions.AVAILABLE"),
     RESERVED: tUnits("statusOptions.RESERVED"),
     SOLD: tUnits("statusOptions.SOLD"),
+    TRANSFERRED: tUnits("statusOptions.TRANSFERRED"),
   };
 
   const counts = units.reduce(
@@ -104,7 +105,7 @@ export default async function MobileUnitsPage(props: Props) {
       acc[unit.status] += 1;
       return acc;
     },
-    { AVAILABLE: 0, RESERVED: 0, SOLD: 0 } as Record<"AVAILABLE" | "RESERVED" | "SOLD", number>,
+    { AVAILABLE: 0, RESERVED: 0, SOLD: 0, TRANSFERRED: 0 } as Record<"AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED", number>,
   );
 
   const projectName = locale === "th" ? project.nameTh : project.nameEn;

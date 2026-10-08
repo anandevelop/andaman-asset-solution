@@ -30,7 +30,7 @@ import UnitForm, { type UnitFormValues } from "@/components/admin/UnitForm";
 export type UnitDetailView = {
   id: string;
   unitNumber: string;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
   statusLabel: string;
   releasedForSale: boolean;
   /** "3-bedroom villa · Type B", composed on the server. */
@@ -58,7 +58,7 @@ type Props = {
   projectSlug: string;
   unit: UnitDetailView | null;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
   saveAction: (state: UnitFormState, formData: FormData) => Promise<UnitFormState>;
   labels: {
     empty: string;
@@ -90,6 +90,7 @@ const STATUS_TONE = {
   AVAILABLE: "bg-adm-success-bg text-adm-success",
   RESERVED: "bg-adm-fill/20 text-adm-accent-ink",
   SOLD: "bg-adm-text/4 text-adm-muted",
+  TRANSFERRED: "bg-adm-info-bg text-adm-info",
 } as const;
 
 export default function UnitDetailPanel({
@@ -117,7 +118,7 @@ export default function UnitDetailPanel({
     );
   }
 
-  const changeStatus = (status: "AVAILABLE" | "RESERVED" | "SOLD") => {
+  const changeStatus = (status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED") => {
     setError(false);
     startTransition(async () => {
       const result = await setUnitStatus(locale, projectId, projectSlug, unit.id, status);

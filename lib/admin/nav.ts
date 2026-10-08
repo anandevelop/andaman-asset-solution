@@ -52,6 +52,9 @@ import {
   Contact,
   FileCheck2,
   FileText,
+  Gift,
+  Handshake,
+  KeyRound,
   Files,
   History,
   LayoutDashboard,
@@ -391,6 +394,27 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         alias: ["/appointments"],
         tabs: NAV_TAB_GROUPS.leads,
         tabsBase: "",
+      },
+      /* ANDAMAN CLUB — residents and their cards, partner benefits,
+         co-agents. CRM roles: sales record transfers and hand over cards;
+         per-house benefit edits by SALES/ADMIN wait for a SUPER_ADMIN. */
+      {
+        key: "clubResidents",
+        href: "/residents",
+        icon: KeyRound,
+        roles: ROLE_SETS.CRM,
+      },
+      {
+        key: "clubPartners",
+        href: "/partners",
+        icon: Gift,
+        roles: ROLE_SETS.CRM,
+      },
+      {
+        key: "clubAgents",
+        href: "/agents",
+        icon: Handshake,
+        roles: ROLE_SETS.CRM,
       },
       {
         // Was minRole: SALES, which EDITOR cleared on the ladder and then

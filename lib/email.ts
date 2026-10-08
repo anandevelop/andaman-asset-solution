@@ -78,6 +78,11 @@ type SendArgs = {
  * mailbox must never turn a successful lead/RSVP capture into a 500 for
  * the visitor.
  */
+/** ANDAMAN CLUB mail (OTP, welcome, member added) — same transport and From. */
+export async function sendClubEmail(args: SendArgs): Promise<void> {
+  return sendMail(args);
+}
+
 async function sendMail(args: SendArgs): Promise<void> {
   if (!isEmailConfigured()) {
     console.info("[email] not configured — skipping send");
