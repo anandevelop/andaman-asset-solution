@@ -67,4 +67,25 @@ describe("privacy policy", () => {
     expect(english).not.toContain("We do not collect sensitive personal data");
     expect(english).not.toContain("To improve our website, measure marketing performance");
   });
+
+  it("has no em dash and no reference to a Cookie Notice that does not exist", () => {
+    // Asked out by the client on 2026-10-08. The cookie details the review
+    // pointed to a "Cookie Notice" for are in section 9 instead.
+    for (const locale of locales) {
+      const text = JSON.stringify(privacyPolicy[locale].sections);
+      expect(text, locale).not.toContain("—");
+      expect(text, locale).not.toMatch(/Cookie Notice|Cookie 声明|Уведомлении о файлах cookie/);
+    }
+  });
+
+  it("names every tracker the site can load, in every locale", () => {
+    // The list in section 9 is a statement of fact about Analytics.tsx,
+    // RecaptchaProvider and lib/cookie-consent.ts.
+    for (const locale of locales) {
+      const cookies = privacyPolicy[locale].sections[8].bullets!.join(" ");
+      for (const name of ["NEXT_LOCALE", "_GRECAPTCHA", "Google Analytics 4", "_ga", "Meta Pixel", "_fbp"]) {
+        expect(cookies, `${locale}: ${name}`).toContain(name);
+      }
+    }
+  });
 });

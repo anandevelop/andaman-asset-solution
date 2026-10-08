@@ -27,6 +27,13 @@
  * fourth bullet. Bumping the version also re-asks every visitor's cookie
  * choice (lib/cookie-consent.ts), which is what the new section 11 says a
  * changed notice must not silently carry forward.
+ *
+ * The review referred to a "Cookie Notice" for the technologies and their
+ * retention, and the site has no such page. Rather than a page of its own,
+ * section 9 lists them (what components/Analytics.tsx, RecaptchaProvider and
+ * lib/cookie-consent.ts actually set) and section 2 points there. Keep that
+ * list in step with those files: it is a statement of fact, and adding a
+ * tracker without adding it here makes the notice untrue.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -91,17 +98,17 @@ const th: PolicyContent = {
         "กรุณาอย่าระบุข้อมูลส่วนบุคคลอ่อนไหวในข้อความสอบถาม หากเราได้รับข้อมูลดังกล่าว เราจะพิจารณาและดำเนินการกับข้อมูลนั้นตามกฎหมายที่ใช้บังคับ",
       ],
       after: [
-        "เมื่อท่านให้ความยินยอม เทคโนโลยีเพื่อการวิเคราะห์และการตลาดที่เปิดใช้งานอาจเก็บรวบรวมคุกกี้หรือตัวระบุตัวตนออนไลน์ หน้าที่ท่านเข้าชม และการโต้ตอบกับเว็บไซต์ รายละเอียดของเทคโนโลยีดังกล่าวและระยะเวลาการเก็บรักษาระบุไว้ในประกาศเกี่ยวกับคุกกี้ (Cookie Notice) ของเรา",
+        "เมื่อท่านให้ความยินยอม เทคโนโลยีเพื่อการวิเคราะห์และการตลาดที่เปิดใช้งานอาจเก็บรวบรวมคุกกี้หรือตัวระบุตัวตนออนไลน์ หน้าที่ท่านเข้าชม และการโต้ตอบกับเว็บไซต์ รายละเอียดของเทคโนโลยีดังกล่าวและระยะเวลาการเก็บรักษาระบุไว้ในข้อ 9 (คุกกี้) ด้านล่าง",
       ],
     },
     {
       heading: "3. วัตถุประสงค์และฐานทางกฎหมาย",
       bullets: [
-        "ติดต่อกลับเพื่อให้ข้อมูลโครงการ นัดหมายเข้าชม และเสนอเงื่อนไขการซื้อขาย — ฐานการปฏิบัติตามสัญญา หรือการดำเนินการตามคำขอของท่านก่อนเข้าทำสัญญา แล้วแต่กรณี (มาตรา 24(3))",
-        "ส่งข่าวสาร โปรโมชัน และเชิญร่วมกิจกรรมของบริษัท — ฐานความยินยอม ซึ่งท่านสามารถถอนได้ทุกเมื่อ",
-        "รักษาความมั่นคงปลอดภัยของเว็บไซต์และป้องกันการส่งข้อมูลผ่านแบบฟอร์มโดยอัตโนมัติที่ไม่พึงประสงค์ — ฐานประโยชน์อันชอบด้วยกฎหมาย (มาตรา 24(5)) ภายใต้การประเมินความสมดุลของประโยชน์",
-        "วิเคราะห์การใช้งานเว็บไซต์และวัดผลการตลาดโดยใช้เทคโนโลยีติดตามที่ไม่จำเป็น — ฐานความยินยอมที่ท่านให้แยกต่างหาก (มาตรา 19)",
-        "ปฏิบัติตามกฎหมายที่เกี่ยวข้อง เช่น กฎหมายภาษีอากรและกฎหมายป้องกันการฟอกเงิน — ฐานหน้าที่ตามกฎหมาย (มาตรา 24(6))",
+        "ติดต่อกลับเพื่อให้ข้อมูลโครงการ นัดหมายเข้าชม และเสนอเงื่อนไขการซื้อขาย โดยอาศัยฐานการปฏิบัติตามสัญญา หรือการดำเนินการตามคำขอของท่านก่อนเข้าทำสัญญา แล้วแต่กรณี (มาตรา 24(3))",
+        "ส่งข่าวสาร โปรโมชัน และเชิญร่วมกิจกรรมของบริษัท โดยอาศัยฐานความยินยอม ซึ่งท่านสามารถถอนได้ทุกเมื่อ",
+        "รักษาความมั่นคงปลอดภัยของเว็บไซต์และป้องกันการส่งข้อมูลผ่านแบบฟอร์มโดยอัตโนมัติที่ไม่พึงประสงค์ โดยอาศัยฐานประโยชน์อันชอบด้วยกฎหมาย (มาตรา 24(5)) ภายใต้การประเมินความสมดุลของประโยชน์",
+        "วิเคราะห์การใช้งานเว็บไซต์และวัดผลการตลาดโดยใช้เทคโนโลยีติดตามที่ไม่จำเป็น โดยอาศัยฐานความยินยอมที่ท่านให้แยกต่างหาก (มาตรา 19)",
+        "ปฏิบัติตามกฎหมายที่เกี่ยวข้อง เช่น กฎหมายภาษีอากรและกฎหมายป้องกันการฟอกเงิน โดยอาศัยฐานหน้าที่ตามกฎหมาย (มาตรา 24(6))",
       ],
       after: [
         "การให้ความยินยอมเพื่อการตลาดเป็นทางเลือก การไม่ให้หรือถอนความยินยอมดังกล่าวไม่กระทบต่อการตอบคำสอบถามของท่าน หรือการขอนัดเข้าชมโครงการ",
@@ -161,6 +168,13 @@ const th: PolicyContent = {
       heading: "9. คุกกี้",
       body: [
         "เว็บไซต์ของเราใช้คุกกี้ที่จำเป็นต่อการทำงานของระบบ และอาจใช้คุกกี้เพื่อการวิเคราะห์และการตลาดเมื่อได้รับความยินยอมจากท่าน ท่านสามารถตั้งค่าเบราว์เซอร์เพื่อปฏิเสธคุกกี้ได้ แต่อาจส่งผลต่อการใช้งานบางส่วนของเว็บไซต์",
+      ],
+      bullets: [
+        "คุกกี้ที่จำเป็น: คุกกี้ภาษา (NEXT_LOCALE) ซึ่งมีอายุเท่ากับช่วงเวลาที่ท่านเปิดเบราว์เซอร์ และการตั้งค่าคุกกี้ของท่าน ซึ่งเก็บไว้ในพื้นที่จัดเก็บข้อมูลของเบราว์เซอร์ (local storage) จนกว่าท่านจะเปลี่ยนการตั้งค่าหรือเราเผยแพร่นโยบายฉบับใหม่ ในกรณีที่แบบฟอร์มเปิดใช้ Google reCAPTCHA ระบบดังกล่าวจะตั้งคุกกี้เพื่อความปลอดภัย (_GRECAPTCHA อายุไม่เกิน 6 เดือน) เพื่อแยกคำสอบถามจริงออกจากการใช้งานโดยอัตโนมัติที่ไม่พึงประสงค์",
+        "คุกกี้เพื่อการวิเคราะห์ เฉพาะเมื่อได้รับความยินยอม: Google Analytics 4 (คุกกี้ _ga และ _ga_<ID> อายุไม่เกิน 2 ปี) โดยปกปิดหมายเลข IP บางส่วน",
+        "คุกกี้เพื่อการตลาด เฉพาะเมื่อได้รับความยินยอม: Meta Pixel (คุกกี้ _fbp อายุไม่เกิน 3 เดือน)",
+      ],
+      after: [
         "ท่านสามารถให้หรือถอนความยินยอมสำหรับคุกกี้เพื่อการวิเคราะห์และการตลาดได้ทุกเมื่อ ผ่านลิงก์ \"ตั้งค่าคุกกี้\" ที่ท้ายเว็บไซต์",
         "การติดตามเพื่อการวิเคราะห์และการตลาดที่ไม่จำเป็นซึ่งอาศัยความยินยอม จะไม่ถูกเปิดใช้งานก่อนที่ท่านจะให้ความยินยอม ท่านสามารถปฏิเสธคุกกี้ประเภทดังกล่าวได้ โดยยังคงเข้าถึงข้อมูลทั่วไปบนเว็บไซต์นี้ได้ตามปกติ",
       ],
@@ -213,21 +227,21 @@ const en: PolicyContent = {
         "Consent records: whether consent was given, when it was given, and the version of the consent wording and privacy notice presented to you at the time.",
       ],
       body: [
-        "We do not request sensitive personal data — such as race, religion, health information or biometric data — through the forms on this website.",
+        "We do not request sensitive personal data, such as race, religion, health information or biometric data, through the forms on this website.",
         "Please do not include sensitive personal data in enquiry messages. If such information is received, we will assess and handle it in accordance with applicable law.",
       ],
       after: [
-        "Where enabled with your consent, analytics and marketing technologies may collect cookie or online identifiers, pages visited and interactions with the website. Details of the technologies and their retention periods are provided in our Cookie Notice.",
+        "Where enabled with your consent, analytics and marketing technologies may collect cookie or online identifiers, pages visited and interactions with the website. Details of the technologies and their retention periods are set out in section 9 (Cookies) below.",
       ],
     },
     {
       heading: "3. Purposes and lawful bases",
       bullets: [
-        "To contact you with project information, arrange viewings and present purchase terms — performance of a contract or steps taken at your request before entering into a contract, where applicable (s.24(3)).",
-        "To send news, promotions and event invitations — consent, which you may withdraw at any time.",
-        "To maintain website security and prevent automated form abuse — legitimate interest (s.24(5)), subject to a balancing assessment.",
-        "To analyse website usage and measure marketing performance using non-essential tracking technologies — your separate consent (s.19).",
-        "To comply with applicable law, including tax and anti-money-laundering obligations — legal obligation (s.24(6)).",
+        "To contact you with project information, arrange viewings and present purchase terms: performance of a contract or steps taken at your request before entering into a contract, where applicable (s.24(3)).",
+        "To send news, promotions and event invitations: consent, which you may withdraw at any time.",
+        "To maintain website security and prevent automated form abuse: legitimate interest (s.24(5)), subject to a balancing assessment.",
+        "To analyse website usage and measure marketing performance using non-essential tracking technologies: your separate consent (s.19).",
+        "To comply with applicable law, including tax and anti-money-laundering obligations: legal obligation (s.24(6)).",
       ],
       after: [
         "Marketing consent is optional. Declining or withdrawing it does not affect our response to your enquiry or your ability to request a viewing.",
@@ -238,7 +252,7 @@ const en: PolicyContent = {
       heading: "4. Disclosure to third parties",
       body: ["We do not sell your personal data. We may disclose it, only as necessary, to:"],
       bullets: [
-        "Service providers processing data on our behalf — hosting, email and CRM providers — under data processing agreements.",
+        "Service providers processing data on our behalf, including hosting, email and CRM providers, under data processing agreements.",
         "Sales agents and business partners appointed to contact you about the project you enquired about.",
         "Government agencies or other authorities where required by law or lawful order.",
         "Analytics and advertising service providers for the purposes described in this notice and subject to applicable consent requirements. Their role as a processor or separate controller depends on the service and its configuration.",
@@ -284,7 +298,14 @@ const en: PolicyContent = {
     {
       heading: "9. Cookies",
       body: [
-        "Our website uses cookies that are strictly necessary for it to function, and — with your consent — analytics and marketing cookies. You can configure your browser to refuse cookies, though some parts of the site may not work as intended.",
+        "Our website uses cookies that are strictly necessary for it to function and, with your consent, analytics and marketing cookies. You can configure your browser to refuse cookies, though some parts of the site may not work as intended.",
+      ],
+      bullets: [
+        "Strictly necessary: a language cookie (NEXT_LOCALE), which lasts for your browser session, and your cookie choice, kept in your browser's local storage until you change it or we publish a new version of this notice. Where it is enabled on our forms, Google reCAPTCHA sets a security cookie (_GRECAPTCHA, up to 6 months) to tell genuine enquiries from automated abuse.",
+        "Analytics, only with your consent: Google Analytics 4 (_ga and _ga_<ID> cookies, up to 2 years), with IP addresses anonymised.",
+        "Marketing, only with your consent: Meta Pixel (_fbp cookie, up to 3 months).",
+      ],
+      after: [
         "You can grant or withdraw consent for analytics and marketing cookies at any time via the \"Cookie Preferences\" link in the site footer.",
         "Non-essential analytics and marketing tracking based on consent will not be activated before you consent. You may reject these categories without losing access to the general information on this website.",
       ],
@@ -341,17 +362,17 @@ const zh: PolicyContent = {
         "请勿在咨询留言中填写敏感个人数据。如收到此类信息，我们将依照适用法律进行评估和处理。",
       ],
       after: [
-        "在您同意并启用的情况下，分析及营销技术可能收集 Cookie 或在线标识符、您访问的页面以及您与网站的互动。有关这些技术及其保留期限的详情，请参阅我们的 Cookie 声明。",
+        "在您同意并启用的情况下，分析及营销技术可能收集 Cookie 或在线标识符、您访问的页面以及您与网站的互动。有关这些技术及其保留期限的详情，请参阅下文第 9 条（Cookie）。",
       ],
     },
     {
       heading: "3. 处理目的与法律依据",
       bullets: [
-        "与您联系以提供项目信息、安排看房及提供购买条款——依据合同履行，或在适用情况下应您的要求在订立合同前采取的步骤（第 24(3) 条）",
-        "发送新闻、促销信息及活动邀请——依据同意，您可随时撤回",
-        "维护网站安全并防止自动化滥用表单——依据合法利益（第 24(5) 条），并经利益平衡评估",
-        "使用非必要跟踪技术分析网站使用情况并评估营销效果——依据您另行给予的同意（第 19 条）",
-        "遵守适用法律，包括税务及反洗钱相关义务——依据法定义务（第 24(6) 条）",
+        "与您联系以提供项目信息、安排看房及提供购买条款：依据合同履行，或在适用情况下应您的要求在订立合同前采取的步骤（第 24(3) 条）",
+        "发送新闻、促销信息及活动邀请：依据同意，您可随时撤回",
+        "维护网站安全并防止自动化滥用表单：依据合法利益（第 24(5) 条），并经利益平衡评估",
+        "使用非必要跟踪技术分析网站使用情况并评估营销效果：依据您另行给予的同意（第 19 条）",
+        "遵守适用法律，包括税务及反洗钱相关义务：依据法定义务（第 24(6) 条）",
       ],
       after: [
         "营销同意为自愿选择。拒绝或撤回该同意不影响我们回复您的咨询，也不影响您预约看房。",
@@ -362,7 +383,7 @@ const zh: PolicyContent = {
       heading: "4. 向第三方披露",
       body: ["我们不会出售您的个人数据。在必要范围内，我们可能将其披露给："],
       bullets: [
-        "代表我们处理数据的服务提供商——包括主机、电子邮件及 CRM 服务商——并签署数据处理协议",
+        "代表我们处理数据的服务提供商（包括主机、电子邮件及 CRM 服务商），并签署数据处理协议",
         "受委托就您咨询的项目与您联系的销售代理及业务合作伙伴",
         "在法律要求或合法命令下的政府机关或其他有权机构",
         "分析及广告服务提供商，用于本声明所述目的，并须遵守适用的同意要求。其作为数据处理者或独立数据控制者的角色，取决于具体服务及其配置",
@@ -409,6 +430,13 @@ const zh: PolicyContent = {
       heading: "9. Cookie",
       body: [
         "本网站使用网站运行所必需的 Cookie，并在获得您同意后使用分析及营销类 Cookie。您可以设置浏览器拒绝 Cookie，但这可能影响网站部分功能的正常使用。",
+      ],
+      bullets: [
+        "必要类：语言 Cookie（NEXT_LOCALE，在浏览器会话期间有效），以及您的 Cookie 偏好，保存在浏览器本地存储（local storage）中，直至您更改设置或我们发布本声明的新版本。如表单启用了 Google reCAPTCHA，该服务会设置安全 Cookie（_GRECAPTCHA，最长 6 个月），用于区分真实咨询与自动化滥用",
+        "分析类，仅在您同意后启用：Google Analytics 4（_ga 及 _ga_<ID> Cookie，最长 2 年），并对 IP 地址进行匿名化处理",
+        "营销类，仅在您同意后启用：Meta Pixel（_fbp Cookie，最长 3 个月）",
+      ],
+      after: [
         "您可以随时通过网站页脚的“Cookie 偏好设置”链接，授予或撤回对分析及营销类 Cookie 的同意。",
         "基于同意的非必要分析及营销跟踪，在您同意之前不会启用。您可以拒绝这些类别，且不会因此无法访问本网站的一般信息。",
       ],
@@ -460,21 +488,21 @@ const ru: PolicyContent = {
         "Записи о согласии: факт предоставления согласия, дата и время, а также версия текста согласия и уведомления о конфиденциальности, показанных вам в тот момент",
       ],
       body: [
-        "Мы не запрашиваем специальные категории персональных данных (Sensitive Personal Data) — например, сведения о расе, религии, состоянии здоровья или биометрические данные — через формы на этом сайте.",
+        "Мы не запрашиваем специальные категории персональных данных (Sensitive Personal Data), например сведения о расе, религии, состоянии здоровья или биометрические данные, через формы на этом сайте.",
         "Пожалуйста, не указывайте специальные категории персональных данных в сообщениях запросов. Если такие сведения будут получены, мы оценим их и обработаем в соответствии с применимым законодательством.",
       ],
       after: [
-        "Если это включено с вашего согласия, аналитические и маркетинговые технологии могут собирать файлы cookie или онлайн-идентификаторы, сведения о просмотренных страницах и взаимодействии с сайтом. Подробности об этих технологиях и сроках хранения приведены в нашем Уведомлении о файлах cookie.",
+        "Если это включено с вашего согласия, аналитические и маркетинговые технологии могут собирать файлы cookie или онлайн-идентификаторы, сведения о просмотренных страницах и взаимодействии с сайтом. Подробности об этих технологиях и сроках хранения приведены ниже, в разделе 9 «Файлы cookie».",
       ],
     },
     {
       heading: "3. Цели обработки и правовые основания",
       bullets: [
-        "Связь с вами для предоставления информации о проекте, организации просмотров и предложения условий покупки — исполнение договора или действия, предпринимаемые по вашему запросу до заключения договора, в зависимости от случая (ст. 24(3))",
-        "Рассылка новостей, акций и приглашений на мероприятия — согласие, которое вы можете отозвать в любой момент",
-        "Обеспечение безопасности сайта и предотвращение автоматизированных злоупотреблений формами — законный интерес (ст. 24(5)) при условии оценки баланса интересов",
-        "Анализ использования сайта и оценка эффективности маркетинга с помощью необязательных технологий отслеживания — ваше отдельное согласие (ст. 19)",
-        "Соблюдение применимого законодательства, включая налоговые обязательства и требования законодательства о противодействии отмыванию денег — юридическая обязанность (ст. 24(6))",
+        "Связь с вами для предоставления информации о проекте, организации просмотров и предложения условий покупки: исполнение договора или действия, предпринимаемые по вашему запросу до заключения договора, в зависимости от случая (ст. 24(3))",
+        "Рассылка новостей, акций и приглашений на мероприятия: согласие, которое вы можете отозвать в любой момент",
+        "Обеспечение безопасности сайта и предотвращение автоматизированных злоупотреблений формами: законный интерес (ст. 24(5)) при условии оценки баланса интересов",
+        "Анализ использования сайта и оценка эффективности маркетинга с помощью необязательных технологий отслеживания: ваше отдельное согласие (ст. 19)",
+        "Соблюдение применимого законодательства, включая налоговые обязательства и требования законодательства о противодействии отмыванию денег: юридическая обязанность (ст. 24(6))",
       ],
       after: [
         "Согласие на маркетинговые сообщения не является обязательным. Отказ от него или его отзыв не влияют на ответ на ваш запрос и на возможность записаться на просмотр.",
@@ -485,10 +513,10 @@ const ru: PolicyContent = {
       heading: "4. Раскрытие третьим лицам",
       body: ["Мы не продаём ваши персональные данные. При необходимости мы можем раскрывать их:"],
       bullets: [
-        "Поставщикам услуг, обрабатывающим данные от нашего имени, — провайдерам хостинга, электронной почты и CRM-систем — на основании соглашений об обработке данных",
+        "Поставщикам услуг, обрабатывающим данные от нашего имени, в том числе провайдерам хостинга, электронной почты и CRM-систем, на основании соглашений об обработке данных",
         "Агентам по продажам и деловым партнёрам, уполномоченным связаться с вами по интересующему вас проекту",
         "Государственным органам или иным уполномоченным инстанциям в случаях, предусмотренных законом",
-        "Поставщикам аналитических и рекламных услуг — для целей, описанных в настоящем уведомлении, и с соблюдением применимых требований о согласии. Выступают ли они обработчиком или самостоятельным оператором, зависит от сервиса и его настроек",
+        "Поставщикам аналитических и рекламных услуг для целей, описанных в настоящем уведомлении, и с соблюдением применимых требований о согласии. Выступают ли они обработчиком или самостоятельным оператором, зависит от сервиса и его настроек",
       ],
     },
     {
@@ -531,7 +559,14 @@ const ru: PolicyContent = {
     {
       heading: "9. Файлы cookie",
       body: [
-        "Наш сайт использует файлы cookie, необходимые для его работы, а также — с вашего согласия — аналитические и маркетинговые файлы cookie. Вы можете настроить браузер так, чтобы отклонять cookie, однако это может повлиять на работу некоторых разделов сайта.",
+        "Наш сайт использует файлы cookie, необходимые для его работы, а также, с вашего согласия, аналитические и маркетинговые файлы cookie. Вы можете настроить браузер так, чтобы отклонять cookie, однако это может повлиять на работу некоторых разделов сайта.",
+      ],
+      bullets: [
+        "Строго необходимые: файл cookie языка (NEXT_LOCALE), действующий в течение сеанса браузера, и ваш выбор в отношении cookie, который хранится в локальном хранилище браузера (local storage), пока вы его не измените или мы не опубликуем новую версию настоящего уведомления. Если в формах включена Google reCAPTCHA, она устанавливает защитный файл cookie (_GRECAPTCHA, до 6 месяцев), чтобы отличать настоящие запросы от автоматизированных злоупотреблений",
+        "Аналитические, только с вашего согласия: Google Analytics 4 (файлы cookie _ga и _ga_<ID>, до 2 лет) с анонимизацией IP-адресов",
+        "Маркетинговые, только с вашего согласия: Meta Pixel (файл cookie _fbp, до 3 месяцев)",
+      ],
+      after: [
         "Вы можете предоставить или отозвать согласие на аналитические и маркетинговые cookie в любое время через ссылку «Настройки cookie» в нижней части сайта.",
         "Необязательное аналитическое и маркетинговое отслеживание, основанное на согласии, не включается до того, как вы дадите согласие. Вы можете отказаться от этих категорий, сохранив доступ к общей информации на сайте.",
       ],
