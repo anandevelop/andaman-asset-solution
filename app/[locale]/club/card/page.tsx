@@ -10,6 +10,7 @@ import QRCode from "qrcode";
 import { ChevronRight, Star, Tag } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { cardUrl } from "@/lib/club/constants";
+import { cardHost } from "@/lib/club/paths";
 import { getResidentPartners, projectName } from "@/lib/club/portal";
 import { requireResident } from "@/lib/club/portal-actions-helpers";
 import BlackCard, { CardChevrons } from "@/components/club/BlackCard";
@@ -32,7 +33,7 @@ export default async function CardPage({ params }: { params: Promise<{ locale: s
   const code = project.cardCode;
   const qr =
     card && code
-      ? await QRCode.toString(cardUrl(code, card.token), { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ececec" } })
+      ? await QRCode.toString(cardUrl(code, card.token, await cardHost()), { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ececec" } })
       : null;
   const best = partners.reduce((max, p) => Math.max(max, p.pct ?? 0), 0);
 

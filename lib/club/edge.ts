@@ -83,7 +83,7 @@ export function clubProxy(request: NextRequest): NextResponse | null {
   // the portal lives under /<locale>/club on the same domain — no extra
   // subdomain or proxy entry needed.
   const host = (request.headers.get("host") ?? "").toLowerCase().split(":")[0];
-  const sharedHost = host === memberHost();
+  const sharedHost = host === memberHost(host);
 
   if (cardOnMain) {
     if (sharedHost) {
@@ -92,7 +92,7 @@ export function clubProxy(request: NextRequest): NextResponse | null {
       url.pathname = `/${localeOf(request)}/club/c/${card[1]}/${card[2]}`;
       return withPrivateHeaders(NextResponse.rewrite(url));
     }
-    const target = new URL(`https://${memberHost()}${pathname}`);
+    const target = new URL(`https://${memberHost(host)}${pathname}`);
     return withPrivateHeaders(NextResponse.redirect(target, 308));
   }
   if (clubOnMain) {

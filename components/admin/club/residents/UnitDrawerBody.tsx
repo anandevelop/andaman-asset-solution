@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { maskEmail, maskPhone } from "@/lib/contact-mask";
 import { formatDateShort, formatNumber, intlLocale } from "@/lib/format";
 import { cardUrl } from "@/lib/club/constants";
+import { cardHost } from "@/lib/club/paths";
 import { projectName } from "@/lib/club/portal";
 import { daysUntil, maskCardUrl, maskHouseCode, qrPreviewSvg, type UnitDetail } from "@/lib/club/admin-residents";
 import {
@@ -141,7 +142,7 @@ export default async function UnitDrawerBody({
     const card = resident.cards.find((c) => !c.revokedAt) ?? null;
     const revoked = resident.cards.filter((c) => c.revokedAt).length;
     const code = unit.project.cardCode;
-    const url = card && code ? cardUrl(code, card.token) : null;
+    const url = card && code ? cardUrl(code, card.token, await cardHost()) : null;
     const qrSvg = url ? await qrPreviewSvg(url) : null;
     const memberNames = new Map(resident.members.map((m) => [m.id, m.name]));
 

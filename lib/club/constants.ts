@@ -18,22 +18,30 @@ function bareHost(value: string): string {
   return value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/[/?#].*$/, "");
 }
 
+/** Hosts that serve the live marketing site (cards go to the member host). */
+const PRODUCTION_HOSTS = ["andamanassetsolution.com", "www.andamanassetsolution.com"];
+
 /**
- * The host card links point at. Read at run time on the server (never
- * inlined), so one image serves both environments:
- *   CLUB_MEMBER_HOST            → used as is
- *   else CLUB_SITE_URL          → "member." + its host
- *                                 (https://168-144-240-9.sslip.io →
- *                                  member.168-144-240-9.sslip.io)
- *   else                        → member.andamanassetsolution.com
- * Staging sets CLUB_SITE_URL; production sets nothing.
+ * The host card links point at. Read at run time (never inlined), so one
+ * image serves every environment:
+ *   CLUB_MEMBER_HOST       → used as is
+ *   else CLUB_SITE_URL     → "member." + its host
+ *   else requestHost       → the host the admin is using, when it is not
+ *                            the live site or localhost — so a staging
+ *                            server such as 168-144-240-9.sslip.io prints
+ *                            https://168-144-240-9.sslip.io/rp/<token>
+ *                            with no configuration at all
+ *   else                   → member.andamanassetsolution.com
  */
-export function memberHost(): string {
+export function memberHost(requestHost?: string | null): string {
   const env = typeof process === "undefined" ? undefined : process.env;
   const explicit = bareHost(env?.CLUB_MEMBER_HOST ?? "");
   if (explicit) return explicit;
   const site = bareHost(env?.CLUB_SITE_URL ?? "").replace(/^www\./, "");
-  return site ? `member.${site}` : DEFAULT_MEMBER_HOST;
+  if (site) return `member.${site}`;
+  const host = bareHost(requestHost ?? "").replace(/:\d+$/, "");
+  if (host && !PRODUCTION_HOSTS.includes(host) && !/^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(host)) return host;
+  return DEFAULT_MEMBER_HOST;
 }
 
 export const CARD_CODES = ["rp", "tv", "vc"] as const;
@@ -44,8 +52,9 @@ export const isCardCode = (value: string): value is CardCode =>
 /** Printed in old test cards only — redirected, never issued again. */
 export const LEGACY_CARD_PREFIX = "r";
 
-export function cardUrl(code: string, token: string): string {
-  return `https://${memberHost()}/${code}/${token}`;
+/** `host`: pass cardHost() (lib/club/paths.ts) from server code. */
+export function cardUrl(code: string, token: string, host?: string): string {
+  return `https://${host || memberHost()}/${code}/${token}`;
 }
 
 /** Program name shown on the login screen and in e-mails. */

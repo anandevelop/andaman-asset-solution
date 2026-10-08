@@ -8,11 +8,17 @@
  */
 import "server-only";
 import { headers } from "next/headers";
+import { memberHost } from "./constants";
 
 export async function clubBase(locale: string): Promise<string> {
   const host = ((await headers()).get("host") ?? "").toLowerCase();
   const member = host.startsWith("member.") || (!!process.env.CLUB_DEV_HOST && host === process.env.CLUB_DEV_HOST);
   return member ? "" : `/${locale}/club`;
+}
+
+/** The host to print in card links for this request (see memberHost). */
+export async function cardHost(): Promise<string> {
+  return memberHost((await headers()).get("host"));
 }
 
 export async function requestIp(): Promise<string | null> {

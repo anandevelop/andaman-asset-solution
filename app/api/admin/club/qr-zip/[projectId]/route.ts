@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { rateLimit } from "@/lib/rate-limit";
 import { cardUrl } from "@/lib/club/constants";
+import { cardHost } from "@/lib/club/paths";
 import { qrFileName, qrPng, qrSvgFile } from "@/lib/club/admin-residents";
 import { makeZip, type ZipEntry } from "@/lib/club/zip";
 
@@ -60,9 +61,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
   const png: ZipEntry[] = [];
   const svg: ZipEntry[] = [];
   const rows = [["file", "project", "unit", "card_no", "issued", "qr_url"].map(csvCell).join(",")];
+  const host = await cardHost();
   for (const card of cards) {
     const unit = card.resident.unit.unitNumber;
-    const url = cardUrl(code, card.token);
+    const url = cardUrl(code, card.token, host);
     const pngName = qrFileName(code, unit, card.version, "png");
     png.push({ name: `png/${pngName}`, data: await qrPng(url) });
     svg.push({ name: `svg/${qrFileName(code, unit, card.version, "svg")}`, data: await qrSvgFile(url) });

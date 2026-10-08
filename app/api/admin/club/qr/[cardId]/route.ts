@@ -15,6 +15,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { cardUrl } from "@/lib/club/constants";
+import { cardHost } from "@/lib/club/paths";
 import { logCardEvent } from "@/lib/club/cards";
 import { qrFileName, qrPng, qrSvgFile } from "@/lib/club/admin-residents";
 
@@ -42,7 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ card
   // A revoked card's QR must never be printed again.
   if (card.revokedAt) return NextResponse.json({ error: "revoked" }, { status: 410 });
 
-  const url = cardUrl(code, card.token);
+  const url = cardUrl(code, card.token, await cardHost());
   const name = qrFileName(code, card.resident.unit.unitNumber, card.version, format);
   const body = format === "svg" ? Buffer.from(await qrSvgFile(url), "utf8") : await qrPng(url);
 
