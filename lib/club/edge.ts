@@ -53,6 +53,11 @@ function notFound(): NextResponse {
   });
 }
 
+function localeOf(request: NextRequest): string {
+  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value ?? "";
+  return LOCALES.includes(cookieLocale) ? cookieLocale : "th";
+}
+
 function withPrivateHeaders(response: NextResponse): NextResponse {
   for (const [key, value] of Object.entries(PRIVATE_HEADERS)) response.headers.set(key, value);
   return response;
@@ -73,13 +78,27 @@ export function clubProxy(request: NextRequest): NextResponse | null {
   const ua = request.headers.get("user-agent") ?? "";
   if (!ua || BOT_UA.test(ua)) return notFound();
 
+  // Shared-host mode (testing): CLUB_MEMBER_HOST is this very host, e.g.
+  // 168-144-240-9.sslip.io, so cards print https://<host>/rp/<token> and
+  // the portal lives under /<locale>/club on the same domain — no extra
+  // subdomain or proxy entry needed.
+  const host = (request.headers.get("host") ?? "").toLowerCase().split(":")[0];
+  const sharedHost = host === memberHost();
+
   if (cardOnMain) {
+    if (sharedHost) {
+      const card = pathname.match(CARD_PATH)!;
+      const url = request.nextUrl.clone();
+      url.pathname = `/${localeOf(request)}/club/c/${card[1]}/${card[2]}`;
+      return withPrivateHeaders(NextResponse.rewrite(url));
+    }
     const target = new URL(`https://${memberHost()}${pathname}`);
     return withPrivateHeaders(NextResponse.redirect(target, 308));
   }
   if (clubOnMain) {
-    // Reachable for local development only; production serves it on member.*
-    if (process.env.NODE_ENV === "production" && !process.env.CLUB_ALLOW_MAIN_HOST) return notFound();
+    // Production serves the portal on member.* only, unless this host is
+    // the configured member host or CLUB_ALLOW_MAIN_HOST is set.
+    if (process.env.NODE_ENV === "production" && !sharedHost && !process.env.CLUB_ALLOW_MAIN_HOST) return notFound();
     return withPrivateHeaders(NextResponse.next());
   }
 
@@ -87,8 +106,7 @@ export function clubProxy(request: NextRequest): NextResponse | null {
   if (/^\/(admin|login)(\/|$)/.test(pathname) || /^\/(th|en|zh|ru)\/(admin|login)(\/|$)/.test(pathname)) return notFound();
   if (MAIN_CLUB_PATH.test(pathname)) return withPrivateHeaders(NextResponse.next());
 
-  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value ?? "";
-  const locale = LOCALES.includes(cookieLocale) ? cookieLocale : "th";
+  const locale = localeOf(request);
   const url = request.nextUrl.clone();
   const card = pathname.match(CARD_PATH);
   url.pathname = card
