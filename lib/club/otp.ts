@@ -8,7 +8,7 @@
  */
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { isEmailConfigured, sendClubEmail } from "@/lib/email";
+import { isClubEmailConfigured, sendClubEmail } from "@/lib/email";
 import { maskEmail } from "@/lib/contact-mask";
 import {
   OTP_LOCK_MINUTES,
@@ -64,7 +64,7 @@ export async function requestOtp(residentId: string, toEmail: string | null, loc
   await prisma.residentOtp.create({
     data: { residentId, email: target.email, codeHash: sha256(code), expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * MIN) },
   });
-  if (!isEmailConfigured() && process.env.NODE_ENV !== "production") {
+  if (!isClubEmailConfigured() && process.env.NODE_ENV !== "production") {
     // Local development without SMTP: the only way to read the code.
     console.info(`[club] OTP for ${maskEmail(target.email)}: ${code}`);
   }
