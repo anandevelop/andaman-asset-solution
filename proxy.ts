@@ -26,7 +26,6 @@ import { roleRequiresTwoFactor } from "./lib/two-factor-policy";
 import { identifyBot } from "./lib/seo/bots";
 import { recordCrawlHit } from "./lib/seo/crawl-log";
 import { stripLocale } from "./lib/public-paths";
-import { clubProxy } from "./lib/club/edge";
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -43,14 +42,6 @@ const SECURITY_PATH = new RegExp(
 );
 
 export default async function proxy(request: NextRequest, event: NextFetchEvent) {
-  /*
-    ANDAMAN CLUB first, before crawl logging: the member host and card
-    links carry private tokens that must never reach the crawl log, and
-    bots get a bare 404 there. See lib/club/edge.ts.
-  */
-  const club = clubProxy(request);
-  if (club) return club;
-
   const { pathname, search } = request.nextUrl;
 
   /*

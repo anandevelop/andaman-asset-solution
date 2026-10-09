@@ -9,7 +9,7 @@
 import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Link2, Loader2 } from "lucide-react";
-import { AGENT_NOTICE_VERSION, PRIVACY_EMAIL } from "@/lib/club/constants";
+import { AGENT_NOTICE_VERSION, PRIVACY_EMAIL } from "@/lib/agents/constants";
 import { registerAgent, type AgentRegisterState } from "./actions";
 
 const INPUT =
@@ -17,7 +17,7 @@ const INPUT =
 const LABEL = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink/70";
 
 export default function RegisterForm({ locale, refSlug, closed }: { locale: string; refSlug: string | null; closed: boolean }) {
-  const t = useTranslations("clubAgents.agentForm");
+  const t = useTranslations("coAgents.agentForm");
   const [state, formAction, pending] = useActionState<AgentRegisterState, FormData>(registerAgent.bind(null, locale, refSlug), {
     status: "idle",
   });

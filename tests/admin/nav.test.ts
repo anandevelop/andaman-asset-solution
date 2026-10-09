@@ -92,12 +92,12 @@ describe("the menu each role sees", () => {
   */
   const EXPECTED: Record<Role, { rail: string[]; drawerExtra: string[]; tabs: string[] }> = {
     SUPER_ADMIN: {
-      rail: ["activity", "analytics", "clubAgents", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
+      rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
     ADMIN: {
-      rail: ["analytics", "clubAgents", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
+      rail: ["analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
@@ -107,7 +107,7 @@ describe("the menu each role sees", () => {
       tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations"],
     },
     SALES: {
-      rail: ["clubAgents", "clubResidents", "dashboard", "leads", "salesTeam"],
+      rail: ["coAgents", "dashboard", "leads", "salesTeam"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/leads"],
     },
@@ -340,8 +340,7 @@ describe("the sidebar each role gets", () => {
     SUPER_ADMIN: [
       "dashboard",
       "leads",
-      "clubResidents",
-      "clubAgents",
+      "coAgents",
       "publishing",
       "analytics",
       "reports",
@@ -360,8 +359,7 @@ describe("the sidebar each role gets", () => {
     ADMIN: [
       "dashboard",
       "leads",
-      "clubResidents",
-      "clubAgents",
+      "coAgents",
       "publishing",
       "analytics",
       "reports",
@@ -387,7 +385,7 @@ describe("the sidebar each role gets", () => {
       "media",
     ],
     // CRM plus the roster they are on. salesTeam is in CONTENT_AND_CRM.
-    SALES: ["dashboard", "leads", "clubResidents", "clubAgents", "salesTeam"],
+    SALES: ["dashboard", "leads", "coAgents", "salesTeam"],
     // Read-only: everything the (catalog) and (content) zones admit them
     // to, and nothing else. Not salesTeam — CONTENT_AND_CRM leaves VIEWER
     // out because that page's own guard is a Role.SALES rank they do not
@@ -416,14 +414,13 @@ describe("the sidebar each role gets", () => {
     });
   }
 
-  it("is seventeen rows for the owner", () => {
+  it("is sixteen rows for the owner", () => {
     // The number the restructure was aiming at, stated once so a diff that
     // changes it has to change this line too. Fourteen until the monthly
     // report joined `growth` — which is the kind of change this assertion
-    // exists to make somebody look at.
-    // Seventeen since ANDAMAN CLUB added residents and agents to the
-    // daily group (both are CRM work, for SALES and up).
-    expect(EXPECTED.SUPER_ADMIN).toHaveLength(17);
+    // exists to make somebody look at. Sixteen since the co-agent list
+    // joined the daily group.
+    expect(EXPECTED.SUPER_ADMIN).toHaveLength(16);
   });
 
   it("groups them by how often they are opened", () => {

@@ -126,7 +126,7 @@ describe("every static page reaches the sitemap", () => {
     name to make the suite green.
   */
   // /agent/register: an invite form reached from a sales person's link,
-  // noindex like the ANDAMAN CLUB pages.
+  // never indexed.
   const UNINDEXED = ["/privacy-policy", "/terms", "/agent/register"];
 
   it("finds the pages it is supposed to be checking", () => {

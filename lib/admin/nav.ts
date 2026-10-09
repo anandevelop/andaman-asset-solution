@@ -52,9 +52,8 @@ import {
   Contact,
   FileCheck2,
   FileText,
-  Handshake,
-  KeyRound,
   Files,
+  Handshake,
   History,
   LayoutDashboard,
   LibraryBig,
@@ -398,16 +397,10 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.leads,
         tabsBase: "",
       },
-      /* ANDAMAN CLUB — residents and their cards, co-agents. CRM roles:
-         sales record transfers and hand over cards. */
+      /* Co-agents: the agent list and the per-sales registration links.
+         CRM roles, like the leads they bring in. */
       {
-        key: "clubResidents",
-        href: "/residents",
-        icon: KeyRound,
-        roles: ROLE_SETS.CRM,
-      },
-      {
-        key: "clubAgents",
+        key: "coAgents",
         href: "/agents",
         icon: Handshake,
         roles: ROLE_SETS.CRM,

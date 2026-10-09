@@ -38,8 +38,7 @@ import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messagefor
 /**
  * The namespaces the public site renders, in the order the editor lists
  * them. `admin` and `auth` are the back office's own chrome — editing them
- * from inside the back office is a way to lock yourself out of reading it —
- * and ANDAMAN CLUB's strings load from messages/club/, outside this merge.
+ * from inside the back office is a way to lock yourself out of reading it.
  */
 export const EDITABLE_NAMESPACES = [
   "nav",

@@ -12,10 +12,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   escapeHtml,
-  isClubEmailConfigured,
   isEmailConfigured,
   notifyNewLeadByEmail,
-  sendClubEmail,
   notifyNewRegistrationByEmail,
   sendRsvpConfirmationEmail,
 } from "@/lib/email";
@@ -26,13 +24,10 @@ import {
   — which is why the send spy is created out here and cleared per test
   rather than rebuilt.
 */
-const { sendMailSpy, createTransportSpy } = vi.hoisted(() => {
-  const sendMailSpy = vi.fn();
-  return { sendMailSpy, createTransportSpy: vi.fn(() => ({ sendMail: sendMailSpy })) };
-});
+const { sendMailSpy } = vi.hoisted(() => ({ sendMailSpy: vi.fn() }));
 
 vi.mock("nodemailer", () => ({
-  default: { createTransport: createTransportSpy },
+  default: { createTransport: () => ({ sendMail: sendMailSpy }) },
 }));
 
 /*
@@ -440,55 +435,4 @@ describe("sendRsvpConfirmationEmail", () => {
       expect(hostile.text).toContain(payload);
     },
   );
-});
-
-/*
-  Club mail (the portal OTP) has its own transport when SMTP_URL is set, so
-  the sign-in code can go through Resend under "Andaman OTP" without every
-  lead notification changing sender too.
-*/
-describe("sendClubEmail", () => {
-  const saved = { url: process.env.SMTP_URL, from: process.env.MAIL_FROM, host: process.env.SMTP_HOST };
-
-  beforeEach(() => {
-    sendMailSpy.mockClear();
-    createTransportSpy.mockClear();
-  });
-
-  afterEach(() => {
-    for (const [name, value] of [
-      ["SMTP_URL", saved.url],
-      ["MAIL_FROM", saved.from],
-      ["SMTP_HOST", saved.host],
-    ] as const) {
-      if (value === undefined) delete process.env[name];
-      else process.env[name] = value;
-    }
-  });
-
-  it("sends through SMTP_URL from MAIL_FROM when both are set", async () => {
-    process.env.SMTP_URL = "smtps://resend:key@smtp.resend.com:2465";
-    process.env.MAIL_FROM = "Andaman OTP <no-reply@andamanassetsolution.com>";
-    delete process.env.SMTP_HOST;
-
-    expect(isClubEmailConfigured()).toBe(true);
-    await sendClubEmail({ to: "owner@example.com", subject: "Code", html: "<p>1</p>", text: "1" });
-
-    expect(createTransportSpy).toHaveBeenCalledWith("smtps://resend:key@smtp.resend.com:2465");
-    expect(sendMailSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        from: "Andaman OTP <no-reply@andamanassetsolution.com>",
-        to: "owner@example.com",
-      }),
-    );
-  });
-
-  it("is unconfigured, and sends nothing, with neither SMTP_URL nor SMTP_HOST", async () => {
-    delete process.env.SMTP_URL;
-    delete process.env.SMTP_HOST;
-
-    expect(isClubEmailConfigured()).toBe(false);
-    await sendClubEmail({ to: "owner@example.com", subject: "Code", html: "", text: "" });
-    expect(sendMailSpy).not.toHaveBeenCalled();
-  });
 });

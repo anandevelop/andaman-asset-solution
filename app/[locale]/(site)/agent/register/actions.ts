@@ -14,8 +14,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { RATE_LIMITS, clientIp, rateLimit } from "@/lib/rate-limit";
-import { AGENT_NOTICE_VERSION } from "@/lib/club/constants";
-import { resolveAgentRef } from "@/lib/club/admin-agents";
+import { AGENT_NOTICE_VERSION } from "@/lib/agents/constants";
+import { resolveAgentRef } from "@/lib/agents/admin";
 import { locales } from "@/i18n";
 
 export type AgentRegisterState =

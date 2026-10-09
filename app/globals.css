@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./club.css";
 
 @custom-variant dark (&:is(.dark *));
 

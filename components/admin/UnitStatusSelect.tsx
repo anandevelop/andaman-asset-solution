@@ -30,9 +30,6 @@ export default function UnitStatusSelect({ action, status, labels }: Props) {
       <select
         name="status"
         defaultValue={status}
-        /* A transferred house belongs to ANDAMAN CLUB now (Units & residents);
-           its status is changed by a resale there, never from this select. */
-        disabled={status === "TRANSFERRED"}
         onChange={() => formRef.current?.requestSubmit()}
         className="rounded-xs border border-adm-line-strong bg-adm-solid px-2.5 py-1.5 text-xs text-adm-text focus:border-adm-line-strong focus:outline-hidden focus:ring-1 focus:ring-adm-info/20"
       >

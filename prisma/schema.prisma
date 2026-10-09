@@ -115,7 +115,7 @@ enum UnitStatus {
   AVAILABLE
   RESERVED
   SOLD
-  /// Handed over to the buyer. Has a Resident row and an ANDAMAN CLUB card.
+  /// Ownership transferred to the buyer.
   TRANSFERRED
 }
 
@@ -425,12 +425,6 @@ model Project {
 
   unitTypes ProjectUnitType[]
   units     ProjectUnit[]
-
-  /// ANDAMAN CLUB card-link code: rp / tv / vc. Printed inside every card's
-  /// QR (member.andamanassetsolution.com/<cardCode>/<token>), so it can never
-  /// change once cards for this project are printed.
-  cardCode     String?          @unique @db.VarChar(8)
-  partnerLinks PartnerProject[]
 
   /// Full-bleed photo cards under the "Facilities" section — see the
   /// model below. Supersedes the plain `facilities` array above.
@@ -802,10 +796,6 @@ model ProjectUnit {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  resident         Resident?
-  partnerOverrides PartnerUnitOverride[]
-  overrideRequests PartnerOverrideRequest[]
 
   @@unique([projectId, unitNumber])
   @@index([projectId, status])
@@ -3386,290 +3376,12 @@ model SeoQueryStat {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// ANDAMAN CLUB — residents, cards, partners, co-agents
-// See "Claude outputs/andaman-sales-crm-mockup.html" and the project doc
-// claude/sales-crm-gap-analysis.md for the behaviour these rows back.
+// Co-agents — /admin/agents and the public /agent/register form
 // ─────────────────────────────────────────────────────────────────────────
-
-enum CardStatus {
-  NONE
-  PRINTED
-  HANDED
-}
-
-enum OverrideRequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  CANCELLED
-}
 
 enum AgentStatus {
   PENDING
   APPROVED
-}
-
-enum CardEventKind {
-  SCAN
-  SCAN_REVOKED
-  OTP_SENT
-  OTP_OK
-  OTP_FAIL
-  OTP_LOCK
-  TRUSTED_LOGIN
-  CODE_LOGIN
-  REISSUE
-  SIGN_OUT_ALL
-  SIGN_OUT_DEVICE
-  QR_DOWNLOAD
-  EMAIL_CHANGED
-  PHONE_REVEALED
-  MEMBER_ADDED
-  MEMBER_REMOVED
-  CARD_PRINTED
-  CARD_HANDED
-  RESALE
-}
-
-/// The current owner of a TRANSFERRED unit. One row per unit; a resale
-/// rewrites it in place and moves the previous owner to ResidentOwnership.
-model Resident {
-  id     String      @id @default(cuid())
-  unitId String      @unique
-  unit   ProjectUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-
-  ownerName    String
-  /// Stored in full, shown masked (lib/contact-mask.ts); every reveal is a CardEvent.
-  phone        String
-  /// Where OTP codes go. A home without one cannot sign in to the portal.
-  email        String?
-  nationality  String   @default("TH") @db.VarChar(2)
-  transferDate DateTime
-  /// Backup sign-in code, e.g. RP-R12-8K4Q. Still needs an OTP.
-  houseCode    String   @unique
-  purpose      String?
-
-  termsVersion    String?
-  termsAcceptedAt DateTime?
-  lastLoginAt     DateTime?
-
-  members    ResidentMember[]
-  cards      ResidentCard[]
-  devices    TrustedDevice[]
-  otps       ResidentOtp[]
-  events     CardEvent[]
-  pastOwners ResidentOwnership[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("residents")
-}
-
-/// Up to 2 people the owner adds (spouse, family, property manager). Each
-/// gets OTP codes at their own email and shares the house's card.
-model ResidentMember {
-  id         String   @id @default(cuid())
-  residentId String
-  resident   Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  name       String
-  relation   String
-  email      String
-  addedBy    String
-  createdAt  DateTime @default(now())
-
-  @@unique([residentId, email])
-  @@map("resident_members")
-}
-
-/// Previous owners after a resale — name and dates only (PDPA).
-model ResidentOwnership {
-  id          String   @id @default(cuid())
-  residentId  String
-  resident    Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  ownerName   String
-  nationality String   @db.VarChar(2)
-  fromDate    DateTime
-  toDate      DateTime
-  recordedBy  String
-  createdAt   DateTime @default(now())
-
-  @@map("resident_ownerships")
-}
-
-/// One printed card. Reissuing revokes the current row and creates the next
-/// version; the old token then only ever shows the "revoked" screen.
-model ResidentCard {
-  id         String    @id @default(cuid())
-  residentId String
-  resident   Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  /// 20-char base62. Stored plain on purpose: QR files must be re-downloadable.
-  token      String    @unique @db.VarChar(32)
-  version    Int
-  issuedAt   DateTime  @default(now())
-  revokedAt  DateTime?
-
-  status         CardStatus @default(NONE)
-  printedAt      DateTime?
-  handedAt       DateTime?
-  handedTo       String?
-  handoverMethod String?
-  handedBy       String?
-
-  @@index([residentId, revokedAt])
-  @@map("resident_cards")
-}
-
-/// "Remember this device" — 90 days sliding from last use.
-model TrustedDevice {
-  id         String    @id @default(cuid())
-  residentId String
-  resident   Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  /// Null = the owner; otherwise the ResidentMember who verified.
-  memberId   String?
-  label      String
-  tokenHash  String    @unique
-  firstSeen  DateTime  @default(now())
-  lastSeen   DateTime  @default(now())
-  expiresAt  DateTime
-  revokedAt  DateTime?
-
-  @@index([residentId])
-  @@map("trusted_devices")
-}
-
-model ResidentOtp {
-  id         String    @id @default(cuid())
-  residentId String
-  resident   Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  email      String
-  codeHash   String
-  expiresAt  DateTime
-  attempts   Int       @default(0)
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@index([residentId, createdAt])
-  @@map("resident_otps")
-}
-
-/// The unit drawer's access log. Kept 1 year (PDPA retention job).
-model CardEvent {
-  id         String        @id @default(cuid())
-  residentId String
-  resident   Resident      @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  kind       CardEventKind
-  actor      String
-  device     String?
-  ip         String?
-  createdAt  DateTime      @default(now())
-
-  @@index([residentId, createdAt])
-  @@map("card_events")
-}
-
-model Partner {
-  id       String  @id @default(cuid())
-  name     String
-  /// hosp | dine | beach | spa | act — see lib/club/constants.ts
-  category String
-  area     String?
-
-  /// The benefit is always a percentage. Null = "รอประกาศสิทธิ์".
-  discountPct  Int?
-  /// "ค่าอาหาร" — shown as "ลด 20% ค่าอาหาร". Translations below.
-  discountNote String?
-
-  phones      String[]
-  contactName String?
-  emails      String[]
-  website     String?
-  coverImage  String?
-
-  isActive  Boolean   @default(true)
-  validFrom DateTime?
-  validTo   DateTime?
-  sortOrder Int       @default(0)
-
-  translations PartnerTranslation[]
-  projects     PartnerProject[]
-  overrides    PartnerUnitOverride[]
-  requests     PartnerOverrideRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive, category])
-  @@map("partners")
-}
-
-model PartnerTranslation {
-  id           String  @id @default(cuid())
-  partnerId    String
-  partner      Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  locale       String  @db.VarChar(5)
-  discountNote String?
-
-  @@unique([partnerId, locale])
-  @@map("partner_translations")
-}
-
-/// A row = the partner is offered to residents of that project.
-model PartnerProject {
-  partnerId String
-  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@id([partnerId, projectId])
-  @@map("partner_projects")
-}
-
-/// What one house actually sees. discountPct may only LOWER the partner's
-/// default — never exceed it (lib/club/benefits.ts enforces this).
-model PartnerUnitOverride {
-  id            String      @id @default(cuid())
-  partnerId     String
-  partner       Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  unitId        String
-  unit          ProjectUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  hidden        Boolean     @default(false)
-  discountPct   Int?
-  updatedByName String
-  updatedAt     DateTime    @updatedAt
-
-  @@unique([partnerId, unitId])
-  @@map("partner_unit_overrides")
-}
-
-/// A SALES or ADMIN edit to a per-house benefit; live only after a
-/// SUPER_ADMIN approves it.
-model PartnerOverrideRequest {
-  id        String      @id @default(cuid())
-  partnerId String
-  partner   Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  unitId    String
-  unit      ProjectUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-
-  fromHidden Boolean
-  fromPct    Int?
-  toHidden   Boolean
-  toPct      Int?
-
-  status          OverrideRequestStatus @default(PENDING)
-  requestedById   String
-  requestedByName String
-  decidedById     String?
-  decidedByName   String?
-  decidedAt       DateTime?
-  reason          String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status, createdAt])
-  @@index([unitId, partnerId])
-  @@map("partner_override_requests")
 }
 
 /// Co-agents. Imported from Excel or self-registered via a sales link.

@@ -408,15 +408,11 @@ so it is safe to expose. LINE's own "Verify" button should return success.
 
 ## 7a. Email
 
-`lib/email.ts` sends three kinds of mail, through two transports:
-
-| Mail | Transport | Variables |
-|---|---|---|
-| Staff alert on a lead or RSVP, RSVP confirmation, monthly report | main | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_*` |
-| ANDAMAN CLUB: portal OTP codes, member and owner notices | club | `SMTP_URL`, `MAIL_FROM` — falls back to the main transport when unset |
-
-Both go through [Resend](https://resend.com), with `andamanassetsolution.com`
-verified there:
+`lib/email.ts` sends the staff alert on a lead or RSVP, the RSVP
+confirmation and the monthly report through one SMTP transport
+(`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`,
+`SMTP_FROM_*`). It goes through [Resend](https://resend.com), with
+`andamanassetsolution.com` verified there:
 
 ```
 SMTP_HOST="smtp.resend.com"
@@ -425,16 +421,12 @@ SMTP_SECURE=true
 SMTP_USER="resend"
 SMTP_PASSWORD="re_…"
 SMTP_FROM_EMAIL="no-reply@andamanassetsolution.com"
-
-SMTP_URL="smtps://resend:re_…@smtp.resend.com:2465"
-MAIL_FROM="Andaman OTP <no-reply@andamanassetsolution.com>"
 ```
 
 **Port 2465, because DigitalOcean blocks 25, 465 and 587.** The staging
 droplet sent through Gmail on 587 and every send ended in
-`[email] send failed Error: Connection timeout` — while the portal still
-told the resident "code sent to an•••@gmail.com", because a send failure is
-logged, never shown. Resend's 2465 (implicit TLS) and 2587 (STARTTLS,
+`[email] send failed Error: Connection timeout` — while the page still
+reported success, because a send failure is logged, never shown. Resend's 2465 (implicit TLS) and 2587 (STARTTLS,
 `SMTP_SECURE=false`) exist for hosts like this one.
 
 A send failure never reaches the page, so check from the server:
@@ -444,21 +436,19 @@ cd /opt/app
 C="docker compose -f docker-compose.prod.yml"
 
 # The container sees the variables (not just .env on disk)
-$C exec -T app sh -c 'test -n "$SMTP_URL" && echo yes || echo no'
+$C exec -T app sh -c 'test -n "$SMTP_HOST" && echo yes || echo no'
 
 # The port is open from inside the container — "open", not "timeout"
 $C exec -T app node -e "require('net').connect(2465,'smtp.resend.com').on('connect',()=>{console.log('open');process.exit(0)}).on('error',e=>{console.log(e.message);process.exit(1)}).setTimeout(8000,()=>{console.log('timeout');process.exit(1)})"
 
 # What the last sends did
-$C logs app --since 1h | grep -iE "\[email\]|\[club\]"
+$C logs app --since 1h | grep -iE "\[email\]"
 ```
 
-In the log, `[email] send failed` is the main transport and
-`[email] club send failed` the club one — so club mail logging the former
-means the container never saw `SMTP_URL`. `[email] not configured` means
-neither transport is set and nothing was sent. The connection card at the
-top of the admin's Settings pages has a test-email button, for the main
-transport only.
+In the log, `[email] send failed` means the server refused or never
+answered; `[email] not configured` means `SMTP_HOST` is not set and nothing
+was sent. The connection card at the top of the admin's Settings pages has
+a test-email button.
 
 ---
 

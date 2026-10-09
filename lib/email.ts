@@ -78,45 +78,6 @@ type SendArgs = {
  * mailbox must never turn a successful lead/RSVP capture into a 500 for
  * the visitor.
  */
-/** ANDAMAN CLUB mail (OTP, welcome, member added) — same transport and From. */
-/**
- * ANDAMAN CLUB's mail — the portal's OTP codes, and the member and owner
- * notices sent from the club and the residents admin — can go through its
- * own server.
- *
- * SMTP_URL (e.g. smtps://resend:<key>@smtp.resend.com:2465) and MAIL_FROM
- * ("Andaman OTP <no-reply@…>") are read only here. A sign-in code is the one
- * mail that has to arrive within its few minutes, so it is sent through a
- * transactional provider rather than the Gmail account the lead and event
- * mail use — and under its own sender name, which is why this is a second
- * transport and not a change to SMTP_HOST: swapping that would have sent
- * every enquiry notification as "Andaman OTP". Unset, OTP falls back to
- * the main transport exactly as before.
- */
-let clubTransporter: Transporter | null = null;
-
-export function isClubEmailConfigured(): boolean {
-  return Boolean(process.env.SMTP_URL) || isEmailConfigured();
-}
-
-export async function sendClubEmail(args: SendArgs): Promise<void> {
-  const url = process.env.SMTP_URL;
-  if (!url) return sendMail(args);
-
-  clubTransporter ??= nodemailer.createTransport(url);
-  try {
-    await clubTransporter.sendMail({
-      from: process.env.MAIL_FROM || fromAddress(),
-      to: args.to,
-      subject: args.subject,
-      html: args.html,
-      text: args.text,
-    });
-  } catch (error) {
-    console.error("[email] club send failed", error);
-  }
-}
-
 async function sendMail(args: SendArgs): Promise<void> {
   if (!isEmailConfigured()) {
     console.info("[email] not configured — skipping send");
