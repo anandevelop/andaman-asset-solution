@@ -6,8 +6,7 @@
  *
  *   TRANSFERRED  resident (masked contacts, e-mail, household, previous
  *                owners) → card (QR, facts, stepper, files, reissue) →
- *                trusted devices → access log → per-house partner
- *                benefits (owned by the partners area) → resale (ADMIN+)
+ *                trusted devices → access log → resale (ADMIN+)
  *   SOLD         buyer + "record transfer"
  *   RESERVED     who holds it and until when
  *   AVAILABLE    unit facts only
@@ -20,7 +19,6 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CalendarClock, Check, Clock, FileText, KeyRound, Lock, ShieldCheck, Users } from "lucide-react";
 import type { CardEventKind, Role } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { maskEmail, maskPhone } from "@/lib/contact-mask";
 import { formatDateShort, formatNumber, intlLocale } from "@/lib/format";
 import { cardUrl } from "@/lib/club/constants";
@@ -36,7 +34,6 @@ import {
 } from "@/app/[locale]/admin/(club)/residents/actions";
 import Avatar from "@/components/admin/ui/Avatar";
 import StatusPill, { type PillTone } from "@/components/admin/ui/StatusPill";
-import UnitBenefits from "@/components/admin/club/partners/UnitBenefits";
 import RevealPhone from "./RevealPhone";
 import { EmailEditor, MembersEditor } from "./ResidentEditors";
 import { CardActions, CardStepper, DeviceList } from "./CardControls";
@@ -107,10 +104,6 @@ export default async function UnitDrawerBody({
   // ── Resale panel ─────────────────────────────────────────────────────
   if (panel === "resale" && isAdmin && resident) {
     const current = resident.cards.find((c) => !c.revokedAt);
-    const [overrides, pending] = await Promise.all([
-      prisma.partnerUnitOverride.count({ where: { unitId: unit.id } }),
-      prisma.partnerOverrideRequest.count({ where: { unitId: unit.id, status: "PENDING" } }),
-    ]);
     return (
       <div className="space-y-4">
         <p className="text-sm text-adm-muted">{t("resale.subtitle", { project: pName, unit: unit.unitNumber, owner: resident.ownerName })}</p>
@@ -121,8 +114,6 @@ export default async function UnitDrawerBody({
             currentVersion: current?.version ?? 0,
             nextVersion: (resident.cards[0]?.version ?? 0) + 1,
             devices: resident.devices.length,
-            overrides,
-            pending,
           }}
         />
       </div>
@@ -287,8 +278,6 @@ export default async function UnitDrawerBody({
             )}
           </div>
         </Section>
-
-        <UnitBenefits unitId={unit.id} locale={locale} role={role} userName={userName} />
 
         <div className="flex flex-wrap items-center gap-2 border-t border-adm-line pt-4">
           {isAdmin ? (

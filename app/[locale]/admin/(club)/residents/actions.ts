@@ -361,8 +361,7 @@ const resaleSchema = z.object({
 /**
  * Change of owner, all or nothing. The previous owner keeps a name-and-
  * dates row (ResidentOwnership); their phone, e-mail, household, devices,
- * OTPs and access log go (PDPA). The card is reissued, and per-house
- * benefit tweaks made for the old owner are reset to the project default.
+ * OTPs and access log go (PDPA). The card is reissued.
  */
 export async function recordResale(unitId: string, _prev: ResidentActionResult | null, form: FormData): Promise<ResidentActionResult> {
   const session = await guard(Role.ADMIN);
@@ -413,11 +412,6 @@ export async function recordResale(unitId: string, _prev: ResidentActionResult |
     await tx.cardEvent.deleteMany({ where: { residentId: resident.id } });
     await tx.trustedDevice.deleteMany({ where: { residentId: resident.id } });
     await reissueCard(resident.id, session.name, tx);
-    await tx.partnerUnitOverride.deleteMany({ where: { unitId } });
-    await tx.partnerOverrideRequest.updateMany({
-      where: { unitId, status: "PENDING" },
-      data: { status: "CANCELLED", decidedById: session.id, decidedByName: session.name, decidedAt: new Date(), reason: "resale" },
-    });
     await logCardEvent(resident.id, "RESALE", session.name, {}, tx);
   });
 

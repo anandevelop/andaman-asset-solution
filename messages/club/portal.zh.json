@@ -14,9 +14,7 @@
     },
     "tabs": {
       "home": "首页",
-      "benefits": "我的权益",
       "card": "住户卡",
-      "partners": "合作商户",
       "account": "我的账户"
     },
     "theme": {
@@ -97,14 +95,7 @@
       "cardAria": "住户卡",
       "since": "自 {d}",
       "actCard": "住户卡",
-      "actBenefits": "我的权益",
-      "actPartners": "合作商户",
-      "actContact": "联系销售",
-      "privileges": "PRIVILEGES",
-      "all": "全部 {n}",
-      "soon": "即将推出",
-      "soonCount": "{n} 家合作商户",
-      "empty": "暂无可用权益"
+      "actContact": "联系销售"
     },
     "a2hs": {
       "title": "将 Andaman 添加到主屏幕",
@@ -122,48 +113,6 @@
       "iphone": "iPhone",
       "android": "Android"
     },
-    "benefits": {
-      "title": "我的权益",
-      "subtitle": "合作商户礼遇 · 出示住户卡即可享受",
-      "available": "现已可用",
-      "soon": "即将推出",
-      "partners": "合作商家",
-      "showCard": "出示住户卡",
-      "showCardSub": "在商家出示以享受权益",
-      "discount": "折扣",
-      "allItems": "全部商品",
-      "use": "使用",
-      "validUntil": "有效期至 {d}",
-      "noExpiry": "长期有效",
-      "notify": "公布后将通知您",
-      "pending": "权益即将公布",
-      "empty": "暂无权益",
-      "foot": "到店出示住户卡即可享受"
-    },
-    "partners": {
-      "title": "合作商户",
-      "subtitle": "到店出示住户卡即可享受",
-      "all": "全部",
-      "residentBenefit": "住户权益",
-      "pending": "权益即将公布",
-      "showToRedeem": "出示住户卡即可享受",
-      "validUntil": "有效期至 {d}",
-      "showCard": "出示住户卡",
-      "contact": "联系方式",
-      "tel": "电话",
-      "person": "联系人",
-      "email": "邮箱",
-      "website": "网站",
-      "noContact": "联系方式即将更新",
-      "empty": "此住宅暂无合作商户"
-    },
-    "categories": {
-      "hosp": "医院",
-      "dine": "高级餐厅",
-      "beach": "海滩俱乐部",
-      "spa": "水疗养生",
-      "act": "休闲活动"
-    },
     "card": {
       "tapBack": "点击卡片查看会员信息",
       "tapFront": "点击卡片显示二维码",
@@ -172,13 +121,6 @@
       "member": "会员姓名",
       "house": "住宅",
       "since": "自 {d}",
-      "privileges": "专属礼遇",
-      "band": "住户专属礼遇",
-      "bandEn": "RESIDENT PRIVILEGES",
-      "partnerDiscount": "合作商户折扣",
-      "upTo": "最高 {n}%",
-      "partnerLink": "合作商户",
-      "partnerLinkSub": "{n} 家商户 · 出示住户卡享受礼遇",
       "qrAlt": "住户卡二维码",
       "noCard": "此住宅的新卡正在办理中，请联系销售。"
     },

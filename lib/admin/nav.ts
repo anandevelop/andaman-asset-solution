@@ -52,7 +52,6 @@ import {
   Contact,
   FileCheck2,
   FileText,
-  Gift,
   Handshake,
   KeyRound,
   Files,
@@ -399,19 +398,12 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.leads,
         tabsBase: "",
       },
-      /* ANDAMAN CLUB — residents and their cards, partner benefits,
-         co-agents. CRM roles: sales record transfers and hand over cards;
-         per-house benefit edits by SALES/ADMIN wait for a SUPER_ADMIN. */
+      /* ANDAMAN CLUB — residents and their cards, co-agents. CRM roles:
+         sales record transfers and hand over cards. */
       {
         key: "clubResidents",
         href: "/residents",
         icon: KeyRound,
-        roles: ROLE_SETS.CRM,
-      },
-      {
-        key: "clubPartners",
-        href: "/partners",
-        icon: Gift,
         roles: ROLE_SETS.CRM,
       },
       {

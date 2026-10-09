@@ -53,11 +53,11 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
 /**
  * ANDAMAN CLUB keeps its strings in messages/club/<part>.<locale>.json
- * (portal, residents, partners) so the three areas can be edited without
+ * (portal, residents, agents) so the three areas can be edited without
  * touching the 1 MB site files. Each part holds one top-level namespace;
  * a missing file is skipped (admin parts only ship th/en).
  */
-const CLUB_MESSAGE_PARTS = ["portal", "residents", "partners"] as const;
+const CLUB_MESSAGE_PARTS = ["portal", "residents", "agents"] as const;
 
 async function loadClubMessages(locale: Locale): Promise<Record<string, unknown>> {
   const merged: Record<string, unknown> = {};

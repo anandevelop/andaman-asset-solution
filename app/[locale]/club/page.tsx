@@ -4,7 +4,7 @@
  */
 import { setRequestLocale } from "next-intl/server";
 import { getSession } from "@/lib/club/session";
-import { getResidentContext, getResidentPartners, projectName } from "@/lib/club/portal";
+import { getResidentContext, projectName } from "@/lib/club/portal";
 import { clubBase } from "@/lib/club/paths";
 import { readTheme, shouldShowInstallHint, viewerOf } from "@/lib/club/portal-actions-helpers";
 import HomeScreen from "@/components/club/HomeScreen";
@@ -19,8 +19,7 @@ export default async function ClubIndexPage({ params }: { params: Promise<{ loca
   const ctx = session ? await getResidentContext(session.residentId) : null;
   if (!session || !ctx) return <LoginScreen locale={locale} base={base} />;
 
-  const [partners, theme, showInstall] = await Promise.all([
-    getResidentPartners(ctx.unit.id, ctx.project.id, locale),
+  const [theme, showInstall] = await Promise.all([
     readTheme(),
     shouldShowInstallHint(),
   ]);
@@ -39,7 +38,6 @@ export default async function ClubIndexPage({ params }: { params: Promise<{ loca
       projectLabel={ctx.project.nameEn.toUpperCase()}
       projectShort={projectName(ctx.project, locale)}
       since={ctx.resident.transferDate}
-      partners={partners}
     />
   );
 }

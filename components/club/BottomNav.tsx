@@ -2,7 +2,7 @@
 /**
  * components/club/BottomNav.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The portal's floating tab bar: an Apple-style capsule with five tabs and
+ * The portal's floating tab bar: an Apple-style capsule with three tabs and
  * a pill that slides to the active one (framer-motion layoutId). Rendered
  * only by signed-in pages, so sign-in, scan and OTP screens never show it.
  *
@@ -14,15 +14,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { CreditCard, Gift, House, Tag, UserRound, type LucideIcon } from "lucide-react";
+import { CreditCard, House, UserRound, type LucideIcon } from "lucide-react";
 
-type Labels = { home: string; benefits: string; card: string; partners: string; account: string; menu: string };
+type Labels = { home: string; card: string; account: string; menu: string };
 
 const TABS: { key: keyof Omit<Labels, "menu">; path: string; icon: LucideIcon }[] = [
   { key: "home", path: "", icon: House },
-  { key: "benefits", path: "/benefits", icon: Gift },
   { key: "card", path: "/card", icon: CreditCard },
-  { key: "partners", path: "/partners", icon: Tag },
   { key: "account", path: "/account", icon: UserRound },
 ];
 

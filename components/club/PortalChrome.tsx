@@ -22,9 +22,7 @@ export async function PortalNav({ locale, base }: { locale: string; base: string
       base={base}
       labels={{
         home: t("tabs.home"),
-        benefits: t("tabs.benefits"),
         card: t("tabs.card"),
-        partners: t("tabs.partners"),
         account: t("tabs.account"),
         menu: t("common.mainMenu"),
       }}

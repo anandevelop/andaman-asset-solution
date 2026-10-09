@@ -7,9 +7,24 @@
     "zipHint": "QR codes of every handed-over home in this project · PNG + SVG + manifest.csv",
     "projectTabs": "Projects",
     "filterLabel": "Filter by status",
-    "views": { "label": "View", "map": "Unit map", "list": "Residents" },
-    "status": { "AVAILABLE": "Available", "RESERVED": "Reserved", "SOLD": "Under contract", "TRANSFERRED": "Transferred · resident" },
-    "statusShort": { "all": "All", "AVAILABLE": "Available", "RESERVED": "Reserved", "SOLD": "Contract", "TRANSFERRED": "Transferred" },
+    "views": {
+      "label": "View",
+      "map": "Unit map",
+      "list": "Residents"
+    },
+    "status": {
+      "AVAILABLE": "Available",
+      "RESERVED": "Reserved",
+      "SOLD": "Under contract",
+      "TRANSFERRED": "Transferred · resident"
+    },
+    "statusShort": {
+      "all": "All",
+      "AVAILABLE": "Available",
+      "RESERVED": "Reserved",
+      "SOLD": "Contract",
+      "TRANSFERRED": "Transferred"
+    },
     "board": {
       "millions": "{value} M",
       "millionsShort": "{value} M",
@@ -53,20 +68,30 @@
       "showCodes": "Show codes",
       "hideCodes": "Hide codes",
       "card": "Card",
-      "partners": "Partner benefits",
       "portal": "Portal",
       "empty": "No transferred units in this project yet",
       "noEmail": "No e-mail",
       "household": "+{count} in household",
-      "partnersUsable": "{count} usable",
-      "partnersTotal": "{count, plural, one {# partner} other {# partners}}",
       "neverLoggedIn": "Never signed in",
       "today": "Today",
       "daysAgo": "{count, plural, one {# day ago} other {# days ago}}"
     },
-    "cardStatus": { "NONE": "Not printed", "PRINTED": "Printed · to hand over", "HANDED": "Handed over" },
-    "purpose": { "own": "Own home", "second": "Second home", "holiday": "Holiday home", "rent": "Rental" },
-    "common": { "save": "Save", "cancel": "Cancel", "close": "Close" },
+    "cardStatus": {
+      "NONE": "Not printed",
+      "PRINTED": "Printed · to hand over",
+      "HANDED": "Handed over"
+    },
+    "purpose": {
+      "own": "Own home",
+      "second": "Second home",
+      "holiday": "Holiday home",
+      "rent": "Rental"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
     "errors": {
       "generic": "That didn't work — please try again",
       "forbidden": "Your account can't do this",
@@ -118,7 +143,12 @@
       "namePlaceholder": "Full name",
       "hint": "The owner may add a spouse, family or a property manager — 2 people. They share the card but get codes at their own e-mail; removing someone signs their devices out at once."
     },
-    "relations": { "spouse": "Spouse", "child": "Child", "family": "Family", "manager": "Property manager" },
+    "relations": {
+      "spouse": "Spouse",
+      "child": "Child",
+      "family": "Family",
+      "manager": "Property manager"
+    },
     "card": {
       "title": "Resident card & portal access",
       "none": "No active card",
@@ -154,7 +184,11 @@
       "date": "Handover date",
       "method": "Method",
       "idNote": "The receiver must be the owner or someone they named · check their ID at handover but don't record its number",
-      "methods": { "office": "Collected at the sales office", "home": "Delivered to the house", "post": "Sent by EMS post" }
+      "methods": {
+        "office": "Collected at the sales office",
+        "home": "Delivered to the house",
+        "post": "Sent by EMS post"
+      }
     },
     "print": {
       "title": "Print file preview · {project} · card no. {version}",
@@ -198,7 +232,10 @@
         "RESALE": "Owner changed · new card · devices and per-house benefits reset"
       }
     },
-    "buyer": { "title": "Buyer", "unknown": "No customer linked to this unit" },
+    "buyer": {
+      "title": "Buyer",
+      "unknown": "No customer linked to this unit"
+    },
     "reserved": {
       "title": "Reserved by",
       "expires": "Reservation expires {date} ({days, plural, one {# day} other {# days}} left) — the sale contract must be signed before then",
@@ -230,9 +267,6 @@
       "effects": {
         "card": "Card no. {next} issued · QR no. {current} and the old house code stop working at once",
         "devices": "{count, plural, one {# device} other {# devices}} of the previous owner signed out",
-        "benefits": "Partner benefits reset to the project default",
-        "overrides": "({count} per-house changes cleared)",
-        "pending": "{count} pending requests cancelled",
         "pdpa": "The previous owner's name and dates are kept as history · their phone, e-mail, household, devices and access log are deleted (PDPA)",
         "download": "After saving, use “Download QR (PNG)” to print the new owner's card"
       },

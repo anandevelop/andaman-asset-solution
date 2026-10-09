@@ -15,8 +15,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Copy, Globe, Mail, Send, ShieldCheck } from "lucide-react";
 import { setAgentLink } from "@/app/[locale]/admin/(club)/agents/actions";
-import { useFlash } from "@/components/admin/club/partners/Flash";
-import { Note, Switch } from "@/components/admin/club/partners/ui";
+import { useFlash } from "@/components/admin/club/shared/Flash";
+import { Note, Switch } from "@/components/admin/club/shared/ui";
 
 export type RegLink = {
   key: string;
@@ -39,7 +39,7 @@ export default function RegLinks({
   website: RegLink;
   canToggle: boolean;
 }) {
-  const t = useTranslations("clubPartners.agents");
+  const t = useTranslations("clubAgents.agents");
   const router = useRouter();
   const [flash, show] = useFlash();
   const [busy, startTransition] = useTransition();

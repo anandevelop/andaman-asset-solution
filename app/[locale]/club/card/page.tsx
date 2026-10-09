@@ -1,17 +1,15 @@
 /**
- * บัตรลูกบ้าน — the card a resident shows at a partner shop. Front: the QR
+ * บัตรลูกบ้าน — the resident's card. Front: the QR
  * (generated here as SVG, so it works from the offline cache with no JS);
  * back: name, house, card number. The live clock under it is the
  * anti-screenshot tell. Offline, public/club-sw.js serves this page from
  * the device for up to 7 days.
  */
-import Link from "next/link";
 import QRCode from "qrcode";
-import { ChevronRight, Star, Tag } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { cardUrl } from "@/lib/club/constants";
 import { cardHost } from "@/lib/club/paths";
-import { getResidentPartners, projectName } from "@/lib/club/portal";
+import { projectName } from "@/lib/club/portal";
 import { requireResident } from "@/lib/club/portal-actions-helpers";
 import BlackCard, { CardChevrons } from "@/components/club/BlackCard";
 import ClubLogo from "@/components/club/ClubLogo";
@@ -25,17 +23,13 @@ export default async function CardPage({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   setRequestLocale(locale);
   const { base, ctx, viewer } = await requireResident(locale);
-  const [t, partners] = await Promise.all([
-    getTranslations({ locale, namespace: "club" }),
-    getResidentPartners(ctx.unit.id, ctx.project.id, locale),
-  ]);
+  const t = await getTranslations({ locale, namespace: "club" });
   const { resident, unit, project, card } = ctx;
   const code = project.cardCode;
   const qr =
     card && code
       ? await QRCode.toString(cardUrl(code, card.token, await cardHost()), { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ececec" } })
       : null;
-  const best = partners.reduce((max, p) => Math.max(max, p.pct ?? 0), 0);
 
   const front = (
     <BlackCard chip={false} className="h-full w-full">
@@ -106,34 +100,6 @@ export default async function CardPage({ params }: { params: Promise<{ locale: s
           <LiveClock locale={locale} label={t("card.live")} />
         </p>
 
-        <h2 className="mb-3 mt-8 flex items-center gap-2 px-1 text-[18px] font-semibold text-club-text">
-          <Star size={18} className="text-club-accent" aria-hidden />
-          {t("card.privileges")}
-        </h2>
-        <section className="overflow-hidden rounded-[18px] border border-club-line bg-club-surface" aria-labelledby="club-band">
-          <div className="border-l-4 border-champagne-300 bg-club-surface-2 px-4 py-3">
-            <b id="club-band" className="block text-[15px] text-club-text">{t("card.band")}</b>
-            <small className="text-[10.5px] tracking-[0.18em] text-club-accent">{t("card.bandEn")}</small>
-          </div>
-          <dl className="text-[13px]">
-            {best > 0 ? (
-              <div className="flex items-center justify-between gap-3 border-b border-club-line px-4 py-3">
-                <dt className="text-club-text">{t("card.partnerDiscount")}</dt>
-                <dd className="font-semibold text-club-accent">{t("card.upTo", { n: best })}</dd>
-              </div>
-            ) : null}
-          </dl>
-          <Link href={`${base}/partners`} className={`flex min-h-14 items-center gap-3 px-4 py-3 ${focusRing}`}>
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-club-surface-2 text-club-accent">
-              <Tag size={17} aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <b className="block text-[14px] font-medium text-club-text">{t("card.partnerLink")}</b>
-              <small className="block text-[11.5px] text-club-text-2">{t("card.partnerLinkSub", { n: partners.length })}</small>
-            </span>
-            <ChevronRight size={16} className="text-club-text-3" aria-hidden />
-          </Link>
-        </section>
       </main>
       <PortalNav locale={locale} base={base} />
     </>

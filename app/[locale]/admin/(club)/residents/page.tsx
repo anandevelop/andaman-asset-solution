@@ -32,7 +32,6 @@ import {
   countByStatus,
   daysSince,
   findByHouseCode,
-  partnerCounts,
   projectBoard,
   reservationExpiringSoon,
   tileName,
@@ -146,7 +145,6 @@ export default async function AdminResidentsPage(props: Props) {
   // ── Residents table ─────────────────────────────────────────────────
   let rows: ResidentRow[] = [];
   if (view === "list") {
-    const partners = await partnerCounts(project.id, transferred.map((u) => u.id));
     const typeName = new Map(types.map((ty) => [ty.id, ty.name]));
     rows = transferred.map((u) => {
       const r = u.resident!;
@@ -166,7 +164,6 @@ export default async function AdminResidentsPage(props: Props) {
         cardStatus: card?.status ?? null,
         handedAt: card?.handedAt ?? null,
         members: r._count.members,
-        partners: partners.get(u.id) ?? { total: 0, usable: 0 },
         lastLoginDays: r.lastLoginAt ? daysSince(r.lastLoginAt) : null,
         href: href({ unit: u.id }),
       };

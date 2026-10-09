@@ -92,12 +92,12 @@ describe("the menu each role sees", () => {
   */
   const EXPECTED: Record<Role, { rail: string[]; drawerExtra: string[]; tabs: string[] }> = {
     SUPER_ADMIN: {
-      rail: ["activity", "analytics", "clubAgents", "clubPartners", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
+      rail: ["activity", "analytics", "clubAgents", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
     ADMIN: {
-      rail: ["analytics", "clubAgents", "clubPartners", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
+      rail: ["analytics", "clubAgents", "clubResidents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
     },
@@ -107,7 +107,7 @@ describe("the menu each role sees", () => {
       tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations"],
     },
     SALES: {
-      rail: ["clubAgents", "clubPartners", "clubResidents", "dashboard", "leads", "salesTeam"],
+      rail: ["clubAgents", "clubResidents", "dashboard", "leads", "salesTeam"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/leads"],
     },
@@ -341,7 +341,6 @@ describe("the sidebar each role gets", () => {
       "dashboard",
       "leads",
       "clubResidents",
-      "clubPartners",
       "clubAgents",
       "publishing",
       "analytics",
@@ -362,7 +361,6 @@ describe("the sidebar each role gets", () => {
       "dashboard",
       "leads",
       "clubResidents",
-      "clubPartners",
       "clubAgents",
       "publishing",
       "analytics",
@@ -389,7 +387,7 @@ describe("the sidebar each role gets", () => {
       "media",
     ],
     // CRM plus the roster they are on. salesTeam is in CONTENT_AND_CRM.
-    SALES: ["dashboard", "leads", "clubResidents", "clubPartners", "clubAgents", "salesTeam"],
+    SALES: ["dashboard", "leads", "clubResidents", "clubAgents", "salesTeam"],
     // Read-only: everything the (catalog) and (content) zones admit them
     // to, and nothing else. Not salesTeam — CONTENT_AND_CRM leaves VIEWER
     // out because that page's own guard is a Role.SALES rank they do not
@@ -418,14 +416,14 @@ describe("the sidebar each role gets", () => {
     });
   }
 
-  it("is eighteen rows for the owner", () => {
+  it("is seventeen rows for the owner", () => {
     // The number the restructure was aiming at, stated once so a diff that
     // changes it has to change this line too. Fourteen until the monthly
     // report joined `growth` — which is the kind of change this assertion
     // exists to make somebody look at.
-    // Eighteen since ANDAMAN CLUB added residents, partners and agents
-    // to the daily group (all three are CRM work, for SALES and up).
-    expect(EXPECTED.SUPER_ADMIN).toHaveLength(18);
+    // Seventeen since ANDAMAN CLUB added residents and agents to the
+    // daily group (both are CRM work, for SALES and up).
+    expect(EXPECTED.SUPER_ADMIN).toHaveLength(17);
   });
 
   it("groups them by how often they are opened", () => {

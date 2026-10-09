@@ -81,16 +81,6 @@ export type MemberRelation = (typeof MEMBER_RELATIONS)[number];
 export const HANDOVER_METHODS = ["office", "home", "post"] as const;
 export type HandoverMethod = (typeof HANDOVER_METHODS)[number];
 
-/** Partner categories, in display order. `icon` is a lucide-react name. */
-export const PARTNER_CATEGORIES = [
-  { key: "hosp", icon: "Hospital" },
-  { key: "dine", icon: "UtensilsCrossed" },
-  { key: "beach", icon: "Sun" },
-  { key: "spa", icon: "Leaf" },
-  { key: "act", icon: "Flag" },
-] as const;
-export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number]["key"];
-
 /** Legal text versions — stored on the row that accepted them. */
 export const TERMS_VERSION = "CT-v1.0";
 export const RESIDENT_NOTICE_VERSION = "RES-PN-v1.0";
@@ -98,5 +88,3 @@ export const AGENT_NOTICE_VERSION = "AGT-PN-v1.0";
 
 export const PRIVACY_EMAIL = "privacy@andamanassetsolution.com";
 
-/** Benefit expiry warning window on the admin dashboard and partner table. */
-export const EXPIRY_WARNING_DAYS = 30;

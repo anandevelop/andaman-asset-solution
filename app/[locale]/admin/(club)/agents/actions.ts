@@ -17,7 +17,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toCsv } from "@/lib/csv";
 import { rateLimit } from "@/lib/rate-limit";
-import { requireClubAction } from "@/lib/club/admin-partners";
+import { requireClubAction } from "@/lib/club/admin-guard";
 import { salesNick } from "@/lib/club/admin-agents";
 
 export type AgentActionResult = { ok: true; csv?: string; phone?: string; whatsapp?: string | null } | { ok: false; error: string };
@@ -45,7 +45,7 @@ export async function saveAgent(
   _previous: AgentFormState,
   formData: FormData,
 ): Promise<AgentFormState> {
-  const t = await getTranslations({ locale, namespace: "clubPartners.agents" });
+  const t = await getTranslations({ locale, namespace: "clubAgents.agents" });
   try {
     await requireClubAction(Role.SALES);
   } catch {
@@ -149,7 +149,7 @@ export async function setAgentLink(locale: string, salesPersonId: string, enable
 
 export async function exportAgentsCsv(locale: string): Promise<AgentActionResult> {
   return guarded(Role.SALES, async () => {
-    const t = await getTranslations({ locale, namespace: "clubPartners.agents" });
+    const t = await getTranslations({ locale, namespace: "clubAgents.agents" });
     const agents = await prisma.agent.findMany({
       orderBy: { createdAt: "asc" },
       include: { salesPerson: { select: { nameEn: true, nameTh: true } }, _count: { select: { leads: true } } },

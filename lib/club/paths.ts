@@ -2,8 +2,8 @@
  * lib/club/paths.ts — where portal links point.
  *
  * On member.andamanassetsolution.com the proxy hides "/<locale>/club", so
- * links are "/benefits". Anywhere else (localhost) they are
- * "/<locale>/club/benefits". Server components compute the base once with
+ * links are "/card". Anywhere else (localhost) they are
+ * "/<locale>/club/card". Server components compute the base once with
  * clubBase() and pass it to client components as a prop.
  */
 import "server-only";

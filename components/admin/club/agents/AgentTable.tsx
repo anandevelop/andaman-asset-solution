@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl";
 import { AlertTriangle, Check, Eye, Pencil, X } from "lucide-react";
 import StatusPill from "@/components/admin/ui/StatusPill";
 import { approveAgent, rejectAgent, revealAgentPhone } from "@/app/[locale]/admin/(club)/agents/actions";
-import { useFlash } from "@/components/admin/club/partners/Flash";
+import { useFlash } from "@/components/admin/club/shared/Flash";
 
 export type AgentRowData = {
   id: string;
@@ -35,7 +35,7 @@ export type AgentRowData = {
 const waHref = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`;
 
 export default function AgentTable({ locale, rows, editHref }: { locale: string; rows: AgentRowData[]; editHref: string }) {
-  const t = useTranslations("clubPartners.agents");
+  const t = useTranslations("clubAgents.agents");
   const router = useRouter();
   const [flash, show] = useFlash();
   const [busy, startTransition] = useTransition();

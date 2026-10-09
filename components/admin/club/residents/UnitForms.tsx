@@ -7,7 +7,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Download, Gift, KeyRound, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import { Check, Download, KeyRound, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { errorText, useRunAction, type FormAction } from "./use-resident-action";
 import { PURPOSES } from "./purposes";
 
@@ -92,7 +92,7 @@ export function ResaleForm({
 }: {
   action: FormAction;
   closeHref: string;
-  info: { nextVersion: number; currentVersion: number; devices: number; overrides: number; pending: number };
+  info: { nextVersion: number; currentVersion: number; devices: number };
 }) {
   const { t } = useRunAction();
   const router = useRouter();
@@ -105,13 +105,6 @@ export function ResaleForm({
   const effects = [
     { icon: RefreshCw, text: t("resale.effects.card", { next: info.nextVersion, current: info.currentVersion }) },
     { icon: Smartphone, text: t("resale.effects.devices", { count: info.devices }) },
-    {
-      icon: Gift,
-      text:
-        t("resale.effects.benefits") +
-        (info.overrides ? ` ${t("resale.effects.overrides", { count: info.overrides })}` : "") +
-        (info.pending ? ` · ${t("resale.effects.pending", { count: info.pending })}` : ""),
-    },
     { icon: ShieldCheck, text: t("resale.effects.pdpa") },
     { icon: Download, text: t("resale.effects.download") },
   ];

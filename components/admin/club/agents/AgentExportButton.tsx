@@ -8,7 +8,7 @@ import { Download, Loader2 } from "lucide-react";
 import { exportAgentsCsv } from "@/app/[locale]/admin/(club)/agents/actions";
 
 export default function AgentExportButton({ locale }: { locale: string }) {
-  const t = useTranslations("clubPartners.agents");
+  const t = useTranslations("clubAgents.agents");
   const [busy, startTransition] = useTransition();
   return (
     <button

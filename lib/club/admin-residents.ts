@@ -15,7 +15,6 @@ import QRCode from "qrcode";
 import type { CardStatus, UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cardUrl } from "./constants";
-import { effectivePct, isWithinValidity, partnerValidity } from "./benefits";
 
 export const UNIT_STATUSES: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD", "TRANSFERRED"];
 
@@ -144,46 +143,6 @@ export function daysSince(date: Date): number {
 export function reservationExpiringSoon(expiresAt: Date | null, now = new Date()): boolean {
   if (!expiresAt) return false;
   return (expiresAt.getTime() - now.getTime()) / DAY <= RESERVATION_FLAG_DAYS;
-}
-
-/**
- * Partners each house sees: { total, usable } per unit. `total` = active,
- * in-date partners offered to the project and not hidden for the house;
- * `usable` = those with a discount actually set.
- */
-export async function partnerCounts(projectId: string, unitIds: string[]) {
-  const [links, overrides] = await Promise.all([
-    prisma.partnerProject.findMany({
-      where: { projectId, partner: { isActive: true } },
-      select: { partner: { select: { id: true, discountPct: true, validFrom: true, validTo: true } } },
-    }),
-    unitIds.length
-      ? prisma.partnerUnitOverride.findMany({
-          where: { unitId: { in: unitIds } },
-          select: { unitId: true, partnerId: true, hidden: true, discountPct: true },
-        })
-      : Promise.resolve([]),
-  ]);
-  const partners = links.map((l) => l.partner).filter((p) => isWithinValidity(partnerValidity(p.validFrom, p.validTo)));
-  const byUnit = new Map<string, Map<string, { hidden: boolean; discountPct: number | null }>>();
-  for (const o of overrides) {
-    if (!byUnit.has(o.unitId)) byUnit.set(o.unitId, new Map());
-    byUnit.get(o.unitId)!.set(o.partnerId, o);
-  }
-  const out = new Map<string, { total: number; usable: number }>();
-  for (const unitId of unitIds) {
-    const own = byUnit.get(unitId);
-    let total = 0;
-    let usable = 0;
-    for (const p of partners) {
-      const o = own?.get(p.id);
-      if (o?.hidden) continue;
-      total += 1;
-      if (effectivePct(p.discountPct, o?.discountPct)) usable += 1;
-    }
-    out.set(unitId, { total, usable });
-  }
-  return out;
 }
 
 export async function findByHouseCode(code: string) {

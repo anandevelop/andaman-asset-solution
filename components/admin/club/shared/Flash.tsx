@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * components/admin/club/partners/Flash.tsx — the mockup's toast: one short
+ * components/admin/club/shared/Flash.tsx — the mockup's toast: one short
  * line at the bottom of the screen after an inline save. Used by the club
  * tables, which save on blur and have no form to show a message in.
  */

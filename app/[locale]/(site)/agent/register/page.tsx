@@ -22,7 +22,7 @@ type Props = {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
-  const t = await getTranslations({ locale, namespace: "clubPartners.agentForm" });
+  const t = await getTranslations({ locale, namespace: "clubAgents.agentForm" });
   return {
     title: t("metaTitle"),
     robots: { index: false, follow: false, nocache: true },
@@ -33,7 +33,7 @@ export default async function AgentRegisterPage(props: Props) {
   const { locale } = await props.params;
   setRequestLocale(locale);
   const { ref } = await props.searchParams;
-  const t = await getTranslations({ locale, namespace: "clubPartners.agentForm" });
+  const t = await getTranslations({ locale, namespace: "clubAgents.agentForm" });
   const refSlug = ref ? ref.trim().toLowerCase().slice(0, 40) : null;
   const link = await resolveAgentRef(refSlug);
   const tNav = await getTranslations({ locale, namespace: "nav" });

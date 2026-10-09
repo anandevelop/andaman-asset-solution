@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { hasRole } from "@/lib/role-rank";
 import { zoneEyebrow } from "@/lib/admin/nav";
 import { maskPhone } from "@/lib/contact-mask";
-import { requireClubAdmin } from "@/lib/club/admin-partners";
+import { requireClubAdmin } from "@/lib/club/admin-guard";
 import {
   agentsForAdmin,
   duplicateMap,
@@ -46,7 +46,7 @@ export default async function ClubAgentsPage(props: Props) {
   const canAdmin = hasRole(session.role, Role.ADMIN);
 
   const [t, tAdmin] = await Promise.all([
-    getTranslations({ locale, namespace: "clubPartners.agents" }),
+    getTranslations({ locale, namespace: "clubAgents.agents" }),
     getTranslations({ locale, namespace: "admin" }),
   ]);
 

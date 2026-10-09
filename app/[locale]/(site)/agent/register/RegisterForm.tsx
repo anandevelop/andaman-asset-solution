@@ -17,7 +17,7 @@ const INPUT =
 const LABEL = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink/70";
 
 export default function RegisterForm({ locale, refSlug, closed }: { locale: string; refSlug: string | null; closed: boolean }) {
-  const t = useTranslations("clubPartners.agentForm");
+  const t = useTranslations("clubAgents.agentForm");
   const [state, formAction, pending] = useActionState<AgentRegisterState, FormData>(registerAgent.bind(null, locale, refSlug), {
     status: "idle",
   });

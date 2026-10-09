@@ -32,7 +32,6 @@ export type ResidentRow = {
   cardStatus: CardStatus | null;
   handedAt: Date | null;
   members: number;
-  partners: { total: number; usable: number };
   /** Days since the last portal sign-in; null = never. */
   lastLoginDays: number | null;
   href: string;
@@ -77,7 +76,6 @@ export default async function ResidentsTable({
               </span>
             </th>
             <th className="admin-th">{t("table.card")}</th>
-            <th className="admin-th">{t("table.partners")}</th>
             <th className="admin-th">{t("table.portal")}</th>
           </tr>
         </thead>
@@ -123,10 +121,6 @@ export default async function ResidentsTable({
                       {t("table.household", { count: row.members })}
                     </div>
                   )}
-                </td>
-                <td className="admin-td">
-                  <StatusPill tone="success" dot={false} label={t("table.partnersUsable", { count: row.partners.usable })} />{" "}
-                  <span className="text-[11.5px] text-adm-muted">{t("table.partnersTotal", { count: row.partners.total })}</span>
                 </td>
                 <td className="admin-td">
                   {days === null ? (

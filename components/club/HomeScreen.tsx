@@ -1,16 +1,14 @@
 /**
  * components/club/HomeScreen.tsx — the signed-in home (mockup "hx"):
- * the black card, four round actions and the first available privileges.
+ * the black card and three round actions (card, account, contact).
  */
 import Link from "next/link";
-import { ChevronRight, CreditCard, Gift, MessageCircle, Moon, Sun, Tag } from "lucide-react";
+import { CreditCard, MessageCircle, Moon, Sun, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { siteConfig } from "@/config/site";
 import { setThemeAction } from "@/app/[locale]/club/actions";
-import type { PortalPartner } from "@/lib/club/portal";
 import type { ClubTheme } from "@/lib/club/portal-actions-helpers";
 import BlackCard from "./BlackCard";
-import { categoryLabel } from "./CategoryIcon";
 import ClubLogo from "./ClubLogo";
 import { InstallPrompt, OfflineNotice, PortalNav } from "./PortalChrome";
 import { bangkokHour, formatMonthYear, initials, lastSegment, stripHonorific } from "./format";
@@ -29,7 +27,6 @@ type Props = {
   projectLabel: string;
   projectShort: string;
   since: Date;
-  partners: PortalPartner[];
 };
 
 const round = `grid size-11 place-items-center rounded-full border border-champagne-300/30 bg-[linear-gradient(180deg,rgb(255_255_255/0.03),transparent)] text-champagne-100 transition-colors group-active:bg-white/10 [.club-light_&]:border-black/12 [.club-light_&]:bg-white [.club-light_&]:text-club-text`;
@@ -38,14 +35,11 @@ export default async function HomeScreen(p: Props) {
   const t = await getTranslations({ locale: p.locale, namespace: "club" });
   const hour = bangkokHour();
   const greeting = t(hour < 12 ? "home.morning" : hour < 17 ? "home.afternoon" : "home.evening");
-  const available = p.partners.filter((x) => x.pct);
-  const soon = p.partners.length - available.length;
   const dark = p.theme !== "light";
 
   const actions = [
     { href: `${p.base}/card`, icon: CreditCard, label: t("home.actCard") },
-    { href: `${p.base}/benefits`, icon: Gift, label: t("home.actBenefits") },
-    { href: `${p.base}/partners`, icon: Tag, label: t("home.actPartners") },
+    { href: `${p.base}/account`, icon: UserRound, label: t("tabs.account") },
     { href: `tel:${siteConfig.contact.phone.replace(/[^\d+]/g, "")}`, icon: MessageCircle, label: t("home.actContact") },
   ];
 
@@ -94,7 +88,7 @@ export default async function HomeScreen(p: Props) {
           <span>{t("home.since", { d: formatMonthYear(p.since) })}</span>
         </div>
 
-        <nav aria-label={t("common.mainMenu")} className="mb-6 mt-6 grid grid-cols-4 gap-1.5">
+        <nav aria-label={t("common.mainMenu")} className="mb-6 mt-6 grid grid-cols-3 gap-1.5">
           {actions.map(({ href, icon: Icon, label }) => {
             const cls = `group flex flex-col items-center gap-2 rounded-2xl py-1 text-center text-[11px] leading-tight text-club-text-2 ${focusRing}`;
             const body = (
@@ -119,45 +113,6 @@ export default async function HomeScreen(p: Props) {
 
         {p.showInstall ? <InstallPrompt locale={p.locale} /> : null}
 
-        <section aria-labelledby="club-priv">
-          <div className="flex items-baseline justify-between border-b border-champagne-300/20 px-0.5 pb-2 [.club-light_&]:border-club-line">
-            <h2 id="club-priv" className="text-[10px] tracking-[0.32em] text-champagne-700 [.club-light_&]:text-club-text-3">
-              {t("home.privileges")}
-            </h2>
-            <Link href={`${p.base}/benefits`} className={`inline-flex min-h-11 items-center gap-0.5 text-[12px] text-club-accent ${focusRing}`}>
-              {t("home.all", { n: p.partners.length })}
-              <ChevronRight size={13} aria-hidden />
-            </Link>
-          </div>
-          <ul>
-            {available.slice(0, 4).map((x) => (
-              <li key={x.id}>
-                <Link href={`${p.base}/partners/${x.id}`} className={`flex min-h-14 items-center justify-between gap-3 border-b border-club-line px-0.5 py-3 ${focusRing}`}>
-                  <span className="min-w-0">
-                    <b className="block truncate text-[14px] font-medium text-club-text">{x.name}</b>
-                    <small className="block truncate text-[11.5px] text-club-text-3">
-                      {categoryLabel(t, x.category)}
-                      {x.area ? ` · ${x.area}` : ""}
-                    </small>
-                  </span>
-                  <span className="shrink-0 text-[12px] text-club-accent">{x.label}</span>
-                </Link>
-              </li>
-            ))}
-            {available.length === 0 ? <li className="border-b border-club-line py-4 text-[12.5px] text-club-text-3">{t("home.empty")}</li> : null}
-            {soon > 0 ? (
-              <li>
-                <Link href={`${p.base}/benefits?tab=soon`} className={`flex min-h-14 items-center justify-between gap-3 border-b border-club-line px-0.5 py-3 ${focusRing}`}>
-                  <span>
-                    <b className="block text-[14px] font-normal text-club-text-2">{t("home.soon")}</b>
-                    <small className="block text-[11.5px] text-club-text-3">{t("home.soonCount", { n: soon })}</small>
-                  </span>
-                  <ChevronRight size={15} className="text-club-text-3" aria-hidden />
-                </Link>
-              </li>
-            ) : null}
-          </ul>
-        </section>
       </main>
       <PortalNav locale={p.locale} base={p.base} />
     </>

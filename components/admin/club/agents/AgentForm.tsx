@@ -15,8 +15,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, Check, Send, ShieldCheck, Trash2 } from "lucide-react";
 import { approveAgent, deleteAgent, saveAgent, type AgentFormState } from "@/app/[locale]/admin/(club)/agents/actions";
-import { useFlash } from "@/components/admin/club/partners/Flash";
-import { fmtDateTime } from "@/components/admin/club/partners/ui";
+import { useFlash } from "@/components/admin/club/shared/Flash";
+import { fmtDateTime } from "@/components/admin/club/shared/ui";
 
 export type AgentFormValues = {
   id: string | null;
@@ -48,7 +48,7 @@ export default function AgentForm({
   closeHref: string;
   canErase: boolean;
 }) {
-  const t = useTranslations("clubPartners.agents");
+  const t = useTranslations("clubAgents.agents");
   const router = useRouter();
   const [flash, show] = useFlash();
   const [state, formAction, saving] = useActionState<AgentFormState, FormData>(saveAgent.bind(null, locale, values.id), { ok: false });

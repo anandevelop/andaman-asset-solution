@@ -14,9 +14,7 @@
     },
     "tabs": {
       "home": "Home",
-      "benefits": "Benefits",
       "card": "Card",
-      "partners": "Partners",
       "account": "Account"
     },
     "theme": {
@@ -97,14 +95,7 @@
       "cardAria": "Resident card",
       "since": "Since {d}",
       "actCard": "Resident card",
-      "actBenefits": "My benefits",
-      "actPartners": "Partners",
-      "actContact": "Contact sales",
-      "privileges": "PRIVILEGES",
-      "all": "All {n}",
-      "soon": "Coming soon",
-      "soonCount": "{n} partners",
-      "empty": "No benefits available yet"
+      "actContact": "Contact sales"
     },
     "a2hs": {
       "title": "Add Andaman to your home screen",
@@ -122,48 +113,6 @@
       "iphone": "iPhone",
       "android": "Android"
     },
-    "benefits": {
-      "title": "My benefits",
-      "subtitle": "Partner privileges · show your resident card to redeem",
-      "available": "Available now",
-      "soon": "Coming soon",
-      "partners": "Partners",
-      "showCard": "Show resident card",
-      "showCardSub": "Show it at the venue to redeem",
-      "discount": "Discount",
-      "allItems": "All items",
-      "use": "Use",
-      "validUntil": "Valid until {d}",
-      "noExpiry": "No expiry",
-      "notify": "We'll notify you when it's announced",
-      "pending": "Benefit coming soon",
-      "empty": "No benefits here yet",
-      "foot": "Show your resident card at the venue to redeem"
-    },
-    "partners": {
-      "title": "Partner stores",
-      "subtitle": "Show your resident card at the venue to redeem",
-      "all": "All",
-      "residentBenefit": "Resident benefit",
-      "pending": "Benefit coming soon",
-      "showToRedeem": "Show your resident card to redeem",
-      "validUntil": "Valid until {d}",
-      "showCard": "Show resident card",
-      "contact": "Contact",
-      "tel": "Phone",
-      "person": "Contact person",
-      "email": "Email",
-      "website": "Website",
-      "noContact": "Contact details coming soon",
-      "empty": "No partners for this home yet"
-    },
-    "categories": {
-      "hosp": "Hospitals",
-      "dine": "Fine dining",
-      "beach": "Beach clubs",
-      "spa": "Wellness & spa",
-      "act": "Activities"
-    },
     "card": {
       "tapBack": "Tap the card for member details",
       "tapFront": "Tap the card to show the QR code",
@@ -172,13 +121,6 @@
       "member": "Member",
       "house": "Home",
       "since": "Since {d}",
-      "privileges": "Privileges",
-      "band": "Resident privileges",
-      "bandEn": "RESIDENT PRIVILEGES",
-      "partnerDiscount": "Partner discounts",
-      "upTo": "Up to {n}%",
-      "partnerLink": "Partner stores",
-      "partnerLinkSub": "{n} partners · show your card to redeem",
       "qrAlt": "Resident card QR code",
       "noCard": "A new card for this home is being issued. Please contact sales."
     },
