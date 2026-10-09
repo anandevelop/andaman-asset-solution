@@ -30,6 +30,9 @@ import JsonLd from "@/components/JsonLd";
 import { getProjectsWithProgress } from "@/lib/projects";
 import { isDatabaseOffline } from "@/lib/db";
 import { formatMonthYear } from "@/lib/format";
+import EditableItem from "@/components/edit/EditableItem";
+import { ITEM_EDIT_HREF, PROGRESS_SECTION_LINKS } from "@/lib/edit-mode";
+import EditableSection from "@/components/edit/EditableSection";
 
 // Shorter than the marketing pages: a new month of photographs should
 // appear without waiting out a long cache.
@@ -89,6 +92,7 @@ export default async function ProgressIndexPage(props: Props) {
         data={breadcrumbList(trail)}
       />
       {/* ── Header ───────────────────────────────────────────────────── */}
+      <EditableSection links={PROGRESS_SECTION_LINKS.header}>
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
           <Breadcrumb items={trail} className="mb-5" />
@@ -102,8 +106,10 @@ export default async function ProgressIndexPage(props: Props) {
           </p>
         </Reveal>
       </section>
+      </EditableSection>
 
       {/* ── Projects ─────────────────────────────────────────────────── */}
+      <EditableSection links={PROGRESS_SECTION_LINKS.projects}>
       <section className="container-luxe py-14 sm:py-20">
         {isDatabaseOffline() && <DbOfflineNotice />}
 
@@ -122,6 +128,7 @@ export default async function ProgressIndexPage(props: Props) {
           <div className="space-y-8">
             {projects.map((project, index) => (
               <Reveal key={project.id} delay={index * 0.08}>
+                <EditableItem href={ITEM_EDIT_HREF.projectProgress(project.id)}>
                 <Link
                   href={`/${locale}/projects/${project.slug}#progress`}
                   className="group grid overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg sm:grid-cols-[42%_1fr] sm:items-center"
@@ -184,11 +191,13 @@ export default async function ProgressIndexPage(props: Props) {
                     </span>
                   </div>
                 </Link>
+                </EditableItem>
               </Reveal>
             ))}
           </div>
         )}
       </section>
+      </EditableSection>
     </>
   );
 }

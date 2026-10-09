@@ -47,13 +47,14 @@ import {
 import {
   COPY_NAMESPACE_PATH,
   COPY_PAGE_GROUPS,
+  copyBlockTitle,
   copyKind,
   copySubgroup,
   humanizeSegment,
 } from "@/lib/site-copy-meta";
 import { allCopyDefaults } from "@/lib/site-copy-content";
-import { getCopyOverridesForEditing } from "@/lib/site-copy";
-import { updateSiteCopy } from "./actions";
+import { getCopyOverridesForEditing, getCopyReviews } from "@/lib/site-copy";
+import { markCopyReviewed, updateSiteCopy } from "./actions";
 import SiteCopyForm, { type SiteCopyGroup, type SiteCopyRow } from "@/components/admin/SiteCopyForm";
 
 type Props = {
@@ -85,11 +86,16 @@ export default async function AdminSiteCopy(props: Props) {
       : "home";
   const show: Show = searchParams.show === "edited" || searchParams.show === "review" ? searchParams.show : "all";
 
-  const [t, defaultsList, overridesList] = await Promise.all([
+  const [t, defaultsList, overridesList, reviewsList] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     Promise.all(locales.map((l) => allCopyDefaults(l))),
     Promise.all(locales.map((l) => getCopyOverridesForEditing(l))),
+    Promise.all(locales.map((l) => getCopyReviews(l))),
   ]);
+  const reviews = Object.fromEntries(locales.map((l, i) => [l, reviewsList[i]])) as Record<
+    Locale,
+    Record<string, Date>
+  >;
   const defaults = Object.fromEntries(locales.map((l, i) => [l, defaultsList[i]])) as Record<
     Locale,
     Record<string, string>
@@ -109,8 +115,10 @@ export default async function AdminSiteCopy(props: Props) {
     const th = overrides.th[key];
     if (!th) return [];
     return COLUMN_ORDER.filter((l) => l !== "th").filter((l) => {
-      const other = overrides[l][key];
-      return !other || other.updatedAt < th.updatedAt;
+      // The later of the language's own edit and an explicit "checked"
+      // mark (markCopyReviewed) — either says someone looked after Thai.
+      const touched = Math.max(overrides[l][key]?.updatedAt.getTime() ?? 0, reviews[l][key]?.getTime() ?? 0);
+      return touched < th.updatedAt.getTime();
     });
   };
 
@@ -165,13 +173,7 @@ export default async function AdminSiteCopy(props: Props) {
       let title: string;
       if (needle) title = t(`pages.copy.ns.${name}` as never);
       else if (!segment) title = t("pages.copy.general");
-      else {
-        const base = `${name}.${segment}`;
-        const heading = ["title", "heading", "eyebrow"]
-          .map((leaf) => defaults[uiLang][`${base}.${leaf}`])
-          .find((value) => value && value.length <= 80);
-        title = heading ?? humanizeSegment(segment);
-      }
+      else title = copyBlockTitle(key, defaults[uiLang]) ?? humanizeSegment(segment);
       group = { id, title, rows: [] };
       groupOf.set(id, group);
       groups.push(group);
@@ -314,6 +316,7 @@ export default async function AdminSiteCopy(props: Props) {
               <SiteCopyForm
                 key={`${ns}|${query}|${show}`}
                 action={updateSiteCopy.bind(null, locale)}
+                markReviewed={canWrite ? markCopyReviewed : null}
                 groups={groups}
                 focusKey={focusKey}
               />

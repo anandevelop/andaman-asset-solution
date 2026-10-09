@@ -35,6 +35,8 @@ import JsonLd from "@/components/JsonLd";
 import { getArticleCategories, getPublishedArticlePage } from "@/lib/news";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
+import EditableItem from "@/components/edit/EditableItem";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 export const revalidate = 300;
 
@@ -184,6 +186,7 @@ export default async function NewsPage(props: Props) {
             <>
               {isLeadPage && (
                 <Reveal>
+                  <EditableItem href={ITEM_EDIT_HREF.article(lead.id)}>
                   <Link
                     href={`/${locale}/news/${lead.slug}`}
                     className="group grid overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.05fr_1fr]"
@@ -249,6 +252,7 @@ export default async function NewsPage(props: Props) {
                       </span>
                     </div>
                   </Link>
+                  </EditableItem>
                 </Reveal>
               )}
 
@@ -260,6 +264,7 @@ export default async function NewsPage(props: Props) {
                 >
                   {gridArticles.map((article, index) => (
                     <Reveal key={article.id} delay={index * 0.06}>
+                      <EditableItem href={ITEM_EDIT_HREF.article(article.id)}>
                       <Link
                         href={`/${locale}/news/${article.slug}`}
                         className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
@@ -312,6 +317,7 @@ export default async function NewsPage(props: Props) {
                           </span>
                         </div>
                       </Link>
+                      </EditableItem>
                     </Reveal>
                   ))}
                 </div>

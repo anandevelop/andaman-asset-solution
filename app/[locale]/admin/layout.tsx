@@ -38,6 +38,7 @@ import { safeQuery } from "@/lib/db";
 import { isSiteIndexable } from "@/lib/indexing";
 import AuthProvider from "@/components/admin/AuthProvider";
 import AdminSidebar, { type AdminEnvironment } from "@/components/admin/AdminSidebar";
+import ReturnToSite from "@/components/admin/ReturnToSite";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import CommandK from "@/components/admin/CommandK";
 import { UndoToaster } from "@/components/admin/UndoToast";
@@ -213,6 +214,8 @@ export default async function AdminLayout(props: Props) {
           */}
           <div className="w-full min-w-0 px-4 pb-20 pt-5 sm:px-6 lg:px-7 lg:pt-[26px]">
             <div data-admin-page className="mx-auto w-full min-w-0 max-w-[1440px]">
+              {/* Back to the public page an "Edit" button came from. */}
+              <ReturnToSite />
               {children}
             </div>
           </div>

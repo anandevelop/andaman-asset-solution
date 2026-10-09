@@ -17,14 +17,19 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ABOUT_SECTION_LINKS,
+  ACHIEVEMENTS_SECTION_LINKS,
+  CONTACT_SECTION_LINKS,
+  PROGRESS_SECTION_LINKS,
   HOME_AUTO_SECTION_LINKS,
   ITEM_EDIT_HREF,
   PAGE_EDIT_LINKS,
   SITE_CTA_LINKS,
   adminBaseFor,
   canSeeEditMode,
+  isReturnPath,
   pageEditLink,
   projectSectionLinks,
+  withReturnTo,
   type EditLink,
 } from "@/lib/edit-mode";
 import { HOME_OUTLINE } from "@/lib/home-outline";
@@ -61,6 +66,9 @@ function adminRouteExists(href: string): boolean {
 const ALL_LINKS: EditLink[] = [
   ...Object.values(PAGE_EDIT_LINKS),
   ...Object.values(ABOUT_SECTION_LINKS).flat(),
+  ...Object.values(CONTACT_SECTION_LINKS).flat(),
+  ...Object.values(ACHIEVEMENTS_SECTION_LINKS).flat(),
+  ...Object.values(PROGRESS_SECTION_LINKS).flat(),
   ...Object.values(HOME_AUTO_SECTION_LINKS).flat(),
   ...Object.values(projectSectionLinks("ID")).flat(),
   ...SITE_CTA_LINKS,
@@ -127,5 +135,42 @@ describe("canSeeEditMode", () => {
     expect(canSeeEditMode("SALES")).toBe(false);
     expect(canSeeEditMode("VIEWER")).toBe(false);
     expect(canSeeEditMode(null)).toBe(false);
+  });
+});
+
+describe("isReturnPath", () => {
+  it("takes public pages, Thai slugs included", () => {
+    expect(isReturnPath("/th")).toBe(true);
+    expect(isReturnPath("/en/projects/villa-kamala")).toBe(true);
+    expect(isReturnPath("/th/projects/บ้านพักตากอากาศ")).toBe(true);
+    expect(isReturnPath("/en/news/a%20b")).toBe(true);
+  });
+
+  it("refuses anything that could leave the site or loop into the back office", () => {
+    for (const path of [
+      "//evil.example",
+      "/th//evil.example",
+      "https://evil.example",
+      "javascript:alert(1)",
+      "/th/admin",
+      "/en/admin/pages/copy",
+      "/th/login",
+      "/de/projects",
+      "/th?x=1",
+      "/th/" + "a".repeat(400),
+    ]) {
+      expect(isReturnPath(path), path).toBe(false);
+    }
+  });
+});
+
+describe("withReturnTo", () => {
+  it("adds from= with the right separator, and drops a bad path", () => {
+    expect(withReturnTo("/th/admin/pages/home", "/th")).toBe("/th/admin/pages/home?from=%2Fth");
+    expect(withReturnTo("/th/admin/pages/copy?ns=terms", "/th/terms")).toBe(
+      "/th/admin/pages/copy?ns=terms&from=%2Fth%2Fterms",
+    );
+    expect(withReturnTo("/th/admin/news", "//evil.example")).toBe("/th/admin/news");
+    expect(withReturnTo("/th/admin/news", null)).toBe("/th/admin/news");
   });
 });

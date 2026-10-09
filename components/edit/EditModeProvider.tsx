@@ -49,6 +49,9 @@ type EditModeState = {
    *  (components/edit/CopyPicker.tsx). Not remembered across page loads. */
   picking: boolean;
   setPicking: (value: boolean) => void;
+  /** The picker registers "may I close?" here (it asks when the panel has
+   *  unsaved text), so turning the mode off from the bar asks too. */
+  setPickGuard: (guard: (() => boolean) | null) => void;
 };
 
 const EditModeContext = createContext<EditModeState | null>(null);
@@ -71,6 +74,21 @@ export default function EditModeProvider({ locale, children }: { locale: string;
   const [switchOn, setSwitchOn] = useState(true);
   const [pageTarget, setPageTarget] = useState<EditLink | null>(null);
   const [picking, setPicking] = useState(false);
+  // State rather than a ref: it is read while building the context value.
+  const [pickGuard, setPickGuardState] = useState<(() => boolean) | null>(null);
+
+  const setPickingGuarded = useCallback(
+    (value: boolean) => {
+      if (!value && pickGuard && !pickGuard()) return;
+      setPicking(value);
+    },
+    [pickGuard],
+  );
+
+  const setPickGuard = useCallback((guard: (() => boolean) | null) => {
+    // The updater form: a bare function would be called as one.
+    setPickGuardState(() => guard);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,9 +135,10 @@ export default function EditModeProvider({ locale, children }: { locale: string;
       pageTarget,
       setPageTarget,
       picking: role !== null && picking,
-      setPicking,
+      setPicking: setPickingGuarded,
+      setPickGuard,
     }),
-    [role, switchOn, setEditing, locale, pageTarget, picking],
+    [role, switchOn, setEditing, locale, pageTarget, picking, setPickingGuarded, setPickGuard],
   );
 
   return (

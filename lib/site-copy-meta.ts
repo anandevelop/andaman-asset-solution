@@ -108,3 +108,26 @@ export function humanizeSegment(segment: string): string {
   const spaced = segment.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ");
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
+
+/** The page group a namespace is listed under in the admin sidebar. */
+export function copyPageGroupOf(namespace: string): CopyPageGroup | null {
+  return COPY_PAGE_GROUPS.find((group) => (group.namespaces as readonly string[]).includes(namespace))?.id ?? null;
+}
+
+/**
+ * The words an editor would recognise a key's block by: that block's own
+ * title, heading or eyebrow as the site prints it ("Four things we do
+ * in-house"), else null. `defaults` is one language's flattened copy.
+ * Shared by the admin grid's group titles and the public-site picker's
+ * "which of these did you mean" list, so both name a block the same way.
+ */
+export function copyBlockTitle(key: string, defaults: Readonly<Record<string, string>>): string | null {
+  const segment = copySubgroup(key);
+  if (!segment) return null;
+  const base = `${key.split(".", 1)[0]}.${segment}`;
+  return (
+    ["title", "heading", "eyebrow"]
+      .map((leaf) => defaults[`${base}.${leaf}`])
+      .find((value) => value && value.length <= 80) ?? null
+  );
+}

@@ -44,6 +44,8 @@ import type { Locale } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
+import EditableSection from "@/components/edit/EditableSection";
+import { CONTACT_SECTION_LINKS } from "@/lib/edit-mode";
 
 export const revalidate = 3600;
 
@@ -243,6 +245,7 @@ export default async function ContactPage(props: Props) {
         data={breadcrumbList(trail)}
       />
       {/* ── Header ───────────────────────────────────────────────────── */}
+      <EditableSection links={CONTACT_SECTION_LINKS.header}>
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
           <Breadcrumb items={trail} className="mb-5" />
@@ -256,8 +259,10 @@ export default async function ContactPage(props: Props) {
           </p>
         </Reveal>
       </section>
+      </EditableSection>
 
       {/* ── Form + details ───────────────────────────────────────────── */}
+      <EditableSection links={CONTACT_SECTION_LINKS.details}>
       <section className="container-luxe py-14 sm:py-20">
         <div className="grid gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
           {/* Form */}
@@ -339,8 +344,10 @@ export default async function ContactPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
 
       {/* ── Map ──────────────────────────────────────────────────────── */}
+      <EditableSection links={CONTACT_SECTION_LINKS.map}>
       <section className="pb-20 sm:pb-28">
         <div className="container-luxe">
           <Reveal>
@@ -368,6 +375,7 @@ export default async function ContactPage(props: Props) {
           </Reveal>
         </div>
       </section>
+      </EditableSection>
     </>
   );
 }

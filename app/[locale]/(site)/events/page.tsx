@@ -23,6 +23,8 @@ import JsonLd from "@/components/JsonLd";
 import { getPublishedEvents, type EventCard } from "@/lib/events";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
+import EditableItem from "@/components/edit/EditableItem";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 // Shorter than the other listings: "seats left" ages badly.
 export const revalidate = 120;
@@ -86,6 +88,7 @@ export default async function EventsPage(props: Props) {
   // moment they click through to actually RSVP.
   const card = (event: EventCard, index: number, muted = false) => (
     <Reveal key={event.id} delay={index * 0.08}>
+      <EditableItem href={ITEM_EDIT_HREF.event(event.id)}>
       <Link
         href={`/${locale}/events/${event.slug}`}
         className={`group flex h-full flex-col overflow-hidden rounded-xs border border-white/10 bg-primary shadow-card transition-all hover:shadow-cardHover ${
@@ -160,6 +163,7 @@ export default async function EventsPage(props: Props) {
           </span>
         </div>
       </Link>
+      </EditableItem>
     </Reveal>
   );
 

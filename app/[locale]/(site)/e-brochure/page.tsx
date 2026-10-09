@@ -25,6 +25,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getPublishedBrochures } from "@/lib/brochures";
 import { isDatabaseOffline } from "@/lib/db";
+import EditableItem from "@/components/edit/EditableItem";
+import { ITEM_EDIT_HREF } from "@/lib/edit-mode";
 
 // An hour, like the other catalogues. Publishing calls revalidatePath, so
 // this is the backstop rather than the mechanism.
@@ -101,6 +103,7 @@ export default async function EBrochureIndexPage(props: Props) {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {brochures.map((brochure, index) => (
               <Reveal key={brochure.id} delay={(index % 6) * 0.07}>
+                <EditableItem href={ITEM_EDIT_HREF.brochure(brochure.id)}>
                 <Link
                   href={`/${locale}/e-brochure/${brochure.slug}`}
                   className="group block"
@@ -150,6 +153,7 @@ export default async function EBrochureIndexPage(props: Props) {
                     </span>
                   </div>
                 </Link>
+                </EditableItem>
               </Reveal>
             ))}
           </div>

@@ -19,10 +19,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
 import FormSaveBar from "@/components/admin/FormSaveBar";
 import type { SiteCopyFormState } from "@/app/[locale]/admin/(content)/pages/copy/actions";
@@ -57,6 +58,8 @@ type Props = {
   groups: SiteCopyGroup[];
   /** A row to scroll to and highlight (?key=). */
   focusKey: string | null;
+  /** "Translations checked" for a flagged row; null for read-only viewers. */
+  markReviewed: ((key: string) => Promise<{ ok: boolean }>) | null;
 };
 
 /** Native names: the same in every back-office language. */
@@ -89,7 +92,7 @@ function rowsFor(text: string): number {
   return n > 400 ? 6 : n > 200 ? 4 : n > 60 ? 2 : 1;
 }
 
-export default function SiteCopyForm({ action, groups, focusKey }: Props) {
+export default function SiteCopyForm({ action, groups, focusKey, markReviewed }: Props) {
   const t = useTranslations("admin.pages.copy");
   const tAdmin = useTranslations("admin");
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -101,6 +104,21 @@ export default function SiteCopyForm({ action, groups, focusKey }: Props) {
     return result;
   }, INITIAL);
   const focusRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [reviewing, startReviewing] = useTransition();
+  const [reviewKey, setReviewKey] = useState<string | null>(null);
+  const [reviewFailed, setReviewFailed] = useState<string | null>(null);
+
+  const confirmReviewed = (key: string) => {
+    if (!markReviewed) return;
+    setReviewKey(key);
+    setReviewFailed(null);
+    startReviewing(async () => {
+      const result = await markReviewed(key);
+      if (result.ok) router.refresh();
+      else setReviewFailed(key);
+    });
+  };
 
   useEffect(() => {
     focusRef.current?.scrollIntoView({ block: "center" });
@@ -207,6 +225,31 @@ export default function SiteCopyForm({ action, groups, focusKey }: Props) {
                         {rowStale && (
                           <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-adm-warning">
                             {t("reviewRow")}
+                          </span>
+                        )}
+                        {/* The way out of the flag when the translations
+                            need no change — see markCopyReviewed. Hidden
+                            while the row has unsaved edits: saving those
+                            clears the flag for the languages edited. */}
+                        {rowStale && markReviewed && !row.cells.some((c) => cellId(c.locale, row.key) in edits) && (
+                          <button
+                            type="button"
+                            onClick={() => confirmReviewed(row.key)}
+                            disabled={reviewing}
+                            title={t("markReviewedHint")}
+                            className="inline-flex items-center gap-1 rounded-full border border-adm-warning/40 px-2 py-0.5 text-adm-warning hover:bg-adm-warning-bg disabled:opacity-60"
+                          >
+                            {reviewing && reviewKey === row.key ? (
+                              <Loader2 size={12} className="animate-spin" aria-hidden />
+                            ) : (
+                              <Check size={12} aria-hidden />
+                            )}
+                            {t("markReviewed")}
+                          </button>
+                        )}
+                        {reviewFailed === row.key && (
+                          <span role="alert" className="text-adm-danger">
+                            {tAdmin("common.error")}
                           </span>
                         )}
                         <span className="ml-auto break-all font-mono text-[11px] text-adm-muted/80">{row.key}</span>

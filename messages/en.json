@@ -760,7 +760,9 @@
           "label": "Label",
           "paragraph": "Paragraph",
           "text": "Text"
-        }
+        },
+        "markReviewed": "Checked",
+        "markReviewedHint": "Confirm the other languages are still right and need no change after the Thai edit"
       }
     },
     "tabs": {
@@ -837,7 +839,8 @@
       "yesterday": "Yesterday",
       "clearFilter": "Clear filter",
       "translationPartial": "Partly translated",
-      "missingThai": "No Thai"
+      "missingThai": "No Thai",
+      "leaveUnsaved": "You have unsaved changes. Leave this page and lose them?"
     },
     "dateTime": {
       "open": "Choose a date and time",
@@ -4099,6 +4102,10 @@
       "team": "Team",
       "clients": "Clients",
       "projects": "Projects"
+    },
+    "returnToSite": {
+      "back": "Back to the page",
+      "dismiss": "Dismiss"
     }
   },
   "legalPage": {
@@ -4180,7 +4187,16 @@
         "syntax": "This is not valid message syntax. Check that every curly bracket is closed.",
         "unknownArgument": "{name} cannot be used in this text.",
         "unknownTag": "The {name} tag cannot be used in this text."
-      }
+      },
+      "discardConfirm": "You have unsaved changes. Discard them?",
+      "ownedBy": "This part is edited in:"
+    },
+    "roles": {
+      "SUPER_ADMIN": "Super admin",
+      "ADMIN": "Admin",
+      "EDITOR": "Editor",
+      "SALES": "Sales",
+      "VIEWER": "Viewer"
     }
   },
   "coAgents": {

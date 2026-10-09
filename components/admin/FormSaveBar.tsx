@@ -10,8 +10,9 @@
  * uncontrolled (see ProjectForm's header), so "dirty" is simply "an input
  * or change event bubbled up from inside the form since it last rendered
  * or was submitted" — the parent passes `dirty` in and resets it itself.
- * While dirty, leaving the page asks first: a project form is long enough
- * that losing it to a stray sidebar click is a real afternoon lost.
+ * While dirty, leaving the page asks first — in-app links included, see
+ * lib/use-leave-guard.ts: a project form is long enough that losing it to
+ * a stray sidebar click is a real afternoon lost.
  *
  * ⌘S / Ctrl+S submits the form the bar sits in — the browser's own "save
  * page as" is never what someone pressing it in a form meant. Unlike the
@@ -22,6 +23,8 @@
  */
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
+import { useLeaveGuard } from "@/lib/use-leave-guard";
 
 export default function FormSaveBar({
   dirty,
@@ -32,6 +35,7 @@ export default function FormSaveBar({
   unsavedLabel: string;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("admin");
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,14 +50,8 @@ export default function FormSaveBar({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  // Closing the tab, reloading, and in-app links — see lib/use-leave-guard.ts.
+  useLeaveGuard(dirty, t("common.leaveUnsaved"));
 
   return (
     <div

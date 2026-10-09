@@ -760,7 +760,9 @@
           "label": "Label",
           "paragraph": "Paragraph",
           "text": "Text"
-        }
+        },
+        "markReviewed": "已核对",
+        "markReviewedHint": "确认其他语言仍然正确，无需随泰文修改"
       }
     },
     "tabs": {
@@ -837,7 +839,8 @@
       "yesterday": "昨天",
       "clearFilter": "清除筛选",
       "translationPartial": "部分翻译",
-      "missingThai": "缺泰文"
+      "missingThai": "缺泰文",
+      "leaveUnsaved": "有尚未保存的修改。离开此页面将丢失这些修改，确定离开吗？"
     },
     "dateTime": {
       "open": "选择日期和时间",
@@ -4099,6 +4102,10 @@
       "team": "团队",
       "clients": "客户",
       "projects": "项目"
+    },
+    "returnToSite": {
+      "back": "返回网页",
+      "dismiss": "关闭"
     }
   },
   "legalPage": {
@@ -4180,7 +4187,16 @@
         "syntax": "文本格式无效，请检查花括号是否成对。",
         "unknownArgument": "此文本中不能使用 {name}。",
         "unknownTag": "此文本中不能使用 {name} 标签。"
-      }
+      },
+      "discardConfirm": "有尚未保存的修改，确定放弃吗？",
+      "ownedBy": "此部分的编辑位置："
+    },
+    "roles": {
+      "SUPER_ADMIN": "超级管理员",
+      "ADMIN": "管理员",
+      "EDITOR": "编辑",
+      "SALES": "销售",
+      "VIEWER": "只读"
     }
   },
   "coAgents": {

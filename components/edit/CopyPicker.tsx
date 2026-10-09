@@ -30,18 +30,33 @@
  * Clicks are taken in the capture phase and stopped, so links and buttons
  * on the page do not fire while picking. Anything inside [data-edit-ui]
  * (the bar, this panel) is left alone.
+ *
+ * UNSAVED TEXT IS NEVER DROPPED SILENTLY
+ *
+ * Picking something else, Esc, ✕, Cancel and turning the mode off from the
+ * bar all ask first when the panel holds unsaved text. Esc is two steps:
+ * the first closes the panel, the second leaves picking mode.
+ *
+ * WHEN THE WORDS ARE NOT SITE COPY
+ *
+ * A project's name or an article's body lives in its own editor. The
+ * section and card wrappers (EditableSection, EditableItem) leave their
+ * admin links on the DOM for editors, so "not found" can offer the screen
+ * that does own the words rather than only saying where not to look.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ExternalLink, Loader2, MousePointerClick, X } from "lucide-react";
+import { ExternalLink, Loader2, MousePointerClick, Pencil, X } from "lucide-react";
 import {
   findCopyForText,
   saveCopyFromSite,
   type PickedCopy,
 } from "@/app/[locale]/(site)/_actions/site-copy";
 import { normalizeCopyText, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
+import { withReturnTo, type EditLink } from "@/lib/edit-mode";
 import { useEditMode } from "./EditModeProvider";
 
 const LANGUAGE_NAMES: Record<string, string> = { th: "ไทย", en: "English", zh: "中文", ru: "Русский" };
@@ -68,6 +83,19 @@ function candidatesFrom(target: Element): string[] {
   return out;
 }
 
+/** The admin screens that own the clicked spot: the card's, then the section's. */
+function ownersOf(el: Element): { item: string | null; links: EditLink[] } {
+  const item = el.closest("[data-edit-item]")?.getAttribute("data-edit-item") ?? null;
+  let links: EditLink[] = [];
+  try {
+    const raw = el.closest("[data-edit-links]")?.getAttribute("data-edit-links");
+    links = raw ? (JSON.parse(raw) as EditLink[]) : [];
+  } catch {
+    links = [];
+  }
+  return { item, links };
+}
+
 /** The one non-blank text node an element holds, or null. */
 function soleTextNode(el: Element): Text | null {
   const nodes = Array.from(el.childNodes).filter(
@@ -78,9 +106,12 @@ function soleTextNode(el: Element): Text | null {
 
 export default function CopyPicker({ locale }: { locale: string }) {
   const t = useTranslations("editMode.picker");
+  const tEdit = useTranslations("editMode");
+  const pathname = usePathname();
   const mode = useEditMode();
   const picking = Boolean(mode?.picking);
   const setPicking = mode?.setPicking;
+  const setPickGuard = mode?.setPickGuard;
   const adminBase = mode?.adminBase ?? "/th/admin";
 
   const [box, setBox] = useState<DOMRect | null>(null);
@@ -91,8 +122,13 @@ export default function CopyPicker({ locale }: { locale: string }) {
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [owners, setOwners] = useState<{ item: string | null; links: EditLink[] }>({ item: null, links: [] });
 
   const clicked = useRef<Element | null>(null);
+  const hovered = useRef<Element | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
+  /** Mirrors `dirty.length > 0` for the event handlers below. */
+  const hasUnsaved = useRef(false);
   const preview = useRef<{ node: Text; original: string; key: string } | null>(null);
 
   const restorePreview = useCallback(() => {
@@ -103,6 +139,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
   }, []);
 
   const close = useCallback(() => {
+    hasUnsaved.current = false;
     restorePreview();
     setPreviewing(false);
     setPicked(null);
@@ -110,6 +147,19 @@ export default function CopyPicker({ locale }: { locale: string }) {
     setErrors({});
     setFailed(false);
   }, [restorePreview]);
+
+  /** True when it is fine to drop what the panel holds. */
+  const confirmDiscard = useCallback(
+    () => !hasUnsaved.current || window.confirm(t("discardConfirm")),
+    [t],
+  );
+
+  /** Close the panel, asking first when it holds unsaved text. */
+  const requestClose = useCallback(() => {
+    if (!confirmDiscard()) return false;
+    close();
+    return true;
+  }, [confirmDiscard, close]);
 
   /** Live preview for `match`, if the clicked element is exactly that
    *  text and nothing else. Called from the handlers that change it. */
@@ -134,9 +184,15 @@ export default function CopyPicker({ locale }: { locale: string }) {
   useEffect(() => {
     if (!picking) return;
 
+    const measure = () => {
+      const el = hovered.current;
+      setBox(el && el.isConnected ? el.getBoundingClientRect() : null);
+    };
+
     const over = (event: MouseEvent) => {
       const el = event.target as Element | null;
-      setBox(el && !isEditUi(el) ? el.getBoundingClientRect() : null);
+      hovered.current = el && !isEditUi(el) ? el : null;
+      measure();
     };
 
     const click = (event: MouseEvent) => {
@@ -145,8 +201,12 @@ export default function CopyPicker({ locale }: { locale: string }) {
       event.preventDefault();
       event.stopPropagation();
 
+      // A stray click while typing must not throw the typing away.
+      if (!confirmDiscard()) return;
+
       restorePreview();
       clicked.current = el;
+      setOwners(ownersOf(el));
       setPicked({ status: "loading" });
       setIndex(0);
       setEdits({});
@@ -161,22 +221,53 @@ export default function CopyPicker({ locale }: { locale: string }) {
         .catch(() => setPicked({ status: "error" }));
     };
 
-    const key = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      close();
-      setPicking?.(false);
-    };
-
     document.addEventListener("mouseover", over, true);
     document.addEventListener("click", click, true);
-    document.addEventListener("keydown", key);
+    // The outline is position: fixed; keep it on the element as the page moves.
+    window.addEventListener("scroll", measure, { capture: true, passive: true });
+    window.addEventListener("resize", measure);
     return () => {
       document.removeEventListener("mouseover", over, true);
       document.removeEventListener("click", click, true);
-      document.removeEventListener("keydown", key);
+      window.removeEventListener("scroll", measure, { capture: true });
+      window.removeEventListener("resize", measure);
+      hovered.current = null;
       setBox(null);
     };
-  }, [picking, locale, setPicking, close, restorePreview, armPreview]);
+  }, [picking, locale, confirmDiscard, restorePreview, armPreview]);
+
+  // Esc: first closes the panel, then leaves picking mode.
+  useEffect(() => {
+    if (!picking && !picked) return;
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (picked) requestClose();
+      else setPicking?.(false);
+    };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [picking, picked, requestClose, setPicking]);
+
+  // Turning the mode off from the bar asks the same question, through the
+  // provider (setPicking is guarded), and then takes the panel with it —
+  // a panel left open after the mode ends had no Esc and kept its preview.
+  useEffect(() => {
+    setPickGuard?.(confirmDiscard);
+    return () => setPickGuard?.(null);
+  }, [setPickGuard, confirmDiscard]);
+
+  useEffect(() => {
+    // Reacting to the mode ending; close() only resets panel state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!picking) close();
+  }, [picking, close]);
+
+  // Move focus into the panel when it opens, so keyboard and screen-reader
+  // users land on what just appeared rather than somewhere behind it.
+  const panelOpen = picked !== null;
+  useEffect(() => {
+    if (panelOpen) panelRef.current?.focus();
+  }, [panelOpen]);
 
   const match = picked?.status === "found" ? picked.matches[index] : null;
 
@@ -187,6 +278,10 @@ export default function CopyPicker({ locale }: { locale: string }) {
       .filter(({ cell, value }) => value !== undefined && value !== (cell.saved ?? cell.fallback))
       .map(({ cell, value }) => ({ locale: cell.locale, key: match.key, value: value as string, cell }));
   }, [edits, match]);
+
+  useEffect(() => {
+    hasUnsaved.current = dirty.length > 0;
+  }, [dirty]);
 
   const localErrors = useMemo(() => {
     const out: Record<string, CopyProblem> = {};
@@ -251,16 +346,18 @@ export default function CopyPicker({ locale }: { locale: string }) {
 
       {picked && (
         <aside
+          ref={panelRef}
+          tabIndex={-1}
           data-edit-ui
           role="dialog"
           aria-label={t("title")}
-          className="fixed inset-y-0 right-0 z-[70] flex w-full flex-col overflow-y-auto bg-white text-[14px] text-gray-900 shadow-2xl sm:w-[420px] print:hidden"
+          className="fixed outline-none inset-y-0 right-0 z-[70] flex w-full flex-col overflow-y-auto bg-white text-[14px] text-gray-900 shadow-2xl sm:w-[420px] print:hidden"
         >
           <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-5 py-3.5">
             <h2 className="text-[15px] font-semibold">{t("title")}</h2>
             <button
               type="button"
-              onClick={close}
+              onClick={requestClose}
               aria-label={t("close")}
               className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
             >
@@ -280,6 +377,32 @@ export default function CopyPicker({ locale }: { locale: string }) {
               <div className="space-y-2">
                 <p className="font-medium">{picked.status === "none" ? t("notFound") : t("failedLookup")}</p>
                 <p className="text-gray-600">{t("notFoundHint")}</p>
+                {(owners.item || owners.links.length > 0) && (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-[13px] text-gray-600">{t("ownedBy")}</p>
+                    <div className="flex flex-col gap-2">
+                      {owners.item && (
+                        <a
+                          href={withReturnTo(`${adminBase}${owners.item}`, pathname)}
+                          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 font-medium text-white hover:bg-blue-500"
+                        >
+                          <Pencil size={14} aria-hidden />
+                          {tEdit("editItem")}
+                        </a>
+                      )}
+                      {owners.links.map((link) => (
+                        <a
+                          key={link.href}
+                          href={withReturnTo(`${adminBase}${link.href}`, pathname)}
+                          className="inline-flex items-center gap-2 rounded-md border border-blue-600 px-3 py-2 font-medium text-blue-700 hover:bg-blue-50"
+                        >
+                          <Pencil size={14} aria-hidden />
+                          {tEdit("editLabel", { name: tEdit(`editors.${link.labelKey}` as never) })}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -295,6 +418,8 @@ export default function CopyPicker({ locale }: { locale: string }) {
                       value={index}
                       onChange={(event) => {
                         const next = Number(event.target.value);
+                        if (!confirmDiscard()) return;
+                        hasUnsaved.current = false;
                         setIndex(next);
                         setEdits({});
                         setErrors({});
@@ -304,14 +429,19 @@ export default function CopyPicker({ locale }: { locale: string }) {
                     >
                       {picked.matches.map((m, i) => (
                         <option key={m.key} value={i}>
-                          {m.key}
+                          {m.where} · {m.kind}
                         </option>
                       ))}
                     </select>
                   </div>
                 )}
 
-                <p className="break-all font-mono text-[11.5px] text-gray-500">{match.key}</p>
+                <div className="space-y-0.5">
+                  <p className="text-[13px] font-medium text-gray-800">
+                    {match.where} <span className="font-normal text-gray-500">· {match.kind}</span>
+                  </p>
+                  <p className="break-all font-mono text-[11px] text-gray-400">{match.key}</p>
+                </div>
 
                 {(match.args.length > 0 || match.tags.length > 0) && (
                   <p className="rounded-md bg-blue-50 px-3 py-2 text-[13px] leading-relaxed text-blue-800">
@@ -397,7 +527,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
             <div className="flex items-center gap-2">
               {match && (
                 <a
-                  href={`${adminBase}/pages/copy?key=${encodeURIComponent(match.key)}`}
+                  href={withReturnTo(`${adminBase}/pages/copy?key=${encodeURIComponent(match.key)}`, pathname)}
                   className="mr-auto inline-flex items-center gap-1 text-[13px] text-blue-700 hover:underline"
                 >
                   {t("openInAdmin")}
@@ -406,7 +536,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
               )}
               <button
                 type="button"
-                onClick={close}
+                onClick={requestClose}
                 className={`rounded-md border border-gray-300 px-3.5 py-2 hover:bg-gray-50 ${match ? "" : "ml-auto"}`}
               >
                 {t("cancel")}

@@ -35,7 +35,7 @@
  */
 
 import type { Role } from "@prisma/client";
-import { adminLocales } from "@/i18n";
+import { adminLocales, locales } from "@/i18n";
 import { hasRole } from "@/lib/role-rank";
 import { stripLocale } from "@/lib/public-paths";
 
@@ -59,6 +59,26 @@ export function canSeeEditMode(role: Role | null | undefined): boolean {
 export function adminBaseFor(locale: string): string {
   const target = (adminLocales as readonly string[]).includes(locale) ? locale : "th";
   return `/${target}/admin`;
+}
+
+/**
+ * Is `path` somewhere on the public site an admin page may link back to?
+ * "/th/projects/x" yes; "//evil.com", "https://…", "/th/admin/…" no. The
+ * check behind components/admin/ReturnToSite.tsx, which takes it from a
+ * query string anyone can write.
+ */
+export function isReturnPath(path: string): boolean {
+  if (path.length > 300) return false;
+  const match = path.match(new RegExp(`^/(${locales.join("|")})(/[\\p{L}\\p{M}\\p{N}._~%\\-/]*)?$`, "u"));
+  if (!match) return false;
+  const rest = match[2] ?? "";
+  return !rest.includes("//") && !/^\/admin(\/|$)/.test(rest) && !/^\/login(\/|$)/.test(rest);
+}
+
+/** `href` (under /{locale}/admin) carrying where the editor came from. */
+export function withReturnTo(href: string, from: string | null | undefined): string {
+  if (!from || !isReturnPath(from)) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}from=${encodeURIComponent(from)}`;
 }
 
 /** One link out of a band of the page. `href` is under `/{locale}/admin`. */
@@ -99,6 +119,7 @@ export function pageEditLink(pathname: string): EditLink | null {
 /** Item-level editors, keyed by what a card shows. `id` is the row's id. */
 export const ITEM_EDIT_HREF = {
   project: (id: string) => `/projects/${id}/edit`,
+  projectProgress: (id: string) => `/projects/${id}/progress`,
   article: (id: string) => `/news/${id}/edit`,
   event: (id: string) => `/events/${id}/edit`,
   brochure: (id: string) => `/e-brochures/${id}/edit`,
@@ -136,6 +157,28 @@ export const ABOUT_SECTION_LINKS = {
   story: [{ labelKey: "aboutStory", href: "/pages/about/story" }],
   principles: [{ labelKey: "aboutMission", href: "/pages/about/mission" }],
   timeline: [{ labelKey: "aboutMilestones", href: "/pages/about/milestones" }],
+} satisfies Record<string, EditLink[]>;
+
+/** The contact page: its words are site copy; its details are settings. */
+export const CONTACT_SECTION_LINKS = {
+  header: [{ labelKey: "siteCopy", href: "/pages/copy?ns=contact" }],
+  details: [
+    { labelKey: "contactPage", href: "/pages/contact" },
+    { labelKey: "siteCopy", href: "/pages/copy?ns=contact" },
+  ],
+  map: [{ labelKey: "contactPage", href: "/pages/contact" }],
+} satisfies Record<string, EditLink[]>;
+
+/** /achievements: narrative from content/achievements.ts, awards from the table. */
+export const ACHIEVEMENTS_SECTION_LINKS = {
+  copy: [{ labelKey: "siteCopy", href: "/pages/copy?ns=achievementsPage" }],
+  awards: [{ labelKey: "aboutAwards", href: "/pages/about/awards" }],
+} satisfies Record<string, EditLink[]>;
+
+/** /progress: a heading over one card per project. */
+export const PROGRESS_SECTION_LINKS = {
+  header: [{ labelKey: "siteCopy", href: "/pages/copy?ns=progress" }],
+  projects: [{ labelKey: "progress", href: "/progress" }],
 } satisfies Record<string, EditLink[]>;
 
 /**

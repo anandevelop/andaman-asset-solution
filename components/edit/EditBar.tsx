@@ -15,7 +15,7 @@
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight, ListOrdered, Pencil, Type } from "lucide-react";
-import { pageEditLink } from "@/lib/edit-mode";
+import { pageEditLink, withReturnTo } from "@/lib/edit-mode";
 import { stripLocale } from "@/lib/public-paths";
 import { useEditMode } from "./EditModeProvider";
 
@@ -41,7 +41,8 @@ export default function EditBar() {
         <p className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
           {t.rich("bar.viewingAs", {
-            role: mode.role ?? "",
+            // In the page's language, not the enum: "EDITOR" read as code.
+            role: mode.role ? t(`roles.${mode.role}` as never) : "",
             b: (chunks) => <b className="font-semibold text-white">{chunks}</b>,
           })}
         </p>
@@ -80,7 +81,7 @@ export default function EditBar() {
 
         {target && (
           <a
-            href={`${mode.adminBase}${target.href}`}
+            href={withReturnTo(`${mode.adminBase}${target.href}`, pathname)}
             className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1 font-medium text-white hover:bg-blue-500"
           >
             <Pencil size={13} aria-hidden />
@@ -90,7 +91,7 @@ export default function EditBar() {
 
         {isHome && (
           <a
-            href={`${mode.adminBase}/pages/home`}
+            href={withReturnTo(`${mode.adminBase}/pages/home`, pathname)}
             className="inline-flex items-center gap-1.5 rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1 hover:bg-gray-700"
           >
             <ListOrdered size={13} aria-hidden />

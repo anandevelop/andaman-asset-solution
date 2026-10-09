@@ -37,6 +37,8 @@ import JsonLd from "@/components/JsonLd";
 import { getAwards, type Award } from "@/lib/awards";
 import { getAchievementsContent } from "@/content/achievements";
 import { withCopyOverrides } from "@/lib/site-copy";
+import EditableSection from "@/components/edit/EditableSection";
+import { ACHIEVEMENTS_SECTION_LINKS } from "@/lib/edit-mode";
 
 // Real development photography (public/gallery/**), not stock imagery —
 // same photo sets the project pages themselves use. Only 3 of the 5
@@ -153,6 +155,7 @@ export default async function AchievementsPage(props: Props) {
     <>
       <JsonLd id="breadcrumb-schema" data={breadcrumbList(trail)} />
       {/* ── Header ───────────────────────────────────────────────────── */}
+      <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.copy}>
       <section className="container-luxe pb-4 pt-28 sm:pt-36">
         <Reveal>
           <Breadcrumb items={trail} className="mb-5" />
@@ -168,6 +171,7 @@ export default async function AchievementsPage(props: Props) {
             with no awards on it needs to say why. */}
         {isDatabaseOffline() && <DbOfflineNotice />}
       </section>
+      </EditableSection>
 
       {/* ── Hero photo ───────────────────────────────────────────────────
           Real site photography (see HERO_IMAGE comment above), not a
@@ -218,6 +222,7 @@ export default async function AchievementsPage(props: Props) {
           section — a photo on one side keeps two long paragraphs from
           reading as a wall of text. Images swap sides between the two
           blocks so the page doesn't repeat the same layout twice in a row. */}
+      <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.copy}>
       <section className="container-luxe grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
@@ -241,7 +246,9 @@ export default async function AchievementsPage(props: Props) {
           </div>
         </Reveal>
       </section>
+      </EditableSection>
 
+      <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.copy}>
       <section className="container-luxe grid gap-10 pb-16 sm:pb-24 lg:grid-cols-2 lg:gap-16">
         <Reveal className="lg:order-2">
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
@@ -265,6 +272,7 @@ export default async function AchievementsPage(props: Props) {
           </div>
         </Reveal>
       </section>
+      </EditableSection>
 
       {awards.length === 0 ? (
         <section className="container-luxe pb-24">
@@ -276,6 +284,7 @@ export default async function AchievementsPage(props: Props) {
         <>
           {/* ── Corporate Awards ─────────────────────────────────────── */}
           {corporateAwards.length > 0 && (
+            <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.awards}>
             <section className="bg-primary-900/3 py-20 sm:py-28">
               <div className="container-luxe">
                 <Reveal>
@@ -290,10 +299,12 @@ export default async function AchievementsPage(props: Props) {
                 </div>
               </div>
             </section>
+            </EditableSection>
           )}
 
           {/* ── Property Awards, grouped by project ─────────────────── */}
           {propertyAwardGroups.length > 0 && (
+            <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.awards}>
             <section className="container-luxe pb-24 pt-20 sm:pt-28">
               <Reveal>
                 <h2 className="text-xl font-medium text-primary sm:text-2xl">
@@ -323,6 +334,7 @@ export default async function AchievementsPage(props: Props) {
                 ))}
               </div>
             </section>
+            </EditableSection>
           )}
         </>
       )}

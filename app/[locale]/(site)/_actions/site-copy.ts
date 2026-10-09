@@ -17,7 +17,9 @@
 
 import { Role } from "@prisma/client";
 import { requireAdminAction } from "@/lib/admin/guard";
-import { locales } from "@/i18n";
+import { getTranslations } from "next-intl/server";
+import { adminLocales, locales } from "@/i18n";
+import { copyBlockTitle, copyKind, copyPageGroupOf, humanizeSegment, copySubgroup } from "@/lib/site-copy-meta";
 import { copyMatches, isContentNamespace, placeholdersOf, type CopyProblem } from "@/lib/site-copy-core";
 import { allCopyDefaults } from "@/lib/site-copy-content";
 import { getCopyOverridesForEditing } from "@/lib/site-copy";
@@ -25,6 +27,10 @@ import { saveCopyEntries, type CopyEntry } from "@/lib/site-copy-save";
 
 export type PickedCopy = {
   key: string;
+  /** Where this is, in words an editor knows: "หน้าแรก › โครงการแนะนำ". */
+  where: string;
+  /** "Heading", "Button"… in the back office's language. */
+  kind: string;
   icu: boolean;
   args: string[];
   tags: string[];
@@ -72,10 +78,34 @@ export async function findCopyForText(locale: string, candidates: string[]): Pro
   const order = ["th", "en", "zh", "ru"];
   perLocale.sort((a, b) => order.indexOf(a.locale) - order.indexOf(b.locale));
 
+  // Labels read in the back office's language (Thai or English), the same
+  // words the /admin/pages/copy grid uses — not raw keys, which mean
+  // nothing to the person maintaining the site.
+  const uiLang = (adminLocales as readonly string[]).includes(locale) ? locale : "th";
+  const [t, uiDefaults] = await Promise.all([
+    getTranslations({ locale: uiLang, namespace: "admin.pages.copy" }),
+    uiLang === locale ? defaults : allCopyDefaults(uiLang),
+  ]);
+  const describe = (key: string) => {
+    const name = key.split(".", 1)[0];
+    const group = copyPageGroupOf(name);
+    const segment = copySubgroup(key);
+    const crumbs = [
+      group ? t(`groups.${group}` as never) : null,
+      t(`ns.${name}` as never),
+      segment ? (copyBlockTitle(key, uiDefaults) ?? humanizeSegment(segment)) : null,
+    ].filter((crumb, i, all): crumb is string => Boolean(crumb) && all.indexOf(crumb) === i);
+    return {
+      where: crumbs.join(" › "),
+      kind: t(`kinds.${copyKind(key, uiDefaults[key] ?? defaults[key] ?? "")}` as never),
+    };
+  };
+
   return keys.map((key) => {
     const icu = !isContentNamespace(key.split(".", 1)[0]);
     return {
       key,
+      ...describe(key),
       icu,
       ...(icu ? placeholdersOf(defaults[key]) : { args: [], tags: [] }),
       cells: perLocale.map((p) => ({

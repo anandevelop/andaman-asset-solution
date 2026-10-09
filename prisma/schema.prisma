@@ -2258,6 +2258,23 @@ model SiteCopy {
   @@map("site_copy")
 }
 
+// "Checked, still right" for one language of one copy key. The admin grid
+// flags a translation for review when the Thai was edited after it; a
+// translation that needs no change has no write of its own to clear that,
+// so the editor's confirmation is stored here instead
+// (app/[locale]/admin/(content)/pages/copy/actions.ts markCopyReviewed).
+model SiteCopyReview {
+  id     String @id @default(cuid())
+  locale String
+  key    String
+
+  reviewedBy String?
+  reviewedAt DateTime @default(now())
+
+  @@unique([locale, key])
+  @@map("site_copy_review")
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // MEDIA LIBRARY
 // ─────────────────────────────────────────────────────────────────────────

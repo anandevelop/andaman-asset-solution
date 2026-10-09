@@ -63,6 +63,19 @@ export async function getCopyOverridesForEditing(
 }
 
 /**
+ * When each key was last confirmed as still right in this language
+ * (SiteCopyReview), for the admin grid's "review" flag. Uncached, like the
+ * overrides above: the grid must show the mark the moment it is made.
+ */
+export async function getCopyReviews(locale: string): Promise<Record<string, Date>> {
+  const rows = await prisma.siteCopyReview.findMany({
+    where: { locale },
+    select: { key: true, reviewedAt: true },
+  });
+  return Object.fromEntries(rows.map((r) => [r.key, r.reviewedAt]));
+}
+
+/**
  * A code-owned content tree (content/*.ts) with this locale's overrides
  * laid over it — for the pages that render those trees directly.
  *
