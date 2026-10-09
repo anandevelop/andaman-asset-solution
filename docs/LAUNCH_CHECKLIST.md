@@ -43,7 +43,10 @@ oversight, but none of them should reach production untouched.
       email") — but it degrades to a silent no-op until `SMTP_HOST` is set.
       Set the SMTP block in section 2 below before launch, and confirm a
       real RSVP produces both the staff email and the attendee
-      confirmation (see section 10).
+      confirmation (see section 10). On DigitalOcean use port 2465, not
+      587 — the droplet blocks 25/465/587 and every send times out
+      without a word on the page (DEPLOYMENT.md §7a). The same goes for
+      `SMTP_URL`, the ANDAMAN CLUB OTP transport.
 - [x] ~~**Seed data must not reach production.**~~ `prisma/seed.ts` now
       refuses to run when `NODE_ENV=production` and exits non-zero, which
       also covers `npm run setup` calling it as its last step. Override
