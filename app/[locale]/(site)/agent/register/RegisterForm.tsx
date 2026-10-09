@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { Check, Link2, Loader2 } from "lucide-react";
 import { AGENT_NOTICE_VERSION, PRIVACY_EMAIL } from "@/lib/agents/constants";
 import { registerAgent, type AgentRegisterState } from "./actions";
+import PhoneField from "./PhoneField";
 
 const INPUT =
   "w-full rounded-xs border border-primary/15 bg-white px-4 py-3 text-base text-ink outline-hidden transition-colors focus:border-accent sm:text-sm";
@@ -73,17 +74,8 @@ export default function RegisterForm({ locale, refSlug, closed }: { locale: stri
         <span className={LABEL}>{t("company")}</span>
         <input name="company" autoComplete="organization" maxLength={120} className={INPUT} />
       </label>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <label className="block">
-          <span className={LABEL}>{t("phone")}</span>
-          <input name="phone" type="tel" autoComplete="tel" maxLength={40} className={INPUT} />
-        </label>
-        <label className="block">
-          <span className={LABEL}>{t("whatsapp")}</span>
-          <input name="whatsapp" type="tel" placeholder="+" maxLength={40} className={INPUT} />
-          <small className="mt-1 block text-xs text-ink-muted">{t("whatsappHint")}</small>
-        </label>
-      </div>
+      <PhoneField name="phone" label={t("phone")} autoComplete="tel" inputClassName={INPUT} labelClassName={LABEL} />
+      <PhoneField name="whatsapp" label={t("whatsapp")} inputClassName={INPUT} labelClassName={LABEL} />
       <label className="block">
         <span className={LABEL}>{t("email")}</span>
         <input name="email" type="email" autoComplete="email" maxLength={200} className={INPUT} />

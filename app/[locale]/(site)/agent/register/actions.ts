@@ -17,12 +17,13 @@ import { RATE_LIMITS, clientIp, rateLimit } from "@/lib/rate-limit";
 import { AGENT_NOTICE_VERSION } from "@/lib/agents/constants";
 import { resolveAgentRef } from "@/lib/agents/admin";
 import { locales } from "@/i18n";
+import { parsePhoneNumberFromString } from "libphonenumber-js/min";
 
 export type AgentRegisterState =
   | { status: "idle" }
   | { status: "done" }
   | { status: "closed" }
-  | { status: "error"; error: "required" | "badEmail" | "mustAck" | "rateLimited" | "error" };
+  | { status: "error"; error: "required" | "badEmail" | "badPhone" | "mustAck" | "rateLimited" | "error" };
 
 const schema = z.object({
   name: z.string().min(1).max(120),
@@ -60,6 +61,11 @@ export async function registerAgent(
   const v = parsed.data;
   if (!v.phone && !v.whatsapp && !v.email) return { status: "error", error: "required" };
   if (v.email && !z.email().safeParse(v.email).success) return { status: "error", error: "badEmail" };
+  // PhoneField submits E.164 ("+66812345678"), or the raw text when it
+  // could not read it for the chosen country.
+  for (const number of [v.phone, v.whatsapp]) {
+    if (number && !parsePhoneNumberFromString(number)?.isValid()) return { status: "error", error: "badPhone" };
+  }
   if (formData.get("notice") !== "on") return { status: "error", error: "mustAck" };
 
   try {
