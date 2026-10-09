@@ -4197,6 +4197,28 @@
       "EDITOR": "Editor",
       "SALES": "Sales",
       "VIEWER": "Viewer"
+    },
+    "cases": {
+      "legend": "Text for each case",
+      "intro": "This text changes with a number. Fill in each case.",
+      "introSelect": "This text changes with a value. Fill in each case.",
+      "pound": "Put # where the number should appear.",
+      "exact": "When the number is {n}",
+      "other": "Any other number",
+      "selectValue": "When it is “{value}”",
+      "before": "Text before",
+      "after": "Text after",
+      "asCode": "Edit as code (advanced)",
+      "asCases": "Back to editing each case",
+      "category": {
+        "zero": "Zero (zero)",
+        "one": "Singular (one)",
+        "two": "Two (two)",
+        "few": "A few (few)",
+        "many": "Many (many)"
+      },
+      "single": "One sentence for every number.",
+      "split": "Split by number, like the default"
     }
   },
   "coAgents": {

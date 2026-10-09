@@ -4197,6 +4197,28 @@
       "EDITOR": "编辑",
       "SALES": "销售",
       "VIEWER": "只读"
+    },
+    "cases": {
+      "legend": "按情况填写的文字",
+      "intro": "此文字随数字变化，请逐项填写。",
+      "introSelect": "此文字随取值变化，请逐项填写。",
+      "pound": "在需要显示数字的位置填 #。",
+      "exact": "数字为 {n} 时",
+      "other": "其他数字",
+      "selectValue": "取值为“{value}”时",
+      "before": "前面的文字",
+      "after": "后面的文字",
+      "asCode": "以代码编辑（高级）",
+      "asCases": "返回逐项编辑",
+      "category": {
+        "zero": "零（zero）",
+        "one": "单数（one）",
+        "two": "二（two）",
+        "few": "少量（few）",
+        "many": "多数（many）"
+      },
+      "single": "所有数字都使用同一句话。",
+      "split": "像默认值一样按数字分开"
     }
   },
   "coAgents": {

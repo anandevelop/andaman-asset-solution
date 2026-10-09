@@ -189,6 +189,16 @@ describe("copyMatches (the picker on the public site)", () => {
     expect(copyMatches("{count}", "anything at all")).toBe(false);
   });
 
+  it("matches whichever case of a counted message is on screen", () => {
+    const corporate = "{count, plural, =4 {Four things we do in-house} other {# things we do in-house}}";
+    expect(copyMatches(corporate, "Four things we do in-house")).toBe(true);
+    expect(copyMatches(corporate, "5 things we do in-house")).toBe(true);
+    expect(copyMatches(corporate, "Things we do in-house")).toBe(false);
+    expect(copyMatches("{count, plural, =0 {Full} other {# left}} today", "3 left today")).toBe(true);
+    // Every case must say something for a counted message to be pickable.
+    expect(copyMatches("{count, plural, =0 {} other {#}}", "12")).toBe(false);
+  });
+
   it("treats content text as plain, braces included", () => {
     expect(copyMatches("Section {1}", "Section 2", false)).toBe(false);
     expect(copyMatches("Section {1}", "Section {1}", false)).toBe(true);

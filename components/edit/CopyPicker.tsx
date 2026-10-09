@@ -57,6 +57,8 @@ import {
 } from "@/app/[locale]/(site)/_actions/site-copy";
 import { normalizeCopyText, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
 import { withReturnTo, type EditLink } from "@/lib/edit-mode";
+import CopyValueField from "@/components/copy/CopyValueField";
+import { icuSkeleton } from "@/lib/icu-skeleton";
 import { useEditMode } from "./EditModeProvider";
 
 const LANGUAGE_NAMES: Record<string, string> = { th: "ไทย", en: "English", zh: "中文", ru: "Русский" };
@@ -443,6 +445,13 @@ export default function CopyPicker({ locale }: { locale: string }) {
                   <p className="break-all font-mono text-[11px] text-gray-400">{match.key}</p>
                 </div>
 
+                {/* Said once here, not in each of the four languages below. */}
+                {match.icu && icuSkeleton(match.cells[0]?.fallback ?? "") && (
+                  <p className="rounded-md bg-blue-50 px-3 py-2 text-[13px] leading-relaxed text-blue-800">
+                    {tEdit("cases.intro")} {tEdit("cases.pound")}
+                  </p>
+                )}
+
                 {(match.args.length > 0 || match.tags.length > 0) && (
                   <p className="rounded-md bg-blue-50 px-3 py-2 text-[13px] leading-relaxed text-blue-800">
                     {t("placeholders", {
@@ -485,19 +494,21 @@ export default function CopyPicker({ locale }: { locale: string }) {
                           </button>
                         )}
                       </div>
-                      <textarea
+                      <CopyValueField
                         id={`copy-picker-${cell.locale}`}
                         lang={cell.locale}
                         rows={current.length > 120 ? 4 : 2}
                         value={value}
-                        onChange={(event) => {
-                          const next = event.target.value;
+                        onChange={(next) => {
                           setEdits((prev) => ({ ...prev, [id]: next }));
                           if (cell.locale === locale && preview.current?.key === match.key) {
                             preview.current.node.nodeValue = next.trim() ? next : cell.fallback;
                           }
                         }}
-                        aria-invalid={problem ? true : undefined}
+                        invalid={Boolean(problem)}
+                        describedBy={problem ? `copy-picker-${cell.locale}-error` : undefined}
+                        fallback={cell.fallback}
+                        compact
                         className={`w-full resize-y rounded-md border px-3 py-2 leading-snug outline-none focus:ring-3 ${
                           problem
                             ? "border-red-600 focus:ring-red-200"
@@ -505,7 +516,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
                         }`}
                       />
                       {problem && (
-                        <p role="alert" className="text-[12.5px] text-red-700">
+                        <p id={`copy-picker-${cell.locale}-error`} role="alert" className="text-[12.5px] text-red-700">
                           {problemText(problem)}
                         </p>
                       )}

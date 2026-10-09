@@ -53,6 +53,7 @@ import {
   humanizeSegment,
 } from "@/lib/site-copy-meta";
 import { allCopyDefaults } from "@/lib/site-copy-content";
+import { icuSkeleton } from "@/lib/icu-skeleton";
 import { getCopyOverridesForEditing, getCopyReviews } from "@/lib/site-copy";
 import { markCopyReviewed, updateSiteCopy } from "./actions";
 import SiteCopyForm, { type SiteCopyGroup, type SiteCopyRow } from "@/components/admin/SiteCopyForm";
@@ -152,6 +153,7 @@ export default async function AdminSiteCopy(props: Props) {
       kind: copyKind(key, defaults[uiLang][key] ?? defaults.th[key]),
       icu,
       ...(icu ? placeholdersOf(defaults.en[key] ?? defaults.th[key]) : { args: [], tags: [] }),
+      counted: icu && icuSkeleton(defaults.th[key] ?? "") !== null,
       cells: COLUMN_ORDER.map((l) => ({
         locale: l,
         fallback: defaults[l][key] ?? "",

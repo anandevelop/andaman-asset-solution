@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
 import FormSaveBar from "@/components/admin/FormSaveBar";
+import CopyValueField from "@/components/copy/CopyValueField";
 import type { SiteCopyFormState } from "@/app/[locale]/admin/(content)/pages/copy/actions";
 import { validateCopy, type CopyProblem } from "@/lib/site-copy-core";
 import type { CopyKind } from "@/lib/site-copy-meta";
@@ -45,6 +46,8 @@ export type SiteCopyRow = {
   kind: CopyKind;
   /** False for content/*.ts text, which is never parsed as ICU. */
   icu: boolean;
+  /** Written per case ({count, plural, …}): drawn as one box per case. */
+  counted: boolean;
   /** Placeholders the copy may use, e.g. ["km"]. */
   args: string[];
   tags: string[];
@@ -95,6 +98,7 @@ function rowsFor(text: string): number {
 export default function SiteCopyForm({ action, groups, focusKey, markReviewed }: Props) {
   const t = useTranslations("admin.pages.copy");
   const tAdmin = useTranslations("admin");
+  const tCases = useTranslations("editMode.cases");
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [state, formAction] = useActionState(async (previous: SiteCopyFormState, formData: FormData) => {
     const result = await action(previous, formData);
@@ -215,6 +219,11 @@ export default function SiteCopyForm({ action, groups, focusKey, markReviewed }:
                         <span className="rounded-full bg-adm-neutral-bg px-2 py-0.5 text-adm-neutral">
                           {t(`kinds.${row.kind}`)}
                         </span>
+                        {row.counted && (
+                          <span className="rounded-full bg-adm-status-info-bg px-2 py-0.5 text-adm-status-info">
+                            {tCases("intro")} {tCases("pound")}
+                          </span>
+                        )}
                         {(row.args.length > 0 || row.tags.length > 0) && (
                           <span className="rounded-full bg-adm-status-info-bg px-2 py-0.5 text-adm-status-info">
                             {t("placeholders", {
@@ -293,17 +302,16 @@ export default function SiteCopyForm({ action, groups, focusKey, markReviewed }:
                               <label htmlFor={`cell-${id}`} className="sr-only">
                                 {`${row.key} — ${LANGUAGE_NAMES[cell.locale]}`}
                               </label>
-                              <textarea
+                              <CopyValueField
                                 id={`cell-${id}`}
                                 lang={cell.locale}
                                 value={value}
                                 rows={rowsFor(current)}
-                                onChange={(event) => {
-                                  const next = event.target.value;
-                                  setEdits((prev) => ({ ...prev, [id]: next }));
-                                }}
-                                aria-invalid={problem ? true : undefined}
-                                aria-describedby={`note-${id}`}
+                                onChange={(next) => setEdits((prev) => ({ ...prev, [id]: next }))}
+                                invalid={Boolean(problem)}
+                                describedBy={`note-${id}`}
+                                fallback={cell.fallback}
+                                compact
                                 className={`w-full resize-y rounded-[8px] border px-2.5 py-2 text-sm leading-snug text-adm-text outline-none transition-colors focus:border-adm-ocean focus:ring-3 focus:ring-adm-ocean/20 ${tone}`}
                               />
                               <div id={`note-${id}`} className={`flex min-h-4 items-start gap-1.5 text-[11.5px] ${noteClass}`}>

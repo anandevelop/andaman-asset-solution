@@ -34,6 +34,7 @@
  */
 
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
+import { icuSkeleton } from "@/lib/icu-skeleton";
 
 /**
  * The namespaces the public site renders, in the order the editor lists
@@ -231,11 +232,19 @@ export function validateCopy(defaultValue: string, value: string): CopyProblem |
   return null;
 }
 
-/** The placeholders an editor may use for a key — shown beside the field. */
+/**
+ * The placeholders an editor may use for a key — shown beside the field.
+ *
+ * Not the argument a counted message branches on: the editor shows that
+ * one as a box per case (components/copy/CopyValueField.tsx), and the
+ * "{count} is filled in by the site, move it, don't translate it" note
+ * beside those boxes only confused — there is no {count} to move.
+ */
 export function placeholdersOf(defaultValue: string): { args: string[]; tags: string[] } {
   try {
     const { args, tags } = namesOf(defaultValue);
-    return { args: [...args], tags: [...tags] };
+    const branching = icuSkeleton(defaultValue)?.argument;
+    return { args: [...args].filter((name) => name !== branching), tags: [...tags] };
   } catch {
     return { args: [], tags: [] };
   }
@@ -266,8 +275,17 @@ function patternOf(elements: MessageFormatElement[]): string {
       case TYPE.pound:
         out += "[\\d.,\\s]+";
         break;
+      case TYPE.plural:
+      case TYPE.select:
+        // One of its cases is on screen, whichever the count chose. Before
+        // this a counted heading ("Four things we do in-house") matched
+        // nothing, and the picker said it could not be edited at all.
+        out += `(?:${Object.values(element.options)
+          .map((option) => patternOf(option.value))
+          .join("|")})`;
+        break;
       default:
-        // An argument, number, date, plural or select: something the
+        // An argument, number or date: something the
         // component fills in. Any run of text, kept short.
         out += "(?:.{1,40}?)";
         break;
@@ -281,6 +299,11 @@ function literalText(elements: MessageFormatElement[]): string {
   for (const element of elements) {
     if (element.type === TYPE.literal) out += element.value;
     else if (element.type === TYPE.tag) out += literalText(element.children);
+    else if (element.type === TYPE.plural || element.type === TYPE.select) {
+      // The shortest case: the guard below must hold whichever is shown.
+      const cases = Object.values(element.options).map((option) => literalText(option.value));
+      out += cases.reduce((shortest, text) => (text.trim().length < shortest.trim().length ? text : shortest));
+    }
   }
   return out;
 }

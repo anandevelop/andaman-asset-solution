@@ -15,6 +15,7 @@
  */
 
 import type { EditableNamespace } from "@/lib/site-copy-core";
+import { icuSkeleton } from "@/lib/icu-skeleton";
 
 /**
  * The sidebar of the editor: namespaces grouped by the page a visitor
@@ -127,7 +128,21 @@ export function copyBlockTitle(key: string, defaults: Readonly<Record<string, st
   const base = `${key.split(".", 1)[0]}.${segment}`;
   return (
     ["title", "heading", "eyebrow"]
-      .map((leaf) => defaults[`${base}.${leaf}`])
+      .map((leaf) => readable(defaults[`${base}.${leaf}`]))
       .find((value) => value && value.length <= 80) ?? null
   );
+}
+
+/**
+ * A heading as it reads, not as it is written: a counted title
+ * ("{count, plural, =4 {Four things…} other {# things…}}") by its first
+ * case, which is what the site shows by default. Other ICU has no single
+ * reading and is not used as a name.
+ */
+function readable(value: string | undefined): string | undefined {
+  if (!value || !/[{<]/.test(value)) return value;
+  const skeleton = icuSkeleton(value);
+  const first = skeleton?.slots.find((slot) => slot.kind === "case");
+  if (!skeleton || !first || /[{<]/.test(first.text)) return undefined;
+  return first.text.replace(/#/g, "N").trim();
 }
