@@ -119,3 +119,33 @@ export function icuSkeleton(message: string): IcuSkeleton | null {
 export function assembleSkeleton(skeleton: IcuSkeleton, texts: readonly string[]): string {
   return skeleton.parts.map((part) => (typeof part === "number" ? (texts[part] ?? "") : part)).join("");
 }
+
+function normalise(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLocaleLowerCase();
+}
+
+/**
+ * Which case of `message` reads as one of `seen` — the text clicked on the
+ * page — or null. Lets the site picker open on the case the visitor is
+ * actually looking at ("Four things we do in-house" is the `=4` case)
+ * with the others tucked away, instead of every case at once.
+ *
+ * `#` in a case stands for the number, as it does when rendered. Tags and
+ * placeholders inside a case are not expanded: such a case simply never
+ * matches, and the caller falls back to the first case.
+ */
+export function caseShowing(message: string, seen: readonly string[]): string | null {
+  const skeleton = icuSkeleton(message);
+  if (!skeleton) return null;
+  const targets = seen.map(normalise);
+  for (const slot of skeleton.slots) {
+    if (slot.kind !== "case" || /[{<]/.test(slot.text)) continue;
+    const pattern = normalise(slot.text)
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/#/g, "[\\d.,\\s]+")
+      .replace(/ /g, "\\s+");
+    const regex = new RegExp(`^${pattern}$`, "i");
+    if (targets.some((target) => regex.test(target))) return slot.selector;
+  }
+  return null;
+}

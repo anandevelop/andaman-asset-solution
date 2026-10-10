@@ -47,6 +47,17 @@ type Props = {
    * in the language beside it, with nothing to say why.
    */
   fallback?: string;
+  /**
+   * The quick view, for the site picker: a counted message opens as one box
+   * — the case on screen (`primary`), or the first — exactly like a plain
+   * heading beside it, with "the other numbers" one click away. A plain
+   * override of a counted default is just its box, no note. The admin grid
+   * leaves this off and shows every case, since it is where the whole
+   * message is maintained.
+   */
+  simple?: boolean;
+  /** The case selector to open on in the quick view, e.g. "=4". */
+  primary?: string | null;
   /** Leave out the "this changes with a number" line — for the grid, which
    *  says it once per row rather than in all four columns. */
   compact?: boolean;
@@ -72,10 +83,13 @@ export default function CopyValueField({
   className,
   compact = false,
   fallback,
+  simple = false,
+  primary = null,
 }: Props) {
   const t = useTranslations("editMode.cases");
   const [parsed, setParsed] = useState<Parsed>(() => parseValue(value));
   const [asCode, setAsCode] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // The value changed from outside ("use default", discard, a save): start
   // the boxes over from it. Adjusting state during render, as React
@@ -87,7 +101,7 @@ export default function CopyValueField({
   if (value !== parsed.assembled) setParsed(parseValue(value));
 
   const skeleton = parsed.skeleton;
-  const defaultSkeleton = !skeleton && fallback ? icuSkeleton(fallback) : null;
+  const defaultSkeleton = !skeleton && fallback && !simple ? icuSkeleton(fallback) : null;
 
   /** One plain sentence → the default's cases, every case starting from it. */
   const splitIntoCases = () => {
@@ -156,6 +170,39 @@ export default function CopyValueField({
     onChange(assembled);
   };
 
+  // The quick view: one box, the case on screen, like any other heading.
+  if (simple && !expanded) {
+    const cases = skeleton.slots
+      .map((slot, index) => ({ slot, index }))
+      .filter(({ slot }) => slot.kind === "case");
+    const shown =
+      cases.find(({ slot }) => slot.kind === "case" && slot.selector === primary) ?? cases[0];
+    const others = skeleton.slots.length - 1;
+    return (
+      <div className="space-y-1">
+        <textarea
+          id={id}
+          lang={lang}
+          rows={rows}
+          value={parsed.texts[shown.index]}
+          onChange={(event) => update(shown.index, event.target.value)}
+          aria-invalid={invalid ? true : undefined}
+          aria-describedby={describedBy}
+          className={className}
+        />
+        {others > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="text-[11.5px] underline underline-offset-2 opacity-70 hover:opacity-100"
+          >
+            {t("more", { count: others })}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <fieldset
       aria-describedby={describedBy}
@@ -163,7 +210,7 @@ export default function CopyValueField({
       className="min-w-0 space-y-1.5"
     >
       <legend className="sr-only">{t("legend")}</legend>
-      {!compact && (
+      {(!compact || simple) && (
         <p className="text-[11.5px] leading-snug opacity-70">
           {skeleton.type === "select" ? t("introSelect") : t("intro")}
           {usesNumber && <> {t("pound")}</>}
@@ -188,13 +235,24 @@ export default function CopyValueField({
           </div>
         );
       })}
-      <button
-        type="button"
-        onClick={() => setAsCode(true)}
-        className="text-[11.5px] underline underline-offset-2 opacity-60 hover:opacity-100"
-      >
-        {t("asCode")}
-      </button>
+      <div className="flex flex-wrap gap-x-3">
+        {simple && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="text-[11.5px] underline underline-offset-2 opacity-70 hover:opacity-100"
+          >
+            {t("less")}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setAsCode(true)}
+          className="text-[11.5px] underline underline-offset-2 opacity-60 hover:opacity-100"
+        >
+          {t("asCode")}
+        </button>
+      </div>
     </fieldset>
   );
 }

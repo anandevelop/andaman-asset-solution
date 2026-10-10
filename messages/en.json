@@ -4218,7 +4218,9 @@
         "many": "Many (many)"
       },
       "single": "One sentence for every number.",
-      "split": "Split by number, like the default"
+      "split": "Split by number, like the default",
+      "more": "Edit the other numbers ({count})",
+      "less": "Hide the other cases"
     }
   },
   "coAgents": {

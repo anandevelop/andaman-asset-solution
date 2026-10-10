@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { assembleSkeleton, icuSkeleton } from "@/lib/icu-skeleton";
+import { assembleSkeleton, caseShowing, icuSkeleton } from "@/lib/icu-skeleton";
 import { EDITABLE_NAMESPACES, validateCopy } from "@/lib/site-copy-core";
 
 function flatten(value: unknown, prefix: string, out: Record<string, string>) {
@@ -80,5 +80,20 @@ describe("icuSkeleton", () => {
       const edited = texts.map((text, i) => (i === 0 ? `${text} ✓` : text));
       expect(validateCopy(value, assembleSkeleton(skeleton!, edited)), `${locale}:${key}`).toBeNull();
     }
+  });
+});
+
+describe("caseShowing", () => {
+  const corporate = "{count, plural, =4 {Four things we do in-house} other {# things we do in-house}}";
+
+  it("finds the case the page is showing, numbers included", () => {
+    expect(caseShowing(corporate, ["Four things we do in-house"])).toBe("=4");
+    expect(caseShowing(corporate, ["FOUR THINGS   we do in-house"])).toBe("=4");
+    expect(caseShowing(corporate, ["5 things we do in-house"])).toBe("other");
+  });
+
+  it("is null when nothing matches or the text is not counted", () => {
+    expect(caseShowing(corporate, ["Vision & Mission"])).toBeNull();
+    expect(caseShowing("Vision & Mission", ["Vision & Mission"])).toBeNull();
   });
 });

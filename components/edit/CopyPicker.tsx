@@ -58,7 +58,7 @@ import {
 import { normalizeCopyText, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
 import { withReturnTo, type EditLink } from "@/lib/edit-mode";
 import CopyValueField from "@/components/copy/CopyValueField";
-import { icuSkeleton } from "@/lib/icu-skeleton";
+import { caseShowing } from "@/lib/icu-skeleton";
 import { useEditMode } from "./EditModeProvider";
 
 const LANGUAGE_NAMES: Record<string, string> = { th: "ไทย", en: "English", zh: "中文", ru: "Русский" };
@@ -124,6 +124,8 @@ export default function CopyPicker({ locale }: { locale: string }) {
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  /** The clicked text, kept to tell which case of a counted message it is. */
+  const [seen, setSeen] = useState<string[]>([]);
   const [owners, setOwners] = useState<{ item: string | null; links: EditLink[] }>({ item: null, links: [] });
 
   const clicked = useRef<Element | null>(null);
@@ -215,7 +217,9 @@ export default function CopyPicker({ locale }: { locale: string }) {
       setErrors({});
       setFailed(false);
 
-      findCopyForText(locale, candidatesFrom(el))
+      const candidates = candidatesFrom(el);
+      setSeen(candidates);
+      findCopyForText(locale, candidates)
         .then((matches) => {
           setPicked(matches.length > 0 ? { status: "found", matches } : { status: "none" });
           armPreview(matches[0]);
@@ -272,6 +276,14 @@ export default function CopyPicker({ locale }: { locale: string }) {
   }, [panelOpen]);
 
   const match = picked?.status === "found" ? picked.matches[index] : null;
+
+  // For a counted message, the case the page is showing in this language
+  // ("=4" for "Four things we do in-house"); every language opens on it.
+  const primaryCase = useMemo(() => {
+    const cell = match?.cells.find((c) => c.locale === locale);
+    if (!match?.icu || !cell) return null;
+    return caseShowing(cell.saved ?? cell.fallback, seen) ?? caseShowing(cell.fallback, seen);
+  }, [match, locale, seen]);
 
   const dirty = useMemo(() => {
     if (!match) return [];
@@ -445,13 +457,6 @@ export default function CopyPicker({ locale }: { locale: string }) {
                   <p className="break-all font-mono text-[11px] text-gray-400">{match.key}</p>
                 </div>
 
-                {/* Said once here, not in each of the four languages below. */}
-                {match.icu && icuSkeleton(match.cells[0]?.fallback ?? "") && (
-                  <p className="rounded-md bg-blue-50 px-3 py-2 text-[13px] leading-relaxed text-blue-800">
-                    {tEdit("cases.intro")} {tEdit("cases.pound")}
-                  </p>
-                )}
-
                 {(match.args.length > 0 || match.tags.length > 0) && (
                   <p className="rounded-md bg-blue-50 px-3 py-2 text-[13px] leading-relaxed text-blue-800">
                     {t("placeholders", {
@@ -508,7 +513,8 @@ export default function CopyPicker({ locale }: { locale: string }) {
                         invalid={Boolean(problem)}
                         describedBy={problem ? `copy-picker-${cell.locale}-error` : undefined}
                         fallback={cell.fallback}
-                        compact
+                        simple
+                        primary={primaryCase}
                         className={`w-full resize-y rounded-md border px-3 py-2 leading-snug outline-none focus:ring-3 ${
                           problem
                             ? "border-red-600 focus:ring-red-200"
