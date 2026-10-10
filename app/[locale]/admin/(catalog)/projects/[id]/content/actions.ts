@@ -27,6 +27,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 // Field list and limits live in lib/, not here: a "use server" module may
 // export only async functions. See lib/project-content.ts.
 
@@ -99,6 +100,9 @@ export async function saveProjectContent(
   // the editor shows the save rather than a cached copy of the old copy.
   revalidatePath(`/${locale}/projects/${project.slug}`);
   revalidatePath(`/${locale}/projects`);
+  // The name and tagline are also on the home page's cards, in the footer
+  // and in the enquiry form's project list, which every page carries.
+  revalidatePublicSite();
 
   return { ok: true, wentLive: project.isPublished, savedAt: new Date().toISOString() };
 }

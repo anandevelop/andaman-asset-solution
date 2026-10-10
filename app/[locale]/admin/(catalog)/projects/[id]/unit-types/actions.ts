@@ -32,6 +32,7 @@ import { unitTypeSchema, floorPlanRowSchema, fieldErrors } from "@/lib/validatio
 import { unitTypeFloorsSchema, type UnitTypeFloorsInput } from "@/lib/validations";
 import { deriveBlueprint } from "@/lib/floor-plan-images";
 import { reportError } from "@/lib/sentry";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type UnitTypeFormState = {
   ok: boolean;
@@ -100,6 +101,9 @@ function revalidateUnitTypes(locale: string, projectId: string, projectSlug: str
   for (const target of locales) {
     revalidatePath(`/${target}/projects/${projectSlug}`);
   }
+  // Bedroom ranges are on the project cards (home, /projects) and the
+  // portfolio summary; see lib/revalidate-site.ts.
+  revalidatePublicSite();
 }
 
 /**

@@ -33,6 +33,7 @@ import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { parseCsv } from "@/lib/csv";
 import { projectUnitSchema, unitStatusPatchSchema } from "@/lib/validations";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type UnitActionResult = { ok: true } | { ok: false; error: string };
 
@@ -84,6 +85,9 @@ function revalidateUnits(locale: string, projectId: string, projectSlug: string)
   for (const target of locales) {
     revalidatePath(`/${target}/projects/${projectSlug}`);
   }
+  // Unit counts feed the home page's company figures and the /projects
+  // portfolio summary, not just this project's own page.
+  revalidatePublicSite();
 }
 
 export type UnitStatusFormState = { ok: boolean; message?: string };

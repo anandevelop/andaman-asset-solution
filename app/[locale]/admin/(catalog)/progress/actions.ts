@@ -19,6 +19,7 @@ import { projectProgressSchema, progressDetailSchema, fieldErrors } from "@/lib/
 import { buyerEmailsFor } from "@/lib/admin/project-progress";
 import { notifyBuyersOfProgress } from "@/lib/email";
 import { siteConfig } from "@/config/site";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type ProgressFormState = {
   ok: boolean;
@@ -78,6 +79,10 @@ async function revalidateProgress(locale: string, projectId: string) {
       revalidatePath(`/${target}/projects/${project.slug}`);
     }
   }
+
+  // A published update also changes the project's card everywhere it
+  // appears (its "latest update" signal on the home page and /projects).
+  revalidatePublicSite();
 }
 
 // ── Create ──────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ import { renderArticleBody } from "@/lib/article-render";
 import { auditArticle } from "@/lib/article-seo";
 import { recordSeoOverride } from "@/lib/audit/events";
 import { submitForReview, approveAndPublish } from "@/app/[locale]/admin/(content)/publishing/actions";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 /** ContentRevision.source for §7.1's autosave — distinct from the human
  *  and automated writers so the rows can be told apart, replaced, and
@@ -120,6 +121,8 @@ function revalidateArticle(locale: string, slug: string) {
     revalidatePath(`/${target}/news`);
     revalidatePath(`/${target}/news/${slug}`);
   }
+  // Every other article's "related" list can name this one too.
+  revalidatePublicSite();
 }
 
 // ── Create ──────────────────────────────────────────────────────────────

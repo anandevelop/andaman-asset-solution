@@ -32,6 +32,7 @@ import {
   type PublishableType,
 } from "@/lib/content-revisions";
 import { getRevisionHistory, type RevisionHistoryItem } from "@/lib/publishing";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -96,6 +97,10 @@ function revalidateAfterChange(locale: string, type: PublishableType, slug: stri
     // index, not a dedicated /e-brochure/[slug] route.
     if (type !== "E_BROCHURE") revalidatePath(`/${target}/${listSegment}/${slug}`);
   }
+  // Publishing from the queue must reach what saving from the editor
+  // reaches: the home page's latest news and next event, a project's place
+  // in the footer and on the cards.
+  revalidatePublicSite();
 }
 
 /** PUBLISHED → DRAFT. The entry point into the workflow — nothing else

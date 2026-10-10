@@ -41,6 +41,7 @@ import {
   isSettingKey,
   type SettingKey,
 } from "@/lib/settings";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type SettingsFormState = {
   ok: boolean;
@@ -202,6 +203,7 @@ export async function setSetting(key: string, value: string): Promise<boolean> {
   });
 
   updateTag("site-settings");
+  revalidatePublicSite();
   return true;
 }
 

@@ -21,6 +21,16 @@
  * Changing which CTA a page shows was the visible case: saved, stored,
  * and not on the site.
  *
+ * WHY SO WIDE
+ *
+ * Most public data is read in more places than the page it belongs to.
+ * The site layout lists the published projects (footer, the closing CTA's
+ * count) on every page; the home page's company figures count units,
+ * milestones and awards; project cards carry unit-type bedrooms and the
+ * latest progress update. Purging "the page this edit is about" kept
+ * missing one of those, so content actions purge the lot. Pages re-render
+ * on their next request, which for a site this size is cheap.
+ *
  * "/" + "layout" is the root layout, which every page sits under, so this
  * is the one call that reliably reaches all of them. It is what the site
  * copy save (lib/site-copy-save.ts) and the settings save already did.

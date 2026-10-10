@@ -40,6 +40,7 @@ import {
   leadHousePreferenceSchema,
   leadNoteSchema,
 } from "@/lib/validations";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 /**
  * Writes the system-generated timeline entry a status/assignment/follow-up/
@@ -428,6 +429,8 @@ export async function reserveUnitForLead(
   await writeSystemNote(parsed.data.leadId, session.id, body);
 
   revalidateLead(locale, parsed.data.leadId);
+  // The unit's status is public (the project page's site plan and unit list).
+  revalidatePublicSite();
 
   return { ok: true };
 }
@@ -472,6 +475,8 @@ export async function releaseUnitReservation(
   );
 
   revalidateLead(locale, leadId);
+  // The unit's status is public (the project page's site plan and unit list).
+  revalidatePublicSite();
 
   return { ok: true };
 }

@@ -27,6 +27,7 @@ import {
   unitStatusPatchSchema,
   fieldErrors,
 } from "@/lib/validations";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type ProjectFormState = {
   ok: boolean;
@@ -151,6 +152,10 @@ function revalidateProject(locale: string, slug: string) {
     revalidatePath(`/${target}/projects`);
     revalidatePath(`/${target}/projects/${slug}`);
   }
+  // The project list is also read by the site layout (footer links, the
+  // closing CTA's count), the enquiry form on /contact, the About page's
+  // figures and /progress — every page, in short.
+  revalidatePublicSite();
 }
 
 // ── Create ──────────────────────────────────────────────────────────────

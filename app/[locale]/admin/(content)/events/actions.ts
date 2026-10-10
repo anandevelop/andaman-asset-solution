@@ -25,6 +25,7 @@ import { requireAdminAction, requireCapabilityAction } from "@/lib/admin/guard";
 import { resolveIsPublished } from "@/lib/publishing-gate";
 import { eventSchema, fieldErrors } from "@/lib/validations";
 import { SEAT_TAKING_STATUSES, countTakenSeats } from "@/lib/events";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type EventFormState = {
   ok: boolean;
@@ -232,6 +233,8 @@ export async function updateRegistrationStatus(
 
   revalidatePath(`/${locale}/admin/events/${eventId}/edit`);
   for (const target of locales) revalidatePath(`/${target}/events`);
+  // Seats left also show on the event's own page and the home page card.
+  revalidatePublicSite();
 
   return { ok: true };
 }

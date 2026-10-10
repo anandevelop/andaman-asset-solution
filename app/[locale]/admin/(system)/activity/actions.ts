@@ -40,6 +40,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { TRUNCATION_MARKER } from "@/lib/audit/extension";
 import { locales } from "@/i18n";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type RevertResult = { ok: true; fields: string[] } | { ok: false; error: string };
 
@@ -120,7 +121,8 @@ export async function revertAuditEntry(
 
   revalidatePath(`/${locale}/admin/activity`);
   revalidatePath(`/${locale}/admin/publishing`);
-  for (const target of locales) revalidatePath(`/${target}`);
+  // A revert can touch any record the site shows, so purge all of it.
+  revalidatePublicSite();
 
   return { ok: true, fields: Object.keys(changes) };
 }

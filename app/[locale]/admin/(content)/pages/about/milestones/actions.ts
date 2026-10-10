@@ -18,6 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { milestoneSchema, fieldErrors } from "@/lib/validations";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 
 export type MilestoneFormState = {
   ok: boolean;
@@ -50,6 +51,9 @@ function revalidateMilestones(locale: string) {
   for (const target of locales) {
     revalidatePath(`/${target}/about`);
   }
+  // Not the only reader after all: the home page's company figures count
+  // milestones (lib/company-stats.ts).
+  revalidatePublicSite();
 }
 
 export async function createMilestone(

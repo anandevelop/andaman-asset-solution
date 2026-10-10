@@ -24,8 +24,10 @@
  */
 
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { EventStatus, PathHitKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { locales } from "@/i18n";
 import { eventRegistrationServerSchema, fieldErrors } from "@/lib/validations";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { isDatabaseOfflineError } from "@/lib/db";
@@ -114,6 +116,7 @@ export async function POST(request: Request, props: Params) {
       where: { id: params.id },
       select: {
         id: true,
+        slug: true,
         isPublished: true,
         capacity: true,
         startsAt: true,
@@ -200,6 +203,20 @@ export async function POST(request: Request, props: Params) {
       // concurrent aggregates can both see the same "seats left".
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+
+    // "N seats left" is printed on the event page, the events list and the
+    // home page's upcoming-event card, all statically cached. Without this
+    // they kept showing the seats from before the booking (up to an hour
+    // on the home page). Only those three paths: this is a public endpoint,
+    // and a whole-site purge per booking would hand anyone a way to empty
+    // the cache on demand.
+    if (event.capacity !== null) {
+      for (const target of locales) {
+        revalidatePath(`/${target}`);
+        revalidatePath(`/${target}/events`);
+        revalidatePath(`/${target}/events/${event.slug}`);
+      }
+    }
 
     void notifyNewRegistration({
       name: data.name,
