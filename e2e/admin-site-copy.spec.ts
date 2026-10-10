@@ -16,7 +16,14 @@ import { nextAccount, signIn } from "./sign-in";
 
 const EDITOR_URL = "/en/admin/pages/copy?key=home.corporate.title";
 // The grid's English cell for the key; ids are `cell-<locale>:<key>`.
+// The heading is a counted message (=4 / other), which the grid edits as
+// one box per case: the first case keeps the cell id, the next gets "-1".
+// Both are filled, because which one the home page shows depends on how
+// many corporate services exist — the e2e seed has one, so "other". The
+// test filled only the first box once the grid split cases, and the home
+// page went on showing the untouched "other" case.
 const FIELD = '[id="cell-en:home.corporate.title"]';
+const FIELD_OTHER = '[id="cell-en:home.corporate.title-1"]';
 const SAVE = "Save and publish";
 
 test.describe("Site copy editor", () => {
@@ -36,6 +43,7 @@ test.describe("Site copy editor", () => {
     await expect(page.getByRole("button", { name: SAVE })).toBeDisabled();
 
     await page.locator(FIELD).fill(heading);
+    await page.locator(FIELD_OTHER).fill(heading);
     await page.getByRole("button", { name: SAVE }).click();
     await expect(page.getByText("Saved").first()).toBeVisible();
 
@@ -45,6 +53,7 @@ test.describe("Site copy editor", () => {
     // "Use default" deletes the override.
     await page.goto(EDITOR_URL);
     await expect(page.locator(FIELD)).toHaveValue(heading);
+    await expect(page.locator(FIELD_OTHER)).toHaveValue(heading);
     await page.locator('[id="note-en:home.corporate.title"]').getByRole("button", { name: "Use default" }).click();
     await page.getByRole("button", { name: SAVE }).click();
     await expect(page.getByText("Saved").first()).toBeVisible();
