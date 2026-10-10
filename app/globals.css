@@ -106,6 +106,7 @@
   --color-adm-rail-hover: var(--adm-rail-hover);
   --color-adm-rail-active: var(--adm-rail-active);
   --color-adm-live: var(--adm-live);
+  --color-adm-rail-warn: var(--adm-rail-warn);
   --color-adm-content: var(--adm-content);
   --color-adm-brief-text: var(--adm-brief-text);
   --color-adm-brief-dim: var(--adm-brief-dim);
@@ -815,6 +816,10 @@
   --adm-rail-active: rgba(232, 179, 132, 0.18);
   --adm-rail-glow: rgba(232, 179, 132, 0.7);
   --adm-live: #5fc79a;
+  /* Staging on the rail. --adm-warning is a text colour for light pages
+     (#8a5100) and turns to mud on the navy; the rail is navy in both
+     themes, so it gets its own amber. 9.6:1 on --adm-band. */
+  --adm-rail-warn: #f0c078;
   /* The daily brief band (DailyBrief.tsx) — navy into ocean, with its
      own text greys and the sand/ocean highlights the tiles use. */
   --adm-brief-1: #083551;

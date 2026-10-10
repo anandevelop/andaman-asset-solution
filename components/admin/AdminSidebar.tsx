@@ -24,7 +24,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Menu, Search, X } from "lucide-react";
+import { Code2, FlaskConical, Menu, Search, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { activeItemKey, visibleNav, type NavItem } from "@/lib/admin/nav";
 import AccountMenu from "@/components/admin/AccountMenu";
@@ -49,9 +49,28 @@ type Props = {
 
 const ENV_DOT: Record<AdminEnvironment["kind"], string> = {
   production: "bg-adm-live",
-  staging: "bg-adm-warning",
+  staging: "bg-adm-rail-warn",
   development: "bg-adm-rail-dim",
 };
+
+/* The host as a person would say it. A staging box reached through
+   sslip.io is "168-144-240-9.sslip.io" — the IP with dashes and a suffix
+   that carries no information — so it is shown as the IP. */
+function displayHost(host: string): string {
+  const sslip = host.match(/^(\d{1,3}(?:-\d{1,3}){3})\.(?:sslip|nip)\.io(:\d+)?$/i);
+  if (sslip) return sslip[1].replaceAll("-", ".") + (sslip[2] ?? "");
+  return host.replace(/^www\./i, "");
+}
+
+/* The logo PNG is one strip: the mark (x 0–180) then the wordmark
+   (x 219–895, "ANDAMAN ASSET" in rows 0–65 above the small company line).
+   Both are cut out of it with a mask and painted with currentColor, so
+   the mark can sit navy on the sand tile and the wordmark white on the
+   rail without a second asset. */
+const MARK_MASK =
+  "[mask-image:url(/logo-white.png)] [mask-position:0_0] [mask-repeat:no-repeat] [mask-size:134px_auto]";
+const WORDMARK_MASK =
+  "[mask-image:url(/logo-white.png)] [mask-position:-43px_0] [mask-repeat:no-repeat] [mask-size:176px_auto]";
 
 export default function AdminSidebar({ locale, user, counts, environment }: Props) {
   const t = useTranslations("admin");
@@ -190,31 +209,35 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
     </button>
   );
 
-  const renderEnvironment = (onRail: boolean) => (
-    <div
-      title={environment.host ?? undefined}
-      className={[
-        "flex min-w-0 items-center gap-2 whitespace-nowrap rounded-[10px] border border-adm-rail-line px-2.5 py-[7px] text-xs text-adm-rail-text",
-        onRail ? "mx-3 mb-2.5 mt-0.5 rail-collapsed:hidden" : "",
-      ].join(" ")}
-    >
-      <span aria-hidden className="relative flex h-1.5 w-1.5 shrink-0">
-        {environment.kind === "production" && (
-          <span className="absolute inset-0 rounded-full bg-adm-live opacity-70 motion-safe:animate-ping" />
-        )}
-        <span className={`relative h-1.5 w-1.5 rounded-full ${ENV_DOT[environment.kind]}`} />
-      </span>
-      <span className="truncate">
-        {environment.label}
+  /* Production says nothing beyond the green dot on the mark: it is the
+     normal case, and a chip that is always there stops being read. Any
+     other deployment gets a strip under the brand that is hard to mistake
+     for the live site. */
+  const renderEnvironment = (onRail: boolean) => {
+    if (environment.kind === "production") return null;
+    const staging = environment.kind === "staging";
+    const Icon = staging ? FlaskConical : Code2;
+    return (
+      <div
+        title={environment.host ?? undefined}
+        className={[
+          "flex h-[30px] min-w-0 items-center gap-2 whitespace-nowrap rounded-[9px] border px-2.5 text-xs",
+          staging
+            ? "border-adm-rail-warn/30 bg-adm-rail-warn/10 text-adm-rail-warn"
+            : "border-adm-rail-line bg-adm-rail-hover text-adm-rail-text",
+          onRail ? "mx-3 mb-2.5 mt-0.5 rail-collapsed:hidden" : "",
+        ].join(" ")}
+      >
+        <Icon size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+        <span className="shrink-0 font-semibold">{environment.label}</span>
         {environment.host && (
-          <>
-            {" · "}
-            <span className="font-medium text-adm-rail-hi">{environment.host}</span>
-          </>
+          <span className="ml-auto truncate text-[11.5px] tabular-nums opacity-80">
+            {displayHost(environment.host)}
+          </span>
         )}
-      </span>
-    </div>
-  );
+      </div>
+    );
+  };
 
   /* The footer is the account menu — account, density, language, sign
      out. Sign-out used to be a row of its own here; the v4 rail has none,
@@ -283,23 +306,30 @@ export default function AdminSidebar({ locale, user, counts, environment }: Prop
             The mark is drawn, not the 192px app icon: at 34px the icon's
             own padding made it read as a smaller square than the mockup's. */}
         <div className="flex h-[60px] shrink-0 items-center px-4 rail-collapsed:justify-center rail-collapsed:px-0">
-          <Link href={base} title={t("brand")} className="flex min-w-0 items-center gap-2.5">
+          <Link
+            href={base}
+            title={[t("brand"), environment.label, environment.host].filter(Boolean).join(" · ")}
+            className="flex min-w-0 items-center gap-[11px]"
+          >
             <span
               aria-hidden
-              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-linear-to-br from-adm-fill-2 to-adm-fill text-[15px] font-bold text-adm-band"
+              className="relative flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-linear-to-br from-adm-fill-2 to-adm-fill text-adm-band shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
             >
-              A
+              <span className={`block h-[18px] w-[27px] translate-x-px bg-current ${MARK_MASK}`} />
+              {/* Which deployment this is, readable even with the rail
+                  collapsed and the strip below hidden. */}
+              <span className="absolute -bottom-[3px] -right-[3px] flex h-2.5 w-2.5">
+                {environment.kind === "production" && (
+                  <span className="absolute inset-0 rounded-full bg-adm-live opacity-60 motion-safe:animate-ping" />
+                )}
+                <span
+                  className={`relative h-2.5 w-2.5 rounded-full border-2 border-adm-band ${ENV_DOT[environment.kind]}`}
+                />
+              </span>
             </span>
             <span className="min-w-0 rail-collapsed:hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo-white.png"
-                alt="Andaman Asset Solution Co., Ltd."
-                width={895}
-                height={120}
-                className="block h-[13px] w-auto"
-              />
-              <span className="mt-1 block text-[10.5px] tracking-[0.08em] text-adm-rail-text">
+              <span role="img" aria-label="Andaman Asset Solution Co., Ltd." className={`block h-[13px] w-[133px] bg-white ${WORDMARK_MASK}`} />
+              <span className="mt-1.5 block text-[10px] font-medium tracking-[0.16em] text-adm-rail-text">
                 {t("backOffice")}
               </span>
             </span>
