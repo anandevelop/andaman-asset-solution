@@ -2445,7 +2445,8 @@
         "privacyPolicy": "隐私政策",
         "progress": "工程进度",
         "projects": "项目",
-        "terms": "使用条款"
+        "terms": "使用条款",
+        "agentRegister": "代理注册"
       },
       "empty": "还没有 CTA 区块"
     },

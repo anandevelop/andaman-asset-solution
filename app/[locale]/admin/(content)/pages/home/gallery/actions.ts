@@ -13,9 +13,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { homeGalleryPhotoSchema, fieldErrors } from "@/lib/validations";
 
@@ -43,9 +43,8 @@ function readForm(formData: FormData) {
 */
 function revalidateHomeGallery(locale: string) {
   revalidatePath(`/${locale}/admin/pages/home/gallery`);
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 }
 
 export async function createHomeGalleryPhoto(

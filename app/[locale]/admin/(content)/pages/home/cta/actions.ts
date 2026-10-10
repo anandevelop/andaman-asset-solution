@@ -24,6 +24,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { Prisma, Role } from "@prisma/client";
 import { getMessages } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
@@ -68,9 +69,8 @@ function readForm(formData: FormData) {
 function revalidateCta(locale: string) {
   revalidatePath(`/${locale}/admin/pages/home/cta`);
   // In the site layout, so every page of every locale renders it.
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 }
 
 /** Blank strings are how an HTML form says "not set"; the columns are

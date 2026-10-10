@@ -11,6 +11,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { z } from "zod";
 import { saveRoutingRules } from "@/lib/lead-routing";
 import { Prisma, Role } from "@prisma/client";
@@ -60,9 +61,8 @@ function readForm(formData: FormData) {
 */
 function revalidateSalesTeam(locale: string) {
   revalidatePath(`/${locale}/admin/sales-team`);
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 }
 
 export async function createSalesPerson(

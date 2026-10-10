@@ -2445,7 +2445,8 @@
         "privacyPolicy": "Privacy policy",
         "progress": "Construction progress",
         "projects": "Projects",
-        "terms": "Terms of use"
+        "terms": "Terms of use",
+        "agentRegister": "Agent registration"
       },
       "empty": "No CTA blocks yet"
     },

@@ -15,9 +15,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { companyProfileSchema, fieldErrors } from "@/lib/validations";
 
@@ -106,9 +106,8 @@ export async function updateCompanyProfile(
   // section — purged as a locale subtree so both surfaces pick up an edit
   // immediately rather than waiting out the page's own revalidate window.
   revalidatePath(`/${locale}/admin/pages/about/story`);
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 
   return { ok: true, message: "SAVED" };
 }

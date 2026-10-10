@@ -13,9 +13,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { corporateServiceSchema, fieldErrors } from "@/lib/validations";
 
@@ -42,9 +42,8 @@ function readForm(formData: FormData) {
 // service or reorder shows up immediately.
 function revalidateCorporate(locale: string) {
   revalidatePath(`/${locale}/admin/pages/about/corporate`);
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 }
 
 export async function createCorporateService(

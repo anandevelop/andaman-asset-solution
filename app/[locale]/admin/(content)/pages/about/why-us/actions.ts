@@ -12,9 +12,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSite } from "@/lib/revalidate-site";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { locales } from "@/i18n";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { whyUsPointSchema, fieldErrors } from "@/lib/validations";
 
@@ -41,9 +41,8 @@ function readForm(formData: FormData) {
 // or reorder shows up immediately.
 function revalidateWhyUs(locale: string) {
   revalidatePath(`/${locale}/admin/pages/about/why-us`);
-  for (const target of locales) {
-    revalidatePath(`/${target}`, "layout");
-  }
+  // See lib/revalidate-site.ts: a per-locale "layout" purge reached nothing.
+  revalidatePublicSite();
 }
 
 export async function createWhyUsPoint(

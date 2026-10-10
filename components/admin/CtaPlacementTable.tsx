@@ -17,11 +17,22 @@
  * records that no decision was made for this page, so a later change of
  * default follows it. Naming a block pins the page to that block until
  * somebody changes it back.
+ *
+ * WHY SAVING LOOKED BROKEN, AND THE TWO PARTS OF THE FIX
+ *
+ * Every save looked as if it had not happened: the placement was stored
+ * and the site changed, but the table went straight back to the old
+ * choices until a reload. React 19 resets a form after its `action` prop
+ * runs; the reset puts each <select> on its *default* option, and React
+ * applies a select's defaultValue only when it mounts, so the value the
+ * server sent back never reached it.
+ *
+ * So the form is submitted by hand (no reset), and the choices are held in
+ * state, taking over the server's values whenever those change.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import SaveToast from "@/components/admin/SaveToast";
@@ -35,6 +46,7 @@ const PATH_KEYS: Record<string, string> = {
   "/": "home",
   "/about": "about",
   "/achievements": "achievements",
+  "/agent/register": "agentRegister",
   "/contact": "contact",
   "/e-brochure": "eBrochure",
   "/events": "events",
@@ -66,9 +78,8 @@ type Props = {
 
 const INITIAL: SiteCtaFormState = { ok: false };
 
-function SaveButton() {
+function SaveButton({ pending }: { pending: boolean }) {
   const t = useTranslations("admin.common");
-  const { pending } = useFormStatus();
 
   return (
     <button type="submit" disabled={pending} className="admin-btn">
@@ -87,12 +98,36 @@ function SaveButton() {
 export default function CtaPlacementTable({ rows, blocks, action }: Props) {
   const t = useTranslations("admin");
   const tc = useTranslations("admin.cta");
-  const [state, formAction] = useActionState(action, INITIAL);
+  const [state, formAction, pending] = useActionState(action, INITIAL);
 
   const fallback = blocks.find((block) => block.isDefault && block.isActive);
 
+  /* Submitted by hand, not through <form action>: React 19 resets a form
+     after an `action` prop runs, and the reset moves every <select> in the
+     DOM back to its first-render option behind React's back — controlled
+     or not — so the table showed the old placements after every save. */
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startTransition(() => formAction(data));
+  };
+
+  const fromServer = (list: PlacementRow[]) => Object.fromEntries(list.map((row) => [row.path, row.value]));
+  const [values, setValues] = useState<Record<string, string>>(() => fromServer(rows));
+  // Compared by content, not identity: a refresh that changes nothing must
+  // not throw away a choice that has not been saved yet.
+  const serverKey = rows.map((row) => `${row.path}=${row.value}`).join("|");
+  const [seenKey, setSeenKey] = useState(serverKey);
+  // New values from the server (after a save, or someone else's): adopt
+  // them. Adjusted during render rather than in an effect, as React
+  // recommends for state derived from props.
+  if (serverKey !== seenKey) {
+    setSeenKey(serverKey);
+    setValues(fromServer(rows));
+  }
+
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={submit} className="space-y-5">
       {state.ok && (
         <SaveToast tone="success" token={state}>
           <CheckCircle2 size={15} aria-hidden />
@@ -147,7 +182,11 @@ export default function CtaPlacementTable({ rows, blocks, action }: Props) {
                          name. Eleven identically-labelled selects would be
                          eleven "Shows" with no way to tell them apart. */
                       aria-label={name}
-                      defaultValue={row.value}
+                      value={values[row.path] ?? row.value}
+                      onChange={(event) => {
+                        const next = event.target.value;
+                        setValues((prev) => ({ ...prev, [row.path]: next }));
+                      }}
                       className="admin-input w-auto! max-w-[280px]"
                     >
                       <option value={PLACEMENT_DEFAULT}>
@@ -171,7 +210,7 @@ export default function CtaPlacementTable({ rows, blocks, action }: Props) {
         </table>
       </div>
 
-      <SaveButton />
+      <SaveButton pending={pending} />
     </form>
   );
 }
