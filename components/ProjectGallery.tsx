@@ -32,7 +32,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Images, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Images, Loader2, Maximize2, X } from "lucide-react";
 
 type Props = {
   images: string[];
@@ -124,6 +124,36 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [openIndex, close, showPrev, showNext]);
+
+  /*
+    WHY THE LIGHTBOX SKIPS THE IMAGE OPTIMIZER
+
+    Measured on staging (2026-10-12): a gallery photo through /_next/image
+    took 1.3 to 4 s on a cold cache, because AVIF at the 3840px a retina
+    screen asks for is slow to encode, and the cache is lost with the
+    container on every deploy. The same file straight from the Spaces CDN
+    took 0.05 to 0.12 s. The uploads are already compressed WebP or JPEG
+    (median about 80 KB, largest about 0.8 MB), and full-screen viewing is
+    the one place the original size is the right size. So the large image
+    is `unoptimized`, and the next and previous photos are fetched as soon
+    as one is shown, so the arrow keys land on a photo already in the
+    browser cache.
+
+    The thumbnail strip waits for the large photo. Its 55 images used to
+    request together on open, each a cold encode on the same server, and
+    the photo the visitor was waiting for queued behind them.
+  */
+  const [shownLoaded, setShownLoaded] = useState<number | null>(null);
+  const mainReady = openIndex !== null && shownLoaded === openIndex;
+
+  useEffect(() => {
+    if (openIndex === null || images.length < 2) return;
+    for (const offset of [1, -1]) {
+      const preload = new window.Image();
+      preload.decoding = "async";
+      preload.src = images[(openIndex + offset + images.length) % images.length];
+    }
+  }, [openIndex, images]);
 
   const hasHeroCluster = images.length >= HERO_COUNT;
   const remainingCount = images.length - HERO_COUNT;
@@ -250,13 +280,22 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               className="relative h-[62vh] w-full max-w-5xl sm:h-[72vh]"
               onClick={(event) => event.stopPropagation()}
             >
+              {!mainReady && (
+                <Loader2
+                  size={28}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-white/60"
+                  aria-hidden
+                />
+              )}
               <Image
                 src={images[openIndex]}
                 alt={`${projectName} view ${openIndex + 1}`}
                 fill
-                sizes="90vw"
+                unoptimized
+                sizes="(max-width: 1100px) 92vw, 1024px"
                 className="object-contain"
                 priority
+                onLoad={() => setShownLoaded(openIndex)}
               />
             </motion.div>
 
@@ -281,11 +320,15 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                     onClick={() => setOpenIndex(i)}
                     aria-label={`${projectName} view ${i + 1}`}
                     aria-current={i === openIndex}
-                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs transition-opacity sm:h-14 sm:w-14 ${
+                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs bg-white/10 transition-opacity sm:h-14 sm:w-14 ${
                       i === openIndex ? "opacity-100 ring-2 ring-white" : "opacity-45 hover:opacity-75"
                     }`}
                   >
-                    <Image src={src} alt="" fill sizes="56px" className="object-cover" />
+                    {/* Only once the large photo is in, and lazily: see the
+                        note above the lightbox state. */}
+                    {(mainReady || shownLoaded !== null) && (
+                      <Image src={src} alt="" fill sizes="56px" loading="lazy" className="object-cover" />
+                    )}
                   </button>
                 ))}
               </div>

@@ -125,6 +125,12 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    # The image optimizer's cache, outside the container so a redeploy
+    # does not throw it away. Without it the first visitor after every
+    # deploy waits 1 to 4 s for each photo to be re-encoded. See the
+    # Dockerfile's note on /app/.next/cache.
+    volumes:
+      - andaman_image_cache:/app/.next/cache/images
 
   # ── The scheduler ───────────────────────────────────────────────────
   #
@@ -162,4 +168,6 @@ services:
 
 volumes:
   andaman_pg_data:
+    driver: local
+  andaman_image_cache:
     driver: local

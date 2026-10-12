@@ -494,6 +494,16 @@ login is not kept): it fails with `error from registry: denied` and
 recreates nothing. The image the last deploy pulled is already on the
 host, which is the one you want.
 
+### The image cache survives a redeploy
+
+`/_next/image` re-encodes each photo the first time a size is asked for:
+1.3 to 4 s for AVIF on the staging droplet, then about 0.1 to 0.3 s from
+cache. The cache lives in `/app/.next/cache/images`, so `docker-compose.prod.yml`
+mounts the named volume `andaman_image_cache` there. Without it every
+deploy starts cold. **The server's own compose file is not this one**, so
+add the same two lines to the `app` service there, plus the volume under
+`volumes:`, then `up -d --force-recreate --pull never app`.
+
 ### Rollback
 
 Re-run step 3 with the previous tag. Migrations do **not** roll back

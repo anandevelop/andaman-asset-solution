@@ -183,6 +183,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modu
 # Node built-ins only, so nothing is copied alongside it.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/cron.mjs ./scripts/cron.mjs
 
+# The image optimizer's cache, created here so it belongs to `nextjs`.
+# docker-compose.prod.yml mounts a named volume over it so optimized images
+# survive a redeploy. A new named volume takes the ownership of the
+# directory it is mounted over, and without this directory in the image it
+# would be root's, and the optimizer could not write a single file. Measured
+# on staging: a cold AVIF encode is 1.3 to 4 s per photo and a cached one
+# about 0.1 to 0.3 s, and a fresh container used to start cold.
+RUN mkdir -p /app/.next/cache/images && chown -R nextjs:nodejs /app/.next/cache
+
 USER nextjs
 
 EXPOSE 3000
