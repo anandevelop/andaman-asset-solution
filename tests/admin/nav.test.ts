@@ -258,6 +258,7 @@ describe("the Pages hub", () => {
       "/mission",
       "/awards",
       "/milestones",
+      "/figures",
     ]);
   });
 

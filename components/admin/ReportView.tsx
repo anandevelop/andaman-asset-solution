@@ -29,6 +29,7 @@
  */
 
 import type { ReportData } from "@/lib/reports/seo-report";
+import { Masthead, PrintPageStyle, Sheet } from "@/components/admin/report/ReportParts";
 import { displayValue, type VitalKey } from "@/lib/analytics/vitals";
 
 export type ReportViewLabels = {
@@ -62,6 +63,8 @@ export type ReportViewLabels = {
   notesDraft: string;
   notesEditedBy: string;
   notesEmpty: string;
+  /** The printed page footer's note, after the company name. */
+  confidential: string;
 };
 
 type Props = {
@@ -85,158 +88,159 @@ export default function ReportView({
   noteBody,
 }: Props) {
   return (
-    <article className="report-sheet admin-card" id="report-sheet">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-adm-line pb-4">
-        <div>
-          <h2 className="text-xl font-semibold text-adm-text">{labels.title}</h2>
-          <p className="mt-1 text-sm text-adm-muted">
-            {formatted.periodLabel} · {audienceLabel}
-          </p>
+    <>
+      {/* The same navy-and-gold masthead and page footer as the executive
+          report (components/admin/report), so every audience's PDF is
+          recognisably the company's. */}
+      <PrintPageStyle footer={labels.confidential} />
+      <Sheet>
+        <Masthead
+          eyebrow={audienceLabel}
+          title={labels.title}
+          lines={[formatted.periodLabel, `${labels.dataUpTo} ${formatted.coversUntil}`]}
+        />
+        <div id="report-sheet" className="px-10 pb-10 pt-2">
+          <section className="mt-5">
+            <h3 className="admin-label">{labels.headlineTitle}</h3>
+
+            <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Phase 4. Drawn, not omitted — see the header. */}
+              <Figure
+                label={labels.googleClicks}
+                value={data.search.reason === "noData" ? labels.noGoogleData : labels.notConnected}
+                muted
+              />
+
+              <Figure
+                label={labels.googleLeads}
+                value={String(data.leads.current.google)}
+                delta={delta(data.leads.current.google, data.leads.previous.google)}
+              />
+              <Figure
+                label={labels.allLeads}
+                value={String(data.leads.current.all)}
+                delta={delta(data.leads.current.all, data.leads.previous.all)}
+              />
+              <Figure
+                label={labels.auditScore}
+                value={data.audit.score === null ? "—" : String(data.audit.score)}
+                delta={
+                  data.audit.score !== null && data.audit.previous !== null
+                    ? delta(data.audit.score, data.audit.previous)
+                    : null
+                }
+              />
+            </dl>
+          </section>
+
+          <section className="mt-6">
+            <h3 className="admin-label">{labels.tableTitle}</h3>
+
+            {data.rows.length === 0 ? (
+              <p className="admin-hint mt-2">{labels.tableEmpty}</p>
+            ) : (
+              <table className="mt-3 w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
+                    <th className="pb-2 font-medium">{labels.columnProject}</th>
+                    <th className="pb-2 text-right font-medium">
+                      {labels.columnClicks}
+                    </th>
+                    <th className="pb-2 text-right font-medium">
+                      {labels.columnGoogleLeads}
+                    </th>
+                    <th className="pb-2 text-right font-medium">
+                      {labels.columnRate}
+                    </th>
+                    <th className="pb-2 text-right font-medium">
+                      {labels.columnAllLeads}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((row) => (
+                    <tr key={row.key} className="border-t border-adm-line">
+                      <td className="py-2 text-adm-text">
+                        {row.key === "news" ? labels.newsRow : row.name}
+                      </td>
+                      {/* Both dashes are phase 4: clicks, and the rate that
+                          needs them as its denominator. */}
+                      <td className="py-2 text-right text-adm-muted">—</td>
+                      <td className="py-2 text-right font-medium tabular-nums text-adm-text">
+                        {row.googleLeads}
+                      </td>
+                      <td className="py-2 text-right text-adm-muted">—</td>
+                      <td className="py-2 text-right tabular-nums text-adm-muted">
+                        {row.allLeads}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <p className="admin-hint mt-3">
+              {labels.footnote}{" "}
+              {formatted.countedSince
+                ? `${labels.countedSince} ${formatted.countedSince}`
+                : labels.countedSinceUnknown}
+            </p>
+          </section>
+
+          <section className="mt-6">
+            <h3 className="admin-label">{labels.vitalsTitle}</h3>
+
+            <dl className="mt-3 grid gap-3 sm:grid-cols-4">
+              {data.vitals.map((vital) => (
+                <Figure
+                  key={vital.metric}
+                  label={vital.metric}
+                  value={
+                    vital.enoughSamples
+                      ? formatVital(
+                          vital.metric,
+                          displayValue(vital.metric, vital.value),
+                        )
+                      : labels.vitalsNotEnough
+                  }
+                  muted={!vital.enoughSamples}
+                />
+              ))}
+            </dl>
+          </section>
+
+          <section className="mt-6 border-t border-adm-line pt-4">
+            <h3 className="admin-label">
+              {labels.notesTitle}
+              {data.note.isDraft ? (
+                <span className="ml-2 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-normal text-adm-warning">
+                  {labels.notesDraft}
+                </span>
+              ) : (
+                data.note.editedBy && (
+                  <span className="ml-2 text-[11px] font-normal text-adm-muted">
+                    {labels.notesEditedBy} {data.note.editedBy}
+                  </span>
+                )
+              )}
+            </h3>
+
+            {noteBody.trim() === "" ? (
+              <p className="admin-hint mt-2">{labels.notesEmpty}</p>
+            ) : (
+              <div className="mt-2 space-y-1.5 text-sm text-adm-text">
+                {noteBody
+                  .split("\n")
+                  .filter((line) => line.trim() !== "")
+                  .map((line, index) => (
+                    <p key={index}>{line}</p>
+                  ))}
+              </div>
+            )}
+          </section>
         </div>
-        <p className="text-xs text-adm-muted">
-          {labels.dataUpTo} {formatted.coversUntil}
-        </p>
-      </header>
-
-      <section className="mt-5">
-        <h3 className="admin-label">{labels.headlineTitle}</h3>
-
-        <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Phase 4. Drawn, not omitted — see the header. */}
-          <Figure
-            label={labels.googleClicks}
-            value={data.search.reason === "noData" ? labels.noGoogleData : labels.notConnected}
-            muted
-          />
-
-          <Figure
-            label={labels.googleLeads}
-            value={String(data.leads.current.google)}
-            delta={delta(data.leads.current.google, data.leads.previous.google)}
-          />
-          <Figure
-            label={labels.allLeads}
-            value={String(data.leads.current.all)}
-            delta={delta(data.leads.current.all, data.leads.previous.all)}
-          />
-          <Figure
-            label={labels.auditScore}
-            value={data.audit.score === null ? "—" : String(data.audit.score)}
-            delta={
-              data.audit.score !== null && data.audit.previous !== null
-                ? delta(data.audit.score, data.audit.previous)
-                : null
-            }
-          />
-        </dl>
-      </section>
-
-      <section className="mt-6">
-        <h3 className="admin-label">{labels.tableTitle}</h3>
-
-        {data.rows.length === 0 ? (
-          <p className="admin-hint mt-2">{labels.tableEmpty}</p>
-        ) : (
-          <table className="mt-3 w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-adm-muted">
-                <th className="pb-2 font-medium">{labels.columnProject}</th>
-                <th className="pb-2 text-right font-medium">
-                  {labels.columnClicks}
-                </th>
-                <th className="pb-2 text-right font-medium">
-                  {labels.columnGoogleLeads}
-                </th>
-                <th className="pb-2 text-right font-medium">
-                  {labels.columnRate}
-                </th>
-                <th className="pb-2 text-right font-medium">
-                  {labels.columnAllLeads}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.rows.map((row) => (
-                <tr key={row.key} className="border-t border-adm-line">
-                  <td className="py-2 text-adm-text">
-                    {row.key === "news" ? labels.newsRow : row.name}
-                  </td>
-                  {/* Both dashes are phase 4: clicks, and the rate that
-                      needs them as its denominator. */}
-                  <td className="py-2 text-right text-adm-muted">—</td>
-                  <td className="py-2 text-right font-medium tabular-nums text-adm-text">
-                    {row.googleLeads}
-                  </td>
-                  <td className="py-2 text-right text-adm-muted">—</td>
-                  <td className="py-2 text-right tabular-nums text-adm-muted">
-                    {row.allLeads}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        <p className="admin-hint mt-3">
-          {labels.footnote}{" "}
-          {formatted.countedSince
-            ? `${labels.countedSince} ${formatted.countedSince}`
-            : labels.countedSinceUnknown}
-        </p>
-      </section>
-
-      <section className="mt-6">
-        <h3 className="admin-label">{labels.vitalsTitle}</h3>
-
-        <dl className="mt-3 grid gap-3 sm:grid-cols-4">
-          {data.vitals.map((vital) => (
-            <Figure
-              key={vital.metric}
-              label={vital.metric}
-              value={
-                vital.enoughSamples
-                  ? formatVital(
-                      vital.metric,
-                      displayValue(vital.metric, vital.value),
-                    )
-                  : labels.vitalsNotEnough
-              }
-              muted={!vital.enoughSamples}
-            />
-          ))}
-        </dl>
-      </section>
-
-      <section className="mt-6 border-t border-adm-line pt-4">
-        <h3 className="admin-label">
-          {labels.notesTitle}
-          {data.note.isDraft ? (
-            <span className="ml-2 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-normal text-adm-warning">
-              {labels.notesDraft}
-            </span>
-          ) : (
-            data.note.editedBy && (
-              <span className="ml-2 text-[11px] font-normal text-adm-muted">
-                {labels.notesEditedBy} {data.note.editedBy}
-              </span>
-            )
-          )}
-        </h3>
-
-        {noteBody.trim() === "" ? (
-          <p className="admin-hint mt-2">{labels.notesEmpty}</p>
-        ) : (
-          <div className="mt-2 space-y-1.5 text-sm text-adm-text">
-            {noteBody
-              .split("\n")
-              .filter((line) => line.trim() !== "")
-              .map((line, index) => (
-                <p key={index}>{line}</p>
-              ))}
-          </div>
-        )}
-      </section>
-    </article>
+      </Sheet>
+    </>
   );
 }
 

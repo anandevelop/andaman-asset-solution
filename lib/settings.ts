@@ -98,6 +98,12 @@ export const SETTING_KEYS = [
   "projectsHero.subtitleEn",
   "projectsHero.subtitleZh",
   "projectsHero.subtitleRu",
+  /* The About page's stat bar. "" = counted from the projects — see
+     lib/about-stats.ts. Shown as typed, in every language, as a figure is. */
+  "aboutStats.projects",
+  "aboutStats.units",
+  "aboutStats.landArea",
+  "aboutStats.years",
 ] as const;
 
 /**
@@ -191,6 +197,8 @@ export type SiteSettings = {
     title: { th: string; en: string; zh: string; ru: string };
     subtitle: { th: string; en: string; zh: string; ru: string };
   };
+  /** Each "" when not overridden — lib/about-stats.ts counts it then. */
+  aboutStats: { projects: string; units: string; landArea: string; years: string };
 };
 
 /** config/site.ts flattened into the same key space, as the fallback. */
@@ -254,6 +262,10 @@ export function defaultSettings(): Record<SettingKey, string> {
     "projectsHero.subtitleEn": "",
     "projectsHero.subtitleZh": "",
     "projectsHero.subtitleRu": "",
+    "aboutStats.projects": "",
+    "aboutStats.units": "",
+    "aboutStats.landArea": "",
+    "aboutStats.years": "",
   };
 }
 
@@ -436,6 +448,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         zh: values["projectsHero.subtitleZh"],
         ru: values["projectsHero.subtitleRu"],
       },
+    },
+    aboutStats: {
+      projects: values["aboutStats.projects"],
+      units: values["aboutStats.units"],
+      landArea: values["aboutStats.landArea"],
+      years: values["aboutStats.years"],
     },
   };
 }

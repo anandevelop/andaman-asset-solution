@@ -52,7 +52,9 @@ import {
   ALERTS_AWAITING_GOOGLE,
   ALERT_THRESHOLDS,
 } from "@/lib/seo/alert-rules";
-import ReportControls from "@/components/admin/ReportControls";
+import ReportControls, { ReportActions } from "@/components/admin/ReportControls";
+import ExecutiveReport from "@/components/admin/report/ExecutiveReport";
+import { getExecutiveData } from "@/lib/reports/executive";
 import ReportView from "@/components/admin/ReportView";
 import ReportNoteEditor from "@/components/admin/ReportNoteEditor";
 import ReportScheduleCard from "@/components/admin/ReportScheduleCard";
@@ -76,7 +78,7 @@ export default async function AdminReportsPage(props: Props) {
   const { locale } = await props.params;
   const searchParams = await props.searchParams;
 
-  await requireAdmin(locale, Role.ADMIN);
+  const session = await requireAdmin(locale, Role.ADMIN);
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
@@ -104,7 +106,11 @@ export default async function AdminReportsPage(props: Props) {
     ),
   ]);
 
-  const draft = await draftNoteText(reportLocale, data);
+  const [draft, exec] = await Promise.all([
+    draftNoteText(reportLocale, data),
+    // The whole-site figures only the executive report shows.
+    audience === "executive" ? getExecutiveData(period, reportLocale) : Promise.resolve(null),
+  ]);
 
   const offline = isDatabaseOffline();
   const recipients = reportRecipients();
@@ -137,6 +143,19 @@ export default async function AdminReportsPage(props: Props) {
         eyebrow={zoneEyebrow((key) => t(key as never), "reports")}
         title={t("reports.title")}
         description={t("reports.subtitle")}
+        actions={
+          <ReportActions
+            audience={audience}
+            period={period.kind}
+            reportLocale={reportLocale}
+            exportBase={`/api/admin/reports/export`}
+            labels={{
+              print: t("reports.controls.print"),
+              csv: t("reports.controls.csv"),
+              excel: t("reports.controls.excel"),
+            }}
+          />
+        }
       />
 
       {offline && (
@@ -150,7 +169,6 @@ export default async function AdminReportsPage(props: Props) {
         period={period.kind}
         reportLocale={reportLocale}
         locales={locales}
-        exportBase={`/api/admin/reports/export`}
         labels={{
           audience: t("reports.controls.audience"),
           audienceExecutive: t("reports.audience.executive"),
@@ -170,6 +188,15 @@ export default async function AdminReportsPage(props: Props) {
         }}
       />
 
+      {exec ? (
+        <ExecutiveReport
+          data={data}
+          exec={exec}
+          locale={reportLocale}
+          noteBody={data.note.body.trim() === "" ? draft : data.note.body}
+          preparedBy={data.note.editedBy ?? session.name ?? null}
+        />
+      ) : (
       <ReportView
         data={data}
         audienceLabel={t(`reports.audience.${audience}` as never)}
@@ -209,8 +236,10 @@ export default async function AdminReportsPage(props: Props) {
           notesDraft: t("reports.view.notesDraft"),
           notesEditedBy: t("reports.view.notesEditedBy"),
           notesEmpty: t("reports.view.notesEmpty"),
+          confidential: t("reports.exec.confidential"),
         }}
       />
+      )}
 
       <ReportNoteEditor
         action={saveReportNote.bind(

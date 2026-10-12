@@ -25,6 +25,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Download, FileSpreadsheet, Printer } from "lucide-react";
+import type { ReactNode } from "react";
 
 export type ReportControlLabels = {
   audience: string;
@@ -50,11 +51,47 @@ type Props = {
   period: string;
   reportLocale: string;
   locales: readonly string[];
-  /** Where the CSV and Excel downloads live, already carrying nothing —
-   *  the current selection is appended here so the file matches the
-   *  screen. */
-  exportBase: string;
 };
+
+/**
+ * A row of joined buttons, one of which is selected. Three short choices
+ * read better side by side than as a stacked radio list, and it puts all
+ * three filters on one line instead of three columns of unequal height.
+ */
+function Segmented({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly (readonly [string, string])[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <fieldset className="min-w-0">
+      <legend className="admin-label mb-1.5">{label}</legend>
+      <div className="inline-flex flex-wrap gap-0.5 rounded-lg border border-adm-line bg-adm-text/4 p-0.5">
+        {options.map(([optionValue, optionLabel]) => (
+          <button
+            key={optionValue}
+            type="button"
+            onClick={() => onChange(optionValue)}
+            aria-pressed={value === optionValue}
+            className={`rounded-md px-3.5 py-1.5 text-sm transition-colors ${
+              value === optionValue
+                ? "bg-adm-strong font-semibold text-adm-on-strong shadow-sm"
+                : "text-adm-muted hover:text-adm-text"
+            }`}
+          >
+            {optionLabel}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 export default function ReportControls({
   labels,
@@ -62,7 +99,6 @@ export default function ReportControls({
   period,
   reportLocale,
   locales,
-  exportBase,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -74,143 +110,90 @@ export default function ReportControls({
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
-  const query = new URLSearchParams({
-    audience,
-    period,
-    reportLocale,
-  }).toString();
+  const hint = {
+    executive: labels.audienceExecutiveHint,
+    marketing: labels.audienceMarketingHint,
+    engineering: labels.audienceEngineeringHint,
+  }[audience];
 
   return (
     <div className="admin-card print:hidden">
-      <div className="grid gap-5 lg:grid-cols-3">
-        <fieldset>
-          <legend className="admin-label">{labels.audience}</legend>
-          <div className="mt-2 space-y-1.5">
-            {(
-              [
-                [
-                  "executive",
-                  labels.audienceExecutive,
-                  labels.audienceExecutiveHint,
-                ],
-                [
-                  "marketing",
-                  labels.audienceMarketing,
-                  labels.audienceMarketingHint,
-                ],
-                [
-                  "engineering",
-                  labels.audienceEngineering,
-                  labels.audienceEngineeringHint,
-                ],
-              ] as const
-            ).map(([value, label, hint]) => (
-              <label
-                key={value}
-                className={`flex cursor-pointer items-start gap-2.5 rounded-xs border px-3 py-2 text-sm transition-colors ${
-                  audience === value
-                    ? "border-adm-line-strong bg-adm-text/5 text-adm-text"
-                    : "border-adm-line text-adm-muted hover:border-adm-line-strong"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="audience"
-                  value={value}
-                  checked={audience === value}
-                  onChange={() => set("audience", value)}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="block font-medium">{label}</span>
-                  <span className="block text-xs text-adm-muted">{hint}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="admin-label">{labels.period}</legend>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {(
-              [
-                ["lastMonth", labels.periodLastMonth],
-                ["thisMonth", labels.periodThisMonth],
-                ["lastQuarter", labels.periodLastQuarter],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => set("period", value)}
-                aria-pressed={period === value}
-                className={`rounded-xs px-3 py-2 text-sm transition-colors ${
-                  period === value
-                    ? "bg-adm-strong font-semibold text-adm-on-strong"
-                    : "border border-adm-line text-adm-muted hover:text-adm-text"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <p className="admin-label mt-5">{labels.language}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {locales.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => set("reportLocale", value)}
-                aria-pressed={reportLocale === value}
-                className={`rounded-xs px-3 py-2 text-sm uppercase transition-colors ${
-                  reportLocale === value
-                    ? "bg-adm-strong font-semibold text-adm-on-strong"
-                    : "border border-adm-line text-adm-muted hover:text-adm-text"
-                }`}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="flex flex-col gap-2 lg:items-end lg:justify-start">
-          {/*
-            window.print() rather than a PDF the server renders. A headless
-            browser in the image to draw a page the operating system's own
-            print dialog already produces costs about 400MB and a second
-            rendering path to keep in step with this one — see the plan's
-            phase 6 note. If a PDF ever has to be *attached* to the
-            scheduled email, that can be added without touching this page.
-          */}
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="admin-btn-ghost w-full lg:w-auto"
-          >
-            <Printer size={15} aria-hidden />
-            {labels.print}
-          </button>
-
-          <a
-            href={`${exportBase}?${query}&format=csv`}
-            className="admin-btn-ghost w-full lg:w-auto"
-          >
-            <Download size={15} aria-hidden />
-            {labels.csv}
-          </a>
-
-          <a
-            href={`${exportBase}?${query}&format=excel`}
-            className="admin-btn-ghost w-full lg:w-auto"
-          >
-            <FileSpreadsheet size={15} aria-hidden />
-            {labels.excel}
-          </a>
+      <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+        <div className="min-w-0">
+          <Segmented
+            label={labels.audience}
+            value={audience}
+            onChange={(value) => set("audience", value)}
+            options={[
+              ["executive", labels.audienceExecutive],
+              ["marketing", labels.audienceMarketing],
+              ["engineering", labels.audienceEngineering],
+            ]}
+          />
+          {hint && <p className="mt-1.5 text-xs text-adm-muted">{hint}</p>}
         </div>
+        <Segmented
+          label={labels.period}
+          value={period}
+          onChange={(value) => set("period", value)}
+          options={[
+            ["lastMonth", labels.periodLastMonth],
+            ["thisMonth", labels.periodThisMonth],
+            ["lastQuarter", labels.periodLastQuarter],
+          ]}
+        />
+        <Segmented
+          label={labels.language}
+          value={reportLocale}
+          onChange={(value) => set("reportLocale", value)}
+          options={locales.map((value) => [value, value.toUpperCase()] as const)}
+        />
       </div>
+    </div>
+  );
+}
+
+/**
+ * The exports, as one row of buttons in the page header: the PDF first
+ * and solid, because that is what gets sent, and the two data files beside
+ * it. They used to be a column of three equal outline buttons at the far
+ * end of the filter card, which gave the PDF no more weight than Excel.
+ *
+ * window.print() rather than a PDF the server renders. A headless browser
+ * in the image to draw a page the operating system's own print dialog
+ * already produces costs about 400MB and a second rendering path to keep
+ * in step with this one.
+ */
+export function ReportActions({
+  labels,
+  audience,
+  period,
+  reportLocale,
+  exportBase,
+}: {
+  labels: Pick<ReportControlLabels, "print" | "csv" | "excel">;
+  audience: string;
+  period: string;
+  reportLocale: string;
+  /** Where the CSV and Excel downloads live; the current selection is
+   *  appended so the file matches the screen. */
+  exportBase: string;
+}): ReactNode {
+  const query = new URLSearchParams({ audience, period, reportLocale }).toString();
+  return (
+    <div className="flex flex-wrap items-center gap-2 print:hidden">
+      <a href={`${exportBase}?${query}&format=csv`} className="admin-btn-ghost py-2!">
+        <Download size={15} aria-hidden />
+        {labels.csv}
+      </a>
+      <a href={`${exportBase}?${query}&format=excel`} className="admin-btn-ghost py-2!">
+        <FileSpreadsheet size={15} aria-hidden />
+        {labels.excel}
+      </a>
+      <button type="button" onClick={() => window.print()} className="admin-btn py-2!">
+        <Printer size={15} aria-hidden />
+        {labels.print}
+      </button>
     </div>
   );
 }

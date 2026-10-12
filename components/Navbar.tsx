@@ -337,7 +337,9 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
       <header
         className={[
           open ? "fixed" : "sticky",
-          "inset-x-0 top-0 z-50 border-b border-white/10 bg-primary print:hidden",
+          // Below the editors-only EditBar when it is on the page (it sets
+          // --edit-bar-h); 0 for every visitor.
+          "inset-x-0 top-[var(--edit-bar-h,0px)] z-50 border-b border-white/10 bg-primary print:hidden",
           "transition-all duration-300 ease-in-out",
           headerHidden && !open ? "-translate-y-full" : "translate-y-0",
         ].join(" ")}

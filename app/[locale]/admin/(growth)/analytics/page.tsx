@@ -71,7 +71,7 @@ import { intlLocale } from "@/lib/format";
 import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
 import { fetchLiveSnapshot } from "./live-actions";
 import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
-import { displayValue, type VitalKey } from "@/lib/analytics/vitals";
+import { formatVital, type VitalKey } from "@/lib/analytics/vitals";
 import DashboardControls from "@/components/admin/DashboardControls";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
@@ -81,39 +81,10 @@ type Props = {
   searchParams: Promise<{ range?: string }>;
 };
 
-/**
- * A stored figure as the panel shows it.
- *
- * Each metric in the unit its own threshold is quoted in, which is not the
- * same unit for all four. LCP is talked about in seconds ("2.5 s"), INP and
- * TTFB in milliseconds ("200 ms", "800 ms"), and CLS is unitless once it
- * comes back from its x1000 storage. Showing INP as "0.26 s" is arithmetic
- * nobody has to do against a 200 ms line, and it reads as four times better
- * than it is at a glance.
- *
- * "s" and "ms" stay in code rather than in the message files: they are SI
- * symbols, written the same way in all four locales, and Google's own Core
- * Web Vitals documentation uses them verbatim in every language it ships.
- *
- * The sample count arrives already worded rather than as a number with a
- * formatter beside it: VitalsPanel is a Client Component, and a function in
- * its props is not a serialisation warning but a render-time crash
- * ("Functions cannot be passed directly to Client Components"). Every
- * count-dependent string is therefore built here, where next-intl's
- * translator lives.
- */
-function formatVital(metric: VitalKey, value: number): string {
-  if (metric === "CLS") return value.toFixed(2);
-  if (metric === "LCP") return `${(value / 1000).toFixed(2)} s`;
-  return `${Math.round(value)} ms`;
-}
-
 function toFigureView(figure: VitalFigure, samplesLabel: (count: number) => string) {
-  const value = displayValue(figure.metric as VitalKey, figure.value);
-
   return {
     metric: figure.metric,
-    display: formatVital(figure.metric as VitalKey, value),
+    display: formatVital(figure.metric as VitalKey, figure.value),
     rating: figure.rating,
     samples: samplesLabel(figure.sampleCount),
     enoughSamples: figure.enoughSamples,
@@ -204,6 +175,7 @@ export default async function AdminAnalyticsPage(props: Props) {
             range90: t("dashboard.range90"),
             range365: t("dashboard.range365"),
             exportReport: t("dashboard.exportReport"),
+            exportCsv: t("dashboard.exportCsv"),
           }}
         />
           </>

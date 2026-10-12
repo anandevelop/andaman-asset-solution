@@ -56,7 +56,7 @@ import {
   type PickedCopy,
 } from "@/app/[locale]/(site)/_actions/site-copy";
 import { normalizeCopyText, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
-import { withReturnTo, type EditLink } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, withReturnTo, type EditLink } from "@/lib/edit-mode";
 import CopyValueField from "@/components/copy/CopyValueField";
 import { caseShowing } from "@/lib/icu-skeleton";
 import { useEditMode } from "./EditModeProvider";
@@ -398,6 +398,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
                       {owners.item && (
                         <a
                           href={withReturnTo(`${adminBase}${owners.item}`, pathname)}
+                          {...ADMIN_LINK_PROPS}
                           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 font-medium text-white hover:bg-blue-500"
                         >
                           <Pencil size={14} aria-hidden />
@@ -408,6 +409,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
                         <a
                           key={link.href}
                           href={withReturnTo(`${adminBase}${link.href}`, pathname)}
+                          {...ADMIN_LINK_PROPS}
                           className="inline-flex items-center gap-2 rounded-md border border-blue-600 px-3 py-2 font-medium text-blue-700 hover:bg-blue-50"
                         >
                           <Pencil size={14} aria-hidden />
@@ -545,6 +547,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
               {match && (
                 <a
                   href={withReturnTo(`${adminBase}/pages/copy?key=${encodeURIComponent(match.key)}`, pathname)}
+                  {...ADMIN_LINK_PROPS}
                   className="mr-auto inline-flex items-center gap-1 text-[13px] text-blue-700 hover:underline"
                 >
                   {t("openInAdmin")}

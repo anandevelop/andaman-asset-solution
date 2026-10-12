@@ -16,6 +16,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_LINK_PROPS,
   ABOUT_SECTION_LINKS,
   ACHIEVEMENTS_SECTION_LINKS,
   CONTACT_SECTION_LINKS,
@@ -172,5 +173,37 @@ describe("withReturnTo", () => {
     );
     expect(withReturnTo("/th/admin/news", "//evil.example")).toBe("/th/admin/news");
     expect(withReturnTo("/th/admin/news", null)).toBe("/th/admin/news");
+  });
+});
+
+/*
+  Editors asked for the admin to open in a new tab, so the page they were
+  editing stays put. Every <a> in components/edit/ that points into the
+  admin has to spread ADMIN_LINK_PROPS. That is also what lets
+  EditModeProvider refresh this tab when they come back. A new link that
+  forgets it would quietly navigate away again.
+*/
+describe("admin links open in a new tab", () => {
+  const dir = join(process.cwd(), "components/edit");
+  const files = readdirSync(dir).filter((name) => name.endsWith(".tsx"));
+
+  it("every anchor into the admin spreads ADMIN_LINK_PROPS", () => {
+    const offenders: string[] = [];
+    for (const name of files) {
+      const source = readFileSync(join(dir, name), "utf8");
+      for (const match of source.matchAll(/<a\b[^>]*?>/g)) {
+        const tag = match[0];
+        if (/href=\{[^}]*adminBase/.test(tag) && !tag.includes("{...ADMIN_LINK_PROPS}")) {
+          offenders.push(`${name}: ${tag.slice(0, 80)}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("opens a new tab without handing it this window", () => {
+    expect(ADMIN_LINK_PROPS.target).toBe("_blank");
+    expect(ADMIN_LINK_PROPS.rel).toContain("noopener");
+    expect(ADMIN_LINK_PROPS).toHaveProperty("data-edit-admin");
   });
 });

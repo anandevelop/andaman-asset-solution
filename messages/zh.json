@@ -763,6 +763,18 @@
         },
         "markReviewed": "已核对",
         "markReviewedHint": "确认其他语言仍然正确，无需随泰文修改"
+      },
+      "aboutFigures": {
+        "heading": "Figures on the About page",
+        "intro": "The four figures in the bar under the About page banner. By default they are counted from the published projects, and the years from the founding year. Type a figure to show something else.",
+        "blankNote": "A blank field uses the counted figure (the grey text in the box). A typed figure is shown exactly as typed, in every language, e.g. 1,200+. The labels under the figures are edited in Site copy.",
+        "group": "Figures",
+        "hint": "Leave blank to count it",
+        "yearsHint": "Leave blank to count from the founding year ({year}), set in the Our story tab",
+        "onSite": "On the site",
+        "edit": "Edit figures",
+        "counted": "Counted",
+        "typed": "Typed"
       }
     },
     "tabs": {
@@ -782,7 +794,8 @@
         "whyUs": "为什么选择我们",
         "mission": "工作理念",
         "awards": "荣誉奖项",
-        "milestones": "里程碑"
+        "milestones": "里程碑",
+        "figures": "公司数据"
       },
       "publishing": {
         "label": "审核与发布",
@@ -966,7 +979,8 @@
       "activity": {
         "title": "最近更改",
         "empty": "暂无更改"
-      }
+      },
+      "exportCsv": "Leads CSV"
     },
     "leads": {
       "title": "客资",
@@ -2739,6 +2753,55 @@
         "topProject": "本期 {project} 从搜索获得的意向客户最多（{leads} 位）。",
         "noGoogleLeads": "{project} 有意向客户，但没有一位来自搜索结果。",
         "notConnected": "尚未连接 Search Console，因此本报告缺少点击、关键词和排名数据。"
+      },
+      "exec": {
+        "eyebrow": "Executive report",
+        "title": "Website performance, {month}",
+        "dataUpTo": "Data up to {date}",
+        "preparedBy": "Prepared by {name}",
+        "confidential": "Internal document for management",
+        "vsPrevious": "vs previous period",
+        "kpiViews": "Website visits",
+        "kpiEnquiries": "New enquiries",
+        "kpiViewings": "Viewings booked",
+        "kpiWon": "Won",
+        "kpiGoogle": "Enquiries from Google",
+        "kpiHealth": "Site health score",
+        "kpiHealthHint": "SEO audit score out of 100",
+        "summary": "Summary and next steps",
+        "traffic": "Traffic",
+        "daily": "Daily",
+        "sumTotal": "Total",
+        "sumPrevious": "Previous period",
+        "sumAverage": "Daily average",
+        "sumPeak": "Busiest day",
+        "sumConversion": "Visits that became enquiries",
+        "enquiries": "Enquiries",
+        "bySource": "Where they came from",
+        "byProject": "Which development",
+        "colEnquiries": "Enquiries",
+        "colGoogle": "From Google",
+        "pipeline": "Sales pipeline",
+        "asOfToday": "As of the report date",
+        "openTotal": "In progress",
+        "bottleneck": "{stage}, {days} days on average",
+        "content": "Content and events",
+        "topPages": "Most visited pages",
+        "colPage": "Page",
+        "colViews": "Visits",
+        "colEvent": "Event",
+        "colSeats": "Registered",
+        "noEvents": "No events in this period",
+        "health": "Website health",
+        "topIssues": "Issues to fix first",
+        "colIssue": "Issue",
+        "colPages": "Pages",
+        "noIssues": "No issues in the latest audit",
+        "colMetric": "Metric",
+        "colValue": "Value",
+        "noData": "No data for this period yet",
+        "footnote": "Every figure is counted from the website's own records for the report period, except the sales pipeline, which is as of the report date. \"Won\" counts enquiries whose status is won and which were last updated in this period.",
+        "noProject": "Enquiries in this period did not name a development"
       }
     },
     "settings": {
@@ -3500,6 +3563,38 @@
         "hintInp": "页面响应点按的速度。",
         "hintCls": "加载过程中布局跳动的程度。",
         "hintTtfb": "服务器开始响应需要多久。"
+      },
+      "report": {
+        "eyebrow": "Analytics report",
+        "title": "Website performance report",
+        "period": "{from} – {to}",
+        "lastDays": "Last {days} days",
+        "thisWeek": "{count} new this week",
+        "prepared": "Prepared {date} · by {name}",
+        "confidential": "Internal document",
+        "kpiViews": "Page views",
+        "kpiLeads": "New enquiries",
+        "kpiWon": "Won",
+        "kpiOpen": "In progress",
+        "traffic": "Traffic",
+        "daily": "Daily",
+        "weekly": "Weekly totals",
+        "leads": "Enquiries & sales",
+        "event": "Event",
+        "date": "Date",
+        "seats": "Seats",
+        "metric": "Metric",
+        "noData": "No data for this period yet",
+        "save": "Save as PDF",
+        "saveHint": "In the print dialog choose “Save as PDF”, paper size A4, and turn on “Background graphics”.",
+        "back": "Back to Analytics",
+        "preparedOn": "Prepared {date}",
+        "since": "Since {date}",
+        "sumTotal": "Total",
+        "sumAverage": "Daily average",
+        "sumPeak": "Busiest day",
+        "sumLeads": "Enquiries, {months} months",
+        "sumWinRate": "Win rate"
       }
     },
     "urls": {
@@ -4159,7 +4254,8 @@
       "projectUnits": "房源状态",
       "article": "此新闻",
       "event": "此活动",
-      "brochure": "此电子手册"
+      "brochure": "此电子手册",
+      "aboutFigures": "company figures"
     },
     "picker": {
       "hint": "点击页面上的任意文字进行编辑 · 按 Esc 退出",

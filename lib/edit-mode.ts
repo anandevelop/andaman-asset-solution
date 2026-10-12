@@ -81,6 +81,20 @@ export function withReturnTo(href: string, from: string | null | undefined): str
   return `${href}${href.includes("?") ? "&" : "?"}from=${encodeURIComponent(from)}`;
 }
 
+/**
+ * Spread on every link from the public site into the admin: the editor
+ * opens in a new tab, so the page being edited stays where it was, scrolled
+ * to the band that was clicked. `data-edit-admin` is what
+ * EditModeProvider watches to refresh this tab when the editor comes back
+ * to it, so a save made in the admin tab shows here without a manual reload.
+ * noopener: the admin tab has no reason to reach back into this one.
+ */
+export const ADMIN_LINK_PROPS = {
+  target: "_blank",
+  rel: "noopener",
+  "data-edit-admin": "",
+} as const;
+
 /** One link out of a band of the page. `href` is under `/{locale}/admin`. */
 export type EditLink = {
   /** i18n key suffix under editMode.editors.* */
@@ -151,9 +165,11 @@ export function projectSectionLinks(id: string) {
   } satisfies Record<string, EditLink[]>;
 }
 
-/** The About page's bands. Its stat bar is computed, so it has none. */
+/** The About page's bands. */
 export const ABOUT_SECTION_LINKS = {
   hero: [{ labelKey: "aboutStory", href: "/pages/about/story" }],
+  // Counted from the projects unless overridden there; see lib/about-stats.ts.
+  stats: [{ labelKey: "aboutFigures", href: "/pages/about/figures" }],
   story: [{ labelKey: "aboutStory", href: "/pages/about/story" }],
   principles: [{ labelKey: "aboutMission", href: "/pages/about/mission" }],
   timeline: [{ labelKey: "aboutMilestones", href: "/pages/about/milestones" }],

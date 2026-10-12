@@ -34,7 +34,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
-import { withReturnTo, type EditLink } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, withReturnTo, type EditLink } from "@/lib/edit-mode";
 import { useEditMode } from "./EditModeProvider";
 
 export default function EditableSection({
@@ -73,6 +73,7 @@ export default function EditableSection({
               <a
                 key={link.href}
                 href={withReturnTo(`${mode!.adminBase}${link.href}`, pathname)}
+                {...ADMIN_LINK_PROPS}
                 aria-label={label}
                 title={label}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12.5px] font-medium text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white [@media(hover:none)]:size-9 [@media(hover:none)]:justify-center [@media(hover:none)]:p-0"

@@ -5,17 +5,23 @@
  * ─────────────────────────────────────────────────────────────────────────
  * The dark strip above the navbar that only editors see.
  *
- * In normal flow above the sticky <header>, not sticky itself: two sticky
- * bars at top-0 would overlap, and this one only needs to be reachable
- * from the top of the page — the pills on each band carry the rest.
+ * Sticky at the top, above the sticky <header>. It used to sit in normal
+ * flow so the two bars would not overlap at top-0, but that meant
+ * scrolling back to the top of a long page to reach "Edit text" or the
+ * back office. Now it stays put, and it publishes its height as
+ * --edit-bar-h on <html>, which the navbar uses as its own `top`. It is
+ * measured, not a constant, because the bar wraps to two or three lines on
+ * a phone. When the navbar hides on scroll down it slides up behind this
+ * bar (z-60 over the header's z-50), so nothing peeks out between them.
  * print:hidden like the rest of the site chrome.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight, ListOrdered, Pencil, Type } from "lucide-react";
-import { pageEditLink, withReturnTo } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, pageEditLink, withReturnTo } from "@/lib/edit-mode";
 import { stripLocale } from "@/lib/public-paths";
 import { useEditMode } from "./EditModeProvider";
 
@@ -23,6 +29,23 @@ export default function EditBar() {
   const t = useTranslations("editMode");
   const pathname = usePathname();
   const mode = useEditMode();
+  const barRef = useRef<HTMLDivElement>(null);
+  const canEdit = Boolean(mode?.canEdit);
+
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!canEdit || !bar) return;
+    const root = document.documentElement;
+    const publish = () => root.style.setProperty("--edit-bar-h", `${bar.offsetHeight}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--edit-bar-h");
+    };
+  }, [canEdit]);
+
   if (!mode?.canEdit) return null;
 
   const isHome = stripLocale(pathname) === "/";
@@ -35,7 +58,8 @@ export default function EditBar() {
       role="region"
       data-edit-ui
       aria-label={t("bar.label")}
-      className="relative z-60 bg-gray-900 text-[13px] text-gray-200 print:hidden"
+      ref={barRef}
+      className="sticky top-0 z-60 bg-gray-900 text-[13px] text-gray-200 print:hidden"
     >
       <div className="container-luxe flex min-h-10 flex-wrap items-center gap-x-4 gap-y-1.5 py-1.5">
         <p className="flex items-center gap-2">
@@ -82,6 +106,7 @@ export default function EditBar() {
         {target && (
           <a
             href={withReturnTo(`${mode.adminBase}${target.href}`, pathname)}
+            {...ADMIN_LINK_PROPS}
             className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1 font-medium text-white hover:bg-blue-500"
           >
             <Pencil size={13} aria-hidden />
@@ -92,6 +117,7 @@ export default function EditBar() {
         {isHome && (
           <a
             href={withReturnTo(`${mode.adminBase}/pages/home`, pathname)}
+            {...ADMIN_LINK_PROPS}
             className="inline-flex items-center gap-1.5 rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1 hover:bg-gray-700"
           >
             <ListOrdered size={13} aria-hidden />
@@ -101,6 +127,7 @@ export default function EditBar() {
 
         <a
           href={mode.adminBase}
+          {...ADMIN_LINK_PROPS}
           className="inline-flex items-center gap-1 rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1 hover:bg-gray-700"
         >
           {t("bar.dashboard")}

@@ -26,6 +26,7 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { adminBaseFor, canSeeEditMode, type EditLink } from "@/lib/edit-mode";
 import EditBar from "./EditBar";
@@ -115,6 +116,36 @@ export default function EditModeProvider({ locale, children }: { locale: string;
       cancelled = true;
     };
   }, []);
+
+  /*
+    Admin links open in a new tab (ADMIN_LINK_PROPS). When the editor comes
+    back to this one, refresh it once so what they just saved is on screen.
+    Only after a click on such a link, not on every tab switch: refresh()
+    re-renders the page from the server, and an editor flicking between
+    tabs for other reasons should not pay for that.
+  */
+  const router = useRouter();
+  useEffect(() => {
+    if (role === null) return;
+    let leftForAdmin = false;
+    const onClick = (event: MouseEvent) => {
+      if ((event.target as Element | null)?.closest?.("a[data-edit-admin]")) leftForAdmin = true;
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || !leftForAdmin) return;
+      leftForAdmin = false;
+      router.refresh();
+    };
+    // Capture, and auxclick too: a middle-click opens a tab without a click event.
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("auxclick", onClick, true);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("auxclick", onClick, true);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [role, router]);
 
   const setEditing = useCallback((value: boolean) => {
     setSwitchOn(value);

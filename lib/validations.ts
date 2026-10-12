@@ -1715,7 +1715,15 @@ const coordinateSetting = (limit: number, name: string) =>
 export const META_TITLE_MAX = 120;
 export const META_DESCRIPTION_MAX = 320;
 
+/** A figure on the About stat bar, as typed: "30", "1,200+", "120k". A
+ *  short ceiling, because the bar gives each figure a quarter of a line. */
+const aboutStatSetting = z.string().max(16, "Keep it to a short figure, e.g. 1,200+");
+
 export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> = {
+  "aboutStats.projects": aboutStatSetting,
+  "aboutStats.units": aboutStatSetting,
+  "aboutStats.landArea": aboutStatSetting,
+  "aboutStats.years": aboutStatSetting,
   "projectsHero.imageUrl": imageSetting(RASTER_EXT, "Use a PNG, JPEG, WebP or AVIF image").refine(
     isOwnMediaUrl,
     "Upload the photo here rather than linking to another site",

@@ -763,6 +763,18 @@
         },
         "markReviewed": "Checked",
         "markReviewedHint": "Confirm the other languages are still right and need no change after the Thai edit"
+      },
+      "aboutFigures": {
+        "heading": "Figures on the About page",
+        "intro": "The four figures in the bar under the About page banner. By default they are counted from the published projects, and the years from the founding year. Type a figure to show something else.",
+        "blankNote": "A blank field uses the counted figure (the grey text in the box). A typed figure is shown exactly as typed, in every language, e.g. 1,200+. The labels under the figures are edited in Site copy.",
+        "group": "Figures",
+        "hint": "Leave blank to count it",
+        "yearsHint": "Leave blank to count from the founding year ({year}), set in the Our story tab",
+        "onSite": "On the site",
+        "edit": "Edit figures",
+        "counted": "Counted",
+        "typed": "Typed"
       }
     },
     "tabs": {
@@ -782,7 +794,8 @@
         "whyUs": "Why Us",
         "mission": "Mission & Principles",
         "awards": "Awards",
-        "milestones": "Milestones"
+        "milestones": "Milestones",
+        "figures": "Company figures"
       },
       "publishing": {
         "label": "Review & publish",
@@ -966,7 +979,8 @@
       "activity": {
         "title": "Recent changes",
         "empty": "No changes yet"
-      }
+      },
+      "exportCsv": "Leads CSV"
     },
     "leads": {
       "title": "Leads",
@@ -2739,6 +2753,55 @@
         "topProject": "{project} earned the most enquiries from search this period ({leads}).",
         "noGoogleLeads": "{project} received enquiries but none of them arrived from a search result.",
         "notConnected": "Search Console is not connected, so clicks, queries and rankings are missing from this report."
+      },
+      "exec": {
+        "eyebrow": "Executive report",
+        "title": "Website performance, {month}",
+        "dataUpTo": "Data up to {date}",
+        "preparedBy": "Prepared by {name}",
+        "confidential": "Internal document for management",
+        "vsPrevious": "vs previous period",
+        "kpiViews": "Website visits",
+        "kpiEnquiries": "New enquiries",
+        "kpiViewings": "Viewings booked",
+        "kpiWon": "Won",
+        "kpiGoogle": "Enquiries from Google",
+        "kpiHealth": "Site health score",
+        "kpiHealthHint": "SEO audit score out of 100",
+        "summary": "Summary and next steps",
+        "traffic": "Traffic",
+        "daily": "Daily",
+        "sumTotal": "Total",
+        "sumPrevious": "Previous period",
+        "sumAverage": "Daily average",
+        "sumPeak": "Busiest day",
+        "sumConversion": "Visits that became enquiries",
+        "enquiries": "Enquiries",
+        "bySource": "Where they came from",
+        "byProject": "Which development",
+        "colEnquiries": "Enquiries",
+        "colGoogle": "From Google",
+        "pipeline": "Sales pipeline",
+        "asOfToday": "As of the report date",
+        "openTotal": "In progress",
+        "bottleneck": "{stage}, {days} days on average",
+        "content": "Content and events",
+        "topPages": "Most visited pages",
+        "colPage": "Page",
+        "colViews": "Visits",
+        "colEvent": "Event",
+        "colSeats": "Registered",
+        "noEvents": "No events in this period",
+        "health": "Website health",
+        "topIssues": "Issues to fix first",
+        "colIssue": "Issue",
+        "colPages": "Pages",
+        "noIssues": "No issues in the latest audit",
+        "colMetric": "Metric",
+        "colValue": "Value",
+        "noData": "No data for this period yet",
+        "footnote": "Every figure is counted from the website's own records for the report period, except the sales pipeline, which is as of the report date. \"Won\" counts enquiries whose status is won and which were last updated in this period.",
+        "noProject": "Enquiries in this period did not name a development"
       }
     },
     "settings": {
@@ -3500,6 +3563,38 @@
         "hintInp": "How quickly the page answers a tap.",
         "hintCls": "How much the layout jumps while loading.",
         "hintTtfb": "How long the server takes to answer at all."
+      },
+      "report": {
+        "eyebrow": "Analytics report",
+        "title": "Website performance report",
+        "period": "{from} – {to}",
+        "lastDays": "Last {days} days",
+        "thisWeek": "{count} new this week",
+        "prepared": "Prepared {date} · by {name}",
+        "confidential": "Internal document",
+        "kpiViews": "Page views",
+        "kpiLeads": "New enquiries",
+        "kpiWon": "Won",
+        "kpiOpen": "In progress",
+        "traffic": "Traffic",
+        "daily": "Daily",
+        "weekly": "Weekly totals",
+        "leads": "Enquiries & sales",
+        "event": "Event",
+        "date": "Date",
+        "seats": "Seats",
+        "metric": "Metric",
+        "noData": "No data for this period yet",
+        "save": "Save as PDF",
+        "saveHint": "In the print dialog choose “Save as PDF”, paper size A4, and turn on “Background graphics”.",
+        "back": "Back to Analytics",
+        "preparedOn": "Prepared {date}",
+        "since": "Since {date}",
+        "sumTotal": "Total",
+        "sumAverage": "Daily average",
+        "sumPeak": "Busiest day",
+        "sumLeads": "Enquiries, {months} months",
+        "sumWinRate": "Win rate"
       }
     },
     "urls": {
@@ -4159,7 +4254,8 @@
       "projectUnits": "unit status",
       "article": "this article",
       "event": "this event",
-      "brochure": "this e-brochure"
+      "brochure": "this e-brochure",
+      "aboutFigures": "company figures"
     },
     "picker": {
       "hint": "Click any text on the page to edit it · Esc to stop",

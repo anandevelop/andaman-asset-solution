@@ -4,7 +4,8 @@
  * components/admin/DashboardControls.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The dashboard header's two action controls (Main.dc.html): a date-range
- * picker and an export button, paired because the export downloads leads
+ * picker and two exports: the A4 PDF report (analytics/report) and the
+ * leads CSV. The CSV is paired with the picker because it downloads leads
  * from exactly the range currently selected — there is no separate range
  * picker for the export, by design.
  *
@@ -22,7 +23,7 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CalendarDays, ChevronDown, Download, Loader2 } from "lucide-react";
+import { CalendarDays, ChevronDown, Download, FileText, Loader2 } from "lucide-react";
 import { RANGE_OPTIONS, type RangeDays } from "@/lib/dashboard-range";
 
 type Props = {
@@ -34,6 +35,7 @@ type Props = {
     range90: string;
     range365: string;
     exportReport: string;
+    exportCsv: string;
   };
 };
 
@@ -126,14 +128,28 @@ export default function DashboardControls({ currentRange, labels }: Props) {
         />
       </div>
 
+      {/* The leads CSV, as before — secondary now that the report itself
+          exports as a document. */}
       <button type="button" onClick={download} disabled={busy} className="admin-btn-ghost py-2!">
         {busy ? (
           <Loader2 size={14} className="animate-spin" aria-hidden />
         ) : (
           <Download size={14} strokeWidth={1.7} aria-hidden />
         )}
-        {labels.exportReport}
+        {labels.exportCsv}
       </button>
+
+      {/* The A4 report (analytics/report) for the same range, in a new tab
+          with the print dialog already open: "Save as PDF" is the export. */}
+      <a
+        href={`${pathname}/report?range=${currentRange}&print=1`}
+        target="_blank"
+        rel="noopener"
+        className="admin-btn py-2!"
+      >
+        <FileText size={14} strokeWidth={1.7} aria-hidden />
+        {labels.exportReport}
+      </a>
     </div>
   );
 }

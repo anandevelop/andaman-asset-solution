@@ -106,6 +106,35 @@ export function displayValue(metric: VitalKey, stored: number): number {
 }
 
 /**
+ * A stored figure as people read it. Shared by the Analytics screen and its
+ * printed report (analytics/report), so the two cannot disagree.
+ *
+ * Each metric in the unit its own threshold is quoted in, which is not the
+ * same unit for all four. LCP is talked about in seconds ("2.5 s"), INP and
+ * TTFB in milliseconds ("200 ms", "800 ms"), and CLS is unitless once it
+ * comes back from its x1000 storage. Showing INP as "0.26 s" is arithmetic
+ * nobody has to do against a 200 ms line, and it reads as four times better
+ * than it is at a glance.
+ *
+ * "s" and "ms" stay in code rather than in the message files: they are SI
+ * symbols, written the same way in all four locales, and Google's own Core
+ * Web Vitals documentation uses them verbatim in every language it ships.
+ *
+ * The sample count arrives already worded rather than as a number with a
+ * formatter beside it: VitalsPanel is a Client Component, and a function in
+ * its props is not a serialisation warning but a render-time crash
+ * ("Functions cannot be passed directly to Client Components"). Every
+ * count-dependent string is therefore built here, where next-intl's
+ * translator lives.
+ */
+export function formatVital(metric: VitalKey, stored: number): string {
+  const value = displayValue(metric, stored);
+  if (metric === "CLS") return value.toFixed(2);
+  if (metric === "LCP") return `${(value / 1000).toFixed(2)} s`;
+  return `${Math.round(value)} ms`;
+}
+
+/**
  * The value to store, from what web-vitals reported.
  *
  * Rounded to an integer, and clamped: a browser reporting a

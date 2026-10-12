@@ -86,10 +86,17 @@ export default function FacilityScroller({ facilities }: Props) {
     track.scrollBy({ left: distance * direction, behavior: "smooth" });
   };
 
+  // Hover turns the button solid navy rather than tinting it. It used to be
+  // hover:bg-primary/5, which *replaced* the white with a 5% wash: the
+  // button straddles the card's photo edge, so on hover it went nearly
+  // transparent over the picture and the arrow seemed to vanish just as
+  // the pointer reached it.
   const buttonClass =
     "absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center " +
-    "rounded-full border border-primary/10 bg-white text-primary shadow-card transition-opacity " +
-    "hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-0 sm:flex";
+    "rounded-full border border-primary/10 bg-white text-primary shadow-card " +
+    "transition-[opacity,background-color,color] " +
+    "hover:border-primary hover:bg-primary hover:text-white " +
+    "disabled:pointer-events-none disabled:opacity-0 sm:flex";
 
   return (
     <div className="relative">

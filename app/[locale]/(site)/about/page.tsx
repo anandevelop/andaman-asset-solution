@@ -15,10 +15,9 @@
  * proper nouns and come from the database unmodified, same convention as
  * Award.organization/projectName.
  *
- * COMPANY_FOUNDED_YEAR (2005, content/company-timeline.ts) is what the
- * "years of experience" stat below is computed from — unrelated to the
- * timeline's row data now, but still the same single source of truth it
- * always was for that one number.
+ * The stat bar's four figures are counted (lib/about-stats.ts), the years
+ * from CompanyProfile.foundedYear and only then COMPANY_FOUNDED_YEAR, and
+ * each can be overridden at /admin/pages/about/figures.
  *
  * Everything else is editorial copy and lives in messages/*.json.
  * ─────────────────────────────────────────────────────────────────────────
@@ -40,6 +39,8 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
+import { countedAboutStats, resolveAboutStats } from "@/lib/about-stats";
+import { getSiteSettings } from "@/lib/settings";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import MilestonesScroller from "@/components/MilestonesScroller";
 import { isDatabaseOffline } from "@/lib/db";
@@ -108,13 +109,14 @@ export default async function AboutPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const [t, tNav, projects, companyProfile, milestones, principles] = await Promise.all([
+  const [t, tNav, projects, companyProfile, milestones, principles, settings] = await Promise.all([
     getTranslations("about"),
     getTranslations("nav"),
     getPublishedProjects(locale),
     getCompanyProfile(locale),
     getMilestones(),
     getMissionPrinciples(locale),
+    getSiteSettings(),
   ]);
 
   /*
@@ -138,16 +140,18 @@ export default async function AboutPage(props: Props) {
   // hasn't run prisma:seed yet.
   const storyBody = companyProfile?.aboutUs || t("story.body");
 
-  // Derived from live data, so the page cannot contradict /projects.
-  const totalUnits = projects.reduce((sum, p) => sum + (p.totalUnits ?? 0), 0);
-  const totalLand = projects.reduce((sum, p) => sum + (p.landAreaSqm ?? 0), 0);
-  const years = Math.max(1, new Date().getFullYear() - COMPANY_FOUNDED_YEAR);
+  // Counted from live data, so by default the page cannot contradict
+  // /projects; each figure can be overridden at /admin/pages/about/figures.
+  const figures = resolveAboutStats(
+    countedAboutStats(locale, projects, companyProfile?.foundedYear ?? null),
+    settings.aboutStats,
+  );
 
   const stats = [
-    { label: t("stats.projects"), value: formatNumber(locale, projects.length) },
-    { label: t("stats.units"), value: formatNumber(locale, totalUnits) },
-    { label: t("stats.landArea"), value: formatNumber(locale, Math.round(totalLand)) },
-    { label: t("stats.years"), value: `${formatNumber(locale, years)}+` },
+    { label: t("stats.projects"), value: figures.projects },
+    { label: t("stats.units"), value: figures.units },
+    { label: t("stats.landArea"), value: figures.landArea },
+    { label: t("stats.years"), value: figures.years },
   ];
 
   // One array for the trail a visitor reads and the one Google reads.
@@ -224,9 +228,11 @@ export default async function AboutPage(props: Props) {
           match — the card reads as a continuation of the hero, not a new
           section with its own title. */}
       <section className="container-luxe relative z-10 -mt-14 sm:-mt-16">
-        <Reveal>
-          <StatBar stats={stats} tone="elevated" />
-        </Reveal>
+        <EditableSection links={ABOUT_SECTION_LINKS.stats}>
+          <Reveal>
+            <StatBar stats={stats} tone="elevated" />
+          </Reveal>
+        </EditableSection>
       </section>
 
       {/* ── Story ────────────────────────────────────────────────────── */}

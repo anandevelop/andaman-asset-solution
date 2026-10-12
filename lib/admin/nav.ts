@@ -194,6 +194,9 @@ export const NAV_TAB_GROUPS = {
     { key: "mission", segment: "/mission", roles: ROLE_SETS.CONTENT },
     { key: "awards", segment: "/awards", roles: ROLE_SETS.CONTENT },
     { key: "milestones", segment: "/milestones", roles: ROLE_SETS.CONTENT },
+    /* The stat bar under the About hero. Read-only below ADMIN, like
+       pages/projects: it saves through updateSettings. */
+    { key: "figures", segment: "/figures", roles: ROLE_SETS.CONTENT },
   ],
   /**
    * Review & publish.
