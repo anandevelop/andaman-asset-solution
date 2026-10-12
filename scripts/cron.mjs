@@ -43,6 +43,8 @@
 
 /** Where the endpoints are. `app` is the service name on the compose
  *  network; nothing here ever goes out to the internet. */
+import { warmImages } from "./warm-images.mjs";
+
 const BASE = process.env.CRON_TARGET_URL ?? "http://app:3000";
 
 const SECRET = process.env.CRON_SECRET;
@@ -182,6 +184,47 @@ if (!SECRET) {
   log(`scheduling ${JOBS.length} jobs against ${BASE}`);
   for (const job of JOBS) schedule(job);
 }
+
+
+/*
+  Image warm-up — scripts/warm-images.mjs.
+
+  Once when this service starts, which is right after every deploy, and
+  every night at 04:45 to pick up photos uploaded during the day. It needs
+  no CRON_SECRET: it only requests public pages and their images, which is
+  why it sits outside the SECRET branch above. It waits for the app to
+  answer /api/health first, because the app container is still booting
+  when this one starts.
+*/
+async function waitForApp(timeoutMs = 10 * 60_000) {
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    try {
+      const response = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(10_000) });
+      if (response.ok) return true;
+    } catch {
+      /* not up yet */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+  }
+  return false;
+}
+
+const WARM_JOB = { name: "image-warm-up", at: [4, 45] };
+
+function scheduleWarm() {
+  const at = nextRun(WARM_JOB);
+  setTimeout(async () => {
+    await warmImages(BASE, log);
+    scheduleWarm();
+  }, at.getTime() - Date.now());
+}
+
+void (async () => {
+  if (await waitForApp()) await warmImages(BASE, log);
+  else log("image warm-up skipped: the app did not answer /api/health within 10 minutes");
+  scheduleWarm();
+})();
 
 /*
   Nothing keeps a Node process alive but its timers, and every timer here

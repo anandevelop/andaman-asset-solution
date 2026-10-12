@@ -285,6 +285,15 @@ const nextConfig = {
       ...mediaHosts.map((hostname) => ({ protocol: "https", hostname })),
     ],
     formats: ["image/avif", "image/webp"],
+    /*
+      Next's default list ends 1920, 2048, 3840. 3840 is what a retina
+      screen asks for whenever an image is sizes="100vw", and on staging it
+      was the slowest encode of all: up to 4 s cold, for a file a 1440px
+      laptop at 2x shows no sharper than 2048. The top width is now 2048,
+      which is also one fewer variant per photo for
+      scripts/warm-images.mjs to fill.
+    */
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     // Uploaded assets are immutable — the object key carries a UUID — so
     // the optimiser's cache can hold them for a day rather than 60s.
     minimumCacheTTL: 86400,

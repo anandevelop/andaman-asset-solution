@@ -182,6 +182,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modu
 # and the script's own header for why it is not a separate cron container.
 # Node built-ins only, so nothing is copied alongside it.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/cron.mjs ./scripts/cron.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/warm-images.mjs ./scripts/warm-images.mjs
 
 # The image optimizer's cache, created here so it belongs to `nextjs`.
 # docker-compose.prod.yml mounts a named volume over it so optimized images
