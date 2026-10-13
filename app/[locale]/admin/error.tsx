@@ -38,10 +38,12 @@ export default function AdminError({ error, reset }: Props) {
 
   /*
     next-intl is allowed here, unlike the three public boundaries, and the
-    reason is the tree: NextIntlClientProvider is mounted in
-    app/[locale]/layout.tsx, an *ancestor*. A failure that destroyed the
-    provider would be caught above this boundary by app/[locale]/error.tsx,
-    which is why that one has to stay next-intl-free and this one does not.
+    reason is the tree: the NextIntlClientProvider carrying the `admin`
+    messages is mounted in app/[locale]/admin/layout.tsx, an *ancestor* of
+    this boundary (the root layout's provider leaves `admin` out). A
+    failure that destroyed the provider would be caught above this
+    boundary by app/[locale]/error.tsx, which is why that one has to stay
+    next-intl-free and this one does not.
 
     What is not safe is the runtime-selected key. t() throws on a missing
     one, so a typo in KNOWN — or a renamed message — would make this

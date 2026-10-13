@@ -245,6 +245,18 @@ export default async function LocaleLayout(props: Props) {
     getSiteSettings(),
   ]);
 
+  /*
+    Every message except the back office's own. The `admin` namespace is
+    about 128 KB of the 160 KB English file, and as the provider's prop it
+    was serialized into every public page's HTML, so a visitor downloaded
+    and parsed the whole admin vocabulary before the hero could paint.
+    Lighthouse put about 1.8 s of main-thread work on the home page
+    document. /admin mounts its own provider with the full set
+    (admin/layout.tsx), and server components read messages directly and
+    never needed this.
+  */
+  const { admin: _adminMessages, ...clientMessages } = messages as Record<string, unknown>;
+
   const isThai = locale === "th";
 
   /* suppressHydrationWarning on <html>: the back office's inline script
@@ -277,7 +289,7 @@ export default async function LocaleLayout(props: Props) {
           chrome (Navbar/Footer) lives in (site)/layout.tsx so that /admin and
           /login can render their own chrome without inheriting it.
         */}
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={clientMessages}>
           {children}
         </NextIntlClientProvider>
 

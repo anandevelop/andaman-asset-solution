@@ -25,7 +25,8 @@
 
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getTranslations } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getTranslations } from "next-intl/server";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { hasRole } from "@/lib/role-rank";
@@ -139,96 +140,102 @@ export default async function AdminLayout(props: Props) {
     }).format(new Date()),
   });
 
+  // The full message set, `admin` included: the root layout's provider
+  // leaves it out to keep it off the public pages (see app/[locale]/layout.tsx).
+  const messages = await getMessages({ locale });
+
   return (
-    <AuthProvider>
-      <CommandK locale={locale} role={user.role} copilotEnabled={copilot} />
-      <UndoToaster />
-      <KeyboardShortcuts locale={locale} role={user.role} />
-      <SpotlightTracker />
-      {/* data-admin-root switches on the back office's denser type and
-          spacing scale — see "Back-office density" in globals.css. */}
-      <div data-admin-root className="isolate min-h-screen bg-adm-bg text-sm text-adm-text lg:flex">
-        {/* The haze and grid behind everything (globals.css, .admin-aurora).
-            `isolate` above is what lets -z-10 sit over the root's own
-            background instead of under it. The rail is opaque, so only the
-            page column shows them. */}
-        <div aria-hidden data-admin-chrome className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="admin-aurora absolute inset-0">
-            <span />
-            <span />
-            <span />
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <AuthProvider>
+        <CommandK locale={locale} role={user.role} copilotEnabled={copilot} />
+        <UndoToaster />
+        <KeyboardShortcuts locale={locale} role={user.role} />
+        <SpotlightTracker />
+        {/* data-admin-root switches on the back office's denser type and
+            spacing scale — see "Back-office density" in globals.css. */}
+        <div data-admin-root className="isolate min-h-screen bg-adm-bg text-sm text-adm-text lg:flex">
+          {/* The haze and grid behind everything (globals.css, .admin-aurora).
+              `isolate` above is what lets -z-10 sit over the root's own
+              background instead of under it. The rail is opaque, so only the
+              page column shows them. */}
+          <div aria-hidden data-admin-chrome className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+            <div className="admin-aurora absolute inset-0">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="admin-grid absolute inset-0" />
           </div>
-          <div className="admin-grid absolute inset-0" />
-        </div>
-        {/*
-          `display: contents` so this wrapper is invisible to layout — the
-          sidebar stays the flex item it has always been — while giving the
-          print stylesheet one thing to hide. /admin/reports is printed as
-          the report alone, and the chrome around it has several root
-          elements (a mobile bar, the rail, the drawer) that would each
-          have to be found and marked otherwise. See @media print in
-          globals.css.
-        */}
-        <div data-admin-chrome className="contents">
-          <AdminSidebar locale={locale} user={user} counts={counts} environment={environment} />
-        </div>
-
-        <div className="flex-1 lg:min-w-0">
-          <div data-admin-chrome className="contents">
-            <AdminTopbar
-              locale={locale}
-              counts={counts}
-              asOfLabel={asOfLabel}
-              liveCount={liveCount}
-              copilotEnabled={copilot}
-              canClearTestNotifications={hasRole(user.role, Role.ADMIN)}
-              notifications={feed.rows.map((row) => ({
-                id: row.id,
-                event: row.event,
-                title: row.title,
-                body: row.body,
-                href: row.href,
-                read: row.readAt !== null,
-                when: whenLabel(row.createdAt),
-              }))}
-              unreadCount={feed.unread}
-              labels={{
-                search: t("search"),
-                searchLeads: t("leads.searchPlaceholder"),
-                language: t("topbar.language"),
-                notifications: t("topbar.notifications"),
-              }}
-            />
-          </div>
-
           {/*
-            Gutters of 26/28/80 and a 1440px measure, as in the v4 mockup.
-
-            It was once max-w-6xl (1152px), which on the 1800px screens this
-            back office is worked on left ~200px of empty surface down each
-            side and squeezed the tables that need the room most — the leads
-            board, the units grid, three-column settings. Then it was no cap
-            at all, which on a 2560px monitor stretched a single-field form
-            across the whole screen. 1440 fits every table at full width.
-            Prose components carry their own max-w-2xl/3xl and keep it.
+            `display: contents` so this wrapper is invisible to layout — the
+            sidebar stays the flex item it has always been — while giving the
+            print stylesheet one thing to hide. /admin/reports is printed as
+            the report alone, and the chrome around it has several root
+            elements (a mobile bar, the rail, the drawer) that would each
+            have to be found and marked otherwise. See @media print in
+            globals.css.
           */}
-          <div className="w-full min-w-0 px-4 pb-20 pt-5 sm:px-6 lg:px-7 lg:pt-[26px]">
-            <div data-admin-page className="mx-auto w-full min-w-0 max-w-[1440px]">
-              {/* Back to the public page an "Edit" button came from. */}
-              <ReturnToSite />
-              {children}
+          <div data-admin-chrome className="contents">
+            <AdminSidebar locale={locale} user={user} counts={counts} environment={environment} />
+          </div>
+
+          <div className="flex-1 lg:min-w-0">
+            <div data-admin-chrome className="contents">
+              <AdminTopbar
+                locale={locale}
+                counts={counts}
+                asOfLabel={asOfLabel}
+                liveCount={liveCount}
+                copilotEnabled={copilot}
+                canClearTestNotifications={hasRole(user.role, Role.ADMIN)}
+                notifications={feed.rows.map((row) => ({
+                  id: row.id,
+                  event: row.event,
+                  title: row.title,
+                  body: row.body,
+                  href: row.href,
+                  read: row.readAt !== null,
+                  when: whenLabel(row.createdAt),
+                }))}
+                unreadCount={feed.unread}
+                labels={{
+                  search: t("search"),
+                  searchLeads: t("leads.searchPlaceholder"),
+                  language: t("topbar.language"),
+                  notifications: t("topbar.notifications"),
+                }}
+              />
+            </div>
+
+            {/*
+              Gutters of 26/28/80 and a 1440px measure, as in the v4 mockup.
+
+              It was once max-w-6xl (1152px), which on the 1800px screens this
+              back office is worked on left ~200px of empty surface down each
+              side and squeezed the tables that need the room most — the leads
+              board, the units grid, three-column settings. Then it was no cap
+              at all, which on a 2560px monitor stretched a single-field form
+              across the whole screen. 1440 fits every table at full width.
+              Prose components carry their own max-w-2xl/3xl and keep it.
+            */}
+            <div className="w-full min-w-0 px-4 pb-20 pt-5 sm:px-6 lg:px-7 lg:pt-[26px]">
+              <div data-admin-page className="mx-auto w-full min-w-0 max-w-[1440px]">
+                {/* Back to the public page an "Edit" button came from. */}
+                <ReturnToSite />
+                {children}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* A sibling of the page column, so opening it narrows the page
-            rather than covering it. Chrome, like the rail: hidden in print. */}
-        {copilot && (
-          <div data-admin-chrome className="contents">
-            <CopilotPanel locale={locale} />
-          </div>
-        )}
-      </div>
-    </AuthProvider>
+          {/* A sibling of the page column, so opening it narrows the page
+              rather than covering it. Chrome, like the rail: hidden in print. */}
+          {copilot && (
+            <div data-admin-chrome className="contents">
+              <CopilotPanel locale={locale} />
+            </div>
+          )}
+        </div>
+      </AuthProvider>
+    </NextIntlClientProvider>
   );
 }
