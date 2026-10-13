@@ -755,7 +755,11 @@ function SlideLayer({
           src={slide.mediaUrl}
           alt=""
           fill
-          priority={priority}
+          // fetchPriority, not `priority`: Next 16 deprecated `priority`, and
+          // beside an explicit `loading` it no longer marks the request
+          // high. Lighthouse found the LCP photo fetched at default
+          // priority for exactly that reason.
+          fetchPriority={priority ? "high" : undefined}
           // Everything but the first is wanted within seconds, and a lazy
           // image inside a layer that is hidden or clipped would wait.
           loading="eager"
@@ -988,7 +992,7 @@ function StaticFallbackHero({
 }: FallbackHero) {
   return (
     <section className="relative flex h-[88vh] min-h-[560px] w-full items-end overflow-hidden">
-      <ImageWithSkeleton src={imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
+      <ImageWithSkeleton src={imageUrl} alt="" fill fetchPriority="high" loading="eager" sizes="100vw" className="object-cover" />
       <div className="absolute inset-0 bg-linear-to-t from-primary-900/95 via-primary-900/50 to-primary-900/30" />
 
       <div className="container-luxe relative z-10 pb-20 sm:pb-28">

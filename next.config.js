@@ -176,6 +176,13 @@ const CSP_DIRECTIVES = {
 
 function buildCsp() {
   return Object.entries(CSP_DIRECTIVES)
+    /*
+      upgrade-insecure-requests only means something in an enforced policy.
+      In Report-Only the browser ignores it and logs a console error
+      saying so, on every page, which Lighthouse counts against Best
+      Practices. It is added back the moment CSP_ENFORCE is on.
+    */
+    .filter(([directive]) => cspEnforced || directive !== "upgrade-insecure-requests")
     .map(([directive, values]) =>
       values.length > 0 ? `${directive} ${values.join(" ")}` : directive,
     )

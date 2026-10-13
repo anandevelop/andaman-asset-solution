@@ -15,7 +15,9 @@
  *
  * ImageWithSkeleton is replaced with a bare <img>. next/image needs the
  * app's loader config, and what is worth asserting is not its markup but
- * the props the hero hands it: `priority` on the first slide only, and
+ * the props the hero hands it: `fetchPriority="high"` on the first slide
+ * only (Next 16 deprecated `priority`, and beside `loading` it no longer
+ * raised the request), and
  * `loading="eager"` on all of them.
  */
 
@@ -30,7 +32,7 @@ import { act, fireEvent, render, screen, within } from "./render";
 type MockImageProps = {
   src: string;
   alt: string;
-  priority?: boolean;
+  fetchPriority?: string;
   loading?: string;
   className?: string;
   style?: CSSProperties;
@@ -38,13 +40,13 @@ type MockImageProps = {
 };
 
 vi.mock("@/components/ImageWithSkeleton", () => ({
-  default: ({ src, alt, priority, loading, className, style, onLoad }: MockImageProps) => (
+  default: ({ src, alt, fetchPriority, loading, className, style, onLoad }: MockImageProps) => (
     // eslint-disable-next-line @next/next/no-img-element -- the stand-in for next/image
     <img
       src={src}
       alt={alt}
       data-testid="hero-image"
-      data-priority={String(Boolean(priority))}
+      data-priority={String(fetchPriority === "high")}
       data-loading={loading}
       className={className}
       style={style}

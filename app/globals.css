@@ -2233,6 +2233,62 @@
   print-color-adjust is the standard property; the -webkit- form is what
   Chrome/Safari actually read as of this writing.
 */
+/*
+  components/Navbar.tsx's entrances, the values framer-motion used to
+  animate: the language list drops 4px in 0.15s, the mobile menu comes
+  down 20px in 0.3s, its rows rise 30px in 0.4s staggered by an inline
+  animation-delay, and the footer fades in after them.
+*/
+@keyframes nav-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--nav-from, -4px));
+  }
+}
+.nav-drop {
+  --nav-from: -4px;
+  animation: nav-rise 0.15s ease-out;
+}
+.nav-menu-in {
+  --nav-from: -20px;
+  animation: nav-rise 0.3s ease-in-out;
+}
+.nav-item-in {
+  --nav-from: 30px;
+  animation: nav-rise 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+@keyframes nav-fade {
+  from {
+    opacity: 0;
+  }
+}
+.nav-fade-in {
+  animation: nav-fade 0.5s 0.4s both;
+}
+
+/*
+  components/Reveal.tsx: hidden until its observer marks it shown, then a
+  0.7s rise and fade on the curve framer-motion used to drive. Under
+  reduced motion it simply appears.
+*/
+.reveal {
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal:not([data-shown]) {
+  opacity: 0;
+  transform: translateY(28px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+  }
+  .reveal:not([data-shown]) {
+    transform: none;
+  }
+}
+
 @media print {
   * {
     print-color-adjust: exact;

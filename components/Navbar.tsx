@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Menu, X, Phone, Globe, Check, ChevronDown, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { siteConfig } from "@/config/site";
 import { locales, type Locale } from "@/i18n";
 
@@ -440,45 +439,39 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
                 />
               </button>
 
-              <AnimatePresence>
-                {langOpen && (
-                  <motion.div
-                    ref={langMenuRef}
-                    role="listbox"
-                    aria-label={t("language")}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full z-50 mt-2 min-w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-ink/10 bg-surface py-1 shadow-card"
-                  >
-                    {locales.map((code, index) => (
-                      <Link
-                        key={code}
-                        ref={(el) => {
-                          langOptionRefs.current[index] = el;
-                        }}
-                        href={localizedPath(code)}
-                        hrefLang={code}
-                        lang={code}
-                        role="option"
-                        aria-selected={code === locale}
-                        onClick={() => setLangOpen(false)}
-                        className={[
-                          "flex min-h-11 items-center justify-between gap-3 whitespace-nowrap px-4 py-2.5 text-sm transition-colors hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-hidden",
-                          code === locale ? "text-primary font-medium" : "text-ink/70",
-                        ].join(" ")}
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <Globe size={14} strokeWidth={1.5} className="shrink-0 text-ink/40" aria-hidden />
-                          {LOCALE_LABELS[code]}
-                        </span>
-                        {code === locale && <Check size={14} strokeWidth={2} aria-hidden />}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {langOpen && (
+                <div
+                  ref={langMenuRef}
+                  role="listbox"
+                  aria-label={t("language")}
+                  className="nav-drop absolute right-0 top-full z-50 mt-2 min-w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-ink/10 bg-surface py-1 shadow-card"
+                >
+                  {locales.map((code, index) => (
+                    <Link
+                      key={code}
+                      ref={(el) => {
+                        langOptionRefs.current[index] = el;
+                      }}
+                      href={localizedPath(code)}
+                      hrefLang={code}
+                      lang={code}
+                      role="option"
+                      aria-selected={code === locale}
+                      onClick={() => setLangOpen(false)}
+                      className={[
+                        "flex min-h-11 items-center justify-between gap-3 whitespace-nowrap px-4 py-2.5 text-sm transition-colors hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-hidden",
+                        code === locale ? "text-primary font-medium" : "text-ink/70",
+                      ].join(" ")}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Globe size={14} strokeWidth={1.5} className="shrink-0 text-ink/40" aria-hidden />
+                        {LOCALE_LABELS[code]}
+                      </span>
+                      {code === locale && <Check size={14} strokeWidth={2} aria-hidden />}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ปุ่มโทรศัพท์ (เดสก์ท็อป) */}
@@ -507,141 +500,126 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
       </header>
 
       {/* Mobile nav - Full Screen */}
-      <AnimatePresence>
-        {open && (
-          <motion.nav
-            ref={menuRef}
-            id={MOBILE_MENU_ID}
-            aria-label={t("mobileMenu")}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-primary pt-16 sm:pt-18 lg:hidden"
-          >
-            <div className="container-luxe flex min-h-full flex-col px-6 pb-8 pt-6 sm:pb-12 sm:pt-8">
-              {/* Menu list — numbered rows on a hairline divider, a
-                  trailing chevron promising "go here", the active row
-                  swapping that chevron for a plain dot since it has
-                  nowhere further to go. */}
-              <div className="flex flex-col">
-                {siteConfig.nav.main.map((item, i) => {
-                  const active = isActive(item.href);
+      {/*
+        Entrance animations are CSS keyframes (globals.css, .nav-*), not
+        framer-motion. The navbar is on every page, and it was one of only
+        two things loading framer-motion on the home page before the hero
+        photo could paint. Closing is now immediate rather than a 0.3s fade
+        out.
+      */}
+      {open && (
+        <nav
+          ref={menuRef}
+          id={MOBILE_MENU_ID}
+          aria-label={t("mobileMenu")}
+          className="nav-menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-primary pt-16 sm:pt-18 lg:hidden"
+        >
+          <div className="container-luxe flex min-h-full flex-col px-6 pb-8 pt-6 sm:pb-12 sm:pt-8">
+            {/* Menu list — numbered rows on a hairline divider, a
+                trailing chevron promising "go here", the active row
+                swapping that chevron for a plain dot since it has
+                nowhere further to go. */}
+            <div className="flex flex-col">
+              {siteConfig.nav.main.map((item, i) => {
+                const active = isActive(item.href);
 
-                  const motionProps = {
-                    initial: { opacity: 0, y: 30 },
-                    animate: { opacity: 1, y: 0 },
-                    exit: { opacity: 0, y: 10 },
-                    transition: {
-                      delay: i * 0.06 + 0.1,
-                      duration: 0.4,
-                      ease: [0.25, 0.1, 0.25, 1] as const,
-                    },
-                  };
-
-                  return (
-                    <motion.div
-                      key={item.key}
-                      {...motionProps}
-                      className="border-b border-white/10 first:border-t"
+                return (
+                  <div
+                    key={item.key}
+                    className="nav-item-in border-b border-white/10 first:border-t"
+                    style={{ animationDelay: `${i * 0.06 + 0.1}s` }}
+                  >
+                    <Link
+                      href={`/${locale}${item.href}`}
+                      onClick={() => setOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className="flex items-center gap-4 py-4"
                     >
-                      <Link
-                        href={`/${locale}${item.href}`}
-                        onClick={() => setOpen(false)}
-                        aria-current={active ? "page" : undefined}
-                        className="flex items-center gap-4 py-4"
-                      >
-                        <span className="text-xs tabular-nums text-white/60" aria-hidden>
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span className={mobileLinkClass(active)}>{t(item.key as any)}</span>
-                        {active ? (
-                          <span
-                            aria-hidden
-                            className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                          />
-                        ) : (
-                          <ChevronRight
-                            size={18}
-                            strokeWidth={1.5}
-                            className="ml-auto shrink-0 text-white/30"
-                            aria-hidden
-                          />
-                        )}
-                      </Link>
-                    </motion.div>
-                  );
-                })}
+                      <span className="text-xs tabular-nums text-white/60" aria-hidden>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className={mobileLinkClass(active)}>{t(item.key as any)}</span>
+                      {active ? (
+                        <span
+                          aria-hidden
+                          className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                        />
+                      ) : (
+                        <ChevronRight
+                          size={18}
+                          strokeWidth={1.5}
+                          className="ml-auto shrink-0 text-white/30"
+                          aria-hidden
+                        />
+                      )}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Language + contact — pushed to the bottom of the panel
+                (mt-auto on the flex-col above) rather than sitting right
+                under the menu list, so the two groups read as separate
+                concerns even on a tall phone screen with room to spare. */}
+            <div className="nav-fade-in mt-auto flex flex-col gap-6 pt-10 sm:pt-12">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-white/60">
+                  {t("language")}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2.5">
+                  {locales.map((code) => (
+                    <Link
+                      key={code}
+                      href={localizedPath(code)}
+                      hrefLang={code}
+                      lang={code}
+                      onClick={() => setOpen(false)}
+                      aria-current={code === locale ? "true" : undefined}
+                      className={[
+                        "rounded-full border px-4 py-2 text-sm transition-colors",
+                        code === locale
+                          ? "border-accent text-white"
+                          : "border-white/20 text-white/70 hover:border-white/40 hover:text-white",
+                      ].join(" ")}
+                    >
+                      {LOCALE_LABELS[code]}
+                    </Link>
+                  ))}
+                </div>
               </div>
 
-              {/* Language + contact — pushed to the bottom of the panel
-                  (mt-auto on the flex-col above) rather than sitting right
-                  under the menu list, so the two groups read as separate
-                  concerns even on a tall phone screen with room to spare. */}
-              <motion.div
-                className="mt-auto flex flex-col gap-6 pt-10 sm:pt-12"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
+              <a
+                href={`tel:${phone}`}
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-3.5 text-[15px] font-medium text-primary shadow-xs transition-colors active:bg-white/90 sm:py-4 sm:text-base"
               >
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/60">
-                    {t("language")}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2.5">
-                    {locales.map((code) => (
-                      <Link
-                        key={code}
-                        href={localizedPath(code)}
-                        hrefLang={code}
-                        lang={code}
-                        onClick={() => setOpen(false)}
-                        aria-current={code === locale ? "true" : undefined}
-                        className={[
-                          "rounded-full border px-4 py-2 text-sm transition-colors",
-                          code === locale
-                            ? "border-accent text-white"
-                            : "border-white/20 text-white/70 hover:border-white/40 hover:text-white",
-                        ].join(" ")}
-                      >
-                        {LOCALE_LABELS[code]}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                <Phone size={18} strokeWidth={1.5} aria-hidden />
+                {phoneDisplay}
+              </a>
 
-                <a
-                  href={`tel:${phone}`}
-                  className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-3.5 text-[15px] font-medium text-primary shadow-xs transition-colors active:bg-white/90 sm:py-4 sm:text-base"
-                >
-                  <Phone size={18} strokeWidth={1.5} aria-hidden />
-                  {phoneDisplay}
-                </a>
-
-                {/* A darkened WhatsApp green, not the brand's own #25D366
-                    (used elsewhere on the site as a small icon/wash accent,
-                    e.g. contact/page.tsx) — white text on that neon green
-                    measures 1.98:1, well under WCAG AA's 4.5:1 floor for
-                    normal-size text. #188640/#136c34 keep the same hue and
-                    still read unmistakably as "WhatsApp green" at 4.6:1 and
-                    6.5:1. Caught by an axe-core scan of this exact panel,
-                    not a hunch — see PR notes for the numbers. */}
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-3 rounded-full bg-[#188640] py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-[#136c34] sm:py-4 sm:text-base"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden>
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                  {tChat("whatsappLabel")}
-                </a>
-              </motion.div>
+              {/* A darkened WhatsApp green, not the brand's own #25D366
+                  (used elsewhere on the site as a small icon/wash accent,
+                  e.g. contact/page.tsx) — white text on that neon green
+                  measures 1.98:1, well under WCAG AA's 4.5:1 floor for
+                  normal-size text. #188640/#136c34 keep the same hue and
+                  still read unmistakably as "WhatsApp green" at 4.6:1 and
+                  6.5:1. Caught by an axe-core scan of this exact panel,
+                  not a hunch — see PR notes for the numbers. */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-[#188640] py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-[#136c34] sm:py-4 sm:text-base"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                {tChat("whatsappLabel")}
+              </a>
             </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+          </div>
+        </nav>
+      )}
     </>
   );
 }
