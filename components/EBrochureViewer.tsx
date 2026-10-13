@@ -560,7 +560,7 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       {status === "loading" ? (
         <>
           <div
-            className="skeleton-shimmer mx-auto w-full max-w-3xl rounded-xs"
+            className="skeleton-shimmer relative mx-auto w-full max-w-3xl rounded-xs"
             style={{ aspectRatio: pages.aspectRatio }}
             role="status"
             aria-label={t("loading")}

@@ -803,6 +803,10 @@ describe("HeroCarousel", () => {
       try {
         const { container } = setup();
         const drip = container.querySelector<HTMLElement>("[style*='hero-scroll-drip']")!;
+        // Still until the page has loaded and gone idle (jsdom has no
+        // requestIdleCallback, so the 300 ms fallback), then running.
+        expect(drip.style.animationPlayState).toBe("paused");
+        tick(300);
         expect(drip.style.animationPlayState).toBe("running");
 
         act(() =>

@@ -58,6 +58,7 @@ export default function ImageWithSkeleton({
       />
       <div
         aria-hidden
+        data-loaded={loaded ? "" : undefined}
         className={`skeleton-shimmer pointer-events-none absolute inset-0 transition-opacity duration-500 ${skeletonClassName} ${
           loaded ? "opacity-0" : "opacity-100"
         }`}

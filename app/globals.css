@@ -1632,12 +1632,15 @@
    `animationend` is what sends the carousel on to the next slide (in normal
    motion; reduced motion uses a timer, since this collapses to ~0ms). See
    components/HeroCarousel.tsx. */
+  /* scaleX, not width: a width animation re-lays-out the rail every frame
+     for the whole hold time of every slide. HeroCarousel's RailBar sets
+     transform-origin left, so it fills the same way. */
   @keyframes story-progress {
     from {
-      width: 0%;
+      transform: scaleX(0);
     }
     to {
-      width: 100%;
+      transform: scaleX(1);
     }
   }
 
@@ -1679,24 +1682,45 @@
    two transition-property utilities on one element don't merge, the later
    one in the stylesheet wins). prefers-reduced-motion is already handled by
    the blanket animation-duration override at the bottom of this file. */
-  @keyframes skeleton-shimmer-sweep {
+  /*
+    The sweep is a band on ::after moved by transform, not a gradient moved
+    by background-position. background-position repaints the box on the main
+    thread every frame, for every photo still loading, and the animation was
+    infinite, so it kept running under the faded-out skeleton after the
+    photo had arrived. Lighthouse counted it in the home page's 0.8 s of
+    style and layout work. A transform runs on the compositor, and
+    [data-loaded] (set by ImageWithSkeleton) stops it.
+    The host needs a position for the band to stay inside it: the
+    ImageWithSkeleton overlay is absolute, and the two e-brochure skeletons
+    carry `relative`.
+  */
+  @keyframes skeleton-shimmer-slide {
     from {
-      background-position: 200% 0;
+      transform: translateX(-100%);
     }
     to {
-      background-position: -200% 0;
+      transform: translateX(100%);
     }
   }
 
   .skeleton-shimmer {
+    overflow: hidden;
+    background-color: rgba(8, 53, 81, 0.05);
+  }
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
     background-image: linear-gradient(
       100deg,
-      rgba(8, 53, 81, 0.05) 30%,
-      rgba(8, 53, 81, 0.12) 50%,
-      rgba(8, 53, 81, 0.05) 70%
+      transparent 30%,
+      rgba(8, 53, 81, 0.07) 50%,
+      transparent 70%
     );
-    background-size: 200% 100%;
-    animation: skeleton-shimmer-sweep 1.6s ease-in-out infinite;
+    animation: skeleton-shimmer-slide 1.6s ease-in-out infinite;
+  }
+  .skeleton-shimmer[data-loaded]::after {
+    animation: none;
   }
 
   /* Site plan tooltip (components/SitePlanMap.tsx) — its position is

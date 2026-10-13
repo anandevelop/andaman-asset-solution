@@ -61,7 +61,7 @@ export default function PagedView({ pages, currentIndex, pageLabel }: Props) {
       ) : (
         // Same shape as the finished page, so the layout does not jump
         // when it arrives.
-        <div className="skeleton-shimmer h-full w-full" aria-hidden />
+        <div className="skeleton-shimmer relative h-full w-full" aria-hidden />
       )}
     </div>
   );

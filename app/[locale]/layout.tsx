@@ -38,6 +38,16 @@ const fcVision = localFont({
   ],
   variable: "--font-fc-vision",
   display: "swap",
+  /*
+    Not preloaded. next/font puts a <link rel="preload"> for every file in
+    the <head> of every page, and this layout is shared by all four
+    locales, so /en, /zh and /ru each fetched about 250 KB of Thai font at
+    high priority and never used it. Lighthouse's throttled mobile run
+    counted it against the hero photo (22 KB). On a Thai page the browser
+    still fetches the font as soon as Thai text needs it, and `swap` shows
+    the text in the fallback until it lands.
+  */
+  preload: false,
 });
 
 type Props = {

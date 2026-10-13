@@ -271,6 +271,36 @@ function Carousel({
   const [labelSwapping, setLabelSwapping] = useState(false);
   const [preloadNext, setPreloadNext] = useState(false);
   const [inView, setInView] = useState(true);
+  /*
+    The hero holds still until the page has loaded and the browser is idle
+    (at most 1.5 s after load). Then the zoom, the progress bar and the
+    scroll cue start. Measured with Lighthouse on mobile: with all three
+    running from the first frame, the page never settled while it was
+    still loading, so Speed Index kept counting and the frames competed
+    with the work that paints the photo. The first slide's hold time
+    starts from here as well, so it still gets its full duration on
+    screen.
+  */
+  const [motionReady, setMotionReady] = useState(false);
+  useEffect(() => {
+    let idle = 0;
+    let timer = 0;
+    const start = () => {
+      // Safari has no requestIdleCallback; a short timer after load does.
+      if (typeof window.requestIdleCallback === "function") {
+        idle = window.requestIdleCallback(() => setMotionReady(true), { timeout: 1500 });
+      } else {
+        timer = window.setTimeout(() => setMotionReady(true), 300);
+      }
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+    return () => {
+      window.removeEventListener("load", start);
+      if (idle) window.cancelIdleCallback(idle);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
 
   const sectionRef = useRef<HTMLElement>(null);
   const layerRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -497,6 +527,7 @@ function Carousel({
             register={(el) => {
               layerRefs.current[s.id] = el;
             }}
+            motionReady={motionReady}
             onAdvance={advance}
             onProgress={setVideoProgress}
             onFirstLoad={i === 0 ? () => setPreloadNext(true) : undefined}
@@ -560,7 +591,7 @@ function Carousel({
               // comment in app/globals.css.
               style={{
                 animation: "hero-scroll-drip 2.2s cubic-bezier(0.16,1,0.3,1) infinite",
-                animationPlayState: inView ? "running" : "paused",
+                animationPlayState: inView && motionReady ? "running" : "paused",
               }}
             />
           </span>
@@ -615,6 +646,7 @@ function Carousel({
                         state={i < index ? "done" : isCurrent ? "current" : "pending"}
                         slide={s}
                         videoProgress={videoProgress}
+                        motionReady={motionReady}
                         onEnded={reduced ? undefined : advance}
                       />
                       <span className="block text-[11px] leading-none tracking-[0.2em] text-accent">
@@ -659,6 +691,7 @@ function SlideLayer({
   role,
   opening,
   priority,
+  motionReady,
   register,
   onAdvance,
   onProgress,
@@ -670,6 +703,8 @@ function SlideLayer({
   opening: boolean;
   /** First slide only — the LCP image. */
   priority: boolean;
+  /** The zoom waits for this; see `motionReady` in the carousel. */
+  motionReady: boolean;
   register: (el: HTMLDivElement | null) => void;
   onAdvance: () => void;
   onProgress: (percent: number) => void;
@@ -713,6 +748,7 @@ function SlideLayer({
           animationDuration: `${Math.max(slide.durationSeconds, 1) + FADE_MS / 1000}s`,
           animationTimingFunction: "cubic-bezier(0.33, 0, 0.2, 1)",
           animationFillMode: "forwards",
+          animationPlayState: motionReady ? "running" : "paused",
           transformOrigin: "60% 55%",
         };
 
@@ -902,27 +938,34 @@ function RailBar({
   state,
   slide,
   videoProgress,
+  motionReady,
   onEnded,
 }: {
   state: "done" | "current" | "pending";
   slide: HeroStorySlide;
   videoProgress: number;
+  /** See `motionReady` in the carousel: the first hold starts after load. */
+  motionReady: boolean;
   onEnded?: () => void;
 }) {
-  const style: CSSProperties =
-    state === "done"
-      ? { width: "100%" }
+  // scaleX from the left, not width: see story-progress in globals.css.
+  const style: CSSProperties = {
+    transformOrigin: "left",
+    ...(state === "done"
+      ? { transform: "scaleX(1)" }
       : state === "pending"
-        ? { width: "0%" }
+        ? { transform: "scaleX(0)" }
         : slide.mediaType === "IMAGE"
           ? {
-              width: "0%",
+              transform: "scaleX(0)",
               animationName: "story-progress",
               animationDuration: `${Math.max(slide.durationSeconds, 1)}s`,
               animationTimingFunction: "linear",
               animationFillMode: "forwards",
+              animationPlayState: motionReady ? "running" : "paused",
             }
-          : { width: `${videoProgress}%` };
+          : { transform: `scaleX(${videoProgress / 100})` }),
+  };
 
   return (
     <span aria-hidden className="mb-3 block h-[2px] overflow-hidden bg-white/[0.22]">
