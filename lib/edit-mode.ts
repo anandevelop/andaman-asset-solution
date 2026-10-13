@@ -160,7 +160,12 @@ export function projectSectionLinks(id: string) {
       { labelKey: "projectSitePlan", href: `${base}/site-plan` },
       { labelKey: "projectUnits", href: `${base}/units` },
     ],
-    location: [{ labelKey: "projectOverview", href: `${base}/edit` }],
+    // The map's pin and address are project details; its Nearby tabs are
+    // their own tab (lib/nearby.ts).
+    location: [
+      { labelKey: "projectOverview", href: `${base}/edit` },
+      { labelKey: "projectNearby", href: `${base}/nearby` },
+    ],
     progress: [{ labelKey: "progress", href: `${base}/progress` }],
   } satisfies Record<string, EditLink[]>;
 }

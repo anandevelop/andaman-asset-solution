@@ -21,7 +21,6 @@ import {
   type ProjectFilters,
   type SortOption,
 } from "@/lib/project-filters";
-import { getNearbyAttractionCategories } from "@/content/nearby-attractions";
 
 /**
  * Derived from UNIT_STATUSES rather than imported as Prisma's generated
@@ -953,25 +952,6 @@ export async function getReservableUnits(projectId: string): Promise<ReservableU
     },
     [],
   );
-}
-
-/**
- * Nearby-attraction categories shown on every project page.
- *
- * Code-owned content (content/nearby-attractions.ts), not a database query
- * — this used to be an admin-editable "shared default, project-overridable"
- * feature (NearbyAttractionCategory/Item), removed by client request once
- * it became clear the per-project override was never used in practice and
- * the shared-default admin screen was silently pointless (prisma/seed.ts
- * wiped and recreated that table every seed run, so an admin edit never
- * survived a re-seed). See content/nearby-attractions.ts's header for the
- * full reasoning. Kept `async` for call-site compatibility even though
- * there is no longer any I/O.
- */
-export async function getNearbyAttractions(
-  locale: string,
-): Promise<NearbyAttractionCategorySummary[]> {
-  return getNearbyAttractionCategories(locale);
 }
 
 /**

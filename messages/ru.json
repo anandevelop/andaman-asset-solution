@@ -4202,6 +4202,32 @@
     "returnToSite": {
       "back": "Вернуться на страницу",
       "dismiss": "Закрыть"
+    },
+    "nearby": {
+      "title": "Nearby",
+      "projectIntro": "The Nearby tabs on this project's map (schools, beaches, activities…), with distance and drive time from the development.",
+      "editShared": "Edit the shared list",
+      "sharedTitle": "Nearby places (shared list)",
+      "sharedIntro": "What every project shows until it has a list of its own.",
+      "usingShared": "This project uses the shared list.",
+      "usingSharedHint": "Editing the shared list changes every project that uses it. If this project needs a different list, make one for it, starting from a copy of the shared list.",
+      "makeOwn": "Make a list for this project",
+      "builtInNote": "Not saved yet: this is the built-in list. The first save stores it in the database.",
+      "tab": "Tab {n}",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "deleteTab": "Delete tab",
+      "confirmDeleteTab": "Delete this tab and every place in it? (Takes effect when you save.)",
+      "label": "Tab label",
+      "place": "Place",
+      "distanceKm": "Distance (km)",
+      "durationMin": "Drive (min)",
+      "deletePlace": "Delete place",
+      "addPlace": "Add a place",
+      "addTab": "Add a tab",
+      "revert": "Go back to the shared list",
+      "confirmRevert": "Delete this project's own list and use the shared list again?",
+      "invalid": "Something is missing or invalid: {detail}"
     }
   },
   "legalPage": {
@@ -4255,7 +4281,8 @@
       "article": "эта статья",
       "event": "это событие",
       "brochure": "эта брошюра",
-      "aboutFigures": "company figures"
+      "aboutFigures": "company figures",
+      "projectNearby": "nearby places"
     },
     "picker": {
       "hint": "Нажмите на любой текст на странице, чтобы изменить его · Esc — выйти",

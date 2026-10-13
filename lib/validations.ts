@@ -1831,3 +1831,29 @@ export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> 
   "seo.metaDescriptionZh": z.string().max(META_DESCRIPTION_MAX),
   "seo.metaDescriptionRu": z.string().max(META_DESCRIPTION_MAX),
 };
+
+/*
+  The "Nearby" list for one scope (a project, or the shared list), saved
+  whole by NearbyEditor — see lib/nearby.ts. English is the one required
+  label because it is the fallback for the other three. Ceilings are
+  abuse limits; the panel holds a handful of tabs of a handful of places.
+*/
+const nearbyPlaceSchema = z.object({
+  name: z.string().trim().min(1, "Name the place").max(120),
+  distanceKm: z.coerce.number().min(0, "0 or more").max(999),
+  durationMin: z.coerce.number().int("Whole minutes").min(0, "0 or more").max(600),
+});
+
+export const nearbyListSchema = z
+  .array(
+    z.object({
+      labels: z.object({
+        en: z.string().trim().min(1, "An English label is required").max(60),
+        th: z.string().trim().max(60),
+        zh: z.string().trim().max(60),
+        ru: z.string().trim().max(60),
+      }),
+      places: z.array(nearbyPlaceSchema).max(40),
+    }),
+  )
+  .max(12);

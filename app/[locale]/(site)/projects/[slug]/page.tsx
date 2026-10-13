@@ -28,13 +28,13 @@ import {
   getProjectProgress,
   getUnitTypesForProject,
   getProjectUnits,
-  getNearbyAttractions,
   getProjectFacilities,
 } from "@/lib/projects";
 import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
 import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
+import { getNearbyForProject } from "@/lib/nearby";
 import { robotsMetadata } from "@/lib/indexing";
 import EditableSection from "@/components/edit/EditableSection";
 import EditTarget from "@/components/edit/EditTarget";
@@ -154,7 +154,7 @@ export default async function ProjectPage(props: Props) {
       getSiteSettings(),
       getUnitTypesForProject(project.id, locale),
       getProjectUnits(project.id),
-      getNearbyAttractions(locale),
+      getNearbyForProject(project.id, locale),
       // Company-wide trust signal for the lead-form mini stat row below —
       // same source as the home page Awards section, not project-specific
       // (Award has no project relation).

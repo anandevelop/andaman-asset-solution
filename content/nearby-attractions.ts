@@ -5,23 +5,17 @@
  * golf/activity spots and lifestyle amenities, with distance/drive time
  * from the development.
  *
- * Previously a full admin-editable feature (NearbyAttractionCategory/Item
- * models + a "shared default, project-overridable" fallback in
- * lib/projects.ts). Removed by client request once it became clear the
- * override capability was never used: all 3 launched projects (Residence
- * Prime, Trinity Village, The Victory) render the exact same list from the
- * Sale Kit extraction, and the admin UI for editing the shared default was
- * silently pointless anyway — prisma/seed.ts wiped and recreated that table
- * on every seed run, so an edit made through the admin never survived a
- * re-seed. A ~790-line CRUD (own admin nav item, 4-language translation
- * tabs, drag-free reorder) maintaining a list that never actually changed
- * wasn't worth keeping. If a future project legitimately needs a different
- * list (e.g. a development far enough from Cherngtalay that these schools
- * and beaches stop being relevant), that's a one-line code edit here, not
- * a data-entry task — see COMPANY_TIMELINE and PRIVACY_POLICY_* for the
- * same "code-owned, developer-edited" convention already used elsewhere on
- * this site for content that only ever changes when a developer is already
- * involved.
+ * Now the built-in list only. The page reads lib/nearby.ts, which shows a
+ * project's own list, else the shared list, both edited in the admin
+ * (/admin/projects/[id]/nearby and /admin/projects/nearby), and falls
+ * back to this list only while the database has neither. The editor also
+ * opens with it the first time.
+ *
+ * History: an earlier admin for this list was removed by client request,
+ * because all three launched projects showed the same list and its
+ * "shared default" screen was wiped by every re-seed. It came back as
+ * per-project lists when projects needed lists of their own. Nothing
+ * seeds these tables, so an edit cannot be reverted by `npm run setup`.
  *
  * Source data (place names, distances, drive times): Sale Kit PDF extraction,
  * prisma/seed-data/content-seed-data.json → nearbyAttractions. That file's
@@ -53,7 +47,12 @@ export type NearbyAttractionCategory = {
   items: NearbyAttractionItem[];
 };
 
-const CATEGORIES: NearbyAttractionCategory[] = [
+/**
+ * The built-in list. Since lib/nearby.ts this is the fallback for a
+ * database with no shared list yet, and the template the admin editor
+ * starts from. It is no longer what every project page shows.
+ */
+export const NEARBY_DEFAULTS: readonly NearbyAttractionCategory[] = [
   {
     id: "international-school",
     categoryName: {
@@ -139,9 +138,9 @@ export function getNearbyAttractionCategories(locale: string): {
   sortOrder: number;
   items: { id: string; name: string; distanceKm: number; durationMin: number }[];
 }[] {
-  const l = (locale in CATEGORIES[0].categoryName ? locale : "en") as Locale;
+  const l = (locale in NEARBY_DEFAULTS[0].categoryName ? locale : "en") as Locale;
 
-  return CATEGORIES.map((cat, sortOrder) => ({
+  return NEARBY_DEFAULTS.map((cat, sortOrder) => ({
     id: cat.id,
     categoryName: cat.categoryName[l],
     sortOrder,

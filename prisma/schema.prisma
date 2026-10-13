@@ -437,6 +437,10 @@ model Project {
   /// that model's comment for why nothing writes to it.
   attractions ProjectAttraction[]
 
+  /// This project's own "nearby" list (NearbyCategory). Empty means the
+  /// project shows the shared list — see lib/nearby.ts.
+  nearbyCategories NearbyCategory[]
+
   /// Back-reference required by Prisma for EBrochure's optional FK. The FK
   /// is SetNull, so these survive the project being deleted.
   eBrochures EBrochure[]
@@ -856,6 +860,58 @@ model ProjectFacilityTranslation {
 
   @@unique([facilityId, locale])
   @@map("project_facility_translations")
+}
+
+/// One tab of the "Nearby" panel on a project page (schools, beaches...).
+///
+/// `projectId` null is the shared list every project falls back to; a
+/// project with categories of its own shows only those. lib/nearby.ts
+/// resolves project → shared → the built-in list in
+/// content/nearby-attractions.ts, so a page is never empty, even on a
+/// database nobody has edited yet.
+///
+/// The four labels are columns rather than a *Translation table: the whole
+/// list is edited as one document in one form (NearbyEditor), each label is
+/// a couple of words, and a category without all four is not a state
+/// worth modelling. A blank label falls back to English.
+model NearbyCategory {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  labelEn String
+  labelTh String @default("")
+  labelZh String @default("")
+  labelRu String @default("")
+
+  sortOrder Int           @default(0)
+  places    NearbyPlace[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@map("nearby_categories")
+}
+
+/// One place in a NearbyCategory. The name is a proper noun, shown as
+/// written in every language (same convention as project names).
+model NearbyPlace {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   NearbyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  name        String
+  distanceKm  Decimal @db.Decimal(6, 2)
+  durationMin Int
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId, sortOrder])
+  @@map("nearby_places")
 }
 
 /// Superseded by NearbyAttractionCategory/NearbyAttractionItem below —

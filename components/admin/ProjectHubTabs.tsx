@@ -58,10 +58,11 @@ export type ProjectHubTabKey =
   | "units"
   | "sitePlan"
   | "facilities"
+  | "nearby"
   | "progress"
   | "brochures";
 
-type TabKey = "overview" | "contentSeo" | "unitTypes" | "unitsPlan" | "facilities" | "progress" | "brochures";
+type TabKey = "overview" | "contentSeo" | "unitTypes" | "unitsPlan" | "facilities" | "nearby" | "progress" | "brochures";
 
 const TAB_OF: Record<ProjectHubTabKey, TabKey> = {
   overview: "overview",
@@ -71,6 +72,7 @@ const TAB_OF: Record<ProjectHubTabKey, TabKey> = {
   units: "unitsPlan",
   sitePlan: "unitsPlan",
   facilities: "facilities",
+  nearby: "nearby",
   progress: "progress",
   brochures: "brochures",
 };
@@ -149,6 +151,7 @@ export default async function ProjectHubTabs({ locale, projectId, active }: Prop
     { key: "unitTypes", href: `${base}/unit-types`, label: t("projects.hubUnitTypes") },
     { key: "unitsPlan", href: `${base}/units`, label: t("projects.hubUnits") },
     { key: "facilities", href: `${base}/facilities`, label: t("facilities.title") },
+    { key: "nearby", href: `${base}/nearby`, label: t("nearby.title") },
     { key: "progress", href: `${base}/progress`, label: t("progress.title") },
     { key: "brochures", href: `${base}/brochures`, label: t("eBrochures.title") },
   ];
