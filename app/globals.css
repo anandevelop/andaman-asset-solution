@@ -1748,19 +1748,59 @@
    would leave the toolbar behind the fullscreen layer, unreachable.
    Tailwind v4 has no `fullscreen:` variant (confirmed empirically — it
    compiles to no rule at all), hence plain CSS here. */
+  /*
+    Fullscreen site plan: the map takes whatever height the toolbar row
+    leaves, and nothing scrolls the page. `flex: 1` on the map frame alone
+    did nothing, because the frame sits three plain divs below the card,
+    so it kept its 16:9 box from the full screen width and ran off the
+    bottom. The fs-body/fs-fill classes on those wrappers
+    (SitePlanMap.tsx) carry the height down to it.
+  */
   .site-plan-fullscreen-card:fullscreen {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background: var(--color-surface);
     display: flex;
     flex-direction: column;
     padding: 12px;
-    overflow: auto;
+    overflow: hidden;
+  }
+  .site-plan-fullscreen-card:fullscreen .site-plan-fs-body {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .site-plan-fullscreen-card:fullscreen .site-plan-fs-fill {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
   }
   .site-plan-fullscreen-card:fullscreen .site-plan-fullscreen-mapbox {
     aspect-ratio: auto;
     flex: 1;
     min-height: 0;
+  }
+  /* The summary column scrolls inside itself rather than pushing the
+     card past the screen; stacked under the map on a narrow screen it
+     gets at most two fifths of the height. */
+  .site-plan-fullscreen-card:fullscreen .site-plan-fs-body > :last-child {
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  @media (max-width: 1023px) {
+    .site-plan-fullscreen-card:fullscreen .site-plan-fs-body > :last-child {
+      max-height: 40dvh;
+    }
+  }
+  /* A phone on its side has ~390px. The plan is why fullscreen was
+     opened, so the summary column is left out there. */
+  @media (max-height: 500px) {
+    .site-plan-fullscreen-card:fullscreen .site-plan-fs-body > :last-child {
+      display: none;
+    }
   }
 
   /* "Our Sales" section — components/SalesTeamSection.tsx. Prefixed

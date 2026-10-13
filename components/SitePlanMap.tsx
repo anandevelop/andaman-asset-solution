@@ -1248,17 +1248,21 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
       </div>
 
       {/* ── Map / list + summary column ─────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-0 @min-[1000px]:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="relative">
+      {/* site-plan-fs-body / site-plan-fs-fill: in fullscreen these stretch
+          every wrapper between the card and the map frame to the height
+          that is left, so the map fits the screen instead of keeping its
+          16:9 box from the full width (see app/globals.css). */}
+      <div className="site-plan-fs-body grid grid-cols-1 gap-0 @min-[1000px]:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="site-plan-fs-fill relative">
           {/* Map view — kept mounted (never unmounted) even while the list
               view is showing, so the canvas engine's pan/zoom/selection
               state survives switching back and forth. */}
           <div
-            className={`transition-[opacity,transform] duration-300 ${
+            className={`site-plan-fs-fill transition-[opacity,transform] duration-300 ${
               view === "map" ? "opacity-100" : "pointer-events-none absolute inset-0 scale-[.985] opacity-0"
             }`}
           >
-            <div className="relative">
+            <div className="site-plan-fs-fill relative">
               <div
                 ref={mapboxRef}
                 className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
