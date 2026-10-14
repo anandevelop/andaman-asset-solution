@@ -36,6 +36,7 @@
     "link:scan": "tsx scripts/link-scan.ts",
     "spaces:cors": "tsx scripts/spaces-cors.ts",
     "media:legacy": "tsx scripts/media-legacy-check.ts",
+    "blueprints:rebuild": "node scripts/rebuild-blueprints.mjs",
     "db:reset": "docker compose down -v && docker compose up -d",
     "db:stop": "brew services stop postgresql@16 2>/dev/null || docker compose down",
     "setup": "bash scripts/setup-db.sh",

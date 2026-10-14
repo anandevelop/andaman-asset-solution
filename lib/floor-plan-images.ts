@@ -84,7 +84,17 @@ export async function blueprintFromBuffer(
   const { width, height } = await sharp(source).metadata();
   if (!width || !height) throw new Error("FLOOR_PLAN_UNREADABLE");
 
-  const alpha = await alphaMask(sharp(source)).raw().toBuffer();
+  /*
+    Flattened onto white first. The Sale Kit PNGs are exported with a
+    transparent background wherever the drawing has no paper — round the
+    outside of an L-shaped plan, say — and a transparent pixel is stored as
+    (0,0,0,0). greyscale() reads only the colour, so that "nothing" came out
+    as black, i.e. full ink, and the whole empty area was painted as one
+    solid pale-blue block on the public page. On white it is paper, and
+    drops out like the rest; anti-aliased edges against transparency blend
+    to the grey they would have been on paper.
+  */
+  const alpha = await alphaMask(sharp(source).flatten({ background: "#ffffff" })).raw().toBuffer();
 
   const webp = await sharp({
     create: { width, height, channels: 3, background: STROKE },
@@ -96,9 +106,19 @@ export async function blueprintFromBuffer(
   return { webp, width, height };
 }
 
-/** `…/abc.webp` → `…/abc-blueprint.webp`, beside the original. */
-export function blueprintKeyFor(key: string): string {
-  return `${key.replace(/\.[^./]+$/, "")}-blueprint.webp`;
+/**
+ * `…/abc.webp` → `…/abc-blueprint.webp`, beside the original.
+ *
+ * With a version, `…/abc-blueprint-<version>.webp`. The plain key is
+ * overwritten in place, which is right for a save (the drawing behind it
+ * is new, and so is its URL), but wrong for regenerating a drawing that
+ * has not changed: the object is served with max-age=86400 and the image
+ * optimizer caches by URL, so the corrected file would sit behind the old
+ * one for a day. A new key is a new URL, and nothing has it cached.
+ */
+export function blueprintKeyFor(key: string, version?: string): string {
+  const base = key.replace(/\.[^./]+$/, "");
+  return version ? `${base}-blueprint-${version}.webp` : `${base}-blueprint.webp`;
 }
 
 async function fetchImage(url: string): Promise<Buffer> {
@@ -120,7 +140,10 @@ async function fetchImage(url: string): Promise<Buffer> {
  * download, a decode and an upload, and a floor whose label was corrected
  * has the same drawing it had before.
  */
-export async function deriveBlueprint(lineUrl: string): Promise<DerivedBlueprint> {
+export async function deriveBlueprint(
+  lineUrl: string,
+  options: { version?: string } = {},
+): Promise<DerivedBlueprint> {
   const source = await fetchImage(lineUrl);
   const { webp, width, height } = await blueprintFromBuffer(source);
 
@@ -136,7 +159,7 @@ export async function deriveBlueprint(lineUrl: string): Promise<DerivedBlueprint
 
   try {
     const blueprintUrl = await putS3Object({
-      key: blueprintKeyFor(key),
+      key: blueprintKeyFor(key, options.version),
       body: webp,
       contentType: "image/webp",
     });

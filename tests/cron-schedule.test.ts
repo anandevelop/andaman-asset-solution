@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -140,6 +140,17 @@ describe("the monthly job", () => {
   });
 });
 
+/**
+ * Cron endpoints deliberately left off the schedule: one-off operator
+ * commands, guarded by CRON_SECRET like the rest, each called by the
+ * script named here. rebuild-blueprints re-derives every floor plan's
+ * blueprint after a fix to lib/floor-plan-images.ts, so it runs once after
+ * the deploy that needs it, not nightly.
+ */
+const RUN_BY_HAND: Record<string, string> = {
+  "/api/cron/rebuild-blueprints": "scripts/rebuild-blueprints.mjs",
+};
+
 describe("the shipped schedule", () => {
   it("covers every cron endpoint the application exposes", () => {
     /*
@@ -150,9 +161,24 @@ describe("the shipped schedule", () => {
     */
     const endpoints = readdirSync(join(process.cwd(), "app/api/cron"))
       .map((name) => `/api/cron/${name}`)
+      .filter((path) => !(path in RUN_BY_HAND))
       .sort();
 
     expect(jobs().map((job) => job.path).sort()).toEqual(endpoints);
+  });
+
+  it("has a script calling each endpoint that is run by hand", () => {
+    /*
+      The exemption above is only safe while something does call these.
+      Each one names the script an operator runs, and that script has to
+      exist and post to that path. Delete the script and this fails,
+      rather than leaving an endpoint nothing reaches.
+    */
+    for (const [path, script] of Object.entries(RUN_BY_HAND)) {
+      const file = join(process.cwd(), script);
+      expect(existsSync(file), script).toBe(true);
+      expect(readFileSync(file, "utf8"), script).toContain(path);
+    }
   });
 
   it("leaves a gap between the two jobs that check alerts", () => {

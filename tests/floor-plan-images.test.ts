@@ -115,12 +115,27 @@ describe("blueprintFromBuffer", () => {
     expect(pixels.map((p) => p[3])).toEqual([0, 0, 255]);
   });
 
+  it("treats a transparent background as paper, not as ink", async () => {
+    // A PNG whose left half is fully transparent (stored as 0,0,0,0) and
+    // right half is a black stroke. Before flattening, the transparent half
+    // read as black and came out as a solid block.
+    const raw = Buffer.from([0, 0, 0, 0, 0, 0, 0, 255]);
+    const source = await sharp(raw, { raw: { width: 2, height: 1, channels: 4 } }).png().toBuffer();
+    const pixels = await rgba((await blueprintFromBuffer(source)).webp);
+    expect(pixels[0][3]).toBe(0);
+    expect(pixels[1][3]).toBeGreaterThan(240);
+  });
+
   it("rejects a buffer that is not a readable image", async () => {
     await expect(blueprintFromBuffer(Buffer.from("not an image"))).rejects.toThrow();
   });
 });
 
 describe("blueprintKeyFor", () => {
+  it("puts a version in the name when given one, so a rebuild gets a new URL", () => {
+    expect(blueprintKeyFor("projects/x/plan.png", "k3f9")).toBe("projects/x/plan-blueprint-k3f9.webp");
+  });
+
   it("writes beside the original, not over it", () => {
     expect(blueprintKeyFor("projects/victory/abc.webp")).toBe(
       "projects/victory/abc-blueprint.webp",

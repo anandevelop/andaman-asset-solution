@@ -184,6 +184,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modu
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/cron.mjs ./scripts/cron.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/warm-images.mjs ./scripts/warm-images.mjs
 
+# Re-derives every floor plan's blueprint after a fix to the transform —
+# see the script's header. Node built-ins only: the work happens in the
+# running app, behind /api/cron/rebuild-blueprints.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/rebuild-blueprints.mjs ./scripts/rebuild-blueprints.mjs
+
 # The image optimizer's cache, created here so it belongs to `nextjs`.
 # docker-compose.prod.yml mounts a named volume over it so optimized images
 # survive a redeploy. A new named volume takes the ownership of the
