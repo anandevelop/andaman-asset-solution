@@ -77,6 +77,8 @@ export async function saveNearbyList(
                 name: place.name,
                 distanceKm: place.distanceKm,
                 durationMin: place.durationMin,
+                latitude: place.pin?.lat ?? null,
+                longitude: place.pin?.lng ?? null,
                 sortOrder: index,
               })),
             },

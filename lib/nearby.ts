@@ -28,11 +28,13 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { getNearbyAttractionCategories, NEARBY_DEFAULTS } from "@/content/nearby-attractions";
 import type { NearbyAttractionCategorySummary } from "@/lib/projects";
+import { formatCoordinateInput } from "@/lib/map-places";
 
 /** The editor's shape: one category with all four labels. */
 export type EditableNearbyCategory = {
   labels: { en: string; th: string; zh: string; ru: string };
-  places: { name: string; distanceKm: number; durationMin: number }[];
+  /** `pin` is the editor's one-field "lat, lng" text, "" for none. */
+  places: { name: string; distanceKm: number; durationMin: number; pin: string }[];
 };
 
 export type NearbySource = "project" | "shared" | "builtIn";
@@ -63,6 +65,7 @@ function toSummary(rows: Row[], locale: string): NearbyAttractionCategorySummary
       name: place.name,
       distanceKm: Number(place.distanceKm),
       durationMin: place.durationMin,
+      pin: place.latitude != null && place.longitude != null ? { lat: place.latitude, lng: place.longitude } : null,
     })),
   }));
 }
@@ -82,14 +85,22 @@ export async function getNearbyForProject(
 function toEditable(rows: Row[]): EditableNearbyCategory[] {
   return rows.map((row) => ({
     labels: { en: row.labelEn, th: row.labelTh, zh: row.labelZh, ru: row.labelRu },
-    places: row.places.map((p) => ({ name: p.name, distanceKm: Number(p.distanceKm), durationMin: p.durationMin })),
+    places: row.places.map((p) => ({
+      name: p.name,
+      distanceKm: Number(p.distanceKm),
+      durationMin: p.durationMin,
+      pin:
+        p.latitude != null && p.longitude != null
+          ? formatCoordinateInput({ lat: p.latitude, lng: p.longitude })
+          : "",
+    })),
   }));
 }
 
 const builtIn = (): EditableNearbyCategory[] =>
   NEARBY_DEFAULTS.map((category) => ({
     labels: { ...category.categoryName },
-    places: category.items.map((item) => ({ ...item })),
+    places: category.items.map((item) => ({ ...item, pin: formatCoordinateInput(item.pin) })),
   }));
 
 /**

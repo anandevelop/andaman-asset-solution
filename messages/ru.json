@@ -4227,7 +4227,12 @@
       "addTab": "Add a tab",
       "revert": "Go back to the shared list",
       "confirmRevert": "Delete this project's own list and use the shared list again?",
-      "invalid": "Something is missing or invalid: {detail}"
+      "invalid": "Something is missing or invalid: {detail}",
+      "pin": "Координаты (широта, долгота)",
+      "pinPlaceholder": "Необязательно · напр. 7.9758, 98.2794",
+      "pinHint": "Координаты под каждым местом необязательны. Если поле пустое, маршрут строится по названию места. Если Google не находит место (карта показывает весь мир), укажите координаты: в Google Картах нажмите правой кнопкой на место и щёлкните числа в первой строке, чтобы скопировать их, затем вставьте сюда. Проверьте метку кнопкой ↗ перед сохранением.",
+      "pinCheck": "Проверить метку в Google Картах",
+      "pinInvalid": "Формат: широта, долгота — напр. 7.9758, 98.2794"
     }
   },
   "legalPage": {

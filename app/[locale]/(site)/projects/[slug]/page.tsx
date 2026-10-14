@@ -35,6 +35,7 @@ import { formatNumber } from "@/lib/format";
 import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 import { getNearbyForProject } from "@/lib/nearby";
+import { nearbyTarget } from "@/lib/map-places";
 import { robotsMetadata } from "@/lib/indexing";
 import EditableSection from "@/components/edit/EditableSection";
 import EditTarget from "@/components/edit/EditTarget";
@@ -345,7 +346,9 @@ export default async function ProjectPage(props: Props) {
     coordinate: these are third-party places and we hold no pin for any of
     them, so Google's own search is more accurate than anything we could
     store. ", Phuket" narrows it — there is a Surin Beach in three
-    countries.
+    countries. Where the name still is not enough (Google cannot find
+    "Surin Beach, Phuket" at all), the editor sets a pin for that place —
+    NearbyPlace.latitude/longitude, used in place of the name.
   */
   const mapGroups: MapListGroup[] = attractionCategories.map((category) => ({
     id: category.id,
@@ -359,7 +362,7 @@ export default async function ProjectPage(props: Props) {
         distanceKm: item.distanceKm,
         durationMin: item.durationMin,
         distanceKind: "drive" as const,
-        target: { query: `${item.name}, Phuket` },
+        target: nearbyTarget(item.pin, item.name),
       })),
   }));
 

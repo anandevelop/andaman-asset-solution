@@ -11,6 +11,7 @@ import { countH1s } from "@/lib/heading-policy";
   is erased at compile time and costs nothing.
 */
 import type { SettingKey } from "@/lib/settings";
+import { parseCoordinates } from "@/lib/map-places";
 
 /**
  * Shared client + server validation. The API route re-validates the parsed
@@ -1842,6 +1843,14 @@ const nearbyPlaceSchema = z.object({
   name: z.string().trim().min(1, "Name the place").max(120),
   distanceKm: z.coerce.number().min(0, "0 or more").max(999),
   durationMin: z.coerce.number().int("Whole minutes").min(0, "0 or more").max(600),
+  /** Optional pin as typed: "lat, lng". Empty means "route by the name". */
+  pin: z
+    .string()
+    .trim()
+    .max(60)
+    .optional()
+    .refine((value) => !value || parseCoordinates(value) !== null, "Latitude, longitude — e.g. 7.9758, 98.2794")
+    .transform((value) => (value ? parseCoordinates(value) : null)),
 });
 
 export const nearbyListSchema = z

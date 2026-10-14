@@ -38,6 +38,8 @@ export type NearbyAttractionItem = {
   name: string;
   distanceKm: number;
   durationMin: number;
+  /** The place's pin, for the map's route — see NearbyPlace.latitude. */
+  pin?: { lat: number; lng: number };
 };
 
 export type NearbyAttractionCategory = {
@@ -80,7 +82,8 @@ export const NEARBY_DEFAULTS: readonly NearbyAttractionCategory[] = [
     items: [
       { name: "Layan Beach", distanceKm: 7, durationMin: 14 },
       { name: "Bangtao Beach", distanceKm: 7, durationMin: 14 },
-      { name: "Surin Beach", distanceKm: 7, durationMin: 14 },
+      // Google's directions embed cannot find "Surin Beach, Phuket".
+      { name: "Surin Beach", distanceKm: 7, durationMin: 14, pin: { lat: 7.9758, lng: 98.2794 } },
       { name: "Maikao Beach", distanceKm: 22, durationMin: 30 },
     ],
   },
@@ -136,7 +139,7 @@ export function getNearbyAttractionCategories(locale: string): {
   id: string;
   categoryName: string;
   sortOrder: number;
-  items: { id: string; name: string; distanceKm: number; durationMin: number }[];
+  items: { id: string; name: string; distanceKm: number; durationMin: number; pin?: { lat: number; lng: number } | null }[];
 }[] {
   const l = (locale in NEARBY_DEFAULTS[0].categoryName ? locale : "en") as Locale;
 
@@ -149,6 +152,7 @@ export function getNearbyAttractionCategories(locale: string): {
       name: item.name,
       distanceKm: item.distanceKm,
       durationMin: item.durationMin,
+      pin: item.pin ?? null,
     })),
   }));
 }

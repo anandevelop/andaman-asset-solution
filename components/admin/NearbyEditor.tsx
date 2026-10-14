@@ -5,7 +5,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  * Edits one "Nearby" list (a project's own, or the shared one) as a
  * single document: tabs with four labels, places with a distance and a
- * drive time, both reorderable. Save posts the whole list as JSON, and
+ * drive time, both reorderable. Each place can also carry a pin
+ * ("lat, lng", pasted from Google Maps) for the names Google cannot find
+ * on its own, with a link to check where it lands before saving. Save posts the whole list as JSON, and
  * the action replaces the stored list (see projects/nearby/actions.ts).
  *
  * For a project still showing the shared list, the editor is closed behind
@@ -18,13 +20,15 @@
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
-import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Loader2, MapPin, Plus, Trash2 } from "lucide-react";
+import { nearbyTarget, parseCoordinates, searchLinkUrl } from "@/lib/map-places";
 import SaveToast from "@/components/admin/SaveToast";
 import type { NearbyFormState } from "@/app/[locale]/admin/(catalog)/projects/nearby/actions";
 
 type Category = {
   labels: { en: string; th: string; zh: string; ru: string };
-  places: { name: string; distanceKm: number; durationMin: number }[];
+  /** "lat, lng" as typed; "" for no pin. Parsed by the action. */
+  places: { name: string; distanceKm: number; durationMin: number; pin: string }[];
 };
 
 type Props = {
@@ -107,6 +111,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
       )}
 
       {source === "builtIn" && <p className="text-sm text-adm-muted">{t("builtInNote")}</p>}
+      <p className="text-xs text-adm-muted">{t("pinHint")}</p>
 
       <fieldset disabled={!canWrite} className="space-y-5">
         {categories.map((category, ci) => (
@@ -165,9 +170,34 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
                       update(ci, (c) => ({ ...c, places: c.places.map((p, i) => (i === pi ? { ...p, ...patch } : p)) }));
                     return (
                       <tr key={pi}>
-                        <td className="admin-td whitespace-normal">
+                        <td className="admin-td min-w-64 whitespace-normal">
                           <input className="admin-input" aria-label={t("place")} value={place.name} maxLength={120} required
                             onChange={(e) => setPlace({ name: e.target.value })} />
+                          {(() => {
+                            const typed = place.pin.trim();
+                            const pin = parseCoordinates(typed);
+                            const invalid = typed !== "" && pin === null;
+                            return (
+                              <>
+                                <div className="mt-1.5 flex items-center gap-1.5">
+                                  <MapPin size={13} aria-hidden className="shrink-0 text-adm-muted" />
+                                  <input className={`admin-input admin-mono py-1! text-xs ${invalid ? "border-adm-danger!" : ""}`}
+                                    aria-label={t("pin")} aria-invalid={invalid || undefined}
+                                    placeholder={t("pinPlaceholder")} inputMode="decimal"
+                                    value={place.pin} maxLength={60}
+                                    onChange={(e) => setPlace({ pin: e.target.value })} />
+                                  {place.name.trim() && !invalid && (
+                                    <a className={`${iconBtn} size-7 shrink-0`} target="_blank" rel="noopener noreferrer"
+                                      href={searchLinkUrl(nearbyTarget(pin, place.name))}
+                                      aria-label={t("pinCheck")} title={t("pinCheck")}>
+                                      <ExternalLink size={13} aria-hidden />
+                                    </a>
+                                  )}
+                                </div>
+                                {invalid && <p className="mt-1 text-xs text-adm-danger">{t("pinInvalid")}</p>}
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="admin-td">
                           <input className="admin-input" aria-label={t("distanceKm")} type="number" min={0} max={999} step="0.1"
@@ -201,7 +231,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
             </div>
 
             <button type="button" className="admin-btn-ghost py-2!"
-              onClick={() => update(ci, (c) => ({ ...c, places: [...c.places, { name: "", distanceKm: 0, durationMin: 0 }] }))}>
+              onClick={() => update(ci, (c) => ({ ...c, places: [...c.places, { name: "", distanceKm: 0, durationMin: 0, pin: "" }] }))}>
               <Plus size={14} aria-hidden />
               {t("addPlace")}
             </button>

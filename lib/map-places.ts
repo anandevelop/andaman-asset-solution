@@ -41,6 +41,41 @@ export type LatLng = { lat: number; lng: number };
 /** Where a route ends: a precise pin, or a name for Google to search. */
 export type RouteTarget = LatLng | { query: string };
 
+/** "7.9758, 98.2794", "7.9758,98.2794" or "7.9758 98.2794" — the forms a
+ *  coordinate copied out of Google Maps (right-click → the first line)
+ *  takes. */
+const COORDINATE_PAIR = /^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/;
+
+/** "lat, lng" as typed in the admin → a pin, or null when it is not one. */
+export function parseCoordinates(text: string | null | undefined): LatLng | null {
+  const match = COORDINATE_PAIR.exec(text ?? "");
+  if (!match) return null;
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+/** A pin back into the one-field form the editor shows. */
+export function formatCoordinateInput(pin: LatLng | null | undefined): string {
+  return pin ? `${pin.lat}, ${pin.lng}` : "";
+}
+
+/**
+ * A nearby place's route target: its pin when it has one, else its name
+ * narrowed to Phuket — see routeParam for why the narrowing belongs to
+ * the caller.
+ */
+export function nearbyTarget(pin: LatLng | null | undefined, name: string): RouteTarget {
+  return pin ?? { query: `${name}, Phuket` };
+}
+
+/** Google Maps searching for one target, in a new tab — the editor's
+ *  "check it" link, so a typo shows up before a visitor finds it. */
+export function searchLinkUrl(target: RouteTarget): string {
+  const query = "lat" in target ? `${target.lat},${target.lng}` : target.query;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 export type OpeningWindow = {
   /** "09:00" */
   open: string;

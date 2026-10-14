@@ -904,6 +904,12 @@ model NearbyPlace {
   name        String
   distanceKm  Decimal @db.Decimal(6, 2)
   durationMin Int
+  /// The place's pin, for the map's route. Both or neither (the action
+  /// writes them together). Without one the route searches for
+  /// `name + ", Phuket"`, which Google cannot resolve for every name —
+  /// "Surin Beach, Phuket" lands on a map of the whole world.
+  latitude    Float?
+  longitude   Float?
 
   sortOrder Int @default(0)
 

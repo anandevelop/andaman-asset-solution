@@ -284,6 +284,8 @@ export type NearbyAttractionItemSummary = {
   name: string;
   distanceKm: number;
   durationMin: number;
+  /** The place's pin — see NearbyPlace.latitude. */
+  pin?: { lat: number; lng: number } | null;
 };
 
 export type NearbyAttractionCategorySummary = {
