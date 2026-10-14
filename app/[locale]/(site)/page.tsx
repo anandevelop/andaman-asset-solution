@@ -488,9 +488,14 @@ export default async function HomePage(props: Props) {
       )}
 
       {/* ── Admin-ordered sections (see /admin/pages/home) ──────────────────── */}
+      {/* .defer-render (globals.css): content-visibility: auto, so the
+          browser skips layout and paint for a section until it nears the
+          viewport. Not the hero, which is the first screen. */}
       {sectionKeys.map((key) => (
         <Fragment key={key}>
-          <EditableSection links={sectionEditLinks(key)}>{SECTION_RENDERERS[key]()}</EditableSection>
+          <div className="defer-render">
+            <EditableSection links={sectionEditLinks(key)}>{SECTION_RENDERERS[key]()}</EditableSection>
+          </div>
         </Fragment>
       ))}
 

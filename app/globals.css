@@ -2298,6 +2298,30 @@
   Chrome/Safari actually read as of this writing.
 */
 /*
+  Below-the-fold blocks the browser may skip rendering until they near the
+  viewport: the home page's sections. Lighthouse put 0.5 to 1 s of the home
+  page's mobile main-thread time in style and layout for a page about
+  8,000px tall, most of it never on screen during load.
+  Not the sales strip, closing CTA and footer in (site)/layout.tsx: those
+  are full-bleed blocks that butt against each other, and with both
+  deferred the browser's rounding at the boundary left a 1px white
+  hairline between the CTA photo and the footer (seen in a scrolled
+  screenshot compare).
+  `auto 900px` is a placeholder height until a block has rendered once,
+  after which the browser remembers the real one, so the scrollbar does
+  not jump back. Print renders everything regardless.
+*/
+.defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+@media print {
+  .defer-render {
+    content-visibility: visible;
+  }
+}
+
+/*
   components/Navbar.tsx's entrances, the values framer-motion used to
   animate: the language list drops 4px in 0.15s, the mobile menu comes
   down 20px in 0.3s, its rows rise 30px in 0.4s staggered by an inline
