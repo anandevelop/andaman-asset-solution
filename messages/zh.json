@@ -1933,7 +1933,8 @@
         "phone": "手机",
         "failed": "无法生成预览",
         "untitled": "（尚无标题）"
-      }
+      },
+      "titlePlaceholder": "Type the article headline…"
     },
     "eBrochures": {
       "title": "电子手册",

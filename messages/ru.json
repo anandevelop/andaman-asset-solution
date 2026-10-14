@@ -1933,7 +1933,8 @@
         "phone": "Телефон",
         "failed": "Не удалось показать предпросмотр",
         "untitled": "(Без заголовка)"
-      }
+      },
+      "titlePlaceholder": "Type the article headline…"
     },
     "eBrochures": {
       "title": "Электронные брошюры",

@@ -1933,7 +1933,8 @@
         "phone": "Phone",
         "failed": "Could not render the preview",
         "untitled": "(No title yet)"
-      }
+      },
+      "titlePlaceholder": "Type the article headline…"
     },
     "eBrochures": {
       "title": "E-Brochures",

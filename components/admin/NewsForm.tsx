@@ -806,14 +806,21 @@ export default function NewsForm({
               >
                 {/* Set like the headline it becomes (v4's canvas): large,
                     borderless until focused, so the card reads as the
-                    article rather than as a form about it. */}
+                    article rather than as a form about it. Except while
+                    empty: then it is a dashed box with a grey prompt.
+                    Borderless and empty, it was a white gap under its
+                    label, and an editor opening a new language could not
+                    tell there was a field there at all. */}
                 <input
                   id="title"
                   name="title"
                   value={title}
                   onChange={(event) => handleTitleChange(event.target.value)}
                   required
-                  className="w-full rounded-[10px] border border-transparent bg-transparent px-2 py-1.5 -mx-2 text-[26px] font-semibold leading-tight text-adm-text transition-colors hover:border-adm-line focus:border-adm-line-strong focus:outline-none sm:text-[28px]"
+                  placeholder={t("news.titlePlaceholder")}
+                  className={`w-full rounded-[10px] border px-2 py-1.5 -mx-2 text-[26px] font-semibold leading-tight text-adm-text transition-colors placeholder:font-normal placeholder:text-adm-muted/70 hover:border-adm-line focus:border-adm-line-strong focus:border-solid focus:outline-none sm:text-[28px] ${
+                    title.trim() ? "border-transparent bg-transparent" : "border-dashed border-adm-line-strong bg-adm-text/3"
+                  }`}
                 />
               </Field>
 
