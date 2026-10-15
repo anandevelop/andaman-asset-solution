@@ -116,6 +116,13 @@ function prepare(html) {
     notes.push("scene.add(patrol) not recognised — patrol car not removed");
   }
 
+  // Plot-number chips: the export's 10px chips crowd each other on a full
+  // estate view, so they ship one size smaller.
+  const LB_BIG = "font-size:10px;font-weight:500;padding:1px 5px;border-radius:9px;color:#fff;white-space:nowrap;pointer-events:auto;cursor:pointer;border:1.5px solid #fff;";
+  const LB_SMALL = "font-size:8.5px;font-weight:500;padding:0 4px;border-radius:7px;color:#fff;white-space:nowrap;pointer-events:auto;cursor:pointer;border:1px solid #fff;";
+  if (out.includes(LB_BIG)) out = out.replace(LB_BIG, LB_SMALL);
+  else if (!out.includes(LB_SMALL)) notes.push(".lb label style not recognised — plot numbers keep the export's size");
+
   const DATA_OPEN = 'if(Q.get("data")) fetch(Q.get("data")';
   const DATA_SAFE =
     'if(Q.get("data") && new URL(Q.get("data"), location.href).origin === location.origin) fetch(Q.get("data")';
