@@ -180,6 +180,8 @@ test.describe("The activity log", () => {
       session, because that is the order it happens in real life.
     */
     await page.goto(`/en/projects/${LEAD_PROJECT.slug}`);
+    // The form loads as it nears the viewport (components/LazyLeadForm.tsx).
+    await page.locator("#enquire").scrollIntoViewIfNeeded();
 
     const email = `audit-probe-${Date.now()}@example.com`;
     await page.getByLabel("Full name").fill("Audit Probe Visitor");

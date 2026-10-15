@@ -24,6 +24,19 @@ import { LEAD_PROJECT } from "./fixtures";
 
 const PROJECT_URL = `/en/projects/${LEAD_PROJECT.slug}`;
 
+/**
+ * The project page as a visitor reaches its form: open the page, scroll to
+ * the enquiry section, and wait for the form to be there. The form loads
+ * as it nears the viewport (components/LazyLeadForm.tsx), so filling
+ * straight after page.goto() waited a minute for a field that was never
+ * mounted, and every test here failed that way.
+ */
+async function openEnquiryForm(page: import("@playwright/test").Page, url: string = PROJECT_URL) {
+  await page.goto(url);
+  await page.locator("#enquire").scrollIntoViewIfNeeded();
+  await page.getByLabel("Full name").waitFor();
+}
+
 /*
   Constructed lazily.
 
@@ -98,7 +111,7 @@ async function fillEnquiry(
 
 test.describe("Lead submission", () => {
   test("writes the enquiry to the database and confirms it", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
@@ -131,7 +144,7 @@ test.describe("Lead submission", () => {
     // Thailand's PDPA requires a demonstrable record of consent, which
     // means the flag, the timestamp and the policy version the visitor
     // actually agreed to — a boolean alone proves nothing a year later.
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
@@ -147,7 +160,7 @@ test.describe("Lead submission", () => {
   });
 
   test("keeps the form's values behind the dialog, and clears them only once it closes", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
@@ -169,7 +182,7 @@ test.describe("Lead submission", () => {
   });
 
   test("carries UTM attribution from the landing URL", async ({ page }) => {
-    await page.goto(`${PROJECT_URL}?utm_source=google&utm_medium=cpc&utm_campaign=villas-q3`);
+    await openEnquiryForm(page, `${PROJECT_URL}?utm_source=google&utm_medium=cpc&utm_campaign=villas-q3`);
 
     const values = await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
@@ -188,7 +201,7 @@ test.describe("Lead submission", () => {
   });
 
   test("refuses an incomplete enquiry without touching the database", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const before = await db().leadInquiry.count();
 
@@ -202,7 +215,7 @@ test.describe("Lead submission", () => {
   });
 
   test("will not submit without PDPA consent", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const before = await db().leadInquiry.count();
 
@@ -221,7 +234,7 @@ test.describe("Lead submission", () => {
   });
 
   test("silently discards a submission that filled the honeypot", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const before = await db().leadInquiry.count();
     const email = uniqueEmail("bot");
@@ -252,7 +265,7 @@ test.describe("Lead submission", () => {
   });
 
   test("has no automatically detectable accessibility violations", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
     await expectNoA11yViolations(page);
   });
 
@@ -260,7 +273,7 @@ test.describe("Lead submission", () => {
     // The state axe most often misses is the one that only appears after
     // an interaction: error text, aria-invalid inputs, a live region with
     // content in it.
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     await page.getByRole("button", { name: "Request viewing" }).click();
     await expect(page.getByText("Name is too short")).toBeVisible();
@@ -273,7 +286,7 @@ test.describe("Lead submission", () => {
     // surface this page grows after an interaction — a focus trap, a
     // backdrop and a portal-rendered node axe cannot see by scanning the
     // page before anyone has submitted anything.
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     await fillEnquiry(page);
     await page.getByRole("button", { name: "Request viewing" }).click();
@@ -283,7 +296,7 @@ test.describe("Lead submission", () => {
   });
 
   test("is reachable and submittable by keyboard alone", async ({ page }) => {
-    await page.goto(PROJECT_URL);
+    await openEnquiryForm(page);
 
     const name = page.getByLabel("Full name");
 

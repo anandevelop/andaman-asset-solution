@@ -151,6 +151,9 @@ test.describe("the workspace", () => {
       matching immediately after it.
     */
     const workspace = page.locator("[data-unit-types-workspace]");
+    // The floor's name sits in its collapsed "Floor settings" section since
+    // the workspace redesign; open it as an editor would.
+    await workspace.getByText("Floor settings", { exact: true }).first().click();
     const floorName = workspace.getByLabel(/Floor name/i).first();
 
     await expect(floorName).toHaveValue("1st Floor");
