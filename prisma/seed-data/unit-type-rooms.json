@@ -1,0 +1,2110 @@
+{
+  "_about": "Written by scripts/export-unit-type-rooms.mjs — do not edit by hand. Applied to another database by scripts/sync-unit-type-rooms.mjs.",
+  "exportedAt": "2026-10-15T08:50:42.360Z",
+  "projects": [
+    {
+      "slug": "residence-prime",
+      "unitTypes": [
+        {
+          "code": "R",
+          "name": "Type R",
+          "floors": [
+            {
+              "floorName": "Ground Floor",
+              "shortLabel": "G",
+              "areaSqm": 178.09,
+              "sortOrder": 0,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/residence-prime/unit-types/ground-line.webp",
+              "blueprintImageUrl": "/floor-plans/residence-prime/unit-types/ground-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/residence-prime/unit-types/ground-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 671,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Terrace",
+                    "ru": "Терраса",
+                    "th": "เทอร์เรซ",
+                    "zh": "露台"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 7.22,
+                  "yPercent": 80.61,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime136.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Studio Room",
+                    "ru": "Студия",
+                    "th": "ห้องสตูดิโอ",
+                    "zh": "工作室"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 17.53,
+                  "yPercent": 30.61,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime108.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 35.05,
+                  "yPercent": 27.55,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime114.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Living Room",
+                    "ru": "Гостиная",
+                    "th": "ห้องนั่งเล่น",
+                    "zh": "客厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 19.59,
+                  "yPercent": 74.49,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime105.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Kitchen & Dining",
+                    "ru": "Кухня и столовая",
+                    "th": "ครัวและห้องทานอาหาร",
+                    "zh": "厨房与餐厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 31.96,
+                  "yPercent": 72.45,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime98.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Wine Room",
+                    "ru": "Винная комната",
+                    "th": "ห้องไวน์",
+                    "zh": "酒窖"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 43.3,
+                  "yPercent": 66.33,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime96.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Pump Room",
+                    "ru": "Насосная",
+                    "th": "ห้องปั๊ม",
+                    "zh": "水泵房"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 50.52,
+                  "yPercent": 25.51,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Room",
+                    "ru": "Многофункциональная комната",
+                    "th": "ห้องอเนกประสงค์",
+                    "zh": "多功能室"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 60.82,
+                  "yPercent": 26.53,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime93.webp"
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Stair & Lift",
+                    "ru": "Лестница и лифт",
+                    "th": "บันไดและลิฟต์",
+                    "zh": "楼梯与电梯"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 57.73,
+                  "yPercent": 72.45,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime89.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Garbage Room",
+                    "ru": "Мусорная комната",
+                    "th": "ห้องพักขยะ",
+                    "zh": "垃圾房"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 69.07,
+                  "yPercent": 17.35,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Parking · 2 cars",
+                    "ru": "Парковка на 2 автомобиля",
+                    "th": "ที่จอดรถ 2 คัน",
+                    "zh": "停车位 · 2辆"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 86.6,
+                  "yPercent": 62.24,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime151_batcheditor_fotor.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 134.16,
+              "sortOrder": 1,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/residence-prime/unit-types/1st-line.webp",
+              "blueprintImageUrl": "/floor-plans/residence-prime/unit-types/1st-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/residence-prime/unit-types/1st-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 594,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Terrace",
+                    "ru": "Терраса",
+                    "th": "เทอร์เรซ",
+                    "zh": "露台"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 9.38,
+                  "yPercent": 16.47,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime32.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Kitchen & Dining",
+                    "ru": "Кухня и столовая",
+                    "th": "ครัวและห้องทานอาหาร",
+                    "zh": "厨房与餐厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 17.71,
+                  "yPercent": 54.12,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime17.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Living Room",
+                    "ru": "Гостиная",
+                    "th": "ห้องนั่งเล่น",
+                    "zh": "客厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 39.58,
+                  "yPercent": 65.88,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime7.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 57.29,
+                  "yPercent": 17.65,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime21.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Stair & Lift",
+                    "ru": "Лестница и лифт",
+                    "th": "บันไดและลิฟต์",
+                    "zh": "楼梯与电梯"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 57.29,
+                  "yPercent": 68.24,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime86.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Outdoor Lounge",
+                    "ru": "Лаунж-зона на открытом воздухе",
+                    "th": "เลานจ์กลางแจ้ง",
+                    "zh": "户外休息区"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 79.17,
+                  "yPercent": 52.94,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime29.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 86.03,
+              "sortOrder": 2,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/residence-prime/unit-types/2nd-line.webp",
+              "blueprintImageUrl": "/floor-plans/residence-prime/unit-types/2nd-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/residence-prime/unit-types/2nd-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 589,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Master Bedroom",
+                    "ru": "Главная спальня",
+                    "th": "ห้องนอนใหญ่",
+                    "zh": "主卧"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 21.88,
+                  "yPercent": 29.76,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime61.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bathroom 3",
+                    "ru": "Ванная 3",
+                    "th": "ห้องน้ำ 3",
+                    "zh": "浴室 3"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 7.29,
+                  "yPercent": 60.71,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime75.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Double-height Void",
+                    "ru": "Пространство двойной высоты",
+                    "th": "ช่องโล่งสูงสองชั้น",
+                    "zh": "挑高空间"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 46.87,
+                  "yPercent": 34.52,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime84.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Hall",
+                    "ru": "Холл",
+                    "th": "โถง",
+                    "zh": "大厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 45.83,
+                  "yPercent": 91.67,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime57.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Stair & Lift",
+                    "ru": "Лестница и лифт",
+                    "th": "บันไดและลิฟต์",
+                    "zh": "楼梯与电梯"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 58.33,
+                  "yPercent": 67.86,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime87.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Guest Room",
+                    "ru": "Гостевая спальня",
+                    "th": "ห้องนอนแขก",
+                    "zh": "客房"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 79.17,
+                  "yPercent": 63.1,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime38.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 82.29,
+                  "yPercent": 13.1,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime49.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Terrace",
+                    "ru": "Терраса",
+                    "th": "เทอร์เรซ",
+                    "zh": "露台"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 88.54,
+                  "yPercent": 86.9,
+                  "photoUrl": "/gallery/residence-prime/The Residence Prime33.webp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "trinity-village",
+      "unitTypes": [
+        {
+          "code": "A",
+          "name": "Type A",
+          "floors": [
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 223.5,
+              "sortOrder": 0,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/trinity-village/unit-types/tvA1-line.webp",
+              "blueprintImageUrl": "/floor-plans/trinity-village/unit-types/tvA1-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/trinity-village/unit-types/tvA1-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 681,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Parking",
+                    "ru": "Парковка",
+                    "th": "ที่จอดรถ",
+                    "zh": "停车位"
+                  },
+                  "areaSqm": 43,
+                  "xPercent": 86.1,
+                  "yPercent": 38.8,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village10.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Pump Room",
+                    "ru": "Насосная",
+                    "th": "ห้องปั๊ม",
+                    "zh": "水泵房"
+                  },
+                  "areaSqm": 5,
+                  "xPercent": 95.8,
+                  "yPercent": 83.6,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Terrace",
+                    "ru": "Терраса",
+                    "th": "เทอร์เรซ",
+                    "zh": "露台"
+                  },
+                  "areaSqm": 9,
+                  "xPercent": 87.3,
+                  "yPercent": 81.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village25.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Hallway",
+                    "ru": "Коридор",
+                    "th": "ทางเดิน",
+                    "zh": "走廊"
+                  },
+                  "areaSqm": 8,
+                  "xPercent": 66.2,
+                  "yPercent": 78.1,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village92.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Pantry",
+                    "ru": "Буфетная",
+                    "th": "แพนทรี",
+                    "zh": "备餐间"
+                  },
+                  "areaSqm": 7,
+                  "xPercent": 68.7,
+                  "yPercent": 54.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village45.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Laundry",
+                    "ru": "Прачечная",
+                    "th": "ห้องซักรีด",
+                    "zh": "洗衣房"
+                  },
+                  "areaSqm": 2.5,
+                  "xPercent": 68.4,
+                  "yPercent": 20,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village90.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Balcony 1",
+                    "ru": "Балкон 1",
+                    "th": "ระเบียง 1",
+                    "zh": "阳台 1"
+                  },
+                  "areaSqm": 1.5,
+                  "xPercent": 69.7,
+                  "yPercent": 10.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village102.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Storage",
+                    "ru": "Кладовая",
+                    "th": "ห้องเก็บของ",
+                    "zh": "储藏室"
+                  },
+                  "areaSqm": 1.5,
+                  "xPercent": 62,
+                  "yPercent": 54.6,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Living Area",
+                    "ru": "Гостиная",
+                    "th": "ห้องนั่งเล่น",
+                    "zh": "客厅"
+                  },
+                  "areaSqm": 30,
+                  "xPercent": 47.6,
+                  "yPercent": 76.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village52.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Bedroom 1",
+                    "ru": "Спальня 1",
+                    "th": "ห้องนอน 1",
+                    "zh": "卧室 1"
+                  },
+                  "areaSqm": 12.5,
+                  "xPercent": 60.2,
+                  "yPercent": 31,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village87.webp"
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": 5,
+                  "xPercent": 50.6,
+                  "yPercent": 26.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village80.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Walk-in Closet 1",
+                    "ru": "Гардеробная 1",
+                    "th": "ห้องแต่งตัว 1",
+                    "zh": "步入式衣帽间 1"
+                  },
+                  "areaSqm": 5,
+                  "xPercent": 51.2,
+                  "yPercent": 52.2,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village118.webp"
+                },
+                {
+                  "sortOrder": 12,
+                  "name": {
+                    "en": "Master Bathroom",
+                    "ru": "Ванная главной спальни",
+                    "th": "ห้องน้ำห้องนอนใหญ่",
+                    "zh": "主卧浴室"
+                  },
+                  "areaSqm": 13.5,
+                  "xPercent": 42.1,
+                  "yPercent": 32.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village68.webp"
+                },
+                {
+                  "sortOrder": 13,
+                  "name": {
+                    "en": "Walk-in Closet",
+                    "ru": "Гардеробная",
+                    "th": "ห้องแต่งตัว",
+                    "zh": "步入式衣帽间"
+                  },
+                  "areaSqm": 9,
+                  "xPercent": 32.2,
+                  "yPercent": 34.1,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village104.webp"
+                },
+                {
+                  "sortOrder": 14,
+                  "name": {
+                    "en": "Master Bedroom",
+                    "ru": "Главная спальня",
+                    "th": "ห้องนอนใหญ่",
+                    "zh": "主卧"
+                  },
+                  "areaSqm": 27.5,
+                  "xPercent": 18.6,
+                  "yPercent": 35.7,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village55.webp"
+                },
+                {
+                  "sortOrder": 15,
+                  "name": {
+                    "en": "Balcony 2",
+                    "ru": "Балкон 2",
+                    "th": "ระเบียง 2",
+                    "zh": "阳台 2"
+                  },
+                  "areaSqm": 14,
+                  "xPercent": 5.4,
+                  "yPercent": 43.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village101.webp"
+                },
+                {
+                  "sortOrder": 16,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": 29.5,
+                  "xPercent": 18.6,
+                  "yPercent": 81.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village22.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 189,
+              "sortOrder": 1,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/trinity-village/unit-types/tvA2-line.webp",
+              "blueprintImageUrl": "/floor-plans/trinity-village/unit-types/tvA2-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/trinity-village/unit-types/tvA2-furnished.webp",
+              "imageWidth": 1742,
+              "imageHeight": 700,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": 22,
+                  "xPercent": 88.8,
+                  "yPercent": 37.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village22.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Balcony 3",
+                    "ru": "Балкон 3",
+                    "th": "ระเบียง 3",
+                    "zh": "阳台 3"
+                  },
+                  "areaSqm": 38,
+                  "xPercent": 78.4,
+                  "yPercent": 42.4,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village97.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Living · Kitchen · Dining",
+                    "ru": "Гостиная · Кухня · Столовая",
+                    "th": "นั่งเล่น · ครัว · ทานอาหาร",
+                    "zh": "客厅 · 厨房 · 餐厅"
+                  },
+                  "areaSqm": 64,
+                  "xPercent": 53.5,
+                  "yPercent": 39,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village49.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Hallway",
+                    "ru": "Коридор",
+                    "th": "ทางเดิน",
+                    "zh": "走廊"
+                  },
+                  "areaSqm": 20,
+                  "xPercent": 45.3,
+                  "yPercent": 84.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village92.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Toilet",
+                    "ru": "Туалет",
+                    "th": "ห้องสุขา",
+                    "zh": "卫生间"
+                  },
+                  "areaSqm": 4.5,
+                  "xPercent": 34.7,
+                  "yPercent": 39,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village78.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Walk-in Closet",
+                    "ru": "Гардеробная",
+                    "th": "ห้องแต่งตัว",
+                    "zh": "步入式衣帽间"
+                  },
+                  "areaSqm": 9.5,
+                  "xPercent": 25.6,
+                  "yPercent": 47.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village104.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Bedroom 2",
+                    "ru": "Спальня 2",
+                    "th": "ห้องนอน 2",
+                    "zh": "卧室 2"
+                  },
+                  "areaSqm": 23.5,
+                  "xPercent": 18.3,
+                  "yPercent": 32.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village107.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": 7.5,
+                  "xPercent": 14,
+                  "yPercent": 61,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village115.webp"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "V",
+          "name": "Type B",
+          "floors": [
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 375.5,
+              "sortOrder": 0,
+              "portraitRotation": "CCW",
+              "imageUrl": "/floor-plans/trinity-village/unit-types/tvB1-line.webp",
+              "blueprintImageUrl": "/floor-plans/trinity-village/unit-types/tvB1-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/trinity-village/unit-types/tvB1-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 513,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Parking",
+                    "ru": "Парковка",
+                    "th": "ที่จอดรถ",
+                    "zh": "停车位"
+                  },
+                  "areaSqm": 35.5,
+                  "xPercent": 8.2,
+                  "yPercent": 58,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village10.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Entrance Hallway",
+                    "ru": "Вход",
+                    "th": "ทางเข้า",
+                    "zh": "入口"
+                  },
+                  "areaSqm": 9,
+                  "xPercent": 5,
+                  "yPercent": 25,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village8.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Laundry",
+                    "ru": "Прачечная",
+                    "th": "ห้องซักรีด",
+                    "zh": "洗衣房"
+                  },
+                  "areaSqm": 6,
+                  "xPercent": 9.5,
+                  "yPercent": 10,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village90.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Hallway",
+                    "ru": "Коридор",
+                    "th": "ทางเดิน",
+                    "zh": "走廊"
+                  },
+                  "areaSqm": 27.5,
+                  "xPercent": 22.2,
+                  "yPercent": 9,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village92.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Toilet",
+                    "ru": "Туалет",
+                    "th": "ห้องสุขา",
+                    "zh": "卫生间"
+                  },
+                  "areaSqm": 3,
+                  "xPercent": 27.5,
+                  "yPercent": 37.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village78.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Bedroom 1",
+                    "ru": "Спальня 1",
+                    "th": "ห้องนอน 1",
+                    "zh": "卧室 1"
+                  },
+                  "areaSqm": 18.5,
+                  "xPercent": 27.7,
+                  "yPercent": 65.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village87.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Walk-in Closet",
+                    "ru": "Гардеробная",
+                    "th": "ห้องแต่งตัว",
+                    "zh": "步入式衣帽间"
+                  },
+                  "areaSqm": 9,
+                  "xPercent": 21.2,
+                  "yPercent": 31.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village104.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": 11,
+                  "xPercent": 19.3,
+                  "yPercent": 67.4,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village80.webp"
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Garden",
+                    "ru": "Сад",
+                    "th": "สวน",
+                    "zh": "花园"
+                  },
+                  "areaSqm": 9.5,
+                  "xPercent": 37.4,
+                  "yPercent": 22.2,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village33.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Dining & Kitchen",
+                    "ru": "Столовая и кухня",
+                    "th": "ครัวและห้องทานอาหาร",
+                    "zh": "餐厅与厨房"
+                  },
+                  "areaSqm": 41,
+                  "xPercent": 48.5,
+                  "yPercent": 37.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village38.webp"
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Living Area",
+                    "ru": "Гостиная",
+                    "th": "ห้องนั่งเล่น",
+                    "zh": "客厅"
+                  },
+                  "areaSqm": 33,
+                  "xPercent": 65,
+                  "yPercent": 29.8,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village52.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Terrace 1",
+                    "ru": "Терраса 1",
+                    "th": "เทอร์เรซ 1",
+                    "zh": "露台 1"
+                  },
+                  "areaSqm": 15.5,
+                  "xPercent": 76.1,
+                  "yPercent": 35.4,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village25.webp"
+                },
+                {
+                  "sortOrder": 12,
+                  "name": {
+                    "en": "Master Bedroom",
+                    "ru": "Главная спальня",
+                    "th": "ห้องนอนใหญ่",
+                    "zh": "主卧"
+                  },
+                  "areaSqm": 35,
+                  "xPercent": 87.2,
+                  "yPercent": 39.2,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village55.webp"
+                },
+                {
+                  "sortOrder": 13,
+                  "name": {
+                    "en": "Master Bathroom",
+                    "ru": "Ванная главной спальни",
+                    "th": "ห้องน้ำห้องนอนใหญ่",
+                    "zh": "主卧浴室"
+                  },
+                  "areaSqm": 17,
+                  "xPercent": 96.1,
+                  "yPercent": 39.2,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village68.webp"
+                },
+                {
+                  "sortOrder": 14,
+                  "name": {
+                    "en": "Outdoor Shower",
+                    "ru": "Уличный душ",
+                    "th": "ฝักบัวกลางแจ้ง",
+                    "zh": "户外淋浴"
+                  },
+                  "areaSqm": 8,
+                  "xPercent": 96.3,
+                  "yPercent": 80.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village19.webp"
+                },
+                {
+                  "sortOrder": 15,
+                  "name": {
+                    "en": "Terrace 2",
+                    "ru": "Терраса 2",
+                    "th": "เทอร์เรซ 2",
+                    "zh": "露台 2"
+                  },
+                  "areaSqm": 27,
+                  "xPercent": 40.6,
+                  "yPercent": 84.4,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village12.webp"
+                },
+                {
+                  "sortOrder": 16,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": 70,
+                  "xPercent": 66.1,
+                  "yPercent": 71.2,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village22.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 184.5,
+              "sortOrder": 1,
+              "portraitRotation": "CCW",
+              "imageUrl": "/floor-plans/trinity-village/unit-types/tvB2-line.webp",
+              "blueprintImageUrl": "/floor-plans/trinity-village/unit-types/tvB2-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/trinity-village/unit-types/tvB2-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 573,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Balcony",
+                    "ru": "Балкон",
+                    "th": "ระเบียง",
+                    "zh": "阳台"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 6.1,
+                  "yPercent": 43.9,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village98.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Service Area 2",
+                    "ru": "Служебная зона 2",
+                    "th": "พื้นที่บริการ 2",
+                    "zh": "服务区 2"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 19.3,
+                  "yPercent": 11,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Service Area 1",
+                    "ru": "Служебная зона 1",
+                    "th": "พื้นที่บริการ 1",
+                    "zh": "服务区 1"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 44.8,
+                  "yPercent": 5.1,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Stair Hall",
+                    "ru": "Лестничный холл",
+                    "th": "โถงบันได",
+                    "zh": "楼梯厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 23,
+                  "yPercent": 35.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village94.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Bathroom 3",
+                    "ru": "Ванная 3",
+                    "th": "ห้องน้ำ 3",
+                    "zh": "浴室 3"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 49.3,
+                  "yPercent": 18.6,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village131.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Walk-in Closet 3",
+                    "ru": "Гардеробная 3",
+                    "th": "ห้องแต่งตัว 3",
+                    "zh": "步入式衣帽间 3"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 39.9,
+                  "yPercent": 36.8,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village150.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Bedroom 3",
+                    "ru": "Спальня 3",
+                    "th": "ห้องนอน 3",
+                    "zh": "卧室 3"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 50.1,
+                  "yPercent": 40.5,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village143.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Bedroom 2",
+                    "ru": "Спальня 2",
+                    "th": "ห้องนอน 2",
+                    "zh": "卧室 2"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 37.3,
+                  "yPercent": 60.8,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village107.webp"
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 20.1,
+                  "yPercent": 60.8,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village115.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Walk-in Closet 2",
+                    "ru": "Гардеробная 2",
+                    "th": "ห้องแต่งตัว 2",
+                    "zh": "步入式衣帽间 2"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 28.4,
+                  "yPercent": 78.9,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village158.webp"
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Hall",
+                    "ru": "Холл",
+                    "th": "โถง",
+                    "zh": "大厅"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 47.2,
+                  "yPercent": 85.3,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village95.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Double-height Void",
+                    "ru": "Пространство двойной высоты",
+                    "th": "ช่องโล่งสูงสองชั้น",
+                    "zh": "挑高空间"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 64.9,
+                  "yPercent": 32.1,
+                  "photoUrl": "/gallery/trinity-village/The Trinity Village103.webp"
+                },
+                {
+                  "sortOrder": 12,
+                  "name": {
+                    "en": "Roof",
+                    "ru": "Крыша",
+                    "th": "หลังคา",
+                    "zh": "屋顶"
+                  },
+                  "areaSqm": null,
+                  "xPercent": 89.9,
+                  "yPercent": 37.2,
+                  "photoUrl": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "victory",
+      "unitTypes": [
+        {
+          "code": "A",
+          "name": "Type A",
+          "floors": [
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 196.1,
+              "sortOrder": 0,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vA1-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vA1-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/victory/unit-types/vA1-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 734,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Bedroom 1",
+                    "ru": "Спальня 1",
+                    "th": "ห้องนอน 1",
+                    "zh": "卧室 1"
+                  },
+                  "areaSqm": 44.03,
+                  "xPercent": 72.6,
+                  "yPercent": 28.8,
+                  "photoUrl": "/gallery/victory/the-victory59.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": 9.61,
+                  "xPercent": 50,
+                  "yPercent": 19.8,
+                  "photoUrl": "/gallery/victory/the-victory60.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Terrace 1",
+                    "ru": "Терраса 1",
+                    "th": "เทอร์เรซ 1",
+                    "zh": "露台 1"
+                  },
+                  "areaSqm": 20.4,
+                  "xPercent": 92.4,
+                  "yPercent": 32.3,
+                  "photoUrl": "/gallery/victory/the-victory52.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Terrace 2",
+                    "ru": "Терраса 2",
+                    "th": "เทอร์เรซ 2",
+                    "zh": "露台 2"
+                  },
+                  "areaSqm": 4.67,
+                  "xPercent": 73.4,
+                  "yPercent": 69.4,
+                  "photoUrl": "/gallery/victory/the-victory67.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Laundry",
+                    "ru": "Прачечная",
+                    "th": "ห้องซักรีด",
+                    "zh": "洗衣房"
+                  },
+                  "areaSqm": 6.93,
+                  "xPercent": 36.3,
+                  "yPercent": 18.6,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Garage",
+                    "ru": "Гараж",
+                    "th": "โรงจอดรถ",
+                    "zh": "车库"
+                  },
+                  "areaSqm": 42.3,
+                  "xPercent": 17.1,
+                  "yPercent": 29.4,
+                  "photoUrl": "/gallery/victory/the-victory62.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Kitchen & Dining",
+                    "ru": "Кухня и столовая",
+                    "th": "ครัวและห้องทานอาหาร",
+                    "zh": "厨房与餐厅"
+                  },
+                  "areaSqm": 30.11,
+                  "xPercent": 49.4,
+                  "yPercent": 69.4,
+                  "photoUrl": "/gallery/victory/the-victory64.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "System Room",
+                    "ru": "Техническое помещение",
+                    "th": "ห้องงานระบบ",
+                    "zh": "设备间"
+                  },
+                  "areaSqm": 11.95,
+                  "xPercent": 48.3,
+                  "yPercent": 91.2,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Restroom",
+                    "ru": "Туалет",
+                    "th": "ห้องสุขา",
+                    "zh": "卫生间"
+                  },
+                  "areaSqm": 4.38,
+                  "xPercent": 48.3,
+                  "yPercent": 45.4,
+                  "photoUrl": "/gallery/victory/the-victory15.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Hallway",
+                    "ru": "Коридор",
+                    "th": "ทางเดิน",
+                    "zh": "走廊"
+                  },
+                  "areaSqm": 10.1,
+                  "xPercent": 29.9,
+                  "yPercent": 72.8,
+                  "photoUrl": "/gallery/victory/the-victory63.webp"
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Wine Room",
+                    "ru": "Винная комната",
+                    "th": "ห้องไวน์",
+                    "zh": "酒窖"
+                  },
+                  "areaSqm": 11.62,
+                  "xPercent": 13.6,
+                  "yPercent": 65,
+                  "photoUrl": null
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 192.8,
+              "sortOrder": 1,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vA2-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vA2-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/victory/unit-types/vA2-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 606,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Stair Hall",
+                    "ru": "Лестничный холл",
+                    "th": "โถงบันได",
+                    "zh": "楼梯厅"
+                  },
+                  "areaSqm": 8.9,
+                  "xPercent": 9.6,
+                  "yPercent": 78.7,
+                  "photoUrl": "/gallery/victory/the-victory1.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bedroom 2",
+                    "ru": "Спальня 2",
+                    "th": "ห้องนอน 2",
+                    "zh": "卧室 2"
+                  },
+                  "areaSqm": 23.5,
+                  "xPercent": 12,
+                  "yPercent": 27.6,
+                  "photoUrl": "/gallery/victory/the-victory61.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": 4.4,
+                  "xPercent": 7.7,
+                  "yPercent": 53.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Bedroom 3",
+                    "ru": "Спальня 3",
+                    "th": "ห้องนอน 3",
+                    "zh": "卧室 3"
+                  },
+                  "areaSqm": 29.35,
+                  "xPercent": 70.2,
+                  "yPercent": 44.6,
+                  "photoUrl": "/gallery/victory/the-victory69.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Bathroom 3",
+                    "ru": "Ванная 3",
+                    "th": "ห้องน้ำ 3",
+                    "zh": "浴室 3"
+                  },
+                  "areaSqm": 4.3,
+                  "xPercent": 56.1,
+                  "yPercent": 45.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Terrace 3",
+                    "ru": "Терраса 3",
+                    "th": "เทอร์เรซ 3",
+                    "zh": "露台 3"
+                  },
+                  "areaSqm": 6.13,
+                  "xPercent": 82.2,
+                  "yPercent": 16,
+                  "photoUrl": "/gallery/victory/the-victory67.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Terrace 4",
+                    "ru": "Терраса 4",
+                    "th": "เทอร์เรซ 4",
+                    "zh": "露台 4"
+                  },
+                  "areaSqm": 3.6,
+                  "xPercent": 23.4,
+                  "yPercent": 53.5,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Entrance",
+                    "ru": "Вход",
+                    "th": "ทางเข้า",
+                    "zh": "入口"
+                  },
+                  "areaSqm": 10.42,
+                  "xPercent": 28.2,
+                  "yPercent": 78.5,
+                  "photoUrl": "/gallery/victory/the-victory30.webp"
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Living · Dining · Kitchen",
+                    "ru": "Гостиная · Столовая · Кухня",
+                    "th": "นั่งเล่น · ทานอาหาร · ครัว",
+                    "zh": "客厅 · 餐厅 · 厨房"
+                  },
+                  "areaSqm": 42.3,
+                  "xPercent": 44,
+                  "yPercent": 48.4,
+                  "photoUrl": "/gallery/victory/the-victory66.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Terrace 5",
+                    "ru": "Терраса 5",
+                    "th": "เทอร์เรซ 5",
+                    "zh": "露台 5"
+                  },
+                  "areaSqm": 3.4,
+                  "xPercent": 59.1,
+                  "yPercent": 90.5,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Swimming Pool 1",
+                    "ru": "Бассейн 1",
+                    "th": "สระว่ายน้ำ 1",
+                    "zh": "游泳池 1"
+                  },
+                  "areaSqm": 16.7,
+                  "xPercent": 27.8,
+                  "yPercent": 27.8,
+                  "photoUrl": "/gallery/victory/the-victory71.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Swimming Pool 2",
+                    "ru": "Бассейн 2",
+                    "th": "สระว่ายน้ำ 2",
+                    "zh": "游泳池 2"
+                  },
+                  "areaSqm": 39.8,
+                  "xPercent": 88.9,
+                  "yPercent": 51.6,
+                  "photoUrl": "/gallery/victory/the-victory11.webp"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "A+",
+          "name": "Type A+",
+          "floors": [
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 235.48,
+              "sortOrder": 0,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vAP1-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vAP1-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/victory/unit-types/vAP1-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 631,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Bedroom 1",
+                    "ru": "Спальня 1",
+                    "th": "ห้องนอน 1",
+                    "zh": "卧室 1"
+                  },
+                  "areaSqm": 44.03,
+                  "xPercent": 63,
+                  "yPercent": 27.6,
+                  "photoUrl": "/gallery/victory/the-victory59.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": 9.61,
+                  "xPercent": 42.3,
+                  "yPercent": 21.3,
+                  "photoUrl": "/gallery/victory/the-victory60.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Terrace 1",
+                    "ru": "Терраса 1",
+                    "th": "เทอร์เรซ 1",
+                    "zh": "露台 1"
+                  },
+                  "areaSqm": 20.4,
+                  "xPercent": 80.2,
+                  "yPercent": 36.9,
+                  "photoUrl": "/gallery/victory/the-victory52.webp"
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Terrace 2",
+                    "ru": "Терраса 2",
+                    "th": "เทอร์เรซ 2",
+                    "zh": "露台 2"
+                  },
+                  "areaSqm": 12.5,
+                  "xPercent": 62.9,
+                  "yPercent": 68.7,
+                  "photoUrl": "/gallery/victory/the-victory67.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Laundry",
+                    "ru": "Прачечная",
+                    "th": "ห้องซักรีด",
+                    "zh": "洗衣房"
+                  },
+                  "areaSqm": 6.93,
+                  "xPercent": 32.2,
+                  "yPercent": 21.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Garage",
+                    "ru": "Гараж",
+                    "th": "โรงจอดรถ",
+                    "zh": "车库"
+                  },
+                  "areaSqm": 42.3,
+                  "xPercent": 13.4,
+                  "yPercent": 31.3,
+                  "photoUrl": "/gallery/victory/the-victory62.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Kitchen & Dining",
+                    "ru": "Кухня и столовая",
+                    "th": "ครัวและห้องทานอาหาร",
+                    "zh": "厨房与餐厅"
+                  },
+                  "areaSqm": 30.11,
+                  "xPercent": 43.9,
+                  "yPercent": 66.9,
+                  "photoUrl": "/gallery/victory/the-victory64.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "System Room",
+                    "ru": "Техническое помещение",
+                    "th": "ห้องงานระบบ",
+                    "zh": "设备间"
+                  },
+                  "areaSqm": 11.95,
+                  "xPercent": 31.2,
+                  "yPercent": 91.9,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Restroom",
+                    "ru": "Туалет",
+                    "th": "ห้องสุขา",
+                    "zh": "卫生间"
+                  },
+                  "areaSqm": 4.38,
+                  "xPercent": 40.1,
+                  "yPercent": 44.8,
+                  "photoUrl": "/gallery/victory/the-victory15.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Hallway",
+                    "ru": "Коридор",
+                    "th": "ทางเดิน",
+                    "zh": "走廊"
+                  },
+                  "areaSqm": 10.1,
+                  "xPercent": 25.9,
+                  "yPercent": 72.4,
+                  "photoUrl": "/gallery/victory/the-victory63.webp"
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Wine Room",
+                    "ru": "Винная комната",
+                    "th": "ห้องไวน์",
+                    "zh": "酒窖"
+                  },
+                  "areaSqm": 11.62,
+                  "xPercent": 12.7,
+                  "yPercent": 65.4,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": 32,
+                  "xPercent": 92.6,
+                  "yPercent": 38.7,
+                  "photoUrl": "/gallery/victory/the-victory71.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 192.8,
+              "sortOrder": 1,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vA2-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vA2-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/victory/unit-types/vA2-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 606,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Stair Hall",
+                    "ru": "Лестничный холл",
+                    "th": "โถงบันได",
+                    "zh": "楼梯厅"
+                  },
+                  "areaSqm": 8.9,
+                  "xPercent": 9.6,
+                  "yPercent": 78.7,
+                  "photoUrl": "/gallery/victory/the-victory1.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bedroom 2",
+                    "ru": "Спальня 2",
+                    "th": "ห้องนอน 2",
+                    "zh": "卧室 2"
+                  },
+                  "areaSqm": 23.5,
+                  "xPercent": 12,
+                  "yPercent": 27.6,
+                  "photoUrl": "/gallery/victory/the-victory61.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": 4.4,
+                  "xPercent": 7.7,
+                  "yPercent": 53.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Bedroom 3",
+                    "ru": "Спальня 3",
+                    "th": "ห้องนอน 3",
+                    "zh": "卧室 3"
+                  },
+                  "areaSqm": 29.35,
+                  "xPercent": 70.2,
+                  "yPercent": 44.6,
+                  "photoUrl": "/gallery/victory/the-victory69.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Bathroom 3",
+                    "ru": "Ванная 3",
+                    "th": "ห้องน้ำ 3",
+                    "zh": "浴室 3"
+                  },
+                  "areaSqm": 4.3,
+                  "xPercent": 56.1,
+                  "yPercent": 45.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Terrace 3",
+                    "ru": "Терраса 3",
+                    "th": "เทอร์เรซ 3",
+                    "zh": "露台 3"
+                  },
+                  "areaSqm": 6.13,
+                  "xPercent": 82.2,
+                  "yPercent": 16,
+                  "photoUrl": "/gallery/victory/the-victory67.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Terrace 4",
+                    "ru": "Терраса 4",
+                    "th": "เทอร์เรซ 4",
+                    "zh": "露台 4"
+                  },
+                  "areaSqm": 3.6,
+                  "xPercent": 23.4,
+                  "yPercent": 53.5,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Entrance",
+                    "ru": "Вход",
+                    "th": "ทางเข้า",
+                    "zh": "入口"
+                  },
+                  "areaSqm": 10.42,
+                  "xPercent": 28.2,
+                  "yPercent": 78.5,
+                  "photoUrl": "/gallery/victory/the-victory30.webp"
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Living · Dining · Kitchen",
+                    "ru": "Гостиная · Столовая · Кухня",
+                    "th": "นั่งเล่น · ทานอาหาร · ครัว",
+                    "zh": "客厅 · 餐厅 · 厨房"
+                  },
+                  "areaSqm": 42.3,
+                  "xPercent": 44,
+                  "yPercent": 48.4,
+                  "photoUrl": "/gallery/victory/the-victory66.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Terrace 5",
+                    "ru": "Терраса 5",
+                    "th": "เทอร์เรซ 5",
+                    "zh": "露台 5"
+                  },
+                  "areaSqm": 3.4,
+                  "xPercent": 59.1,
+                  "yPercent": 90.5,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Swimming Pool 1",
+                    "ru": "Бассейн 1",
+                    "th": "สระว่ายน้ำ 1",
+                    "zh": "游泳池 1"
+                  },
+                  "areaSqm": 16.7,
+                  "xPercent": 27.8,
+                  "yPercent": 27.8,
+                  "photoUrl": "/gallery/victory/the-victory71.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "Swimming Pool 2",
+                    "ru": "Бассейн 2",
+                    "th": "สระว่ายน้ำ 2",
+                    "zh": "游泳池 2"
+                  },
+                  "areaSqm": 39.8,
+                  "xPercent": 88.9,
+                  "yPercent": 51.6,
+                  "photoUrl": "/gallery/victory/the-victory11.webp"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "B",
+          "name": "Type B",
+          "floors": [
+            {
+              "floorName": "1st Floor",
+              "shortLabel": "1",
+              "areaSqm": 454,
+              "sortOrder": 0,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vB1-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vB1-blueprint.webp",
+              "furnishedImageUrl": "/floor-plans/victory/unit-types/vB1-furnished.webp",
+              "imageWidth": 1800,
+              "imageHeight": 608,
+              "rooms": [
+                {
+                  "sortOrder": 0,
+                  "name": {
+                    "en": "Bedroom 1",
+                    "ru": "Спальня 1",
+                    "th": "ห้องนอน 1",
+                    "zh": "卧室 1"
+                  },
+                  "areaSqm": 40,
+                  "xPercent": 53.2,
+                  "yPercent": 82.1,
+                  "photoUrl": "/gallery/victory/the-victory59.webp"
+                },
+                {
+                  "sortOrder": 1,
+                  "name": {
+                    "en": "Bathroom 1",
+                    "ru": "Ванная 1",
+                    "th": "ห้องน้ำ 1",
+                    "zh": "浴室 1"
+                  },
+                  "areaSqm": 8,
+                  "xPercent": 33.6,
+                  "yPercent": 87,
+                  "photoUrl": "/gallery/victory/the-victory60.webp"
+                },
+                {
+                  "sortOrder": 2,
+                  "name": {
+                    "en": "Outdoor Dining",
+                    "ru": "Обеденная зона на открытом воздухе",
+                    "th": "ทานอาหารกลางแจ้ง",
+                    "zh": "户外用餐区"
+                  },
+                  "areaSqm": 30,
+                  "xPercent": 69.3,
+                  "yPercent": 79.4,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 3,
+                  "name": {
+                    "en": "Outdoor Living",
+                    "ru": "Гостиная зона на открытом воздухе",
+                    "th": "นั่งเล่นกลางแจ้ง",
+                    "zh": "户外起居区"
+                  },
+                  "areaSqm": 17,
+                  "xPercent": 66.1,
+                  "yPercent": 38.3,
+                  "photoUrl": "/gallery/victory/the-victory32.webp"
+                },
+                {
+                  "sortOrder": 4,
+                  "name": {
+                    "en": "Terrace 1",
+                    "ru": "Терраса 1",
+                    "th": "เทอร์เรซ 1",
+                    "zh": "露台 1"
+                  },
+                  "areaSqm": 43,
+                  "xPercent": 58.8,
+                  "yPercent": 54.9,
+                  "photoUrl": "/gallery/victory/the-victory52.webp"
+                },
+                {
+                  "sortOrder": 5,
+                  "name": {
+                    "en": "Swimming Pool",
+                    "ru": "Бассейн",
+                    "th": "สระว่ายน้ำ",
+                    "zh": "游泳池"
+                  },
+                  "areaSqm": 90,
+                  "xPercent": 84,
+                  "yPercent": 42.7,
+                  "photoUrl": "/gallery/victory/the-victory71.webp"
+                },
+                {
+                  "sortOrder": 6,
+                  "name": {
+                    "en": "Bedroom 2",
+                    "ru": "Спальня 2",
+                    "th": "ห้องนอน 2",
+                    "zh": "卧室 2"
+                  },
+                  "areaSqm": 42,
+                  "xPercent": 50.4,
+                  "yPercent": 17.9,
+                  "photoUrl": "/gallery/victory/the-victory61.webp"
+                },
+                {
+                  "sortOrder": 7,
+                  "name": {
+                    "en": "Bathroom 2",
+                    "ru": "Ванная 2",
+                    "th": "ห้องน้ำ 2",
+                    "zh": "浴室 2"
+                  },
+                  "areaSqm": 10,
+                  "xPercent": 35.6,
+                  "yPercent": 17.9,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 8,
+                  "name": {
+                    "en": "Restroom",
+                    "ru": "Туалет",
+                    "th": "ห้องสุขา",
+                    "zh": "卫生间"
+                  },
+                  "areaSqm": 4,
+                  "xPercent": 30.9,
+                  "yPercent": 30.8,
+                  "photoUrl": "/gallery/victory/the-victory15.webp"
+                },
+                {
+                  "sortOrder": 9,
+                  "name": {
+                    "en": "Shoe Room",
+                    "ru": "Обувная комната",
+                    "th": "ห้องเก็บรองเท้า",
+                    "zh": "鞋帽间"
+                  },
+                  "areaSqm": 3.5,
+                  "xPercent": 28.9,
+                  "yPercent": 18.4,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 10,
+                  "name": {
+                    "en": "Living · Dining · Kitchen",
+                    "ru": "Гостиная · Столовая · Кухня",
+                    "th": "นั่งเล่น · ทานอาหาร · ครัว",
+                    "zh": "客厅 · 餐厅 · 厨房"
+                  },
+                  "areaSqm": 56,
+                  "xPercent": 48.2,
+                  "yPercent": 48.2,
+                  "photoUrl": "/gallery/victory/the-victory66.webp"
+                },
+                {
+                  "sortOrder": 11,
+                  "name": {
+                    "en": "CDU",
+                    "ru": "Наружный блок кондиционера",
+                    "th": "CDU",
+                    "zh": "空调外机"
+                  },
+                  "areaSqm": 1.5,
+                  "xPercent": 29.2,
+                  "yPercent": 2.7,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 12,
+                  "name": {
+                    "en": "Shoe Area",
+                    "ru": "Зона для обуви",
+                    "th": "พื้นที่วางรองเท้า",
+                    "zh": "鞋柜区"
+                  },
+                  "areaSqm": 6,
+                  "xPercent": 29.1,
+                  "yPercent": 83,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 13,
+                  "name": {
+                    "en": "Hall",
+                    "ru": "Холл",
+                    "th": "โถง",
+                    "zh": "大厅"
+                  },
+                  "areaSqm": 6,
+                  "xPercent": 24.7,
+                  "yPercent": 48.9,
+                  "photoUrl": "/gallery/victory/the-victory63.webp"
+                },
+                {
+                  "sortOrder": 14,
+                  "name": {
+                    "en": "Wine Room",
+                    "ru": "Винная комната",
+                    "th": "ห้องไวน์",
+                    "zh": "酒窖"
+                  },
+                  "areaSqm": 7,
+                  "xPercent": 11.9,
+                  "yPercent": 52.2,
+                  "photoUrl": null
+                },
+                {
+                  "sortOrder": 15,
+                  "name": {
+                    "en": "Parking 1",
+                    "ru": "Парковка 1",
+                    "th": "ที่จอดรถ 1",
+                    "zh": "停车位 1"
+                  },
+                  "areaSqm": 45,
+                  "xPercent": 6.7,
+                  "yPercent": 25.7,
+                  "photoUrl": "/gallery/victory/the-victory62.webp"
+                },
+                {
+                  "sortOrder": 16,
+                  "name": {
+                    "en": "Parking 2",
+                    "ru": "Парковка 2",
+                    "th": "ที่จอดรถ 2",
+                    "zh": "停车位 2"
+                  },
+                  "areaSqm": 45,
+                  "xPercent": 7,
+                  "yPercent": 77.6,
+                  "photoUrl": "/gallery/victory/the-victory62.webp"
+                }
+              ]
+            },
+            {
+              "floorName": "2nd Floor",
+              "shortLabel": "2",
+              "areaSqm": 454,
+              "sortOrder": 1,
+              "portraitRotation": "CW",
+              "imageUrl": "/floor-plans/victory/unit-types/vB2-line.webp",
+              "blueprintImageUrl": "/floor-plans/victory/unit-types/vB2-blueprint.webp",
+              "furnishedImageUrl": null,
+              "imageWidth": 1800,
+              "imageHeight": 667,
+              "rooms": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
