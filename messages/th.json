@@ -280,7 +280,24 @@
       "previousRoom": "ห้องก่อนหน้า",
       "nextRoom": "ห้องถัดไป",
       "close": "ปิด",
-      "floorSelector": "เลือกชั้น"
+      "floorSelector": "เลือกชั้น",
+      "viewMode": "มุมมอง",
+      "viewPlan": "แปลน",
+      "view3d": "3D",
+      "room": "ห้อง",
+      "tapRoom3d": "แตะห้องในโมเดล",
+      "ofFloor": "ของพื้นที่ชั้น",
+      "model3d": {
+        "top": "มุมบน",
+        "overview": "ภาพรวม",
+        "street": "ระดับสายตา",
+        "walls": "ผนัง",
+        "wallFull": "เต็ม",
+        "wallCut": "ตัดครึ่ง",
+        "wallOff": "ปิด",
+        "hint": "ลาก · ซูม · แตะห้อง",
+        "loading": "กำลังโหลดโมเดล…"
+      }
     },
     "unitTypeLabels": {
       "livingArea": "พื้นที่ใช้สอย",
@@ -2548,6 +2565,8 @@
         "tabFloors": "ชั้น แปลน และห้อง",
         "tabPreview": "ตัวอย่างหน้าเว็บ",
         "typeList": "แบบบ้านในโครงการ",
+        "model3dShow": "แสดง 3D บนเว็บ",
+        "model3dMatched": "ห้อง {matched}/{total} ตรงกับระบบ",
         "floorsShort": "ชั้น",
         "unitsShort": "ยูนิต",
         "addFloor": "เพิ่มชั้น",

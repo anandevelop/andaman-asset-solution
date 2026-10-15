@@ -29,10 +29,13 @@
  */
 
 import type { Rotation } from "./geometry";
+import type { Model3dLabels } from "./UnitModel3D";
 
 export type ElevatorRoom = {
   id: string;
   name: string;
+  /** The English name, for matching a tapped 3D-model room to this one. */
+  matchName: string;
   /** Already formatted, e.g. "42.30". Null when the Sale Kit gave no area. */
   areaLabel: string | null;
   /** 0–100 against the *line* drawing, before any portrait rotation. */
@@ -71,6 +74,9 @@ export type ElevatorType = {
   title: string;
   /** "3 floors. Press a floor." — or the private-lift line. Finished. */
   subtitle: string;
+  /** Has a 3D house model to show (components/unit-types/model3d), and the
+   *  admin has not switched it off. */
+  model3d: boolean;
   floors: ElevatorFloor[];
 };
 
@@ -93,4 +99,13 @@ export type ElevatorLabels = {
   close: string;
   /** Screen-reader name for the lift button group. */
   floorSelector: string;
+  /** The แปลน | 3D switch, and the 3D view's own controls. */
+  viewMode: string;
+  viewPlan: string;
+  view3d: string;
+  room: string;
+  tapRoom3d: string;
+  /** Follows a percentage: "12.4% of the floor". */
+  ofFloor: string;
+  model3d: Model3dLabels;
 };

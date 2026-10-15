@@ -280,7 +280,24 @@
       "previousRoom": "Предыдущая комната",
       "nextRoom": "Следующая комната",
       "close": "Закрыть",
-      "floorSelector": "Выберите этаж"
+      "floorSelector": "Выберите этаж",
+      "viewMode": "Вид",
+      "viewPlan": "План",
+      "view3d": "3D",
+      "room": "Комната",
+      "tapRoom3d": "Нажмите на комнату в модели",
+      "ofFloor": "площади этажа",
+      "model3d": {
+        "top": "Сверху",
+        "overview": "Обзор",
+        "street": "С улицы",
+        "walls": "Стены",
+        "wallFull": "Полные",
+        "wallCut": "Разрез",
+        "wallOff": "Скрыть",
+        "hint": "Тяните · Масштаб · Нажмите на комнату",
+        "loading": "Загрузка модели…"
+      }
     },
     "unitTypeLabels": {
       "livingArea": "Жилая площадь",
@@ -2548,6 +2565,8 @@
         "tabFloors": "Floors, plans and rooms",
         "tabPreview": "Live preview",
         "typeList": "Unit types",
+        "model3dShow": "Показывать 3D на сайте",
+        "model3dMatched": "Совпадает комнат: {matched}/{total}",
         "floorsShort": "floors",
         "unitsShort": "units",
         "addFloor": "Add floor",

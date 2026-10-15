@@ -125,6 +125,9 @@ export type FloorRoom = {
   id: string;
   /** Locale-picked, with the site's usual fallback chain. */
   name: string;
+  /** The English name, whatever the page's locale — what the 3D view
+   *  matches its model's rooms against (components/unit-types/match-room.ts). */
+  nameEn: string | null;
   areaSqm: number | null;
   /** 0–100, against the *line* drawing — see FloorPlanSummary.imageUrl. */
   x: number;
@@ -179,6 +182,8 @@ export type UnitTypeSummary = {
   sortOrder: number;
   /** Whether each home of this type has its own lift — changes the copy. */
   hasPrivateLift: boolean;
+  /** Admin switch for the 3D model view — see ProjectUnitType.model3dEnabled. */
+  model3dEnabled: boolean;
   floorPlans: FloorPlanSummary[];
 };
 
@@ -858,6 +863,7 @@ export async function getUnitTypesForProject(
     gallery: t.gallery,
     sortOrder: t.sortOrder,
     hasPrivateLift: t.hasPrivateLift,
+    model3dEnabled: t.model3dEnabled ?? true,
     floorPlans: t.floorPlans.map((fp: any) => ({
       id: fp.id,
       floorName: fp.floorName,
@@ -883,6 +889,7 @@ export async function getUnitTypesForProject(
         .map((room: any) => ({
           id: room.id,
           name: getTranslation<any>(room.translations, locale)?.name?.trim() ?? "",
+          nameEn: room.translations.find((row: any) => row.locale === "en")?.name?.trim() || null,
           areaSqm: toNumber(room.areaSqm),
           x: room.xPercent,
           y: room.yPercent,

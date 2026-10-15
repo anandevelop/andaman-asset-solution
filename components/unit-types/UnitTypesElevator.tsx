@@ -18,6 +18,15 @@
  * every label arrives finished — see types.ts for why that is not an
  * accident.
  *
+ * THE 3D VIEW
+ *
+ * A type with a house model (components/unit-types/model3d) gets a
+ * แปลน | 3D switch, and opens on 3D: the model takes the shaft's place,
+ * the lift panel picks its floor (no ride — the model moves itself), and a
+ * tapped room shows in the title block under its name from the admin,
+ * matched by English name (./match-room.ts). Only on the site: the admin
+ * preview has no project to load.
+ *
  * `busy` is a real constraint rather than a nicety. A second press during
  * the 900ms travel would start a new transition from a car that has not
  * arrived, and the plan would draw itself in over a floor the display has
@@ -26,9 +35,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Image as ImageIcon } from "lucide-react";
 import FloorCar from "./FloorCar";
 import LiftPanel from "./LiftPanel";
 import RoomPhotoCard from "./RoomPhotoCard";
+import UnitModel3D, { type Model3dRoom } from "./UnitModel3D";
+import { matchRoom } from "./match-room";
 import type { ElevatorLabels, ElevatorRoom, ElevatorType } from "./types";
 
 /** Matches the CSS transition on the car. */
@@ -50,6 +62,8 @@ const PORTRAIT_MAX = 1000;
 
 type Props = {
   projectName: string;
+  /** Which project's 3D models to load. Omitted by the admin preview. */
+  projectSlug?: string;
   types: ElevatorType[];
   labels: ElevatorLabels;
   /**
@@ -62,6 +76,7 @@ type Props = {
 
 export default function UnitTypesElevator({
   projectName,
+  projectSlug,
   types,
   labels,
   variant = "site",
@@ -76,7 +91,12 @@ export default function UnitTypesElevator({
     null,
   );
 
+  const [mode, setMode] = useState<"3d" | "plan">("3d");
+  const [room3d, setRoom3d] = useState<Model3dRoom | null>(null);
+
   const type = types[Math.min(typeIndex, types.length - 1)];
+  const can3d = Boolean(type?.model3d && projectSlug && variant === "site");
+  const show3d = can3d && mode === "3d";
   // Memoised because goToFloor closes over it: a fresh [] every render
   // would rebuild that callback every render, and with it every button.
   const floors = useMemo(() => type?.floors ?? [], [type]);
@@ -127,10 +147,12 @@ export default function UnitTypesElevator({
       if (busy || next === floorIndex || !floors[next]) return;
 
       closeRoom();
+      setRoom3d(null);
       setDirection(next > floorIndex ? 1 : -1);
       setFloorIndex(next);
 
-      if (reducedMotion.current || variant === "preview") {
+      // No lift ride in 3D: the model moves its own camera.
+      if (reducedMotion.current || variant === "preview" || show3d) {
         setDrawn(true);
         setDirection(0);
         return;
@@ -139,7 +161,7 @@ export default function UnitTypesElevator({
       setBusy(true);
       setDrawn(false);
     },
-    [busy, closeRoom, floorIndex, floors, variant],
+    [busy, closeRoom, floorIndex, floors, variant, show3d],
   );
 
   // The arrival: the car has stopped, so the plan may draw itself in.
@@ -159,6 +181,7 @@ export default function UnitTypesElevator({
     (index: number) => {
       if (index === typeIndex) return;
       closeRoom();
+      setRoom3d(null);
       setTypeIndex(index);
       setFloorIndex(0);
       setDirection(0);
@@ -190,6 +213,10 @@ export default function UnitTypesElevator({
 
   if (!type || !floor) return null;
 
+  // The admin's room for the one tapped in the model, when there is one.
+  const picked = room3d ? matchRoom(room3d.name, floor.rooms) : null;
+  const pickedIndex = picked ? floor.rooms.indexOf(picked) : -1;
+
   const openIndex = openRoom
     ? Math.max(
         photoRooms.findIndex((room) => room.id === openRoom.room.id),
@@ -200,16 +227,17 @@ export default function UnitTypesElevator({
   return (
     <section
       id="unit-types"
-      className="scroll-mt-24 bg-[#041d2c] py-16 text-white sm:py-24"
+      className="scroll-mt-24 bg-[#041d2c] py-14 text-white sm:py-20"
     >
       <div ref={host} className="container-luxe @container">
         <p className="eyebrow text-accent">{labels.eyebrow}</p>
-        <h2 className="mt-3 text-3xl font-light text-white sm:text-4xl">{type.title}</h2>
-        <p className="mt-2.5 text-sm text-white/60">{type.subtitle}</p>
+        <h2 className="mt-2.5 text-2xl font-light text-white sm:text-3xl">{type.title}</h2>
+        <p className="mt-2 text-[13px] text-white/55">{type.subtitle}</p>
 
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
         {/* Type chips — pointless with a single type. */}
-        {types.length > 1 && (
-          <div className="mt-7 flex flex-wrap gap-2">
+        {types.length > 1 ? (
+          <div className="flex flex-wrap gap-2">
             {types.map((candidate, index) => (
               <button
                 key={candidate.id}
@@ -229,11 +257,40 @@ export default function UnitTypesElevator({
               </button>
             ))}
           </div>
+        ) : (
+          <span />
         )}
+
+        {can3d && (
+          <div
+            role="group"
+            aria-label={labels.viewMode}
+            className="inline-flex rounded-xs border border-[#c3d3dd]/25 p-0.5"
+          >
+            {(["plan", "3d"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={mode === value}
+                onClick={() => {
+                  setMode(value);
+                  setRoom3d(null);
+                  closeRoom();
+                }}
+                className={`rounded-xs px-3.5 py-1.5 text-[12.5px] transition-colors ${
+                  mode === value ? "bg-accent font-medium text-[#062a41]" : "text-white/65 hover:text-white"
+                }`}
+              >
+                {value === "plan" ? labels.viewPlan : labels.view3d}
+              </button>
+            ))}
+          </div>
+        )}
+        </div>
 
         {/* ── The board ───────────────────────────────────────────── */}
         <div
-          className="relative mt-9 grid grid-cols-1 border border-[#c3d3dd]/20 @min-[1000px]:grid-cols-[92px_1fr_300px]"
+          className="relative mt-6 grid grid-cols-1 border border-[#c3d3dd]/20 @min-[1000px]:grid-cols-[80px_1fr_260px]"
           style={{
             /* Two grids, not one: the 40px major lines read as a drawing
                board, and the 8px minor ones are what make it read as
@@ -254,10 +311,22 @@ export default function UnitTypesElevator({
             onSelect={goToFloor}
           />
 
-          {/* The shaft. In portrait it is a tall box centred in its column —
-              it was flush left at around 920px before the margin. */}
+          {show3d && projectSlug ? (
+            <div className="relative h-[min(70vh,520px)] @min-[1000px]:h-auto @min-[1000px]:min-h-[clamp(380px,30vw,460px)]">
+              <UnitModel3D
+                projectSlug={projectSlug}
+                typeCode={type.code}
+                floorIndex={floorIndex}
+                floorShort={floor.shortLabel}
+                labels={labels.model3d}
+                onRoom={setRoom3d}
+              />
+            </div>
+          ) : (
+          /* The shaft. In portrait it is a tall box centred in its column —
+              it was flush left at around 920px before the margin. */
           <div
-            className="relative mx-auto w-full overflow-hidden p-5 @min-[1000px]:min-h-[clamp(420px,38vw,560px)] @min-[1000px]:p-[34px]"
+            className="relative mx-auto w-full overflow-hidden p-5 @min-[1000px]:min-h-[clamp(380px,30vw,460px)] @min-[1000px]:p-7"
             style={
               portrait
                 ? {
@@ -291,6 +360,7 @@ export default function UnitTypesElevator({
               />
             ))}
           </div>
+          )}
 
           {/* ── Title block ───────────────────────────────────────── */}
           {/* Mono for the keys and the schedule, Roboto for the values — the
@@ -307,31 +377,52 @@ export default function UnitTypesElevator({
 
             <Row label={labels.floor} value={floor.name} />
 
-            <div className="border-b border-[#c3d3dd]/15 px-4.5 py-3.5">
+            {show3d && (
+              <div className="border-b border-[#c3d3dd]/15 bg-accent/5 px-4 py-2.5">
+                <Key>
+                  {room3d
+                    ? `${labels.room} ${String(pickedIndex >= 0 ? pickedIndex + 1 : room3d.n).padStart(2, "0")}`
+                    : labels.room}
+                </Key>
+                <div className="mt-1 font-sans text-[13.5px] text-white">
+                  {/* The admin's name for the room — so all four languages —
+                      and the model's own only when no room matches. */}
+                  {room3d ? (picked?.name ?? room3d.name) : labels.tapRoom3d}
+                </div>
+                {room3d && (
+                  <div className="mt-0.5 text-[10.5px] text-white/50">
+                    {picked?.areaLabel ?? room3d.sqm.toFixed(2)} {labels.sqm} ·{" "}
+                    {room3d.share.toFixed(1)}% {labels.ofFloor}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
               <Key>{labels.areaThisFloor}</Key>
-              <div className="mt-1.5 font-sans text-4xl font-extralight leading-none text-white">
+              <div className="mt-1 font-sans text-[28px] font-extralight leading-none text-white">
                 {floor.areaLabel ?? "—"}
                 {floor.areaLabel && (
-                  <small className="ml-1 text-xs text-white/55">{labels.sqm}</small>
+                  <small className="ml-1 text-[11px] text-white/50">{labels.sqm}</small>
                 )}
               </div>
             </div>
 
-            <div className="px-4.5 py-3.5">
+            <div className="px-4 py-2.5">
               <Key>{labels.areaByFloor}</Key>
-              <div className="mt-2.5 flex flex-col-reverse gap-1">
+              <div className="mt-2 flex flex-col-reverse gap-1">
                 {floors.map((candidate, index) => (
                   <div
                     key={candidate.id}
-                    className={`flex items-center gap-2.5 font-mono text-[11px] transition-colors ${
+                    className={`flex items-center gap-2 font-mono text-[10.5px] transition-colors ${
                       index === floorIndex ? "text-white" : "text-white/55"
                     }`}
                   >
                     <b
-                      className={`h-3.5 transition-[background-color,width] duration-700 ${
+                      className={`h-2.5 transition-[background-color,width] duration-700 ${
                         index === floorIndex ? "bg-accent" : "bg-[#c3d3dd]/20"
                       }`}
-                      style={{ width: `${Math.max(candidate.areaRatio * 150, 4)}px` }}
+                      style={{ width: `${Math.max(candidate.areaRatio * 130, 4)}px` }}
                     />
                     {candidate.shortLabel} · {candidate.areaLabel ?? "—"}
                   </div>
@@ -340,27 +431,27 @@ export default function UnitTypesElevator({
 
               {type.totalAreaLabel && (
                 <>
-                  <div className="mt-3.5">
+                  <div className="mt-3">
                     <Key>{labels.total}</Key>
                   </div>
-                  <div className="mt-1.5 font-sans text-[15px] text-white">
+                  <div className="mt-1 font-sans text-[13.5px] text-white">
                     {type.totalAreaLabel} {labels.sqm}
                   </div>
                 </>
               )}
 
               {floor.rooms.length > 0 && (
-                <div className="mt-4">
+                <div className="mt-3">
                   <Key>
                     {labels.roomSchedule} · {floor.shortLabel}
                   </Key>
-                  <ol className="mt-2 max-h-52 list-none overflow-auto p-0">
+                  <ol className="mt-1.5 max-h-44 list-none overflow-auto p-0">
                     {floor.rooms.map((room, index) => (
                       <ScheduleRow
                         key={room.id}
                         room={room}
                         index={index}
-                        open={openRoom?.room.id === room.id}
+                        open={openRoom?.room.id === room.id || (show3d && picked?.id === room.id)}
                         onOpen={(element) => setOpenRoom({ room, element })}
                       />
                     ))}
@@ -390,7 +481,7 @@ export default function UnitTypesElevator({
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[#c3d3dd]/55">
+    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#c3d3dd]/55">
       {children}
     </div>
   );
@@ -398,9 +489,9 @@ function Key({ children }: { children: React.ReactNode }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-[#c3d3dd]/15 px-4.5 py-3.5">
+    <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
       <Key>{label}</Key>
-      <div className="mt-1.5 font-sans text-[15px] text-white">{value}</div>
+      <div className="mt-1 font-sans text-[13.5px] text-white">{value}</div>
     </div>
   );
 }
@@ -408,12 +499,12 @@ function Row({ label, value }: { label: string; value: string }) {
 function Cell({ label, value, bordered }: { label: string; value: string; bordered?: boolean }) {
   return (
     <div
-      className={`border-b border-[#c3d3dd]/15 px-4.5 py-3.5 ${
+      className={`border-b border-[#c3d3dd]/15 px-4 py-2.5 ${
         bordered ? "border-l border-l-[#c3d3dd]/15" : ""
       }`}
     >
       <Key>{label}</Key>
-      <div className="mt-1.5 font-sans text-[15px] text-white">{value}</div>
+      <div className="mt-1 font-sans text-[13.5px] text-white">{value}</div>
     </div>
   );
 }
@@ -432,16 +523,21 @@ function ScheduleRow({
   const content = (
     <>
       <span className="text-accent">{String(index + 1).padStart(2, "0")}</span>
-      <span className="flex items-center">{room.name}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate">{room.name}</span>
+        {/* Says "this one opens a photo" before anybody has to hover. */}
+        {room.photoUrl && <ImageIcon size={11} aria-hidden className="shrink-0 text-accent/80" />}
+      </span>
       <b className="font-normal text-white">{room.areaLabel ?? "—"}</b>
     </>
   );
 
   const shell =
-    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-[#c3d3dd]/12 py-1 text-left font-mono text-[11px]";
+    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-[#c3d3dd]/12 py-[3px] text-left font-mono text-[10.5px]";
 
   if (!room.photoUrl) {
-    return <li className={`${shell} text-white/75`}>{content}</li>;
+    // `open` without a photo is the room tapped in the 3D view.
+    return <li className={`${shell} ${open ? "text-accent" : "text-white/75"}`}>{content}</li>;
   }
 
   return (

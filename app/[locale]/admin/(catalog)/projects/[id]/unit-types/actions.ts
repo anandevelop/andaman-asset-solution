@@ -477,3 +477,32 @@ export async function reorderUnitTypes(
   revalidateUnitTypes(locale, projectId, projectSlug);
   return { ok: true, message: "SAVED" };
 }
+
+/**
+ * The per-type switch for the 3D house model on the project page
+ * (ProjectUnitType.model3dEnabled; see components/unit-types/model3d). The
+ * model itself lives in code, so this only shows or hides it.
+ */
+export async function setUnitType3dEnabled(
+  locale: string,
+  projectId: string,
+  projectSlug: string,
+  unitTypeId: string,
+  enabled: boolean,
+): Promise<UnitTypeFormState> {
+  await requireAdminAction(Role.EDITOR);
+
+  try {
+    const result = await prisma.projectUnitType.updateMany({
+      where: { id: unitTypeId, projectId },
+      data: { model3dEnabled: enabled },
+    });
+    if (result.count === 0) return { ok: false, message: "NOT_FOUND" };
+  } catch (error) {
+    console.error("[setUnitType3dEnabled] failed", error);
+    return { ok: false, message: "SAVE_FAILED" };
+  }
+
+  revalidateUnitTypes(locale, projectId, projectSlug);
+  return { ok: true, message: "SAVED" };
+}

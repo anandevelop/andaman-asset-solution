@@ -22,6 +22,7 @@ import {
   deleteUnitType,
   saveUnitTypeFloors,
   reorderUnitTypes,
+  setUnitType3dEnabled,
 } from "./actions";
 import UnitTypesWorkspace, {
   type DraftFloor,
@@ -33,6 +34,7 @@ import UnitTypeForm from "@/components/admin/UnitTypeForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 import { liftLabelFor } from "@/lib/lift-label";
+import { checkModel3dRooms } from "@/lib/unit-types-3d-check";
 import AdminDrawer from "@/components/admin/ui/AdminDrawer";
 import { collectionHref } from "@/components/admin/ui/CollectionGrid";
 
@@ -92,6 +94,28 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     and storing it as one would either reject the keystroke or silently
     round it. They are parsed once, on save.
   */
+  const uw = await getTranslations({ locale, namespace: "admin.unitTypes.workspace" });
+
+  /* Each type's 3D model, when it has one: how many of its rooms find their
+     room here, by the same match the project page uses. */
+  const model3dChecks = new Map(
+    await Promise.all(
+      unitTypes.map(async (type: any) => [
+        type.id,
+        await checkModel3dRooms(
+          project.slug,
+          type.code,
+          type.floorPlans.map((plan: any) => ({
+            shortLabel: liftLabelFor(plan.shortLabel, plan.floorName),
+            rooms: plan.rooms.map((room: any) => ({
+              matchName: room.translations.find((row: any) => row.locale === "en")?.name ?? "",
+            })),
+          })),
+        ),
+      ] as const),
+    ),
+  );
+
   const draftTypes: DraftType[] = unitTypes.map((type: any) => ({
     id: type.id,
     name: type.name,
@@ -102,6 +126,15 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     totalUnits: type.totalUnits,
     hasPrivateLift: type.hasPrivateLift,
     floors: [],
+    model3d: (() => {
+      const check = model3dChecks.get(type.id);
+      if (!check) return null;
+      return {
+        enabled: type.model3dEnabled ?? true,
+        matchedLabel: uw("model3dMatched", { matched: check.matched, total: check.total }),
+        complete: check.matched === check.total,
+      };
+    })(),
     // Plots actually placed on the plan, falling back to the declared total.
     unitCount: type._count.units || type.totalUnits,
     /* What the old "at a glance" cards called out, now on the type switcher:
@@ -158,7 +191,6 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     ]),
   );
 
-  const uw = await getTranslations({ locale, namespace: "admin.unitTypes.workspace" });
   const up = await getTranslations({ locale, namespace: "projects.unitTypesSection" });
 
   /*
@@ -222,6 +254,8 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
   const workspaceLabels = {
     tabs: { details: uw("tabDetails"), floors: uw("tabFloors"), preview: uw("tabPreview") },
     typeList: uw("typeList"),
+    model3dShow: uw("model3dShow"),
+    model3dFailed: t("common.error"),
     floorsShort: uw("floorsShort"),
     unitsShort: uw("unitsShort"),
     addFloor: uw("addFloor"),
@@ -308,6 +342,21 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       nextRoom: up("nextRoom"),
       close: up("close"),
       floorSelector: up("floorSelector"),
+      viewMode: up("viewMode"),
+      viewPlan: up("viewPlan"),
+      view3d: up("view3d"),
+      room: up("room"),
+      tapRoom3d: up("tapRoom3d"),
+      ofFloor: up("ofFloor"),
+      model3d: {
+        top: up("model3d.top"),
+        overview: up("model3d.overview"),
+        street: up("model3d.street"),
+        walls: up("model3d.walls"),
+        wallModes: [up("model3d.wallFull"), up("model3d.wallCut"), up("model3d.wallOff")] as [string, string, string],
+        hint: up("model3d.hint"),
+        loading: up("model3d.loading"),
+      },
     },
     translationComplete: t("common.translationComplete"),
     translationMissing: t("common.translationMissing"),
@@ -351,6 +400,7 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
           initialFloorsByType={floorsByType}
           detailForms={detailForms}
           onReorder={reorderUnitTypes.bind(null, locale, project.id, project.slug)}
+          onToggle3d={setUnitType3dEnabled.bind(null, locale, project.id, project.slug)}
           locales={locales}
           adminLocales={adminLocales}
           canWrite={canWrite}

@@ -87,11 +87,17 @@ export type DraftType = {
   unitCount?: number | null;
   /** Already-translated notes for the switcher: no price, no Thai text. */
   warnings?: string[];
+  /** The 3D house model for this type, when one exists in code
+   *  (components/unit-types/model3d): whether it is shown, and how many of
+   *  its rooms find their admin room ("23/23 rooms match"), formatted. */
+  model3d?: { enabled: boolean; matchedLabel: string; complete: boolean } | null;
 };
 
 export type WorkspaceLabels = {
   tabs: { details: string; floors: string; preview: string };
   typeList: string;
+  model3dShow: string;
+  model3dFailed: string;
   floorsShort: string;
   unitsShort: string;
   addFloor: string;
@@ -172,6 +178,8 @@ type Props = {
   detailForms?: Record<string, React.ReactNode>;
   /** Bound server action — persists the order the list was dragged into. */
   onReorder?: (orderedIds: string[]) => Promise<{ ok: boolean; message?: string }>;
+  /** Bound server action — shows or hides a type's 3D model on the site. */
+  onToggle3d?: (unitTypeId: string, enabled: boolean) => Promise<{ ok: boolean; message?: string }>;
   labels: WorkspaceLabels;
   /**
    * Bound server action. A function prop is fine here and only here: this
@@ -254,9 +262,26 @@ export default function UnitTypesWorkspace({
   labels,
   onSave,
   onReorder,
+  onToggle3d,
 }: Props) {
   const [typeId, setTypeId] = useState(types[0]?.id ?? "");
   const [tab, setTab] = useState<"details" | "floors" | "preview">("floors");
+  // The 3D switches, flipped at once and put back if the save fails.
+  const [shown3d, setShown3d] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(types.map((candidate) => [candidate.id, candidate.model3d?.enabled ?? false])),
+  );
+  const [failed3d, setFailed3d] = useState(false);
+  const toggle3d = (id: string) => {
+    const next = !shown3d[id];
+    setShown3d((current) => ({ ...current, [id]: next }));
+    setFailed3d(false);
+    void onToggle3d?.(id, next).then((result) => {
+      if (result.ok) return;
+      setShown3d((current) => ({ ...current, [id]: !next }));
+      setFailed3d(true);
+    });
+  };
+
   const [lang, setLang] = useState<Locale>(adminLocales[0] ?? "en");
   const [floorsByType, setFloorsByType] = useState(initialFloorsByType);
   const [floorKey, setFloorKey] = useState<string | null>(null);
@@ -549,13 +574,16 @@ export default function UnitTypesWorkspace({
                 void onReorder?.(next);
               }}
             >
+              <div
+                className={`admin-card flex h-full flex-col p-0! transition-colors ${
+                  active ? "ring-2 ring-adm-fill" : "hover:border-adm-line-strong"
+                }`}
+              >
               <button
                 type="button"
                 onClick={() => selectType(candidate.id)}
                 aria-pressed={active}
-                className={`admin-card h-full w-full p-3.5! text-left transition-colors ${
-                  active ? "ring-2 ring-adm-fill" : "hover:border-adm-line-strong"
-                }`}
+                className="w-full flex-1 p-3.5 text-left"
               >
                 <span className="flex items-center justify-between gap-2">
                   <span className="truncate font-semibold text-adm-text">{candidate.name}</span>
@@ -590,10 +618,42 @@ export default function UnitTypesWorkspace({
                   </span>
                 )}
               </button>
+              {/* The 3D model's row: present only for a type that has one. */}
+              {candidate.model3d && (
+                <div className="flex items-center justify-between gap-2 border-t border-adm-line px-3.5 py-2 text-[12px]">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="rounded-[5px] bg-adm-band px-1.5 py-px font-mono text-[10px] font-semibold text-white">3D</span>
+                    <span className={`truncate ${candidate.model3d.complete ? "text-adm-success" : "text-adm-warning"}`}>
+                      {candidate.model3d.matchedLabel}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={shown3d[candidate.id]}
+                    aria-label={`${labels.model3dShow} · ${candidate.name}`}
+                    title={labels.model3dShow}
+                    disabled={!canWrite || !onToggle3d}
+                    onClick={() => toggle3d(candidate.id)}
+                    className={`relative h-5 w-[34px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                      shown3d[candidate.id] ? "bg-adm-info" : "bg-adm-line-strong"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`absolute left-[3px] top-[3px] h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+                        shown3d[candidate.id] ? "translate-x-[14px]" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
+              </div>
             </li>
           );
         })}
       </ul>
+      {failed3d && <p className="text-xs text-adm-danger">{labels.model3dFailed}</p>}
 
         {/* ── Editor ──────────────────────────────────────────────── */}
         <div className="space-y-4">
@@ -815,6 +875,9 @@ function PreviewTab({
       .filter(Boolean)
       .join(" · "),
     title: ut("ride", { type: type.name }),
+    // The preview shows the plans being edited; the 3D model is not drawn
+    // from them, so it stays off here.
+    model3d: false,
     subtitle: type.hasPrivateLift
       ? ut("liftHint")
       : ut("floorsHint", { count: floors.length }),
@@ -833,6 +896,7 @@ function PreviewTab({
         .map((r) => ({
           id: r.key,
           name: Object.values(r.names).find((n) => (n ?? "").trim() !== "") ?? "",
+          matchName: r.names.en ?? "",
           areaLabel: areaOf(r.areaSqm),
           x: r.xPercent,
           y: r.yPercent,

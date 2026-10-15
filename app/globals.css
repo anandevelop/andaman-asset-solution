@@ -2531,3 +2531,35 @@
 :root[data-admin-theme="dark"] .login-card .login-link {
   color: #e8b384;
 }
+
+/* Room number chips in the unit-types 3D view. three.js creates them
+   (CSS2DRenderer in components/unit-types/model3d/scene.ts), so they are
+   styled here rather than with utilities on an element React owns. */
+.u3d-lbl {
+  pointer-events: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 9999px;
+  border: 1px solid rgb(195 211 221 / 0.55);
+  background: rgb(6 42 65 / 0.85);
+  color: #c7d5e3;
+  font: 400 9px ui-monospace, Menlo, monospace;
+}
+@media (min-width: 640px) {
+  .u3d-lbl {
+    min-width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+}
+.u3d-lbl.is-on {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #062a41;
+}
+.u3d-lbl.is-off {
+  display: none;
+}

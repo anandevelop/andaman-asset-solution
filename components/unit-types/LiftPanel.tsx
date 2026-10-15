@@ -43,7 +43,7 @@ export default function LiftPanel({
     /* @min-[1000px]:self-start — the panel belongs at the top of the shaft's height,
        like a real lift's. Left to the grid it stretches and centres, which
        floats the FLOOR display halfway down a 560px column. */
-    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-[30px] @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-[34px]">
+    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-6 @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-7">
       {/* ── FLOOR display ──────────────────────────────────────────── */}
       <div className="relative w-16 pb-2.5 text-center @min-[1000px]:pb-3.5">
         <span className="mb-1 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 @min-[1000px]:mb-2">
@@ -58,7 +58,7 @@ export default function LiftPanel({
             {floors.map((floor) => (
               <span
                 key={floor.id}
-                className="block text-[40px] font-extralight leading-[44px] tracking-[0.02em] text-[#f3dcc4]"
+                className="block text-[32px] font-extralight leading-[44px] tracking-[0.02em] text-[#f3dcc4]"
                 style={{ height: DIGIT_HEIGHT }}
               >
                 {floor.shortLabel}
@@ -91,7 +91,7 @@ export default function LiftPanel({
         {/* The panel's axis line, behind the buttons. */}
         <span
           aria-hidden
-          className="absolute left-[22px] right-[22px] top-1/2 h-px bg-[#c3d3dd]/15 @min-[1000px]:left-1/2 @min-[1000px]:right-auto @min-[1000px]:top-[22px] @min-[1000px]:bottom-[22px] @min-[1000px]:h-auto @min-[1000px]:w-px"
+          className="absolute left-5 right-5 top-1/2 h-px bg-[#c3d3dd]/15 @min-[1000px]:left-1/2 @min-[1000px]:right-auto @min-[1000px]:top-5 @min-[1000px]:bottom-5 @min-[1000px]:h-auto @min-[1000px]:w-px"
         />
 
         {floors.map((floor, index) => {
@@ -104,7 +104,7 @@ export default function LiftPanel({
               onClick={() => onSelect(index)}
               aria-label={floor.name}
               aria-pressed={active}
-              className={`relative h-11 w-11 rounded-full border text-sm font-light tracking-[0.04em] transition-[color,border-color,background-color] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+              className={`relative h-10 w-10 rounded-full border text-[13px] font-light tracking-[0.04em] transition-[color,border-color,background-color] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                 active
                   ? "border-accent text-accent"
                   : "border-[#c3d3dd]/30 text-white/70 hover:border-accent/60 hover:text-white"

@@ -280,7 +280,24 @@
       "previousRoom": "Previous room",
       "nextRoom": "Next room",
       "close": "Close",
-      "floorSelector": "Choose a floor"
+      "floorSelector": "Choose a floor",
+      "viewMode": "View",
+      "viewPlan": "Plan",
+      "view3d": "3D",
+      "room": "Room",
+      "tapRoom3d": "Tap a room in the model",
+      "ofFloor": "of the floor",
+      "model3d": {
+        "top": "Top",
+        "overview": "Overview",
+        "street": "Street",
+        "walls": "Walls",
+        "wallFull": "Full",
+        "wallCut": "Cutaway",
+        "wallOff": "Off",
+        "hint": "Drag · Zoom · Tap a room",
+        "loading": "Loading model…"
+      }
     },
     "unitTypeLabels": {
       "livingArea": "Living Area",
@@ -2548,6 +2565,8 @@
         "tabFloors": "Floors, plans and rooms",
         "tabPreview": "Live preview",
         "typeList": "Unit types",
+        "model3dShow": "Show 3D on the site",
+        "model3dMatched": "{matched}/{total} rooms match",
         "floorsShort": "floors",
         "unitsShort": "units",
         "addFloor": "Add floor",

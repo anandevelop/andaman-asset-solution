@@ -16,6 +16,7 @@ import FacilityCard from "@/components/FacilityCard";
 import FacilityScroller from "@/components/FacilityScroller";
 import ProjectGallery from "@/components/ProjectGallery";
 import UnitTypesElevator from "@/components/unit-types/UnitTypesElevator";
+import { hasModel3d } from "@/components/unit-types/model3d";
 import type { ElevatorType } from "@/components/unit-types/types";
 import { getFaqs } from "@/lib/faqs";
 import { getAwards } from "@/lib/awards";
@@ -202,6 +203,7 @@ export default async function ProjectPage(props: Props) {
           .filter(Boolean)
           .join(" · "),
         title: ut("ride", { type: type.name }),
+        model3d: type.model3dEnabled && hasModel3d(project.slug, type.code),
         subtitle: type.hasPrivateLift
           ? ut("liftHint")
           : ut("floorsHint", { count: type.floorPlans.length }),
@@ -219,6 +221,7 @@ export default async function ProjectPage(props: Props) {
           rooms: plan.rooms.map((room) => ({
             id: room.id,
             name: room.name,
+            matchName: room.nameEn ?? room.name,
             areaLabel: area(room.areaSqm),
             x: room.x,
             y: room.y,
@@ -846,6 +849,7 @@ export default async function ProjectPage(props: Props) {
         <EditableSection links={editLinks.unitTypes}>
         <UnitTypesElevator
           projectName={project.name}
+          projectSlug={project.slug}
           types={elevatorTypes}
           labels={{
             eyebrow: t("unitTypesEyebrow"),
@@ -864,6 +868,21 @@ export default async function ProjectPage(props: Props) {
             nextRoom: ut("nextRoom"),
             close: ut("close"),
             floorSelector: ut("floorSelector"),
+            viewMode: ut("viewMode"),
+            viewPlan: ut("viewPlan"),
+            view3d: ut("view3d"),
+            room: ut("room"),
+            tapRoom3d: ut("tapRoom3d"),
+            ofFloor: ut("ofFloor"),
+            model3d: {
+              top: ut("model3d.top"),
+              overview: ut("model3d.overview"),
+              street: ut("model3d.street"),
+              walls: ut("model3d.walls"),
+              wallModes: [ut("model3d.wallFull"), ut("model3d.wallCut"), ut("model3d.wallOff")],
+              hint: ut("model3d.hint"),
+              loading: ut("model3d.loading"),
+            },
           }}
         />
         </EditableSection>

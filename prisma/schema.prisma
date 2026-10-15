@@ -543,6 +543,10 @@ model ProjectUnitType {
   /// line the unit-types section leads with. Only The Residence Prime does,
   /// so it is a flag rather than a guess from the floor count.
   hasPrivateLift Boolean @default(false)
+  /// Show the 3D house model (components/unit-types/model3d) for this type
+  /// on the project page, when one exists for its code. Switched in the
+  /// admin's unit-types tab; on by default so a model, once added, shows.
+  model3dEnabled Boolean @default(true)
 
   /// @deprecated — superseded by `UnitTypeTranslation` below. `name` above
   /// is unaffected (never was a bilingual pair — see its own comment) and

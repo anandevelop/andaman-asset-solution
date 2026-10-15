@@ -280,7 +280,24 @@
       "previousRoom": "上一间",
       "nextRoom": "下一间",
       "close": "关闭",
-      "floorSelector": "选择楼层"
+      "floorSelector": "选择楼层",
+      "viewMode": "视图",
+      "viewPlan": "平面图",
+      "view3d": "3D",
+      "room": "房间",
+      "tapRoom3d": "点击模型中的房间",
+      "ofFloor": "占本层面积",
+      "model3d": {
+        "top": "俯视",
+        "overview": "全景",
+        "street": "平视",
+        "walls": "墙体",
+        "wallFull": "完整",
+        "wallCut": "剖切",
+        "wallOff": "隐藏",
+        "hint": "拖动 · 缩放 · 点击房间",
+        "loading": "正在加载模型…"
+      }
     },
     "unitTypeLabels": {
       "livingArea": "使用面积",
@@ -2548,6 +2565,8 @@
         "tabFloors": "Floors, plans and rooms",
         "tabPreview": "Live preview",
         "typeList": "Unit types",
+        "model3dShow": "在网站上显示 3D",
+        "model3dMatched": "{matched}/{total} 个房间匹配",
         "floorsShort": "floors",
         "unitsShort": "units",
         "addFloor": "Add floor",
