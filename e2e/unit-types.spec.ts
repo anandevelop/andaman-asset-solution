@@ -187,6 +187,9 @@ test.describe("the workspace", () => {
     await expect(workspace.getByText(/has no floors yet/)).toBeVisible();
     await workspace.getByRole("button", { name: "Add floor" }).click();
 
+    // The new floor's name field is in its collapsed "Floor settings"
+    // section (see the unsaved-bar test above); open it to find it.
+    await workspace.getByText("Floor settings", { exact: true }).first().click();
     await expect(workspace.getByLabel(/Floor name/i).first()).toBeVisible();
     await expect(page.getByText(/Unsaved changes/i)).toBeVisible();
   });
