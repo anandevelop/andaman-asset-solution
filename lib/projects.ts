@@ -53,6 +53,7 @@ export { pickLocale, type Locale } from "@/lib/locale";
 // example.
 import { getTranslation } from "@/lib/get-translation";
 import { liftLabelFor } from "@/lib/lift-label";
+import { sortUnitsWithinGroups } from "@/lib/unit-order";
 
 /** Prisma Decimal → number (safe for the magnitudes we store). */
 function toNumber(value: Prisma.Decimal | number | null): number | null {
@@ -302,6 +303,8 @@ export type ProjectDetail = ProjectCard & {
   gallery: string[];
   brochureUrl: string | null;
   masterPlanImageUrl: string | null;
+  /** The admin's on/off for the 3D site plan — see Project.sitePlan3dEnabled. */
+  sitePlan3dEnabled: boolean;
   latitude: number | null;
   longitude: number | null;
   googleMapsUrl: string | null;
@@ -423,6 +426,9 @@ export const getProjectBySlug = cache(
       gallery: project.gallery,
       brochureUrl: project.brochureUrl,
       masterPlanImageUrl: project.masterPlanImageUrl,
+      // `?? true`: a client generated before the column existed reads it as
+      // undefined, and the column's own default is on.
+      sitePlan3dEnabled: project.sitePlan3dEnabled ?? true,
       latitude: toNumber(project.latitude),
       longitude: toNumber(project.longitude),
       googleMapsUrl: project.googleMapsUrl,
@@ -911,7 +917,7 @@ export async function getProjectUnits(projectId: string): Promise<ProjectUnitSum
     [] as any[],
   );
 
-  return units.map((u: any) => ({
+  return sortUnitsWithinGroups(units as any[], (u: any) => u.sortOrder).map((u: any) => ({
     id: u.id,
     unitNumber: u.unitNumber,
     unitTypeId: u.unitTypeId,
@@ -948,9 +954,9 @@ export async function getReservableUnits(projectId: string): Promise<ReservableU
         // later phase is not something a rep can promise a lead today.
         where: { projectId, status: "AVAILABLE", releasedForSale: true },
         orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
-        select: { id: true, unitNumber: true, unitType: { select: { name: true } } },
+        select: { id: true, unitNumber: true, sortOrder: true, unitType: { select: { name: true } } },
       });
-      return units.map((u) => ({ id: u.id, unitNumber: u.unitNumber, unitTypeName: u.unitType?.name ?? null }));
+      return sortUnitsWithinGroups(units, (u) => u.sortOrder).map((u) => ({ id: u.id, unitNumber: u.unitNumber, unitTypeName: u.unitType?.name ?? null }));
     },
     [],
   );

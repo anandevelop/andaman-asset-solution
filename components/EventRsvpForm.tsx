@@ -48,7 +48,7 @@ import {
   eventRegistrationSchema,
   type EventRegistrationInput,
 } from "@/lib/validations";
-import RecaptchaProvider, { useRecaptchaToken } from "@/components/RecaptchaProvider";
+import { loadRecaptcha, useRecaptchaToken } from "@/components/RecaptchaProvider";
 import { trackRsvp } from "@/lib/analytics";
 import { siteConfig } from "@/config/site";
 
@@ -186,7 +186,11 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
         {remaining !== null ? tEvent("seatsLeft", { count: remaining }) : t("subtitle")}
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-10 space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-10 space-y-6"
+        // reCAPTCHA loads on the first touch of the form, not with the page.
+        onFocusCapture={() => void loadRecaptcha()}
+        onPointerDownCapture={() => void loadRecaptcha()}
+      >
         <AnimatePresence>
           {(status === "error" ||
             status === "full" ||
@@ -305,8 +309,6 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
             t("submit")
           )}
         </button>
-
-        <RecaptchaProvider />
       </form>
     </>
   );

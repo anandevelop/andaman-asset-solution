@@ -37,7 +37,10 @@ import {
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import UnitTileBoard, { type TileGroup } from "@/components/admin/UnitTileBoard";
 import UnitDetailPanel from "@/components/admin/UnitDetailPanel";
-import UnitsPanel, { type UnitTableRow } from "@/components/admin/UnitsPanel";
+import UnitsPanel from "@/components/admin/UnitsPanel";
+import SitePlan3dCard from "@/components/admin/SitePlan3dCard";
+import { sitePlan3dSrc } from "@/lib/site-plan-3d";
+import { checkScenePlots } from "@/lib/site-plan-3d-check";
 import { saveUnit } from "./actions";
 
 type Props = {
@@ -78,12 +81,16 @@ export default async function AdminUnitsPage(props: Props) {
           status: true,
           isPublished: true,
           masterPlanImageUrl: true,
+          sitePlan3dEnabled: true,
         },
       }),
     undefined,
   );
 
   if (!project) notFound();
+
+  // The 3D card, for a project that has a scene file at all.
+  const scene3dSrc = sitePlan3dSrc(project.slug);
 
   const [units, unitTypes] = await Promise.all([
     getAdminProjectUnits(project.id),
@@ -100,6 +107,8 @@ export default async function AdminUnitsPage(props: Props) {
   ]);
 
   const now = new Date();
+
+  const scene3dCheck = scene3dSrc ? await checkScenePlots(scene3dSrc, units.map((u) => u.unitNumber)) : null;
 
   const statusLabels = {
     AVAILABLE: t("units.statusOptions.AVAILABLE"),
@@ -156,39 +165,6 @@ export default async function AdminUnitsPage(props: Props) {
 
 
   // ── Tiles, grouped by house type ───────────────────────────────────────
-  /* In the house types' own order; plots with no type last. A plot held
-     for somebody is `locked` — see UnitTileBoard's header for why it gets
-     the detail panel rather than the quick menu. */
-  const typeOrder = new Map(unitTypes.map((type, index) => [type.id, index]));
-  const tileGroupsById = new Map<string, TileGroup>();
-  for (const unit of phaseUnits) {
-    const key = unit.unitTypeId ?? "none";
-    const group = tileGroupsById.get(key) ?? {
-      key,
-      label: unit.unitTypeName ?? t("units.tiles.noType"),
-      meta: unit.bedrooms ? t("units.bedroomsLabel", { count: unit.bedrooms }) : null,
-      units: [],
-    };
-    group.units.push({
-      id: unit.id,
-      unitNumber: unit.unitNumber,
-      status: unit.status,
-      released: unit.releasedForSale,
-      locked:
-        unit.status === "RESERVED" &&
-        Boolean(unit.reservedByLead || unit.reservedByName || unit.reservationExpiresAt),
-      selectedInPanel: unit.id === selected?.id,
-      detailHref: `?${new URLSearchParams({
-        ...(activeGroup ? { phase: String(activeGroup.phase ?? "none") } : {}),
-        unit: unit.id,
-      }).toString()}`,
-    });
-    tileGroupsById.set(key, group);
-  }
-  const tileGroups = [...tileGroupsById.values()].sort(
-    (a, b) => (typeOrder.get(a.key) ?? Number.MAX_SAFE_INTEGER) - (typeOrder.get(b.key) ?? Number.MAX_SAFE_INTEGER),
-  );
-
   const livingAreaLabelFor = (unit: UnitRow) =>
     unit.livingAreaSqm === null
       ? null
@@ -209,6 +185,53 @@ export default async function AdminUnitsPage(props: Props) {
     ].filter(Boolean);
     return parts.length ? parts.join(" · ") : null;
   };
+
+  /* In the house types' own order; plots with no type last. A plot held
+     for somebody is `locked` — see UnitTileBoard's header for why it gets
+     the detail panel rather than the quick menu. */
+  const typeOrder = new Map(unitTypes.map((type, index) => [type.id, index]));
+  const tileGroupsById = new Map<string, TileGroup>();
+  for (const unit of phaseUnits) {
+    const key = unit.unitTypeId ?? "none";
+    const group = tileGroupsById.get(key) ?? {
+      key,
+      label: unit.unitTypeName ?? t("units.tiles.noType"),
+      // Type-level facts, once per group rather than on every tile.
+      meta:
+        [
+          unit.bedrooms ? t("units.bedroomsLabel", { count: unit.bedrooms }) : null,
+          livingAreaLabelFor(unit),
+        ]
+          .filter(Boolean)
+          .join(" · ") || null,
+      units: [],
+    };
+    group.units.push({
+      id: unit.id,
+      unitNumber: unit.unitNumber,
+      status: unit.status,
+      released: unit.releasedForSale,
+      locked:
+        unit.status === "RESERVED" &&
+        Boolean(unit.reservedByLead || unit.reservedByName || unit.reservationExpiresAt),
+      selectedInPanel: unit.id === selected?.id,
+      landAreaLabel: landAreaLabelFor(unit),
+      facingLabel: facingLabelFor(unit),
+      leadName: unit.reservedByLead?.name ?? unit.reservedByName ?? null,
+      lastEditedLabel: [relativeTime(locale, unit.lastEditedAt ?? unit.updatedAt, now), unit.lastEditedBy]
+        .filter(Boolean)
+        .join(" · "),
+      searchText: [unit.unitTypeName, typeLabelFor(unit)].filter(Boolean).join(" "),
+      detailHref: `?${new URLSearchParams({
+        ...(activeGroup ? { phase: String(activeGroup.phase ?? "none") } : {}),
+        unit: unit.id,
+      }).toString()}`,
+    });
+    tileGroupsById.set(key, group);
+  }
+  const tileGroups = [...tileGroupsById.values()].sort(
+    (a, b) => (typeOrder.get(a.key) ?? Number.MAX_SAFE_INTEGER) - (typeOrder.get(b.key) ?? Number.MAX_SAFE_INTEGER),
+  );
 
   const dateFormat = new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
@@ -259,21 +282,6 @@ export default async function AdminUnitsPage(props: Props) {
         },
       }
     : null;
-
-  const tableRows: UnitTableRow[] = phaseUnits.map((unit) => ({
-    id: unit.id,
-    unitNumber: unit.unitNumber,
-    typeLabel: typeLabelFor(unit),
-    livingAreaLabel: livingAreaLabelFor(unit),
-    landAreaLabel: landAreaLabelFor(unit),
-    facingLabel: facingLabelFor(unit),
-    status: unit.status,
-    releasedForSale: unit.releasedForSale,
-    leadId: unit.reservedByLead?.id ?? null,
-    leadName: unit.reservedByLead?.name ?? null,
-    lastEditedLabel: relativeTime(locale, unit.lastEditedAt ?? unit.updatedAt, now),
-    lastEditedBy: unit.lastEditedBy,
-  }));
 
   const formLabels = {
     unitNumber: t("units.unitNumber"),
@@ -326,7 +334,51 @@ export default async function AdminUnitsPage(props: Props) {
 
       <fieldset disabled={!canWrite} className="contents">
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
-        <section className="admin-card space-y-4">
+        <UnitsPanel
+          locale={locale}
+          projectId={project.id}
+          projectSlug={project.slug}
+          unitTypes={unitTypes}
+          statusLabels={statusLabels}
+          saveAction={createAction}
+          labels={{
+            title: t("units.listTitle"),
+            subtitle: t("units.listSubtitle", {
+              count: phaseUnits.length,
+              phase: phaseLabelFor(activeGroup?.phase ?? null),
+            }),
+            search: t("units.searchPlaceholder"),
+            importCsv: t("units.importCsv"),
+            exportCsv: t("units.exportCsv"),
+            exportFailed: t("units.export.failed"),
+            exportRateLimited: t("units.export.rateLimited"),
+            exportTruncated: t("units.export.truncated"),
+            addUnit: t("units.addUnit"),
+            cancel: t("common.cancel"),
+            csvIntro: t("units.csv.intro"),
+            csvColumns: t("units.csv.columns"),
+            csvChoose: t("units.csv.choose"),
+            csvSkippedTitle: t("units.csv.skippedTitle"),
+            csvNothingApplied: t("units.csv.nothingApplied"),
+            csvError: t("common.error"),
+            csvReasons: {
+              EMPTY_FILE: t("units.csv.reasons.EMPTY_FILE"),
+              NO_ROWS: t("units.csv.reasons.NO_ROWS"),
+              TOO_MANY_ROWS: t("units.csv.reasons.TOO_MANY_ROWS"),
+              MISSING_UNIT_NUMBER_COLUMN: t("units.csv.reasons.MISSING_UNIT_NUMBER_COLUMN"),
+              MISSING_UNIT_NUMBER: t("units.csv.reasons.MISSING_UNIT_NUMBER"),
+              DUPLICATE_IN_FILE: t("units.csv.reasons.DUPLICATE_IN_FILE"),
+              BAD_STATUS: t("units.csv.reasons.BAD_STATUS"),
+              UNKNOWN_UNIT_TYPE: t("units.csv.reasons.UNKNOWN_UNIT_TYPE"),
+              BAD_LAND_AREA: t("units.csv.reasons.BAD_LAND_AREA"),
+              BAD_PRICE: t("units.csv.reasons.BAD_PRICE"),
+              BAD_PHASE: t("units.csv.reasons.BAD_PHASE"),
+              BAD_RELEASED: t("units.csv.reasons.BAD_RELEASED"),
+              SAVE_FAILED: t("common.error"),
+            },
+            form: formLabels,
+          }}
+        >
           {/* Phases, when the project releases in stages — the tiles and
               the counts are one phase at a time, as the plan was. */}
           {phaseGroups.length > 1 && (
@@ -371,10 +423,12 @@ export default async function AdminUnitsPage(props: Props) {
                 bulkStatus: t("units.tiles.bulkStatus"),
                 clear: t("units.tiles.clear"),
                 failed: t("common.error"),
+                noMatches: t("units.noMatches"),
+                updated: t("projects.columns.lastEdited"),
               }}
             />
           )}
-        </section>
+        </UnitsPanel>
 
         <div className="space-y-4">
           {/* How much is left, as one ring: available of what is on sale.
@@ -423,6 +477,47 @@ export default async function AdminUnitsPage(props: Props) {
             </span>
           </Link>
 
+          {scene3dSrc && (
+            <SitePlan3dCard
+              locale={locale}
+              projectId={project.id}
+              projectSlug={project.slug}
+              projectName={locale === "th" ? project.nameTh || project.nameEn : project.nameEn || project.nameTh}
+              src={scene3dSrc}
+              enabled={project.sitePlan3dEnabled}
+              canWrite={canWrite}
+              check={scene3dCheck}
+              units={units.map((u) => ({ unitNumber: u.unitNumber, status: u.status, landAreaSqm: u.landAreaSqm }))}
+              masterPlanImageUrl={project.masterPlanImageUrl}
+              labels={{
+                title: t("units.scene3d.title"),
+                isNew: t("units.scene3d.isNew"),
+                file: t("units.scene3d.file"),
+                plots: t("units.scene3d.plots"),
+                // Formatted here: next-intl cannot format a message whose
+                // {scene}/{total} placeholders are left without values.
+                matched: t("units.scene3d.matched", {
+                  scene: scene3dCheck?.scenePlots.length ?? 0,
+                  total: units.length,
+                }),
+                mismatch: t("units.scene3d.mismatch"),
+                unreadable: t("units.scene3d.unreadable"),
+                statusSource: t("units.scene3d.statusSource"),
+                statusSourceValue: t("units.scene3d.statusSourceValue"),
+                show: t("units.scene3d.show"),
+                shown: t("units.scene3d.shown"),
+                hidden: t("units.scene3d.hidden"),
+                preview: t("units.scene3d.preview"),
+                previewTitle: t("units.scene3d.previewTitle"),
+                previewSub: t("units.scene3d.previewSub"),
+                close: t("units.scene3d.close"),
+                missing: t("units.scene3d.missing"),
+                extra: t("units.scene3d.extra"),
+                error: t("common.error"),
+              }}
+            />
+          )}
+
           <UnitDetailPanel
             locale={locale}
             projectId={project.id}
@@ -459,65 +554,6 @@ export default async function AdminUnitsPage(props: Props) {
         </div>
       </div>
 
-      <UnitsPanel
-        locale={locale}
-        projectId={project.id}
-        projectSlug={project.slug}
-        rows={tableRows}
-        selectedUnitId={selected?.id ?? null}
-        unitTypes={unitTypes}
-        statusLabels={statusLabels}
-        saveAction={createAction}
-        labels={{
-          title: t("units.listTitle"),
-          subtitle: t("units.listSubtitle", {
-            count: phaseUnits.length,
-            phase: phaseLabelFor(activeGroup?.phase ?? null),
-          }),
-          search: t("units.searchPlaceholder"),
-          importCsv: t("units.importCsv"),
-          exportCsv: t("units.exportCsv"),
-          exportFailed: t("units.export.failed"),
-          exportRateLimited: t("units.export.rateLimited"),
-          exportTruncated: t("units.export.truncated"),
-          addUnit: t("units.addUnit"),
-          columnUnit: t("units.unitNumber"),
-          columnType: t("unitTypes.title"),
-          columnLivingArea: t("units.detail.livingArea"),
-          columnLandArea: t("units.detail.landArea"),
-          columnFacing: t("units.detail.facing"),
-          columnStatus: t("units.status"),
-          columnLead: t("units.detail.linkedLead"),
-          columnUpdated: t("projects.columns.lastEdited"),
-          notReleased: t("units.unreleased"),
-          none: t("units.detail.notSet"),
-          empty: t("units.empty"),
-          noMatches: t("units.noMatches"),
-          cancel: t("common.cancel"),
-          csvIntro: t("units.csv.intro"),
-          csvColumns: t("units.csv.columns"),
-          csvChoose: t("units.csv.choose"),
-          csvSkippedTitle: t("units.csv.skippedTitle"),
-          csvNothingApplied: t("units.csv.nothingApplied"),
-          csvError: t("common.error"),
-          csvReasons: {
-            EMPTY_FILE: t("units.csv.reasons.EMPTY_FILE"),
-            NO_ROWS: t("units.csv.reasons.NO_ROWS"),
-            TOO_MANY_ROWS: t("units.csv.reasons.TOO_MANY_ROWS"),
-            MISSING_UNIT_NUMBER_COLUMN: t("units.csv.reasons.MISSING_UNIT_NUMBER_COLUMN"),
-            MISSING_UNIT_NUMBER: t("units.csv.reasons.MISSING_UNIT_NUMBER"),
-            DUPLICATE_IN_FILE: t("units.csv.reasons.DUPLICATE_IN_FILE"),
-            BAD_STATUS: t("units.csv.reasons.BAD_STATUS"),
-            UNKNOWN_UNIT_TYPE: t("units.csv.reasons.UNKNOWN_UNIT_TYPE"),
-            BAD_LAND_AREA: t("units.csv.reasons.BAD_LAND_AREA"),
-            BAD_PRICE: t("units.csv.reasons.BAD_PRICE"),
-            BAD_PHASE: t("units.csv.reasons.BAD_PHASE"),
-            BAD_RELEASED: t("units.csv.reasons.BAD_RELEASED"),
-            SAVE_FAILED: t("common.error"),
-          },
-          form: formLabels,
-        }}
-      />
       </fieldset>
     </div>
   );

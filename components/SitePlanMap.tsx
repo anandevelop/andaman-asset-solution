@@ -52,9 +52,10 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useTranslations } from "next-intl";
-import { LayoutGrid, Map as MapIcon, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Box, LayoutGrid, Map as MapIcon, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
 import type { ProjectUnitSummary, UnitStatus } from "@/lib/projects";
+import SitePlan3D from "@/components/SitePlan3D";
 
 type Labels = {
   all: string;
@@ -67,6 +68,8 @@ type Labels = {
   resetView: string;
   viewMap: string;
   viewList: string;
+  /** Only read when the project has a 3D scene (`scene3dSrc`). */
+  view3d: string;
   hint: string;
   canvasLabel: string;
   statusTitle: string;
@@ -89,10 +92,21 @@ type Props = {
   masterPlanImageUrl: string | null;
   units: ProjectUnitSummary[];
   labels: Labels;
+  /** The project's 3D scene in public/embed/ (lib/site-plan-3d.ts), or
+   *  null for none — then there is no 3D view and nothing else changes. */
+  scene3dSrc?: string | null;
 };
 
 type FilterValue = "ALL" | UnitStatus;
-type View = "map" | "list";
+/*
+  "3d" frames a hand-modelled scene (components/SitePlan3D.tsx) that has its
+  own filters and plot panel, so while it shows, this component's chips and
+  summary column step aside rather than duplicate them. The map stays
+  mounted underneath, as it does for the list, so its pan/zoom survives.
+  The scene itself mounts only on the first switch to 3D — three.js is
+  downloaded by nobody who never asks for it.
+*/
+type View = "map" | "list" | "3d";
 
 // ── Status visual language — Claude outputs/siteplan-canvas-mockup.html §2 ──
 // Solid dot/marker colour + a separate, deliberately lighter text colour for
@@ -1081,15 +1095,17 @@ function ListView({
   );
 }
 
-export default function SitePlanMap({ projectName, masterPlanImageUrl, units, labels }: Props) {
+export default function SitePlanMap({ projectName, masterPlanImageUrl, units, labels, scene3dSrc = null }: Props) {
   const t = useTranslations("projects");
+  const locale = useLocale();
   const cardRef = useRef<HTMLDivElement>(null);
   const mapboxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<PlanMapEngine | null>(null);
 
-  const [view, setView] = useState<View>("map");
+  // A project with a 3D scene opens on it; the 2D map is one tab away.
+  const [view, setView] = useState<View>(scene3dSrc ? "3d" : "map");
   const [statusFilter, setStatusFilter] = useState<FilterValue>("ALL");
   const [selected, setSelected] = useState<EngineUnit | null>(null);
   const [tooltipUnit, setTooltipUnit] = useState<EngineUnit | null>(null);
@@ -1225,9 +1241,10 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
         <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-xs bg-surface-muted p-1">
           {(
             [
+              ...(scene3dSrc ? [{ value: "3d" as View, label: labels.view3d, icon: Box }] : []),
               { value: "map" as View, label: labels.viewMap, icon: MapIcon },
               { value: "list" as View, label: labels.viewList, icon: LayoutGrid },
-            ] as const
+            ]
           ).map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -1244,15 +1261,31 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
           ))}
         </div>
 
-        <StatusChips labels={labels} filter={statusFilter} onChange={setStatusFilter} counts={chipCounts} />
+        {view !== "3d" && (
+          <StatusChips labels={labels} filter={statusFilter} onChange={setStatusFilter} counts={chipCounts} />
+        )}
       </div>
+
+      {view === "3d" && scene3dSrc && (
+        <SitePlan3D
+          src={scene3dSrc}
+          locale={locale}
+          projectName={projectName}
+          units={units}
+          title={`${projectName} — ${labels.view3d}`}
+        />
+      )}
 
       {/* ── Map / list + summary column ─────────────────────────────── */}
       {/* site-plan-fs-body / site-plan-fs-fill: in fullscreen these stretch
           every wrapper between the card and the map frame to the height
           that is left, so the map fits the screen instead of keeping its
           16:9 box from the full width (see app/globals.css). */}
-      <div className="site-plan-fs-body grid grid-cols-1 gap-0 @min-[1000px]:grid-cols-[minmax(0,1fr)_300px]">
+      <div
+        className={`site-plan-fs-body grid grid-cols-1 gap-0 @min-[1000px]:grid-cols-[minmax(0,1fr)_300px] ${
+          view === "3d" ? "hidden" : ""
+        }`}
+      >
         <div className="site-plan-fs-fill relative">
           {/* Map view — kept mounted (never unmounted) even while the list
               view is showing, so the canvas engine's pan/zoom/selection

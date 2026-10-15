@@ -304,6 +304,7 @@
     "sitePlanUnitsSuffix": "units",
     "sitePlanViewMap": "Map",
     "sitePlanViewList": "Unit list",
+    "sitePlanView3d": "3D",
     "sitePlanHint": "Drag to pan · scroll to zoom · tap a marker for details",
     "sitePlanCanvasLabel": "Interactive site plan",
     "sitePlanStatusTitle": "Plot status",
@@ -1582,6 +1583,26 @@
         "changedOne": "Unit {unit} → {status}",
         "changedMany": "{count} units → {status}",
         "selected": "{count} selected"
+      },
+      "scene3d": {
+        "title": "3D site plan",
+        "isNew": "New",
+        "file": "Scene file",
+        "plots": "Plots in scene",
+        "matched": "{scene} / {total} match the system",
+        "mismatch": "Does not match the system",
+        "unreadable": "Could not read the file",
+        "statusSource": "Statuses",
+        "statusSourceValue": "Taken from this page",
+        "show": "Show on the project page",
+        "shown": "The 3D site plan is now shown on the project page",
+        "hidden": "The 3D site plan is hidden; visitors see the 2D plan only",
+        "preview": "Preview 3D",
+        "previewTitle": "3D site plan preview",
+        "previewSub": "As visitors see it, with the latest statuses from this page",
+        "missing": "In the system but not in the scene:",
+        "extra": "In the scene but not in the system:",
+        "close": "Close"
       }
     },
     "sitePlan": {
@@ -2527,6 +2548,8 @@
         "tabFloors": "Floors, plans and rooms",
         "tabPreview": "Live preview",
         "typeList": "Unit types",
+        "floorsShort": "floors",
+        "unitsShort": "units",
         "addFloor": "Add floor",
         "copyFloor": "Copy floor…",
         "floorName": "Floor name",
@@ -2548,14 +2571,19 @@
         "roomName": "Room name",
         "roomArea": "m²",
         "roomPhoto": "Photo",
-        "pickPhoto": "Choose",
-        "clearPhoto": "Remove",
         "deleteRoom": "Delete room",
         "untranslated": "Not translated yet",
         "roomTotal": "Rooms total",
         "areaMatches": "Matches the floor area",
         "areaDiffers": "Differs by",
         "noRooms": "No rooms yet — use “Place pin” and click the drawing.",
+        "allRooms": "All rooms",
+        "prevRoom": "Previous room",
+        "nextRoom": "Next room",
+        "floorSettings": "Floor settings",
+        "floorSettingsHint": "Name, lift label, area, rotation and order",
+        "roomPickHint": "Click a pin on the plan or a room in the list to edit it",
+        "pinLabels": "Pin language",
         "unsaved": "Unsaved changes",
         "discard": "Discard changes",
         "complete": "Ready",
@@ -2584,10 +2612,6 @@
         }
       },
       "card": {
-        "bedrooms": "Bedrooms",
-        "bathrooms": "Bathrooms",
-        "area": "Living area",
-        "units": "Units",
         "noPrice": "No price",
         "noThai": "No Thai description"
       }
@@ -3148,8 +3172,9 @@
       "actionRevealContact": "viewed contact details of"
     },
     "navGroups": {
-      "daily": "Daily work",
-      "master": "Master data",
+      "overview": "Overview",
+      "sales": "Sales",
+      "content": "Website content",
       "system": "System"
     },
     "collapseSidebar": "Collapse sidebar",

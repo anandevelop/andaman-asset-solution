@@ -6,10 +6,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, Compass, FileDown, MapPin } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
-import SitePlanMap from "@/components/SitePlanMap";
-import MapCard, { type MapListGroup } from "@/components/MapCard";
-import ProgressGallery from "@/components/ProgressGallery";
-import LeadForm from "@/components/LeadForm";
+import { sitePlan3dSrc } from "@/lib/site-plan-3d";
+import type { MapListGroup } from "@/components/MapCard";
+import { LazyMapCard, LazyProgressGallery, LazySitePlanMap } from "@/components/LazyProjectSections";
+import LazyLeadForm from "@/components/LazyLeadForm";
 import JsonLd from "@/components/JsonLd";
 import FaqAccordion from "@/components/FaqAccordion";
 import FacilityCard from "@/components/FacilityCard";
@@ -907,10 +907,11 @@ export default async function ProjectPage(props: Props) {
           {units.length > 0 && (
             <div className="mt-10">
               <Reveal delay={0.1}>
-                <SitePlanMap
+                <LazySitePlanMap
                   projectName={project.name}
                   masterPlanImageUrl={project.masterPlanImageUrl}
                   units={units}
+                  scene3dSrc={project.sitePlan3dEnabled ? sitePlan3dSrc(project.slug) : null}
                   labels={{
                     all: t("unitStatus.ALL"),
                     available: t("unitStatus.AVAILABLE"),
@@ -922,6 +923,7 @@ export default async function ProjectPage(props: Props) {
                     resetView: t("sitePlanResetView"),
                     viewMap: t("sitePlanViewMap"),
                     viewList: t("sitePlanViewList"),
+                    view3d: t("sitePlanView3d"),
                     hint: t("sitePlanHint"),
                     canvasLabel: t("sitePlanCanvasLabel"),
                     statusTitle: t("sitePlanStatusTitle"),
@@ -969,7 +971,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.1} className="mt-10">
-            <MapCard
+            <LazyMapCard
               origin={{
                 name: project.name,
                 address: project.location,
@@ -1002,7 +1004,7 @@ export default async function ProjectPage(props: Props) {
             </h2>
           </Reveal>
           <Reveal delay={0.1} className="mt-10">
-            <ProgressGallery
+            <LazyProgressGallery
               months={progress}
               locale={locale}
               emptyLabel={t("progressEmpty")}
@@ -1063,7 +1065,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
           <Reveal delay={0.15}>
             <div className="border border-primary/8 bg-white p-6 shadow-cardHover sm:p-9">
-              <LeadForm projectSlug={project.slug} source="PROJECT_PAGE" />
+              <LazyLeadForm projectSlug={project.slug} source="PROJECT_PAGE" />
             </div>
           </Reveal>
         </div>

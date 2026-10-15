@@ -90,47 +90,31 @@ function revalidateUnits(locale: string, projectId: string, projectSlug: string)
   revalidatePublicSite();
 }
 
-export type UnitStatusFormState = { ok: boolean; message?: string };
-
 /**
- * Inline status dropdown on the units table (UnitStatusSelect.tsx), as a
- * <form action>. Kept in its useFormState shape because that component is
- * also used by the older per-type list.
+ * The 3D site plan's on/off switch (SitePlan3dCard). The scene itself is a
+ * file in public/embed/ — see lib/site-plan-3d.ts — so this only decides
+ * whether the public page offers it.
  */
-export async function updateUnitStatus(
+export async function setSitePlan3dEnabled(
   locale: string,
   projectId: string,
   projectSlug: string,
-  unitId: string,
-  _previous: UnitStatusFormState,
-  formData: FormData,
-): Promise<UnitStatusFormState> {
+  enabled: boolean,
+): Promise<{ ok: boolean }> {
   await requireAdminAction(Role.EDITOR);
-
-  const parsed = unitStatusPatchSchema.safeParse({ status: formData.get("status") });
-  if (!parsed.success) return { ok: false, message: "SAVE_FAILED" };
-
   try {
-    // updateMany, not update — see the identical reasoning in
-    // ../site-plan/actions.ts's saveUnitShape.
-    const result = await prisma.projectUnit.updateMany({
-      where: { id: unitId, projectId },
-      data: { status: parsed.data.status, ...reservationPatchFor(parsed.data.status) },
-    });
-    if (result.count === 0) return { ok: false, message: "SAVE_FAILED" };
+    await prisma.project.update({ where: { id: projectId }, data: { sitePlan3dEnabled: enabled } });
   } catch (error) {
-    console.error("[updateUnitStatus]", error);
-    return { ok: false, message: "SAVE_FAILED" };
+    console.error("[setSitePlan3dEnabled]", error);
+    return { ok: false };
   }
-
   revalidateUnits(locale, projectId, projectSlug);
-
-  return { ok: true, message: "SAVED" };
+  return { ok: true };
 }
 
 /**
- * Mobile "change status on site" bottom sheet (/admin/m/units) — same
- * write as updateUnitStatus above, but gated at Role.SALES rather than
+ * Mobile "change status on site" bottom sheet (/admin/m/units) — the
+ * same write as setUnitStatus, but gated at Role.SALES rather than
  * EDITOR, and a plain async-function signature (no useFormState/FormData)
  * since the caller is a client component driving useTransition, not a
  * <form action>. A rep standing in front of a unit is exactly who needs

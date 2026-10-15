@@ -304,6 +304,7 @@
     "sitePlanUnitsSuffix": "หลัง",
     "sitePlanViewMap": "แผนผัง",
     "sitePlanViewList": "รายการแปลง",
+    "sitePlanView3d": "3 มิติ",
     "sitePlanHint": "ลากเพื่อเลื่อน · สกรอลล์เพื่อซูม · แตะหมุดเพื่อดูแปลง",
     "sitePlanCanvasLabel": "ผังโครงการแบบโต้ตอบ",
     "sitePlanStatusTitle": "สถานะแปลง",
@@ -1582,6 +1583,26 @@
         "changedOne": "ยูนิต {unit} → {status}",
         "changedMany": "เปลี่ยน {count} ยูนิตเป็น {status}",
         "selected": "เลือก {count} ยูนิต"
+      },
+      "scene3d": {
+        "title": "ผังโครงการ 3 มิติ",
+        "isNew": "ใหม่",
+        "file": "ไฟล์ฉาก",
+        "plots": "แปลงในฉาก",
+        "matched": "{scene} / {total} ตรงกับระบบ",
+        "mismatch": "ไม่ตรงกับระบบ",
+        "unreadable": "อ่านไฟล์ไม่ได้",
+        "statusSource": "สถานะ",
+        "statusSourceValue": "ดึงจากหน้านี้อัตโนมัติ",
+        "show": "แสดงบนหน้าเว็บโครงการ",
+        "shown": "แสดงผัง 3 มิติบนหน้าเว็บโครงการแล้ว",
+        "hidden": "ซ่อนผัง 3 มิติแล้ว ลูกค้าจะเห็นแค่ผัง 2D",
+        "preview": "ดูตัวอย่าง 3D",
+        "previewTitle": "ตัวอย่างผัง 3 มิติ",
+        "previewSub": "เหมือนที่ลูกค้าเห็นบนเว็บ ใช้สถานะล่าสุดจากหน้านี้",
+        "missing": "มีในระบบแต่ไม่มีในฉาก:",
+        "extra": "มีในฉากแต่ไม่มีในระบบ:",
+        "close": "ปิด"
       }
     },
     "sitePlan": {
@@ -2527,6 +2548,8 @@
         "tabFloors": "ชั้น แปลน และห้อง",
         "tabPreview": "ตัวอย่างหน้าเว็บ",
         "typeList": "แบบบ้านในโครงการ",
+        "floorsShort": "ชั้น",
+        "unitsShort": "ยูนิต",
         "addFloor": "เพิ่มชั้น",
         "copyFloor": "คัดลอกชั้น…",
         "floorName": "ชื่อชั้น",
@@ -2548,14 +2571,19 @@
         "roomName": "ชื่อห้อง",
         "roomArea": "ตร.ม.",
         "roomPhoto": "รูป",
-        "pickPhoto": "เลือกรูป",
-        "clearPhoto": "นำรูปออก",
         "deleteRoom": "ลบห้อง",
         "untranslated": "ยังไม่แปล",
         "roomTotal": "รวมพื้นที่ห้อง",
         "areaMatches": "ตรงกับพื้นที่ชั้น",
         "areaDiffers": "ต่าง",
         "noRooms": "ยังไม่มีห้อง — กด “วางหมุดห้อง” แล้วคลิกบนแปลน",
+        "allRooms": "ทุกห้อง",
+        "prevRoom": "ห้องก่อนหน้า",
+        "nextRoom": "ห้องถัดไป",
+        "floorSettings": "ตั้งค่าชั้นนี้",
+        "floorSettingsHint": "ชื่อชั้น ป้ายลิฟต์ พื้นที่ การหมุน และลำดับชั้น",
+        "roomPickHint": "คลิกหมุดบนแปลนหรือห้องในรายการเพื่อแก้ไข",
+        "pinLabels": "ภาษาบนหมุด",
         "unsaved": "มีการแก้ไขที่ยังไม่บันทึก",
         "discard": "ยกเลิกการแก้ไข",
         "complete": "ครบ",
@@ -2584,10 +2612,6 @@
         }
       },
       "card": {
-        "bedrooms": "ห้องนอน",
-        "bathrooms": "ห้องน้ำ",
-        "area": "พื้นที่ใช้สอย",
-        "units": "จำนวนยูนิต",
         "noPrice": "ยังไม่ระบุราคา",
         "noThai": "ไม่มีคำอธิบายภาษาไทย"
       }
@@ -3148,8 +3172,9 @@
       "actionRevealContact": "เปิดดูข้อมูลติดต่อ"
     },
     "navGroups": {
-      "daily": "งานประจำวัน",
-      "master": "ข้อมูลหลัก",
+      "overview": "ภาพรวม",
+      "sales": "งานขาย",
+      "content": "เนื้อหาเว็บไซต์",
       "system": "ระบบ"
     },
     "collapseSidebar": "ย่อแถบเมนู",

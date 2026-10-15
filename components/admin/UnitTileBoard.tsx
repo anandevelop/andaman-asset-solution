@@ -5,8 +5,14 @@
  * ─────────────────────────────────────────────────────────────────────────
  * Every plot as a tile, grouped by house type and coloured by status — the
  * v4 units tab. The question this screen answers is "what is left, and
- * where", and a wall of numbered tiles answers it faster than a table or a
- * plan image that most projects have not traced yet.
+ * where", and a wall of tiles answers it faster than a table or a plan
+ * image that most projects have not traced yet.
+ *
+ * Each tile carries what the old table under it showed: the status in
+ * words, land area, facing/view, and the lead the plot is held for; each
+ * group's heading carries the type, bedrooms and living area. The last
+ * edit is in the tile's tooltip. The search box in UnitsPanel filters the
+ * tiles (UnitSearchContext).
  *
  *   · click        → the status menu; picking one applies it at once, with
  *                    the eight-second undo (tier 1, see UndoToast)
@@ -24,10 +30,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UnitStatus } from "@prisma/client";
-import { Lock, X } from "lucide-react";
+import { Lock, User, X } from "lucide-react";
 import { setUnitStatus } from "@/app/[locale]/admin/(catalog)/projects/[id]/units/actions";
 import PopoverMenu from "@/components/admin/PopoverMenu";
 import { showUndoToast } from "@/components/admin/UndoToast";
+import { useUnitSearch } from "@/components/admin/unit-search-context";
 
 export type TileUnit = {
   id: string;
@@ -38,6 +45,13 @@ export type TileUnit = {
   locked: boolean;
   selectedInPanel: boolean;
   detailHref: string;
+  landAreaLabel: string | null;
+  facingLabel: string | null;
+  leadName: string | null;
+  /** "2 weeks ago · Somchai" — the tooltip. */
+  lastEditedLabel: string;
+  /** Extra words the search box matches (type name, bedrooms). */
+  searchText: string;
 };
 
 export type TileGroup = { key: string; label: string; meta: string | null; units: TileUnit[] };
@@ -74,6 +88,8 @@ type Props = {
     bulkStatus: string;
     clear: string;
     failed: string;
+    noMatches: string;
+    updated: string;
   };
 };
 
@@ -82,6 +98,16 @@ export default function UnitTileBoard({ locale, projectId, projectSlug, groups, 
   const t = useTranslations("admin.units.tiles");
   const [picked, setPicked] = useState<Set<string>>(() => new Set());
   const [, startTransition] = useTransition();
+  const query = useUnitSearch().trim().toLowerCase();
+
+  const matches = (unit: TileUnit) =>
+    !query ||
+    [unit.unitNumber, unit.facingLabel, unit.leadName, unit.searchText, statusLabels[unit.status]]
+      .filter(Boolean)
+      .some((value) => value!.toLowerCase().includes(query));
+  const shown = groups
+    .map((group) => ({ ...group, units: group.units.filter(matches) }))
+    .filter((group) => group.units.length > 0);
 
   const all = groups.flatMap((group) => group.units);
   const byId = new Map(all.map((unit) => [unit.id, unit]));
@@ -158,38 +184,58 @@ export default function UnitTileBoard({ locale, projectId, projectSlug, groups, 
         </div>
       )}
 
-      {groups.map((group) => (
+      {shown.length === 0 && <p className="py-8 text-center text-sm text-adm-muted">{labels.noMatches}</p>}
+
+      {shown.map((group) => (
         <section key={group.key}>
           <h3 className="mb-2 flex items-baseline gap-2 text-xs text-adm-muted">
             <span className="font-medium text-adm-text">{group.label}</span>
             {group.meta && <span>· {group.meta}</span>}
           </h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(54px,1fr))] gap-1.5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-2">
             {group.units.map((unit) => {
               const isPicked = picked.has(unit.id);
               const tileClass = [
-                // Square, mono, and a sand ring that grows on hover — the
-                // mockup's .unit. Status is the tile's colour and its title;
-                // the word under the number did not fit at 54px.
-                "admin-mono relative flex aspect-square w-full items-center justify-center rounded-[9px] border text-[11px] font-semibold tabular-nums transition-[transform,box-shadow] duration-150 hover:z-10 hover:scale-[1.08] hover:shadow-[0_0_0_2px_var(--adm-fill),0_0_14px_var(--adm-rail-glow)] motion-reduce:hover:scale-100",
+                "relative flex w-full flex-col items-start gap-1 rounded-[10px] border px-3 py-2.5 text-left transition-[transform,box-shadow] duration-150 hover:z-10 hover:-translate-y-px hover:shadow-[0_0_0_2px_var(--adm-fill),0_0_14px_var(--adm-rail-glow)] motion-reduce:hover:translate-y-0",
                 unit.released ? TONE[unit.status] : "border-dashed border-adm-line-strong bg-transparent text-adm-muted",
                 unit.selectedInPanel ? "ring-2 ring-adm-info ring-offset-1 ring-offset-adm-bg" : "",
                 isPicked ? "ring-2 ring-adm-fill ring-offset-1 ring-offset-adm-bg" : "",
               ].join(" ");
               const body = (
                 <>
-                  {unit.unitNumber}
-                  {unit.locked && <Lock size={9} aria-hidden className="absolute right-1 top-1 opacity-70" />}
+                  <span className="admin-mono text-[15px] font-semibold leading-tight tabular-nums text-adm-text">
+                    {unit.unitNumber}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[11.5px] font-medium">
+                    <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${unit.released ? DOT[unit.status] : "bg-adm-line-strong"}`} />
+                    {unit.released ? statusLabels[unit.status] : labels.unreleased}
+                  </span>
+                  {unit.landAreaLabel && (
+                    <span className="text-[11.5px] tabular-nums text-adm-muted">{unit.landAreaLabel}</span>
+                  )}
+                  {unit.facingLabel && (
+                    <span className="w-full truncate text-[11px] text-adm-muted" title={unit.facingLabel}>
+                      {unit.facingLabel}
+                    </span>
+                  )}
+                  {unit.leadName && (
+                    <span className="flex w-full items-center gap-1 truncate text-[11px] text-adm-text" title={unit.leadName}>
+                      <User size={11} aria-hidden className="shrink-0 opacity-70" />
+                      <span className="truncate">{unit.leadName}</span>
+                    </span>
+                  )}
+                  {unit.locked && <Lock size={11} aria-hidden className="absolute right-2 top-2 opacity-70" />}
                 </>
               );
               const label = `${unit.unitNumber} · ${unit.released ? statusLabels[unit.status] : labels.unreleased}`;
+              const tooltip = `${label} · ${labels.updated} ${unit.lastEditedLabel}`;
 
               if (!canWrite || unit.locked) {
                 return (
                   <button
                     key={unit.id}
                     type="button"
-                    title={unit.locked ? `${label} · ${labels.lockedHint}` : label}
+                    title={unit.locked ? `${tooltip} · ${labels.lockedHint}` : tooltip}
                     aria-label={label}
                     onClick={() => router.push(unit.detailHref, { scroll: false })}
                     className={tileClass}

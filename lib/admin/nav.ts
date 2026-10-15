@@ -35,8 +35,8 @@
  *   · Mobile view            → still a row, but `mobileOnly`: the drawer
  *                              draws it, the desktop rail does not
  *
- * Three zones — see NavGroupKey below for why they are cut by frequency of
- * use. Before that, six groups by job; before that, the SEO and
+ * Four zones by job — see NavGroupKey below. Before that, three zones by
+ * frequency of use; before those, six groups by job; before that, the SEO and
  * analytics rows used to sit under "Administration" beside user accounts
  * and the audit log, which put "how is the site doing" and "who deleted
  * that" in one list.
@@ -349,17 +349,17 @@ export type NavItem = Gated & {
 /**
  * Also the i18n keys under `admin.navGroups.*`.
  *
- * Three zones, by how often somebody opens them rather than by department:
- * what has to be dealt with today, the records the website is built from,
- * and the system itself. The six groups before this split the same links
- * by subject — "sales", "properties", "content", "growth" — which put the
- * review queue beside the media library and the traffic report beside SEO
- * settings, so a person's daily round crossed four headings. Only the
- * grouping and order moved: every item below is the same object with the
- * same roles, capability, tabs and aliases, and tests/admin/nav.test.ts
- * pins each role's link set to what it was before the move.
+ * Four zones, by the job: an overview (today and the numbers), sales
+ * (customers, agents, the team, and the projects and units they sell),
+ * the website's content, and the system. Before this, three zones by
+ * frequency of use ("daily" / "master" / "system") put the review queue
+ * and the traffic report under "daily work" beside the leads, and the
+ * sales team under "master data" with the news. Only the grouping and
+ * order moved: every item is the same object with the same roles,
+ * capability, tabs and aliases, and tests/admin/nav.test.ts pins each
+ * role's link set to what it was before the move.
  */
-export type NavGroupKey = "daily" | "master" | "system";
+export type NavGroupKey = "overview" | "sales" | "content" | "system";
 
 export type NavGroup = {
   key: NavGroupKey;
@@ -372,11 +372,9 @@ export type NavGroup = {
 
 export const ADMIN_NAV: readonly NavGroup[] = [
   {
-    /* What somebody opens the back office to do on an ordinary morning:
-       today's work, the customers waiting on a reply, what is waiting to
-       go live, and how the site did. */
-    key: "daily",
-    labelKey: "daily",
+    /* How things stand: today's work and how the site is doing. */
+    key: "overview",
+    labelKey: "overview",
     items: [
       {
         key: "dashboard",
@@ -384,6 +382,33 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         icon: LayoutDashboard,
         roles: ROLE_SETS.EVERYONE,
       },
+      {
+        // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
+        // floor, no exception needed here (see that layout's header).
+        key: "analytics",
+        href: "/analytics",
+        icon: BarChart3,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
+      {
+        /* The monthly report. Here and not in `system`, although the
+           blueprint filed it under Administration: it answers "how is the
+           site doing", beside the traffic numbers it summarises, while
+           `system` is about how the back office behaves and who did what. */
+        key: "reports",
+        href: "/reports",
+        icon: FileText,
+        roles: ROLE_SETS.ADMIN_UP,
+      },
+    ],
+  },
+
+  {
+    /* Customers and what they are buying: the pipeline, the co-agents who
+       bring leads in, the team, and the projects and units being sold. */
+    key: "sales",
+    labelKey: "sales",
+    items: [
       {
         /* Leads and their appointments, one row. The badge is still the
            unassigned-lead count and not the two backlogs added together:
@@ -419,44 +444,13 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         mobileOnly: true,
       },
       {
-        key: "publishing",
-        href: "/publishing",
-        icon: FileCheck2,
-        roles: ROLE_SETS.CONTENT,
-        /* Still the review queue alone. Rolling the translation gaps into
-           this number would make one badge mean two unrelated backlogs,
-           and the one that needs a person today is the review queue. */
-        countKey: "reviewQueue",
-        alias: ["/seo/translations"],
-        tabs: NAV_TAB_GROUPS.publishing,
+        // A rep must be able to see the roster of the team they are on;
+        // editing it stays with content people. Fixed in Phase 1 (P5).
+        key: "salesTeam",
+        href: "/sales-team",
+        icon: Contact,
+        roles: ROLE_SETS.CONTENT_AND_CRM,
       },
-      {
-        // requireAdmin(locale, Role.ADMIN) — the (growth) zone's ordinary
-        // floor, no exception needed here (see that layout's header).
-        key: "analytics",
-        href: "/analytics",
-        icon: BarChart3,
-        roles: ROLE_SETS.ADMIN_UP,
-      },
-      {
-        /* The monthly report. Here and not in `system`, although the
-           blueprint filed it under Administration: it answers "how is the
-           site doing", beside the traffic numbers it summarises, while
-           `system` is about how the back office behaves and who did what. */
-        key: "reports",
-        href: "/reports",
-        icon: FileText,
-        roles: ROLE_SETS.ADMIN_UP,
-      },
-    ],
-  },
-
-  {
-    /* The records the public site is assembled from — edited when they
-       change, not every day. */
-    key: "master",
-    labelKey: "master",
-    items: [
       {
         /* One row for everything about a property. "Progress" and
            "E-brochures" were separate rows for two screens that belong to
@@ -473,13 +467,26 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.projects,
         tabsBase: "",
       },
+    ],
+  },
+
+  {
+    /* The public website: the review queue before anything goes live,
+       its pages, news, events and media, and SEO. */
+    key: "content",
+    labelKey: "content",
+    items: [
       {
-        // A rep must be able to see the roster of the team they are on;
-        // editing it stays with content people. Fixed in Phase 1 (P5).
-        key: "salesTeam",
-        href: "/sales-team",
-        icon: Contact,
-        roles: ROLE_SETS.CONTENT_AND_CRM,
+        key: "publishing",
+        href: "/publishing",
+        icon: FileCheck2,
+        roles: ROLE_SETS.CONTENT,
+        /* Still the review queue alone. Rolling the translation gaps into
+           this number would make one badge mean two unrelated backlogs,
+           and the one that needs a person today is the review queue. */
+        countKey: "reviewQueue",
+        alias: ["/seo/translations"],
+        tabs: NAV_TAB_GROUPS.publishing,
       },
       {
         /* One hub instead of eight links to the pieces of two pages.

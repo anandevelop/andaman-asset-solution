@@ -11,6 +11,10 @@
  * ordinary server-rendered form with its own server action — this is only
  * the frame. Closing replaces the URL with `closeHref`.
  *
+ * Or driven by client state instead: pass `onClose` and no `closeHref`
+ * (the unit-type workspace's room editor, whose unsaved draft a URL change
+ * must not touch).
+ *
  * LeadCreateDrawer and LeadDrawer predate this and keep their own frames;
  * they carry behaviour (a hand-off to the new lead, a full-page link) that
  * a generic shell would only have to grow options for.
@@ -25,6 +29,7 @@ export default function AdminDrawer({
   title,
   icon,
   closeHref,
+  onClose,
   closeLabel,
   width = 560,
   children,
@@ -33,7 +38,9 @@ export default function AdminDrawer({
   /** An element, not a component: server pages render this drawer, and a
    *  function cannot cross into a client component as a prop. */
   icon?: ReactNode;
-  closeHref: string;
+  /** Where closing goes — or use `onClose` for a state-driven drawer. */
+  closeHref?: string;
+  onClose?: () => void;
   closeLabel: string;
   width?: number;
   children: ReactNode;
@@ -41,16 +48,26 @@ export default function AdminDrawer({
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Kept in a ref so the key listener below is bound once per drawer, not
+  // re-bound on every render of a parent that passes a fresh `onClose`.
+  const closeRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    closeRef.current = () => {
+      if (onClose) onClose();
+      else if (closeHref) router.replace(closeHref, { scroll: false });
+    };
+  });
+
   useEffect(() => {
     panelRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") router.replace(closeHref, { scroll: false });
+      if (event.key === "Escape") closeRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeHref, router]);
+  }, []);
 
-  const close = () => router.replace(closeHref, { scroll: false });
+  const close = () => closeRef.current();
 
   return (
     <div className="fixed inset-0 z-50 print:hidden" role="presentation">

@@ -20,6 +20,7 @@ import { hasRole } from "@/lib/role-rank";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import SitePlanDrawer from "@/components/admin/SitePlanDrawer";
 import { saveUnitShape } from "./actions";
+import { sortUnitsWithinGroups } from "@/lib/unit-order";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -47,11 +48,14 @@ export default async function AdminSitePlanPage(props: Props) {
   });
   if (!project) notFound();
 
-  const units = await db.projectUnit.findMany({
-    where: { projectId },
-    orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
-    select: { id: true, unitNumber: true, status: true, shapePoints: true },
-  });
+  const units = sortUnitsWithinGroups(
+    await db.projectUnit.findMany({
+      where: { projectId },
+      orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
+      select: { id: true, unitNumber: true, status: true, shapePoints: true, sortOrder: true },
+    }),
+    (u: { sortOrder: number }) => u.sortOrder,
+  );
 
   const mappedCount = units.filter((u: any) => u.shapePoints !== null).length;
 

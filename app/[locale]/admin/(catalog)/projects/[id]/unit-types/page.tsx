@@ -10,7 +10,8 @@
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, Bath, BedDouble, Plus, Ruler, Grid2x2 } from "lucide-react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
@@ -32,10 +33,12 @@ import UnitTypeForm from "@/components/admin/UnitTypeForm";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import TranslationStatusBadges from "@/components/admin/TranslationStatusBadges";
 import { liftLabelFor } from "@/lib/lift-label";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
+import { collectionHref } from "@/components/admin/ui/CollectionGrid";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; add?: string }>;
 };
 
 /** null / Decimal / number → the string an <input> expects — same helper
@@ -99,6 +102,17 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     totalUnits: type.totalUnits,
     hasPrivateLift: type.hasPrivateLift,
     floors: [],
+    // Plots actually placed on the plan, falling back to the declared total.
+    unitCount: type._count.units || type.totalUnits,
+    /* What the old "at a glance" cards called out, now on the type switcher:
+       no price shows "price on request" publicly whether or not that was
+       meant; no Thai description shows the English one to Thai readers. */
+    warnings: [
+      type.priceFromTHB === null ? t("unitTypes.card.noPrice") : null,
+      (type.translations.find((row: any) => row.locale === "th")?.description?.trim() || type.descriptionTh?.trim())
+        ? null
+        : t("unitTypes.card.noThai"),
+    ].filter((warning): warning is string => Boolean(warning)),
   }));
 
   const floorsByType: Record<string, DraftFloor[]> = Object.fromEntries(
@@ -164,9 +178,20 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
       return [
         type.id,
         <section key={type.id} className="admin-card">
-          <div className="mb-5 flex flex-wrap items-center gap-3">
-            <h2 className="text-base font-semibold text-adm-text">{type.name}</h2>
-            <TranslationStatusBadges completeness={completeness} />
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <span className="flex flex-wrap items-center gap-3">
+              <h2 className="text-base font-semibold text-adm-text">{type.name}</h2>
+              <TranslationStatusBadges completeness={completeness} />
+            </span>
+            {/* The description is the only translated field; the language
+                switch lives with it rather than at the top of the page,
+                where it read as if it switched the room names too. */}
+            <LanguageTabs
+              active={lang}
+              completeness={completeness}
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
           </div>
 
           <fieldset disabled={!canWrite} className="contents">
@@ -197,6 +222,8 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
   const workspaceLabels = {
     tabs: { details: uw("tabDetails"), floors: uw("tabFloors"), preview: uw("tabPreview") },
     typeList: uw("typeList"),
+    floorsShort: uw("floorsShort"),
+    unitsShort: uw("unitsShort"),
     addFloor: uw("addFloor"),
     copyFloor: uw("copyFloor"),
     floorName: uw("floorName"),
@@ -218,14 +245,19 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     roomName: uw("roomName"),
     roomArea: uw("roomArea"),
     roomPhoto: uw("roomPhoto"),
-    pickPhoto: uw("pickPhoto"),
-    clearPhoto: uw("clearPhoto"),
     deleteRoom: uw("deleteRoom"),
     untranslated: uw("untranslated"),
     roomTotal: uw("roomTotal"),
     areaMatches: uw("areaMatches"),
     areaDiffers: uw("areaDiffers"),
     noRooms: uw("noRooms"),
+    allRooms: uw("allRooms"),
+    prevRoom: uw("prevRoom"),
+    nextRoom: uw("nextRoom"),
+    floorSettings: uw("floorSettings"),
+    floorSettingsHint: uw("floorSettingsHint"),
+    roomPickHint: uw("roomPickHint"),
+    pinLabels: uw("pinLabels"),
     unsaved: uw("unsaved"),
     discard: uw("discard"),
     save: t("common.save"),
@@ -281,74 +313,35 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
     translationMissing: t("common.translationMissing"),
   };
 
+  const base = `/${locale}/admin/projects/${project.id}/unit-types`;
+  const addHref = (open: boolean) => collectionHref(base, searchParams.lang, null) + (open ? `${searchParams.lang ? "&" : "?"}add=1` : "");
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <ProjectHubTabs
         locale={locale}
         projectId={project.id}
         active="unitTypes"
       />
 
-      <p className="max-w-2xl text-sm text-adm-muted">{t("unitTypes.subtitle")}</p>
-
-      {/* One language selection drives every unit type's description field
-          on this page — see the file comment on LanguageTabs. Hardcoded
-          "all complete" here for the same reason facilities/page.tsx's
-          does: this tab row switches the whole page's language, not one
-          record's, so per-record completeness is shown separately via
-          TranslationStatusBadges next to each type's own heading below. */}
-      <LanguageTabs
-        active={lang}
-        completeness={{ en: true, th: true, zh: true, ru: true }}
-        completeLabel={t("common.translationComplete")}
-        missingLabel={t("common.translationMissing")}
-      />
-
-      {/* ── At a glance ──────────────────────────────────────────────
-          One card per type, with what is missing called out: a type with
-          no price shows "price on request" on the public page whether or
-          not that was meant, and one with no Thai description shows the
-          English one to Thai readers. Unit count is the plots actually
-          placed on the plan, falling back to the declared total. */}
-      {unitTypes.length > 0 && (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {unitTypes.map((type) => {
-            const thai =
-              type.translations.find((row) => row.locale === "th")?.description?.trim() || type.descriptionTh?.trim();
-            const noPrice = type.priceFromTHB === null;
-            const units = type._count.units || type.totalUnits;
-            return (
-              <li key={type.id} className="admin-card p-4!">
-                <p className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-semibold text-adm-text">{type.name}</span>
-                  {type.code && <span className="admin-mono text-xs text-adm-muted">{type.code}</span>}
-                </p>
-                <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-adm-muted">
-                  <Spec icon={BedDouble} value={type.bedrooms} label={t("unitTypes.card.bedrooms")} />
-                  <Spec icon={Bath} value={type.bathrooms} label={t("unitTypes.card.bathrooms")} />
-                  <Spec
-                    icon={Ruler}
-                    value={type.livingAreaSqm === null ? null : `${Math.round(Number(type.livingAreaSqm))} m²`}
-                    label={t("unitTypes.card.area")}
-                  />
-                  <Spec icon={Grid2x2} value={units} label={t("unitTypes.card.units")} />
-                </dl>
-                {(noPrice || !thai) && (
-                  <p className="mt-3 flex flex-wrap gap-1.5">
-                    {noPrice && <Warning label={t("unitTypes.card.noPrice")} />}
-                    {!thai && <Warning label={t("unitTypes.card.noThai")} />}
-                  </p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-2xl text-sm text-adm-muted">{t("unitTypes.subtitle")}</p>
+        {canWrite && (
+          <Link href={addHref(true)} scroll={false} className="admin-btn">
+            <Plus size={15} aria-hidden />
+            {t("unitTypes.newTitle")}
+          </Link>
+        )}
+      </div>
 
       {/* ── Floors, plans and room pins ──────────────────────────────
           The workspace holds one unsaved draft for the whole type — see
           its own header. The per-type spec forms below are unchanged and
           still save through their own action. */}
+      {draftTypes.length === 0 && (
+        <div className="admin-card text-center text-sm text-adm-muted">{t("unitTypes.empty")}</div>
+      )}
+
       {draftTypes.length > 0 && (
         <UnitTypesWorkspace
           locale={locale}
@@ -366,52 +359,35 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         />
       )}
 
-      {/* ── Add ─────────────────────────────────────────────────────── */}
-      <section className="admin-card">
-        <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-adm-text">
-          <Plus size={16} className="text-adm-accent-ink" aria-hidden />
-          {t("unitTypes.newTitle")}
-        </h2>
-
-        <fieldset disabled={!canWrite} className="contents">
-          <UnitTypeForm
-            key={lang}
-            lang={lang}
-            projectSlug={project.slug}
-            action={saveUnitType.bind(null, locale, project.id, project.slug, null)}
-            manageFloorPlans={false}
-            submitLabel={t("common.create")}
-          />
-        </fieldset>
-      </section>
-
+      {/* ── Add — in a drawer, opened from the button above ─────────
+          This form used to sit open at the bottom of the page, a second
+          full set of type fields under the one being edited. */}
+      {canWrite && searchParams.add === "1" && (
+        <AdminDrawer
+          title={t("unitTypes.newTitle")}
+          icon={<Plus size={18} aria-hidden />}
+          closeHref={addHref(false)}
+          closeLabel={t("leadDrawer.close")}
+        >
+          <div className="space-y-5">
+            <LanguageTabs
+              active={lang}
+              completeness={{ en: true, th: true, zh: true, ru: true }}
+              completeLabel={t("common.translationComplete")}
+              missingLabel={t("common.translationMissing")}
+            />
+            <UnitTypeForm
+              key={lang}
+              lang={lang}
+              projectSlug={project.slug}
+              action={saveUnitType.bind(null, locale, project.id, project.slug, null)}
+              manageFloorPlans={false}
+              submitLabel={t("common.create")}
+            />
+          </div>
+        </AdminDrawer>
+      )}
     </div>
   );
 }
 
-function Spec({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof BedDouble;
-  value: string | number | null;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-1" title={label}>
-      <Icon size={13} aria-hidden />
-      <dt className="sr-only">{label}</dt>
-      <dd className="tabular-nums text-adm-text">{value ?? "—"}</dd>
-    </div>
-  );
-}
-
-function Warning({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11px] font-medium text-adm-warning">
-      <AlertTriangle size={11} aria-hidden />
-      {label}
-    </span>
-  );
-}

@@ -304,6 +304,7 @@
     "sitePlanUnitsSuffix": "栋",
     "sitePlanViewMap": "总平面图",
     "sitePlanViewList": "地块列表",
+    "sitePlanView3d": "3D",
     "sitePlanHint": "拖动平移 · 滚动缩放 · 点击标记查看详情",
     "sitePlanCanvasLabel": "互动式总平面图",
     "sitePlanStatusTitle": "地块状态",
@@ -1582,6 +1583,26 @@
         "changedOne": "单位 {unit} → {status}",
         "changedMany": "{count} 个单位 → {status}",
         "selected": "已选 {count} 个"
+      },
+      "scene3d": {
+        "title": "3D site plan",
+        "isNew": "New",
+        "file": "Scene file",
+        "plots": "Plots in scene",
+        "matched": "{scene} / {total} match the system",
+        "mismatch": "Does not match the system",
+        "unreadable": "Could not read the file",
+        "statusSource": "Statuses",
+        "statusSourceValue": "Taken from this page",
+        "show": "Show on the project page",
+        "shown": "The 3D site plan is now shown on the project page",
+        "hidden": "The 3D site plan is hidden; visitors see the 2D plan only",
+        "preview": "Preview 3D",
+        "previewTitle": "3D site plan preview",
+        "previewSub": "As visitors see it, with the latest statuses from this page",
+        "missing": "In the system but not in the scene:",
+        "extra": "In the scene but not in the system:",
+        "close": "Close"
       }
     },
     "sitePlan": {
@@ -2527,6 +2548,8 @@
         "tabFloors": "Floors, plans and rooms",
         "tabPreview": "Live preview",
         "typeList": "Unit types",
+        "floorsShort": "floors",
+        "unitsShort": "units",
         "addFloor": "Add floor",
         "copyFloor": "Copy floor…",
         "floorName": "Floor name",
@@ -2548,14 +2571,19 @@
         "roomName": "Room name",
         "roomArea": "m²",
         "roomPhoto": "Photo",
-        "pickPhoto": "Choose",
-        "clearPhoto": "Remove",
         "deleteRoom": "Delete room",
         "untranslated": "Not translated yet",
         "roomTotal": "Rooms total",
         "areaMatches": "Matches the floor area",
         "areaDiffers": "Differs by",
         "noRooms": "No rooms yet — use “Place pin” and click the drawing.",
+        "allRooms": "All rooms",
+        "prevRoom": "Previous room",
+        "nextRoom": "Next room",
+        "floorSettings": "Floor settings",
+        "floorSettingsHint": "Name, lift label, area, rotation and order",
+        "roomPickHint": "Click a pin on the plan or a room in the list to edit it",
+        "pinLabels": "Pin language",
         "unsaved": "Unsaved changes",
         "discard": "Discard changes",
         "complete": "Ready",
@@ -2584,10 +2612,6 @@
         }
       },
       "card": {
-        "bedrooms": "卧室",
-        "bathrooms": "浴室",
-        "area": "使用面积",
-        "units": "单位数",
         "noPrice": "未定价",
         "noThai": "缺少泰语描述"
       }
@@ -3148,8 +3172,9 @@
       "actionRevealContact": "查看了联系方式"
     },
     "navGroups": {
-      "daily": "日常工作",
-      "master": "基础数据",
+      "overview": "概览",
+      "sales": "销售",
+      "content": "网站内容",
       "system": "系统"
     },
     "collapseSidebar": "收起侧边栏",

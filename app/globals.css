@@ -386,16 +386,6 @@
 }
 
 @utility prose-article {
-  /* Vision & Mission photo mosaic — components/VisionMissionMosaic.tsx.
-     v3: a bento grid of straight rounded rectangles, per direct reference
-     images, replacing a v2 pass that rotated the same 4x4 grid composition
-     45deg into a tessellating diamond mosaic. A bento grid needs none of
-     that rotation machinery — every cell is already upright, so the grid
-     just fills its own box (grid-cols-4/grid-rows-4/gap-3/rounded-2xl, all
-     plain Tailwind utility classes on the component itself) instead of
-     needing a fixed oversized grid clipped by an unconditionally-capped
-     container. No custom CSS is needed here any more. */
-
   /* Article body. Written by hand rather than pulled in via
      @tailwindcss/typography: the allowlist in lib/markdown.ts is short
      enough that styling it directly is less code than a plugin plus the

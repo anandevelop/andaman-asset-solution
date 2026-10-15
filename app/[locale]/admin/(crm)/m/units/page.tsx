@@ -17,6 +17,7 @@ import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import MobileShell from "@/components/admin/mobile/MobileShell";
 import MobileUnitList from "@/components/admin/mobile/MobileUnitList";
+import { sortUnitsWithinGroups } from "@/lib/unit-order";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -88,10 +89,10 @@ export default async function MobileUnitsPage(props: Props) {
       prisma.projectUnit.findMany({
         where: { projectId: project.id },
         orderBy: [{ sortOrder: "asc" }, { unitNumber: "asc" }],
-        select: { id: true, unitNumber: true, status: true, unitType: { select: { name: true } } },
+        select: { id: true, unitNumber: true, status: true, sortOrder: true, unitType: { select: { name: true } } },
       }),
     [],
-  );
+  ).then((rows) => sortUnitsWithinGroups(rows, (u) => u.sortOrder));
 
   const statusLabels = {
     AVAILABLE: tUnits("statusOptions.AVAILABLE"),

@@ -473,6 +473,16 @@ const nextConfig = {
         source: "/api/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
+      // three.js for the 3D site plans (public/embed/vendor/three-r128).
+      // The folder is the version: a newer three.js goes in a new folder,
+      // these files never change in place — so a visitor downloads them
+      // once and every other project's 3D view reuses them. The scene
+      // files beside it are deliberately left on the default (revalidate
+      // every visit) so a new version of a scene shows up straight away.
+      {
+        source: "/embed/vendor/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       // Hashed filenames — safe to cache permanently, in a production build
       // only. Under `next dev` Turbopack keeps one name per chunk and
       // rewrites its contents in place, so `immutable` told the browser to

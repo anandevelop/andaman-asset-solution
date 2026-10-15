@@ -24,6 +24,7 @@ import "server-only";
 import { UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
+import { sortUnitsWithinGroups } from "@/lib/unit-order";
 
 /** Prisma model name as the audit trail records it. */
 const AUDIT_MODEL = "ProjectUnit";
@@ -132,31 +133,35 @@ export async function getAdminProjectUnits(projectId: string): Promise<UnitRow[]
   return safeQuery(
     "admin:project:units",
     async () => {
-      const units = await prisma.projectUnit.findMany({
-        where: { projectId },
-        orderBy: [{ phase: "asc" }, { sortOrder: "asc" }, { unitNumber: "asc" }],
-        select: {
-          id: true,
-          unitNumber: true,
-          status: true,
-          releasedForSale: true,
-          phase: true,
-          unitTypeId: true,
-          landAreaSqm: true,
-          facing: true,
-          viewLabel: true,
-          priceTHB: true,
-          adminNotes: true,
-          shapePoints: true,
-          positionXPercent: true,
-          positionYPercent: true,
-          reservationExpiresAt: true,
-          updatedAt: true,
-          unitType: { select: { name: true, livingAreaSqm: true, bedrooms: true } },
-          reservedByLead: { select: { id: true, name: true } },
-          reservedBy: { select: { name: true } },
-        },
-      });
+      const units = sortUnitsWithinGroups(
+        await prisma.projectUnit.findMany({
+          where: { projectId },
+          orderBy: [{ phase: "asc" }, { sortOrder: "asc" }, { unitNumber: "asc" }],
+          select: {
+            sortOrder: true,
+            id: true,
+            unitNumber: true,
+            status: true,
+            releasedForSale: true,
+            phase: true,
+            unitTypeId: true,
+            landAreaSqm: true,
+            facing: true,
+            viewLabel: true,
+            priceTHB: true,
+            adminNotes: true,
+            shapePoints: true,
+            positionXPercent: true,
+            positionYPercent: true,
+            reservationExpiresAt: true,
+            updatedAt: true,
+            unitType: { select: { name: true, livingAreaSqm: true, bedrooms: true } },
+            reservedByLead: { select: { id: true, name: true } },
+            reservedBy: { select: { name: true } },
+          },
+        }),
+        (u) => `${u.phase ?? ""}\u0000${u.sortOrder}`,
+      );
 
       const audits = units.length
         ? await prisma.auditLog.findMany({

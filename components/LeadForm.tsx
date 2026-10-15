@@ -17,7 +17,7 @@ import {
 import CountrySelect from "@/components/CountrySelect";
 import LeadSuccessDialog from "@/components/LeadSuccessDialog";
 import { emailDomain } from "@/lib/email-quality";
-import RecaptchaProvider, { useRecaptchaToken } from "@/components/RecaptchaProvider";
+import { loadRecaptcha, useRecaptchaToken } from "@/components/RecaptchaProvider";
 import { trackLead } from "@/lib/analytics";
 import { siteConfig } from "@/config/site";
 import { readLanding } from "@/lib/analytics/landing";
@@ -582,7 +582,11 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
           react-hook-form does not invoke onSubmit's body until the form
           actually submits, a later event-handler execution the static
           analysis has no visibility into. */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5"
+        // reCAPTCHA loads on the first touch of the form, not with the page.
+        onFocusCapture={() => void loadRecaptcha()}
+        onPointerDownCapture={() => void loadRecaptcha()}
+      >
       {/* defaultValue, not value: a native form reset restores the value
           attribute, which is how the slug survives the reset above. */}
       <input type="hidden" defaultValue={projectSlug} {...register("projectSlug")} />
@@ -860,9 +864,6 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
       <p className="text-[11px] leading-relaxed text-ink/65">
         {t("consentNotice", { version: siteConfig.legal.consentVersion })}
       </p>
-
-      {/* Loads the v3 script only on pages that actually carry a form. */}
-      <RecaptchaProvider />
       </form>
 
       <LeadSuccessDialog open={status === "success"} onClose={closeSuccessDialog} />

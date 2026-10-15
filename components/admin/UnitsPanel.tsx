@@ -3,57 +3,41 @@
 /**
  * components/admin/UnitsPanel.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The unit list under the site plan (Units.dc.html) — search, the table
- * itself, adding a plot, and the CSV import.
+ * The units tab's main card: its title and toolbar — search, CSV export,
+ * CSV import, adding a plot — around the tile board, which the page passes
+ * in as children.
  *
- * One component rather than four because they all act on the same list and
- * share its selection: clicking a row opens that plot in the detail panel
- * above, which is the query string, so the table and the plan stay in
- * agreement without either knowing about the other.
+ * This used to also hold a table of every plot under the tiles. The tiles
+ * now carry what the table showed (status, land area, facing, the lead a
+ * plot is held for; type and living area in each group's heading), so the
+ * table was the same list twice and is gone. Clicking a tile opens the plot
+ * in the detail panel beside it, as a table row did.
  *
- * Search filters in the browser. The whole project's plots are already on
- * the page (a development is tens of them, not thousands), so a round trip
- * per keystroke would buy nothing and lose the instant response that makes
- * a find-as-you-type box worth having.
+ * Search filters the tiles in the browser (UnitSearchContext → the board).
+ * The whole project's plots are already on the page (a development is tens
+ * of them, not thousands), so a round trip per keystroke would buy nothing.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Check, Loader2, Plus, Search, Upload, X } from "lucide-react";
 import {
   importUnitsCsv,
-  updateUnitStatus,
   type CsvImportResult,
   type UnitFormState,
 } from "@/app/[locale]/admin/(catalog)/projects/[id]/units/actions";
-import UnitStatusSelect from "@/components/admin/UnitStatusSelect";
-import UnitForm, { type UnitFormValues } from "@/components/admin/UnitForm";
+import UnitForm from "@/components/admin/UnitForm";
 import UnitExportButton from "@/components/admin/UnitExportButton";
-
-export type UnitTableRow = {
-  id: string;
-  unitNumber: string;
-  typeLabel: string | null;
-  livingAreaLabel: string | null;
-  landAreaLabel: string | null;
-  facingLabel: string | null;
-  status: "AVAILABLE" | "RESERVED" | "SOLD" | "TRANSFERRED";
-  releasedForSale: boolean;
-  leadId: string | null;
-  leadName: string | null;
-  lastEditedLabel: string;
-  lastEditedBy: string | null;
-};
+import { UnitSearchContext } from "@/components/admin/unit-search-context";
 
 type Props = {
   locale: string;
   projectId: string;
   projectSlug: string;
-  rows: UnitTableRow[];
-  selectedUnitId: string | null;
+  /** The tile board (and the phase switcher above it). */
+  children: ReactNode;
   unitTypes: { id: string; name: string }[];
   statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
   saveAction: (state: UnitFormState, formData: FormData) => Promise<UnitFormState>;
@@ -68,18 +52,6 @@ type Props = {
     exportRateLimited: string;
     exportTruncated: string;
     addUnit: string;
-    columnUnit: string;
-    columnType: string;
-    columnLivingArea: string;
-    columnLandArea: string;
-    columnFacing: string;
-    columnStatus: string;
-    columnLead: string;
-    columnUpdated: string;
-    notReleased: string;
-    none: string;
-    empty: string;
-    noMatches: string;
     cancel: string;
     csvIntro: string;
     csvColumns: string;
@@ -96,15 +68,13 @@ export default function UnitsPanel({
   locale,
   projectId,
   projectSlug,
-  rows,
-  selectedUnitId,
+  children,
   unitTypes,
   statusLabels,
   saveAction,
   labels,
 }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   // The two import counts are the only strings here whose numbers are not
   // known until the server answers, so they are pluralised on the client
@@ -116,22 +86,6 @@ export default function UnitsPanel({
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter((row) =>
-      [row.unitNumber, row.typeLabel, row.facingLabel, row.leadName]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(needle)),
-    );
-  }, [rows, query]);
-
-  const select = (unitId: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("unit", unitId);
-    router.replace(`/${locale}/admin/projects/${projectId}/units?${params.toString()}`);
-  };
 
   const runImport = async (file: File) => {
     setImportResult(null);
@@ -274,91 +228,7 @@ export default function UnitsPanel({
         </div>
       )}
 
-      {rows.length === 0 ? (
-        <p className="py-8 text-center text-sm text-adm-muted">{labels.empty}</p>
-      ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-adm-muted">{labels.noMatches}</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse">
-            <thead className="border-b border-adm-line">
-              <tr>
-                <th className="admin-th">{labels.columnUnit}</th>
-                <th className="admin-th">{labels.columnType}</th>
-                <th className="admin-th">{labels.columnLivingArea}</th>
-                <th className="admin-th">{labels.columnLandArea}</th>
-                <th className="admin-th">{labels.columnFacing}</th>
-                <th className="admin-th">{labels.columnStatus}</th>
-                <th className="admin-th">{labels.columnLead}</th>
-                <th className="admin-th">{labels.columnUpdated}</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-adm-line">
-              {filtered.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => select(row.id)}
-                  className={`cursor-pointer transition-colors ${
-                    row.id === selectedUnitId ? "bg-adm-fill/6" : "hover:bg-adm-text/4"
-                  }`}
-                >
-                  <td className="admin-td font-medium text-adm-text">
-                    {row.unitNumber}
-                    {!row.releasedForSale && (
-                      <span className="ml-2 rounded-xs border border-dashed border-adm-line-strong px-1.5 py-0.5 text-[11px] text-adm-muted">
-                        {labels.notReleased}
-                      </span>
-                    )}
-                  </td>
-                  <td className="admin-td whitespace-nowrap text-adm-muted">{row.typeLabel ?? labels.none}</td>
-                  <td className="admin-td whitespace-nowrap text-adm-muted">
-                    {row.livingAreaLabel ?? labels.none}
-                  </td>
-                  <td className="admin-td whitespace-nowrap text-adm-muted">
-                    {row.landAreaLabel ?? labels.none}
-                  </td>
-                  <td className="admin-td whitespace-nowrap text-adm-muted">
-                    {row.facingLabel ?? labels.none}
-                  </td>
-
-                  {/* The select stops the click here so changing a status
-                      does not also re-select the row underneath it. */}
-                  <td className="admin-td" onClick={(event) => event.stopPropagation()}>
-                    <UnitStatusSelect
-                      action={updateUnitStatus.bind(null, locale, projectId, projectSlug, row.id)}
-                      status={row.status}
-                      labels={statusLabels}
-                    />
-                  </td>
-
-                  <td className="admin-td" onClick={(event) => event.stopPropagation()}>
-                    {row.leadId && row.leadName ? (
-                      <Link
-                        href={`/${locale}/admin/leads/${row.leadId}`}
-                        className="text-sm text-adm-accent-ink hover:text-adm-accent-ink"
-                      >
-                        {row.leadName}
-                      </Link>
-                    ) : (
-                      <span className="text-adm-muted">{labels.none}</span>
-                    )}
-                  </td>
-
-                  <td className="admin-td max-w-[150px] text-xs text-adm-muted">
-                    <span className="block whitespace-nowrap">{row.lastEditedLabel}</span>
-                    {row.lastEditedBy && (
-                      <span className="block truncate text-adm-muted/80" title={row.lastEditedBy}>
-                        {row.lastEditedBy}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <UnitSearchContext.Provider value={query}>{children}</UnitSearchContext.Provider>
     </section>
   );
 }

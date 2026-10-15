@@ -340,13 +340,13 @@ describe("the sidebar each role gets", () => {
   const EXPECTED: Record<Role, string[]> = {
     SUPER_ADMIN: [
       "dashboard",
-      "leads",
-      "coAgents",
-      "publishing",
       "analytics",
       "reports",
-      "projects",
+      "leads",
+      "coAgents",
       "salesTeam",
+      "projects",
+      "publishing",
       "pages",
       "news",
       "events",
@@ -359,13 +359,13 @@ describe("the sidebar each role gets", () => {
     // No users or activity: both are OWNER_ONLY.
     ADMIN: [
       "dashboard",
-      "leads",
-      "coAgents",
-      "publishing",
       "analytics",
       "reports",
-      "projects",
+      "leads",
+      "coAgents",
       "salesTeam",
+      "projects",
+      "publishing",
       "pages",
       "news",
       "events",
@@ -377,9 +377,9 @@ describe("the sidebar each role gets", () => {
     // fix), no SEO, no analytics, no settings.
     EDITOR: [
       "dashboard",
-      "publishing",
-      "projects",
       "salesTeam",
+      "projects",
+      "publishing",
       "pages",
       "news",
       "events",
@@ -393,8 +393,8 @@ describe("the sidebar each role gets", () => {
     // meet; see the note on that set in lib/admin/nav.ts.
     VIEWER: [
       "dashboard",
-      "publishing",
       "projects",
+      "publishing",
       "pages",
       "news",
       "events",
@@ -424,14 +424,15 @@ describe("the sidebar each role gets", () => {
     expect(EXPECTED.SUPER_ADMIN).toHaveLength(16);
   });
 
-  it("groups them by how often they are opened", () => {
-    // Daily work, master data, system — see NavGroupKey in
-    // lib/admin/nav.ts. Six groups by department before this.
+  it("groups them by job", () => {
+    // Overview, sales, website content, system — see NavGroupKey in
+    // lib/admin/nav.ts. Three zones by frequency of use before this, and
+    // six groups by department before those.
     const groups = visibleNav(Role.SUPER_ADMIN, "rail").map(
       (group) => group.key,
     );
 
-    expect(groups).toEqual(["daily", "master", "system"]);
+    expect(groups).toEqual(["overview", "sales", "content", "system"]);
   });
 
   it("labels every group it draws", () => {
@@ -494,11 +495,11 @@ describe("mobileOnly", () => {
   });
 
   it("puts it first in its group in the drawer", () => {
-    const daily = visibleNav(Role.SALES, "drawer").find(
-      (g) => g.key === "daily",
+    const sales = visibleNav(Role.SALES, "drawer").find(
+      (g) => g.key === "sales",
     );
 
-    expect(daily?.items[0]?.key).toBe("mobileView");
+    expect(sales?.items[0]?.key).toBe("mobileView");
   });
 
   it("leaves it in the unfiltered menu, which is what ⌘K reads", () => {

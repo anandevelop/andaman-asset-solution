@@ -380,8 +380,8 @@ export const linesToArray = z
   );
 
 /**
- * One row of Project.specialFeatures. Submitted by SpecialFeaturesEditor
- * (components/admin/SpecialFeaturesEditor.tsx) as a single hidden-input
+ * One row of Project.specialFeatures. Was submitted by the (since removed)
+ * special-features editor as a single hidden-input
  * JSON string rather than N indexed form fields — the row count is
  * variable and FormData has no native array/object support, so the
  * component owns serialization and this schema owns validating what comes

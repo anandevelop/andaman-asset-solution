@@ -29,11 +29,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, Check, Copy, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, DoorOpen, ImageOff, Plus, Trash2 } from "lucide-react";
+import AdminDrawer from "@/components/admin/ui/AdminDrawer";
 import { useTranslations } from "next-intl";
 import type { Locale } from "@/i18n";
 import ImageUploader from "@/components/admin/ImageUploader";
-import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
 import SaveToast from "@/components/admin/SaveToast";
 import UnitTypesElevator from "@/components/unit-types/UnitTypesElevator";
 import type { ElevatorLabels, ElevatorType } from "@/components/unit-types/types";
@@ -83,11 +83,17 @@ export type DraftType = {
   totalUnits: number | null;
   hasPrivateLift: boolean;
   floors: DraftFloor[];
+  /** Plots on the plan (or the declared total) — shown on the type switcher. */
+  unitCount?: number | null;
+  /** Already-translated notes for the switcher: no price, no Thai text. */
+  warnings?: string[];
 };
 
 export type WorkspaceLabels = {
   tabs: { details: string; floors: string; preview: string };
   typeList: string;
+  floorsShort: string;
+  unitsShort: string;
   addFloor: string;
   copyFloor: string;
   floorName: string;
@@ -109,14 +115,19 @@ export type WorkspaceLabels = {
   roomName: string;
   roomArea: string;
   roomPhoto: string;
-  pickPhoto: string;
-  clearPhoto: string;
   deleteRoom: string;
   untranslated: string;
   roomTotal: string;
   areaMatches: string;
   areaDiffers: string;
   noRooms: string;
+  allRooms: string;
+  prevRoom: string;
+  nextRoom: string;
+  floorSettings: string;
+  floorSettingsHint: string;
+  roomPickHint: string;
+  pinLabels: string;
   unsaved: string;
   discard: string;
   save: string;
@@ -478,95 +489,111 @@ export default function UnitTypesWorkspace({
         </SaveToast>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-        {/* ── Type list ───────────────────────────────────────────── */}
-        <aside className="admin-card h-fit p-0!">
-          <h2 className="border-b border-adm-line px-4 py-3 text-sm font-semibold text-adm-text">
-            {labels.typeList}
-          </h2>
+      {/*
+        ── Type switcher ────────────────────────────────────────────────
+        A row of cards rather than a 260px column beside the editor: the
+        column took the width the plan and its room panel need, and the
+        page above repeated the same types again as "at a glance" cards.
+        One row now does both — pick a type, see its specs and what it
+        still needs. Drag to reorder, as the column did.
+      */}
+      <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-label={labels.typeList}>
+        {orderedTypes.map((candidate, position) => {
+          const candidateFloors = floorsByType[candidate.id] ?? [];
+          const issues = unitTypeHealth(
+            candidateFloors.map((f) => ({
+              floorName: f.floorName,
+              shortLabel: f.shortLabel,
+              imageUrl: f.imageUrl,
+              furnishedImageUrl: f.furnishedImageUrl,
+              areaSqm: toNumberOrNull(f.areaSqm),
+              rooms: f.rooms.map((r) => ({
+                names: r.names,
+                areaSqm: toNumberOrNull(r.areaSqm),
+                photoUrl: r.photoUrl,
+              })),
+            })),
+            locales,
+          ).issueCount;
+          const active = candidate.id === type.id;
+          const specs = [
+            candidate.bedrooms !== null ? `${candidate.bedrooms} ${labels.elevator.bed}` : null,
+            candidate.bathrooms !== null ? `${candidate.bathrooms} ${labels.elevator.bath}` : null,
+            candidate.livingAreaSqm !== null ? `${formatNumber(locale, Math.round(candidate.livingAreaSqm))} ${labels.sqm}` : null,
+            candidate.unitCount ? `${candidate.unitCount} ${labels.unitsShort}` : null,
+          ].filter(Boolean);
 
-          <ul className="divide-y divide-adm-line">
-            {orderedTypes.map((candidate, position) => {
-              const candidateFloors = floorsByType[candidate.id] ?? [];
-              const issues = unitTypeHealth(
-                candidateFloors.map((f) => ({
-                  floorName: f.floorName,
-                  shortLabel: f.shortLabel,
-                  imageUrl: f.imageUrl,
-                  furnishedImageUrl: f.furnishedImageUrl,
-                  areaSqm: toNumberOrNull(f.areaSqm),
-                  rooms: f.rooms.map((r) => ({
-                    names: r.names,
-                    areaSqm: toNumberOrNull(r.areaSqm),
-                    photoUrl: r.photoUrl,
-                  })),
-                })),
-                locales,
-              ).issueCount;
+          return (
+            <li
+              key={candidate.id}
+              draggable={canWrite && Boolean(onReorder)}
+              onDragStart={() => {
+                dragFrom.current = candidate.id;
+              }}
+              // Without preventDefault the browser refuses the drop.
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                const from = dragFrom.current;
+                dragFrom.current = null;
+                if (!from || from === candidate.id) return;
 
-              return (
-                <li
-                  key={candidate.id}
-                  draggable={canWrite && Boolean(onReorder)}
-                  onDragStart={() => {
-                    dragFrom.current = candidate.id;
-                  }}
-                  // Without preventDefault the browser refuses the drop.
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => {
-                    const from = dragFrom.current;
-                    dragFrom.current = null;
-                    if (!from || from === candidate.id) return;
+                const current = orderedTypes.map((row) => row.id);
+                const next = current.filter((id) => id !== from);
+                next.splice(position, 0, from);
 
-                    const current = orderedTypes.map((row) => row.id);
-                    const next = current.filter((id) => id !== from);
-                    next.splice(position, 0, from);
-
-                    setOrder(next);
-                    // Persisted immediately: the order is one column on a
-                    // handful of rows, and holding it in the unsaved bar
-                    // alongside the floor draft would mean one Save writing
-                    // two unrelated things.
-                    void onReorder?.(next);
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => selectType(candidate.id)}
-                    aria-pressed={candidate.id === type.id}
-                    className={`w-full px-4 py-3 text-left transition-colors ${
-                      candidate.id === type.id ? "bg-adm-text/4" : "hover:bg-adm-text/4"
+                setOrder(next);
+                // Persisted immediately: the order is one column on a
+                // handful of rows, and holding it in the unsaved bar
+                // alongside the floor draft would mean one Save writing
+                // two unrelated things.
+                void onReorder?.(next);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => selectType(candidate.id)}
+                aria-pressed={active}
+                className={`admin-card h-full w-full p-3.5! text-left transition-colors ${
+                  active ? "ring-2 ring-adm-fill" : "hover:border-adm-line-strong"
+                }`}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate font-semibold text-adm-text">{candidate.name}</span>
+                  {/* No floors is not "Ready": there is nothing to check,
+                      and nothing on the public page either. */}
+                  <span
+                    className={`shrink-0 rounded-xs px-1.5 py-0.5 text-[11px] font-medium ${
+                      candidateFloors.length === 0
+                        ? "bg-adm-text/5 text-adm-muted"
+                        : issues === 0
+                          ? "bg-adm-success-bg text-adm-success"
+                          : "bg-adm-warning-bg text-adm-warning"
                     }`}
                   >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-adm-text">{candidate.name}</span>
-                      {/* No floors is not "Ready": there is nothing to check,
-                          and nothing on the public page either. */}
-                      <span
-                        className={`rounded-xs px-1.5 py-0.5 text-[11px] font-medium ${
-                          candidateFloors.length === 0
-                            ? "bg-adm-text/5 text-adm-muted"
-                            : issues === 0
-                              ? "bg-adm-success-bg text-adm-success"
-                              : "bg-adm-warning-bg text-adm-warning"
-                        }`}
-                      >
-                        {candidateFloors.length === 0
-                          ? labels.noFloorsBadge
-                          : issues === 0
-                            ? labels.complete
-                            : `${issues} ${labels.issues}`}
+                    {candidateFloors.length === 0
+                      ? labels.noFloorsBadge
+                      : issues === 0
+                        ? labels.complete
+                        : `${issues} ${labels.issues}`}
+                  </span>
+                </span>
+                <span className="mt-1 block truncate text-xs text-adm-muted">
+                  {[`${candidateFloors.length} ${labels.floorsShort}`, ...specs].join(" · ")}
+                </span>
+                {candidate.warnings && candidate.warnings.length > 0 && (
+                  <span className="mt-2 flex flex-wrap gap-1">
+                    {candidate.warnings.map((warning) => (
+                      <span key={warning} className="rounded-xs bg-adm-warning-bg px-1.5 py-0.5 text-[10.5px] text-adm-warning">
+                        {warning}
                       </span>
-                    </span>
-                    <span className="mt-0.5 block text-xs text-adm-muted">
-                      {candidateFloors.length} · {candidate.name}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
+                    ))}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
         {/* ── Editor ──────────────────────────────────────────────── */}
         <div className="space-y-4">
@@ -664,7 +691,6 @@ export default function UnitTypesWorkspace({
             />
           )}
         </div>
-      </div>
 
       {/* ── Save bar ────────────────────────────────────────────── */}
       {canWrite && dirtyTypes.length > 0 && (
@@ -1036,6 +1062,11 @@ function FloorsTab({
   const floorArea = toNumberOrNull(floor.areaSqm);
   const difference = floorArea === null ? null : Math.abs(roomTotal - floorArea);
 
+  const roomIndex = floor.rooms.findIndex((r) => r.key === selectedRoom);
+  const room = roomIndex >= 0 ? floor.rooms[roomIndex] : null;
+  const roomLabel = (candidate: DraftRoom) =>
+    (candidate.names[lang] ?? "").trim() || (candidate.names.en ?? "").trim() || "—";
+
   return (
     <div className="space-y-4">
       {/* ── Floor strip ──────────────────────────────────────────── */}
@@ -1138,286 +1169,168 @@ function FloorsTab({
         </ul>
       )}
 
-      <FloorPlanPinner
-        lineImageUrl={floor.imageUrl}
-        furnishedImageUrl={floor.furnishedImageUrl}
-        aspect={floor.aspect}
-        rooms={pins}
-        selectedKey={selectedRoom}
-        placing={placing}
-        readOnly={!canWrite}
-        labels={labels.pinner}
-        onPlace={(x, y) => addRoom(x, y)}
-        onMove={(key, x, y) => onPatchRoom(floor.key, key, { xPercent: x, yPercent: y })}
-        onSelect={onSelectRoom}
-        onTogglePlacing={onTogglePlacing}
-        onDeleteSelected={() => selectedRoom && deleteRoom(selectedRoom)}
-      />
-
-      <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
-        {/* ── Floor fields ──────────────────────────────────────── */}
-        <section className="admin-card space-y-3">
-          <label className="block">
-            <span className="admin-label">{labels.floorName}</span>
-            <input
-              className="admin-input"
-              value={floor.floorName}
-              disabled={!canWrite}
-              onChange={(event) => onPatchFloor(floor.key, { floorName: event.target.value })}
-            />
-          </label>
-
-          <label className="block">
-            <span className="admin-label">{labels.liftLabel}</span>
-            <input
-              className="admin-input max-w-20"
-              maxLength={3}
-              value={floor.shortLabel}
-              disabled={!canWrite}
-              onChange={(event) => onPatchFloor(floor.key, { shortLabel: event.target.value })}
-            />
-          </label>
-
-          <label className="block">
-            <span className="admin-label">{labels.floorArea}</span>
-            <input
-              className="admin-input max-w-32"
-              inputMode="decimal"
-              value={floor.areaSqm}
-              disabled={!canWrite}
-              onChange={(event) => onPatchFloor(floor.key, { areaSqm: event.target.value })}
-            />
-          </label>
-
-          <fieldset>
-            <legend className="admin-label">{labels.rotation}</legend>
-            <div className="mt-1 inline-flex rounded-xs border border-adm-line-strong p-0.5">
-              {(["CW", "CCW"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  disabled={!canWrite}
-                  onClick={() => onPatchFloor(floor.key, { portraitRotation: value })}
-                  aria-pressed={floor.portraitRotation === value}
-                  className={`rounded-xs px-2.5 py-1 text-xs ${
-                    floor.portraitRotation === value
-                      ? "bg-adm-strong font-medium text-adm-on-strong"
-                      : "text-adm-muted"
-                  }`}
-                >
-                  {value === "CW" ? labels.rotationCw : labels.rotationCcw}
-                </button>
-              ))}
-            </div>
-            <p className="admin-hint">{labels.rotationHint}</p>
-          </fieldset>
-
+      {/*
+        The plan and, beside it, one panel: the rooms of this floor as a
+        short list, or — once a room is picked on the plan or in the list —
+        that room's own fields. This replaced a table of every room's inputs
+        under the plan, which put the thing being edited a screen away from
+        the pin it belongs to. The plan images go under the plan; the
+        floor's other settings fold away under the list — they are set once
+        per floor and rarely touched after.
+      */}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">
+          <FloorPlanPinner
+            lineImageUrl={floor.imageUrl}
+            furnishedImageUrl={floor.furnishedImageUrl}
+            aspect={floor.aspect}
+            rooms={pins}
+            selectedKey={selectedRoom}
+            placing={placing}
+            readOnly={!canWrite}
+            labels={labels.pinner}
+            onPlace={(x, y) => addRoom(x, y)}
+            onMove={(key, x, y) => onPatchRoom(floor.key, key, { xPercent: x, yPercent: y })}
+            onSelect={onSelectRoom}
+            onTogglePlacing={onTogglePlacing}
+            onDeleteSelected={() => selectedRoom && deleteRoom(selectedRoom)}
+          />
+          {/* The plan images sit under the plan they replace, in the
+              room the column has below it, rather than folded into the
+              panel's floor settings. */}
           {canWrite && (
-            <div className="flex flex-wrap gap-2 border-t border-adm-line pt-3">
-              <button type="button" onClick={() => moveFloor(-1)} className="admin-btn-ghost">
-                {labels.moveUp}
-              </button>
-              <button type="button" onClick={() => moveFloor(1)} className="admin-btn-ghost">
-                {labels.moveDown}
-              </button>
-              <button
-                type="button"
-                onClick={deleteFloor}
-                disabled={floors.length <= 1}
-                title={floors.length <= 1 ? labels.lastFloor : undefined}
-                className="admin-btn-ghost text-adm-danger disabled:opacity-40"
-              >
-                <Trash2 size={14} aria-hidden />
-                {labels.deleteFloor}
-              </button>
+            <div className="mt-4 space-y-4">
+              <div className="admin-card p-4!">
+                <ImageUploader
+                  name={`line-${floor.key}`}
+                  prefix="projects"
+                  slug={projectSlug}
+                  defaultValue={floor.imageUrl}
+                  label={labels.lineUpload}
+                  hint={labels.lineUploadHint}
+                  // A new drawing makes the saved blueprint stale; the save derives a
+                  // fresh one, and the preview draws its own until then. Only when
+                  // the URL really changed: ImageUploader re-fires onChange with
+                  // the same value on every render (see isNoop), and clearing the
+                  // blueprint then marked every floor dirty on load.
+                  onChange={(value) =>
+                    onPatchFloor(
+                      floor.key,
+                      value === floor.imageUrl
+                        ? { imageUrl: value }
+                        : { imageUrl: value, blueprintImageUrl: null },
+                    )
+                  }
+                />
+              </div>
+              <div className="admin-card p-4!">
+                <ImageUploader
+                  name={`furnished-${floor.key}`}
+                  prefix="projects"
+                  slug={projectSlug}
+                  defaultValue={floor.furnishedImageUrl ?? ""}
+                  label={labels.furnishedUpload}
+                  hint={labels.furnishedUploadHint}
+                  onChange={(value) => onPatchFloor(floor.key, { furnishedImageUrl: value || null })}
+                />
+              </div>
             </div>
           )}
+        </div>
 
-          {canWrite && (
-            <div className="space-y-3 border-t border-adm-line pt-3">
-              <ImageUploader
-                name={`line-${floor.key}`}
-                prefix="projects"
-                slug={projectSlug}
-                defaultValue={floor.imageUrl}
-                label={labels.lineUpload}
-                hint={labels.lineUploadHint}
-                // A new drawing makes the saved blueprint stale; the save derives a
-                // fresh one, and the preview draws its own until then. Only when
-                // the URL really changed: ImageUploader re-fires onChange with
-                // the same value on every render (see isNoop), and clearing the
-                // blueprint then marked every floor dirty on load.
-                onChange={(value) =>
-                  onPatchFloor(
-                    floor.key,
-                    value === floor.imageUrl
-                      ? { imageUrl: value }
-                      : { imageUrl: value, blueprintImageUrl: null },
-                  )
-                }
-              />
-              <ImageUploader
-                name={`furnished-${floor.key}`}
-                prefix="projects"
-                slug={projectSlug}
-                defaultValue={floor.furnishedImageUrl ?? ""}
-                label={labels.furnishedUpload}
-                hint={labels.furnishedUploadHint}
-                onChange={(value) =>
-                  onPatchFloor(floor.key, { furnishedImageUrl: value || null })
-                }
-              />
-            </div>
-          )}
-        </section>
-
-        {/* ── Room table ────────────────────────────────────────── */}
-        <section className="admin-card p-0!">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-adm-line px-4 py-3">
-            <h3 className="text-sm font-semibold text-adm-text">{labels.roomsHeading}</h3>
-            {/*
-              Not components/admin/LanguageTabs: that switches language by
-              navigating to ?lang=, and a navigation here would throw away
-              the unsaved draft this whole screen is built around. Same four
-              tabs, same completeness dot, driven by state instead.
-            */}
-            <div className="flex gap-1">
-              {(["th", "en", "zh", "ru"] as Locale[]).map((code) => {
-                const complete =
-                  floor.rooms.length > 0 &&
-                  floor.rooms.every((room) => (room.names[code] ?? "").trim() !== "");
-
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => onSelectLang(code)}
-                    aria-pressed={code === lang}
-                    title={complete ? labels.translationComplete : labels.translationMissing}
-                    className={`flex items-center gap-1 rounded-xs px-2 py-1 text-xs uppercase transition-colors ${
-                      code === lang
-                        ? "bg-adm-strong font-medium text-adm-on-strong"
-                        : "text-adm-muted hover:text-adm-text"
-                    }`}
-                  >
-                    {code}
-                    <span
-                      aria-hidden
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        complete ? "bg-adm-success" : "bg-adm-warning"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {floor.rooms.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-adm-muted">{labels.noRooms}</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-adm-line text-left text-xs uppercase tracking-wide text-adm-muted">
-                  <th className="px-3 py-2 font-medium">#</th>
-                  <th className="px-3 py-2 font-medium">{labels.roomName}</th>
-                  <th className="px-3 py-2 font-medium">{labels.roomArea}</th>
-                  <th className="px-3 py-2 font-medium">{labels.roomPhoto}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-adm-line">
-                {floor.rooms.map((room, roomIndex) => {
-                  const fallback = (room.names.en ?? "").trim();
-                  const value = room.names[lang] ?? "";
-                  const untranslated = value.trim() === "" && fallback !== "";
-
-                  return (
-                    <tr
-                      key={room.key}
-                      onClick={() => onSelectRoom(room.key)}
-                      className={room.key === selectedRoom ? "bg-adm-fill/15" : ""}
-                    >
-                      <td className="px-3 py-2 tabular-nums text-adm-muted">
-                        {String(roomIndex + 1).padStart(2, "0")}
-                      </td>
-
-                      <td className="px-3 py-2">
-                        <input
-                          className="admin-input"
-                          value={value}
-                          placeholder={untranslated ? fallback : ""}
-                          /*
-                            A column header is not an accessible name — axe
-                            reports these as critical without one, and a
-                            screen reader lands on thirty unnamed text
-                            boxes. Numbered, because "room name" thirty
-                            times is no more use than nothing.
-                          */
-                          aria-label={`${labels.roomName} ${roomIndex + 1}`}
-                          disabled={!canWrite}
-                          onChange={(event) =>
-                            onPatchRoom(floor.key, room.key, {
-                              names: { ...room.names, [lang]: event.target.value },
-                            })
-                          }
+        <aside className="admin-card space-y-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+          {/* ── The floor's rooms, then its settings ─────────────── */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-adm-text">
+                  {labels.roomsHeading}
+                  <span className="ml-1.5 font-normal tabular-nums text-adm-muted">· {floor.rooms.length}</span>
+                </h3>
+                {/*
+                  Which language the pins on the plan are labelled in. Not
+                  components/admin/LanguageTabs: that switches by navigating
+                  to ?lang=, which would throw away the unsaved draft.
+                */}
+                <div className="flex gap-0.5" role="group" aria-label={labels.pinLabels} title={labels.pinLabels}>
+                  {(["th", "en", "zh", "ru"] as Locale[]).map((code) => {
+                    const complete =
+                      floor.rooms.length > 0 &&
+                      floor.rooms.every((candidate) => (candidate.names[code] ?? "").trim() !== "");
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => onSelectLang(code)}
+                        aria-pressed={code === lang}
+                        title={complete ? labels.translationComplete : labels.translationMissing}
+                        className={`flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-[11px] uppercase transition-colors ${
+                          code === lang
+                            ? "bg-adm-strong font-medium text-adm-on-strong"
+                            : "text-adm-muted hover:text-adm-text"
+                        }`}
+                      >
+                        {code}
+                        <span
+                          aria-hidden
+                          className={`h-1.5 w-1.5 rounded-full ${complete ? "bg-adm-success" : "bg-adm-warning"}`}
                         />
-                        {untranslated && (
-                          <span className="mt-0.5 block text-[11px] text-adm-warning">
-                            {labels.untranslated}
-                          </span>
-                        )}
-                      </td>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      <td className="px-3 py-2">
-                        <input
-                          className="admin-input max-w-24"
-                          inputMode="decimal"
-                          value={room.areaSqm}
-                          aria-label={`${labels.roomArea} ${roomIndex + 1}`}
-                          disabled={!canWrite}
-                          onChange={(event) =>
-                            onPatchRoom(floor.key, room.key, { areaSqm: event.target.value })
-                          }
-                        />
-                      </td>
-
-                      <td className="px-3 py-2">
-                        <RoomPhotoCell
-                          locale={locale}
-                          photoUrl={room.photoUrl}
-                          canWrite={canWrite}
-                          labels={labels}
-                          onChange={(url) => onPatchRoom(floor.key, room.key, { photoUrl: url })}
-                        />
-                      </td>
-
-                      <td className="px-3 py-2 text-right">
-                        {canWrite && (
+              {floor.rooms.length === 0 ? (
+                <p className="text-sm text-adm-muted">{labels.noRooms}</p>
+              ) : (
+                <>
+                  <p className="text-xs text-adm-muted">{labels.roomPickHint}</p>
+                  <ul className="-mx-2 divide-y divide-adm-line">
+                    {floor.rooms.map((candidate, candidateIndex) => {
+                      const untranslated = (["th", "en", "zh", "ru"] as Locale[]).some(
+                        (code) => (candidate.names[code] ?? "").trim() === "",
+                      );
+                      return (
+                        <li key={candidate.key}>
                           <button
                             type="button"
-                            onClick={() => deleteRoom(room.key)}
-                            aria-label={labels.deleteRoom}
-                            className="text-adm-muted hover:text-adm-danger"
+                            onClick={() => onSelectRoom(candidate.key)}
+                            aria-current={candidate.key === selectedRoom ? "true" : undefined}
+                            className={`flex w-full items-center gap-2.5 rounded-[8px] px-2 py-2 text-left text-sm transition-colors ${
+                              candidate.key === selectedRoom ? "bg-adm-fill/15" : "hover:bg-adm-text/4"
+                            }`}
                           >
-                            <Trash2 size={14} aria-hidden />
+                            <span className="w-5 shrink-0 text-xs tabular-nums text-adm-muted">
+                              {String(candidateIndex + 1).padStart(2, "0")}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-adm-text">{roomLabel(candidate)}</span>
+                            {untranslated && (
+                              <span
+                                aria-label={labels.untranslated}
+                                title={labels.untranslated}
+                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-adm-warning"
+                              />
+                            )}
+                            {!candidate.photoUrl && (
+                              <ImageOff
+                                size={13}
+                                aria-label={labels.issueLabels.roomsWithoutPhoto}
+                                className="shrink-0 text-adm-warning"
+                              />
+                            )}
+                            <span className="w-12 shrink-0 text-right text-xs tabular-nums text-adm-muted">
+                              {candidate.areaSqm || "—"}
+                            </span>
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-
-              <tfoot>
-                <tr className="border-t border-adm-line text-xs">
-                  <td />
-                  <td className="px-3 py-2 text-adm-muted">{labels.roomTotal}</td>
-                  <td className="px-3 py-2 font-medium tabular-nums text-adm-text">
-                    {roomTotal.toFixed(2)}
-                  </td>
-                  <td colSpan={2} className="px-3 py-2">
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="flex items-center justify-between gap-2 border-t border-adm-line pt-2 text-xs">
+                    <span className="text-adm-muted">
+                      {labels.roomTotal}{" "}
+                      <span className="font-medium tabular-nums text-adm-text">{roomTotal.toFixed(2)}</span>
+                    </span>
                     {difference !== null &&
                       (difference <= 0.6 ? (
                         <span className="text-adm-success">{labels.areaMatches}</span>
@@ -1426,87 +1339,249 @@ function FloorsTab({
                           {labels.areaDiffers} {difference.toFixed(2)}
                         </span>
                       ))}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          )}
-        </section>
+                  </p>
+                </>
+              )}
+
+              <details className="group border-t border-adm-line pt-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+                  <span>
+                    <span className="block text-sm font-semibold text-adm-text">{labels.floorSettings}</span>
+                    <span className="block text-xs text-adm-muted">{labels.floorSettingsHint}</span>
+                  </span>
+                  <ChevronDown size={16} aria-hidden className="shrink-0 text-adm-muted transition-transform group-open:rotate-180" />
+                </summary>
+
+                <div className="mt-3 space-y-3">
+                  <label className="block">
+                    <span className="admin-label">{labels.floorName}</span>
+                    <input
+                      className="admin-input"
+                      value={floor.floorName}
+                      disabled={!canWrite}
+                      onChange={(event) => onPatchFloor(floor.key, { floorName: event.target.value })}
+                    />
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="admin-label">{labels.liftLabel}</span>
+                      <input
+                        className="admin-input"
+                        maxLength={3}
+                        value={floor.shortLabel}
+                        disabled={!canWrite}
+                        onChange={(event) => onPatchFloor(floor.key, { shortLabel: event.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="admin-label">{labels.floorArea}</span>
+                      <input
+                        className="admin-input"
+                        inputMode="decimal"
+                        value={floor.areaSqm}
+                        disabled={!canWrite}
+                        onChange={(event) => onPatchFloor(floor.key, { areaSqm: event.target.value })}
+                      />
+                    </label>
+                  </div>
+
+                  <fieldset>
+                    <legend className="admin-label">{labels.rotation}</legend>
+                    <div className="mt-1 inline-flex rounded-xs border border-adm-line-strong p-0.5">
+                      {(["CW", "CCW"] as const).map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          disabled={!canWrite}
+                          onClick={() => onPatchFloor(floor.key, { portraitRotation: value })}
+                          aria-pressed={floor.portraitRotation === value}
+                          className={`rounded-xs px-2.5 py-1 text-xs ${
+                            floor.portraitRotation === value
+                              ? "bg-adm-strong font-medium text-adm-on-strong"
+                              : "text-adm-muted"
+                          }`}
+                        >
+                          {value === "CW" ? labels.rotationCw : labels.rotationCcw}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="admin-hint">{labels.rotationHint}</p>
+                  </fieldset>
+
+
+                  {canWrite && (
+                    <div className="flex flex-wrap gap-2 border-t border-adm-line pt-3">
+                      <button type="button" onClick={() => moveFloor(-1)} className="admin-btn-ghost">
+                        {labels.moveUp}
+                      </button>
+                      <button type="button" onClick={() => moveFloor(1)} className="admin-btn-ghost">
+                        {labels.moveDown}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={deleteFloor}
+                        disabled={floors.length <= 1}
+                        title={floors.length <= 1 ? labels.lastFloor : undefined}
+                        className="admin-btn-ghost text-adm-danger disabled:opacity-40"
+                      >
+                        <Trash2 size={14} aria-hidden />
+                        {labels.deleteFloor}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </details>
+            </div>
+        </aside>
       </div>
+
+      {/*
+        The picked room opens in a drawer from the right — the same frame as
+        every add/edit form in this admin (AdminDrawer), driven by state
+        rather than the URL so the unsaved draft is never navigated away
+        from. ‹ › step through the floor's rooms without closing it.
+      */}
+      {room && (
+        <AdminDrawer
+          title={`${String(roomIndex + 1).padStart(2, "0")} · ${roomLabel(room)}`}
+          icon={<DoorOpen size={18} aria-hidden />}
+          onClose={() => onSelectRoom(null)}
+          closeLabel={labels.allRooms}
+          width={460}
+        >
+            <div className="space-y-4">
+              <div className="flex items-center justify-end gap-2">
+                <span className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onSelectRoom(floor.rooms[roomIndex - 1]?.key ?? null)}
+                    disabled={roomIndex <= 0}
+                    aria-label={labels.prevRoom}
+                    title={labels.prevRoom}
+                    className="admin-btn-ghost h-7 w-7 p-0! disabled:opacity-30"
+                  >
+                    <ChevronLeft size={14} aria-hidden />
+                  </button>
+                  <span className="text-xs tabular-nums text-adm-muted">
+                    {roomIndex + 1} / {floor.rooms.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectRoom(floor.rooms[roomIndex + 1]?.key ?? null)}
+                    disabled={roomIndex >= floor.rooms.length - 1}
+                    aria-label={labels.nextRoom}
+                    title={labels.nextRoom}
+                    className="admin-btn-ghost h-7 w-7 p-0! disabled:opacity-30"
+                  >
+                    <ChevronRight size={14} aria-hidden />
+                  </button>
+                </span>
+              </div>
+
+
+              {/* All four languages at once: a room name is two words, and
+                  switching a language tab per room was most of the clicks. */}
+              <div className="space-y-2.5">
+                {(["th", "en", "zh", "ru"] as Locale[]).map((code) => {
+                  const value = room.names[code] ?? "";
+                  const missing = value.trim() === "";
+                  return (
+                    <label key={code} className="block">
+                      <span className="admin-label flex items-center gap-1.5">
+                        {labels.roomName} · {code.toUpperCase()}
+                        {missing && (
+                          <span className="text-[11px] font-normal text-adm-warning">{labels.untranslated}</span>
+                        )}
+                      </span>
+                      <input
+                        className="admin-input"
+                        value={value}
+                        placeholder={code === "en" ? "" : (room.names.en ?? "")}
+                        disabled={!canWrite}
+                        onChange={(event) =>
+                          onPatchRoom(floor.key, room.key, {
+                            names: { ...room.names, [code]: event.target.value },
+                          })
+                        }
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+
+              <label className="block">
+                <span className="admin-label">{labels.roomArea}</span>
+                <input
+                  className="admin-input max-w-32"
+                  inputMode="decimal"
+                  value={room.areaSqm}
+                  disabled={!canWrite}
+                  onChange={(event) => onPatchRoom(floor.key, room.key, { areaSqm: event.target.value })}
+                />
+              </label>
+
+              {/* The same uploader as every other image in the admin — upload,
+                  drag in, pick from the library or paste a URL — rather than
+                  the library-only link pair the old room table used. */}
+              {canWrite ? (
+                <ImageUploader
+                  key={room.key}
+                  name={`room-photo-${room.key}`}
+                  prefix="projects"
+                  slug={projectSlug}
+                  defaultValue={room.photoUrl ?? ""}
+                  label={labels.roomPhoto}
+                  // ImageUploader re-fires onChange with the same value on
+                  // every render (see isNoop); patching only on a real change
+                  // keeps opening a room from marking the draft unsaved.
+                  onChange={(value) => {
+                    const next = value || null;
+                    if (next !== room.photoUrl) onPatchRoom(floor.key, room.key, { photoUrl: next });
+                  }}
+                />
+              ) : (
+                <RoomPhotoPreview label={labels.roomPhoto} photoUrl={room.photoUrl} />
+              )}
+
+              {canWrite && (
+                <div className="border-t border-adm-line pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteRoom(room.key);
+                      onSelectRoom(null);
+                    }}
+                    className="admin-btn-ghost text-adm-danger"
+                  >
+                    <Trash2 size={14} aria-hidden />
+                    {labels.deleteRoom}
+                  </button>
+                </div>
+              )}
+            </div>
+        </AdminDrawer>
+      )}
     </div>
   );
 }
 
-/** Thumbnail plus the library picker for one room's photo. */
-function RoomPhotoCell({
-  locale,
-  photoUrl,
-  canWrite,
-  labels,
-  onChange,
-}: {
-  locale: string;
-  photoUrl: string | null;
-  canWrite: boolean;
-  labels: WorkspaceLabels;
-  onChange: (url: string | null) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
+/** A room's photo for someone who may look but not change it. */
+function RoomPhotoPreview({ label, photoUrl }: { label: string; photoUrl: string | null }) {
   return (
-    <span className="flex items-center gap-2">
+    <div>
+      <span className="admin-label">{label}</span>
       {photoUrl ? (
-        /* A 32px thumbnail of whatever the library holds, the same call
-           MediaLibrary.tsx makes for its own tiles and for the same reason:
-           these URLs span more than one media host (see next.config.js's
-           remotePatterns) and none of them benefit from optimisation at
-           this size. */
+        /* Plain <img>: these URLs span more than one media host (see
+           next.config.js's remotePatterns) and gain nothing from
+           optimisation at this size — the same call MediaLibrary.tsx makes. */
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photoUrl} alt="" loading="lazy" className="h-8 w-12 rounded-xs object-cover" />
+        <img src={photoUrl} alt="" loading="lazy" className="aspect-[4/3] w-36 rounded-[8px] object-cover" />
       ) : (
-        <span className="grid h-8 w-12 place-items-center rounded-xs bg-adm-text/4 text-[10px] text-adm-muted">
+        <span className="grid aspect-[4/3] w-36 place-items-center rounded-[8px] bg-adm-text/4 text-[10px] text-adm-muted">
           —
         </span>
       )}
-
-      {canWrite && (
-        <span className="flex flex-col items-start gap-0.5">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="text-xs text-adm-text underline"
-          >
-            {labels.pickPhoto}
-          </button>
-
-          {photoUrl && (
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              className="text-xs text-adm-muted underline hover:text-adm-danger"
-            >
-              {labels.clearPhoto}
-            </button>
-          )}
-        </span>
-      )}
-
-      {/*
-        Mounted only while open. MediaLibraryPicker fetches the whole
-        library when its `open` turns true, and a room table is thirty of
-        these — thirty idle pickers would each hold a copy of it.
-      */}
-      {open && (
-        <MediaLibraryPicker
-          open={open}
-          locale={locale as Locale}
-          loadingLabel={labels.pickPhoto}
-          onSelect={(item) => {
-            onChange(item.url);
-            setOpen(false);
-          }}
-        />
-      )}
-    </span>
+    </div>
   );
 }

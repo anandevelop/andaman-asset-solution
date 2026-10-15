@@ -366,6 +366,11 @@ model Project {
   // Master Plan — single overview image; individual units overlay on top.
   masterPlanImageUrl String?
 
+  /// Whether the public site plan offers its 3D view. Only matters for a
+  /// project that has a scene file (lib/site-plan-3d.ts); switched from the
+  /// admin's units tab, so the view can be taken down without a deploy.
+  sitePlan3dEnabled Boolean @default(true)
+
   latitude  Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
 
