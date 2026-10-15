@@ -19,6 +19,9 @@
  */
 
 import type { ProjectDef } from "./types";
+import { model3dKey, model3dKeyFor } from "./key";
+
+export { model3dKey, model3dKeyFor };
 
 export const MODEL_3D_TYPES: Readonly<Record<string, readonly string[]>> = {
   "residence-prime": ["R"],
@@ -27,7 +30,8 @@ export const MODEL_3D_TYPES: Readonly<Record<string, readonly string[]>> = {
 };
 
 export function hasModel3d(projectSlug: string, typeCode: string | null | undefined): boolean {
-  return Boolean(typeCode && MODEL_3D_TYPES[projectSlug]?.includes(typeCode));
+  const key = model3dKeyFor(projectSlug, typeCode);
+  return Boolean(key && MODEL_3D_TYPES[projectSlug]?.includes(key));
 }
 
 export async function loadModel3d(projectSlug: string): Promise<ProjectDef | null> {

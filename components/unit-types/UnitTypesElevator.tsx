@@ -41,6 +41,7 @@ import LiftPanel from "./LiftPanel";
 import RoomPhotoCard from "./RoomPhotoCard";
 import UnitModel3D, { type Model3dRoom } from "./UnitModel3D";
 import { matchRoom } from "./match-room";
+import { model3dKeyFor } from "./model3d/key";
 import type { ElevatorLabels, ElevatorRoom, ElevatorType } from "./types";
 
 /** Matches the CSS transition on the car. */
@@ -315,7 +316,7 @@ export default function UnitTypesElevator({
             <div className="relative h-[min(70vh,520px)] @min-[1000px]:h-auto @min-[1000px]:min-h-[clamp(380px,30vw,460px)]">
               <UnitModel3D
                 projectSlug={projectSlug}
-                typeCode={type.code}
+                typeCode={model3dKeyFor(projectSlug, type.code)}
                 floorIndex={floorIndex}
                 floorShort={floor.shortLabel}
                 labels={labels.model3d}

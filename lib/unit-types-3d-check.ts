@@ -13,7 +13,7 @@ import "server-only";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { hasModel3d, loadModel3d } from "@/components/unit-types/model3d";
+import { hasModel3d, loadModel3d, model3dKeyFor } from "@/components/unit-types/model3d";
 import { matchRoom } from "@/components/unit-types/match-room";
 
 export type Model3dCheck = { matched: number; total: number };
@@ -27,7 +27,7 @@ export async function checkModel3dRooms(
 ): Promise<Model3dCheck | null> {
   if (!typeCode || !hasModel3d(projectSlug, typeCode)) return null;
   const project = await loadModel3d(projectSlug);
-  const type = project?.types.find((candidate) => candidate.key === typeCode);
+  const type = project?.types.find((candidate) => candidate.key === model3dKeyFor(projectSlug, typeCode));
   if (!type) return null;
 
   let matched = 0;
