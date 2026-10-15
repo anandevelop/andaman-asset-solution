@@ -104,7 +104,9 @@ export default async function AdminProjectUnitTypesPage(props: Props) {
         type.id,
         await checkModel3dRooms(
           project.slug,
-          type.code,
+          // code ?? name, as the project page does: production's types
+          // carry only a name ("Type A").
+          type.code ?? type.name,
           type.floorPlans.map((plan: any) => ({
             shortLabel: liftLabelFor(plan.shortLabel, plan.floorName),
             rooms: plan.rooms.map((room: any) => ({

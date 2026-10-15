@@ -203,7 +203,10 @@ export default async function ProjectPage(props: Props) {
           .filter(Boolean)
           .join(" · "),
         title: ut("ride", { type: type.name }),
-        model3d: type.model3dEnabled && hasModel3d(project.slug, type.code),
+        // code ?? name, as `code` above: production's types have no code,
+        // only the name "Type A", and looking the model up by the empty
+        // code left every type without its 3D view.
+        model3d: type.model3dEnabled && hasModel3d(project.slug, type.code ?? type.name),
         subtitle: type.hasPrivateLift
           ? ut("liftHint")
           : ut("floorsHint", { count: type.floorPlans.length }),
