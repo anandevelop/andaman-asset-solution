@@ -177,6 +177,25 @@ else's hands. It does not clear the second factor; only another
 demo Trinity Village project, a sample article and a sample event. It is
 for local development.
 
+### Unit-type rooms edited locally
+
+A deploy ships code, not rows, so rooms named and placed in a laptop's
+`/admin` (names in all four languages, areas, pins, photos) do not reach
+production on their own. To carry them over:
+
+```bash
+npm run rooms:export        # locally → prisma/seed-data/unit-type-rooms.json; commit it
+# deploy, then on the server:
+docker compose -f docker-compose.prod.yml exec app node scripts/sync-unit-type-rooms.mjs          # dry run
+docker compose -f docker-compose.prod.yml exec app node scripts/sync-unit-type-rooms.mjs --apply
+```
+
+It replaces the rooms of every floor in the file, so it is a deliberate
+command and never part of the deploy: run on every deploy, it would undo
+room edits made in production's own `/admin`. The project page shows the
+result within the hour (`revalidate = 3600`), or at once after restarting
+`app`.
+
 ---
 
 ## 4. Running

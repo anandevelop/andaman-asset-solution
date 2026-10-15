@@ -189,6 +189,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/warm-images.mjs ./scripts
 # running app, behind /api/cron/rebuild-blueprints.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/rebuild-blueprints.mjs ./scripts/rebuild-blueprints.mjs
 
+# Copies the rooms exported from a laptop's /admin (prisma/seed-data/
+# unit-type-rooms.json, already in the image with the rest of prisma/) into
+# this database. Run by hand, dry-run first — see the script's header for
+# why it is never a deploy step. Needs only @prisma/client and the pg
+# adapter, both already here for create-admin.mjs.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/sync-unit-type-rooms.mjs ./scripts/sync-unit-type-rooms.mjs
+
 # The image optimizer's cache, created here so it belongs to `nextjs`.
 # docker-compose.prod.yml mounts a named volume over it so optimized images
 # survive a redeploy. A new named volume takes the ownership of the
