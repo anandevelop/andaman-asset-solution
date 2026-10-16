@@ -223,7 +223,12 @@ export default async function SalesTeamSection() {
                         <span className="sales-photo absolute top-3 left-3 block h-[68px] w-[68px] overflow-hidden rounded-full">
                           <ImageWithSkeleton
                             src={person.photoUrl}
-                            alt=""
+                            // The person's name, not "": this section is on
+                            // every public page, and its four alt="" photos
+                            // failed the SEO audit's image-alt rule on all
+                            // 84 URLs. They are portraits of named people,
+                            // not decoration.
+                            alt={name}
                             fill
                             sizes="68px"
                             className="object-cover"
