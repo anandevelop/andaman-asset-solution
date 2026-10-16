@@ -886,6 +886,9 @@ export default async function ProjectPage(props: Props) {
               wallModes: [ut("model3d.wallFull"), ut("model3d.wallCut"), ut("model3d.wallOff")],
               hint: ut("model3d.hint"),
               loading: ut("model3d.loading"),
+              zoomIn: ut("model3d.zoomIn"),
+              zoomOut: ut("model3d.zoomOut"),
+              resetView: ut("model3d.resetView"),
             },
           }}
         />

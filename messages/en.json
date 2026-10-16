@@ -296,7 +296,10 @@
         "wallCut": "Cutaway",
         "wallOff": "Off",
         "hint": "Drag · Zoom · Tap a room",
-        "loading": "Loading model…"
+        "loading": "Loading model…",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "resetView": "Reset view"
       }
     },
     "unitTypeLabels": {

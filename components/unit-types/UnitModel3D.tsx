@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from "react";
 import type { RoomInfo, UnitScene } from "./model3d/scene";
 import type { ViewName } from "./model3d/types";
 import { useNearViewport } from "@/components/useNearViewport";
+import { Minus, Plus, RotateCcw } from "lucide-react";
 
 export type Model3dRoom = RoomInfo;
 
@@ -31,6 +32,9 @@ export type Model3dLabels = {
   wallModes: [string, string, string];
   hint: string;
   loading: string;
+  zoomIn: string;
+  zoomOut: string;
+  resetView: string;
 };
 
 const VIEWS: ViewName[] = ["plan", "overview", "street"];
@@ -131,6 +135,33 @@ export default function UnitModel3D({
         <Control on={wallMode > 0} onClick={() => setWallMode(scene.current?.cycleWalls() ?? wallMode)}>
           {labels.walls} · {labels.wallModes[wallMode]}
         </Control>
+      </div>
+
+      {/* Top right: the bottom edge belongs to the view buttons and the
+          hint, and the lift panel is to the left of the stage. */}
+      <div className="absolute right-3 top-3 z-[2] flex flex-col gap-1.5 @min-[1000px]:right-4 @min-[1000px]:top-4">
+        {(
+          [
+            { id: "in", label: labels.zoomIn, icon: <Plus size={16} aria-hidden /> },
+            { id: "out", label: labels.zoomOut, icon: <Minus size={16} aria-hidden /> },
+            { id: "reset", label: labels.resetView, icon: <RotateCcw size={15} aria-hidden /> },
+          ] as const
+        ).map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            aria-label={b.label}
+            title={b.label}
+            disabled={!ready}
+            onClick={() => {
+              if (b.id === "reset") scene.current?.reset();
+              else scene.current?.zoom(b.id === "in" ? 0.75 : 1 / 0.75);
+            }}
+            className="grid h-9 w-9 place-items-center rounded-xs border border-[#c3d3dd]/25 bg-[#062a41]/85 text-white/75 transition-colors hover:border-accent/60 hover:text-accent disabled:opacity-40"
+          >
+            {b.icon}
+          </button>
+        ))}
       </div>
 
       <p className="pointer-events-none absolute bottom-4 right-4 z-[2] hidden font-mono text-[9px] uppercase tracking-[0.14em] text-[#c3d3dd]/40 @min-[1000px]:block">

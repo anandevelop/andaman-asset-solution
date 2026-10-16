@@ -173,6 +173,22 @@ export class UnitScene {
     return byLabel >= 0 ? byLabel : Math.max(0, Math.min(index, this.T.floors.length - 1));
   }
 
+  /** For the + and − buttons: moves the camera toward the point it orbits
+   *  (factor < 1) or away from it, within the same limits as the wheel.
+   *  The wheel and a pinch were the only way in before, and a trackpad
+   *  user who did not know that, or a phone held in one hand, had none. */
+  zoom(factor: number) {
+    const t = this.controls.target.clone(), off = this.camera.position.clone().sub(t);
+    const d = THREE.MathUtils.clamp(off.length() * factor, this.controls.minDistance, this.controls.maxDistance);
+    this.flyTo(t.clone().add(off.setLength(d)), t, 350);
+  }
+
+  /** Back to how the model opened: the top view of this floor, nothing
+   *  selected. The way back after dragging the house out of frame. */
+  reset() {
+    this.setView('plan');
+  }
+
   /** cycles Full → Cutaway → Off and returns the new mode index */
   cycleWalls() {
     this.wallMode = (this.wallMode + 1) % 3;

@@ -296,7 +296,10 @@
         "wallCut": "剖切",
         "wallOff": "隐藏",
         "hint": "拖动 · 缩放 · 点击房间",
-        "loading": "正在加载模型…"
+        "loading": "正在加载模型…",
+        "zoomIn": "放大",
+        "zoomOut": "缩小",
+        "resetView": "重置视图"
       }
     },
     "unitTypeLabels": {
