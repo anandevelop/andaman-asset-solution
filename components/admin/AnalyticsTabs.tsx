@@ -184,27 +184,18 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
         </div>
       )}
 
-      {/* Traffic is Google Search: where visitors come from before they
-          arrive. The site's own article counter moved to Content, consent
-          to Core Web Vitals, and the "configured" tiles were dropped, since
-          Settings → Integrations shows the same three values as fields
-          that can be edited. */}
-      {tab === "traffic" && <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />}
-
-      {tab === "content" && (
+      {/* Traffic: Google Search, then the site's own page-view count.
+          Consent moved to Core Web Vitals, and the "configured" tiles were
+          dropped, since Settings → Integrations shows the same three values
+          as fields that can be edited. */}
+      {tab === "traffic" && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatTile label={labels.projectsDelivered} value={content.companyStats.projectsDelivered} />
-            <StatTile label={labels.awardsWon} value={content.companyStats.awards} />
-            <StatTile label={labels.villasInBuild} value={content.companyStats.villasUnderConstruction} />
-            <StatTile
-              label={labels.foundedYear}
-              value={content.companyStats.foundedYear ?? "—"}
-            />
-          </div>
+          <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />
 
-          {/* The site's own beacon counts article reads only, so it sits
-              with the articles rather than passing for site traffic. */}
+          {/* The site's own count, under Google's: every public page, with
+              no consent needed, so it is the larger and the steadier of the
+              two. Its old copy said "articles only", which stopped being
+              true when the beacon moved into the site layout in SEO phase 3. */}
           <section className="admin-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="min-w-0 flex-1">
@@ -220,6 +211,20 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
               <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
             </div>
           </section>
+        </div>
+      )}
+
+      {tab === "content" && (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile label={labels.projectsDelivered} value={content.companyStats.projectsDelivered} />
+            <StatTile label={labels.awardsWon} value={content.companyStats.awards} />
+            <StatTile label={labels.villasInBuild} value={content.companyStats.villasUnderConstruction} />
+            <StatTile
+              label={labels.foundedYear}
+              value={content.companyStats.foundedYear ?? "—"}
+            />
+          </div>
 
           <section className="admin-card overflow-hidden p-0!">
             <div className="border-b border-adm-line px-5 py-3.5">

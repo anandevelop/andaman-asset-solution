@@ -26,12 +26,13 @@
  * The tabs, reusing rather than re-deriving every number:
  *   Traffic  — Search Console's Performance report, live
  *              (lib/seo/search-performance.ts, components/admin/
- *              SearchPerformancePanel.tsx). Whether GA4, Meta Pixel and
- *              Search Console are configured used to be three tiles here;
- *              Settings → Integrations shows those values as fields.
- *   Content  — lib/admin/analytics.ts's article-read trend (the site's own
- *              beacon counts articles only), lib/admin/news-list.ts's
- *              views-vs-leads pairing per article, lib/reports.ts's conversion-by-project and event
+ *              SearchPerformancePanel.tsx), then lib/admin/analytics.ts's
+ *              page-view trend: the site's own count of every public page.
+ *              Whether GA4, Meta Pixel and Search Console are configured
+ *              used to be three tiles here; Settings → Integrations shows
+ *              those values as fields.
+ *   Content  — lib/admin/news-list.ts's views-vs-leads pairing per
+ *              article, lib/reports.ts's conversion-by-project and event
  *              RSVP fill rates, and lib/company-stats.ts's four public-site
  *              headline figures.
  *   Leads    — lib/reports.ts's monthly/source/pipeline reports plus
