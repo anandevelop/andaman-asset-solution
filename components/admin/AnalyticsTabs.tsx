@@ -23,6 +23,8 @@ import VitalsPanel, {
   type VitalsRouteView,
 } from "./VitalsPanel";
 import type { LiveSnapshotDto } from "@/lib/analytics/live-visit";
+import SearchPerformancePanel, { type SearchPanelLabels } from "./SearchPerformancePanel";
+import type { Locale } from "@/i18n";
 
 type Tab = "traffic" | "content" | "leads" | "realtime" | "vitals";
 
@@ -52,6 +54,9 @@ export type EventRsvpRow = {
 type Props = {
   locale: string;
   canViewLeads: boolean;
+
+  /** Google Search Console's Performance report, at the top of Traffic. */
+  search: { labels: SearchPanelLabels };
 
   traffic: {
     trend: TrendPoint[];
@@ -105,7 +110,7 @@ type Props = {
   };
 };
 
-export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, leads, labels, realtime, vitals }: Props) {
+export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, content, leads, labels, realtime, vitals }: Props) {
   const [tab, setTab] = useState<Tab>("traffic");
 
   /* Realtime first: it is the only tab that answers a question about right
@@ -149,6 +154,8 @@ export default function AnalyticsTabs({ locale, canViewLeads, traffic, content, 
 
       {tab === "traffic" && (
         <div className="space-y-6">
+          <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />
+
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="admin-card">
               <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">

@@ -3643,6 +3643,74 @@
         "sumPeak": "วันที่สูงสุด",
         "sumLeads": "ผู้สนใจ {months} เดือน",
         "sumWinRate": "อัตราปิดการขาย"
+      },
+      "search": {
+        "title": "Google Search",
+        "subtitle": "รายงานประสิทธิภาพจาก Search Console: เว็บเราขึ้นใน Google อย่างไร และคนค้นหาด้วยคำอะไร",
+        "property": "Property",
+        "updated": "ดึงข้อมูลเมื่อ",
+        "fresh": "ข้อมูล 2–3 วันล่าสุด Google ยังนับไม่เสร็จ ตัวเลขจะเพิ่มขึ้นอีก",
+        "hourlyNote": "24 ชั่วโมงล่าสุด รายชั่วโมง ตามเวลาไทย ตัวเลขรายชั่วโมงของ Google ยังเป็นค่าเบื้องต้น",
+        "ranges": {
+          "24h": "24 ชั่วโมง",
+          "7d": "7 วัน",
+          "28d": "28 วัน",
+          "3m": "3 เดือน",
+          "6m": "6 เดือน",
+          "12m": "12 เดือน",
+          "16m": "16 เดือน"
+        },
+        "more": "เพิ่มเติม",
+        "types": {
+          "web": "เว็บ",
+          "image": "รูปภาพ",
+          "video": "วิดีโอ",
+          "news": "ข่าว",
+          "discover": "Discover",
+          "googleNews": "Google News"
+        },
+        "searchType": "ประเภทการค้นหา",
+        "metrics": {
+          "clicks": "การคลิกทั้งหมด",
+          "impressions": "จำนวนการแสดงผล",
+          "ctr": "CTR เฉลี่ย",
+          "position": "อันดับเฉลี่ย"
+        },
+        "vsPrevious": "เทียบช่วงก่อนหน้า",
+        "tabs": {
+          "query": "ข้อความค้นหา",
+          "page": "หน้า",
+          "country": "ประเทศ",
+          "device": "อุปกรณ์",
+          "searchAppearance": "ลักษณะที่ปรากฏในการค้นหา"
+        },
+        "devices": {
+          "DESKTOP": "คอมพิวเตอร์",
+          "MOBILE": "มือถือ",
+          "TABLET": "แท็บเล็ต"
+        },
+        "filterQuery": "ข้อความค้นหามีคำว่า",
+        "filterPage": "URL หน้ามีคำว่า",
+        "filterCountry": "ประเทศ",
+        "filterDevice": "อุปกรณ์",
+        "addFilter": "เพิ่มตัวกรอง",
+        "apply": "ใช้ตัวกรอง",
+        "reset": "รีเซ็ตตัวกรอง",
+        "searchRows": "ค้นหาในตาราง",
+        "rowsPerPage": "จำนวนแถวต่อหน้า",
+        "pageOf": "{from}–{to} จาก {total}",
+        "export": "ส่งออก CSV",
+        "empty": "ไม่มีข้อมูลในช่วงนี้",
+        "loading": "กำลังดึงข้อมูลจาก Search Console…",
+        "withheld": "มี {count} คลิกที่มาจากคำค้นที่ Google ไม่เปิดเผยเพื่อความเป็นส่วนตัว ผลรวมของแถวจึงน้อยกว่ายอดรวม",
+        "truncated": "แสดงเฉพาะ 5,000 แถวแรก เพิ่มตัวกรองเพื่อให้แคบลง",
+        "appearanceNote": "ลักษณะที่ปรากฏแยกรายชั่วโมงไม่ได้ แท็บนี้จึงนับทั้งวันที่ช่วง 24 ชั่วโมงคาบเกี่ยว",
+        "notConfigured": "ยังไม่ได้เชื่อมต่อ Search Console",
+        "notConfiguredHint": "ใส่ GOOGLE_SA_EMAIL, GOOGLE_SA_PRIVATE_KEY และ GSC_SITE_URL ใน .env ของเซิร์ฟเวอร์ แล้วรีสตาร์ตแอป",
+        "noAccess": "บัญชีบริการยังไม่มีสิทธิ์อ่าน property นี้",
+        "noAccessHint": "ใน Search Console เปิด {property} → การตั้งค่า → ผู้ใช้และสิทธิ์ → เพิ่มผู้ใช้ แล้วใส่\n{email}\nสิทธิ์แบบจำกัด (Restricted)",
+        "failed": "Search Console ไม่ตอบกลับ",
+        "clickToFilter": "คลิกที่แถวเพื่อกรองรายงานด้วยค่านั้น"
       }
     },
     "urls": {

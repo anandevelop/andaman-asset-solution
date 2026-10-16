@@ -69,6 +69,8 @@ import { getCompanyStats } from "@/lib/company-stats";
 import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import { intlLocale } from "@/lib/format";
 import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
+import type { SearchPanelLabels } from "@/components/admin/SearchPerformancePanel";
+import { BREAKDOWNS, RANGES, SEARCH_TYPES } from "@/lib/seo/search-performance-shape";
 import { fetchLiveSnapshot } from "./live-actions";
 import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
 import { formatVital, type VitalKey } from "@/lib/analytics/vitals";
@@ -80,6 +82,59 @@ type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ range?: string }>;
 };
+
+type AdminT = Awaited<ReturnType<typeof getTranslations<"admin">>>;
+
+/**
+ * The Google Search panel's words. The three with placeholders are read
+ * raw: the panel fills them in itself, and t() would format them here with
+ * nothing to put in the braces.
+ */
+function searchPanelLabels(t: AdminT): SearchPanelLabels {
+  const s = (key: string) => t(`analytics.search.${key}` as never);
+  const raw = (key: string) => t.raw(`analytics.search.${key}` as never) as string;
+  const pick = <K extends string>(group: string, keys: readonly K[]) =>
+    Object.fromEntries(keys.map((key) => [key, s(`${group}.${key}`)])) as Record<K, string>;
+
+  return {
+    title: s("title"),
+    subtitle: s("subtitle"),
+    property: s("property"),
+    updated: s("updated"),
+    fresh: s("fresh"),
+    hourlyNote: s("hourlyNote"),
+    ranges: pick("ranges", RANGES),
+    more: s("more"),
+    types: pick("types", SEARCH_TYPES),
+    searchType: s("searchType"),
+    metrics: pick("metrics", ["clicks", "impressions", "ctr", "position"] as const),
+    vsPrevious: s("vsPrevious"),
+    tabs: pick("tabs", BREAKDOWNS),
+    devices: pick("devices", ["DESKTOP", "MOBILE", "TABLET"] as const),
+    filterQuery: s("filterQuery"),
+    filterPage: s("filterPage"),
+    filterCountry: s("filterCountry"),
+    filterDevice: s("filterDevice"),
+    addFilter: s("addFilter"),
+    apply: s("apply"),
+    reset: s("reset"),
+    searchRows: s("searchRows"),
+    rowsPerPage: s("rowsPerPage"),
+    pageOf: raw("pageOf"),
+    export: s("export"),
+    empty: s("empty"),
+    loading: s("loading"),
+    withheld: raw("withheld"),
+    truncated: s("truncated"),
+    appearanceNote: s("appearanceNote"),
+    notConfigured: s("notConfigured"),
+    notConfiguredHint: s("notConfiguredHint"),
+    noAccess: s("noAccess"),
+    noAccessHint: raw("noAccessHint"),
+    failed: s("failed"),
+    clickToFilter: s("clickToFilter"),
+  };
+}
 
 function toFigureView(figure: VitalFigure, samplesLabel: (count: number) => string) {
   return {
@@ -262,6 +317,7 @@ export default async function AdminAnalyticsPage(props: Props) {
                how every other number on this screen arrives. */
           },
         }}
+        search={{ labels: searchPanelLabels(t) }}
         traffic={{
           trend: trendPoints,
           totalViews: trend.totalViews,

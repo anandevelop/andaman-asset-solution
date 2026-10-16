@@ -3643,6 +3643,74 @@
         "sumPeak": "Busiest day",
         "sumLeads": "Enquiries, {months} months",
         "sumWinRate": "Win rate"
+      },
+      "search": {
+        "title": "Google Search",
+        "subtitle": "Search Console's Performance report: how the site appears in Google, and what people searched to find it.",
+        "property": "Property",
+        "updated": "Fetched",
+        "fresh": "The last two or three days are still being counted by Google and will rise.",
+        "hourlyNote": "The last 24 hours, by the hour, on Bangkok time. Google's hourly figures are preliminary.",
+        "ranges": {
+          "24h": "24 hours",
+          "7d": "7 days",
+          "28d": "28 days",
+          "3m": "3 months",
+          "6m": "6 months",
+          "12m": "12 months",
+          "16m": "16 months"
+        },
+        "more": "More",
+        "types": {
+          "web": "Web",
+          "image": "Image",
+          "video": "Video",
+          "news": "News",
+          "discover": "Discover",
+          "googleNews": "Google News"
+        },
+        "searchType": "Search type",
+        "metrics": {
+          "clicks": "Total clicks",
+          "impressions": "Total impressions",
+          "ctr": "Average CTR",
+          "position": "Average position"
+        },
+        "vsPrevious": "vs previous period",
+        "tabs": {
+          "query": "Queries",
+          "page": "Pages",
+          "country": "Countries",
+          "device": "Devices",
+          "searchAppearance": "Search appearance"
+        },
+        "devices": {
+          "DESKTOP": "Desktop",
+          "MOBILE": "Mobile",
+          "TABLET": "Tablet"
+        },
+        "filterQuery": "Query contains",
+        "filterPage": "Page URL contains",
+        "filterCountry": "Country",
+        "filterDevice": "Device",
+        "addFilter": "Add filter",
+        "apply": "Apply",
+        "reset": "Reset filters",
+        "searchRows": "Search this table",
+        "rowsPerPage": "Rows per page",
+        "pageOf": "{from}–{to} of {total}",
+        "export": "Export CSV",
+        "empty": "No data for this range",
+        "loading": "Loading from Search Console…",
+        "withheld": "{count} clicks came from searches Google does not name, for privacy, so the rows add up to less than the total.",
+        "truncated": "Only the first 5,000 rows are shown. Add a filter to narrow it down.",
+        "appearanceNote": "Search appearance cannot be broken down by hour, so this tab covers the whole days the 24 hours fall in.",
+        "notConfigured": "Search Console is not connected",
+        "notConfiguredHint": "Set GOOGLE_SA_EMAIL, GOOGLE_SA_PRIVATE_KEY and GSC_SITE_URL in the server's .env, then restart the app.",
+        "noAccess": "The service account cannot read this property",
+        "noAccessHint": "In Search Console, open {property} → Settings → Users and permissions → Add user, and add\n{email}\nwith Restricted permission.",
+        "failed": "Search Console did not answer",
+        "clickToFilter": "Click a row to filter the report by it."
       }
     },
     "urls": {
