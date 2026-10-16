@@ -212,6 +212,88 @@ async function loadHourly(
   };
 }
 
+export type SearchSummary =
+  | {
+      ok: true;
+      siteUrl: string;
+      totals: Metrics;
+      previous: Metrics | null;
+      series: SeriesPoint[];
+      queries: BreakdownRow[];
+      pages: BreakdownRow[];
+      countries: BreakdownRow[];
+      devices: BreakdownRow[];
+      withheldClicks: number;
+    }
+  | Exclude<SearchPerformance, { ok: true }>;
+
+/**
+ * One window of Search Console, all at once, for the printed report: the
+ * totals and the period before, the days, and the top of each breakdown.
+ * The report's window is a day count ending today, not one of the panel's
+ * ranges, so it takes dates. Read with dataState ALL, like the panel, so
+ * the two show the same figures for the same days.
+ */
+export async function loadSearchSummary(
+  window: { startDate: string; endDate: string },
+  locale: string,
+  limit = 10,
+): Promise<SearchSummary> {
+  const siteUrl = searchConsoleSiteUrl();
+  if (!siteUrl || !googleCredentials()) return { ok: false, reason: "NOT_CONFIGURED" };
+
+  const start = Date.parse(`${window.startDate}T00:00:00Z`);
+  const end = Date.parse(`${window.endDate}T00:00:00Z`);
+  const span = Math.round((end - start) / 86_400_000) + 1;
+  const iso = (time: number) => new Date(time).toISOString().slice(0, 10);
+  const before = { startDate: iso(start - span * 86_400_000), endDate: iso(start - 86_400_000) };
+
+  const base = { siteUrl, ...window, dataState: "ALL" as const, type: "web" as const };
+  const top = (dimension: "query" | "page" | "country" | "device") =>
+    query({ ...base, dimensions: [dimension], maxRows: dimension === "query" ? 25_000 : limit * 4 });
+
+  try {
+    const [totals, previous, days, queries, pages, countries, devices] = await Promise.all([
+      query({ ...base, dimensions: [], maxRows: 1 }),
+      query({ ...base, ...before, dimensions: [], maxRows: 1 }),
+      query({ ...base, dimensions: ["date"] }),
+      top("query"),
+      top("page"),
+      top("country"),
+      top("device"),
+    ]);
+
+    const total = metricsOf(totals.rows[0]);
+    const rows = (result: { rows: SearchRow[] }, breakdown: Breakdown) =>
+      result.rows
+        .map((row) => ({ key: row.keys[0], ...metricsOf(row) }))
+        .sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions)
+        .slice(0, limit)
+        .map((row) => labelRow(row, breakdown, locale));
+
+    return {
+      ok: true,
+      siteUrl,
+      totals: total,
+      previous: previous.rows.length > 0 ? metricsOf(previous.rows[0]) : null,
+      series: fillDays(
+        window.startDate,
+        window.endDate,
+        days.rows.map((row) => ({ key: row.keys[0], ...metricsOf(row) })),
+      ).map((point) => ({ ...point, label: dayLabel(point.key, locale) })),
+      queries: rows(queries, "query"),
+      pages: rows(pages, "page"),
+      countries: rows(countries, "country"),
+      devices: rows(devices, "device"),
+      // Every query row is fetched, not just the top ten, so this is the
+      // same figure the panel shows.
+      withheldClicks: Math.max(0, total.clicks - queries.rows.reduce((sum, row) => sum + row.clicks, 0)),
+    };
+  } catch (error) {
+    return asFailure(error, siteUrl);
+  }
+}
+
 function emptyHourly(siteUrl: string, base: Omit<QueryOptions, "dimensions">, now: Date): SearchPerformance {
   const zero = { clicks: 0, impressions: 0, ctr: 0, position: 0 };
   return {
@@ -238,7 +320,7 @@ async function query(options: QueryOptions) {
   return result;
 }
 
-function asFailure(error: unknown, siteUrl: string): SearchPerformance {
+function asFailure(error: unknown, siteUrl: string): Exclude<SearchPerformance, { ok: true }> {
   const detail = error instanceof Error ? error.message : String(error);
   if (detail.startsWith("403")) {
     return { ok: false, reason: "NO_ACCESS", siteUrl, serviceAccount: googleCredentials()?.email ?? null, detail };

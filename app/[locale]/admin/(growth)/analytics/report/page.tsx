@@ -56,6 +56,8 @@ import {
 } from "@/components/admin/report/ReportParts";
 import { BRAND, BarList, ColumnChart } from "@/components/admin/report/ReportCharts";
 import PrintToolbar from "@/components/admin/report/PrintToolbar";
+import { loadSearchSummary } from "@/lib/seo/search-performance";
+import { changePercent } from "@/lib/reports/executive";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -76,7 +78,12 @@ export default async function AnalyticsReportPage(props: Props) {
   const days = Number(rangeDays);
   const months = Math.max(1, Math.ceil(days / 30));
 
-  const [trend, articles, conversions, rsvp, leads, vitals, coverage] = await Promise.all([
+  /* Google's window is the same days the page-view trend counts: the last
+     `days` days, today included. */
+  const today = new Date();
+  const isoDay = (offset: number) => new Date(today.getTime() - offset * 86_400_000).toISOString().slice(0, 10);
+
+  const [trend, articles, conversions, rsvp, leads, vitals, coverage, search] = await Promise.all([
     getPageViewTrend(days),
     getNewsList({ ...parseFilters({}), sort: "views", perPage: 8 }),
     getProjectConversions(locale, months),
@@ -86,6 +93,7 @@ export default async function AnalyticsReportPage(props: Props) {
       : Promise.resolve(null),
     getVitalsOverview(days),
     getConsentCoverage(days),
+    loadSearchSummary({ startDate: isoDay(days - 1), endDate: isoDay(0) }, locale),
   ]);
 
   const n = (value: number) => formatNumber(locale, value);
@@ -145,6 +153,27 @@ export default async function AnalyticsReportPage(props: Props) {
   const metrics: VitalKey[] = ["LCP", "INP", "CLS", "TTFB"];
   const company = siteConfig.legalName;
 
+  const sl = (key: string) => t(`analytics.search.${key}` as never);
+  const pct = new Intl.NumberFormat(intlLocale(locale), { style: "percent", maximumFractionDigits: 1 });
+  const dec = new Intl.NumberFormat(intlLocale(locale), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const position = (value: number) => (value > 0 ? dec.format(value) : "—");
+  const searchRow = (row: { label: string; clicks: number; impressions: number; ctr: number; position: number }) => [
+    row.label,
+    n(row.clicks),
+    n(row.impressions),
+    pct.format(row.ctr),
+    position(row.position),
+  ];
+  const searchHead = (first: string) => [first, sl("metrics.clicks"), sl("metrics.impressions"), sl("metrics.ctr"), sl("metrics.position")];
+  const searchAlign: ("left" | "right")[] = ["left", "right", "right", "right", "right"];
+  const pagePath = (url: string) => {
+    try {
+      return decodeURI(new URL(url).pathname) || "/";
+    } catch {
+      return url;
+    }
+  };
+
   return (
     <>
       <PrintPageStyle footer={r("confidential")} />
@@ -194,6 +223,109 @@ export default async function AnalyticsReportPage(props: Props) {
               <Empty text={r("noData")} />
             )}
           </Section>
+
+          {/* ── Google Search ──────────────────────────────────────── */}
+          {/* The same Search Console figures as the Traffic tab's panel,
+              for the report's own window, so the printed numbers and the
+              screen agree. */}
+          <Section title={sl("title")} note={search.ok ? search.siteUrl.replace(/^sc-domain:/, "") : undefined}>
+            {!search.ok ? (
+              <Empty
+                text={
+                  search.reason === "NOT_CONFIGURED"
+                    ? sl("notConfigured")
+                    : search.reason === "NO_ACCESS"
+                      ? sl("noAccess")
+                      : sl("failed")
+                }
+              />
+            ) : (
+              <>
+                <div className="grid grid-cols-4 gap-3">
+                  <KpiTile
+                    label={sl("metrics.clicks")}
+                    value={n(search.totals.clicks)}
+                    change={search.previous ? changePercent({ current: search.totals.clicks, previous: search.previous.clicks }) : null}
+                    hint={search.previous ? `${sl("vsPrevious")} ${n(search.previous.clicks)}` : undefined}
+                  />
+                  <KpiTile
+                    label={sl("metrics.impressions")}
+                    value={n(search.totals.impressions)}
+                    change={search.previous ? changePercent({ current: search.totals.impressions, previous: search.previous.impressions }) : null}
+                    hint={search.previous ? `${sl("vsPrevious")} ${n(search.previous.impressions)}` : undefined}
+                  />
+                  <KpiTile
+                    label={sl("metrics.ctr")}
+                    value={pct.format(search.totals.ctr)}
+                    hint={search.previous ? `${sl("vsPrevious")} ${pct.format(search.previous.ctr)}` : undefined}
+                  />
+                  <KpiTile
+                    label={sl("metrics.position")}
+                    value={position(search.totals.position)}
+                    hint={search.previous ? `${sl("vsPrevious")} ${position(search.previous.position)}` : undefined}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <Legend items={[{ color: BRAND.navy, label: sl("metrics.clicks") }]} />
+                  <ColumnChart
+                    locale={locale}
+                    points={(weekly
+                      ? Array.from({ length: Math.ceil(search.series.length / 7) }, (_, w) => {
+                          const week = search.series.slice(w * 7, w * 7 + 7);
+                          return { label: week[0].label, value: week.reduce((sum, d) => sum + d.clicks, 0) };
+                        })
+                      : search.series.map((d) => ({ label: d.label, value: d.clicks })))}
+                  />
+                  <p className="mt-2 text-[9.5px]" style={{ color: BRAND.muted }}>
+                    {sl("fresh")}
+                  </p>
+                </div>
+              </>
+            )}
+          </Section>
+
+          {search.ok && (search.queries.length > 0 || search.pages.length > 0) && (
+            <Section title={`${sl("tabs.query")} · ${sl("tabs.page")}`}>
+              {search.queries.length > 0 && (
+                <Table head={searchHead(sl("tabs.query"))} align={searchAlign} rows={search.queries.map(searchRow)} />
+              )}
+              {search.withheldClicks > 0 && (
+                <p className="mt-2 text-[9.5px]" style={{ color: BRAND.muted }}>
+                  {(t.raw("analytics.search.withheld" as never) as string).replace("{count}", n(search.withheldClicks))}
+                </p>
+              )}
+              {search.pages.length > 0 && (
+                <div className="mt-6">
+                  <Table
+                    head={searchHead(sl("tabs.page"))}
+                    align={searchAlign}
+                    rows={search.pages.map((row) => searchRow({ ...row, label: pagePath(row.key) }))}
+                  />
+                </div>
+              )}
+              {(search.countries.length > 0 || search.devices.length > 0) && (
+                <div className="mt-6 grid grid-cols-2 gap-8">
+                  <div>
+                    <p className="mb-3 text-[11px] font-semibold" style={{ color: BRAND.navy }}>
+                      {sl("tabs.country")}
+                    </p>
+                    <BarList locale={locale} rows={search.countries.map((row) => ({ label: row.label, value: row.clicks }))} />
+                  </div>
+                  <div>
+                    <p className="mb-3 text-[11px] font-semibold" style={{ color: BRAND.navy }}>
+                      {sl("tabs.device")}
+                    </p>
+                    <BarList
+                      locale={locale}
+                      tone="gold"
+                      rows={search.devices.map((row) => ({ label: sl(`devices.${row.key}`), value: row.clicks }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </Section>
+          )}
 
           {/* ── Leads ──────────────────────────────────────────────── */}
           {canViewLeads && (
