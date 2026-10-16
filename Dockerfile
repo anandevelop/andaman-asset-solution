@@ -68,6 +68,22 @@ WORKDIR /prisma-cli
 RUN npm install prisma@7.10.0 --omit=dev --no-audit --no-fund
 
 
+# ── Database driver for the scripts, standalone ──────────────────────────
+# create-admin.mjs and sync-unit-type-rooms.mjs import @prisma/adapter-pg
+# outside the app, and the standalone output cannot serve them: Next
+# bundles pg into the server chunks and traces only what the bundle still
+# reads, so node_modules/postgres-array arrived as a package.json with no
+# index.js, and both scripts died with "Cannot find package
+# …/postgres-array/index.js" on the server. Installed in its own directory,
+# for the prisma-cli stage's reasons, and placed at scripts/node_modules so
+# only the scripts resolve it — the app keeps its traced copies, and
+# @prisma/client (absent here) still resolves to the generated one in
+# /app/node_modules. Versions match package-lock.json.
+FROM base AS script-deps
+WORKDIR /script-deps
+RUN npm install @prisma/adapter-pg@7.10.0 pg@8.23.0 --omit=dev --no-audit --no-fund
+
+
 # ── Build ────────────────────────────────────────────────────────────────
 FROM base AS builder
 
@@ -192,9 +208,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/rebuild-blueprints.mjs ./
 # Copies the rooms exported from a laptop's /admin (prisma/seed-data/
 # unit-type-rooms.json, already in the image with the rest of prisma/) into
 # this database. Run by hand, dry-run first — see the script's header for
-# why it is never a deploy step. Needs only @prisma/client and the pg
-# adapter, both already here for create-admin.mjs.
+# why it is never a deploy step.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/sync-unit-type-rooms.mjs ./scripts/sync-unit-type-rooms.mjs
+
+# The pg adapter both scripts above import — see the script-deps stage.
+COPY --from=script-deps --chown=nextjs:nodejs /script-deps/node_modules ./scripts/node_modules
 
 # The image optimizer's cache, created here so it belongs to `nextjs`.
 # docker-compose.prod.yml mounts a named volume over it so optimized images
