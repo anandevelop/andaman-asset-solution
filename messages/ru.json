@@ -3548,7 +3548,7 @@
         "leads": "Лиды"
       },
       "totalViews": "Просмотры статей",
-      "totalViewsHint": "За последние 30 дней, только статьи новостей — почему, см. ниже.",
+      "totalViewsHint": "просмотров за 30 дней",
       "gaLabel": "Google Analytics",
       "metaPixelLabel": "Meta Pixel",
       "searchConsoleLabel": "Search Console",

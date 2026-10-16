@@ -23,14 +23,15 @@
  * across with them — they lived only on the dashboard, so dropping them
  * would have removed them from the back office entirely.
  *
- * Three tabs, reusing rather than re-deriving every number:
- *   Traffic  — lib/admin/analytics.ts's page-view trend (the one genuinely
- *              new query this page needed), whether GA4/Meta Pixel/Search
- *              Console are configured (lib/settings.ts), and the
- *              cookie-consent rate that decides how much of the first two
- *              ever fire.
- *   Content  — lib/admin/news-list.ts's views-vs-leads pairing per
- *              article, lib/reports.ts's conversion-by-project and event
+ * The tabs, reusing rather than re-deriving every number:
+ *   Traffic  — Search Console's Performance report, live
+ *              (lib/seo/search-performance.ts, components/admin/
+ *              SearchPerformancePanel.tsx). Whether GA4, Meta Pixel and
+ *              Search Console are configured used to be three tiles here;
+ *              Settings → Integrations shows those values as fields.
+ *   Content  — lib/admin/analytics.ts's article-read trend (the site's own
+ *              beacon counts articles only), lib/admin/news-list.ts's
+ *              views-vs-leads pairing per article, lib/reports.ts's conversion-by-project and event
  *              RSVP fill rates, and lib/company-stats.ts's four public-site
  *              headline figures.
  *   Leads    — lib/reports.ts's monthly/source/pipeline reports plus
@@ -53,7 +54,6 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { can } from "@/lib/permissions";
 import { isDatabaseOffline } from "@/lib/db";
 import { getPageViewTrend } from "@/lib/admin/analytics";
-import { getSiteSettings } from "@/lib/settings";
 import { getNewsList, parseFilters } from "@/lib/admin/news-list";
 import {
   getMonthlyLeads,
@@ -165,10 +165,9 @@ export default async function AdminAnalyticsPage(props: Props) {
   // month, "365" the full 12-month window.
   const rangeMonths = Math.max(1, Math.ceil(Number(rangeDays) / 30));
 
-  const [trend, settings, topArticlesView, conversions, companyStats, eventRsvp, cookieStats, leadsData, vitals, vitalsCoverage] =
+  const [trend, topArticlesView, conversions, companyStats, eventRsvp, cookieStats, leadsData, vitals, vitalsCoverage] =
     await Promise.all([
       getPageViewTrend(),
-      getSiteSettings(),
       getNewsList({ ...parseFilters({}), sort: "views", perPage: 10 }),
       getProjectConversions(locale, rangeMonths),
       getCompanyStats(),
@@ -322,9 +321,6 @@ export default async function AdminAnalyticsPage(props: Props) {
           trend: trendPoints,
           totalViews: trend.totalViews,
           countingSince: trend.countingSince,
-          gaConfigured: settings.analytics.gaMeasurementId.trim().length > 0,
-          metaPixelConfigured: settings.analytics.metaPixelId.trim().length > 0,
-          searchConsoleConfigured: settings.analytics.googleSiteVerification.trim().length > 0,
           cookieConsent: {
             total: cookieStats.total,
             analyticsRate: cookieStats.analyticsRate,
@@ -391,13 +387,7 @@ export default async function AdminAnalyticsPage(props: Props) {
           tab_traffic: t("analytics.tabs.traffic"),
           tab_content: t("analytics.tabs.content"),
           tab_leads: t("analytics.tabs.leads"),
-          totalViews: t("analytics.totalViews"),
           totalViewsHint: t("analytics.totalViewsHint"),
-          gaLabel: t("analytics.gaLabel"),
-          metaPixelLabel: t("analytics.metaPixelLabel"),
-          searchConsoleLabel: t("analytics.searchConsoleLabel"),
-          configured: t("analytics.configured"),
-          notConfigured: t("analytics.notConfigured"),
           trendTitle: t("analytics.trendTitle"),
           trendSubtitle: t("analytics.trendSubtitle"),
           views: t("analytics.views"),

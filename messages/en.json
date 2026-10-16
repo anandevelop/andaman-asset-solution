@@ -3548,7 +3548,7 @@
         "leads": "Leads"
       },
       "totalViews": "Article views",
-      "totalViewsHint": "Last 30 days, news articles only — see below for why.",
+      "totalViewsHint": "views in 30 days",
       "gaLabel": "Google Analytics",
       "metaPixelLabel": "Meta Pixel",
       "searchConsoleLabel": "Search Console",

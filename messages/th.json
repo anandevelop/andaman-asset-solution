@@ -3548,7 +3548,7 @@
         "leads": "ลีด"
       },
       "totalViews": "ยอดอ่านบทความ",
-      "totalViewsHint": "30 วันล่าสุด เฉพาะข่าว/บทความ — เหตุผลอยู่ด้านล่าง",
+      "totalViewsHint": "ยอดอ่านใน 30 วัน",
       "gaLabel": "Google Analytics",
       "metaPixelLabel": "Meta Pixel",
       "searchConsoleLabel": "Search Console",

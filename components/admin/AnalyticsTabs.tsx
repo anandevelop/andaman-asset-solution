@@ -13,7 +13,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle } from "lucide-react";
 import ProgressRing from "@/components/admin/ui/ProgressRing";
 import { MonthlyLeadsChart, LeadSourceChart, TrendChart, type MonthlyPoint, type SourcePoint, type TrendPoint } from "./DashboardCharts";
 import RealtimePanel, { type RealtimeLabels } from "./RealtimePanel";
@@ -62,13 +61,9 @@ type Props = {
     trend: TrendPoint[];
     totalViews: number;
     countingSince: string | null;
-    gaConfigured: boolean;
-    metaPixelConfigured: boolean;
-    searchConsoleConfigured: boolean;
-    /* Consent sits on the Traffic tab because it is the ceiling on
-       everything else on it: the GA4 and Meta Pixel tiles above say the
-       tags are configured, and this says what share of visitors let them
-       fire at all. */
+    /* Shown on the Core Web Vitals tab: it is the ceiling on how many
+       visits that tab can measure, since a visit without analytics consent
+       sends no vitals at all. */
     cookieConsent: { total: number; analyticsRate: number | null; marketingRate: number | null };
   };
 
@@ -143,102 +138,58 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
       )}
 
       {tab === "vitals" && (
-        <VitalsPanel
-          labels={vitals.labels}
-          overall={vitals.overall}
-          routes={vitals.routes}
-          deploys={vitals.deploys}
-          empty={vitals.empty}
-        />
-      )}
-
-      {tab === "traffic" && (
         <div className="space-y-6">
-          <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />
+          <VitalsPanel
+            labels={vitals.labels}
+            overall={vitals.overall}
+            routes={vitals.routes}
+            deploys={vitals.deploys}
+            empty={vitals.empty}
+          />
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="admin-card">
-              <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-                {labels.totalViews}
-              </p>
-              <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">
-                {traffic.totalViews.toLocaleString()}
-              </p>
-              <p className="mt-1 text-xs text-adm-muted">{labels.totalViewsHint}</p>
-            </div>
+          <section className="admin-card max-w-xl">
+            <h2 className="text-base font-semibold text-adm-text">{labels.cookieConsentTitle}</h2>
+            <p className="mt-1 text-sm text-adm-muted">{labels.cookieConsentSubtitle}</p>
 
-            {(
-              [
-                ["gaConfigured", labels.gaLabel],
-                ["metaPixelConfigured", labels.metaPixelLabel],
-                ["searchConsoleConfigured", labels.searchConsoleLabel],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key} className="admin-card">
-                <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">{label}</p>
-                <p className="mt-4 flex items-center gap-2">
-                  {traffic[key] ? (
-                    <>
-                      <CheckCircle2 size={18} className="text-adm-success" aria-hidden />
-                      <span className="text-sm font-medium text-adm-success">{labels.configured}</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={18} className="text-adm-muted" aria-hidden />
-                      <span className="text-sm text-adm-muted">{labels.notConfigured}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* The trend beside the consent share (v4: 8/12 and 4/12) — the
-              second is the ceiling on the first, so they read together. */}
-          <div className="grid items-start gap-4 xl:grid-cols-12">
-            <section className="admin-card xl:col-span-8">
-              <h2 className="text-base font-semibold text-adm-text">{labels.trendTitle}</h2>
-              <p className="mb-5 mt-1 text-sm text-adm-muted">{labels.trendSubtitle}</p>
-              <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
-            </section>
-
-            <section className="admin-card xl:col-span-4">
-              <h2 className="text-base font-semibold text-adm-text">{labels.cookieConsentTitle}</h2>
-              <p className="mt-1 text-sm text-adm-muted">{labels.cookieConsentSubtitle}</p>
-
-              {traffic.cookieConsent.total === 0 ? (
-                <p className="py-6 text-center text-sm text-adm-muted">{labels.empty}</p>
-              ) : (
-                <div className="mt-5 flex items-center gap-5">
-                  <ProgressRing
-                    value={traffic.cookieConsent.analyticsRate ?? 0}
-                    size="lg"
-                    suffix="%"
+            {traffic.cookieConsent.total === 0 ? (
+              <p className="py-6 text-center text-sm text-adm-muted">{labels.empty}</p>
+            ) : (
+              <div className="mt-5 flex items-center gap-5">
+                <ProgressRing
+                  value={traffic.cookieConsent.analyticsRate ?? 0}
+                  size="lg"
+                  suffix="%"
+                  label={labels.cookieConsentAnalytics}
+                />
+                <ul className="min-w-0 flex-1 space-y-2.5 text-[13px]">
+                  <LegendRow
+                    dot="bg-adm-success"
                     label={labels.cookieConsentAnalytics}
+                    value={`${traffic.cookieConsent.analyticsRate ?? 0}%`}
                   />
-                  <ul className="min-w-0 flex-1 space-y-2.5 text-[13px]">
-                    <LegendRow
-                      dot="bg-adm-success"
-                      label={labels.cookieConsentAnalytics}
-                      value={`${traffic.cookieConsent.analyticsRate ?? 0}%`}
-                    />
-                    <LegendRow
-                      dot="bg-adm-fill"
-                      label={labels.cookieConsentMarketing}
-                      value={`${traffic.cookieConsent.marketingRate ?? 0}%`}
-                    />
-                    <LegendRow
-                      dot="bg-adm-text/30"
-                      label={labels.cookieConsentTotal}
-                      value={traffic.cookieConsent.total.toLocaleString()}
-                    />
-                  </ul>
-                </div>
-              )}
-            </section>
-          </div>
+                  <LegendRow
+                    dot="bg-adm-fill"
+                    label={labels.cookieConsentMarketing}
+                    value={`${traffic.cookieConsent.marketingRate ?? 0}%`}
+                  />
+                  <LegendRow
+                    dot="bg-adm-text/30"
+                    label={labels.cookieConsentTotal}
+                    value={traffic.cookieConsent.total.toLocaleString()}
+                  />
+                </ul>
+              </div>
+            )}
+          </section>
         </div>
       )}
+
+      {/* Traffic is Google Search: where visitors come from before they
+          arrive. The site's own article counter moved to Content, consent
+          to Core Web Vitals, and the "configured" tiles were dropped, since
+          Settings → Integrations shows the same three values as fields
+          that can be edited. */}
+      {tab === "traffic" && <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />}
 
       {tab === "content" && (
         <div className="space-y-6">
@@ -251,6 +202,24 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
               value={content.companyStats.foundedYear ?? "—"}
             />
           </div>
+
+          {/* The site's own beacon counts article reads only, so it sits
+              with the articles rather than passing for site traffic. */}
+          <section className="admin-card">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-adm-text">{labels.trendTitle}</h2>
+                <p className="mt-1 text-sm text-adm-muted">{labels.trendSubtitle}</p>
+              </div>
+              <div className="shrink-0 sm:max-w-[16rem] sm:text-right">
+                <p className="text-3xl font-semibold tabular-nums text-adm-text">{traffic.totalViews.toLocaleString()}</p>
+                <p className="text-xs text-adm-muted">{labels.totalViewsHint}</p>
+              </div>
+            </div>
+            <div className="mt-5">
+              <TrendChart data={traffic.trend} labels={{ count: labels.views, empty: labels.empty }} />
+            </div>
+          </section>
 
           <section className="admin-card overflow-hidden p-0!">
             <div className="border-b border-adm-line px-5 py-3.5">

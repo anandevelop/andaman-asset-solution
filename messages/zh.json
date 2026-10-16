@@ -3548,7 +3548,7 @@
         "leads": "销售线索"
       },
       "totalViews": "文章浏览量",
-      "totalViewsHint": "最近 30 天，仅统计新闻文章 — 原因见下方",
+      "totalViewsHint": "30 天内阅读次数",
       "gaLabel": "Google Analytics",
       "metaPixelLabel": "Meta 像素",
       "searchConsoleLabel": "Search Console",
