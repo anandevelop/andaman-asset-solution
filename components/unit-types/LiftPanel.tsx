@@ -43,10 +43,17 @@ export default function LiftPanel({
     /* @min-[1000px]:self-start — the panel belongs at the top of the shaft's height,
        like a real lift's. Left to the grid it stretches and centres, which
        floats the FLOOR display halfway down a 560px column. */
-    <div className="flex items-center justify-center gap-6 self-stretch border-b border-[#c3d3dd]/12 px-4 py-4 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-6 @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-7">
+    <div className="flex items-center justify-center gap-4 self-stretch border-b border-[#c3d3dd]/12 px-4 py-3 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-6 @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-7">
       {/* ── FLOOR display ──────────────────────────────────────────── */}
-      <div className="relative w-16 pb-2.5 text-center @min-[1000px]:pb-3.5">
-        <span className="mb-1 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 @min-[1000px]:mb-2">
+      {/* Narrow screens: the label alone. The rolling digit only repeated
+          the highlighted button beside it — in a row, the button already
+          says which floor this is — and doubled the panel's height. */}
+      <span className="pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 @min-[1000px]:hidden">
+        {labels.floor}
+      </span>
+
+      <div className="relative hidden w-16 pb-3.5 text-center @min-[1000px]:block">
+        <span className="mb-2 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40">
           {labels.floor}
         </span>
 
@@ -86,14 +93,8 @@ export default function LiftPanel({
       <div
         role="group"
         aria-label={labels.floorSelector}
-        className="relative flex flex-row items-center gap-4 @min-[1000px]:flex-col-reverse"
+        className="flex flex-row items-center gap-1.5 @min-[1000px]:flex-col-reverse"
       >
-        {/* The panel's axis line, behind the buttons. */}
-        <span
-          aria-hidden
-          className="absolute left-5 right-5 top-1/2 h-px bg-[#c3d3dd]/15 @min-[1000px]:left-1/2 @min-[1000px]:right-auto @min-[1000px]:top-5 @min-[1000px]:bottom-5 @min-[1000px]:h-auto @min-[1000px]:w-px"
-        />
-
         {floors.map((floor, index) => {
           const active = index === activeIndex;
 
@@ -104,29 +105,20 @@ export default function LiftPanel({
               onClick={() => onSelect(index)}
               aria-label={floor.name}
               aria-pressed={active}
-              className={`relative h-10 w-10 rounded-full border text-[13px] font-light tracking-[0.04em] transition-[color,border-color,background-color] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-                active
-                  ? "border-accent text-accent"
-                  : "border-[#c3d3dd]/30 text-white/70 hover:border-accent/60 hover:text-white"
-              }`}
               /*
-                An opaque base, not a translucent tint: the axis line above
-                runs behind every button, and at 9% alpha it showed straight
-                through the selected one as a bar across the digit.
+                Minimal: no axis line, no halo, no fill. The selected floor
+                is the one with a sand outline; the rest are bare digits
+                until hovered. The line and the halo were drawn to make it
+                read as a lift panel, and next to the rolling display and the
+                type cards it was three rings saying the same thing.
               */
-              style={{
-                background: active
-                  ? "linear-gradient(rgba(232,179,132,.09),rgba(232,179,132,.09)) #062538"
-                  : "#062538",
-              }}
+              className={`h-8 w-8 rounded-full border text-[13px] font-light tracking-[0.04em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                active
+                  ? "border-accent/70 text-accent"
+                  : "border-transparent text-white/60 hover:border-[#c3d3dd]/25 hover:text-white"
+              }`}
             >
               {floor.shortLabel}
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute -inset-[5px] rounded-full border border-accent/30"
-                />
-              )}
             </button>
           );
         })}
