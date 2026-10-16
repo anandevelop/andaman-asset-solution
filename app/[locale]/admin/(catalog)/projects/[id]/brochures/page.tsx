@@ -162,7 +162,7 @@ export default async function AdminProjectBrochuresPage(props: Props) {
                         </Link>
                         {row.isPublished && (
                           <a
-                            href={`/${locale}/e-brochures/${row.slug}`}
+                            href={`/${locale}/e-brochure/${row.slug}`}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs text-adm-muted hover:text-adm-text"
