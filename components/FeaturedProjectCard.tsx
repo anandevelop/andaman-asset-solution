@@ -122,7 +122,8 @@ export default function FeaturedProjectCard({
             src={project.heroImageUrl}
             alt={project.name}
             fill
-            priority={priority}
+            fetchPriority={priority ? "high" : undefined}
+            loading={priority ? "eager" : undefined}
             sizes={sizes}
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />

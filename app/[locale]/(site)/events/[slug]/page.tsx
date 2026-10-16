@@ -211,7 +211,8 @@ export default async function EventPage(props: Props) {
             src={event.coverImageUrl}
             alt={event.title}
             fill
-            priority
+            fetchPriority="high"
+            loading="eager"
             sizes="100vw"
             className="object-cover"
           />

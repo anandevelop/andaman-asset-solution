@@ -46,23 +46,44 @@ export default function ImageWithSkeleton({
 }: Props) {
   const [loaded, setLoaded] = useState(false);
 
-  return (
+  const image = (
+    <Image
+      {...props}
+      alt={alt}
+      onLoad={(event) => {
+        setLoaded(true);
+        onLoad?.(event);
+      }}
+    />
+  );
+  const skeleton = (
+    <div
+      aria-hidden
+      data-loaded={loaded ? "" : undefined}
+      className={`skeleton-shimmer pointer-events-none absolute inset-0 transition-opacity duration-500 ${skeletonClassName} ${
+        loaded ? "opacity-0" : "opacity-100"
+      }`}
+    />
+  );
+
+  /*
+    A high-priority image is the page's hero, and its skeleton goes under
+    it rather than over it. Over it, the photo stayed hidden until React
+    hydrated and onLoad fired: Lighthouse on /projects/victory filmed a
+    grey shimmer for two seconds after the photo had already arrived, on
+    a phone where the JS is the slow part. Under it, the photo covers the
+    shimmer the moment it paints. Only the heroes get this, because they
+    are opaque photos; a transparent image would show the shimmer through.
+  */
+  return props.fetchPriority === "high" ? (
     <>
-      <Image
-        {...props}
-        alt={alt}
-        onLoad={(event) => {
-          setLoaded(true);
-          onLoad?.(event);
-        }}
-      />
-      <div
-        aria-hidden
-        data-loaded={loaded ? "" : undefined}
-        className={`skeleton-shimmer pointer-events-none absolute inset-0 transition-opacity duration-500 ${skeletonClassName} ${
-          loaded ? "opacity-0" : "opacity-100"
-        }`}
-      />
+      {skeleton}
+      {image}
+    </>
+  ) : (
+    <>
+      {image}
+      {skeleton}
     </>
   );
 }

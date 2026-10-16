@@ -489,7 +489,8 @@ export default async function ProjectPage(props: Props) {
               src={project.heroImageUrl}
               alt={`${project.name} — ${project.location}`}
               fill
-              priority
+              fetchPriority="high"
+              loading="eager"
               sizes="100vw"
               className="object-cover"
             />

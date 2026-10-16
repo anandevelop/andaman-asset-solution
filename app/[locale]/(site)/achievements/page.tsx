@@ -191,7 +191,8 @@ export default async function AchievementsPage(props: Props) {
                   src={HERO_IMAGE}
                   alt={t("heroCaption")}
                   fill
-                  priority
+                  fetchPriority="high"
+                  loading="eager"
                   sizes="100vw"
                   className="object-cover"
                 />

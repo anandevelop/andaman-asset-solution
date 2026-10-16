@@ -148,7 +148,8 @@ export default function ProjectsHero({
             src={image.url}
             alt={image.alt}
             fill
-            priority
+            fetchPriority="high"
+            loading="eager"
             sizes="100vw"
             className="object-cover object-[50%_58%]"
           />

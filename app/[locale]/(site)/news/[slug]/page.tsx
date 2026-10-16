@@ -231,7 +231,8 @@ export default async function ArticlePage(props: Props) {
                   src={article.coverImageUrl}
                   alt={article.title}
                   fill
-                  priority
+                  fetchPriority="high"
+                  loading="eager"
                   sizes="(max-width: 1440px) 100vw, 1440px"
                   className="object-cover"
                 />

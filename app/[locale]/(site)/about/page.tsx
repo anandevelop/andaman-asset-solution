@@ -182,7 +182,8 @@ export default async function AboutPage(props: Props) {
           src={companyProfile?.aboutHeroImageUrl || "/gallery/trinity-village/pool-garden.webp"}
           alt=""
           fill
-          priority
+          fetchPriority="high"
+          loading="eager"
           sizes="100vw"
           className="object-cover"
         />
