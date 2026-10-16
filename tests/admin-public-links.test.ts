@@ -41,3 +41,21 @@ describe("admin links to public pages", () => {
     expect(broken).toEqual([]);
   });
 });
+
+/*
+  The media library's "Used in" links. lib/media-usage.ts builds each one
+  from "/admin" on, and MediaLibrary.tsx added "/admin" again in front, so
+  every link went to /en/admin/admin/news/… and a 404. Both halves are
+  checked, because either one changing alone brings it back.
+*/
+describe("media usage links", () => {
+  it("are built from /admin on, and the panel adds only the locale", () => {
+    const usage = readFileSync(path.join(ROOT, "lib", "media-usage.ts"), "utf8");
+    const hrefs = [...usage.matchAll(/href: \([^)]*\) => [`"]([^`"]*)/g)].map((match) => match[1]);
+    expect(hrefs.length).toBeGreaterThan(10);
+    expect(hrefs.filter((href) => !href.startsWith("/admin/"))).toEqual([]);
+
+    const panel = readFileSync(path.join(ROOT, "components", "admin", "MediaLibrary.tsx"), "utf8");
+    expect(panel).toContain("href={`/${locale}${ref.href}`}");
+  });
+});

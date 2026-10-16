@@ -604,7 +604,7 @@ function MediaDetail({
             {usage.map((ref, idx) => (
               <li key={idx} className="flex items-center gap-1.5 text-xs">
                 {ref.href ? (
-                  <Link href={`/${locale}/admin${ref.href}`} className="truncate font-medium text-adm-accent-ink hover:underline">
+                  <Link href={`/${locale}${ref.href}`} className="truncate font-medium text-adm-accent-ink hover:underline">
                     {ref.label}
                   </Link>
                 ) : (

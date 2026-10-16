@@ -33,6 +33,9 @@ export type MediaUsageRef = {
   /** i18n key suffix under admin.media.usageKind.* */
   kind: string;
   label: string;
+  /** The editing screen, from "/admin" on and without the locale, which the
+   *  caller puts in front. Not "/news/…" with "/admin" added by the caller:
+   *  the media panel once added it to these and linked to /admin/admin/…. */
   href: string | null;
   /** i18n key suffix under admin.media.usageNote.*, e.g. which field. */
   note: string;
