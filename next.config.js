@@ -1,4 +1,5 @@
 const withNextIntl = require("next-intl/plugin")("./i18n-request.ts");
+const { legacyRedirects } = require("./config/legacy-redirects");
 
 /**
  * The media host is where every uploaded asset is served from — currently a
@@ -330,6 +331,8 @@ const nextConfig = {
    */
   async redirects() {
     return [
+      // The old WordPress site's URLs — see config/legacy-redirects.js.
+      ...legacyRedirects,
       {
         /* Straight to the Home tab, not via /pages/home/sections — that
            address now redirects here itself, and a two-hop chain is a
