@@ -109,6 +109,22 @@ function nextRun(job, now = new Date()) {
   return next;
 }
 
+/*
+  Node's longest timer is 2^31-1 ms, about 24.8 days. Ask for longer and it
+  warns once and fires after 1 ms. The monthly report's next run is 28 to
+  31 days away, so after every run it fired again at once: the report went
+  out every few seconds until the next 1st was under 24.8 days off (about
+  the 7th). A restart in the first week of a month started the same loop.
+  Waiting at most the limit and re-checking keeps every wait in range.
+*/
+const MAX_TIMEOUT = 2 ** 31 - 1;
+
+function setTimeoutAt(at, callback) {
+  const delay = at.getTime() - Date.now();
+  if (delay > MAX_TIMEOUT) return setTimeout(() => setTimeoutAt(at, callback), MAX_TIMEOUT);
+  return setTimeout(callback, Math.max(0, delay));
+}
+
 async function run(job) {
   const url = `${BASE}${job.path}`;
 
@@ -151,10 +167,10 @@ function schedule(job) {
 
   log(`${job.name} next at ${at.toLocaleString("en-GB")} (in ${Math.round(delay / 60_000)} min)`);
 
-  setTimeout(async () => {
+  setTimeoutAt(at, async () => {
     await run(job);
     schedule(job);
-  }, delay);
+  });
 }
 
 if (!SECRET) {
@@ -214,10 +230,10 @@ const WARM_JOB = { name: "image-warm-up", at: [4, 45] };
 
 function scheduleWarm() {
   const at = nextRun(WARM_JOB);
-  setTimeout(async () => {
+  setTimeoutAt(at, async () => {
     await warmImages(BASE, log);
     scheduleWarm();
-  }, at.getTime() - Date.now());
+  });
 }
 
 void (async () => {

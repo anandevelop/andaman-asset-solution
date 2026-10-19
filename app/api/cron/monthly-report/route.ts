@@ -66,6 +66,29 @@ export async function POST(request: Request) {
   const locale: Locale = "th";
 
   try {
+    /*
+      Once per month and audience. A scheduler bug once called this every
+      few seconds for a week (scripts/cron.mjs, timers longer than Node's
+      limit) and every call emailed the executives, because nothing here
+      looked at what had already gone out. A failed send does not count, so
+      the next attempt still tries. `?force=1` re-sends deliberately.
+    */
+    const force = new URL(request.url).searchParams.get("force") === "1";
+    if (!force) {
+      const sent = await prisma.reportSend.findFirst({
+        where: { period: period.noteKey, audience: AUDIENCE, ok: true },
+        select: { sentAt: true },
+      });
+      if (sent) {
+        return NextResponse.json({
+          ok: true,
+          skipped: "ALREADY_SENT",
+          period: period.noteKey.toISOString().slice(0, 10),
+          sentAt: sent.sentAt.toISOString(),
+        });
+      }
+    }
+
     const data = await getReportData({ period, locale, audience: AUDIENCE });
 
     const noteBody =

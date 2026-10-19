@@ -17,7 +17,7 @@
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const source = readFileSync(join(process.cwd(), "scripts/cron.mjs"), "utf8");
 
@@ -202,5 +202,52 @@ describe("the shipped schedule", () => {
     expect(report.day).toBe(1);
     expect(report.at[0]).toBeGreaterThanOrEqual(7);
     expect(report.at[0]).toBeLessThanOrEqual(10);
+  });
+});
+
+/*
+  Node fires any setTimeout longer than 2^31-1 ms (~24.8 days) after 1 ms.
+  The monthly report's next run is 28-31 days out, so before setTimeoutAt
+  it ran again immediately after every run — every few seconds for the
+  first week of each month. Lifted out of the script the same way as
+  nextRun, and driven with fake timers.
+*/
+describe("setTimeoutAt", () => {
+  function loadSetTimeoutAt(): (at: Date, callback: () => void) => unknown {
+    const start = source.indexOf("const MAX_TIMEOUT");
+    expect(start, "MAX_TIMEOUT not found in scripts/cron.mjs").toBeGreaterThan(-1);
+    const end = source.indexOf("\nasync function run(", start);
+    return new Function(`${source.slice(start, end)}; return setTimeoutAt;`)() as ReturnType<typeof loadSetTimeoutAt>;
+  }
+
+  it("waits a whole month without firing early", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-10-01T08:00:05+07:00"));
+      const setTimeoutAt = loadSetTimeoutAt();
+      const fired = vi.fn();
+      setTimeoutAt(new Date("2026-11-01T08:00:00+07:00"), fired);
+
+      vi.advanceTimersByTime(1_000);
+      expect(fired, "fired at once: the 24.8-day overflow is back").not.toHaveBeenCalled();
+
+      // Due 31 days less 5 s after "now"; 1 s has already passed.
+      const due = Date.parse("2026-11-01T08:00:00+07:00") - Date.parse("2026-10-01T08:00:05+07:00");
+      vi.advanceTimersByTime(due - 1_000 - 1);
+      expect(fired).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(fired).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("is used for every scheduled job, not a raw setTimeout", () => {
+    // The only raw setTimeout left is waitForApp's 5-second poll.
+    const raw = source.match(/setTimeout\(/g) ?? [];
+    const wrapped = source.match(/setTimeoutAt\(/g) ?? [];
+    expect(wrapped.length).toBeGreaterThanOrEqual(3);
+    expect(raw.length - wrapped.length).toBeLessThanOrEqual(3);
   });
 });
