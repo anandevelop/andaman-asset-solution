@@ -12,7 +12,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { rateLimit, resetRateLimit, RATE_LIMITS, clientIp } from "@/lib/rate-limit";
 
 /** Unique per test so the module-level Map cannot leak between them. */
@@ -168,16 +168,38 @@ describe("RATE_LIMITS policies", () => {
 });
 
 describe("clientIp", () => {
-  it("takes the first entry of x-forwarded-for", () => {
-    const headers = new Headers({ "x-forwarded-for": "203.0.113.5, 70.41.3.18" });
+  afterEach(() => {
+    delete process.env.CLIENT_IP_HEADER;
+    delete process.env.TRUSTED_PROXY_HOPS;
+  });
 
+  it("takes the address the proxy appended, not the one the client sent", () => {
+    // A client sent "1.2.3.4"; nginx appended the real peer.
+    const headers = new Headers({ "x-forwarded-for": "1.2.3.4, 203.0.113.5" });
     expect(clientIp(headers)).toBe("203.0.113.5");
   });
 
-  it("falls back to cf-connecting-ip", () => {
-    expect(clientIp(new Headers({ "cf-connecting-ip": "203.0.113.9" }))).toBe(
-      "203.0.113.9",
-    );
+  it("cannot be moved to a fresh bucket by forging the header", () => {
+    const a = clientIp(new Headers({ "x-forwarded-for": "9.9.9.1, 203.0.113.5" }));
+    const b = clientIp(new Headers({ "x-forwarded-for": "9.9.9.2, 203.0.113.5" }));
+    expect(a).toBe(b);
+  });
+
+  it("reads the single entry Caddy leaves", () => {
+    expect(clientIp(new Headers({ "x-forwarded-for": "203.0.113.5" }))).toBe("203.0.113.5");
+  });
+
+  it("counts TRUSTED_PROXY_HOPS from the right", () => {
+    process.env.TRUSTED_PROXY_HOPS = "2";
+    const headers = new Headers({ "x-forwarded-for": "1.2.3.4, 203.0.113.5, 172.68.0.1" });
+    expect(clientIp(headers)).toBe("203.0.113.5");
+  });
+
+  it("does not trust cf-connecting-ip unless told to", () => {
+    const headers = new Headers({ "cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "203.0.113.5" });
+    expect(clientIp(headers)).toBe("203.0.113.5");
+    process.env.CLIENT_IP_HEADER = "cf-connecting-ip";
+    expect(clientIp(headers)).toBe("1.2.3.4");
   });
 
   it("falls back to x-real-ip", () => {

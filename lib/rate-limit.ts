@@ -104,16 +104,49 @@ export function rateLimit(
   };
 }
 
-/** Best-effort client IP from proxy headers (Vercel / nginx / Cloudflare). */
+/**
+ * The visitor's IP, as the proxy in front of the app saw it.
+ *
+ * NOT THE LEFTMOST X-FORWARDED-FOR
+ *
+ * This took the first entry, and the first entry is whatever the client
+ * sent: nginx's $proxy_add_x_forwarded_for appends the real address to the
+ * header it received. A random X-Forwarded-For on each request lifted every
+ * per-IP limit (lead spam, RSVP mail, the revalidate-secret guess limit),
+ * grew the bucket map without bound, and wrote a forged address into
+ * LeadInquiry.ipAddress, which is part of the PDPA consent record. The
+ * unconditional cf-connecting-ip fallback was forgeable the same way.
+ *
+ * Each proxy appends the address it received from, so the trustworthy
+ * entry counts from the right: with TRUSTED_PROXY_HOPS proxies in front
+ * (default 1, the Caddy or nginx on the droplet) it is the
+ * TRUSTED_PROXY_HOPS-th entry from the end. Caddy with no trusted_proxies
+ * replaces the header with the one address it saw, which lands on the same
+ * entry.
+ *
+ * Behind Cloudflare that address is a Cloudflare edge, and every visitor
+ * would share a handful of buckets. Set CLIENT_IP_HEADER=cf-connecting-ip
+ * there, and only there: it is trusted outright, so the origin must not be
+ * reachable except through Cloudflare.
+ */
 export function clientIp(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
+  const named = process.env.CLIENT_IP_HEADER?.trim().toLowerCase();
+  if (named) {
+    const value = headers.get(named)?.split(",")[0]?.trim();
+    if (value) return value;
+  }
 
-  return (
-    headers.get("cf-connecting-ip") ??
-    headers.get("x-real-ip") ??
-    "unknown"
-  );
+  const forwarded = headers
+    .get("x-forwarded-for")
+    ?.split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (forwarded && forwarded.length > 0) {
+    const hops = Math.max(1, Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? "1", 10) || 1);
+    return forwarded[Math.max(0, forwarded.length - hops)];
+  }
+
+  return headers.get("x-real-ip")?.trim() || "unknown";
 }
 
 /**

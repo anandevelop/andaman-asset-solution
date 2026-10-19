@@ -311,8 +311,17 @@ location / {
 }
 ```
 
-`lib/rate-limit.ts` reads `x-forwarded-for` first, then
-`cf-connecting-ip`, then `x-real-ip`.
+`lib/rate-limit.ts` takes the client from the **right** of
+`x-forwarded-for`: the entry the proxy appended, not the one the client
+sent (anything to the left is whatever the client chose to send). With
+`TRUSTED_PROXY_HOPS` proxies in front (default 1) it is that many entries
+from the end. Caddy with no `trusted_proxies` replaces the header with the
+single address it saw, which is the same entry.
+
+**Behind Cloudflare** the proxy's peer is a Cloudflare edge, so every
+visitor shares a few rate-limit buckets. Either grey-cloud the record, or
+set `CLIENT_IP_HEADER=cf-connecting-ip`, and then the origin must accept
+traffic only from Cloudflare, because that header is trusted outright.
 
 ---
 
