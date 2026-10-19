@@ -938,6 +938,17 @@
   letter-spacing: 0.02em;
 }
 
+/* Thai headings on the public site get Thai line spacing. Their size
+   utilities (text-4xl and the rest) and the explicit leading-[1.05] on the
+   heroes are set for Latin, which has nothing above the cap height. Thai
+   stacks tone marks above and vowels below, so at 1.1 the marks of one line
+   touched the line under them ("ภูเก็ต" sitting on "สบาย" on /th/about).
+   Unlayered on purpose: it has to win over those utilities, and only for
+   Thai. The admin keeps its own, denser rhythm. */
+:root:lang(th) :is(h1, h2, h3, h4):not([data-admin-root] *) {
+  line-height: 1.4;
+}
+
 /* LeadDrawer's entrance. Named keyframes rather than a transition because
    the panel mounts already open — there is no "before" state to transition
    from. Reduced motion gets the end state with no movement. */
