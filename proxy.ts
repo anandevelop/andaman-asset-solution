@@ -13,6 +13,9 @@
  *   2. Locale     — next-intl handles prefixing and negotiation for
  *      everything that gets through.
  *
+ * Every response then gets the CSP and, off the canonical site, noindex
+ * (lib/runtime-headers.ts), because only here are they read per request.
+ *
  * `getToken` verifies the JWT signature at the edge without touching the
  * database, which is why lib/auth.ts uses a JWT session strategy.
  * ─────────────────────────────────────────────────────────────────────────
@@ -26,6 +29,7 @@ import { roleRequiresTwoFactor } from "./lib/two-factor-policy";
 import { identifyBot } from "./lib/seo/bots";
 import { recordCrawlHit } from "./lib/seo/crawl-log";
 import { stripLocale } from "./lib/public-paths";
+import { applyRuntimeHeaders } from "./lib/runtime-headers";
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -42,6 +46,13 @@ const SECURITY_PATH = new RegExp(
 );
 
 export default async function proxy(request: NextRequest, event: NextFetchEvent) {
+  const response = await route(request, event);
+  // CSP and the staging noindex, read at request time — see the file.
+  applyRuntimeHeaders(response.headers);
+  return response;
+}
+
+async function route(request: NextRequest, event: NextFetchEvent): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl;
 
   /*

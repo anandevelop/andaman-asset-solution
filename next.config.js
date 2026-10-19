@@ -151,7 +151,8 @@ const CSP_DIRECTIVES = {
   "child-src": ["'self'"],
 
   // reCAPTCHA renders its challenge in a frame; the contact page embeds a map.
-  "frame-src": ["'self'", "https://www.google.com", "https://maps.google.com"],
+  // youtube-nocookie: the drone footage in ProgressGallery (lib/youtube.ts).
+  "frame-src": ["'self'", "https://www.google.com", "https://maps.google.com", "https://www.youtube-nocookie.com"],
 
   "object-src": ["'none'"],
   "base-uri": ["'self'"],
@@ -174,7 +175,7 @@ const CSP_DIRECTIVES = {
   "upgrade-insecure-requests": [],
 };
 
-function buildCsp() {
+function buildCsp(cspEnforced) {
   return Object.entries(CSP_DIRECTIVES)
     /*
       upgrade-insecure-requests only means something in an enforced policy.
@@ -189,8 +190,17 @@ function buildCsp() {
     .join("; ");
 }
 
-const cspEnforced = process.env.CSP_ENFORCE === "true";
-
+/*
+  The CSP and the site-wide noindex are NOT set here. headers() is
+  evaluated at build time and written into routes-manifest.json, which is
+  all a production server reads, so CSP_ENFORCE and SITE_INDEXABLE set on
+  the container did nothing: every image shipped Report-Only and noindex,
+  whatever its .env said. Both are switches that differ between staging and
+  production on the same image, so proxy.ts sets them per request, from
+  lib/runtime-headers.ts. The policy text itself is fixed at build (it only
+  depends on NEXT_PUBLIC_MEDIA_DOMAIN) and reaches the proxy through `env`
+  below.
+*/
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   // frame-ancestors above supersedes this in modern browsers; kept for
@@ -220,17 +230,17 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  {
-    key: cspEnforced
-      ? "Content-Security-Policy"
-      : "Content-Security-Policy-Report-Only",
-    value: buildCsp(),
-  },
 ];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Read by lib/runtime-headers.ts; see the note above securityHeaders.
+  env: {
+    CSP_POLICY_REPORT_ONLY: buildCsp(false),
+    CSP_POLICY_ENFORCED: buildCsp(true),
+  },
 
   /*
     Development only, and it is what makes the local e2e suite able to
@@ -432,27 +442,6 @@ const nextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
-      /*
-        Anything that has not declared itself the canonical site gets
-        noindex on every response, not only in robots.txt — robots.txt asks
-        a crawler not to fetch, this tells one that fetched anyway not to
-        index. It is also the only mechanism that covers the pages setting
-        their own `robots: { index: true }` metadata (privacy-policy,
-        terms), which override the root layout's default.
-
-        The condition is spelled out rather than imported from
-        lib/indexing.ts because next.config.js cannot import TypeScript;
-        that file is where the reasoning lives, including why the default
-        is "not indexable".
-      */
-      ...(process.env.SITE_INDEXABLE === "true"
-        ? []
-        : [
-            {
-              source: "/:path*",
-              headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
-            },
-          ]),
       {
         // The admin is per-user and must never be held by a shared cache.
         source: "/:locale/admin/:path*",

@@ -28,6 +28,17 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { isSiteIndexable } from "@/lib/indexing";
 
+/*
+  Rendered per request. Without this Next prerenders robots.txt at build,
+  where SITE_INDEXABLE is never set, so every image would have answered
+  `Disallow: /` on the production domain too, the same build-time trap
+  lib/runtime-headers.ts describes for the noindex header.
+*/
+export const dynamic = "force-dynamic";
+
+/** Every locale's admin and login: the real paths are /th/admin, /en/login. */
+const PRIVATE = ["/admin", "/*/admin", "/login", "/*/login", "/api/"];
+
 export default function robots(): MetadataRoute.Robots {
   if (!isSiteIndexable()) {
     return { rules: [{ userAgent: "*", disallow: "/" }] };
@@ -39,10 +50,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
-          "/admin",
-          "/admin/",
-          "/login",
-          "/api/",
+          ...PRIVATE,
           // Filtered listings duplicate /news; let the canonical page rank.
           "/*?category=",
         ],
@@ -52,7 +60,9 @@ export default function robots(): MetadataRoute.Robots {
         // audience — Bing powers a meaningful slice of expat search.
         userAgent: ["Googlebot", "Bingbot"],
         allow: "/",
-        disallow: ["/admin", "/login", "/api/"],
+        // A crawler obeys only its most specific group, so this one repeats
+        // the ?category= rule rather than dropping it.
+        disallow: [...PRIVATE, "/*?category="],
       },
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,
