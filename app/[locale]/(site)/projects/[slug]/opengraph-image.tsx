@@ -31,9 +31,9 @@ export default async function Image({
   const { locale, slug } = await params;
   const project = await getProjectBySlug(slug, locale);
 
-  if (project?.ogImageUrl) {
-    return passThroughImage(project.ogImageUrl);
-  }
+  // Null when the URL is not one of ours or not an image: draw the card.
+  const passed = project?.ogImageUrl ? await passThroughImage(project.ogImageUrl) : null;
+  if (passed) return passed;
 
   return renderOgCard({
     locale: locale as Locale,

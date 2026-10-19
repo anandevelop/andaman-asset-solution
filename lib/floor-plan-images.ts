@@ -36,6 +36,8 @@ import sharp, { type Sharp } from "sharp";
 import { objectKeyFromUrl, putS3Object, isS3Configured } from "@/lib/s3";
 import { reportError } from "@/lib/sentry";
 import { BLUEPRINT_ALPHA_GAIN, BLUEPRINT_STROKE } from "@/lib/blueprint-pixels";
+import { siteConfig } from "@/config/site";
+import { trustedImageUrl } from "@/lib/trusted-media";
 
 /** Flat colour every stroke is redrawn in — pale blue, for navy paper.
  *  Shared with the admin preview's canvas copy of this transform. */
@@ -121,8 +123,11 @@ export function blueprintKeyFor(key: string, version?: string): string {
   return version ? `${base}-blueprint-${version}.webp` : `${base}-blueprint.webp`;
 }
 
+/** Only our own media, never via a redirect: see lib/trusted-media.ts. */
 async function fetchImage(url: string): Promise<Buffer> {
-  const response = await fetch(url, { cache: "no-store" });
+  const target = trustedImageUrl(url, siteConfig.url);
+  if (!target) throw new Error("FLOOR_PLAN_UNTRUSTED_URL");
+  const response = await fetch(target, { cache: "no-store", redirect: "error" });
   if (!response.ok) throw new Error(`FLOOR_PLAN_FETCH_${response.status}`);
   return Buffer.from(await response.arrayBuffer());
 }

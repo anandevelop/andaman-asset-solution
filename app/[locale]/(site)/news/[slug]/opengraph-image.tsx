@@ -36,9 +36,9 @@ export default async function Image({
   const { locale, slug } = await params;
   const article = await getArticleBySlug(slug, locale);
 
-  if (article?.ogImageUrl) {
-    return passThroughImage(article.ogImageUrl);
-  }
+  // Null when the URL is not one of ours or not an image: draw the card.
+  const passed = article?.ogImageUrl ? await passThroughImage(article.ogImageUrl) : null;
+  if (passed) return passed;
 
   const newsLabel =
     locale === "zh" ? "News" : (await getTranslations({ locale, namespace: "nav" }))("news");

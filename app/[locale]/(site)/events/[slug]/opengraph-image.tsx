@@ -32,9 +32,9 @@ export default async function Image({
   const { locale, slug } = await params;
   const event = await getEventBySlug(slug, locale);
 
-  if (event?.ogImageUrl) {
-    return passThroughImage(event.ogImageUrl);
-  }
+  // Null when the URL is not one of ours or not an image: draw the card.
+  const passed = event?.ogImageUrl ? await passThroughImage(event.ogImageUrl) : null;
+  if (passed) return passed;
 
   const dateLabel = event
     ? new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {

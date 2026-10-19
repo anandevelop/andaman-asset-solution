@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isTrustedImageValue, TRUSTED_IMAGE_MESSAGE } from "@/lib/trusted-media";
 import { createTranslator } from "next-intl";
 import { locales } from "@/i18n";
 import { isKnownIso2, isValidPhoneForCountry } from "@/lib/countries";
@@ -667,8 +668,9 @@ export const newsArticleSchema = z
 
     coverImageUrl: optionalText(600),
     // Manual social-share override — see the schema.prisma comment on
-    // NewsArticle.ogImageUrl. Falls back to coverImageUrl when empty.
-    ogImageUrl: optionalText(600),
+    // NewsArticle.ogImageUrl. Falls back to coverImageUrl when empty. Ours
+    // only: the share-image route fetches it server-side.
+    ogImageUrl: optionalText(600).refine(isTrustedImageValue, TRUSTED_IMAGE_MESSAGE),
     category: optionalText(80),
     tags: tagsToArray,
 
@@ -861,8 +863,9 @@ export const eventSchema = z
     endsAt: optionalDateTime,
     coverImageUrl: optionalText(600),
     // Manual social-share override — see the schema.prisma comment on
-    // Event.ogImageUrl. Falls back to coverImageUrl when empty.
-    ogImageUrl: optionalText(600),
+    // Event.ogImageUrl. Falls back to coverImageUrl when empty. Ours only,
+    // as for articles.
+    ogImageUrl: optionalText(600).refine(isTrustedImageValue, TRUSTED_IMAGE_MESSAGE),
 
     capacity: optionalNumber(1, 100_000),
 
@@ -1003,8 +1006,9 @@ export const floorSchema = z.object({
   /** What the lift button prints — see FloorPlan.shortLabel. */
   shortLabel: z.string().trim().min(1, "Give the floor a lift label").max(3),
   areaSqm: jsonArea,
-  imageUrl: z.string().trim().min(1, "Upload the line drawing").max(600),
-  furnishedImageUrl: z.string().trim().max(600).nullable().optional(),
+  // Ours only: lib/floor-plan-images.ts downloads this server-side.
+  imageUrl: z.string().trim().min(1, "Upload the line drawing").max(600).refine(isTrustedImageValue, TRUSTED_IMAGE_MESSAGE),
+  furnishedImageUrl: z.string().trim().max(600).refine(isTrustedImageValue, TRUSTED_IMAGE_MESSAGE).nullable().optional(),
   portraitRotation: z.enum(["CW", "CCW"]),
   /** A Sale Kit floor lists a dozen or so; 60 is a ceiling, not a target. */
   rooms: z.array(floorRoomSchema).max(60),

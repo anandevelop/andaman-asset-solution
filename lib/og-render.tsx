@@ -41,6 +41,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import type { Locale } from "@/i18n";
+import { siteConfig } from "@/config/site";
+import { PASSTHROUGH_IMAGE_TYPES, trustedImageUrl } from "@/lib/trusted-media";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 
@@ -230,22 +232,33 @@ export async function renderOgCard({
 }
 
 /**
- * For the one genuine manual override in the schema — Project.ogImageUrl,
- * the SEO tab's escape hatch for a hero photo that crops badly. Passed
- * through byte-for-byte rather than redrawn: an admin who picked a
- * specific image for this exact purpose gets that image, not this file's
- * opinion about it.
+ * For the one genuine manual override in the schema — ogImageUrl on a
+ * project, article or event, the SEO tab's escape hatch for a hero photo
+ * that crops badly. Passed through byte-for-byte rather than redrawn: an
+ * admin who picked a specific image for this exact purpose gets that
+ * image, not this file's opinion about it.
+ *
+ * Only from our own media hosts, only as a raster image, and never via a
+ * redirect: see lib/trusted-media.ts for what an open passthrough allowed.
+ * Returns null when the URL is not ours or the upstream is not an image,
+ * and the caller draws the card instead.
  */
-export async function passThroughImage(url: string): Promise<Response> {
-  const upstream = await fetch(url);
-  if (!upstream.ok || !upstream.body) {
-    throw new Error(`og image passthrough failed: ${upstream.status} ${url}`);
+export async function passThroughImage(url: string): Promise<Response | null> {
+  const target = trustedImageUrl(url, siteConfig.url);
+  if (!target) {
+    console.warn(`[og] refused a passthrough from outside our media hosts: ${url.slice(0, 200)}`);
+    return null;
   }
+
+  const upstream = await fetch(target, { redirect: "error" }).catch(() => null);
+  const type = upstream?.headers.get("content-type")?.split(";")[0].trim().toLowerCase() ?? "";
+  if (!upstream?.ok || !upstream.body || !PASSTHROUGH_IMAGE_TYPES.includes(type)) return null;
 
   return new Response(upstream.body, {
     headers: {
-      "Content-Type": upstream.headers.get("content-type") ?? "image/jpeg",
+      "Content-Type": type,
       "Cache-Control": "public, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

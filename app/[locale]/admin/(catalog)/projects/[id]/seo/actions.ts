@@ -19,6 +19,7 @@
 import { revalidatePath } from "next/cache";
 import { Role } from "@prisma/client";
 import { z } from "zod";
+import { isTrustedImageValue, TRUSTED_IMAGE_MESSAGE } from "@/lib/trusted-media";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { locales } from "@/i18n";
@@ -96,7 +97,8 @@ export async function saveLocaleSeo(adminLocale: string, input: unknown): Promis
 
 const projectSeoSchema = z.object({
   projectId: z.string().min(1),
-  ogImageUrl: z.string().trim().max(1000),
+  // Ours only: the share-image route fetches it server-side (lib/trusted-media.ts).
+  ogImageUrl: z.string().trim().max(1000).refine(isTrustedImageValue, TRUSTED_IMAGE_MESSAGE),
   canonicalUrl: z.string().trim().max(1000),
   sitemapPriority: z.number().min(0).max(1).nullable(),
   sitemapChangeFreq: z.string().trim().max(20),
