@@ -540,6 +540,55 @@ a forward migration that reverses it.
 
 ---
 
+## 8a. Backups
+
+Postgres runs in the `db` container on the same droplet, in the
+`andaman_pg_data` volume. `scripts/backup-db.sh` dumps it nightly:
+`pg_dump` in custom format, a `pg_restore --list` check that the dump is
+readable, a copy to a **private** Spaces bucket, and 14 days kept locally.
+
+**Setup, once:**
+
+1. In DigitalOcean, create a Space for backups only, separate from the
+   media bucket, with file listing restricted (e.g. `andaman-db-backups`,
+   region sgp1). The media bucket's objects are public-read; a database
+   dump holds every lead.
+2. Add `BACKUP_BUCKET="andaman-db-backups"` to `/opt/app/.env`. It reuses
+   the `DO_SPACES_*` keys already there.
+3. Copy the script to `/opt/app/backup-db.sh`, `chmod 700` it, and run it
+   once by hand.
+4. Root's crontab (`crontab -e`), 02:30 Bangkok:
+
+   ```
+   30 19 * * * /opt/app/backup-db.sh >> /var/log/andaman-backup.log 2>&1
+   ```
+
+**Restore test** (a scratch database beside the real one, then dropped):
+
+```bash
+cd /opt/app
+F=$(ls -t backups/andaman-*.dump | head -1)
+docker compose -f docker-compose.prod.yml exec -T db sh -c '
+  createdb -U "$POSTGRES_USER" restore_test &&
+  pg_restore -U "$POSTGRES_USER" -d restore_test --no-owner &&
+  psql -U "$POSTGRES_USER" -d restore_test -tAc "select count(*) from lead_inquiries" &&
+  dropdb -U "$POSTGRES_USER" restore_test' < "$F"
+```
+
+**Real restore** (stop the app first so nothing writes mid-restore):
+
+```bash
+docker compose -f docker-compose.prod.yml stop app cron
+docker compose -f docker-compose.prod.yml exec -T db sh -c \
+  'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner' < backups/<file>.dump
+docker compose -f docker-compose.prod.yml up -d --pull never app cron
+```
+
+A dump from Spaces first comes down with
+`docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD/backups:/b amazon/aws-cli s3 cp s3://<bucket>/db/<file>.dump /b/ --endpoint-url https://sgp1.digitaloceanspaces.com`.
+
+---
+
 ## 9. What to watch
 
 | Signal | Where |

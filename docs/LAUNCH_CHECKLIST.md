@@ -113,7 +113,8 @@ Cross-check against `.env.example`, which annotates each one.
 
 - [ ] `prisma migrate deploy` run against production
 - [ ] `prisma migrate status` reports no pending migrations
-- [ ] **Automated backups enabled**, with retention agreed in writing
+- [ ] **Automated backups enabled**, with retention agreed in writing —
+      `scripts/backup-db.sh`, setup in DEPLOYMENT.md §8a
 - [ ] A restore has actually been tested — an untested backup is a hope
 - [ ] Connection limit checked against expected concurrency; add PgBouncer
       if the host is small
