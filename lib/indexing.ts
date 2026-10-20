@@ -47,6 +47,36 @@ export function isSiteIndexable(): boolean {
 }
 
 /**
+ * Whether a request reached the canonical host.
+ *
+ * Staging and production are one container behind one proxy: the same
+ * process answers andamanassetsolution.com and 168-144-240-9.sslip.io.
+ * SITE_INDEXABLE=true on that container would have made the staging host
+ * indexable too, so the request's own Host header decides as well.
+ * NEXT_PUBLIC_SITE_URL is baked into the image as the production address
+ * (ci.yml IMAGE_BUILD_ARGS) and read literally so it is inlined.
+ *
+ * The page-level <meta name="robots"> cannot use this: pages are cached
+ * per path, not per host, so both hosts get the same HTML. The per-request
+ * X-Robots-Tag (lib/runtime-headers.ts) and robots.txt do use it, and a
+ * crawler obeys the strictest of the three.
+ */
+export function isCanonicalHost(host: string | null | undefined): boolean {
+  if (!host) return false;
+  try {
+    const canonical = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://andamanassetsolution.com").hostname;
+    return host.trim().toLowerCase().replace(/:\d+$/, "") === canonical.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+/** Indexable deployment, reached at the canonical host. */
+export function isIndexableRequest(host: string | null | undefined): boolean {
+  return isSiteIndexable() && isCanonicalHost(host);
+}
+
+/**
  * A page's robots metadata, gated by whether this deployment may be indexed
  * at all.
  *

@@ -21,10 +21,14 @@
  * images get neither header. Neither matters for them: a CSP governs
  * documents, and on staging robots.txt (app/robots.ts, now rendered per
  * request too) still disallows everything.
+ *
+ * Staging and production are one container (lib/indexing.ts
+ * isCanonicalHost), so the noindex also follows the request's Host: the
+ * sslip.io address stays noindex after SITE_INDEXABLE=true.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { isSiteIndexable } from "@/lib/indexing";
+import { isIndexableRequest } from "@/lib/indexing";
 
 /** Built in next.config.js from CSP_DIRECTIVES and inlined through `env`. */
 const POLICY_REPORT_ONLY = process.env.CSP_POLICY_REPORT_ONLY ?? "";
@@ -43,17 +47,19 @@ export function cspHeader(): [string, string] | null {
   return POLICY_REPORT_ONLY ? ["Content-Security-Policy-Report-Only", POLICY_REPORT_ONLY] : null;
 }
 
-export function applyRuntimeHeaders(headers: Headers): void {
+/** `host` is the request's Host header: only the canonical host is ever
+ *  indexable, see lib/indexing.ts isCanonicalHost. */
+export function applyRuntimeHeaders(headers: Headers, host: string | null): void {
   const csp = cspHeader();
   if (csp) headers.set(csp[0], csp[1]);
 
   /*
-    Anything that has not declared itself the canonical site gets noindex
-    on every page, not only in robots.txt: robots.txt asks a crawler not to
-    fetch, this tells one that fetched anyway not to index. It also covers
-    the pages that set their own `robots: { index: true }` metadata
-    (privacy-policy, terms). Admin and login carry their own noindex from
-    next.config.js whatever this says.
+    Anything that is not the canonical site, by its environment or by the
+    host it was reached at, gets noindex on every page, not only in
+    robots.txt: robots.txt asks a crawler not to fetch, this tells one that
+    fetched anyway not to index. It also covers the pages that set their own
+    `robots: { index: true }` metadata (privacy-policy, terms). Admin and
+    login carry their own noindex from next.config.js whatever this says.
   */
-  if (!isSiteIndexable()) headers.set("X-Robots-Tag", "noindex, nofollow");
+  if (!isIndexableRequest(host)) headers.set("X-Robots-Tag", "noindex, nofollow");
 }

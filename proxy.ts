@@ -48,7 +48,7 @@ const SECURITY_PATH = new RegExp(
 export default async function proxy(request: NextRequest, event: NextFetchEvent) {
   const response = await route(request, event);
   // CSP and the staging noindex, read at request time — see the file.
-  applyRuntimeHeaders(response.headers);
+  applyRuntimeHeaders(response.headers, request.headers.get("host"));
   return response;
 }
 

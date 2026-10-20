@@ -26,7 +26,8 @@
 
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
-import { isSiteIndexable } from "@/lib/indexing";
+import { headers } from "next/headers";
+import { isIndexableRequest } from "@/lib/indexing";
 
 /*
   Rendered per request. Without this Next prerenders robots.txt at build,
@@ -39,8 +40,10 @@ export const dynamic = "force-dynamic";
 /** Every locale's admin and login: the real paths are /th/admin, /en/login. */
 const PRIVATE = ["/admin", "/*/admin", "/login", "/*/login", "/api/"];
 
-export default function robots(): MetadataRoute.Robots {
-  if (!isSiteIndexable()) {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  // Per host as well as per deployment: staging and production share one
+  // container, and only the canonical host may be crawled.
+  if (!isIndexableRequest((await headers()).get("host"))) {
     return { rules: [{ userAgent: "*", disallow: "/" }] };
   }
 
