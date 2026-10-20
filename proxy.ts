@@ -35,6 +35,17 @@ const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
   localePrefix: "always", // /th/..., /en/...
+  /*
+    A URL without a locale always goes to English (defaultLocale), whatever
+    the browser's language or a remembered choice. It used to negotiate:
+    a Thai-language browser, or anyone who had once picked Thai, landed on
+    /th from andamanassetsolution.com, and the owners asked for the English
+    site first. Visitors still switch language with the switcher, and every
+    page keeps its own /th, /zh, /ru URL; only the bare entry points stop
+    guessing. The old WordPress URLs are unaffected: config/legacy-
+    redirects.js sends those to /th before this runs.
+  */
+  localeDetection: false,
 });
 
 /** Matches /th/admin, /en/admin/leads, … and captures the locale. */

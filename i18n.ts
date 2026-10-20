@@ -22,13 +22,12 @@ export const LOCALE_DISPLAY_ORDER = ["th", "en", "zh", "ru"] as const;
  * hreflang tags, and what the error boundaries fall back to on a URL with
  * no locale segment.
  *
- * It is *not* the only thing that decides the language. proxy.ts runs
- * next-intl's middleware with locale detection left at its default of
- * `true`, so a `NEXT_LOCALE` cookie wins first and `accept-language` second
- * — a Thai-configured browser with no cookie still lands on `/th`, which is
- * the intended behaviour and not this constant failing to apply. Setting
- * `localeDetection: false` there is what would force English on everybody,
- * at the cost of the language switcher no longer being remembered.
+ * It is also the only thing that decides where a URL with no locale goes.
+ * proxy.ts runs next-intl's middleware with `localeDetection: false`, so
+ * neither the browser's accept-language nor a remembered NEXT_LOCALE
+ * cookie sends a visitor to /th: the owners want the English site first.
+ * Until 2026-10-20 detection was on, and a Thai-language browser opened
+ * andamanassetsolution.com in Thai.
  *
  * Deliberately separate from LOCALE_DISPLAY_ORDER above, which is Thai-first
  * because the people filling the admin in are Thai. Who writes the content
