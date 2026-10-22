@@ -22,6 +22,7 @@ import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
 import LoginBackdrop from "@/components/admin/login/LoginBackdrop";
 import LoginThemeToggle from "@/components/admin/login/LoginThemeToggle";
+import { safeCallbackUrl } from "@/lib/safe-callback";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -81,10 +82,9 @@ export default async function LoginPage(props: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "auth" });
 
-  // Only accept same-origin relative paths — an attacker-supplied absolute
-  // URL here would turn the login form into an open redirect.
-  const raw = searchParams.callbackUrl ?? "";
-  const callbackUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : `/${locale}/admin`;
+  // Same origin, admin pages only — see lib/safe-callback.ts for the
+  // "/\evil.example" bypass the old startsWith("/") check let through.
+  const callbackUrl = safeCallbackUrl(searchParams.callbackUrl, locale);
 
   const tAdmin = await getTranslations({ locale, namespace: "admin" });
   const notes = [t("note2fa"), t("noteSession"), t("noteAudit")];
