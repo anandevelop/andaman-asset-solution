@@ -3840,7 +3840,9 @@
         "corporateService": "企业服务",
         "eBrochure": "电子手册",
         "news": "新闻/文章",
-        "event": "活动"
+        "event": "活动",
+        "siteCta": "CTA 区块",
+        "siteSetting": "网站设置"
       },
       "copyLink": "复制链接",
       "copied": "已复制",

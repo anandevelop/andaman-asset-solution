@@ -3840,7 +3840,9 @@
         "corporateService": "บริการองค์กร",
         "eBrochure": "อี-โบรชัวร์",
         "news": "ข่าว/บทความ",
-        "event": "อีเวนต์"
+        "event": "อีเวนต์",
+        "siteCta": "บล็อก CTA",
+        "siteSetting": "การตั้งค่าเว็บไซต์"
       },
       "copyLink": "คัดลอกลิงก์",
       "copied": "คัดลอกแล้ว",

@@ -96,6 +96,45 @@ function column(config: {
   };
 }
 
+/**
+ * One model, one String[] column (Project.gallery, ProjectProgress.images):
+ * a row matches when any of its entries is one of the URLs, and reports
+ * each entry that is.
+ */
+function arrayColumn(config: {
+  kind: string;
+  note: string;
+  field: string;
+  find: (args: any) => Promise<Row[]>;
+  select: Record<string, unknown>;
+  label: (row: Row) => string;
+  href: (row: Row) => string | null;
+}): Source {
+  return {
+    kind: config.kind,
+    note: config.note,
+    findMany: async (urls) => {
+      if (urls.length === 0) return [];
+      const wanted = new Set(urls);
+      const rows = await config.find({
+        where: { [config.field]: { hasSome: urls } },
+        select: { ...config.select, [config.field]: true },
+      });
+      return rows.flatMap((row) =>
+        (row[config.field] as string[])
+          .filter((url) => wanted.has(url))
+          .map((url) => ({ url, label: config.label(row), href: config.href(row) })),
+      );
+    },
+  };
+}
+
+/** Where the admin edits each image-bearing setting. */
+function settingHref(key: string): string {
+  if (key.startsWith("projectsHero.")) return "/admin/pages/projects";
+  return "/admin/seo/defaults";
+}
+
 const projectSelect = { id: true, nameEn: true, nameTh: true };
 const projectLabel = (p: Row) => p.nameEn || p.nameTh;
 const projectHref = (p: Row) => `/admin/projects/${p.id}/edit`;
@@ -339,6 +378,118 @@ const SOURCES: Source[] = [
     label: (e) => e.titleEn || e.titleTh,
     href: (e) => `/admin/events/${e.id}/edit`,
   }),
+
+  /*
+    Everything below was missing until 2026-10-22, so the library reported
+    these files as unused and let them be deleted from Spaces for good while
+    a live page still showed them: the project gallery, every progress
+    photo, share images, the About hero, CTA backgrounds, the logo, and
+    images inside article bodies. tests/media-usage-coverage.test.ts now
+    fails when a URL field is added to the schema and not listed here.
+  */
+  arrayColumn({
+    kind: "project",
+    note: "gallery",
+    field: "gallery",
+    find: (args) => prisma.project.findMany(args),
+    select: projectSelect,
+    label: projectLabel,
+    href: projectHref,
+  }),
+  arrayColumn({
+    kind: "unitType",
+    note: "gallery",
+    field: "gallery",
+    find: (args) => prisma.projectUnitType.findMany(args),
+    select: { id: true, name: true, projectId: true },
+    label: (u) => u.name,
+    href: (u) => `/admin/projects/${u.projectId}/unit-types`,
+  }),
+  arrayColumn({
+    kind: "progressUpdate",
+    note: "image",
+    field: "images",
+    find: (args) => prisma.projectProgress.findMany(args),
+    select: { id: true, month: true, year: true, projectId: true },
+    label: (p) => `${p.month}/${p.year}`,
+    href: (p) => `/admin/projects/${p.projectId}/progress`,
+  }),
+  column({
+    kind: "project",
+    note: "ogImage",
+    field: "ogImageUrl",
+    find: (args) => prisma.project.findMany(args),
+    select: projectSelect,
+    label: projectLabel,
+    href: (p) => `/admin/projects/${p.id}/seo`,
+  }),
+  column({
+    kind: "news",
+    note: "ogImage",
+    field: "ogImageUrl",
+    find: (args) => prisma.newsArticle.findMany(args),
+    select: { id: true, titleEn: true, titleTh: true },
+    label: (n) => n.titleEn || n.titleTh,
+    href: (n) => `/admin/news/${n.id}/edit`,
+  }),
+  column({
+    kind: "event",
+    note: "ogImage",
+    field: "ogImageUrl",
+    find: (args) => prisma.event.findMany(args),
+    select: { id: true, titleEn: true, titleTh: true },
+    label: (e) => e.titleEn || e.titleTh,
+    href: (e) => `/admin/events/${e.id}/edit`,
+  }),
+  column({
+    kind: "companyProfile",
+    note: "aboutHero",
+    field: "aboutHeroImageUrl",
+    find: (args) => prisma.companyProfile.findMany(args),
+    select: { id: true },
+    label: () => "About page hero",
+    href: () => "/admin/pages/about/story",
+  }),
+  column({
+    kind: "siteCta",
+    note: "background",
+    field: "backgroundImageUrl",
+    find: (args) => prisma.siteCtaBlock.findMany(args),
+    select: { id: true, name: true },
+    label: (b) => b.name,
+    href: () => "/admin/pages/home/cta",
+  }),
+  column({
+    kind: "siteSetting",
+    note: "setting",
+    field: "value",
+    find: (args) => prisma.siteSetting.findMany(args),
+    select: { key: true },
+    label: (row) => row.key,
+    href: (row) => settingHref(row.key),
+  }),
+  {
+    // An image placed inside an article's body. The URL is in the HTML, so
+    // this is a substring match, one OR term per URL in the batch.
+    kind: "news",
+    note: "bodyImage",
+    findMany: async (urls) => {
+      if (urls.length === 0) return [];
+      const rows = await prisma.newsArticleTranslation.findMany({
+        where: { OR: urls.map((url) => ({ content: { contains: url } })) },
+        select: { content: true, locale: true, article: { select: { id: true, titleEn: true, titleTh: true } } },
+      });
+      return rows.flatMap((row: Row) =>
+        urls
+          .filter((url) => String(row.content ?? "").includes(url))
+          .map((url) => ({
+            url,
+            label: `${row.article.titleEn || row.article.titleTh} (${row.locale})`,
+            href: `/admin/news/${row.article.id}/edit`,
+          })),
+      );
+    },
+  },
 ];
 
 /**

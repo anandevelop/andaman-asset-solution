@@ -3840,7 +3840,9 @@
         "corporateService": "Corporate service",
         "eBrochure": "E-brochure",
         "news": "News article",
-        "event": "Event"
+        "event": "Event",
+        "siteCta": "CTA block",
+        "siteSetting": "Site setting"
       },
       "copyLink": "Copy link",
       "copied": "Copied",

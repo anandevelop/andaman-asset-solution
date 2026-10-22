@@ -19,7 +19,7 @@ import { revalidatePath } from "next/cache";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
-import { deleteS3Object } from "@/lib/s3";
+import { deleteS3Object, objectKeyFromUrl } from "@/lib/s3";
 import { findMediaUsage, isMediaUrlInUse, type MediaUsageRef } from "@/lib/media-usage";
 import { getMediaLibrary, type MediaLibraryData } from "@/lib/media";
 import { mediaCreateSchema, mediaDeleteSchema, mediaMetaSchema } from "@/lib/validations";
@@ -45,7 +45,15 @@ export async function createMedia(
   const parsed = mediaCreateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "VALIDATION_FAILED" };
 
-  const { url, key, mimeType, width, height, sizeBytes, tags } = parsed.data;
+  const { url, mimeType, width, height, sizeBytes, tags } = parsed.data;
+
+  /*
+    The object key comes from the URL, not from the browser. deleteMedia
+    deletes by key, and a client-sent key that named a different, live
+    object would have deleted that one instead. A URL that is not in our
+    bucket has no key, so deleting its row never touches the bucket.
+  */
+  const key = objectKeyFromUrl(url);
 
   const media = await prisma.media.create({
     data: {
@@ -108,14 +116,17 @@ export async function deleteMedia(locale: string, input: unknown): Promise<Actio
     return { ok: false, error: "IN_USE" };
   }
 
-  if (media.key) {
+  // Re-derived from the URL rather than trusting the stored key: rows saved
+  // before createMedia stopped accepting the client's key may not match.
+  const objectKey = objectKeyFromUrl(media.url);
+  if (objectKey) {
     try {
-      await deleteS3Object(media.key);
+      await deleteS3Object(objectKey);
     } catch (error) {
       // Best-effort — see deleteS3Object's own comment. The library entry
       // still goes away; an orphaned object is a smaller problem than a
       // row nobody can ever remove.
-      console.error("[deleteMedia] failed to delete S3 object", media.key, error);
+      console.error("[deleteMedia] failed to delete S3 object", objectKey, error);
     }
   }
 
