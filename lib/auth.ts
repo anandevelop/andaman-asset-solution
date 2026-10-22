@@ -38,6 +38,9 @@ import { notifyAdmins } from "@/lib/notifications";
 // header for the full reasoning.
 export { hasRole } from "@/lib/role-rank";
 
+/** The jwt refresh's "the query failed", apart from "no such user". */
+const UNREACHABLE = Symbol("database unreachable");
+
 /** How often to re-validate the role/isActive flag against the database. */
 const ROLE_REFRESH_MS = 5 * 60_000;
 
@@ -304,11 +307,21 @@ export const authOptions: NextAuthOptions = {
               credentialsChangedAt: true,
             },
           })
-          .catch(() => null);
+          .catch((): typeof UNREACHABLE => UNREACHABLE);
+
+        /*
+          Three answers, not two. A deleted user comes back as null, and
+          that used to be read as "database unreachable, keep the claims":
+          a staff member who was deleted rather than deactivated kept their
+          session, refreshed it every five minutes, and stayed signed in for
+          as long as they kept using it. Only a failed query keeps the
+          claims now.
+        */
+        if (fresh === null) return {};
 
         // Database unreachable → keep the existing claims rather than
         // locking every editor out of the CMS.
-        if (fresh) {
+        if (fresh !== UNREACHABLE) {
           if (!fresh.isActive) return {};
 
           /*
