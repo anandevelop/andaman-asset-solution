@@ -16,6 +16,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { getTranslation } from "@/lib/get-translation";
+import { localizeHref } from "@/lib/localize-href";
 
 export type HeroStoryMediaType = "IMAGE" | "VIDEO";
 
@@ -63,7 +64,9 @@ function toSlide(row: Row, locale: string): HeroStorySlide {
     mediaUrl: row.mediaUrl,
     posterImageUrl: row.posterImageUrl,
     durationSeconds: row.durationSeconds,
-    ctaUrl: row.ctaUrl,
+    // In the reader's language: an editor's "/projects/x" sent /en readers
+    // to the Thai page (lib/localize-href.ts).
+    ctaUrl: row.ctaUrl ? localizeHref(row.ctaUrl, locale) : null,
     label: t?.label ?? null,
     caption: t?.caption ?? null,
     tagline: t?.tagline ?? null,
