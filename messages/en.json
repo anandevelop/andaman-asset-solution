@@ -2900,6 +2900,8 @@
         "metaPixelIdHint": "From Facebook Events Manager — just the number, e.g. 1234567890123456. Not the full script.",
         "googleSiteVerification": "Google Search Console verification code",
         "googleSiteVerificationHint": "In Search Console, choose the \"HTML tag\" verification method and paste only the content=\"...\" value here, not the whole tag.",
+        "facebookDomainVerification": "Meta (Facebook) domain verification code",
+        "facebookDomainVerificationHint": "In Meta Business settings → Brand safety → Domains, choose \"Meta-tag verification\" and paste only the content=\"...\" value here. Do not remove it once verified: Meta re-checks it.",
         "gaMeasurementId": "Google Analytics 4 measurement ID",
         "gaMeasurementIdHint": "From GA4 → Admin → Data streams. Starts with G-, e.g. G-ABCD123456. Not a UA- or GTM- ID.",
         "favicon": "Favicon",

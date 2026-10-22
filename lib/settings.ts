@@ -79,6 +79,7 @@ export const SETTING_KEYS = [
   "analytics.metaPixelId",
   "analytics.gaMeasurementId",
   "analytics.googleSiteVerification",
+  "analytics.facebookDomainVerification",
   /* The banner atop /projects, edited at /admin/pages/projects. Empty is
      the default and means "the built-in": projects.eyebrow/title/subtitle
      from messages/, and the first published project's photograph with its
@@ -188,6 +189,9 @@ export type SiteSettings = {
     /** The `content` value of Google's `google-site-verification` meta
      *  tag — just the code, not the whole tag. */
     googleSiteVerification: string;
+    /** The `content` value of Meta's `facebook-domain-verification` meta
+     *  tag (Business settings → Brand safety → Domains). */
+    facebookDomainVerification: string;
   };
   /** Each field "" when not overridden — see SETTING_KEYS. */
   projectsHero: {
@@ -248,6 +252,13 @@ export function defaultSettings(): Record<SettingKey, string> {
     "analytics.metaPixelId": process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "",
     "analytics.gaMeasurementId": process.env.NEXT_PUBLIC_GA_ID ?? "",
     "analytics.googleSiteVerification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
+    /* Meta's code for andamanassetsolution.com, added in Business settings
+       on 2026-10-22 (domain id 1121648477085833). A default rather than "",
+       so the tag is on every page from the first deploy: Meta re-checks it
+       and un-verifies the domain if it ever disappears. Public by nature,
+       since it is printed in every page's <head>. */
+    "analytics.facebookDomainVerification":
+      process.env.FACEBOOK_DOMAIN_VERIFICATION ?? "oudjw83qhphw24adlen93zljrofro7",
     "projectsHero.imageUrl": "",
     "projectsHero.imageCaption": "",
     "projectsHero.eyebrowTh": "",
@@ -426,6 +437,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       metaPixelId: values["analytics.metaPixelId"],
       gaMeasurementId: values["analytics.gaMeasurementId"],
       googleSiteVerification: values["analytics.googleSiteVerification"],
+      facebookDomainVerification: values["analytics.facebookDomainVerification"],
     },
     projectsHero: {
       imageUrl: values["projectsHero.imageUrl"],

@@ -2900,6 +2900,8 @@
         "metaPixelIdHint": "来自 Facebook Events Manager，只需填写数字编号，例如 1234567890123456，不要粘贴完整脚本代码。",
         "googleSiteVerification": "Google Search Console 验证代码",
         "googleSiteVerificationHint": "在 Search Console 中选择「HTML 标记」验证方式，只需粘贴 content=\"...\" 中的值，不要粘贴整个标记。",
+        "facebookDomainVerification": "Meta（Facebook）域名验证代码",
+        "facebookDomainVerificationHint": "在 Meta 商务设置 → 品牌安全 → 域名中选择「Meta 标签验证」，只需粘贴 content=\"...\" 中的值。验证后请勿删除：Meta 会定期复查。",
         "gaMeasurementId": "Google Analytics 4 衡量 ID",
         "gaMeasurementIdHint": "在 GA4 →「管理」→「数据流」中获取。以 G- 开头，例如 G-ABCD123456，而非 UA- 或 GTM- 开头的 ID。",
         "favicon": "网站图标（Favicon）",

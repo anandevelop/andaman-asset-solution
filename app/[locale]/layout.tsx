@@ -207,9 +207,16 @@ export async function generateMetadata(
       : { index: false, follow: false },
     // undefined (not "") when unset — Next omits the meta tag entirely
     // rather than rendering content="".
-    verification: analytics.googleSiteVerification
-      ? { google: analytics.googleSiteVerification }
-      : undefined,
+    verification:
+      analytics.googleSiteVerification || analytics.facebookDomainVerification
+        ? {
+            ...(analytics.googleSiteVerification ? { google: analytics.googleSiteVerification } : {}),
+            // Meta's domain check: <meta name="facebook-domain-verification">.
+            ...(analytics.facebookDomainVerification
+              ? { other: { "facebook-domain-verification": analytics.facebookDomainVerification } }
+              : {}),
+          }
+        : undefined,
   };
 }
 

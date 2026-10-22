@@ -1790,6 +1790,7 @@ export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> 
   // Google's token had no shape check at all before — only the action's
   // 500-character cap.
   "analytics.googleSiteVerification": verificationToken,
+  "analytics.facebookDomainVerification": verificationToken,
 
   "branding.faviconUrl": imageSetting(
     ICON_EXT,

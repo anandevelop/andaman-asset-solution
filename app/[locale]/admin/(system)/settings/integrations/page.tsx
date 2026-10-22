@@ -68,6 +68,11 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
           t("settings.fields.googleSiteVerification"),
           t("settings.fields.googleSiteVerificationHint"),
         ),
+        field(
+          "analytics.facebookDomainVerification",
+          t("settings.fields.facebookDomainVerification"),
+          t("settings.fields.facebookDomainVerificationHint"),
+        ),
       ],
     },
   ];

@@ -2900,6 +2900,8 @@
         "metaPixelIdHint": "Из Facebook Events Manager — только цифровой ID, например 1234567890123456. Не вставляйте весь скрипт.",
         "googleSiteVerification": "Код подтверждения Google Search Console",
         "googleSiteVerificationHint": "В Search Console выберите способ подтверждения «HTML-тег» и вставьте сюда только значение content=\"...\", а не весь тег.",
+        "facebookDomainVerification": "Код подтверждения домена Meta (Facebook)",
+        "facebookDomainVerificationHint": "В настройках Meta Business → Безопасность бренда → Домены выберите «Подтверждение через метатег» и вставьте сюда только значение content=\"...\". Не удаляйте после подтверждения: Meta проверяет его повторно.",
         "gaMeasurementId": "Идентификатор Google Analytics 4",
         "gaMeasurementIdHint": "GA4 → «Администратор» → «Потоки данных». Начинается с G-, например G-ABCD123456, а не с UA- или GTM-.",
         "favicon": "Иконка сайта (favicon)",

@@ -2900,6 +2900,8 @@
         "metaPixelIdHint": "นำมาจาก Facebook Events Manager ใส่เฉพาะตัวเลข เช่น 1234567890123456 ไม่ต้องใส่โค้ดสคริปต์ทั้งหมด",
         "googleSiteVerification": "รหัสยืนยัน Google Search Console",
         "googleSiteVerificationHint": "ใน Search Console เลือกวิธียืนยันแบบ \"HTML tag\" แล้วคัดลอกเฉพาะค่าใน content=\"...\" มาใส่ตรงนี้ ไม่ต้องใส่ทั้งแท็ก",
+        "facebookDomainVerification": "รหัสยืนยันโดเมนของ Meta (Facebook)",
+        "facebookDomainVerificationHint": "ใน Meta Business Settings → ความปลอดภัยของแบรนด์ → โดเมน เลือกยืนยันแบบ \"Meta-tag\" แล้วคัดลอกเฉพาะค่าใน content=\"...\" มาใส่ตรงนี้ ห้ามลบหลังยืนยันแล้ว เพราะ Meta จะตรวจซ้ำเป็นระยะ",
         "gaMeasurementId": "Google Analytics 4 measurement ID",
         "gaMeasurementIdHint": "ดูได้จาก GA4 → Admin → Data streams ขึ้นต้นด้วย G- เช่น G-ABCD123456 (ไม่ใช่ UA- หรือ GTM-)",
         "favicon": "Favicon",
