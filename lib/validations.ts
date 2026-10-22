@@ -1871,3 +1871,16 @@ export const nearbyListSchema = z
     }),
   )
   .max(12);
+
+/**
+ * The honeypot's value from a submit event. The forms' client schemas do
+ * not include `company`, so react-hook-form never sends it; before this was
+ * read off the form, the input reached no request at all and the API's
+ * `if (data.company)` trap caught nothing.
+ */
+export function honeypotValue(event?: { target?: unknown } | null): string {
+  const form = event?.target;
+  if (typeof FormData === "undefined" || !(form instanceof HTMLFormElement)) return "";
+  const value = new FormData(form).get("company");
+  return typeof value === "string" ? value : "";
+}

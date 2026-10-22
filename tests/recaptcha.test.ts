@@ -114,15 +114,13 @@ describe("verifyRecaptcha — allow", () => {
 });
 
 describe("verifyRecaptcha — deny", () => {
-  it("denies a missing token", async () => {
-    const outcome = await verifyRecaptcha("", "lead_form");
-
-    expect(outcome).toMatchObject({ allowed: false, reason: "invalid_token" });
+  it("lets a submission with no token through, as a logged skip", async () => {
+    // The visitor's browser could not load Google's script (blocker,
+    // timeout, mainland China). Refusing them lost real enquiries.
+    expect(await verifyRecaptcha("", "lead_form")).toMatchObject({ allowed: true, reason: "skipped", detail: "no_token" });
+    expect(await verifyRecaptcha(undefined, "lead_form")).toMatchObject({ allowed: true, reason: "skipped" });
   });
 
-  it("denies an undefined token", async () => {
-    expect((await verifyRecaptcha(undefined, "lead_form")).allowed).toBe(false);
-  });
 
   it("denies a score below the threshold", async () => {
     mockVerify({ success: true, score: 0.2, action: "lead_form" });

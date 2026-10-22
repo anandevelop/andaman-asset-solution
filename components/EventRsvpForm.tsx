@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import {
   eventRegistrationSchema,
+  honeypotValue,
   type EventRegistrationInput,
 } from "@/lib/validations";
 import { loadRecaptcha, useRecaptchaToken } from "@/components/RecaptchaProvider";
@@ -89,7 +90,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
 
   const soldOut = remaining !== null && remaining <= 0;
 
-  const onSubmit = async (data: EventRegistrationInput) => {
+  const onSubmit = async (data: EventRegistrationInput, event?: React.BaseSyntheticEvent) => {
     setStatus("submitting");
 
     try {
@@ -101,6 +102,9 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
         body: JSON.stringify({
           ...data,
           recaptchaToken,
+          // The honeypot, read off the submitted form: it is not in this
+          // form's schema, so react-hook-form would never send it.
+          company: honeypotValue(event),
           consentVersion: siteConfig.legal.consentVersion,
           // Which language to send the confirmation email in — the page
           // the visitor is actually looking at.
@@ -217,7 +221,9 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           )}
         </AnimatePresence>
 
-        {/* Honeypot — hidden from people, irresistible to bots. */}
+        {/* Honeypot — hidden from people, irresistible to bots. onSubmit
+            reads it off the form (honeypotValue), so a filled value reaches
+            the server's check; before, it never left the page. */}
         <div aria-hidden className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
           <label htmlFor="rsvp-company">Company</label>
           <input id="rsvp-company" type="text" tabIndex={-1} autoComplete="off" name="company" />

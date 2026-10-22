@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations, useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
-import { leadInquirySchema, type LeadInquiryInput } from "@/lib/validations";
+import { honeypotValue, leadInquirySchema, type LeadInquiryInput } from "@/lib/validations";
 import {
   DEFAULT_PHONE_COUNTRY,
   detectFromInternational,
@@ -364,7 +364,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
     void checkEmail(email.trim());
   }
 
-  const onSubmit = async (data: LeadInquiryInput) => {
+  const onSubmit = async (data: LeadInquiryInput, event?: React.BaseSyntheticEvent) => {
     // A browser autofilling name/email/phone together can submit without
     // ever firing blur on the email field — onEmailBlur's own idle/checked
     // guard makes this a no-op for a value already checked, so it costs
@@ -409,6 +409,9 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
           ...utm,
           source,
           recaptchaToken,
+          // The honeypot, read off the submitted form: it is not in this
+          // form's schema, so react-hook-form would never send it.
+          company: honeypotValue(event),
           // Bind the PDPA policy version the visitor consented to.
           consentVersion: siteConfig.legal.consentVersion,
           // Real signals, not typed by the visitor — see
@@ -591,7 +594,10 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
           attribute, which is how the slug survives the reset above. */}
       <input type="hidden" defaultValue={projectSlug} {...register("projectSlug")} />
 
-      {/* Honeypot — hidden from humans, ignored by the API when filled. */}
+      {/* Honeypot — hidden from humans; the API drops a submission that
+          fills it. onSubmit reads it off the form (honeypotValue): it is
+          not in the client schema, and before that it reached no request,
+          so the server's check never saw a value. */}
       <input
         type="text"
         name="company"

@@ -89,8 +89,19 @@ export async function verifyRecaptcha(
     return { allowed: true, reason: "skipped", detail: "not_configured" };
   }
 
+  /*
+    No token is a visitor whose browser never got Google's script: an ad or
+    tracker blocker, the 5-second load timeout on a slow phone, or mainland
+    China, where www.google.com does not load. RecaptchaProvider sends null
+    in exactly those cases and says the server lets them through; the server
+    answered 403 instead, and those enquiries were lost, the Chinese-speaking
+    ones most of all. They pass now, logged as a skip. What still stands in
+    a bot's way is the honeypot and the per-IP rate limit, which can no
+    longer be dodged by forging X-Forwarded-For (lib/rate-limit.ts). A token
+    that is present and bad is still refused below.
+  */
   if (!token || token.trim().length === 0) {
-    return { allowed: false, reason: "invalid_token", codes: ["missing-input-response"] };
+    return { allowed: true, reason: "skipped", detail: "no_token" };
   }
 
   const body = new URLSearchParams({ secret, response: token });
