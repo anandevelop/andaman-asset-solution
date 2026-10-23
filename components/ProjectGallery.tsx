@@ -248,6 +248,10 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               <X size={20} aria-hidden />
             </button>
 
+            {/* z-10: on a phone the photo frame below spans the full width and,
+                coming later in the DOM, sat on top of both arrows, so a tap on an
+                arrow landed on the photo. The darker fill keeps them visible over a
+                bright photo now that they are drawn above it. */}
             <button
               type="button"
               onClick={(event) => {
@@ -255,7 +259,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 showPrev();
               }}
               aria-label={labels.previous}
-              className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:left-6"
+              className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:left-6"
             >
               <ChevronLeft size={20} aria-hidden />
             </button>
@@ -267,7 +271,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 showNext();
               }}
               aria-label={labels.next}
-              className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-6"
+              className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:right-6"
             >
               <ChevronRight size={20} aria-hidden />
             </button>
