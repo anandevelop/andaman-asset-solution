@@ -230,7 +230,7 @@ export async function getPublishedArticlePage(
   const pageCount = Math.max(1, Math.ceil(total / perPage));
   // Clamped rather than trusted: "?page=99" on a two-page list should show
   // the last page, not an empty one with no explanation.
-  const page = Math.min(Math.max(1, options.page ?? 1), pageCount);
+  const page = Math.min(Math.max(1, Math.floor(options.page ?? 1) || 1), pageCount);
 
   const rows = await safeQuery(
     "newsArticle.findMany(page)",
@@ -343,4 +343,28 @@ export async function getArticleCategories(): Promise<string[]> {
   );
 
   return rows.map((row) => row.category).filter((c): c is string => Boolean(c));
+}
+
+type QueryValue = string | string[] | undefined;
+
+/**
+ * /news's query string, one value per key.
+ *
+ * Next passes a repeated key as an array: "?q=a&q=b" made `.trim()` throw,
+ * and "?category=a&category=b" put an array into Prisma's where. Neither is
+ * a connection error, so safeQuery rightly let them through, and the page
+ * answered 500 on the live site. "?page=1.5" became a fractional skip.
+ */
+export function parseNewsQuery(query: { category?: QueryValue; q?: QueryValue; page?: QueryValue }): {
+  category: string | undefined;
+  search: string;
+  page: number;
+} {
+  const first = (value: QueryValue) => (Array.isArray(value) ? value[0] : value);
+  const page = Math.floor(Number(first(query.page)));
+  return {
+    category: first(query.category)?.trim() || undefined,
+    search: first(query.q)?.trim() ?? "",
+    page: Number.isFinite(page) && page >= 1 ? page : 1,
+  };
 }

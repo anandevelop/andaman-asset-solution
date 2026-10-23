@@ -32,7 +32,7 @@ import NewsSearch from "@/components/NewsSearch";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
-import { getArticleCategories, getPublishedArticlePage } from "@/lib/news";
+import { getArticleCategories, getPublishedArticlePage, parseNewsQuery } from "@/lib/news";
 import { isDatabaseOffline } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
 import EditableItem from "@/components/edit/EditableItem";
@@ -42,7 +42,8 @@ export const revalidate = 300;
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string; q?: string; page?: string }>;
+  // string[] when a key repeats (?q=a&q=b): Next passes every value.
+  searchParams: Promise<{ category?: string | string[]; q?: string | string[]; page?: string | string[] }>;
 };
 
 export async function generateMetadata(props: {
@@ -64,9 +65,7 @@ export default async function NewsPage(props: Props) {
 
   setRequestLocale(locale);
 
-  const category = searchParams.category;
-  const search = searchParams.q?.trim() ?? "";
-  const requestedPage = Number(searchParams.page);
+  const { category, search, page: requestedPage } = parseNewsQuery(searchParams);
 
   const [t, tNav, page, categories] = await Promise.all([
     getTranslations("news"),
@@ -74,7 +73,7 @@ export default async function NewsPage(props: Props) {
     getPublishedArticlePage(locale, {
       category,
       search,
-      page: Number.isFinite(requestedPage) ? requestedPage : 1,
+      page: requestedPage,
     }),
     getArticleCategories(),
   ]);
