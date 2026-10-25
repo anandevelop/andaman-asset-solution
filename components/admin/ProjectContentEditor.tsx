@@ -23,7 +23,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -146,14 +146,23 @@ export default function ProjectContentEditor({
   const [previewNonce, setPreviewNonce] = useState(0);
   const [pending, startTransition] = useTransition();
 
-  // What was last written to the database, so "dirty" survives a save
-  // without needing the server to re-render the whole page.
-  const savedValues = useRef<ContentValues>(targetValues);
+  /*
+    What was last written to the database, so "dirty" survives a save
+    without needing the server to re-render the whole page.
+
+    State, not a ref. It was a ref, and dirtyFields below only re-ran when
+    `values` changed, so a save updated the ref and left everything
+    computed from it stale: the unsaved bar stayed up, the localStorage copy
+    stayed, and the beforeunload prompt stayed armed after a successful
+    save, so the tab could not be closed without "Leave site?" (reported
+    2026-10-24). Saving now changes `savedValues`, which re-computes
+    isDirty, which disarms the prompt.
+  */
+  const [savedValues, setSavedValues] = useState<ContentValues>(targetValues);
 
   const dirtyFields = useMemo(
-    // eslint-disable-next-line react-hooks/refs -- comparing against the last saved values, which is a ref precisely because changing it must not re-render.
-    () => CONTENT_FIELDS.filter((field) => values[field] !== savedValues.current[field]),
-    [values],
+    () => CONTENT_FIELDS.filter((field) => values[field] !== savedValues[field]),
+    [values, savedValues],
   );
   const isDirty = dirtyFields.length > 0;
 
@@ -214,7 +223,7 @@ export default function ProjectContentEditor({
         return;
       }
 
-      savedValues.current = { ...values };
+      setSavedValues({ ...values });
       setSavedAt(new Date(result.savedAt));
       setRestored(false);
       try {
@@ -231,7 +240,7 @@ export default function ProjectContentEditor({
 
   const discard = () => {
     if (!window.confirm(labels.confirmDiscard)) return;
-    setValues({ ...savedValues.current });
+    setValues({ ...savedValues });
     setRestored(false);
     try {
       window.localStorage.removeItem(storageKey);
