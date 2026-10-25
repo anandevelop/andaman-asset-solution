@@ -168,6 +168,7 @@ export default async function AdminProjectSeoPage(props: Props) {
           noIndexHint: t("pageSeo.noIndexHint"),
           save: t("common.save"),
           saved: t("pageSeo.saved"),
+          unsaved: t("pages.copy.status.unsaved"),
           error: t("common.error"),
           canonicalNotAbsolute: t("pageSeo.canonicalNotAbsolute"),
           serpTitle: t("pageSeo.serpTitle"),

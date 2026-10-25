@@ -84,6 +84,8 @@ type Props = {
     noIndexHint: string;
     save: string;
     saved: string;
+    /** On a language button with edits not yet saved. */
+    unsaved: string;
     error: string;
     canonicalNotAbsolute: string;
     serpTitle: string;
@@ -120,6 +122,22 @@ export default function PageSeoEditor({
   const [drafts, setDrafts] = useState<Record<string, LocaleSeo>>(() =>
     Object.fromEntries(perLocale.map((row) => [row.locale, row])),
   );
+  /* What the server last confirmed, per language. A language whose draft
+     differs from it has unsaved edits: its button carries a dot, and Save
+     sends it. */
+  const [saved, setSaved] = useState<Record<string, LocaleSeo>>(() =>
+    Object.fromEntries(perLocale.map((row) => [row.locale, row])),
+  );
+  const isDirty = (code: string) => {
+    const a = drafts[code];
+    const b = saved[code];
+    return (
+      a.title !== b.title ||
+      a.description !== b.description ||
+      a.noIndex !== b.noIndex ||
+      a.keywords.join("\u0000") !== b.keywords.join("\u0000")
+    );
+  };
 
   const [ogImageUrl, setOgImageUrl] = useState(initialOgImage);
   const [canonicalUrl, setCanonicalUrl] = useState(initialCanonical);
@@ -148,24 +166,44 @@ export default function PageSeoEditor({
     setKeywordDraft("");
   };
 
+  /*
+    Every language with unsaved edits, not just the one on screen.
+
+    It used to send only `active`. Edits made in another language stayed in
+    this component's state, so they looked entered, and were dropped without
+    a word: the Thai copy of Residence Prime and three languages of Trinity
+    Village were lost that way on 2026-10-24 and typed in again by hand. A
+    language that fails stops the save on that language, with its tab opened
+    and the others left as they are.
+  */
   const save = () => {
     setStatus("idle");
     setErrorKey(null);
 
-    startTransition(async () => {
-      const localeResult = await saveLocaleSeo(adminLocale, {
-        projectId,
-        locale: active,
-        metaTitle: current.title,
-        metaDescription: current.description,
-        noIndex: current.noIndex,
-        targetKeywords: current.keywords,
-      });
+    // The one on screen first, then the rest in button order.
+    const pendingLocales = [active, ...perLocale.map((row) => row.locale).filter((code) => code !== active)].filter(
+      (code) => code === active || isDirty(code),
+    );
 
-      if (!localeResult.ok) {
-        setStatus("error");
-        setErrorKey(localeResult.error);
-        return;
+    startTransition(async () => {
+      for (const code of pendingLocales) {
+        const draft = drafts[code];
+        const localeResult = await saveLocaleSeo(adminLocale, {
+          projectId,
+          locale: code,
+          metaTitle: draft.title,
+          metaDescription: draft.description,
+          noIndex: draft.noIndex,
+          targetKeywords: draft.keywords,
+        });
+
+        if (!localeResult.ok) {
+          setActive(code);
+          setStatus("error");
+          setErrorKey(localeResult.error);
+          return;
+        }
+        setSaved((all) => ({ ...all, [code]: draft }));
       }
 
       const projectResult = await saveProjectSeo(adminLocale, {
@@ -229,6 +267,12 @@ export default function PageSeoEditor({
                   ].join(" ")}
                 >
                   {row.label}
+                  {isDirty(row.locale) && (
+                    <span
+                      className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-adm-warning align-middle"
+                      aria-label={labels.unsaved}
+                    />
+                  )}
                 </button>
               );
             })}
