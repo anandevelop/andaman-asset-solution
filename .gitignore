@@ -33,3 +33,6 @@ _claude_preview*.webp
 .gemini/
 .claude/
 .aider*
+
+# Claude Cowork scratch output — never part of the app.
+/Claude outputs/
