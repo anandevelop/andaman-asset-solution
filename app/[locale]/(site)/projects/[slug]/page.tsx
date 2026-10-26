@@ -41,6 +41,7 @@ import { robotsMetadata } from "@/lib/indexing";
 import EditableSection from "@/components/edit/EditableSection";
 import EditTarget from "@/components/edit/EditTarget";
 import { ITEM_EDIT_HREF, projectSectionLinks } from "@/lib/edit-mode";
+import TrackProjectView from "@/components/TrackProjectView";
 
 // Every slug is resolved on demand (nothing is prerendered at build — see
 // app/[locale]/layout.tsx), cached by ISR after its first request, and one
@@ -471,6 +472,9 @@ export default async function ProjectPage(props: Props) {
           height (not h-screen/100vh) so mobile Safari's collapsing address
           bar doesn't leave a gap the moment the page settles. Desktop's
           sm:h-[88vh] is untouched — its stat card sits well clear already. */}
+      {/* Meta ViewContent / GA project_view, once consent allows it. */}
+      <TrackProjectView projectSlug={project.slug} projectName={project.name} />
+
       <EditableSection links={editLinks.hero}>
       <section className="relative flex h-dvh min-h-[560px] w-full items-end overflow-hidden sm:h-[88vh]">
         {heroIsVideo ? (

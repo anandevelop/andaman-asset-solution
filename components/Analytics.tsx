@@ -38,7 +38,7 @@
 import Script from "next/script";
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { GA_ID, META_PIXEL_ID, trackPageview } from "@/lib/analytics";
+import { GA_ID, META_PIXEL_ID, isStaffPath, trackPageview } from "@/lib/analytics";
 import { useCookieConsent } from "@/lib/cookie-consent";
 
 /**
@@ -79,9 +79,12 @@ type Props = {
 
 export default function Analytics({ gaId = GA_ID, metaPixelId = META_PIXEL_ID }: Props) {
   const { consent } = useCookieConsent();
+  // Never on staff pages: see isStaffPath in lib/analytics.ts.
+  const staff = isStaffPath(usePathname() ?? "");
   const analyticsAllowed = Boolean(consent?.analytics);
   const marketingAllowed = Boolean(consent?.marketing);
 
+  if (staff) return null;
   if ((!gaId || !analyticsAllowed) && (!metaPixelId || !marketingAllowed)) return null;
 
   return (

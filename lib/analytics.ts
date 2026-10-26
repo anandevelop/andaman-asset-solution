@@ -64,9 +64,24 @@ const META_STANDARD: Partial<Record<AnalyticsEvent, string>> = {
   project_view: "ViewContent",
 };
 
+/**
+ * The back office and the sign-in page are never measured.
+ *
+ * GA and the Pixel live in the root layout, so a staff member who had once
+ * accepted cookies on the public site was counted on every admin page too:
+ * the Pixel's audiences filled with our own team, and GA received admin
+ * paths and query strings carrying lead ids and searches. Checked here as
+ * well as in components/Analytics.tsx, because a script loaded on a public
+ * page stays loaded after a client-side move into the admin.
+ */
+export function isStaffPath(pathname: string): boolean {
+  return /^(?:\/[a-z]{2})?\/(?:admin|login)(?:\/|$)/.test(pathname);
+}
+
 function canTrack(): boolean {
   return (
     typeof window !== "undefined" &&
+    !isStaffPath(window.location.pathname) &&
     (typeof window.gtag === "function" || typeof window.fbq === "function")
   );
 }
@@ -151,16 +166,25 @@ export function trackRsvp(params: { eventId: string }): void {
   });
 }
 
-export function trackProjectView(params: { slug: string; name: string }): void {
-  track("project_view", { content_ids: params.slug, content_name: params.name });
-}
-
 export function trackLineClick(location: string): void {
   track("line_click", { location });
 }
 
 export function trackPhoneClick(location: string): void {
   track("phone_click", { location });
+}
+
+/**
+ * A project page was viewed: Meta's ViewContent, GA's project_view. What
+ * "people who looked at The Victory" audiences are built from.
+ */
+export function trackProjectView(params: { projectSlug: string; projectName: string }): void {
+  track("project_view", {
+    project: params.projectSlug,
+    content_name: params.projectName,
+    content_category: "project",
+    content_type: "product",
+  });
 }
 
 export function trackWhatsappClick(location: string): void {
