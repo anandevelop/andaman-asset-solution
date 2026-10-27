@@ -85,6 +85,30 @@ export type OpeningWindow = {
   timeZone: string;
 };
 
+/**
+ * The opening window read back out of the hours an editor typed.
+ *
+ * The map's "Open now · closes 18:00" badge used config/site.ts's
+ * hard-coded window (09:00–18:00) while Settings › Contact said
+ * 08:00–18:00, so between eight and nine the office showed as closed.
+ * The typed text is prose in four languages ("Daily 08:00–18:00 (GMT+7)",
+ * "ทุกวัน 08.00 - 18.00 น."), but each carries one HH:MM–HH:MM range,
+ * which is all this needs. The first text that has one wins; none does →
+ * the fallback.
+ */
+export function openingWindowFrom(texts: Array<string | null | undefined>, fallback: OpeningWindow): OpeningWindow {
+  const range = /(\d{1,2})[:.](\d{2})\s*(?:[–—-]|to|ถึง|до|至)\s*(\d{1,2})[:.](\d{2})/i;
+  for (const text of texts) {
+    const match = text?.match(range);
+    if (!match) continue;
+    const [, oh, om, ch, cm] = match.map(Number);
+    if (oh > 23 || ch > 24 || om > 59 || cm > 59) continue;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return { open: `${pad(oh)}:${pad(om)}`, close: `${pad(ch)}:${pad(cm)}`, timeZone: fallback.timeZone };
+  }
+  return fallback;
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;

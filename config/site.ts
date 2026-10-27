@@ -61,7 +61,8 @@ export const siteConfig = {
       zh: "每日 09:00–18:00（GMT+7）",
       ru: "Ежедневно 09:00–18:00 (GMT+7)",
     },
-    /** See officeHours above: the same hours, kept in sync by hand. */
+    /** Fallback only: /contact reads the window out of the hours typed in
+     *  Settings › Contact (lib/map-places.ts openingWindowFrom). */
     openingWindow: { open: "09:00", close: "18:00", timeZone: "Asia/Bangkok" },
 
     /**

@@ -39,7 +39,7 @@ import MapCard, { type MapListGroup } from "@/components/MapCard";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
 import { getPublishedProjects } from "@/lib/projects";
-import { haversineKm, placeEmbedUrl, type LatLng } from "@/lib/map-places";
+import { haversineKm, openingWindowFrom, placeEmbedUrl, type LatLng } from "@/lib/map-places";
 import type { Locale } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -368,7 +368,12 @@ export default async function ContactPage(props: Props) {
               directionsUrl={mapDirectionsUrl}
               groups={mapGroups}
               groupLayout="stacked"
-              openingHours={siteConfig.contact.openingWindow}
+              // From the hours typed in Settings › Contact, not the window in
+              // config/site.ts: see openingWindowFrom.
+              openingHours={openingWindowFrom(
+                [settings.contact.officeHours.en, settings.contact.officeHours[locale as "th"]],
+                siteConfig.contact.openingWindow,
+              )}
               note={tMap("noteStraight")}
               labels={{ viewOnMaps: t("directions"), getDirections: t("mapGetDirections") }}
             />
