@@ -341,9 +341,11 @@ export default async function AboutPage(props: Props) {
           <Reveal delay={0.05}>
             {/* "START" + a trailing dashed rule, then the founding line —
                 the one thing on this page that still isn't a database row,
-                since it isn't a project. formatYear(COMPANY_FOUNDED_YEAR) is
-                the same figure the "years of experience" stat above is
-                computed from, so the two can never contradict each other. */}
+                since it isn't a project. The year is the one the "years of
+                experience" stat above is counted from (Year founded in Pages ›
+                About › Our story, else COMPANY_FOUNDED_YEAR), so the two can
+                never contradict each other. It read the constant alone, and
+                showed 2005 beside a "5+ years" counted from 2021. */}
             <div className="mt-12 flex items-center gap-4">
               <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 {t("timeline.start")}
@@ -354,7 +356,7 @@ export default async function AboutPage(props: Props) {
               />
             </div>
             <p className="mt-2 text-xs text-ink-muted">
-              {t("timeline.origin")} · {formatYear(COMPANY_FOUNDED_YEAR)}
+              {t("timeline.origin")} · {formatYear(companyProfile?.foundedYear ?? COMPANY_FOUNDED_YEAR)}
             </p>
 
             {/* One project photo per entry, grouped by year: a shared bar

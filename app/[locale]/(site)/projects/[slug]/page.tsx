@@ -35,6 +35,7 @@ import { isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { formatNumber } from "@/lib/format";
 import { resolveMapEmbed } from "@/lib/google-maps";
 import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
+import { getCompanyStats } from "@/lib/company-stats";
 import { getNearbyForProject } from "@/lib/nearby";
 import { nearbyTarget } from "@/lib/map-places";
 import { robotsMetadata } from "@/lib/indexing";
@@ -143,7 +144,8 @@ export default async function ProjectPage(props: Props) {
     units,
     attractionCategories,
     awards,
-    facilities
+    facilities,
+    companyStats,
   ] = await Promise.all([
       getTranslations("projects"),
       getTranslations("nav"),
@@ -165,6 +167,8 @@ export default async function ProjectPage(props: Props) {
       // Photo cards for the Facilities section below — supersedes reading
       // project.facilities (the deprecated string array) directly.
       getProjectFacilities(project.id, locale),
+          // Year founded, as set in Pages › About › Our story.
+      getCompanyStats(),
     ]);
 
   // Hero badge ("TYPE R · 398.28 SQ.M") — the first unit type by the same
@@ -262,14 +266,15 @@ export default async function ProjectPage(props: Props) {
   ];
 
   // Small trust-signal row next to the lead form — real figures, not
-  // hardcoded copy: unit count from this project, company founding year
-  // (COMPANY_FOUNDED_YEAR, same shared constant /about's "years" stat and
-  // timeline are built from — content/company-timeline.ts), active award
-  // count company-wide.
+  // hardcoded copy: unit count from this project, the founding year from
+  // Pages › About › Our story (CompanyProfile.foundedYear, the figure
+  // /about counts its years from), active award count company-wide. The
+  // year used to be COMPANY_FOUNDED_YEAR alone, 2005, while the company was
+  // founded in 2021: every project page said "Since 2005".
   const totalUnits = project.totalUnits ?? 0;
   const miniStats = [
     totalUnits > 0 ? t("miniStats.units", { count: totalUnits }) : null,
-    t("miniStats.since", { year: COMPANY_FOUNDED_YEAR }),
+    t("miniStats.since", { year: companyStats.foundedYear ?? COMPANY_FOUNDED_YEAR }),
     awards.length > 0 ? t("miniStats.awards", { count: awards.length }) : null,
   ].filter((value): value is string => value !== null);
 

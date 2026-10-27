@@ -1,12 +1,15 @@
 /**
  * content/company-timeline.ts
  * ─────────────────────────────────────────────────────────────────────────
- * COMPANY_FOUNDED_YEAR (2005) is the single source of truth for the About
- * page's "years of experience" stat, a project page mini-stat ("since
- * {year}"), and formerly the starting point drawn on the About page's
- * "Milestones" timeline — previously a separate, inconsistent constant
- * (2019) with no real basis. Update this one value if the founding year is
- * ever corrected; every reader of it updates with it.
+ * COMPANY_FOUNDED_YEAR is only the fallback now. The founding year is set
+ * in the admin (Pages › About › Our story › Year founded,
+ * CompanyProfile.foundedYear), and the About stats, the About timeline and
+ * the project pages' "Since {year}" all read that first. This constant is
+ * what they show on a database with no company profile yet.
+ *
+ * It was 2005, which was never the founding year: the company was founded
+ * in 2021, and the project pages and the timeline printed 2005 straight
+ * from here even after the admin field said 2021 (corrected 2026-10-27).
  *
  * The timeline itself (project history, one photo per entry) moved to the
  * database — see the Milestone model in schema.prisma, lib/milestones.ts,
@@ -17,4 +20,4 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-export const COMPANY_FOUNDED_YEAR = 2005;
+export const COMPANY_FOUNDED_YEAR = 2021;
