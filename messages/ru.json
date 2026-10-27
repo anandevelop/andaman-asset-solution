@@ -354,10 +354,10 @@
     "specs": {
       "type": "Тип недвижимости",
       "landArea": "Площадь участка",
-      "units": "Вилл",
+      "units": "Виллы",
       "facilities": "Инфраструктура",
-      "villas": "Вилл",
-      "bedrooms": "Спален",
+      "villas": "Виллы",
+      "bedrooms": "Спальни",
       "land": "Участок"
     },
     "miniStats": {
