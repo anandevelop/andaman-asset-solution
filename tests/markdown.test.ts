@@ -15,7 +15,7 @@
 
 import { describe, expect, it } from "vitest";
 import { ALLOWED_ATTR, RICH_TEXT_TAGS, renderMarkdown, sanitizeArticleHtml } from "@/lib/markdown";
-import { markdownToText, readingMinutes, truncate } from "@/lib/markdown-text";
+import { markdownToText, metaDescription, readingMinutes, truncate } from "@/lib/markdown-text";
 
 const SAFE_URI = /^(?:https?:|mailto:|tel:|#|\/)/i;
 
@@ -269,6 +269,34 @@ describe("truncate", () => {
 
     expect(result.endsWith("…")).toBe(true);
     expect(result.length).toBeGreaterThan(10);
+  });
+});
+
+describe("metaDescription", () => {
+  it("ends on the last whole sentence that fits", () => {
+    const source =
+      "We protect your personal data. This notice explains how we collect, use, disclose and retain it, and the rights you have.";
+
+    expect(metaDescription(source, 55)).toBe("We protect your personal data.");
+  });
+
+  it("knows a Chinese full stop", () => {
+    const source = `${"数".repeat(50)}。${"据".repeat(60)}。`;
+
+    expect(metaDescription(source, 80)).toBe(`${"数".repeat(50)}。`);
+  });
+
+  it("falls back to a word cut when the first sentence is the whole budget", () => {
+    const result = metaDescription(`Short. ${"word ".repeat(40)}`, 80);
+
+    expect(result.endsWith("…")).toBe(true);
+    expect(result.length).toBeGreaterThan(40);
+  });
+
+  it("does not leave a comma before the ellipsis", () => {
+    expect(metaDescription(`${"word ".repeat(12)}collect, use, disclose and retain`, 70)).not.toMatch(
+      /,…$/,
+    );
   });
 });
 

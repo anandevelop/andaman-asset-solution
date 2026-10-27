@@ -40,7 +40,25 @@ export function truncate(text: string, max = 160): string {
   if (text.length <= max) return text;
   const cut = text.slice(0, max);
   const lastSpace = cut.lastIndexOf(" ");
-  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+  // Drop a dangling comma or dash too: "we collect, use,…" reads as broken.
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:–—-]+$/, "")}…`;
+}
+
+/**
+ * A meta description: whole sentences when they fit, else truncate().
+ *
+ * A search snippet that stops on "…disclose and retain your…" looks cut
+ * off even on a word boundary, so when at least half the budget ends on a
+ * full stop — Latin or CJK — the description ends there instead.
+ */
+export function metaDescription(text: string, max = 160): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max + 1);
+  let end = -1;
+  for (const m of cut.matchAll(/[.!?](?=\s)|[。！？]/g)) {
+    if (m.index < max) end = m.index + 1;
+  }
+  return end >= max * 0.5 ? text.slice(0, end) : truncate(text, max);
 }
 
 /**

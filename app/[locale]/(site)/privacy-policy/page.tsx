@@ -9,6 +9,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import LegalPolicyPage from "@/components/LegalPolicyPage";
 import { getPrivacyPolicy } from "@/content/privacy-policy";
 import { intlLocale } from "@/lib/format";
+import { metaDescription } from "@/lib/markdown-text";
 import { robotsMetadata } from "@/lib/indexing";
 import { withCopyOverrides } from "@/lib/site-copy";
 import { getSiteSettings } from "@/lib/settings";
@@ -30,7 +31,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: policy.title,
-    description: policy.intro[0].slice(0, 160),
+    // Whole sentences where they fit: slice(0, 160) ended the English
+    // snippet mid-sentence on "…disclose and retain your".
+    description: metaDescription(policy.intro[0]),
     alternates: localizedAlternates(locale, siteConfig.legal.privacyPolicyPath),
     robots: robotsMetadata({ index: true }),
   };
