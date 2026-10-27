@@ -5,7 +5,13 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-const INTL_LOCALE: Record<string, string> = { th: "th-TH", en: "en-US" };
+/*
+  zh and ru were missing, so both fell back to en-US: the Chinese and
+  Russian pages printed "October 14, 2026" and "Sep 2026" on news,
+  progress and the legal pages (reported 2026-10-27). Numbers follow the
+  same tag, so Russian also gets its own separators.
+*/
+const INTL_LOCALE: Record<string, string> = { th: "th-TH", en: "en-US", zh: "zh-CN", ru: "ru-RU" };
 
 export function intlLocale(locale: string): string {
   return INTL_LOCALE[locale] ?? "en-US";

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { intlLocale } from "@/lib/format";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { notFound, redirect } from "next/navigation";
 import { redirectIfMoved } from "@/lib/redirects";
@@ -409,7 +410,7 @@ export default async function ProjectPage(props: Props) {
           url,
           name: project.name,
           description: project.description || project.tagline,
-          inLanguage: locale === "th" ? "th-TH" : "en-US",
+          inLanguage: intlLocale(locale),
           datePosted: undefined,
           image: [project.heroImageUrl, ...project.gallery].filter(Boolean),
           address: {

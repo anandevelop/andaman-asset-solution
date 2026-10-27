@@ -169,7 +169,7 @@ export default async function EventPage(props: Props) {
           // Both required for the Event rich result.
           eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
           eventStatus: "https://schema.org/EventScheduled",
-          inLanguage: locale === "th" ? "th-TH" : "en-US",
+          inLanguage: intlLocale(locale),
           location: event.location
             ? {
                 "@type": "Place",

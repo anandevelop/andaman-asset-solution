@@ -19,6 +19,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { intlLocale } from "@/lib/format";
 import { extractFaqItems } from "@/lib/faq-block";
 import { absoluteAssetUrl } from "@/lib/seo";
 import { truncate } from "@/lib/markdown-text";
@@ -76,7 +77,7 @@ export function buildArticleJsonLd(
     image: input.coverImageUrl ? [input.coverImageUrl] : undefined,
     datePublished: input.publishedAt?.toISOString(),
     dateModified: input.updatedAt.toISOString(),
-    inLanguage: input.locale === "th" ? "th-TH" : "en-US",
+    inLanguage: intlLocale(input.locale),
     articleSection: input.category,
     keywords: input.tags.length > 0 ? input.tags.join(", ") : undefined,
     author: input.authorName
