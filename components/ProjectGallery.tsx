@@ -44,6 +44,9 @@ type Props = {
     /** "View all {count} photos" — shown once there are more than fit
      *  in the fixed hero cluster. */
     viewAll: string;
+    /** One alt text per image, in the page's language ("… — ภาพที่ 3").
+     *  It was "{name} view {n}" in English on every locale. */
+    photoAlt: string[];
   };
 };
 
@@ -176,7 +179,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
             >
               <Image
                 src={src}
-                alt={`${projectName} view ${i + 1}`}
+                alt={labels.photoAlt[i] ?? projectName}
                 fill
                 sizes={HERO_SIZES[i]}
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
@@ -203,7 +206,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
             >
               <Image
                 src={src}
-                alt={`${projectName} view ${i + 1}`}
+                alt={labels.photoAlt[i] ?? projectName}
                 fill
                 sizes="(max-width: 640px) 50vw, 33vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
@@ -293,7 +296,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               )}
               <Image
                 src={images[openIndex]}
-                alt={`${projectName} view ${openIndex + 1}`}
+                alt={labels.photoAlt[openIndex] ?? projectName}
                 fill
                 unoptimized
                 sizes="(max-width: 1100px) 92vw, 1024px"
@@ -322,7 +325,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                     key={src}
                     type="button"
                     onClick={() => setOpenIndex(i)}
-                    aria-label={`${projectName} view ${i + 1}`}
+                    aria-label={labels.photoAlt[i] ?? projectName}
                     aria-current={i === openIndex}
                     className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs bg-white/10 transition-opacity sm:h-14 sm:w-14 ${
                       i === openIndex ? "opacity-100 ring-2 ring-white" : "opacity-45 hover:opacity-75"

@@ -260,6 +260,7 @@
     "galleryNext": "Следующее фото",
     "galleryMore": "+{count}",
     "galleryViewAll": "Показать все фото ({count})",
+    "galleryPhotoAlt": "{name} — фото {number}",
     "unitTypesEyebrow": "Типы вилл",
     "unitTypesTitle": "Выберите свою виллу",
     "unitTypesSection": {

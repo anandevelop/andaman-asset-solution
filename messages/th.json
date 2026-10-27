@@ -260,6 +260,7 @@
     "galleryNext": "รูปถัดไป",
     "galleryMore": "+{count}",
     "galleryViewAll": "ดูรูปทั้งหมด {count} รูป",
+    "galleryPhotoAlt": "{name} — ภาพที่ {number}",
     "unitTypesEyebrow": "รูปแบบยูนิต",
     "unitTypesTitle": "เลือกรูปแบบวิลล่าของคุณ",
     "unitTypesSection": {

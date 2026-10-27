@@ -260,6 +260,7 @@
     "galleryNext": "下一张",
     "galleryMore": "+{count}",
     "galleryViewAll": "查看全部 {count} 张照片",
+    "galleryPhotoAlt": "{name} — 第 {number} 张照片",
     "unitTypesEyebrow": "户型",
     "unitTypesTitle": "选择您的别墅",
     "unitTypesSection": {

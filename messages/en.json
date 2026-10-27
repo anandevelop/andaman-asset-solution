@@ -260,6 +260,7 @@
     "galleryNext": "Next photo",
     "galleryMore": "+{count}",
     "galleryViewAll": "View all {count} photos",
+    "galleryPhotoAlt": "{name} — photo {number}",
     "unitTypesEyebrow": "Unit Types",
     "unitTypesTitle": "Choose your villa",
     "unitTypesSection": {

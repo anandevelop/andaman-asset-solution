@@ -846,6 +846,7 @@ export default async function ProjectPage(props: Props) {
                 // missing `count` is a FORMATTING_ERROR that renders the key
                 // path ("projects.galleryViewAll") in place of the label.
                 viewAll: t("galleryViewAll", { count: villaImages.length }),
+                photoAlt: villaImages.map((_, i) => t("galleryPhotoAlt", { name: project.name, number: i + 1 })),
               }}
             />
           </div>
