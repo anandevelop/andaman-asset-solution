@@ -168,7 +168,7 @@ export default async function ProjectPage(props: Props) {
       // Photo cards for the Facilities section below — supersedes reading
       // project.facilities (the deprecated string array) directly.
       getProjectFacilities(project.id, locale),
-          // Year founded, as set in Pages › About › Our story.
+      // Year founded, as set in Pages › About › Our story.
       getCompanyStats(),
     ]);
 

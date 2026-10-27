@@ -224,7 +224,13 @@ describe("keys referenced from source", () => {
       for (const m of source.matchAll(
         /const\s*\[\s*([\w,\s]+?)\s*\]\s*=\s*await\s+Promise\.all\(\[([\s\S]*?)\]\)/g,
       )) {
-        const names = m[1].split(",").map((n) => n.trim());
+        // filter(Boolean): a destructure long enough to wrap ends in a
+        // trailing comma, and the empty name it leaves behind matched every
+        // `("` on the page — comments included — as a translation call.
+        const names = m[1]
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean);
         for (const call of m[2].matchAll(
           /getTranslations\((?:"([^"]+)"|\{[^}]*namespace:\s*"([^"]+)")/g,
         )) {
@@ -315,7 +321,13 @@ describe("keys referenced from source", () => {
       for (const m of source.matchAll(
         /const\s*\[\s*([\w,\s]+?)\s*\]\s*=\s*await\s+Promise\.all\(\[([\s\S]*?)\]\)/g,
       )) {
-        const names = m[1].split(",").map((n) => n.trim());
+        // filter(Boolean): a destructure long enough to wrap ends in a
+        // trailing comma, and the empty name it leaves behind matched every
+        // `("` on the page — comments included — as a translation call.
+        const names = m[1]
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean);
         for (const call of m[2].matchAll(
           /getTranslations\((?:"([^"]+)"|\{[^}]*namespace:\s*"([^"]+)")/g,
         )) {

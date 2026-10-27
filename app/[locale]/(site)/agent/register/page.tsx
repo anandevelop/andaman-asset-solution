@@ -13,6 +13,7 @@ import { resolveAgentRef } from "@/lib/agents/admin";
 import { breadcrumbList, trailFor } from "@/lib/seo";
 import JsonLd from "@/components/JsonLd";
 import Breadcrumb from "@/components/Breadcrumb";
+import { localizedAlternates } from "@/lib/seo";
 import RegisterForm from "./RegisterForm";
 
 type Props = {
@@ -24,7 +25,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
   const t = await getTranslations({ locale, namespace: "coAgents.agentForm" });
   return {
+    // The layout's template adds "| Andaman Asset Solution"; the message
+    // carried it too, so the tab said it twice.
     title: t("metaTitle"),
+    // Its own description and canonical, rather than inheriting the home
+    // page's.
+    description: t("subtitle"),
+    alternates: localizedAlternates(locale, "/agent/register"),
     robots: { index: false, follow: false, nocache: true },
   };
 }

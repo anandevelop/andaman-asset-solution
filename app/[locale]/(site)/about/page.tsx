@@ -91,10 +91,16 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     locale
   } = params;
 
-  const t = await getTranslations({ locale, namespace: "about" });
+  const [t, tNav] = await Promise.all([
+    getTranslations({ locale, namespace: "about" }),
+    getTranslations({ locale, namespace: "nav" }),
+  ]);
 
   return {
-    title: t("title"),
+    // "About", not about.title: that heading is the company's own name, and
+    // the layout's "%s | Andaman Asset Solution" template then made the tab
+    // read "Andaman Asset Solution | Andaman Asset Solution".
+    title: tNav("about"),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/about"),
   };
