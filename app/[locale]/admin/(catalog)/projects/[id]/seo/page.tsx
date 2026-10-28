@@ -27,10 +27,14 @@ import { hasRole } from "@/lib/role-rank";
 import { siteConfig } from "@/config/site";
 import { LOCALE_DISPLAY_ORDER, type Locale } from "@/i18n";
 import { getPageSeo } from "@/lib/admin/page-seo";
+import { parseEditingLocale } from "@/lib/admin/translated-form";
 import ProjectHubTabs from "@/components/admin/ProjectHubTabs";
 import PageSeoEditor, { type LocaleSeo } from "@/components/admin/PageSeoEditor";
 
-type Props = { params: Promise<{ locale: string; id: string }> };
+type Props = {
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
+};
 
 const LOCALE_LABELS: Record<Locale, string> = {
   th: "ไทย",
@@ -41,6 +45,11 @@ const LOCALE_LABELS: Record<Locale, string> = {
 
 export default async function AdminProjectSeoPage(props: Props) {
   const { locale, id: projectId } = await props.params;
+  // ?lang= opens that language's tab, as on every other translated screen.
+  // Only when it is actually present: parseEditingLocale's "en" default
+  // would otherwise override the editor's own first-tab choice.
+  const { lang } = await props.searchParams;
+  const initialLocale = lang === undefined ? undefined : parseEditingLocale(lang);
 
   // VIEWER may open this to see how the page introduces itself; saving
   // stays behind a disabled fieldset for anyone below EDITOR.
@@ -137,6 +146,7 @@ export default async function AdminProjectSeoPage(props: Props) {
         slug={seo.slug}
         siteOrigin={siteConfig.url}
         perLocale={perLocale}
+        initialLocale={initialLocale}
         ogImageUrl={seo.ogImageUrl ?? ""}
         heroImageUrl={seo.heroImageUrl}
         canonicalUrl={seo.canonicalUrl ?? ""}

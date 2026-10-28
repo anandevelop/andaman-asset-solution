@@ -57,6 +57,8 @@ type Props = {
   slug: string;
   siteOrigin: string;
   perLocale: LocaleSeo[];
+  /** From `?lang=`; the first language when absent. */
+  initialLocale?: string;
   ogImageUrl: string;
   heroImageUrl: string | null;
   canonicalUrl: string;
@@ -104,6 +106,7 @@ export default function PageSeoEditor({
   slug,
   siteOrigin,
   perLocale,
+  initialLocale,
   ogImageUrl: initialOgImage,
   heroImageUrl,
   canonicalUrl: initialCanonical,
@@ -118,7 +121,21 @@ export default function PageSeoEditor({
      known. Same split as the rest of the admin. */
   const t = useTranslations("admin");
 
-  const [active, setActive] = useState(perLocale[0]?.locale ?? "th");
+  const [active, setActiveState] = useState(
+    perLocale.some((row) => row.locale === initialLocale)
+      ? (initialLocale as string)
+      : (perLocale[0]?.locale ?? "th"),
+  );
+  /* The tab is mirrored into ?lang= so a reload, or a link copied from the
+     address bar, comes back to the language being edited. history, not
+     router.replace: a navigation would re-render the page from the server,
+     and the drafts below are state it must not touch. */
+  const setActive = (code: string) => {
+    setActiveState(code);
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", code);
+    window.history.replaceState(window.history.state, "", url);
+  };
   const [drafts, setDrafts] = useState<Record<string, LocaleSeo>>(() =>
     Object.fromEntries(perLocale.map((row) => [row.locale, row])),
   );

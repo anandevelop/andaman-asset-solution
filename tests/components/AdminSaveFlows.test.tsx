@@ -55,7 +55,7 @@ describe("PageSeoEditor", () => {
     complete: false,
   });
 
-  function renderSeo() {
+  function renderSeo(initialLocale?: string) {
     return render(
       <PageSeoEditor
         adminLocale="th"
@@ -63,6 +63,7 @@ describe("PageSeoEditor", () => {
         slug="residence-prime"
         siteOrigin="https://andamanassetsolution.com"
         perLocale={[row("th", "ไทย"), row("en", "English"), row("zh", "中文"), row("ru", "Русский")]}
+        initialLocale={initialLocale}
         ogImageUrl=""
         heroImageUrl={null}
         canonicalUrl=""
@@ -115,6 +116,19 @@ describe("PageSeoEditor", () => {
 
     await waitFor(() => expect(screen.getByRole("button", { name: /ไทย/ })).toHaveAttribute("aria-pressed", "true"));
     expect(saveProjectSeo).not.toHaveBeenCalled();
+  });
+
+  it("opens on the language ?lang= names, and keeps the URL in step with the tabs", () => {
+    renderSeo("zh");
+    expect(screen.getByRole("button", { name: /中文/ })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: /Русский/ }));
+    expect(new URL(window.location.href).searchParams.get("lang")).toBe("ru");
+  });
+
+  it("ignores a ?lang= the project has no row for", () => {
+    renderSeo("xx");
+    expect(screen.getByRole("button", { name: /ไทย/ })).toHaveAttribute("aria-pressed", "true");
   });
 });
 
