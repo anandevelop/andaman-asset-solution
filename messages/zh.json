@@ -875,7 +875,8 @@
       "clearFilter": "清除筛选",
       "translationPartial": "部分翻译",
       "missingThai": "缺泰文",
-      "leaveUnsaved": "有尚未保存的修改。离开此页面将丢失这些修改，确定离开吗？"
+      "leaveUnsaved": "有尚未保存的修改。离开此页面将丢失这些修改，确定离开吗？",
+      "closeUnsaved": "有尚未保存的修改。关闭此面板将丢失这些修改，确定关闭吗？"
     },
     "dateTime": {
       "open": "选择日期和时间",

@@ -15,6 +15,14 @@
  * (the unit-type workspace's room editor, whose unsaved draft a URL change
  * must not touch).
  *
+ * Closing a URL-driven drawer throws its form away, so once anything inside
+ * has been typed into, the backdrop, ✕ and Esc ask first — the backdrop is
+ * a big target, and a click beside the panel was losing a half-written
+ * entry without a word. "Typed into" is any input or change event bubbling
+ * out of the panel, the same test FormSaveBar uses; submitting clears it.
+ * A state-driven drawer is not asked for: its parent keeps the draft, and
+ * closing loses nothing.
+ *
  * LeadCreateDrawer and LeadDrawer predate this and keep their own frames;
  * they carry behaviour (a hand-off to the new lead, a full-page link) that
  * a generic shell would only have to grow options for.
@@ -23,6 +31,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
 export default function AdminDrawer({
@@ -46,15 +55,25 @@ export default function AdminDrawer({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const t = useTranslations("admin");
   const panelRef = useRef<HTMLDivElement>(null);
+  // A ref, not state: nothing renders differently while dirty.
+  const dirtyRef = useRef(false);
+  const markDirty = () => {
+    dirtyRef.current = true;
+  };
 
   // Kept in a ref so the key listener below is bound once per drawer, not
   // re-bound on every render of a parent that passes a fresh `onClose`.
   const closeRef = useRef<() => void>(() => {});
+  const confirmMessage = t("common.closeUnsaved");
   useEffect(() => {
     closeRef.current = () => {
       if (onClose) onClose();
-      else if (closeHref) router.replace(closeHref, { scroll: false });
+      else if (closeHref) {
+        if (dirtyRef.current && !window.confirm(confirmMessage)) return;
+        router.replace(closeHref, { scroll: false });
+      }
     };
   });
 
@@ -84,6 +103,11 @@ export default function AdminDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        onInput={markDirty}
+        onChange={markDirty}
+        onSubmit={() => {
+          dirtyRef.current = false;
+        }}
         style={{ width: `min(${width}px, calc(100vw - 20px))` }}
         className="absolute inset-y-2.5 right-2.5 flex flex-col overflow-hidden rounded-[20px] bg-adm-solid shadow-[var(--adm-shadow-float)] outline-none motion-safe:animate-[lead-drawer-in_220ms_cubic-bezier(0.2,0.8,0.2,1)]"
       >

@@ -875,7 +875,8 @@
       "clearFilter": "Clear filter",
       "translationPartial": "Partly translated",
       "missingThai": "No Thai",
-      "leaveUnsaved": "You have unsaved changes. Leave this page and lose them?"
+      "leaveUnsaved": "You have unsaved changes. Leave this page and lose them?",
+      "closeUnsaved": "You have unsaved changes. Close this panel and lose them?"
     },
     "dateTime": {
       "open": "Choose a date and time",
