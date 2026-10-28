@@ -29,7 +29,18 @@ const row = (projectId: string | null, labelEn: string, labelTh = "") => ({
   sortOrder: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
-  places: [{ id: "p1", name: "Some School", distanceKm: "3.50", durationMin: 6, sortOrder: 0 }],
+  places: [
+    {
+      id: "p1",
+      name: "Some School",
+      nameTh: "โรงเรียนหนึ่ง",
+      nameZh: "",
+      nameRu: "",
+      distanceKm: "3.50",
+      durationMin: 6,
+      sortOrder: 0,
+    },
+  ],
 });
 
 function store(rows: ReturnType<typeof row>[]) {
@@ -49,7 +60,7 @@ describe("getNearbyForProject", () => {
     store([row("p-1", "Schools", "โรงเรียน"), row(null, "Shared")]);
     const list = await getNearbyForProject("p-1", "th");
     expect(list.map((c) => c.categoryName)).toEqual(["โรงเรียน"]);
-    expect(list[0].items[0]).toMatchObject({ name: "Some School", distanceKm: 3.5, durationMin: 6 });
+    expect(list[0].items[0]).toMatchObject({ name: "โรงเรียนหนึ่ง", distanceKm: 3.5, durationMin: 6 });
   });
 
   it("falls back to the shared list", async () => {
@@ -63,6 +74,16 @@ describe("getNearbyForProject", () => {
     const list = await getNearbyForProject("p-3", "en");
     expect(list).toHaveLength(NEARBY_DEFAULTS.length);
     expect(list[0].categoryName).toBe(NEARBY_DEFAULTS[0].categoryName.en);
+  });
+
+  it("shows a place in the page's language, but routes by its English name", async () => {
+    store([row("p-1", "Schools")]);
+    const [th] = await getNearbyForProject("p-1", "th");
+    expect(th.items[0]).toMatchObject({ name: "โรงเรียนหนึ่ง", nameEn: "Some School" });
+
+    // zh left blank: the English name, not an empty row.
+    const [zh] = await getNearbyForProject("p-1", "zh");
+    expect(zh.items[0].name).toBe("Some School");
   });
 
   it("uses the English label when the locale's is blank", async () => {

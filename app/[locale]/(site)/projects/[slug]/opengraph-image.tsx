@@ -37,7 +37,9 @@ export default async function Image({
 
   return renderOgCard({
     locale: locale as Locale,
-    eyebrow: project?.location,
+    // No CJK font in the card (lib/og-render.tsx): a Chinese location
+    // line would draw as boxes, so zh prints the overview tab's.
+    eyebrow: locale === "zh" ? project?.locationBase : project?.location,
     title: project?.name ?? siteConfig.name,
     backgroundImageUrl: project?.heroImageUrl ?? null,
   });

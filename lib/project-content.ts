@@ -13,10 +13,12 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-/** The seven translated columns on ProjectTranslation. */
+/** The eight translated columns on ProjectTranslation. */
 export const CONTENT_FIELDS = [
   "name",
   "tagline",
+  // Blank falls back to Project.location, from the overview tab.
+  "location",
   "description",
   "conceptDesign",
   "aboutThisProject",
@@ -26,11 +28,11 @@ export const CONTENT_FIELDS = [
 
 export type ContentField = (typeof CONTENT_FIELDS)[number];
 
-/** The fields grouped into the content tab's numbered cards (v4: 01 name
- *  and tagline, 02 the story, 03 how Google shows it). Together they are
+/** The fields grouped into the content tab's numbered cards (v4: 01 name,
+ *  tagline and location line, 02 the story, 03 how Google shows it). Together they are
  *  CONTENT_FIELDS, each once — tests/project-content-sections.test.ts. */
 export const CONTENT_SECTIONS: { key: "identity" | "story" | "search"; fields: ContentField[] }[] = [
-  { key: "identity", fields: ["name", "tagline"] },
+  { key: "identity", fields: ["name", "tagline", "location"] },
   { key: "story", fields: ["description", "conceptDesign", "aboutThisProject"] },
   { key: "search", fields: ["metaTitle", "metaDescription"] },
 ];

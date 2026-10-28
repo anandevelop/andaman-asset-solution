@@ -482,6 +482,9 @@ model ProjectTranslation {
 
   name             String  @db.Text
   tagline          String? @db.Text
+  /// The location line under the name, in this language. Project.location
+  /// is the one typed on the overview tab and stands in when this is null.
+  location         String? @db.Text
   description      String? @db.Text
   conceptDesign    String? @db.Text
   aboutThisProject String? @db.Text
@@ -903,14 +906,21 @@ model NearbyCategory {
   @@map("nearby_categories")
 }
 
-/// One place in a NearbyCategory. The name is a proper noun, shown as
-/// written in every language (same convention as project names).
+/// One place in a NearbyCategory.
+///
+/// `name` is the English name, and stays the one Google is asked for a
+/// route by: "Surin Beach, Phuket" resolves, "หาดสุรินทร์, Phuket" may
+/// not. The other three are what the panel shows in that language — a
+/// Thai visitor reads "หาดสุรินทร์" — and fall back to `name` when blank.
 model NearbyPlace {
   id         String         @id @default(cuid())
   categoryId String
   category   NearbyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   name        String
+  nameTh      String  @default("")
+  nameZh      String  @default("")
+  nameRu      String  @default("")
   distanceKm  Decimal @db.Decimal(6, 2)
   durationMin Int
   /// The place's pin, for the map's route. Both or neither (the action

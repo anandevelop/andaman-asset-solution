@@ -75,6 +75,9 @@ export async function saveNearbyList(
             places: {
               create: category.places.map((place, index) => ({
                 name: place.name,
+                nameTh: place.names.th,
+                nameZh: place.names.zh,
+                nameRu: place.names.ru,
                 distanceKm: place.distanceKm,
                 durationMin: place.durationMin,
                 latitude: place.pin?.lat ?? null,

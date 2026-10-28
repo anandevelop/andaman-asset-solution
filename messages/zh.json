@@ -1293,6 +1293,7 @@
       "slug": "URL别名",
       "slugHint": "小写字母、数字与连字符。将生成 /projects/your-slug。",
       "location": "位置",
+      "locationFallbackHint": "未单独填写位置的语言都显示这一行。各语言的位置行在“内容”标签页中编辑。",
       "propertyType": "物业类型",
       "status": "状态",
       "units": "户数",
@@ -4354,7 +4355,11 @@
       "pinPlaceholder": "可选 · 例如 7.9758, 98.2794",
       "pinHint": "每个地点下方的坐标为可选项。留空时，地图按地点名称规划路线。若 Google 找不到（地图显示整个世界），请填写坐标：在 Google 地图中右键点击该地点，点击第一行数字即可复制，然后粘贴到此处。保存前可点 ↗ 检查位置。",
       "pinCheck": "在 Google 地图中检查位置",
-      "pinInvalid": "请填写 纬度, 经度，例如 7.9758, 98.2794"
+      "pinInvalid": "请填写 纬度, 经度，例如 7.9758, 98.2794",
+      "placeEn": "地点名称（英文）*",
+      "placeIn": "{lang} 名称",
+      "placeInPlaceholder": "留空：显示英文名称",
+      "placeNamesHint": "每个地点必须填写英文名称，地图也用它来查找路线。其他三种语言可选，留空则显示英文名称。"
     }
   },
   "legalPage": {

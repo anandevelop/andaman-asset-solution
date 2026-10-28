@@ -10,6 +10,9 @@
  * on its own, with a link to check where it lands before saving. Save posts the whole list as JSON, and
  * the action replaces the stored list (see projects/nearby/actions.ts).
  *
+ * A place's name is English first — the map routes by it — with three
+ * optional translations under it for the panel itself (see NearbyPlace).
+ *
  * For a project still showing the shared list, the editor is closed behind
  * "Make a list for this project". Opening it starts from a copy of the
  * shared list, so the first edit changes one place rather than retyping
@@ -28,7 +31,13 @@ import type { NearbyFormState } from "@/app/[locale]/admin/(catalog)/projects/ne
 type Category = {
   labels: { en: string; th: string; zh: string; ru: string };
   /** "lat, lng" as typed; "" for no pin. Parsed by the action. */
-  places: { name: string; distanceKm: number; durationMin: number; pin: string }[];
+  places: {
+    name: string;
+    names: { th: string; zh: string; ru: string };
+    distanceKm: number;
+    durationMin: number;
+    pin: string;
+  }[];
 };
 
 type Props = {
@@ -42,6 +51,8 @@ type Props = {
 };
 
 const LANGS = ["th", "en", "zh", "ru"] as const;
+/** The place-name translations; English is the required field above them. */
+const PLACE_LANGS = ["th", "zh", "ru"] as const;
 const INITIAL: NearbyFormState = { ok: false };
 
 function move<T>(list: T[], from: number, to: number): T[] {
@@ -111,6 +122,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
       )}
 
       {source === "builtIn" && <p className="text-sm text-adm-muted">{t("builtInNote")}</p>}
+      <p className="text-xs text-adm-muted">{t("placeNamesHint")}</p>
       <p className="text-xs text-adm-muted">{t("pinHint")}</p>
 
       <fieldset disabled={!canWrite} className="space-y-5">
@@ -158,7 +170,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
               <table className="w-full text-sm">
                 <thead>
                   <tr>
-                    <th className="admin-th">{t("place")}</th>
+                    <th className="admin-th">{t("placeEn")}</th>
                     <th className="admin-th w-28">{t("distanceKm")}</th>
                     <th className="admin-th w-28">{t("durationMin")}</th>
                     <th className="admin-th w-32" />
@@ -173,6 +185,15 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
                         <td className="admin-td min-w-64 whitespace-normal">
                           <input className="admin-input" aria-label={t("place")} value={place.name} maxLength={120} required
                             onChange={(e) => setPlace({ name: e.target.value })} />
+                          <div className="mt-1.5 grid gap-1.5 sm:grid-cols-3">
+                            {PLACE_LANGS.map((lang) => (
+                              <input key={lang} className="admin-input py-1! text-xs"
+                                aria-label={t("placeIn", { lang: lang.toUpperCase() })}
+                                placeholder={`${lang.toUpperCase()} · ${t("placeInPlaceholder")}`}
+                                value={place.names?.[lang] ?? ""} maxLength={120}
+                                onChange={(e) => setPlace({ names: { ...{ th: "", zh: "", ru: "" }, ...place.names, [lang]: e.target.value } })} />
+                            ))}
+                          </div>
                           {(() => {
                             const typed = place.pin.trim();
                             const pin = parseCoordinates(typed);
@@ -231,7 +252,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
             </div>
 
             <button type="button" className="admin-btn-ghost py-2!"
-              onClick={() => update(ci, (c) => ({ ...c, places: [...c.places, { name: "", distanceKm: 0, durationMin: 0, pin: "" }] }))}>
+              onClick={() => update(ci, (c) => ({ ...c, places: [...c.places, { name: "", names: { th: "", zh: "", ru: "" }, distanceKm: 0, durationMin: 0, pin: "" }] }))}>
               <Plus size={14} aria-hidden />
               {t("addPlace")}
             </button>

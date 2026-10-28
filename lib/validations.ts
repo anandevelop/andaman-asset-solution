@@ -1849,6 +1849,15 @@ export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> 
 */
 const nearbyPlaceSchema = z.object({
   name: z.string().trim().min(1, "Name the place").max(120),
+  // Optional: blank shows the English name. Defaulted so a payload from an
+  // editor tab opened before this field existed still saves.
+  names: z
+    .object({
+      th: z.string().trim().max(120),
+      zh: z.string().trim().max(120),
+      ru: z.string().trim().max(120),
+    })
+    .default({ th: "", zh: "", ru: "" }),
   distanceKm: z.coerce.number().min(0, "0 or more").max(999),
   durationMin: z.coerce.number().int("Whole minutes").min(0, "0 or more").max(600),
   /** Optional pin as typed: "lat, lng". Empty means "route by the name". */

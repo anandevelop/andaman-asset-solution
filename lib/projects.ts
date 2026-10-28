@@ -289,7 +289,11 @@ export type ProjectFacilitySummary = {
 
 export type NearbyAttractionItemSummary = {
   id: string;
+  /** In the page's language — see NearbyPlace. */
   name: string;
+  /** What Google is asked for a route by, and what code matches on
+   *  ("airport"): the English name, whatever the page's language. */
+  nameEn: string;
   distanceKm: number;
   durationMin: number;
   /** The place's pin — see NearbyPlace.latitude. */
@@ -304,6 +308,10 @@ export type NearbyAttractionCategorySummary = {
 };
 
 export type ProjectDetail = ProjectCard & {
+  /** `location` as typed on the overview tab, whatever the page's
+   *  language: what Google Maps is searched for, and what the OG card
+   *  prints where its fonts have no glyphs for the translation. */
+  locationBase: string;
   description: string;
   projectArea: string | null;
   facilities: string[];
@@ -422,7 +430,8 @@ export const getProjectBySlug = cache(
       name: t?.name ?? pickLocale(locale, project.nameTh, project.nameEn),
       tagline: t?.tagline ?? pickLocale(locale, project.taglineTh, project.taglineEn),
       description: t?.description ?? pickLocale(locale, project.descriptionTh, project.descriptionEn),
-      location: project.location,
+      location: t?.location ?? project.location,
+      locationBase: project.location,
       propertyType: project.propertyType,
       status: project.status,
       totalUnits: project.totalUnits,
@@ -542,7 +551,7 @@ export const getPublishedProjects = cache(async function getPublishedProjects(
       slug: project.slug,
       name: t?.name ?? pickLocale(locale, project.nameTh, project.nameEn),
       tagline: t?.tagline ?? pickLocale(locale, project.taglineTh, project.taglineEn),
-      location: project.location,
+      location: t?.location ?? project.location,
       propertyType: project.propertyType,
       status: project.status,
       totalUnits: project.totalUnits,
@@ -763,7 +772,7 @@ export async function getProjectsWithProgress(
         id: project.id,
         slug: project.slug,
         name: t?.name ?? pickLocale(locale, project.nameTh, project.nameEn),
-        location: project.location,
+        location: t?.location ?? project.location,
         status: project.status,
         heroImageUrl: project.heroImageUrl,
         updateCount: project._count.progressUpdates,

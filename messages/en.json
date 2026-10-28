@@ -1293,6 +1293,7 @@
       "slug": "URL slug",
       "slugHint": "Lowercase letters, numbers and hyphens. This becomes /projects/your-slug.",
       "location": "Location",
+      "locationFallbackHint": "Shown in every language that has no location line of its own. Each language's line is on the Content tab.",
       "propertyType": "Property type",
       "status": "Status",
       "units": "Units",
@@ -4354,7 +4355,11 @@
       "pinPlaceholder": "Optional · e.g. 7.9758, 98.2794",
       "pinHint": "The coordinates under each place are optional. Left empty, the map routes by the place's name. If Google cannot find it (the map shows the whole world), add coordinates: in Google Maps, right-click the place and click the numbers on the first line to copy them, then paste here. Use ↗ to check the pin before saving.",
       "pinCheck": "Check the pin in Google Maps",
-      "pinInvalid": "Use latitude, longitude — e.g. 7.9758, 98.2794"
+      "pinInvalid": "Use latitude, longitude — e.g. 7.9758, 98.2794",
+      "placeEn": "Place (English) *",
+      "placeIn": "Name in {lang}",
+      "placeInPlaceholder": "Blank: shown in English",
+      "placeNamesHint": "Each place's name is required in English, which the map also uses to find the route. The other three languages are optional; a blank one shows the English name."
     }
   },
   "legalPage": {

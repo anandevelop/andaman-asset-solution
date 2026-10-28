@@ -40,6 +40,7 @@ const saveSchema = z.object({
     // cannot be blanked out from here.
     name: z.string().trim().min(1).max(300),
     tagline: z.string().trim().max(500),
+    location: z.string().trim().max(300),
     description: z.string().trim().max(8000),
     conceptDesign: z.string().trim().max(20000),
     aboutThisProject: z.string().trim().max(20000),
@@ -76,6 +77,7 @@ export async function saveProjectContent(
   const data = {
     name: values.name.trim(),
     tagline: blankToNull(values.tagline),
+    location: blankToNull(values.location),
     description: blankToNull(values.description),
     conceptDesign: blankToNull(values.conceptDesign),
     aboutThisProject: blankToNull(values.aboutThisProject),

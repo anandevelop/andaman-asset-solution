@@ -34,7 +34,14 @@ import { formatCoordinateInput } from "@/lib/map-places";
 export type EditableNearbyCategory = {
   labels: { en: string; th: string; zh: string; ru: string };
   /** `pin` is the editor's one-field "lat, lng" text, "" for none. */
-  places: { name: string; distanceKm: number; durationMin: number; pin: string }[];
+  /** `name` is English; `names` the other three, "" for "use English". */
+  places: {
+    name: string;
+    names: { th: string; zh: string; ru: string };
+    distanceKm: number;
+    durationMin: number;
+    pin: string;
+  }[];
 };
 
 export type NearbySource = "project" | "shared" | "builtIn";
@@ -55,6 +62,11 @@ function labelFor(row: Row, locale: string): string {
   return byLocale[locale]?.trim() || row.labelEn;
 }
 
+function placeNameFor(place: Row["places"][number], locale: string): string {
+  const byLocale: Record<string, string> = { th: place.nameTh, zh: place.nameZh, ru: place.nameRu };
+  return byLocale[locale]?.trim() || place.name;
+}
+
 function toSummary(rows: Row[], locale: string): NearbyAttractionCategorySummary[] {
   return rows.map((row, sortOrder) => ({
     id: row.id,
@@ -62,7 +74,8 @@ function toSummary(rows: Row[], locale: string): NearbyAttractionCategorySummary
     sortOrder,
     items: row.places.map((place) => ({
       id: place.id,
-      name: place.name,
+      name: placeNameFor(place, locale),
+      nameEn: place.name,
       distanceKm: Number(place.distanceKm),
       durationMin: place.durationMin,
       pin: place.latitude != null && place.longitude != null ? { lat: place.latitude, lng: place.longitude } : null,
@@ -87,6 +100,7 @@ function toEditable(rows: Row[]): EditableNearbyCategory[] {
     labels: { en: row.labelEn, th: row.labelTh, zh: row.labelZh, ru: row.labelRu },
     places: row.places.map((p) => ({
       name: p.name,
+      names: { th: p.nameTh, zh: p.nameZh, ru: p.nameRu },
       distanceKm: Number(p.distanceKm),
       durationMin: p.durationMin,
       pin:
@@ -100,7 +114,11 @@ function toEditable(rows: Row[]): EditableNearbyCategory[] {
 const builtIn = (): EditableNearbyCategory[] =>
   NEARBY_DEFAULTS.map((category) => ({
     labels: { ...category.categoryName },
-    places: category.items.map((item) => ({ ...item, pin: formatCoordinateInput(item.pin) })),
+    places: category.items.map((item) => ({
+      ...item,
+      names: { th: "", zh: "", ru: "" },
+      pin: formatCoordinateInput(item.pin),
+    })),
   }));
 
 /**

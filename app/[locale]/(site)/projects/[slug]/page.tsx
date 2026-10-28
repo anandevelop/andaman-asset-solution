@@ -251,7 +251,7 @@ export default async function ProjectPage(props: Props) {
   const heroAirport =
     attractionCategories
       .flatMap((c) => c.items)
-      .find((item) => item.name.toLowerCase().includes("airport")) ?? null;
+      .find((item) => item.nameEn.toLowerCase().includes("airport")) ?? null;
 
   const stats = [
     { label: t("specs.type"), value: t(`propertyType.${project.propertyType}` as any) },
@@ -336,7 +336,7 @@ export default async function ProjectPage(props: Props) {
     project.googleMapsUrl ||
     (hasCoords
       ? `https://www.google.com/maps?q=${project.latitude},${project.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`);
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.locationBase)}`);
   // Routes to the pin when we have one from either source — a text search
   // for "Laguna Area (Ban Don-Cherngtalay, Phuket)" is a worse destination
   // than a coordinate whenever a coordinate exists.
@@ -375,7 +375,9 @@ export default async function ProjectPage(props: Props) {
         distanceKm: item.distanceKm,
         durationMin: item.durationMin,
         distanceKind: "drive" as const,
-        target: nearbyTarget(item.pin, item.name),
+        // English: Google resolves "Surin Beach, Phuket", not every
+        // translation of it.
+        target: nearbyTarget(item.pin, item.nameEn),
       })),
   }));
 

@@ -139,7 +139,14 @@ export function getNearbyAttractionCategories(locale: string): {
   id: string;
   categoryName: string;
   sortOrder: number;
-  items: { id: string; name: string; distanceKm: number; durationMin: number; pin?: { lat: number; lng: number } | null }[];
+  items: {
+    id: string;
+    name: string;
+    nameEn: string;
+    distanceKm: number;
+    durationMin: number;
+    pin?: { lat: number; lng: number } | null;
+  }[];
 }[] {
   const l = (locale in NEARBY_DEFAULTS[0].categoryName ? locale : "en") as Locale;
 
@@ -150,6 +157,7 @@ export function getNearbyAttractionCategories(locale: string): {
     items: cat.items.map((item, index) => ({
       id: `${cat.id}-${index}`,
       name: item.name,
+      nameEn: item.name,
       distanceKm: item.distanceKm,
       durationMin: item.durationMin,
       pin: item.pin ?? null,

@@ -9,7 +9,9 @@
  * its header, and lib/admin/translated-form.ts); this screen needs two
  * languages on screen at once and a live preview, which is a different
  * shape of editor, not a variation on that one. The overview tab still
- * owns everything that is not translated — location, price, images.
+ * owns everything that is not translated — price, images — and the
+ * location every language falls back to; the line each language shows is
+ * here.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -182,6 +184,7 @@ export default async function AdminProjectContentPage(props: Props) {
           fields: {
             name: t("projects.name"),
             tagline: t("projects.tagline"),
+            location: t("projects.location"),
             description: t("projects.description"),
             conceptDesign: t("projects.conceptDesign"),
             aboutThisProject: t("projects.aboutThisProject"),

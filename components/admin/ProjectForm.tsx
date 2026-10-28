@@ -287,7 +287,7 @@ export default function ProjectForm({
         </Field>
 
         <Field name="location"
-          error={err("location")} label={t("projects.location")}>
+          error={err("location")} label={t("projects.location")} hint={t("projects.locationFallbackHint")}>
           <input
             id="location"
             name="location"
