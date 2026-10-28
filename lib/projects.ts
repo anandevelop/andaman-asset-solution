@@ -41,6 +41,7 @@ export type UnitStatus = Exclude<(typeof UNIT_STATUSES)[number], "TRANSFERRED">;
 // The definitions live in lib/locale.ts, which imports nothing.
 import { pickLocale } from "@/lib/locale";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
+import { localFloorName } from "@/lib/floor-name";
 
 export { pickLocale, type Locale } from "@/lib/locale";
 
@@ -846,6 +847,9 @@ export async function getUnitTypesForProject(
 
   return types.map((t: any) => {
     const tr = getTranslation<any>(t.translations, locale);
+    // The whole panel, so localFloorName can tell British numbering (a "G"
+    // button present) from numbering that starts at the ground.
+    const panel: string[] = t.floorPlans.map((fp: any) => liftLabelFor(fp.shortLabel, fp.floorName));
 
     return {
     id: t.id,
@@ -867,7 +871,8 @@ export async function getUnitTypesForProject(
     model3dEnabled: t.model3dEnabled ?? true,
     floorPlans: t.floorPlans.map((fp: any) => ({
       id: fp.id,
-      floorName: fp.floorName,
+      // In the page's language — floorName itself is typed once, in English.
+      floorName: localFloorName(locale, fp.floorName, liftLabelFor(fp.shortLabel, fp.floorName), panel),
       // A label is what the lift button prints, so it cannot be empty.
       // The stand-in for a row that predates the column — see lift-label.ts.
       shortLabel: liftLabelFor(fp.shortLabel, fp.floorName),
