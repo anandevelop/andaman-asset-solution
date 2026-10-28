@@ -228,7 +228,8 @@ export async function getAdminProjectList(
         const entry = unitCounts.get(row.projectId) ?? { available: 0, reserved: 0, sold: 0 };
         if (row.status === "AVAILABLE") entry.available = row._count._all;
         if (row.status === "RESERVED") entry.reserved = row._count._all;
-        if (row.status === "SOLD") entry.sold = row._count._all;
+        // Handed over is still sold, for "how much is left to sell".
+        if (row.status === "SOLD" || row.status === "TRANSFERRED") entry.sold += row._count._all;
         unitCounts.set(row.projectId, entry);
       }
 

@@ -348,6 +348,9 @@ export const UNIT_STATUSES = [
   "AVAILABLE",
   "RESERVED",
   "SOLD",
+  // Ownership handed over. It was in the Prisma enum but not here, so the
+  // unit form could not offer it and a save carrying it failed validation.
+  "TRANSFERRED",
 ] as const;
 
 /** Empty / whitespace-only string → null; otherwise the trimmed string. */

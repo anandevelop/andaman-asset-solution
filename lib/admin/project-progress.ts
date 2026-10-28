@@ -77,7 +77,8 @@ const EMPTY: ProgressOverview = {
  */
 export async function buyerEmailsFor(projectId: string): Promise<{ email: string; name: string }[]> {
   const units = await prisma.projectUnit.findMany({
-    where: { projectId, status: "SOLD", reservedByLeadId: { not: null } },
+    // Handed over is still a buyer, and the one most likely to care.
+    where: { projectId, status: { in: ["SOLD", "TRANSFERRED"] }, reservedByLeadId: { not: null } },
     select: { reservedByLead: { select: { email: true, name: true } } },
   });
 

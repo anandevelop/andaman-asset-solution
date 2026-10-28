@@ -39,7 +39,7 @@ type Props = {
   /** The tile board (and the phase switcher above it). */
   children: ReactNode;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED: string };
   saveAction: (state: UnitFormState, formData: FormData) => Promise<UnitFormState>;
   labels: {
     title: string;

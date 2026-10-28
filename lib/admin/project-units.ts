@@ -75,7 +75,10 @@ export type UnitStatusCounts = {
   available: number;
   reserved: number;
   sold: number;
-  /** Not one of the three sale statuses — see ProjectUnit.releasedForSale. */
+  /** Sold and handed over. Its own figure here, where staff track the
+   *  handover; folded into "sold" everywhere a buyer looks. */
+  transferred: number;
+  /** Not one of the sale statuses — see ProjectUnit.releasedForSale. */
   unreleased: number;
 };
 
@@ -86,7 +89,7 @@ function toNumber(value: unknown): number | null {
 }
 
 export function countUnits(units: UnitRow[]): UnitStatusCounts {
-  const counts: UnitStatusCounts = { available: 0, reserved: 0, sold: 0, unreleased: 0 };
+  const counts: UnitStatusCounts = { available: 0, reserved: 0, sold: 0, transferred: 0, unreleased: 0 };
 
   for (const unit of units) {
     // Release state is checked first on purpose: an unreleased plot keeps
@@ -96,6 +99,7 @@ export function countUnits(units: UnitRow[]): UnitStatusCounts {
     if (!unit.releasedForSale) counts.unreleased += 1;
     else if (unit.status === UnitStatus.AVAILABLE) counts.available += 1;
     else if (unit.status === UnitStatus.RESERVED) counts.reserved += 1;
+    else if (unit.status === UnitStatus.TRANSFERRED) counts.transferred += 1;
     else counts.sold += 1;
   }
 

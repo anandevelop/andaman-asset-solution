@@ -43,7 +43,7 @@ export type UnitActionResult = { ok: true } | { ok: false; error: string };
  * AVAILABLE — the hold is over; nobody is waiting on this plot, so all
  * three are cleared.
  *
- * SOLD — the lead link is kept, because it records who bought it and is
+ * SOLD, TRANSFERRED — the lead link is kept, because it records who bought it and is
  * the only trace of that on the unit; the expiry date goes, since there is
  * no longer a reservation for it to be the deadline of.
  *
@@ -69,7 +69,7 @@ function reservationPatchFor(status: UnitStatus): ReservationPatch {
   if (status === UnitStatus.AVAILABLE) {
     return { reservedByLeadId: null, reservedById: null, reservationExpiresAt: null };
   }
-  if (status === UnitStatus.SOLD) {
+  if (status === UnitStatus.SOLD || status === UnitStatus.TRANSFERRED) {
     return { reservationExpiresAt: null };
   }
   return {};

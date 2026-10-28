@@ -229,7 +229,8 @@ export async function getProjectStock(): Promise<ProjectStockRow[]> {
         .map(({ heroImageUrl, ogImageUrl, _count, ...project }) => {
           const available = count(project.id, UnitStatus.AVAILABLE);
           const reserved = count(project.id, UnitStatus.RESERVED);
-          const sold = count(project.id, UnitStatus.SOLD);
+          // Handed over is still sold — it was dropping out of the total.
+          const sold = count(project.id, UnitStatus.SOLD) + count(project.id, UnitStatus.TRANSFERRED);
           return {
             ...project,
             imageUrl: heroImageUrl ?? ogImageUrl,

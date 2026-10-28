@@ -435,7 +435,10 @@ export default async function AdminUnitsPage(props: Props) {
               Unreleased plots are not counted as available — see
               countUnits. */}
           <section className="admin-card flex items-center gap-4">
-            <AvailabilityRing available={counts.available} total={counts.available + counts.reserved + counts.sold} />
+            <AvailabilityRing
+              available={counts.available}
+              total={counts.available + counts.reserved + counts.sold + counts.transferred}
+            />
             <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1 text-xs">
               <dt className="text-adm-muted">{statusLabels.AVAILABLE}</dt>
               <dd className="text-right font-semibold tabular-nums text-adm-success">{counts.available}</dd>
@@ -443,6 +446,12 @@ export default async function AdminUnitsPage(props: Props) {
               <dd className="text-right font-semibold tabular-nums text-adm-warning">{counts.reserved}</dd>
               <dt className="text-adm-muted">{statusLabels.SOLD}</dt>
               <dd className="text-right font-semibold tabular-nums text-adm-neutral">{counts.sold}</dd>
+              {counts.transferred > 0 && (
+                <>
+                  <dt className="text-adm-muted">{statusLabels.TRANSFERRED}</dt>
+                  <dd className="text-right font-semibold tabular-nums text-adm-info">{counts.transferred}</dd>
+                </>
+              )}
               {counts.unreleased > 0 && (
                 <>
                   <dt className="text-adm-muted">{t("units.unreleased")}</dt>

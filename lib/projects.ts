@@ -23,17 +23,18 @@ import {
 } from "@/lib/project-filters";
 
 /**
+ * The statuses the public site shows: UNIT_STATUSES less TRANSFERRED.
+ *
  * Derived from UNIT_STATUSES rather than imported as Prisma's generated
- * `UnitStatus` type. The two are required to be identical — Prisma's is
- * generated straight from the `enum UnitStatus` in schema.prisma, and
- * lib/validations.ts's `unitStatusPatchSchema` already validates against
- * this exact array — so this is one definition doing double duty, not a
- * second source of truth to keep in sync by hand.
+ * `UnitStatus` type, which is generated from the same `enum UnitStatus` in
+ * schema.prisma. A buyer has no use for the difference between sold and
+ * handed over, so the public mapping below reports TRANSFERRED as SOLD and
+ * the site plan has three colours, not four; the admin uses the full list.
  *
  * Re-exported so components can import it from here without reaching into
  * @prisma/client directly.
  */
-export type UnitStatus = (typeof UNIT_STATUSES)[number];
+export type UnitStatus = Exclude<(typeof UNIT_STATUSES)[number], "TRANSFERRED">;
 
 // Imported for use below, and re-exported so existing callers keep working.
 // `export … from` alone would re-export without binding it in this scope.

@@ -58,7 +58,7 @@ type Props = {
   projectSlug: string;
   unit: UnitDetailView | null;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED: string };
   saveAction: (state: UnitFormState, formData: FormData) => Promise<UnitFormState>;
   labels: {
     empty: string;
@@ -281,7 +281,8 @@ export default function UnitDetailPanel({
               </button>
             )}
 
-            {unit.status === "SOLD" ? (
+            {/* Handed over is past sold: the same way back, never "mark sold". */}
+            {unit.status === "SOLD" || unit.status === "TRANSFERRED" ? (
               <button
                 type="button"
                 onClick={() => changeStatus("AVAILABLE")}

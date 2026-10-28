@@ -39,7 +39,7 @@ type Props = {
   /** Null when creating. */
   unit: UnitFormValues | null;
   unitTypes: { id: string; name: string }[];
-  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED?: string };
+  statusLabels: { AVAILABLE: string; RESERVED: string; SOLD: string; TRANSFERRED: string };
   onDone?: () => void;
   labels: {
     unitNumber: string;
@@ -147,6 +147,7 @@ export default function UnitForm({
             <option value="AVAILABLE">{statusLabels.AVAILABLE}</option>
             <option value="RESERVED">{statusLabels.RESERVED}</option>
             <option value="SOLD">{statusLabels.SOLD}</option>
+            <option value="TRANSFERRED">{statusLabels.TRANSFERRED}</option>
           </select>
         </div>
 
