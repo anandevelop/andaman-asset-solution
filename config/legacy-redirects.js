@@ -58,6 +58,8 @@ const MAP = [
   // Company pages.
   ["/contact", "/th/contact"],
   ["/contact-agency", "/th/agent/register"],
+  // The old register-interest form: about 70 hits a month still 404ed on it.
+  ["/contact-registration", "/th/contact"],
   ["/our-corporate", "/th/about"],
   ["/our-space", "/th/about"],
   ["/services", "/th/about"],
@@ -66,8 +68,12 @@ const MAP = [
   ["/careers/:path*", "/th/about"],
   ["/our-achievements", "/th/achievements"],
   ["/our-achievements-2", "/th/achievements"],
+  // WordPress's "-1" copies of pages, still requested by old links.
+  ["/achievements-1", "/th/achievements"],
   ["/4-winning-of-dot-property-thailand-award-2021", "/th/achievements"],
   ["/event", "/th/events"],
+  ["/events-1", "/th/events"],
+  ["/e-brochure-1", "/th/e-brochure"],
   ["/q-a", "/th"],
   ["/privacy", "/th/privacy-policy"],
   ["/sample-page", "/th"],
