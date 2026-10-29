@@ -157,7 +157,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
 
   reporter: process.env.CI
-    ? [["github"], ["html", { open: "never" }]]
+    ? // `list` prints every test with its duration, so a slow shard can be
+      // traced to the test that made it slow straight from the job log.
+      [["github"], ["list"], ["html", { open: "never" }]]
     : [["list"], ["html", { open: "never" }]],
 
   use: {

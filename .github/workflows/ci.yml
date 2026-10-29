@@ -149,10 +149,11 @@ jobs:
           POSTGRES_DB: andaman_e2e
         ports:
           - 5432:5432
+        # -U, or pg_isready probes as "root" and logs a FATAL every 10s.
         # Without the health check the first migration races the server's
         # own startup and fails on connection refused.
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U e2e"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -298,7 +299,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U smoke"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
