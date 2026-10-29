@@ -1597,14 +1597,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           rather than stacking a second bar on top of the first. */}
       <BubbleMenu
         editor={editor}
-        shouldShow={({ editor: instance, from, to }) =>
-          from !== to &&
-          !instance.isActive("link") &&
-          // A figure has its own controls (FigureNodeView) and a code
-          // block is meant to be literal — neither wants a formatting bar.
-          !instance.isActive("figure") &&
-          !instance.isActive("codeBlock")
-        }
+        shouldShow={showSelectionMenu}
         className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         {([2, 3, 4] as HeadingLevel[]).map((level) => (
@@ -1682,7 +1675,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 
       <BubbleMenu
         editor={editor}
-        shouldShow={({ editor: instance }) => instance.isActive("link")}
+        shouldShow={showLinkMenu}
         className="flex max-w-[22rem] items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 pl-2.5 shadow-lg"
       >
         {/* The href, so "where does this go" needs no click to answer —
@@ -1740,7 +1733,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           controls — the choice belongs to the block you are standing in. */}
       <BubbleMenu
         editor={editor}
-        shouldShow={({ editor: instance }) => instance.isActive("callout")}
+        shouldShow={showCalloutMenu}
         className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         {CALLOUT_TONES.map((tone) => (
@@ -1764,7 +1757,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
           means losing the cell you were in. */}
       <BubbleMenu
         editor={editor}
-        shouldShow={({ editor: instance }) => instance.isActive("table")}
+        shouldShow={showTableMenu}
         className="flex items-center gap-1 rounded-xs border border-adm-line-strong bg-adm-solid p-1 shadow-lg"
       >
         <button
@@ -1921,6 +1914,43 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
 });
 
 export default RichTextEditor;
+
+/*
+  The bubble menus' shouldShow, at module level on purpose.
+
+  BubbleMenu dispatches an "updateOptions" transaction whenever its
+  shouldShow or options prop changes identity. Written inline, they changed
+  on every render — so every keystroke, which re-renders this editor through
+  NewsForm's content state, sent four extra transactions, and SlashMenu's
+  open menu (which re-renders on every transaction) fed itself: about ten
+  thousand transactions a second with the menu open, and React error #185
+  ("Maximum update depth exceeded") when a keystroke landed in the middle.
+  A function that never changes identity sends none.
+*/
+type MenuContext = { editor: Editor; from: number; to: number };
+
+function showSelectionMenu({ editor: instance, from, to }: MenuContext): boolean {
+  return (
+    from !== to &&
+    !instance.isActive("link") &&
+    // A figure has its own controls (FigureNodeView) and a code block is
+    // meant to be literal — neither wants a formatting bar.
+    !instance.isActive("figure") &&
+    !instance.isActive("codeBlock")
+  );
+}
+
+function showLinkMenu({ editor: instance }: MenuContext): boolean {
+  return instance.isActive("link");
+}
+
+function showCalloutMenu({ editor: instance }: MenuContext): boolean {
+  return instance.isActive("callout");
+}
+
+function showTableMenu({ editor: instance }: MenuContext): boolean {
+  return instance.isActive("table");
+}
 
 function toolbarButtonClass(active: boolean): string {
   return `inline-flex h-8 w-8 items-center justify-center rounded-xs border text-adm-muted transition-colors hover:border-adm-line-strong hover:bg-adm-text/5 hover:text-adm-text ${

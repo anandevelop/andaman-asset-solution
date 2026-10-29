@@ -18,6 +18,7 @@ import type { Editor } from "@tiptap/react";
 import {
   filterSlashItems,
   readSlashState,
+  sameSlashState,
   type SlashItem,
 } from "@/components/admin/editor/SlashMenu";
 
@@ -100,6 +101,21 @@ const ITEMS: SlashItem[] = [
   { id: "table", label: "Insert table", keywords: "grid rows columns ตาราง แถว", icon: null as never, run: () => {} },
   { id: "heading2", label: "Heading 2", keywords: "h2 หัวข้อ หัวข้อใหญ่", icon: null as never, run: () => {} },
 ];
+
+describe("sameSlashState", () => {
+  // The menu re-reads the caret on every transaction; a fresh object for an
+  // unchanged trigger was a re-render, and with the bubble menu's own
+  // dispatch, a loop. See tests/components/BubbleMenuProps.test.tsx.
+  it("treats an unchanged trigger as the same state", () => {
+    expect(sameSlashState({ from: 1, to: 3, query: "ta" }, { from: 1, to: 3, query: "ta" })).toBe(true);
+    expect(sameSlashState(null, null)).toBe(true);
+  });
+
+  it("sees a change of query, position or open state", () => {
+    expect(sameSlashState({ from: 1, to: 3, query: "ta" }, { from: 1, to: 4, query: "tab" })).toBe(false);
+    expect(sameSlashState({ from: 1, to: 2, query: "" }, null)).toBe(false);
+  });
+});
 
 describe("filterSlashItems", () => {
   it("returns everything for an empty query, so '/' alone lists the blocks", () => {

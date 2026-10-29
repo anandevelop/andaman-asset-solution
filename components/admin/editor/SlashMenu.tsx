@@ -74,6 +74,11 @@ export function readSlashState(editor: Editor): SlashState | null {
   return { from: start, to: $from.pos, query: match[1] };
 }
 
+export function sameSlashState(a: SlashState | null, b: SlashState | null): boolean {
+  if (a === b) return true;
+  return a !== null && b !== null && a.from === b.from && a.to === b.to && a.query === b.query;
+}
+
 /** Case-insensitive match over the label and the translated keywords. */
 export function filterSlashItems(items: SlashItem[], query: string): SlashItem[] {
   const needle = query.trim().toLowerCase();
@@ -86,6 +91,9 @@ export function filterSlashItems(items: SlashItem[], query: string): SlashItem[]
 /** The bubble-menu plugin turns a string key into a PluginKey; the same
  *  string is what a transaction meta has to be addressed to. */
 const SLASH_PLUGIN_KEY = "slashMenu";
+
+/** Module-level for the same reason as shouldShow below. */
+const MENU_OPTIONS = { placement: "bottom-start", offset: 8 } as const;
 
 type Props = {
   editor: Editor;
@@ -121,14 +129,30 @@ export default function SlashMenu({ editor, items, emptyLabel }: Props) {
     return dismissed.current === next.from ? null : next;
   });
 
+  /*
+    Only a real change is a new state. readSlashState builds a fresh object
+    on every call, and this runs on every transaction — including the one
+    the bubble menu dispatches after each render — so storing whatever came
+    back re-rendered the menu forever while it was open. Comparing the three
+    fields that matter ends that loop here, whatever else dispatches.
+  */
   useEffect(() => {
-    const sync = () => setState(compute.current());
+    const sync = () => {
+      const next = compute.current();
+      setState((current) => (sameSlashState(current, next) ? current : next));
+    };
     sync();
     editor.on("transaction", sync);
     return () => {
       editor.off("transaction", sync);
     };
   }, [editor]);
+
+  /* Stable for the menu's lifetime: BubbleMenu dispatches a transaction
+     whenever shouldShow or options change identity — see the note above
+     showSelectionMenu in RichTextEditor.tsx. compute is a ref, so a
+     function created once still reads the current caret. */
+  const [shouldShow] = useState(() => () => compute.current() !== null);
 
   const matches = useMemo(
     () => (state ? filterSlashItems(items, state.query) : []),
@@ -217,8 +241,8 @@ export default function SlashMenu({ editor, items, emptyLabel }: Props) {
       pluginKey={SLASH_PLUGIN_KEY}
       /* Reads the same computation the menu's contents come from, so a
          dismissed trigger does not leave an empty popup behind. */
-      shouldShow={() => compute.current() !== null}
-      options={{ placement: "bottom-start", offset: 8 }}
+      shouldShow={shouldShow}
+      options={MENU_OPTIONS}
     >
       <div
         role="listbox"
