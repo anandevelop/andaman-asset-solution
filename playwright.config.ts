@@ -138,7 +138,14 @@ export default defineConfig({
   // depends on a known session state — parallel workers sharing one
   // database would make both flaky in ways that look like real failures.
   workers: 1,
-  fullyParallel: false,
+  // Still one test at a time — `workers: 1` above is what guarantees that.
+  // What fullyParallel changes is how CI's `--shard` splits the suite: by
+  // test instead of by file. Split by file, admin-login.spec.ts (which
+  // generates a test per admin section) landed whole in one shard, and the
+  // four shards of run c59e336 took 5:52, 8:04, 2:22 and 5:00. Files that
+  // need their order keep it with test.describe.configure({ mode: "serial" }),
+  // which sharding never splits.
+  fullyParallel: true,
 
   // No retries locally: a test that only passes on the second attempt is
   // telling you something, and hiding it is how a suite stops being
