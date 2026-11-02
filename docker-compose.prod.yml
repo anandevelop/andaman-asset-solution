@@ -162,6 +162,11 @@ services:
       # the afternoon.
       TZ: Asia/Bangkok
       CRON_TARGET_URL: http://app:3000
+    # The image's HEALTHCHECK asks port 3000 for /api/health, and this
+    # container serves nothing — so it read "unhealthy" for ever while
+    # running every job on time. Its health is in `docker logs`.
+    healthcheck:
+      disable: true
     depends_on:
       app:
         condition: service_started
