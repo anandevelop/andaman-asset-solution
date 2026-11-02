@@ -2785,7 +2785,7 @@
         "title": "定时发送",
         "hint": "每月报告发给谁。",
         "recipients": "收件人",
-        "noRecipients": "尚未配置收件地址 — 请设置 REPORT_RECIPIENTS。",
+        "noRecipients": "尚无收件人 — 点击编辑添加",
         "notConfigured": "尚未配置邮件服务器 — 请设置 SMTP_HOST。",
         "lastSent": "最近发送",
         "neverSent": "从未发送",
@@ -2795,7 +2795,17 @@
         "sending": "发送中…",
         "sentOk": "已发送。",
         "draftWarning": "本月的\"该做什么\"还没有人修改。若按现状发送，将带上\"系统草稿\"标记，而不会伪装成人工撰写。",
-        "noScheduler": "由 docker-compose.prod.yml 中的 `cron` 服务在每月 1 日 08:00 发送。若该服务未运行，或采用其他部署方式，则没有任何东西会调用 POST /api/cron/monthly-report，报告也不会发出。"
+        "noScheduler": "由 docker-compose.prod.yml 中的 `cron` 服务在每月 1 日 08:00 发送。若该服务未运行，或采用其他部署方式，则没有任何东西会调用 POST /api/cron/monthly-report，报告也不会发出。",
+        "editRecipients": "编辑",
+        "recipientsPlaceholder": "ceo@example.com, sales@example.com",
+        "recipientsHelp": "多个邮箱用逗号或换行分隔。留空则使用服务器上的 REPORT_RECIPIENTS。SEO 提醒和每周摘要邮件也发送给这些地址。",
+        "saveRecipients": "保存",
+        "cancel": "取消",
+        "savedRecipients": "收件人已保存",
+        "invalidRecipients": "不是有效的邮箱：",
+        "tooManyRecipients": "最多 20 个地址",
+        "saveFailed": "保存失败，请重试",
+        "fromEnv": "来自服务器上的 REPORT_RECIPIENTS。在此保存列表即可覆盖。"
       },
       "alerts": {
         "title": "告警规则",

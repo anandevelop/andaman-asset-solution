@@ -31,7 +31,8 @@ import "server-only";
 import { PathHitKind, type SeoAlertKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
-import { reportRecipients, sendReportEmail, escapeHtml } from "@/lib/email";
+import { sendReportEmail, escapeHtml } from "@/lib/email";
+import { getReportRecipients } from "@/lib/report-recipients";
 import { MIN_SAMPLES, type VitalKey } from "@/lib/analytics/vitals";
 import {
   ALERT_KINDS,
@@ -303,7 +304,7 @@ async function fire(
 }
 
 async function email(alerts: readonly AlertCandidate[]): Promise<void> {
-  const to = reportRecipients();
+  const { recipients: to } = await getReportRecipients();
   if (to.length === 0) return;
 
   const subject =

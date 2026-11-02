@@ -38,6 +38,7 @@ import { getRoutingRules } from "@/lib/lead-routing";
 import { isEnabled, notifyAdmins } from "@/lib/notifications";
 import { pushLineAlert } from "@/lib/line";
 import { sendStaffAlertEmail } from "@/lib/email";
+import { getReportRecipients } from "@/lib/report-recipients";
 import { getPageViewTrend } from "@/lib/admin/analytics";
 import { getBackupStatus } from "@/lib/backup-status";
 
@@ -316,7 +317,7 @@ async function weeklySummary(now: Date, sent: Record<string, string>): Promise<n
   if (on.inApp) await notifyAdmins({ event: "weeklySummary", title, body: rows.map((r) => r.join(" ")).join(" · "), href: "/admin" });
   if (on.line) await pushLineAlert({ kind: "weekly", title: "📊 สรุปประจำสัปดาห์", rows, url, urlLabel: "เปิดหลังบ้าน" });
   if (on.email) {
-    const to = await emailRecipients("viewAuditLog", [process.env.REPORT_RECIPIENTS]);
+    const to = await emailRecipients("viewAuditLog", (await getReportRecipients()).recipients);
     if (to.length) {
       await sendStaffAlertEmail({ to, subject: title, heading: "สรุปประจำสัปดาห์ (7 วันที่ผ่านมา)", rows, url, urlLabel: "เปิดหลังบ้าน" });
     }
@@ -364,7 +365,7 @@ async function backupProblem(now: Date, sent: Record<string, string>): Promise<n
   if (on.inApp) await notifyAdmins({ event: "backupProblem", title, body: rows.map((r) => r[1]).join(" · "), href: path });
   if (on.line) await pushLineAlert({ kind: "backup", title: `🗄️ ${title}`, rows, url: `${siteUrl()}/th${path}`, urlLabel: "ดูสถานะระบบ" });
   if (on.email) {
-    const to = await emailRecipients("manageUsers", [process.env.REPORT_RECIPIENTS]);
+    const to = await emailRecipients("manageUsers", (await getReportRecipients()).recipients);
     if (to.length) {
       await sendStaffAlertEmail({ to, subject: title, heading: title, rows, url: `${siteUrl()}/th${path}`, urlLabel: "ดูสถานะระบบ" });
     }

@@ -2785,7 +2785,7 @@
         "title": "Scheduled send",
         "hint": "Who the monthly report goes to.",
         "recipients": "To",
-        "noRecipients": "No addresses configured — set REPORT_RECIPIENTS.",
+        "noRecipients": "No recipients yet — add them with Edit",
         "notConfigured": "No mail server configured — set SMTP_HOST.",
         "lastSent": "Last sent",
         "neverSent": "Never sent",
@@ -2795,7 +2795,17 @@
         "sending": "Sending…",
         "sentOk": "Sent.",
         "draftWarning": "Nobody has edited this month's note. If it is sent as it stands, it goes out labelled \"automatic draft\" rather than as though a person wrote it.",
-        "noScheduler": "Sent by the `cron` service in docker-compose.prod.yml, on the 1st at 08:00. If that service is not running — or you deploy another way — nothing calls POST /api/cron/monthly-report and no report is sent."
+        "noScheduler": "Sent by the `cron` service in docker-compose.prod.yml, on the 1st at 08:00. If that service is not running — or you deploy another way — nothing calls POST /api/cron/monthly-report and no report is sent.",
+        "editRecipients": "Edit",
+        "recipientsPlaceholder": "ceo@example.com, sales@example.com",
+        "recipientsHelp": "Separate addresses with commas or new lines. Leave blank to use REPORT_RECIPIENTS on the server. Also used for SEO alerts and the weekly summary email.",
+        "saveRecipients": "Save",
+        "cancel": "Cancel",
+        "savedRecipients": "Recipients saved",
+        "invalidRecipients": "Not an email address:",
+        "tooManyRecipients": "At most 20 addresses",
+        "saveFailed": "Could not save — try again",
+        "fromEnv": "From REPORT_RECIPIENTS on the server. Save a list here to override it."
       },
       "alerts": {
         "title": "Alert rules",

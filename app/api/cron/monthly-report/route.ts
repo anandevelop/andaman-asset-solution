@@ -29,7 +29,8 @@
 import { NextResponse } from "next/server";
 import { guardCron } from "@/lib/seo/cron-auth";
 import { prisma } from "@/lib/prisma";
-import { reportRecipients, sendReportEmail } from "@/lib/email";
+import { sendReportEmail } from "@/lib/email";
+import { getReportRecipients } from "@/lib/report-recipients";
 import { getReportData } from "@/lib/reports/seo-report";
 import { renderReportEmail } from "@/lib/reports/email-body";
 import { draftNoteText } from "@/lib/reports/audience";
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     accident rather than on purpose. When the public default became English
     this email would have quietly switched language on the Thai staff who
     receive it. The language the report is *written in* is about its readers
-    (REPORT_RECIPIENTS), not about which language the site greets visitors
+    (/admin/reports, or REPORT_RECIPIENTS), not about which language the site greets visitors
     in, so it is stated here instead of inherited.
   */
   const locale: Locale = "th";
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
       noteBody,
     });
 
-    const to = reportRecipients();
+    const { recipients: to } = await getReportRecipients();
     const result = await sendReportEmail({ to, subject, html, text });
 
     await prisma.reportSend.create({

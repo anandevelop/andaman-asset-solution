@@ -42,7 +42,8 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { intlLocale } from "@/lib/format";
 import { locales } from "@/i18n";
-import { isEmailConfigured, reportRecipients } from "@/lib/email";
+import { isEmailConfigured } from "@/lib/email";
+import { getReportRecipients } from "@/lib/report-recipients";
 import { getReportData } from "@/lib/reports/seo-report";
 import { resolvePeriod } from "@/lib/reports/period";
 import { draftNoteText, isAudience } from "@/lib/reports/audience";
@@ -59,7 +60,7 @@ import ReportView from "@/components/admin/ReportView";
 import ReportNoteEditor from "@/components/admin/ReportNoteEditor";
 import ReportScheduleCard from "@/components/admin/ReportScheduleCard";
 import AlertRulesCard from "@/components/admin/AlertRulesCard";
-import { saveReportNote, sendTestReport, toggleAlertRule } from "./actions";
+import { saveReportNote, sendTestReport, toggleAlertRule, updateReportRecipients } from "./actions";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
@@ -113,7 +114,7 @@ export default async function AdminReportsPage(props: Props) {
   ]);
 
   const offline = isDatabaseOffline();
-  const recipients = reportRecipients();
+  const { recipients, source: recipientSource } = await getReportRecipients();
 
   // Formatted here rather than in the components: this page owns the
   // locale, and a date formatted in two places eventually disagrees.
@@ -277,6 +278,8 @@ export default async function AdminReportsPage(props: Props) {
             reportLocale,
           )}
           recipients={recipients}
+          recipientSource={recipientSource}
+          saveRecipients={updateReportRecipients.bind(null, locale)}
           emailConfigured={isEmailConfigured()}
           noteIsDraft={data.note.isDraft}
           lastSent={
@@ -303,6 +306,16 @@ export default async function AdminReportsPage(props: Props) {
             sentOk: t("reports.schedule.sentOk"),
             draftWarning: t("reports.schedule.draftWarning"),
             noScheduler: t("reports.schedule.noScheduler"),
+            editRecipients: t("reports.schedule.editRecipients"),
+            recipientsPlaceholder: t("reports.schedule.recipientsPlaceholder"),
+            recipientsHelp: t("reports.schedule.recipientsHelp"),
+            saveRecipients: t("reports.schedule.saveRecipients"),
+            cancel: t("reports.schedule.cancel"),
+            savedRecipients: t("reports.schedule.savedRecipients"),
+            invalidRecipients: t("reports.schedule.invalidRecipients"),
+            tooManyRecipients: t("reports.schedule.tooManyRecipients"),
+            saveFailed: t("reports.schedule.saveFailed"),
+            fromEnv: t("reports.schedule.fromEnv"),
           }}
         />
 

@@ -2785,7 +2785,7 @@
         "title": "ส่งอัตโนมัติ",
         "hint": "รายงานประจำเดือนส่งถึงใคร",
         "recipients": "ถึง",
-        "noRecipients": "ยังไม่ได้ตั้งอีเมลผู้รับ — ตั้งที่ REPORT_RECIPIENTS",
+        "noRecipients": "ยังไม่มีผู้รับ — กด แก้ไข เพื่อเพิ่ม",
         "notConfigured": "ยังไม่ได้ตั้งเมลเซิร์ฟเวอร์ — ตั้งที่ SMTP_HOST",
         "lastSent": "ส่งล่าสุด",
         "neverSent": "ยังไม่เคยส่ง",
@@ -2795,7 +2795,17 @@
         "sending": "กำลังส่ง…",
         "sentOk": "ส่งแล้ว",
         "draftWarning": "เดือนนี้ยังไม่มีใครแก้ \"สิ่งที่ควรทำ\" ถ้าส่งตามนี้ จะติดป้าย \"ร่างอัตโนมัติ\" ไปด้วย ไม่ส่งเงียบ ๆ ราวกับคนเขียนเอง",
-        "noScheduler": "ส่งโดย service ชื่อ `cron` ใน docker-compose.prod.yml ทุกวันที่ 1 เวลา 08:00 ถ้า service นั้นไม่ได้รันอยู่ หรือ deploy ด้วยวิธีอื่น จะไม่มีอะไรมายิง POST /api/cron/monthly-report และจะไม่มีรายงานถูกส่ง"
+        "noScheduler": "ส่งโดย service ชื่อ `cron` ใน docker-compose.prod.yml ทุกวันที่ 1 เวลา 08:00 ถ้า service นั้นไม่ได้รันอยู่ หรือ deploy ด้วยวิธีอื่น จะไม่มีอะไรมายิง POST /api/cron/monthly-report และจะไม่มีรายงานถูกส่ง",
+        "editRecipients": "แก้ไข",
+        "recipientsPlaceholder": "ceo@example.com, sales@example.com",
+        "recipientsHelp": "คั่นแต่ละอีเมลด้วยจุลภาคหรือขึ้นบรรทัดใหม่ เว้นว่างไว้เพื่อใช้ค่า REPORT_RECIPIENTS ในเซิร์ฟเวอร์ รายชื่อนี้ใช้กับแจ้งเตือน SEO และอีเมลสรุปประจำสัปดาห์ด้วย",
+        "saveRecipients": "บันทึก",
+        "cancel": "ยกเลิก",
+        "savedRecipients": "บันทึกผู้รับแล้ว",
+        "invalidRecipients": "ไม่ใช่อีเมล:",
+        "tooManyRecipients": "ใส่ได้ไม่เกิน 20 อีเมล",
+        "saveFailed": "บันทึกไม่สำเร็จ ลองอีกครั้ง",
+        "fromEnv": "มาจาก REPORT_RECIPIENTS ในเซิร์ฟเวอร์ บันทึกรายชื่อที่นี่เพื่อใช้แทน"
       },
       "alerts": {
         "title": "กฎแจ้งเตือน",

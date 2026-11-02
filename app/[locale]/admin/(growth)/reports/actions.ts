@@ -26,7 +26,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { setAlertRule } from "@/lib/seo/alerts";
 import { ALERT_KINDS } from "@/lib/seo/alert-rules";
-import { reportRecipients, sendReportEmail } from "@/lib/email";
+import { sendReportEmail } from "@/lib/email";
+import { getReportRecipients, parseRecipients, saveReportRecipients, MAX_RECIPIENTS } from "@/lib/report-recipients";
 import { getReportData } from "@/lib/reports/seo-report";
 import { renderReportEmail } from "@/lib/reports/email-body";
 import {
@@ -120,6 +121,32 @@ export async function toggleAlertRule(
   }
 }
 
+export type RecipientsResult =
+  | { ok: true; recipients: string[] }
+  | { ok: false; error: "INVALID" | "TOO_MANY" | "FAILED"; invalid?: string[] };
+
+/**
+ * Who the monthly report and the alerts go to. Blank hands it back to
+ * REPORT_RECIPIENTS on the server.
+ */
+export async function updateReportRecipients(locale: string, raw: string): Promise<RecipientsResult> {
+  const actor = await requireAdminAction(Role.ADMIN);
+
+  const { valid, invalid } = parseRecipients(String(raw ?? "").slice(0, 5000));
+  if (invalid.length > 0) return { ok: false, error: "INVALID", invalid: invalid.slice(0, 5) };
+  if (valid.length > MAX_RECIPIENTS) return { ok: false, error: "TOO_MANY" };
+
+  try {
+    await saveReportRecipients(valid, actor.id);
+    await log(actor, "report_recipients_updated", valid.length ? valid.join(", ") : "(REPORT_RECIPIENTS)");
+    revalidatePath(`/${locale}/admin/reports`);
+    return { ok: true, recipients: valid };
+  } catch (error) {
+    console.error("[reports] failed to save recipients", error);
+    return { ok: false, error: "FAILED" };
+  }
+}
+
 export type TestEmailResult =
   { ok: true; recipientCount: number } | { ok: false; error: string };
 
@@ -169,7 +196,7 @@ export async function sendTestReport(
     noteBody: data.note.body.trim() === "" ? draft : data.note.body,
   });
 
-  const to = reportRecipients();
+  const { recipients: to } = await getReportRecipients();
   const result = await sendReportEmail({ to, subject, html, text });
 
   // Recorded like any other send, so the card's "last sent" line tells the

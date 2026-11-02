@@ -22,8 +22,8 @@
  */
 
 import { useState, useTransition } from "react";
-import { Mail, Loader2 } from "lucide-react";
-import type { TestEmailResult } from "@/app/[locale]/admin/(growth)/reports/actions";
+import { Mail, Loader2, Pencil } from "lucide-react";
+import type { RecipientsResult, TestEmailResult } from "@/app/[locale]/admin/(growth)/reports/actions";
 
 export type ScheduleLabels = {
   title: string;
@@ -40,11 +40,24 @@ export type ScheduleLabels = {
   sentOk: string;
   draftWarning: string;
   noScheduler: string;
+  editRecipients: string;
+  recipientsPlaceholder: string;
+  recipientsHelp: string;
+  saveRecipients: string;
+  cancel: string;
+  savedRecipients: string;
+  invalidRecipients: string;
+  tooManyRecipients: string;
+  saveFailed: string;
+  fromEnv: string;
 };
 
 type Props = {
   labels: ScheduleLabels;
   recipients: string[];
+  /** "env": coming from REPORT_RECIPIENTS on the server, not saved here. */
+  recipientSource: "admin" | "env" | null;
+  saveRecipients: (raw: string) => Promise<RecipientsResult>;
   emailConfigured: boolean;
   /** Already formatted by the page, which owns the locale's date format. */
   lastSent: { at: string; ok: boolean; error: string | null } | null;
@@ -55,6 +68,8 @@ type Props = {
 export default function ReportScheduleCard({
   labels,
   recipients,
+  recipientSource,
+  saveRecipients,
   emailConfigured,
   lastSent,
   noteIsDraft,
@@ -62,6 +77,17 @@ export default function ReportScheduleCard({
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<TestEmailResult | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(recipients.join(", "));
+  const [saving, startSaving] = useTransition();
+  const [saved, setSaved] = useState<RecipientsResult | null>(null);
+
+  const save = () =>
+    startSaving(async () => {
+      const outcome = await saveRecipients(draft);
+      setSaved(outcome);
+      if (outcome.ok) setEditing(false);
+    });
 
   return (
     <section className="admin-card print:hidden">
@@ -74,12 +100,72 @@ export default function ReportScheduleCard({
             {labels.recipients}
           </dt>
           <dd className="mt-0.5 text-adm-text">
-            {!emailConfigured ? (
-              <span className="text-adm-muted">{labels.notConfigured}</span>
-            ) : recipients.length === 0 ? (
-              <span className="text-adm-muted">{labels.noRecipients}</span>
+            {editing ? (
+              <div className="space-y-2">
+                <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  rows={3}
+                  placeholder={labels.recipientsPlaceholder}
+                  aria-label={labels.recipients}
+                  className="admin-input w-full font-mono text-xs"
+                />
+                <p className="admin-hint">{labels.recipientsHelp}</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={save} disabled={saving} className="admin-btn text-xs">
+                    {saving && <Loader2 size={13} className="animate-spin" aria-hidden />}
+                    {labels.saveRecipients}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(false);
+                      setDraft(recipients.join(", "));
+                      setSaved(null);
+                    }}
+                    className="admin-btn-ghost text-xs"
+                  >
+                    {labels.cancel}
+                  </button>
+                </div>
+              </div>
             ) : (
-              <span className="break-all">{recipients.join(", ")}</span>
+              <div className="flex items-start justify-between gap-2">
+                <span>
+                  {recipients.length === 0 ? (
+                    <span className="text-adm-muted">{labels.noRecipients}</span>
+                  ) : (
+                    <span className="break-all">{recipients.join(", ")}</span>
+                  )}
+                  {recipientSource === "env" && (
+                    <span className="block text-xs text-adm-muted">{labels.fromEnv}</span>
+                  )}
+                  {!emailConfigured && (
+                    <span className="block text-xs text-adm-warning">{labels.notConfigured}</span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(true);
+                    setSaved(null);
+                  }}
+                  className="admin-btn-ghost shrink-0 py-1! text-xs"
+                >
+                  <Pencil size={12} aria-hidden />
+                  {labels.editRecipients}
+                </button>
+              </div>
+            )}
+            {saved?.ok && !editing && <p className="mt-1 text-xs text-adm-success">{labels.savedRecipients}</p>}
+            {saved && !saved.ok && (
+              <p className="mt-1 text-xs text-adm-danger">
+                {saved.error === "INVALID"
+                  ? `${labels.invalidRecipients} ${saved.invalid?.join(", ") ?? ""}`
+                  : saved.error === "TOO_MANY"
+                    ? labels.tooManyRecipients
+                    : labels.saveFailed}
+              </p>
             )}
           </dd>
         </div>
