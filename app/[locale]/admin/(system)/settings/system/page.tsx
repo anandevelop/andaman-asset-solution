@@ -8,7 +8,7 @@
  * either a fact about the running process or a count from the database —
  * not a setting, because nothing there can be changed without a deploy.
  *
- * THE BACKUP SECTION DOES NOT OFFER A BACKUP BUTTON
+ * THE BACKUP SECTION REPORTS, IT DOES NOT OFFER A BACKUP BUTTON
  *
  * This application does not take backups and cannot: they are the database
  * host's job, run outside the container on a schedule this process knows
@@ -35,6 +35,7 @@ import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { collectEnvProblems } from "@/lib/env";
 import { formatGigabytes, getSystemHealth } from "@/lib/admin/system-health";
 import ClearCacheButton from "@/components/admin/ClearCacheButton";
+import { getBackupStatus } from "@/lib/backup-status";
 import { clearSiteCache } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -44,7 +45,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, health, counts] = await Promise.all([
+  const [t, health, counts, backup] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSystemHealth(),
     safeQuery(
@@ -61,6 +62,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
       },
       { leads: 0, media: 0, projects: 0, articles: 0, audit: 0 },
     ),
+    getBackupStatus(),
   ]);
 
   const env = collectEnvProblems();
@@ -181,8 +183,65 @@ export default async function AdminSystemSettingsPage(props: Props) {
 
       <section className="admin-card space-y-3">
         <h3 className="text-sm font-semibold text-adm-text">{t("settings.system.backupTitle")}</h3>
-        <p className="flex items-start gap-2 text-sm leading-relaxed text-adm-muted">
-          <Info size={15} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
+        {backup.state === "never" ? (
+          <p className="flex items-start gap-2 text-sm leading-relaxed text-adm-danger">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
+            {t("settings.system.backupNever")}
+          </p>
+        ) : (
+          <>
+            <p
+              className={`flex items-start gap-2 text-sm leading-relaxed ${
+                backup.state === "ok"
+                  ? backup.offsite
+                    ? "text-adm-success"
+                    : "text-adm-warning"
+                  : "text-adm-danger"
+              }`}
+            >
+              {backup.state === "ok" ? (
+                <CheckCircle2 size={15} className="mt-0.5 shrink-0" aria-hidden />
+              ) : (
+                <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
+              )}
+              {backup.state === "ok"
+                ? t("settings.system.backupOk", { hours: Math.max(0, Math.floor(backup.ageHours)) })
+                : backup.state === "stale"
+                  ? t("settings.system.backupStale", { hours: Math.floor(backup.ageHours) })
+                  : t("settings.system.backupFailed")}
+            </p>
+            <dl className="grid gap-1.5 text-sm sm:grid-cols-2">
+              <div className="flex justify-between gap-3">
+                <dt className="text-adm-muted">{t("settings.system.backupLastRun")}</dt>
+                <dd className="tabular-nums text-adm-text">
+                  {new Date(backup.run.at).toLocaleString(locale === "th" ? "th-TH" : locale, {
+                    timeZone: "Asia/Bangkok",
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-adm-muted">{t("settings.system.backupSize")}</dt>
+                <dd className="tabular-nums text-adm-text">{backup.run.size || "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3 sm:col-span-2">
+                <dt className="text-adm-muted">{t("settings.system.backupWhere")}</dt>
+                <dd className={backup.offsite ? "text-adm-text" : "text-adm-warning"}>
+                  {backup.offsite ? t("settings.system.backupOffsite") : t("settings.system.backupLocalOnly")}
+                </dd>
+              </div>
+              {backup.run.detail && backup.state !== "ok" && (
+                <div className="flex justify-between gap-3 sm:col-span-2">
+                  <dt className="text-adm-muted">{t("settings.system.backupDetail")}</dt>
+                  <dd className="text-adm-text">{backup.run.detail}</dd>
+                </div>
+              )}
+            </dl>
+          </>
+        )}
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-adm-muted">
+          <Info size={13} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
           {t("settings.system.backupNote")}
         </p>
       </section>

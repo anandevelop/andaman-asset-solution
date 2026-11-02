@@ -46,6 +46,8 @@ vi.mock("@/lib/lead-routing", () => ({
   getRoutingRules: async () => ({ escalateAfterHours: 2, teamLeadUserId: null }),
 }));
 vi.mock("@/lib/admin/analytics", () => ({ getPageViewTrend: async () => ({ totalViews: 333 }) }));
+let backupState: { state: string; run?: unknown; ageHours?: number } = { state: "ok" };
+vi.mock("@/lib/backup-status", () => ({ getBackupStatus: async () => backupState }));
 
 import { runScheduledAlerts } from "@/lib/scheduled-alerts";
 
@@ -58,6 +60,7 @@ beforeEach(() => {
   alerts.length = 0;
   leads = [];
   units = [];
+  backupState = { state: "ok" };
 });
 
 describe("unclaimed leads", () => {
@@ -106,5 +109,22 @@ describe("weekly summary", () => {
     // 08:00 Bangkok.
     expect((await runScheduledAlerts(new Date("2026-11-09T01:00:00Z"))).weekly).toBe(1);
     expect((await runScheduledAlerts(new Date("2026-11-09T01:15:00Z"))).weekly).toBe(0);
+  });
+});
+
+describe("backup problems", () => {
+  it("say nothing while backups are healthy", async () => {
+    expect((await runScheduledAlerts(TUESDAY)).backup).toBe(0);
+  });
+
+  it("are announced once a day from 09:00 Bangkok while they last", async () => {
+    backupState = { state: "never" };
+    // 08:30 Bangkok: too early.
+    expect((await runScheduledAlerts(new Date("2026-11-04T01:30:00Z"))).backup).toBe(0);
+    expect((await runScheduledAlerts(TUESDAY)).backup).toBe(1);
+    expect((await runScheduledAlerts(new Date(TUESDAY.getTime() + 15 * 60_000))).backup).toBe(0);
+    expect(alerts.at(-1)).toContain("ยังไม่เคยถูกสำรอง");
+    // Next day, still broken: again.
+    expect((await runScheduledAlerts(new Date(TUESDAY.getTime() + 24 * HOUR))).backup).toBe(1);
   });
 });
