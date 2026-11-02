@@ -93,6 +93,10 @@ export async function runSeoAudit(options: { baseUrl?: string } = {}): Promise<A
 
     const input: SeoRuleInput = {
       ...url,
+      // The row first, then what the page really rendered for it (see
+      // RenderedPage.metaDescription): a fallback counts as present.
+      metaDescription: url.metaDescription || rendered?.metaDescription || "",
+      ogImageUrl: url.ogImageUrl || rendered?.ogImage || null,
       duplicates: {
         title: url.title ? (duplicates.title.get(url.title) ?? 0) : 0,
         metaDescription: url.metaDescription

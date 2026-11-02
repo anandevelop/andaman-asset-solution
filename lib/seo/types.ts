@@ -56,6 +56,15 @@ export type RenderedPage = {
   imagesMissingAlt: number;
   /** Words of visible body text, for the thin-content rule. */
   wordCount: number;
+  /**
+   * What the page's <head> actually says. A static page has no row to read
+   * these from, and a row left blank still renders a fallback (the site's
+   * description, the default share image); the audit used to report both as
+   * missing on ~48 pages that had them. Optional so older fixtures hold.
+   */
+  title?: string | null;
+  metaDescription?: string | null;
+  ogImage?: string | null;
 };
 
 export type SeoRuleInput = {

@@ -83,6 +83,17 @@ export function parseRendered(html: string): RenderedPage {
     ),
     ...imageStats(html),
     wordCount: visibleWordCount(html),
+    title: firstMatch(html, /<title[^>]*>[^<]*<\/title>/i, (tag) => tag.replace(/<[^>]+>/g, "").trim() || null),
+    metaDescription: firstMatch(
+      html,
+      /<meta[^>]+name=["']description["'][^>]*>/i,
+      (tag) => attr(tag, "content")?.trim() || null,
+    ),
+    ogImage: firstMatch(
+      html,
+      /<meta[^>]+property=["']og:image["'][^>]*>/i,
+      (tag) => attr(tag, "content")?.trim() || null,
+    ),
   };
 }
 

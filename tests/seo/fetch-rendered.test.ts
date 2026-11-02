@@ -172,3 +172,21 @@ describe("parseRendered — visible words", () => {
     expect(parseRendered("<html><body></body></html>").wordCount).toBe(0);
   });
 });
+
+describe("parseRendered head tags", () => {
+  it("reads the description and share image a fallback rendered", () => {
+    const html =
+      '<head><title>About | Andaman</title><meta name="description" content="Phuket villas"/>' +
+      '<meta property="og:image:width" content="1200"/><meta property="og:image" content="https://x/og.jpg"/></head>';
+    const page = parseRendered(html);
+    expect(page.metaDescription).toBe("Phuket villas");
+    expect(page.ogImage).toBe("https://x/og.jpg");
+    expect(page.title).toBe("About | Andaman");
+  });
+
+  it("is null when the tags are absent or empty", () => {
+    const page = parseRendered('<meta name="description" content=""/>');
+    expect(page.metaDescription).toBeNull();
+    expect(page.ogImage).toBeNull();
+  });
+});
