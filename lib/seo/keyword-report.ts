@@ -176,12 +176,37 @@ export async function getKeywordReport(days = 28): Promise<KeywordReport> {
 
 /** Which of these phrases the team already tracks, lowercased for
  *  comparison because a library entry and a search rarely agree on case. */
+/**
+ * Every phrase the team has said it is going after: the keyword library,
+ * plus each project's target keywords and each article's focus and
+ * secondary keywords. Those used to be left out, so a query a project was
+ * written for still showed under "untracked".
+ */
 export async function trackedPhrases(): Promise<Set<string>> {
-  const keywords = await safeQuery(
-    "seo:trackedPhrases",
-    () => prisma.keyword.findMany({ select: { phrase: true } }),
-    [] as { phrase: string }[],
-  );
+  const [keywords, projects, articles, translations] = await Promise.all([
+    safeQuery("seo:trackedPhrases", () => prisma.keyword.findMany({ select: { phrase: true } }), [] as { phrase: string }[]),
+    safeQuery(
+      "seo:trackedPhrases:projects",
+      () => prisma.projectTranslation.findMany({ select: { targetKeywords: true } }),
+      [] as { targetKeywords: string[] }[],
+    ),
+    safeQuery(
+      "seo:trackedPhrases:news",
+      () => prisma.newsArticle.findMany({ select: { focusKeyword: true, secondaryKeywords: true } }),
+      [] as { focusKeyword: string | null; secondaryKeywords: string[] }[],
+    ),
+    safeQuery(
+      "seo:trackedPhrases:newsTranslations",
+      () => prisma.newsArticleTranslation.findMany({ select: { focusKeyword: true } }),
+      [] as { focusKeyword: string | null }[],
+    ),
+  ]);
 
-  return new Set(keywords.map((row) => row.phrase.trim().toLowerCase()));
+  const phrases = [
+    ...keywords.map((row) => row.phrase),
+    ...projects.flatMap((row) => row.targetKeywords),
+    ...articles.flatMap((row) => [row.focusKeyword ?? "", ...row.secondaryKeywords]),
+    ...translations.map((row) => row.focusKeyword ?? ""),
+  ];
+  return new Set(phrases.map((phrase) => phrase.trim().toLowerCase()).filter(Boolean));
 }

@@ -25,7 +25,7 @@ import RescanButton from "@/components/admin/RescanButton";
 import KeywordRankImportPanel from "@/components/admin/KeywordRankImportPanel";
 import KeywordLibraryTable from "@/components/admin/KeywordLibraryTable";
 import SearchQueryViews, { type QueryRow } from "@/components/admin/SearchQueryViews";
-import { rescanContentLinks, importKeywordRanksCsv } from "./actions";
+import { rescanContentLinks, importKeywordRanksCsv, trackSearchQuery } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -212,7 +212,7 @@ export default async function KeywordLibraryPage(props: Props) {
         }}
         brandTermsConfigured={brandTerms.length > 0}
         empty={report.empty}
-        trackHrefPrefix="#keyword-library?add="
+        trackAction={trackSearchQuery.bind(null, locale)}
       />
 
       {/* ── Cannibalization ──────────────────────────────────────────── */}

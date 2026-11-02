@@ -350,25 +350,25 @@ export async function getSeoAudit(): Promise<SeoAudit> {
           severity: "critical",
           key: "notFoundHits",
           count: redirects.openNotFoundHits,
-          href: "/admin/seo/urls",
+          href: "/seo/urls",
         });
       }
       if (projectRows.missingDescription > 0) {
-        issues.push({ id: "desc-projects", severity: "warning", key: "missingDescriptionProjects", count: projectRows.missingDescription, href: "/admin/projects" });
+        issues.push({ id: "desc-projects", severity: "warning", key: "missingDescriptionProjects", count: projectRows.missingDescription, href: "/projects" });
       }
       if (newsRows.missingDescription > 0) {
-        issues.push({ id: "desc-news", severity: "warning", key: "missingDescriptionNews", count: newsRows.missingDescription, href: "/admin/news" });
+        issues.push({ id: "desc-news", severity: "warning", key: "missingDescriptionNews", count: newsRows.missingDescription, href: "/news" });
       }
       if (eventRows.missingDescription > 0) {
-        issues.push({ id: "desc-events", severity: "warning", key: "missingDescriptionEvents", count: eventRows.missingDescription, href: "/admin/events" });
+        issues.push({ id: "desc-events", severity: "warning", key: "missingDescriptionEvents", count: eventRows.missingDescription, href: "/events" });
       }
       if (!searchConsoleVerified) {
-        issues.push({ id: "search-console", severity: "warning", key: "searchConsoleNotVerified", href: "/admin/seo/defaults" });
+        issues.push({ id: "search-console", severity: "warning", key: "searchConsoleNotVerified", href: "/seo/defaults" });
       }
       if (languageIncompleteCount > 0) {
         // The translation-status report lists exactly these items, one
         // row per missing locale, with a link to each one's editor.
-        issues.push({ id: "language-gaps", severity: "warning", key: "languageIncomplete", count: languageIncompleteCount, href: "/admin/publishing/translations" });
+        issues.push({ id: "language-gaps", severity: "warning", key: "languageIncomplete", count: languageIncompleteCount, href: "/publishing/translations" });
       }
       if (titleTooLongCount > 0) {
         issues.push({ id: "title-length", severity: "minor", key: "titleTooLong", count: titleTooLongCount });

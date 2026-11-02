@@ -304,7 +304,7 @@ export default async function AdminSeoOverviewPage(props: Props) {
                     {t(`seo.issues.${issue.key}`, issue.count !== undefined ? { count: issue.count } : undefined)}
                   </p>
                   {issue.href && (
-                    <Link href={issue.href} className="admin-btn-ghost admin-btn-sm mt-3 w-fit">
+                    <Link href={`/${locale}/admin${issue.href}`} className="admin-btn-ghost admin-btn-sm mt-3 w-fit">
                       {t("seo.issuesFix")}
                       <ArrowUpRight size={12} aria-hidden />
                     </Link>

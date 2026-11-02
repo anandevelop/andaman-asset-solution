@@ -99,7 +99,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         group: "projects" as const,
         title: p.nameEn || p.nameTh,
         subtitle: p.location,
-        href: `/admin/projects/${p.id}/edit`,
+        href: `/projects/${p.id}/edit`,
       })),
     },
     {
@@ -109,7 +109,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         group: "units" as const,
         title: u.unitNumber,
         subtitle: u.project.nameEn || u.project.nameTh,
-        href: `/admin/projects/${u.projectId}/edit`,
+        href: `/projects/${u.projectId}/edit`,
         badge: u.status,
       })),
     },
@@ -120,7 +120,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         group: "leads" as const,
         title: l.name,
         subtitle: l.phone,
-        href: `/admin/leads/${l.id}`,
+        href: `/leads/${l.id}`,
         badge: l.status,
       })),
     },
@@ -130,7 +130,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         id: n.id,
         group: "news" as const,
         title: n.titleEn || n.titleTh,
-        href: `/admin/news/${n.id}/edit`,
+        href: `/news/${n.id}/edit`,
       })),
     },
     {
@@ -139,7 +139,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         id: e.id,
         group: "events" as const,
         title: e.titleEn || e.titleTh,
-        href: `/admin/events/${e.id}/edit`,
+        href: `/events/${e.id}/edit`,
       })),
     },
     {
@@ -148,7 +148,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         id: m.id,
         group: "media" as const,
         title: decodeURIComponent(m.url.split("/").pop() ?? m.url),
-        href: `/admin/media`,
+        href: `/media`,
       })),
     },
   ].filter((g) => g.hits.length > 0);

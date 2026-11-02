@@ -35,8 +35,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useState } from "react";
-import { Info, Plus, Search } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Check, Info, Loader2, Plus, Search } from "lucide-react";
 
 type View = "tracked" | "untracked" | "opportunity";
 
@@ -85,16 +86,40 @@ type Props = {
   brandTermsConfigured: boolean;
   empty: boolean;
   /**
-   * Prefix for the "+ track" link; the query is appended, encoded.
-   *
-   * A string and not a builder function. A function in a Client
-   * Component's props is not a serialisation warning but a server render
-   * error — the whole page hits its error boundary — and this is the
-   * second time that has been written in this codebase. See the note
-   * above toFigureView in the analytics page.
+   * "+ track": adds the query to the keyword library. A server action
+   * (bound on the page), which — unlike a plain function — may be passed
+   * to a Client Component. It used to be a link to #keyword-library?add=…
+   * that nothing read.
    */
-  trackHrefPrefix: string;
+  trackAction: (query: string) => Promise<{ ok: boolean }>;
 };
+
+function TrackButton({ query, label, action }: { query: string; label: string; action: Props["trackAction"] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
+
+  if (state === "done") {
+    return <Check size={13} className="ml-auto text-adm-success" aria-label="✓" />;
+  }
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const result = await action(query);
+          setState(result.ok ? "done" : "failed");
+          if (result.ok) router.refresh();
+        })
+      }
+      className={`inline-flex items-center gap-1 text-xs underline ${state === "failed" ? "text-adm-danger" : "text-adm-text"}`}
+    >
+      {pending ? <Loader2 size={11} className="animate-spin" aria-hidden /> : <Plus size={11} aria-hidden />}
+      {label}
+    </button>
+  );
+}
 
 export default function SearchQueryViews({
   labels,
@@ -103,7 +128,7 @@ export default function SearchQueryViews({
   totals,
   brandTermsConfigured,
   empty,
-  trackHrefPrefix,
+  trackAction,
 }: Props) {
   const [view, setView] = useState<View>("untracked");
 
@@ -224,13 +249,7 @@ export default function SearchQueryViews({
                   )}
                   {view === "untracked" && (
                     <td className="px-3 py-2.5 text-right">
-                      <a
-                        href={`${trackHrefPrefix}${encodeURIComponent(row.query)}`}
-                        className="inline-flex items-center gap-1 text-xs text-adm-text underline"
-                      >
-                        <Plus size={11} aria-hidden />
-                        {labels.track}
-                      </a>
+                      <TrackButton query={row.query} label={labels.track} action={trackAction} />
                     </td>
                   )}
                 </tr>
