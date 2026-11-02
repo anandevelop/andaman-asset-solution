@@ -66,7 +66,9 @@ test.describe("the public section", () => {
     await expect(section).toBeVisible();
 
     // The floor display, which is the thing that makes it read as a lift.
-    await expect(section.getByRole("button", { name: "1st Floor" })).toBeVisible();
+    // Seeded as "1st Floor" with label 1 on a one-floor panel: the ground,
+    // so the English page names it from the label (lib/floor-name.ts).
+    await expect(section.getByRole("button", { name: "Ground Floor" })).toBeVisible();
 
     /*
       A room with a photo is a button; one without is a plain label. Both

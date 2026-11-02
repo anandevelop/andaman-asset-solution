@@ -219,7 +219,8 @@ export default async function ProjectPage(props: Props) {
         floors: type.floorPlans.map((plan) => ({
           id: plan.id,
           name: plan.floorName,
-          shortLabel: plan.shortLabel,
+          shortLabel: plan.liftLabel,
+          modelShort: plan.shortLabel,
           // The blueprint is the variant built for this dark frame; the
           // line drawing is the fallback when one was never derived.
           imageUrl: plan.blueprintImageUrl ?? plan.imageUrl,

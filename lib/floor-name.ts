@@ -15,18 +15,35 @@
  * panel already counts from the ground and "1" is the first floor
  * everywhere.
  *
- * English keeps the name the admin typed, and a label this cannot read
- * keeps it in every language. Free of server-only imports, like
+ * English is built the same way, so the ground is "Ground Floor" on every
+ * type — admins had typed "1st Floor" on some and "Ground Floor" on others
+ * for the same level. A label this cannot read keeps the typed name.
+ *
+ * The lift buttons follow the same count (localLiftLabel): on a Thai page
+ * a "G" button beside a "ชั้น 1" heading read as two different floors. Free of server-only imports, like
  * lib/lift-label.ts beside it.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 const CHINESE_DIGITS = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
 
+function englishOrdinal(n: number): string {
+  const rest = n % 100;
+  if (rest >= 11 && rest <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+}
+
 const NAMES: Record<
   string,
   { floor: (n: number) => string; roof: string; basement: string; mezzanine: string }
 > = {
+  // n counts the ground as 1, as the other languages do.
+  en: {
+    floor: (n) => (n === 1 ? "Ground Floor" : `${englishOrdinal(n - 1)} Floor`),
+    roof: "Roof",
+    basement: "Basement",
+    mezzanine: "Mezzanine",
+  },
   th: { floor: (n) => `ชั้น ${n}`, roof: "ชั้นดาดฟ้า", basement: "ชั้นใต้ดิน", mezzanine: "ชั้นลอย" },
   zh: {
     floor: (n) => `${CHINESE_DIGITS[n] ?? n}层`,
@@ -64,4 +81,20 @@ export function localFloorName(
     return n > 0 ? names.floor(n) : floorName;
   }
   return floorName;
+}
+
+/**
+ * What the lift button prints. English keeps G/1/2. Thai, Chinese and
+ * Russian count the ground as 1, so a British panel's G, 1, 2 becomes
+ * 1, 2, 3 — matching "ชั้น 1, ชั้น 2…" beside it. R/B/M and labels this
+ * cannot read are left alone.
+ */
+export function localLiftLabel(locale: string, shortLabel: string, panel: readonly string[]): string {
+  if (locale === "en" || !NAMES[locale]) return shortLabel;
+  const label = shortLabel.trim().toUpperCase();
+  const british = panel.some((other) => other.trim().toUpperCase() === "G");
+  if (!british) return shortLabel;
+  if (label === "G") return "1";
+  if (/^\d{1,2}$/.test(label)) return String(Number(label) + 1);
+  return shortLabel;
 }

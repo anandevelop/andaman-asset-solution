@@ -49,6 +49,8 @@ export type ElevatorFloor = {
   name: string;
   /** What the lift button and the FLOOR display print. */
   shortLabel: string;
+  /** The language-free label the 3D model matches floors by ("G", "1"). */
+  modelShort: string;
   /** The blueprint variant when one exists, else the plain line drawing. */
   imageUrl: string;
   /** width / height, so the box is reserved before the image arrives. */

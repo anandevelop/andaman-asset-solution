@@ -318,7 +318,7 @@ export default function UnitTypesElevator({
                 projectSlug={projectSlug}
                 typeCode={model3dKeyFor(projectSlug, type.code)}
                 floorIndex={floorIndex}
-                floorShort={floor.shortLabel}
+                floorShort={floor.modelShort}
                 labels={labels.model3d}
                 onRoom={setRoom3d}
               />

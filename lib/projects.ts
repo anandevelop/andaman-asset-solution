@@ -41,7 +41,7 @@ export type UnitStatus = Exclude<(typeof UNIT_STATUSES)[number], "TRANSFERRED">;
 // The definitions live in lib/locale.ts, which imports nothing.
 import { pickLocale } from "@/lib/locale";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
-import { localFloorName } from "@/lib/floor-name";
+import { localFloorName, localLiftLabel } from "@/lib/floor-name";
 
 export { pickLocale, type Locale } from "@/lib/locale";
 
@@ -153,6 +153,8 @@ export type FloorPlanSummary = {
   floorName: string;
   /** Lift button and FLOOR display. Falls back to floorName's first character. */
   shortLabel: string;
+  /** shortLabel as the page's language counts floors — see localLiftLabel. */
+  liftLabel: string;
   /** The line drawing. The coordinate space every room's x/y refers to. */
   imageUrl: string;
   blueprintImageUrl: string | null;
@@ -885,6 +887,9 @@ export async function getUnitTypesForProject(
       // A label is what the lift button prints, so it cannot be empty.
       // The stand-in for a row that predates the column — see lift-label.ts.
       shortLabel: liftLabelFor(fp.shortLabel, fp.floorName),
+      // What the button prints in this language; shortLabel stays the key
+      // the 3D model matches floors by.
+      liftLabel: localLiftLabel(locale, liftLabelFor(fp.shortLabel, fp.floorName), panel),
       imageUrl: fp.imageUrl,
       blueprintImageUrl: fp.blueprintImageUrl,
       furnishedImageUrl: fp.furnishedImageUrl,

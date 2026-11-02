@@ -886,6 +886,7 @@ function PreviewTab({
       name: f.floorName,
       // Same fallback the public page's data layer uses (lib/projects.ts).
       shortLabel: liftLabelFor(f.shortLabel, f.floorName) || "?",
+      modelShort: liftLabelFor(f.shortLabel, f.floorName) || "?",
       imageUrl: planFor[f.key] ?? f.imageUrl,
       aspect: f.aspect,
       areaLabel: areaOf(f.areaSqm),
