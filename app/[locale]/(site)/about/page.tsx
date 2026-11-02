@@ -399,7 +399,7 @@ export default async function AboutPage(props: Props) {
                         {milestone.imageUrl ? (
                           <ImageWithSkeleton
                             src={milestone.imageUrl}
-                            alt=""
+                            alt={`${milestone.projectName} · ${milestone.year}`}
                             fill
                             sizes="220px"
                             className="object-cover"

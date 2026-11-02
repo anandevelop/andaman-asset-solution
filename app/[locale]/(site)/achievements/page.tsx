@@ -87,7 +87,8 @@ function AwardCard({ award, index }: { award: Award; index: number }) {
           {award.trophyImageUrl ? (
             <ImageWithSkeleton
               src={award.trophyImageUrl}
-              alt=""
+              // Named from the row itself until awards get alt fields.
+              alt={`${award.organization}: ${award.title}`}
               fill
               sizes="96px"
               className="object-contain drop-shadow-[0_14px_20px_rgba(8,53,81,0.2)]"
@@ -229,7 +230,7 @@ export default async function AchievementsPage(props: Props) {
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
             <ImageWithSkeleton
               src={NARRATIVE_IMAGE_1}
-              alt=""
+              alt={content.intro.heading}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
@@ -255,7 +256,7 @@ export default async function AchievementsPage(props: Props) {
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs shadow-card">
             <ImageWithSkeleton
               src={NARRATIVE_IMAGE_2}
-              alt=""
+              alt={content.evolution.heading}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"

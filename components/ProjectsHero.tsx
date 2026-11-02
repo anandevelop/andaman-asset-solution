@@ -306,7 +306,7 @@ export default function ProjectsHero({
                   {shortcut.imageUrl && (
                     <Image
                       src={shortcut.imageUrl}
-                      alt=""
+                      alt={shortcut.name}
                       width={58}
                       height={58}
                       className="h-[58px] w-[58px] shrink-0 bg-primary-600 object-cover"
