@@ -131,10 +131,16 @@ jobs:
   # the shared-session reason for `workers: 1` (playwright.config.ts) still
   # holds inside every shard. Playwright splits by spec file because the
   # config is not fullyParallel.
+  #
+  # No `needs`: it starts with the jobs above rather than after them. Once
+  # sign-in stopped costing thirty seconds a test, each shard ran about
+  # four and a half minutes, and waiting first for lint and typecheck put
+  # another two and a half in front of that — the longest wait in CI. A
+  # schema or lint failure still fails the run; e2e just no longer waits to
+  # hear about it.
   e2e:
     name: End-to-end (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
-    needs: [prisma, quality]
     strategy:
       fail-fast: false
       matrix:
