@@ -352,7 +352,7 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
           <Link
             href={`/${locale}`}
             className="flex shrink-0 items-center relative z-50"
-            aria-label="Andaman Asset Solution — Home"
+            aria-label={`Andaman Asset Solution — ${t("home")}`}
           >
             {/* The intrinsic 180×36 stays whatever gets uploaded: it
                 reserves the right space before the file loads, and the

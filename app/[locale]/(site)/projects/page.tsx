@@ -290,6 +290,7 @@ export default async function ProjectsPage(props: Props) {
                     specVillas: t("specs.villas"),
                     specBedrooms: t("specs.bedrooms"),
                     specLand: t("specs.land"),
+                    unitSqm: t("units.sqm"),
                     signal: projectSignalLabel(project.signal, t as never, locale),
                   }}
                 />

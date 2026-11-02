@@ -84,6 +84,7 @@ export default async function ArticleBody({ html, locale }: Props) {
               specVillas: tProjects("specs.villas"),
               specBedrooms: tProjects("specs.bedrooms"),
               specLand: tProjects("specs.land"),
+              unitSqm: tProjects("units.sqm"),
               signal: projectSignalLabel(project.signal, tProjects as never, locale),
             }}
           />

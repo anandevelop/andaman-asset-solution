@@ -274,7 +274,15 @@ export default async function LocaleLayout(props: Props) {
     (admin/layout.tsx), and server components read messages directly and
     never needed this.
   */
-  const { admin: _adminMessages, ...clientMessages } = messages as Record<string, unknown>;
+  const { admin: _adminMessages, ...rest } = messages as Record<string, unknown>;
+  /* Same for the co-agent screens' half of `coAgents`: only the public
+     registration form (coAgents.agentForm) runs on the site. The back
+     office's agent table strings ("No leads in the pipeline yet", …) were
+     shipping, untranslated, in every ZH/RU page. */
+  const coAgents = rest.coAgents as Record<string, unknown> | undefined;
+  const clientMessages = coAgents
+    ? { ...rest, coAgents: { agentForm: coAgents.agentForm } }
+    : rest;
 
   const isThai = locale === "th";
 

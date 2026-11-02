@@ -110,7 +110,6 @@ const CARD_SELECT = {
   coverImageUrl: true,
   ogImageUrl: true,
   publishedAt: true,
-  author: { select: { name: true } },
   translations: true,
 } satisfies Prisma.NewsArticleSelect;
 
@@ -135,7 +134,10 @@ function toCard(row: CardRow, locale: string): ArticleCard {
     coverImageUrl: row.coverImageUrl,
     ogImageUrl: row.ogImageUrl,
     publishedAt: row.publishedAt,
-    authorName: row.author?.name ?? null,
+    // The staff account that saved it is not the byline: articles are
+    // published by the company (Organization in the JSON-LD, no person in
+    // og:article:author), and the account name never reaches the page.
+    authorName: null,
     readingMinutes: readingMinutesFromText(plainText),
   };
 }

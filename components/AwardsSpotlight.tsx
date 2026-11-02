@@ -84,7 +84,10 @@ function usePrefersReducedMotion() {
 /** Counts up from `from` to `target` over 1.4s (ease-out cubic) once
  *  `active` turns true, and only once — matching the mockup's countUp. */
 function useCountUp(target: number, from: number, pad: number, active: boolean, reducedMotion: boolean) {
-  const [display, setDisplay] = useState(from);
+  // Starts at the real number, so the server HTML (what crawlers and
+  // no-JS visitors read) says "05 awards · 2021", not "00 · 1990". The
+  // count from `from` only begins when the band scrolls into view.
+  const [display, setDisplay] = useState(target);
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -96,6 +99,7 @@ function useCountUp(target: number, from: number, pad: number, active: boolean, 
       return;
     }
 
+    setDisplay(from);
     let frame: number;
     const start = performance.now();
     const duration = 1400;

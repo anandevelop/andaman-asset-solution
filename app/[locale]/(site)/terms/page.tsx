@@ -86,7 +86,7 @@ export default async function TermsOfServicePage(props: Props) {
         <LegalPolicyPage
           locale={locale}
           eyebrowIcon={<FileText size={14} />}
-          eyebrowLabel="Legal"
+          eyebrowLabel={tLegal("eyebrow")}
           content={terms}
           contact={contact}
           effectiveDateFormatted={effectiveDate}

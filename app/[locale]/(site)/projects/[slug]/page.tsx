@@ -257,7 +257,8 @@ export default async function ProjectPage(props: Props) {
     { label: t("specs.type"), value: t(`propertyType.${project.propertyType}` as any) },
     {
       label: t("specs.landArea"),
-      value: `${formatNumber(locale, project.landAreaSqm)} ${t("units.sqm")}`,
+      // Whole square metres, as on the project cards (FeaturedProjectCard).
+      value: `${formatNumber(locale, project.landAreaSqm === null ? null : Math.round(project.landAreaSqm))} ${t("units.sqm")}`,
     },
     { label: t("specs.units"), value: formatNumber(locale, project.totalUnits) },
     // Counts the new ProjectFacility rows, not the deprecated

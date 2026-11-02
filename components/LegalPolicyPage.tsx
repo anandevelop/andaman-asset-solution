@@ -127,7 +127,9 @@ export default function LegalPolicyPage({
               </span>
               <span className="hidden sm:inline">·</span>
               <span>
-                {content.versionLabel}: <code className="text-ink/70">{content.version}</code>
+                {/* "privacy-policy-v2" is the id stored with each consent;
+                    a reader is told "Version 2". */}
+                {content.versionLabel} {displayVersion(content.version)}
               </span>
             </p>
           </div>
@@ -296,4 +298,9 @@ export default function LegalPolicyPage({
       </div>
     </>
   );
+}
+
+/** "privacy-policy-v2" / "terms-v2" → "2"; anything else as it is. */
+export function displayVersion(id: string): string {
+  return id.match(/-v(\d+(?:\.\d+)*)$/i)?.[1] ?? id;
 }

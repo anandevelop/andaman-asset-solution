@@ -361,7 +361,7 @@
       "land": "Участок"
     },
     "miniStats": {
-      "units": "{count} вилл",
+      "units": "{count, plural, one {# вилла} few {# виллы} many {# вилл} other {# виллы}}",
       "since": "С {year} года",
       "awards": "{count} наград"
     },
@@ -425,7 +425,7 @@
     "heroDistanceLine": "{beachDistance} км до {beachName}, {airportDistance} км до аэропорта",
     "registerInterest": "Оставить заявку",
     "signal": {
-      "awards": "Наград: {count}, {year}",
+      "awards": "{count, plural, one {# награда} few {# награды} many {# наград} other {# награды}} · {year}",
       "progressPhotos": "{count} фото хода строительства · {when}"
     },
     "cta": {
@@ -4498,7 +4498,8 @@
     "print": "Печать",
     "needHelp": "Нужна помощь?",
     "needHelpBody": "Если у вас есть вопросы о ваших персональных данных, наша команда готова помочь.",
-    "contactCta": "Связаться с нами"
+    "contactCta": "Связаться с нами",
+    "eyebrow": "Правовая информация"
   },
   "editMode": {
     "bar": {

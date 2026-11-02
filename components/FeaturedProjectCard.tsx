@@ -71,6 +71,8 @@ export type FeaturedProjectCardProps = {
     specVillas: string;
     specBedrooms: string;
     specLand: string;
+    /** projects.units.sqm — "ตร.ม.", "平方米", the same unit the project page uses. */
+    unitSqm: string;
     /** Already formatted with its own numbers; null when the project has
      *  no signal worth showing. */
     signal: string | null;
@@ -107,7 +109,7 @@ export default function FeaturedProjectCard({
       value:
         project.landAreaSqm === null
           ? null
-          : `${formatNumber(locale, Math.round(project.landAreaSqm))} m²`,
+          : `${formatNumber(locale, Math.round(project.landAreaSqm))} ${labels.unitSqm}`,
     },
   ].filter((spec) => spec.value !== null && spec.value !== "");
 
