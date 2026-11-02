@@ -47,7 +47,6 @@ import {
   FileImage,
   LayoutGrid,
   Loader2,
-  Moon,
   Newspaper,
   PanelLeft,
   Plus,
@@ -227,15 +226,6 @@ export default function CommandK({ locale, role, copilotEnabled = false }: Props
      browser's view. */
   const commands = useMemo<Row[]>(() => {
     const all: Row[] = [
-      {
-        id: "cmd:theme",
-        label: t("commands.theme"),
-        icon: Moon,
-        run: () =>
-          runInPlace(() =>
-            applyDisplayPref("theme", document.documentElement.dataset.adminTheme === "dark" ? "light" : "dark"),
-          ),
-      },
       {
         id: "cmd:density",
         label: t("commands.density"),

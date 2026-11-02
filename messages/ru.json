@@ -4048,9 +4048,6 @@
       "density": "Плотность интерфейса",
       "densityCompact": "Компактный вид",
       "densityComfortable": "Просторный вид (крупнее текст)",
-      "theme": "Цветовая тема",
-      "themeDark": "Тёмная тема",
-      "themeLight": "Светлая тема",
       "searchOrCommand": "Поиск лидов, проектов, новостей — или команда",
       "liveVisitors": "{count, plural, one {# человек} few {# человека} many {# человек} other {# человека}} на сайте",
       "drawer": {
@@ -4086,7 +4083,6 @@
         "commands": "Команды"
       },
       "commands": {
-        "theme": "Светлая / тёмная тема",
         "density": "Плотность экрана",
         "rail": "Свернуть / развернуть меню",
         "copilot": "Открыть / закрыть Copilot"

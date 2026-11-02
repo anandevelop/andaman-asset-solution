@@ -4048,9 +4048,6 @@
       "density": "界面密度",
       "densityCompact": "切换为紧凑",
       "densityComfortable": "切换为宽松（更大字体）",
-      "theme": "颜色主题",
-      "themeDark": "切换到深色模式",
-      "themeLight": "切换到浅色模式",
       "searchOrCommand": "搜索客户、项目、新闻，或输入命令",
       "liveVisitors": "{count} 人正在浏览网站",
       "drawer": {
@@ -4086,7 +4083,6 @@
         "commands": "命令"
       },
       "commands": {
-        "theme": "切换浅色 / 深色",
         "density": "切换界面密度",
         "rail": "折叠 / 展开菜单",
         "copilot": "打开 / 关闭 Copilot"

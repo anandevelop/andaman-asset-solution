@@ -4,7 +4,7 @@
  * components/admin/AdminTopbar.tsx
  * ─────────────────────────────────────────────────────────────────────────
  * The persistent strip above every admin page's content: breadcrumb,
- * search, live visitors, notifications, theme and Copilot — the v4
+ * search, live visitors, notifications and Copilot — the v4
  * mockup's topbar, in its order — plus a TH | EN switch. Density moved to
  * the account menu at the foot of the rail (AccountMenu.tsx). Language
  * went there too in round two, following the mockup, and came back: the
@@ -29,12 +29,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Bell,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   Sparkles,
-  Sun,
 } from "lucide-react";
 import { adminLocales } from "@/i18n";
 import type { AdminNavCounts } from "@/lib/admin-nav-counts";
@@ -101,7 +99,6 @@ export default function AdminTopbar({
   const [bellOpen, setBellOpen] = useState(false);
   const closeBell = useCallback(() => setBellOpen(false), []);
   const t = useTranslations("admin");
-  const theme = useDisplayPref("theme");
   const rail = useDisplayPref("rail");
   const copilot = useDisplayPref("copilot");
 
@@ -247,17 +244,6 @@ export default function AdminTopbar({
           </Link>
         ))}
       </nav>
-
-      <button
-        type="button"
-        onClick={() => applyDisplayPref("theme", theme === "light" ? "dark" : "light")}
-        aria-pressed={theme === "dark"}
-        title={theme === "light" ? t("topbar.themeDark") : t("topbar.themeLight")}
-        aria-label={t("topbar.theme")}
-        className={iconButton}
-      >
-        {theme === "light" ? <Moon size={17} aria-hidden /> : <Sun size={17} aria-hidden />}
-      </button>
 
       {copilotEnabled && (
         <button

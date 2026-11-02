@@ -30,7 +30,6 @@ import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { visibleNav } from "@/lib/admin/nav";
 import { isTypingTarget } from "@/lib/admin/keyboard";
-import { applyDisplayPref } from "@/lib/admin/use-display-pref";
 
 /** Second key of a `g` chord → nav item key. */
 export const GO_KEYS: Record<string, string> = {
@@ -88,9 +87,6 @@ export default function KeyboardShortcuts({ locale, role }: { locale: string; ro
           event.preventDefault();
           router.push(`${leads}?new=1`, { scroll: false });
         }
-      } else if (key === "t") {
-        const dark = document.documentElement.dataset.adminTheme === "dark";
-        applyDisplayPref("theme", dark ? "light" : "dark");
       }
     };
 

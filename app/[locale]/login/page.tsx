@@ -21,7 +21,6 @@ import { LOCALE_DISPLAY_ORDER } from "@/i18n";
 import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
 import LoginBackdrop from "@/components/admin/login/LoginBackdrop";
-import LoginThemeToggle from "@/components/admin/login/LoginThemeToggle";
 import { safeCallbackUrl } from "@/lib/safe-callback";
 
 type Props = {
@@ -86,7 +85,6 @@ export default async function LoginPage(props: Props) {
   // "/\evil.example" bypass the old startsWith("/") check let through.
   const callbackUrl = safeCallbackUrl(searchParams.callbackUrl, locale);
 
-  const tAdmin = await getTranslations({ locale, namespace: "admin" });
   const notes = [t("note2fa"), t("noteSession"), t("noteAudit")];
 
   return (
@@ -130,7 +128,6 @@ export default async function LoginPage(props: Props) {
               ))}
             </ul>
           </details>
-          <LoginThemeToggle labels={{ dark: tAdmin("topbar.themeDark"), light: tAdmin("topbar.themeLight") }} />
         </div>
       </header>
 

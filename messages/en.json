@@ -4048,9 +4048,6 @@
       "density": "Screen density",
       "densityCompact": "Switch to compact",
       "densityComfortable": "Switch to comfortable (larger text)",
-      "theme": "Colour theme",
-      "themeDark": "Switch to dark mode",
-      "themeLight": "Switch to light mode",
       "searchOrCommand": "Search leads, projects, news — or type a command",
       "liveVisitors": "{count, plural, one {# person} other {# people}} on the site",
       "drawer": {
@@ -4086,7 +4083,6 @@
         "commands": "Commands"
       },
       "commands": {
-        "theme": "Switch light / dark",
         "density": "Switch screen density",
         "rail": "Collapse / expand the menu",
         "copilot": "Open / close Copilot"
