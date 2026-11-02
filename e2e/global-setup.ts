@@ -32,6 +32,7 @@ import {
   MEDIA,
   PROJECTS,
   VIEWER,
+  VIEWER_POOL,
 } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
@@ -358,17 +359,20 @@ async function seed(prisma: PrismaClient) {
   });
 
   // Phase 4's read-only role — enrolled the same way ADMIN is, since
-  // lib/two-factor-policy.ts exempts nobody.
-  await prisma.user.create({
-    data: {
-      name: VIEWER.name,
-      email: VIEWER.email,
-      passwordHash: await bcrypt.hash(VIEWER.password, BCRYPT_ROUNDS),
-      role: "VIEWER",
-      isActive: true,
-      totpSecret: encryptSecret(VIEWER.totpSecret),
-      totpEnabledAt: new Date(),
-    },
+  // lib/two-factor-policy.ts exempts nobody. A pool, like ADMIN_POOL: see
+  // VIEWER_POOL in fixtures.ts.
+  await prisma.user.createMany({
+    data: await Promise.all(
+      VIEWER_POOL.map(async (account) => ({
+        name: account.name,
+        email: account.email,
+        passwordHash: await bcrypt.hash(account.password, BCRYPT_ROUNDS),
+        role: "VIEWER" as const,
+        isActive: true,
+        totpSecret: encryptSecret(account.totpSecret),
+        totpEnabledAt: new Date(),
+      })),
+    ),
   });
 }
 

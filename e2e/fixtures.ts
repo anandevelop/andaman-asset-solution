@@ -96,6 +96,31 @@ export const VIEWER = {
   totpSecret: ADMIN.totpSecret,
 } as const;
 
+/**
+ * VIEWER, six times — ADMIN_POOL's reasoning, for the same reason.
+ *
+ * admin-viewer-access.spec.ts signs in afresh for each of its six tests, and
+ * with one account every sign-in after the first landed in the step the
+ * previous one had burned and waited out the rest of it: four tests at
+ * thirty seconds each, two of CI's slowest shard's four and a half minutes.
+ * The first entry is VIEWER itself.
+ */
+export const VIEWER_POOL: ReadonlyArray<{
+  email: string;
+  password: string;
+  name: string;
+  totpSecret: string;
+}> = Array.from({ length: 6 }, (_, index) =>
+  index === 0
+    ? VIEWER
+    : {
+        email: `e2e-viewer-${index + 1}@andaman.test`,
+        password: VIEWER.password,
+        name: `${VIEWER.name} ${index + 1}`,
+        totpSecret: VIEWER.totpSecret,
+      },
+);
+
 /*
   Four projects, chosen so the filter bar has something to do.
 
