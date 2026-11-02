@@ -3019,7 +3019,8 @@
           "contentInReview": "Content is waiting for review",
           "reservationExpiring": "A unit reservation expires within 48 hours",
           "weeklySummary": "Weekly summary for management (Monday 08:00)",
-          "failedLogins": "Unusual failed sign-ins"
+          "failedLogins": "Unusual failed sign-ins",
+          "backupProblem": "The database backup is missing, failed or stopped (each morning)"
         },
         "line": "LINE",
         "lineNotConfigured": "LINE is not connected yet, or no chat is switched on — the LINE switches save, but nothing is sent until it is.",
@@ -3091,12 +3092,22 @@
         "volumeStorage": "Total file size",
         "gigabytes": "{gb} GB",
         "backupTitle": "Backups",
-        "backupNote": "This application does not take backups and cannot — that is the database host's job. Configure and check them in the provider's console; the restore procedure is in docs/DEPLOYMENT.md.",
+        "backupNote": "Backups are taken nightly at 02:30 by scripts/backup-db.sh on the server (docs/DEPLOYMENT.md §8a), which reports here after every run. A missing or failed backup is announced each morning under Notifications.",
         "cacheTitle": "Cache",
         "cacheNote": "Saving already clears the pages that edit touched — this is only for the rest: a bulk script that wrote through the database directly, or a page that still looks stale for a reason a specific save couldn't reach.",
         "cacheButton": "Clear site cache",
         "cacheSuccess": "Cleared",
-        "cacheError": "Could not clear the cache — check the server log."
+        "cacheError": "Could not clear the cache — check the server log.",
+        "backupNever": "No backup has ever reported in. The nightly backup script is not installed on the server, so every lead and page lives on one disk with no copy.",
+        "backupOk": "Backed up {hours} h ago.",
+        "backupStale": "The last successful backup was {hours} h ago — the nightly job has stopped running.",
+        "backupFailed": "The last backup failed.",
+        "backupLastRun": "Last run",
+        "backupSize": "Size",
+        "backupWhere": "Copy kept",
+        "backupOffsite": "On the server and in the private backup bucket",
+        "backupLocalOnly": "On the server only — set BACKUP_BUCKET so a lost server does not take its backups with it",
+        "backupDetail": "Detail"
       },
       "line": {
         "title": "LINE lead alerts",
@@ -3178,7 +3189,8 @@
         },
         "kindUnclaimed": "Unclaimed lead",
         "kindReservation": "Reservation",
-        "kindWeekly": "Weekly summary"
+        "kindWeekly": "Weekly summary",
+        "kindBackup": "Backup"
       }
     },
     "security": {

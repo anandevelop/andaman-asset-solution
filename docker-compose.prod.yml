@@ -32,6 +32,18 @@
 
 name: andaman-prod
 
+# Every container's log is capped: 5 files of 10 MB, rotated by Docker.
+# Without it the json-file driver keeps everything for the container's
+# whole life, and on 2026-10-03 the droplet's disk filled up. The server's
+# own copy of this file has its own proxy service; /etc/docker/daemon.json
+# carries the same limit as the default for every container on the host
+# (scripts/server-setup.sh), so the proxy is covered too.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 # ── One architecture, on purpose ──────────────────────────────────────
 #
 # The published image is linux/amd64 only, because the deploy target is an
@@ -49,6 +61,7 @@ name: andaman-prod
 
 services:
   db:
+    logging: *default-logging
     image: postgres:16-alpine
     container_name: andaman_prod_db
     restart: always
@@ -73,6 +86,7 @@ services:
   # command: a failed migration then stops the deploy outright, instead of
   # leaving a container that restart-loops while still answering requests.
   migrate:
+    logging: *default-logging
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_migrate
     platform: linux/amd64 # amd64-only image; see the note above `services`
@@ -95,6 +109,7 @@ services:
     command: ["node_modules/prisma/build/index.js", "migrate", "deploy"]
 
   app:
+    logging: *default-logging
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_app
     platform: linux/amd64 # amd64-only image; see the note above `services`
@@ -147,6 +162,7 @@ services:
   # replica would run every job twice — including emailing the monthly
   # report to the executives twice.
   cron:
+    logging: *default-logging
     image: ghcr.io/anandevelop/andaman-asset-solution:latest
     container_name: andaman_prod_cron
     platform: linux/amd64 # amd64-only image; see the note above `services`

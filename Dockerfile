@@ -211,6 +211,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/rebuild-blueprints.mjs ./
 # why it is never a deploy step.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/sync-unit-type-rooms.mjs ./scripts/sync-unit-type-rooms.mjs
 
+# Host-side scripts, shipped in the image so the droplet can take them from
+# it rather than from a checkout it does not have: the nightly backup and
+# the one-time host setup. Never run inside the container — deploy.yml
+# copies backup-db.sh out to /opt/app on every deploy, and
+# scripts/server-setup.sh's header says how to run itself.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/backup-db.sh ./scripts/ops/backup-db.sh
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/server-setup.sh ./scripts/ops/server-setup.sh
+
 # The pg adapter both scripts above import — see the script-deps stage.
 COPY --from=script-deps --chown=nextjs:nodejs /script-deps/node_modules ./scripts/node_modules
 

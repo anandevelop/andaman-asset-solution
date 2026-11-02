@@ -3019,7 +3019,8 @@
           "contentInReview": "有内容等待审核",
           "reservationExpiring": "单位预订将在 48 小时内到期",
           "weeklySummary": "管理层每周摘要（周一 08:00）",
-          "failedLogins": "异常登录失败"
+          "failedLogins": "异常登录失败",
+          "backupProblem": "数据库备份缺失、失败或已停止（每天早上）"
         },
         "line": "LINE",
         "lineNotConfigured": "LINE 尚未连接或未开启任何聊天 — LINE 开关可以保存，但在设置完成前不会发送。",
@@ -3091,12 +3092,22 @@
         "volumeStorage": "文件总大小",
         "gigabytes": "{gb} GB",
         "backupTitle": "备份",
-        "backupNote": "本系统不进行备份，也无法进行——备份由数据库服务商负责。请在服务商控制台配置并检查；恢复步骤见 docs/DEPLOYMENT.md。",
+        "backupNote": "服务器上的 scripts/backup-db.sh 每晚 02:30 进行备份（docs/DEPLOYMENT.md §8a），每次运行后都会在此报告。备份缺失或失败时，每天早上会按通知设置发出提醒。",
         "cacheTitle": "缓存",
         "cacheNote": "保存内容时已自动清除对应页面的缓存——此按钮仅用于其他情况，例如直接通过数据库写入的批量脚本，或某个页面在正常保存后仍未更新。",
         "cacheButton": "清除网站缓存",
         "cacheSuccess": "已清除",
-        "cacheError": "清除缓存失败——请检查服务器日志。"
+        "cacheError": "清除缓存失败——请检查服务器日志。",
+        "backupNever": "从未收到任何备份报告。服务器上未安装夜间备份脚本，所有潜在客户和页面都只存在于一块磁盘上，没有副本。",
+        "backupOk": "{hours} 小时前已备份。",
+        "backupStale": "最后一次成功备份是在 {hours} 小时前 — 夜间备份任务已停止运行。",
+        "backupFailed": "最近一次备份失败。",
+        "backupLastRun": "最近一次",
+        "backupSize": "大小",
+        "backupWhere": "副本位置",
+        "backupOffsite": "服务器上及私有备份存储桶中",
+        "backupLocalOnly": "仅在服务器上 — 请设置 BACKUP_BUCKET，以免服务器丢失时备份一并丢失",
+        "backupDetail": "详情"
       },
       "line": {
         "title": "LINE 潜在客户提醒",
@@ -3178,7 +3189,8 @@
         },
         "kindUnclaimed": "无人认领",
         "kindReservation": "预订",
-        "kindWeekly": "每周摘要"
+        "kindWeekly": "每周摘要",
+        "kindBackup": "备份"
       }
     },
     "security": {

@@ -113,6 +113,15 @@ export const NOTIFICATION_EVENTS: readonly NotificationEvent[] = [
     defaults: { email: true, inApp: true, line: false },
   },
   {
+    key: "backupProblem",
+    capability: "manageUsers",
+    // The nightly backup never reported, failed, or stopped (lib/backup-status.ts).
+    // Checked by the scheduled alerts; once a day while it lasts.
+    needsScheduler: false,
+    channels: ["email", "inApp", "line"],
+    defaults: { email: true, inApp: true, line: false },
+  },
+  {
     key: "failedLogins",
     capability: "manageUsers",
     needsScheduler: false,

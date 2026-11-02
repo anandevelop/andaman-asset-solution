@@ -547,21 +547,39 @@ Postgres runs in the `db` container on the same droplet, in the
 `pg_dump` in custom format, a `pg_restore --list` check that the dump is
 readable, a copy to a **private** Spaces bucket, and 14 days kept locally.
 
-**Setup, once:**
+**Setup:** automatic. Every deploy (`.github/workflows/deploy.yml`) copies
+the current `backup-db.sh` out of the new image to `/opt/app/backup-db.sh`,
+adds root's crontab line if it is missing, and takes a backup straight
+away when there is none from the last day:
+
+```
+30 19 * * * /opt/app/backup-db.sh >> /opt/app/backups/backup.log 2>&1
+```
+
+(19:30 UTC = 02:30 Bangkok.) Each run reports its outcome to
+`site_settings` `backup.last`; **/admin/settings/system → Backups** shows
+it, and a missing, failed or stale backup is announced every morning
+(Settings → Notifications → "backupProblem").
+
+**One thing to do by hand — the off-site copy.** Without it the dumps sit
+on the same droplet as the database:
 
 1. In DigitalOcean, create a Space for backups only, separate from the
    media bucket, with file listing restricted (e.g. `andaman-db-backups`,
    region sgp1). The media bucket's objects are public-read; a database
    dump holds every lead.
 2. Add `BACKUP_BUCKET="andaman-db-backups"` to `/opt/app/.env`. It reuses
-   the `DO_SPACES_*` keys already there.
-3. Copy the script to `/opt/app/backup-db.sh`, `chmod 700` it, and run it
-   once by hand.
-4. Root's crontab (`crontab -e`), 02:30 Bangkok:
+   the `DO_SPACES_*` keys already there. The next run uploads.
 
-   ```
-   30 19 * * * /opt/app/backup-db.sh >> /var/log/andaman-backup.log 2>&1
-   ```
+**Docker log limits** live in `/etc/docker/daemon.json` (10 MB × 5 per
+container). `scripts/server-setup.sh` sets them once, as root; deploys warn
+until it has been run:
+
+```bash
+cd /opt/app
+docker compose -f docker-compose.prod.yml exec -T app cat scripts/ops/server-setup.sh > server-setup.sh
+sudo sh server-setup.sh
+```
 
 **Restore test** (a scratch database beside the real one, then dropped):
 

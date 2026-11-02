@@ -63,7 +63,7 @@ beforeEach(() => {
 });
 
 describe("the notification catalogue", () => {
-  it("has the seven rows the settings screen renders", () => {
+  it("has the eight rows the settings screen renders", () => {
     expect(NOTIFICATION_EVENTS.map((event) => event.key)).toEqual([
       "newLead",
       "unclaimedLead",
@@ -71,6 +71,7 @@ describe("the notification catalogue", () => {
       "contentInReview",
       "reservationExpiring",
       "weeklySummary",
+      "backupProblem",
       "failedLogins",
     ]);
   });
@@ -95,6 +96,7 @@ describe("the notification catalogue", () => {
       "eventRegistration",
       "reservationExpiring",
       "weeklySummary",
+      "backupProblem",
     ]);
   });
 });

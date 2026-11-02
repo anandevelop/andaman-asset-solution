@@ -115,3 +115,41 @@ jobs:
                 }),
               }).then(r => console.log('revalidate:', r.status));
             " || echo "::warning::post-deploy revalidate failed"
+
+            # ── Host upkeep ──────────────────────────────────────────────
+            # The nightly database backup runs on this host, not in a
+            # container (scripts/backup-db.sh). Every deploy refreshes the
+            # script from the image just deployed, installs its crontab line
+            # if it is missing, and takes a backup now when there is none
+            # from the last day — so a fresh or rebuilt droplet is never a
+            # night without one. All of it only warns: a good deploy never
+            # turns red over upkeep. The back office shows the outcome
+            # (/admin/settings/system, lib/backup-status.ts).
+            BACKUP_LINE="30 19 * * * /opt/app/backup-db.sh >> /opt/app/backups/backup.log 2>&1"
+            mkdir -p /opt/app/backups && chmod 700 /opt/app/backups || true
+            if $COMPOSE exec -T app cat scripts/ops/backup-db.sh > /opt/app/backup-db.sh.new \
+                && [ -s /opt/app/backup-db.sh.new ]; then
+              mv /opt/app/backup-db.sh.new /opt/app/backup-db.sh && chmod 700 /opt/app/backup-db.sh
+            else
+              rm -f /opt/app/backup-db.sh.new
+              echo "::warning::could not refresh backup-db.sh from the image"
+            fi
+            if ! crontab -l 2>/dev/null | grep -qF "/opt/app/backup-db.sh"; then
+              ( crontab -l 2>/dev/null; echo "$BACKUP_LINE" ) | crontab - \
+                && echo "installed the nightly backup (02:30 Bangkok) in crontab" \
+                || echo "::warning::could not install the backup crontab line"
+            fi
+            if [ -x /opt/app/backup-db.sh ] && \
+               [ -z "$(find /opt/app/backups -name 'andaman-*.dump' -mtime -1 2>/dev/null | head -n 1)" ]; then
+              echo "no backup from the last day — taking one now"
+              if /opt/app/backup-db.sh >> /opt/app/backups/backup.log 2>&1; then
+                tail -n 2 /opt/app/backups/backup.log
+              else
+                echo "::warning::backup failed — see /opt/app/backups/backup.log"
+                tail -n 5 /opt/app/backups/backup.log || true
+              fi
+            fi
+            if ! grep -q '"max-size"' /etc/docker/daemon.json 2>/dev/null; then
+              echo "::warning::Docker log limits are not set on this host. Run scripts/server-setup.sh once, as root (see its header)."
+            fi
+            df -h / | tail -n 1

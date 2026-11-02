@@ -39,6 +39,7 @@ import { isEnabled, notifyAdmins } from "@/lib/notifications";
 import { pushLineAlert } from "@/lib/line";
 import { sendStaffAlertEmail } from "@/lib/email";
 import { getPageViewTrend } from "@/lib/admin/analytics";
+import { getBackupStatus } from "@/lib/backup-status";
 
 const SENT_KEY = "scheduledAlerts.sent";
 const KEEP_DAYS = 60;
@@ -324,17 +325,65 @@ async function weeklySummary(now: Date, sent: Record<string, string>): Promise<n
   return 1;
 }
 
+// ── Backups ─────────────────────────────────────────────────────────────
+
+/**
+ * Once a day from 09:00 Bangkok while the backup is missing, failing or
+ * stale — and silent once it is healthy again. Three hours after the
+ * 02:30 run, so a slow dump is not reported as missing.
+ */
+async function backupProblem(now: Date, sent: Record<string, string>): Promise<number> {
+  const local = bangkok(now);
+  if (local.hour < 9) return 0;
+  const key = `backup:${local.ymd}`;
+  if (sent[key]) return 0;
+
+  const status = await getBackupStatus(now);
+  if (status.state === "ok") return 0;
+
+  const on = await channels("backupProblem");
+  sent[key] = now.toISOString();
+  if (!on.inApp && !on.email && !on.line) return 0;
+
+  const title =
+    status.state === "never"
+      ? "ฐานข้อมูลยังไม่เคยถูกสำรอง"
+      : status.state === "failed"
+        ? "การสำรองฐานข้อมูลล่าสุดล้มเหลว"
+        : `ไม่มีการสำรองฐานข้อมูลมา ${Math.floor(status.ageHours)} ชม.`;
+  const rows: [string, string][] =
+    status.state === "never"
+      ? [["สถานะ", "สคริปต์สำรองข้อมูลยังไม่ได้ติดตั้งบนเซิร์ฟเวอร์"]]
+      : [
+          ["ครั้งล่าสุด", thaiDateTime(new Date(status.run.at))],
+          ["ผล", status.run.ok ? "สำเร็จ" : "ล้มเหลว"],
+          ["รายละเอียด", status.run.detail ?? "—"],
+        ];
+  const path = "/admin/settings/system";
+
+  if (on.inApp) await notifyAdmins({ event: "backupProblem", title, body: rows.map((r) => r[1]).join(" · "), href: path });
+  if (on.line) await pushLineAlert({ kind: "backup", title: `🗄️ ${title}`, rows, url: `${siteUrl()}/th${path}`, urlLabel: "ดูสถานะระบบ" });
+  if (on.email) {
+    const to = await emailRecipients("manageUsers", [process.env.REPORT_RECIPIENTS]);
+    if (to.length) {
+      await sendStaffAlertEmail({ to, subject: title, heading: title, rows, url: `${siteUrl()}/th${path}`, urlLabel: "ดูสถานะระบบ" });
+    }
+  }
+  return 1;
+}
+
 // ── Entry point ─────────────────────────────────────────────────────────
 
-export type ScheduledAlertsResult = { unclaimed: number; reservations: number; weekly: number };
+export type ScheduledAlertsResult = { unclaimed: number; reservations: number; weekly: number; backup: number };
 
 export async function runScheduledAlerts(now = new Date()): Promise<ScheduledAlertsResult> {
   const sent = await readSent();
-  const result: ScheduledAlertsResult = { unclaimed: 0, reservations: 0, weekly: 0 };
+  const result: ScheduledAlertsResult = { unclaimed: 0, reservations: 0, weekly: 0, backup: 0 };
   try {
     result.unclaimed = await unclaimedLeads(now, sent);
     result.reservations = await expiringReservations(now, sent);
     result.weekly = await weeklySummary(now, sent);
+    result.backup = await backupProblem(now, sent);
   } finally {
     // Whatever went out is remembered, even if a later step threw.
     await writeSent(sent);
