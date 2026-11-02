@@ -9,13 +9,15 @@
  * request that triggered it: the enquiry is already committed to Postgres
  * by the time we try to notify anyone.
  *
- * Configuration is optional throughout. Without LINE_CHANNEL_ACCESS_TOKEN
- * and LINE_NOTIFY_TO, every push is a logged no-op.
+ * Configuration is optional throughout, and lives in lib/line-config.ts:
+ * set from /admin/settings/integrations, with the LINE_* environment
+ * variables as the fallback. Unconfigured, every push is a logged no-op.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { getActiveRecipients, getLineConfig } from "@/lib/line-config";
 
 const PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const MULTICAST_URL = "https://api.line.me/v2/bot/message/multicast";
@@ -36,8 +38,11 @@ const TIMEOUT_MS = 5_000;
  * The body must be the raw string, byte for byte. Parsing and re-stringifying
  * JSON reorders keys and changes whitespace, which silently breaks the HMAC.
  */
-export function verifyLineSignature(rawBody: string, signature: string | null): boolean {
-  const secret = process.env.LINE_CHANNEL_SECRET;
+export function verifyLineSignature(
+  rawBody: string,
+  signature: string | null,
+  secret: string | null | undefined = process.env.LINE_CHANNEL_SECRET,
+): boolean {
 
   if (!secret || !signature) return false;
 
@@ -54,16 +59,11 @@ export function verifyLineSignature(rawBody: string, signature: string | null): 
 
 // ── Push ────────────────────────────────────────────────────────────────
 
-function recipients(): string[] {
-  return (process.env.LINE_NOTIFY_TO ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
+export async function isLineConfigured(): Promise<boolean> {
+  return (await getActiveRecipients()) !== null;
 }
 
-export function isLineConfigured(): boolean {
-  return Boolean(process.env.LINE_CHANNEL_ACCESS_TOKEN) && recipients().length > 0;
-}
+export type LineSendResult = { sent: number; failed: { to: string; status: number | null; detail: string }[] };
 
 type LineMessage = Record<string, unknown>;
 
@@ -74,14 +74,17 @@ type LineMessage = Record<string, unknown>;
  * is not a `U…` is pushed individually. Getting this wrong produces a 400
  * that is easy to misread as an auth failure.
  */
-async function send(messages: LineMessage[]): Promise<void> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  const to = recipients();
+async function send(
+  messages: LineMessage[],
+  target?: { token: string; to: string[] },
+): Promise<LineSendResult> {
+  const active = target ?? (await getActiveRecipients());
 
-  if (!token || to.length === 0) {
+  if (!active) {
     console.info("[line] not configured — skipping notification");
-    return;
+    return { sent: 0, failed: [] };
   }
+  const { token, to } = active;
 
   const headers = {
     "Content-Type": "application/json",
@@ -92,8 +95,10 @@ async function send(messages: LineMessage[]): Promise<void> {
   const others = to.filter((id) => !id.startsWith("U"));
 
   const requests: Promise<Response>[] = [];
+  const labels: string[] = [];
 
   if (users.length > 1) {
+    labels.push(users.join(","));
     requests.push(
       fetch(MULTICAST_URL, {
         method: "POST",
@@ -107,6 +112,7 @@ async function send(messages: LineMessage[]): Promise<void> {
   }
 
   for (const id of others) {
+    labels.push(id);
     requests.push(
       fetch(PUSH_URL, {
         method: "POST",
@@ -118,17 +124,24 @@ async function send(messages: LineMessage[]): Promise<void> {
   }
 
   const results = await Promise.allSettled(requests);
+  const outcome: LineSendResult = { sent: 0, failed: [] };
 
-  for (const result of results) {
+  for (const [i, result] of results.entries()) {
     if (result.status === "rejected") {
       console.error("[line] push failed", result.reason);
+      outcome.failed.push({ to: labels[i], status: null, detail: String(result.reason) });
       continue;
     }
     if (!result.value.ok) {
       const detail = await result.value.text().catch(() => "");
       console.error(`[line] push rejected ${result.value.status}`, detail);
+      outcome.failed.push({ to: labels[i], status: result.value.status, detail: detail.slice(0, 300) });
+      continue;
     }
+    outcome.sent += 1;
   }
+
+  return outcome;
 }
 
 // ── Message builders ────────────────────────────────────────────────────
@@ -312,7 +325,7 @@ export async function notifyNewRegistration(registration: {
 
 /** Plain reply to an inbound webhook message. */
 export async function replyToLine(replyToken: string, text: string): Promise<void> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const token = (await getLineConfig()).accessToken;
   if (!token) return;
 
   try {
@@ -332,4 +345,55 @@ export async function replyToLine(replyToken: string, text: string): Promise<voi
   } catch (error) {
     console.error("[line] reply failed", error);
   }
+}
+
+// ── Back office ─────────────────────────────────────────────────────────
+
+/** The OA behind a token, or null when LINE refuses the token. */
+export async function fetchLineBotInfo(
+  token: string,
+): Promise<{ displayName: string; basicId: string; pictureUrl?: string } | null> {
+  try {
+    const response = await fetch("https://api.line.me/v2/bot/info", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as { displayName: string; basicId: string; pictureUrl?: string };
+  } catch {
+    return null;
+  }
+}
+
+/** A group's display name, so the back office can say which chat it is. */
+export async function fetchLineGroupName(groupId: string, token: string): Promise<string> {
+  try {
+    const response = await fetch(`https://api.line.me/v2/bot/group/${encodeURIComponent(groupId)}/summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) return "";
+    return ((await response.json()) as { groupName?: string }).groupName ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** "Send a test" on the integrations page: to one chat, or to all enabled. */
+export async function sendLineTest(onlyTo?: string): Promise<LineSendResult | { error: "NO_TOKEN" | "NO_RECIPIENTS" }> {
+  const config = await getLineConfig();
+  if (!config.accessToken) return { error: "NO_TOKEN" };
+  const to = onlyTo ? [onlyTo] : config.destinations.filter((d) => d.enabled).map((d) => d.id);
+  if (to.length === 0) return { error: "NO_RECIPIENTS" };
+
+  return send(
+    [
+      {
+        type: "text",
+        text: "✅ ทดสอบการแจ้งเตือนจากหลังบ้าน Andaman Asset Solution\nห้องนี้จะได้รับการแจ้งเตือนเมื่อมีผู้สนใจรายใหม่",
+      },
+    ],
+    { token: config.accessToken, to },
+  );
 }

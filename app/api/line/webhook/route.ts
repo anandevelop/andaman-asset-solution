@@ -20,7 +20,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyLineSignature, replyToLine } from "@/lib/line";
+import { fetchLineGroupName, verifyLineSignature, replyToLine } from "@/lib/line";
+import { getLineConfig, recordLineChat } from "@/lib/line-config";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { siteConfig } from "@/config/site";
 
@@ -60,7 +61,10 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-line-signature");
 
-  if (!verifyLineSignature(rawBody, signature)) {
+  // The secret an admin saved in the back office, else the env variable.
+  const config = await getLineConfig();
+
+  if (!verifyLineSignature(rawBody, signature, config.channelSecret)) {
     // The one case that must NOT be 200: an unsigned request is either a
     // misconfiguration or someone probing.
     //
@@ -129,20 +133,42 @@ export async function POST(request: Request) {
         }
         break;
 
-      case "join":
-        console.info(
-          `[line/webhook] joined ${event.source?.type} — group ID for LINE_NOTIFY_TO: ${id}`,
-        );
+      case "join": {
+        console.info(`[line/webhook] joined ${event.source?.type} ${id}`);
+        /*
+          Recorded switched OFF (lib/line-config.ts): anyone can add a
+          public OA to a chat, so a chat receives customers' details only
+          once an admin turns it on under Settings → Integrations.
+        */
+        const chatType = event.source?.type === "room" ? "room" : "group";
+        if (id && (chatType === "room" || event.source?.type === "group")) {
+          const name =
+            chatType === "group" && config.accessToken
+              ? await fetchLineGroupName(id, config.accessToken)
+              : "";
+          await recordLineChat(id, chatType, name, "join").catch((error) =>
+            console.error("[line/webhook] could not record chat", error),
+          );
+        }
         if (event.replyToken) {
           await replyToLine(
             event.replyToken,
-            `พร้อมแจ้งเตือนผู้สนใจรายใหม่ในห้องนี้แล้วครับ\nID: ${id ?? "-"}`,
+            [
+              "สวัสดีครับ ระบบแจ้งเตือนผู้สนใจรายใหม่ของ Andaman Asset Solution",
+              "ให้แอดมินเปิดใช้ห้องนี้ที่ หลังบ้าน → ตั้งค่า → การเชื่อมต่อ → LINE",
+              "แล้วการแจ้งเตือนจะเริ่มส่งเข้ามาที่นี่",
+            ].join("\n"),
           );
         }
         break;
+      }
+
+      case "leave":
+        console.info(`[line/webhook] leave — ${id}`);
+        if (id) await recordLineChat(id, "group", "", "leave").catch(() => {});
+        break;
 
       case "unfollow":
-      case "leave":
         console.info(`[line/webhook] ${event.type} — ${id}`);
         break;
 

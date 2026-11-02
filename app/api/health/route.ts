@@ -111,7 +111,7 @@ export async function GET(request: Request) {
         },
         // Configuration only: probing LINE would post a message, and
         // reCAPTCHA has no health endpoint worth calling.
-        line: { configured: isLineConfigured() },
+        line: { configured: await isLineConfigured() },
         recaptcha: { configured: isRecaptchaConfigured() },
       },
     },

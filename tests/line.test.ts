@@ -12,8 +12,12 @@
  */
 
 import { createHmac } from "node:crypto";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { notifyNewLead, verifyLineSignature } from "@/lib/line";
+import { invalidateLineConfig } from "@/lib/line-config";
+
+// No saved settings: the LINE config falls back to the environment.
+vi.mock("@/lib/prisma", () => ({ prisma: { siteSetting: { findMany: async () => [] } } }));
 
 const SECRET = "test_channel_secret_abc123";
 
@@ -104,8 +108,9 @@ describe("notifyNewLead", () => {
   beforeEach(() => {
     bodies = [];
     process.env.LINE_CHANNEL_ACCESS_TOKEN = "test-token";
-    process.env.LINE_NOTIFY_TO = "C0123456789abcdef";
+    process.env.LINE_NOTIFY_TO = "C0123456789abcdef0123456789abcdef";
     process.env.NEXT_PUBLIC_SITE_URL = "https://andamanassetsolution.com";
+    invalidateLineConfig();
     globalThis.fetch = (async (_url: string, init: RequestInit) => {
       bodies.push(JSON.parse(String(init.body)));
       return new Response("{}", { status: 200 });
@@ -130,7 +135,7 @@ describe("notifyNewLead", () => {
   it("pushes one card to a group ID, never multicast", async () => {
     await notifyNewLead(lead);
     expect(bodies).toHaveLength(1);
-    expect(bodies[0].to).toBe("C0123456789abcdef");
+    expect(bodies[0].to).toBe("C0123456789abcdef0123456789abcdef");
   });
 
   it("links the card to the lead in the Thai back office", async () => {
@@ -149,6 +154,7 @@ describe("notifyNewLead", () => {
 
   it("does nothing when LINE is not configured", async () => {
     delete process.env.LINE_NOTIFY_TO;
+    invalidateLineConfig();
     await notifyNewLead(lead);
     expect(bodies).toHaveLength(0);
   });

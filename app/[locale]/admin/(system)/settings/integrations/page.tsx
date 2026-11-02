@@ -24,6 +24,9 @@ import {
 } from "@/lib/settings";
 import { updateSettings } from "../actions";
 import SettingsForm, { type SettingGroup } from "@/components/admin/SettingsForm";
+import LineSettingsCard, { type LineCardLabels } from "@/components/admin/LineSettingsCard";
+import { getLineConfig } from "@/lib/line-config";
+import { fetchLineBotInfo } from "@/lib/line";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -32,11 +35,24 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, current, overridden] = await Promise.all([
+  const [t, current, overridden, line] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSettingsForEditing(),
     getOverriddenKeys(),
+    getLineConfig(),
   ]);
+
+  // Asks LINE which OA the token belongs to: proof the token works, and
+  // the name the card shows. Five-second timeout inside, never throws.
+  const bot = line.accessToken ? await fetchLineBotInfo(line.accessToken) : null;
+
+  const lineRaw = t.raw("settings.line") as Record<string, string> & { err: Record<string, string> };
+  const lineLabels = {
+    ...Object.fromEntries(Object.entries(lineRaw).filter(([, v]) => typeof v === "string")),
+    ...Object.fromEntries(Object.entries(lineRaw.err).map(([k, v]) => [`err.${k}`, v])),
+  } as LineCardLabels;
+
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://andamanassetsolution.com").replace(/\/+$/, "");
 
   const defaults = defaultSettings();
 
@@ -90,6 +106,24 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.integrationsEnvNote")}
       </p>
+
+      <LineSettingsCard
+        locale={locale}
+        enabled={line.enabled}
+        secretSource={line.secretSource}
+        tokenSource={line.tokenSource}
+        undecryptable={line.undecryptable}
+        bot={bot}
+        webhookUrl={`${siteUrl}/api/line/webhook`}
+        destinations={line.destinations.map(({ id, type, name, enabled, source }) => ({
+          id,
+          type,
+          name,
+          enabled,
+          source,
+        }))}
+        labels={lineLabels}
+      />
 
       <SettingsForm
         action={updateSettings.bind(null, locale)}
