@@ -13,7 +13,7 @@
 
 import { type Page } from "@playwright/test";
 import { generate } from "otplib";
-import { ADMIN, ADMIN_POOL } from "./fixtures";
+import { ADMIN, ADMIN_POOL, VIEWER_POOL } from "./fixtures";
 
 export const LOGIN = "/en/login";
 export const DASHBOARD = "/en/admin";
@@ -60,6 +60,13 @@ let poolCursor = 0;
 
 export function nextAccount() {
   return ADMIN_POOL[poolCursor++ % ADMIN_POOL.length];
+}
+
+let viewerCursor = 0;
+
+/** nextAccount() for VIEWER — see VIEWER_POOL. */
+export function nextViewer() {
+  return VIEWER_POOL[viewerCursor++ % VIEWER_POOL.length];
 }
 
 /** Email + password. Stops before the second factor. */

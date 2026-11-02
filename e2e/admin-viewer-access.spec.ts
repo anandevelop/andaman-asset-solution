@@ -14,12 +14,14 @@
  */
 
 import { expect, test } from "./harness";
-import { VIEWER } from "./fixtures";
-import { DASHBOARD, signIn } from "./sign-in";
+import { DASHBOARD, nextViewer, signIn } from "./sign-in";
 
 async function signInAsViewer(page: import("@playwright/test").Page) {
   await page.goto("/en/login");
-  await signIn(page, VIEWER.email, VIEWER.password);
+  // A different VIEWER each time: one account signing in once per test
+  // waited thirty seconds a time for a fresh code. See VIEWER_POOL.
+  const viewer = nextViewer();
+  await signIn(page, viewer.email, viewer.password);
   await expect(page).toHaveURL(/\/en\/admin/);
 }
 
