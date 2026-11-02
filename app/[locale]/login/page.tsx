@@ -94,7 +94,8 @@ export default async function LoginPage(props: Props) {
       <LoginBackdrop />
 
       <header className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-10 sm:py-6">
-        <Link href={`/${locale}`} className="inline-block">
+        {/* prefetch={false} on both links home: see the one in the footer. */}
+        <Link href={`/${locale}`} prefetch={false} className="inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-white.png"
@@ -154,8 +155,18 @@ export default async function LoginPage(props: Props) {
       </div>
 
       <footer className="relative z-10 pb-8 text-center">
+        {/*
+          Not prefetched. Nobody signing in is on their way to the home
+          page, and the prefetch was not free: on a second visit to this
+          page Chromium sent the home page's RSC prefetch twice and held the
+          second open until it was aborted thirty seconds later — measured
+          on the live site, while the same request answers in 0.2s from
+          curl. Every admin e2e test paid those thirty seconds waiting for
+          the network to go quiet before it could sign in.
+        */}
         <Link
           href={`/${locale}`}
+          prefetch={false}
           className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-accent"
         >
           <ArrowLeft size={15} aria-hidden />

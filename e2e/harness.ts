@@ -34,10 +34,21 @@
  * ~20ms of navigation, long before handlers are attached, so waiting on it
  * proves nothing. Waiting for the network to settle means every chunk the
  * page needs has arrived, which is the part that was still in flight.
+ *
+ * Capped at five seconds. The chunks a page needs arrive in well under one
+ * on a CI runner; what keeps a page busy for longer is something else — a
+ * prefetch of another route, a request that never ends. One of those, on
+ * the login page every admin test starts from, held each of those tests
+ * for thirty seconds: nine of CI's thirteen minutes of e2e. A page that
+ * has not settled in five seconds is not going to, and waiting the full
+ * timeout for it changes nothing but the bill.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { test as base, expect } from "@playwright/test";
+
+/** See the header: past this, the page is not going to settle. */
+const IDLE_CAP_MS = 5_000;
 
 export const test = base.extend({
   page: async ({ page }, use) => {
@@ -51,7 +62,7 @@ export const test = base.extend({
         to fail a test that has not made an assertion yet — the assertions
         below have their own timeouts and will report something meaningful.
       */
-      await page.waitForLoadState("networkidle").catch(() => {});
+      await page.waitForLoadState("networkidle", { timeout: IDLE_CAP_MS }).catch(() => {});
 
       return response;
     };
