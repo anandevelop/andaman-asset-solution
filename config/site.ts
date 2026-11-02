@@ -158,13 +158,14 @@ export const siteConfig = {
       zh: "安达曼资产解决方案 | 普吉岛豪华泳池别墅",
       ru: "Andaman Asset Solution | Роскошные виллы с бассейном на Пхукете",
     },
-    keywords: [
-      "Phuket pool villa",
-      "luxury real estate Phuket",
-      "villa for sale Phuket",
-      "อสังหาริมทรัพย์ภูเก็ต",
-      "พูลวิลล่าภูเก็ต",
-    ],
+    /** <meta name="keywords"> per language — one list used to carry
+     *  English and Thai into every locale, and nothing for ZH/RU. */
+    keywords: {
+      en: ["Phuket pool villa", "premium real estate Phuket", "villa for sale Phuket"],
+      th: ["พูลวิลล่าภูเก็ต", "อสังหาริมทรัพย์ภูเก็ต", "บ้านเดี่ยวภูเก็ต"],
+      zh: ["普吉岛泳池别墅", "普吉岛房产", "普吉岛别墅出售"],
+      ru: ["вилла с бассейном Пхукет", "недвижимость на Пхукете", "купить виллу на Пхукете"],
+    },
     ogImage: "/og-image.jpg",
     twitterHandle: "@andamanasset",
   },

@@ -150,12 +150,16 @@ export async function generateMetadata(
       template: seo.titleTemplate,
     },
     description,
-    keywords: [...siteConfig.seo.keywords],
+    keywords: [...(siteConfig.seo.keywords[resolvedLocale] ?? siteConfig.seo.keywords.en)],
     alternates: localizedAlternates(locale, ""),
+    /*
+      No title or description here. A page that sets its own title but no
+      openGraph would inherit this object whole, and every page shared as
+      the home page's title. Left out, Next.js fills og:title and
+      og:description (and Twitter's, from those) from each page's own.
+    */
+    // No url either: it named /{locale} for every page that set none.
     openGraph: {
-      title,
-      description,
-      url: `${siteConfig.url}/${locale}`,
       siteName: siteConfig.name,
       images: [
         {
@@ -188,8 +192,6 @@ export async function generateMetadata(
     formatDetection: { telephone: false, address: false, email: false },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
       site: seo.twitterHandle,
       images: [absoluteAssetUrl(branding.ogImageUrl)],
     },
