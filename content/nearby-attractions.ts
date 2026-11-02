@@ -156,11 +156,32 @@ export function getNearbyAttractionCategories(locale: string): {
     sortOrder,
     items: cat.items.map((item, index) => ({
       id: `${cat.id}-${index}`,
-      name: item.name,
+      name: knownPlaceName(item.name, locale) ?? item.name,
       nameEn: item.name,
       distanceKm: item.distanceKm,
       durationMin: item.durationMin,
       pin: item.pin ?? null,
     })),
   }));
+}
+
+/**
+ * The usual name of a well-known place in each language, used when a
+ * place's own Thai/Chinese/Russian name was left blank in the back office
+ * (every one was, so ZH/RU pages listed "Surin Beach"). Brand names —
+ * schools, malls, golf clubs, restaurants — stay as they are written.
+ * Matched on the English name, case-insensitively.
+ */
+export const KNOWN_PLACE_NAMES: Readonly<Record<string, Partial<Record<Locale, string>>>> = {
+  "layan beach": { th: "หาดลายัน", zh: "莱彦海滩", ru: "Пляж Лаян" },
+  "bangtao beach": { th: "หาดบางเทา", zh: "邦涛海滩", ru: "Пляж Банг Тао" },
+  "surin beach": { th: "หาดสุรินทร์", zh: "苏林海滩", ru: "Пляж Сурин" },
+  "maikao beach": { th: "หาดไม้ขาว", zh: "迈考海滩", ru: "Пляж Май Кхао" },
+  "phuket international airport": { th: "ท่าอากาศยานภูเก็ต", zh: "普吉国际机场", ru: "Международный аэропорт Пхукета" },
+  "bangkok hospital phuket": { th: "โรงพยาบาลกรุงเทพภูเก็ต", zh: "普吉曼谷医院", ru: "Бангкокский госпиталь Пхукет" },
+  "phuket old town": { th: "เมืองเก่าภูเก็ต", zh: "普吉老城", ru: "Старый город Пхукета" },
+};
+
+export function knownPlaceName(englishName: string, locale: string): string | null {
+  return KNOWN_PLACE_NAMES[englishName.trim().toLowerCase()]?.[locale as Locale] ?? null;
 }

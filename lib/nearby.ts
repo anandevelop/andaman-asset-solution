@@ -26,7 +26,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
-import { getNearbyAttractionCategories, NEARBY_DEFAULTS } from "@/content/nearby-attractions";
+import { getNearbyAttractionCategories, knownPlaceName, NEARBY_DEFAULTS } from "@/content/nearby-attractions";
 import type { NearbyAttractionCategorySummary } from "@/lib/projects";
 import { formatCoordinateInput } from "@/lib/map-places";
 
@@ -64,7 +64,7 @@ function labelFor(row: Row, locale: string): string {
 
 function placeNameFor(place: Row["places"][number], locale: string): string {
   const byLocale: Record<string, string> = { th: place.nameTh, zh: place.nameZh, ru: place.nameRu };
-  return byLocale[locale]?.trim() || place.name;
+  return byLocale[locale]?.trim() || knownPlaceName(place.name, locale) || place.name;
 }
 
 function toSummary(rows: Row[], locale: string): NearbyAttractionCategorySummary[] {
