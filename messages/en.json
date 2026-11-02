@@ -1132,7 +1132,33 @@
         "nationalityNone": "Not specified"
       },
       "headerDescription": "Enquiries from the website's forms · {count, plural, one {# open lead} other {# open leads}}",
-      "viewLabel": "View"
+      "viewLabel": "View",
+      "delete": {
+        "button": "Delete lead",
+        "buttonMany": "Delete {count}",
+        "titleOne": "Delete {name}?",
+        "titleMany": "Delete {count} leads?",
+        "warning": "This permanently deletes the lead, its notes and its timeline. It cannot be undone or restored from the back office.",
+        "reasonLabel": "Why?",
+        "reasons": {
+          "test": "Test entry",
+          "duplicate": "Duplicate",
+          "spam": "Spam",
+          "pdpaRequest": "The customer asked to be deleted (PDPA)",
+          "other": "Other"
+        },
+        "reasonHint": "Recorded in the edit history with who deleted it — the name is not.",
+        "confirmWord": "DELETE",
+        "typeToConfirm": "Type {word} to confirm",
+        "keeps": "Appointments and event registrations stay, unlinked. A lead holding a reserved or sold unit is not deleted — release the unit first.",
+        "confirm": "Delete permanently",
+        "cancel": "Cancel",
+        "done": "Deleted {count}",
+        "partial": "Deleted {deleted} · {refused} not deleted",
+        "refusedUnits": "Not deleted: {count} hold a reserved or sold unit. Release the unit first.",
+        "forbidden": "Only an admin can delete leads.",
+        "failed": "Could not delete. Try again."
+      }
     },
     "leadDetail": {
       "title": "Lead",
@@ -3293,7 +3319,8 @@
           "RECORD_GONE": "The record this entry refers to has been deleted."
         }
       },
-      "actionRevealContact": "viewed contact details of"
+      "actionRevealContact": "viewed contact details of",
+      "actionEraseLead": "deleted lead"
     },
     "navGroups": {
       "overview": "Overview",

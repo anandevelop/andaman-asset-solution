@@ -30,7 +30,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction, requireCapabilityAction } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
 import { rateLimit } from "@/lib/rate-limit";
-import { recordContactReveal } from "@/lib/audit/events";
+import { LEAD_ERASE_REASONS, recordContactReveal, recordLeadErasure } from "@/lib/audit/events";
 import { isLeadVisibleTo, scopedProjectIdsOf } from "@/lib/leads-board";
 import { parseAdminLead, type AdminLeadErrors } from "@/lib/admin/lead-create";
 import { siteConfig } from "@/config/site";
@@ -563,9 +563,7 @@ export type BulkResult = { ok: true; changed: string[]; refused: string[] } | { 
  * three of them a colleague's, gets seven changed and three refused — not
  * an all-or-nothing error that hides which three.
  *
- * Deliberately no bulk delete. Leads are not deleted from the back office
- * at all (see updateLeadStatus above): the consent record is part of the
- * PDPA trail, and LOST is how a lead leaves the pipeline.
+ * Delete is its own action, deleteLeads below, with its own rules.
  */
 export async function bulkUpdateLeads(locale: string, input: unknown): Promise<BulkResult> {
   await requireCapabilityAction("viewAllLeads");
@@ -684,4 +682,81 @@ export async function createLead(
 
   revalidateLead(locale, leadId);
   return { status: "created", leadId };
+}
+
+/* ── Deleting ───────────────────────────────────────────────────────── */
+
+const deleteSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(100),
+  reason: z.enum(LEAD_ERASE_REASONS),
+});
+
+export type DeleteResult =
+  | { ok: true; deleted: string[]; refused: { id: string; reason: "UNITS" | "NOT_FOUND" | "FAILED" }[] }
+  | { ok: false; error: "FORBIDDEN" | "INVALID_INPUT" };
+
+/**
+ * Permanently delete leads: test entries, duplicates, spam, and a
+ * customer's own request to be erased (PDPA). LOST is still how a real lead
+ * leaves the pipeline; this is for records that should not exist.
+ *
+ *  · ADMIN and above. A rep cannot delete, so nobody can make their own
+ *    lost lead disappear from the pipeline figures.
+ *  · Each deletion is logged first, with the reason and without the name
+ *    (recordLeadErasure); if the log cannot be written the lead stays.
+ *  · Notes go with the lead (cascade). Appointments and an event
+ *    registration are kept but unlinked — the registration is its own
+ *    record with its own consent, deleted from the event if asked.
+ *  · The bell's notifications about the lead are deleted too: their titles
+ *    carry the customer's name.
+ *  · A lead holding a reserved or sold unit is refused: release the unit
+ *    first, so a sale is never left without its buyer by accident.
+ */
+export async function deleteLeads(locale: string, input: unknown): Promise<DeleteResult> {
+  let actor;
+  try {
+    actor = await requireAdminAction(Role.ADMIN);
+  } catch {
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const parsed = deleteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+  const { ids, reason } = parsed.data;
+
+  const leads = await prisma.leadInquiry.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, _count: { select: { reservedUnits: true } } },
+  });
+  const found = new Map(leads.map((lead) => [lead.id, lead]));
+
+  const deleted: string[] = [];
+  const refused: { id: string; reason: "UNITS" | "NOT_FOUND" | "FAILED" }[] = [];
+
+  for (const id of ids) {
+    const lead = found.get(id);
+    if (!lead) {
+      refused.push({ id, reason: "NOT_FOUND" });
+      continue;
+    }
+    if (lead._count.reservedUnits > 0) {
+      refused.push({ id, reason: "UNITS" });
+      continue;
+    }
+    try {
+      await recordLeadErasure({ actor, leadId: id, reason });
+      await prisma.$transaction([
+        prisma.adminNotification.deleteMany({ where: { href: { contains: id } } }),
+        prisma.leadInquiry.delete({ where: { id } }),
+      ]);
+      deleted.push(id);
+    } catch (error) {
+      console.error("[leads] delete failed", { id, error });
+      refused.push({ id, reason: "FAILED" });
+    }
+  }
+
+  revalidatePath(`/${locale}/admin/leads`);
+  revalidatePath(`/${locale}/admin`);
+  return { ok: true, deleted, refused };
 }

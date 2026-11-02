@@ -519,6 +519,7 @@ export default async function AdminLeadsPage(props: Props) {
           assignees={assignableTo}
           statusLabels={statusLabels}
           canExport={can(session.role, "exportCustomerData")}
+          canDelete={session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN}
           labels={{
             selectAll: t("leads.table.selectAll"),
             customer: t("leads.table.customer"),

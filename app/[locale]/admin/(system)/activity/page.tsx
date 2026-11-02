@@ -33,6 +33,7 @@ import {
   AUTH_LOGOUT,
   AUTH_TOTP_FAILED,
   CONTACT_REVEAL,
+  LEAD_ERASE,
   isAuthEvent,
   isFailedAuth,
 } from "@/lib/audit/events";
@@ -151,6 +152,7 @@ export default async function AdminActivityPage(props: Props) {
     [AUTH_LOGIN_FAILED]: t("activity.actionLoginFailed"),
     [AUTH_TOTP_FAILED]: t("activity.actionTotpFailed"),
     [CONTACT_REVEAL]: t("activity.actionRevealContact"),
+    [LEAD_ERASE]: t("activity.actionEraseLead"),
   };
 
   const actionLabel = (action: string) => actionLabels[action] ?? action;

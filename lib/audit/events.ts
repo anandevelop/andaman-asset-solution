@@ -279,3 +279,38 @@ export async function recordContactReveal(params: {
     },
   });
 }
+
+/** The action value recordLeadErasure() writes. */
+export const LEAD_ERASE = "erase_lead";
+
+export const LEAD_ERASE_REASONS = ["test", "duplicate", "spam", "pdpaRequest", "other"] as const;
+export type LeadEraseReason = (typeof LEAD_ERASE_REASONS)[number];
+
+/**
+ * Record that a lead was deleted, and why (deleteLeads in
+ * app/[locale]/admin/(crm)/leads/actions.ts).
+ *
+ * No name, no label: the point of an erasure is that the person's details
+ * are gone, and a log line carrying their name would undo it. What stays is
+ * who deleted which record id, when, and the reason, which is what a PDPA
+ * request needs to be shown as handled. Throws, and the caller then keeps
+ * the lead: an untraced deletion is worse than a delayed one.
+ */
+export async function recordLeadErasure(params: {
+  actor: { id: string; email: string; role: Role };
+  leadId: string;
+  reason: LeadEraseReason;
+}): Promise<void> {
+  await prisma.auditLog.create({
+    data: {
+      actorId: params.actor.id,
+      actorEmail: params.actor.email.slice(0, 200),
+      actorRole: params.actor.role,
+      action: LEAD_ERASE,
+      model: "LeadInquiry",
+      recordId: params.leadId,
+      recordLabel: null,
+      changedFields: [params.reason],
+    },
+  });
+}

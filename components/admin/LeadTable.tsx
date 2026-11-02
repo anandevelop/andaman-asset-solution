@@ -11,8 +11,8 @@
  * component. Revealing one is the drawer's job, and is audited there.
  *
  * Every change here is tier 1 (see UndoToast): status from the pill, owner
- * from the owner cell, and both again in bulk. The bulk bar has no delete:
- * leads are not deleted from the back office (see bulkUpdateLeads).
+ * from the owner cell, and both again in bulk. Delete is in the bulk bar
+ * too, for ADMIN and above (LeadDeleteControl, deleteLeads).
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl";
 import { LeadStatus } from "@prisma/client";
 import { Clock, Download, Lock, UserPlus, X } from "lucide-react";
 import { assignLead, bulkUpdateLeads } from "@/app/[locale]/admin/(crm)/leads/actions";
+import LeadDeleteControl from "@/components/admin/LeadDeleteControl";
 import { LEAD_STATUS_DOT } from "@/lib/admin/lead-status-tone";
 import LeadStatusSelect from "@/components/admin/LeadStatusSelect";
 import PopoverMenu from "@/components/admin/PopoverMenu";
@@ -81,10 +82,21 @@ type Props = {
   statusLabels: Record<LeadStatus, string>;
   /** exportCustomerData — ADMIN and above. */
   canExport: boolean;
+  /** ADMIN and above may delete (deleteLeads checks the same). */
+  canDelete?: boolean;
   labels: Labels;
 };
 
-export default function LeadTable({ locale, rows, leadHrefBase, assignees, statusLabels, canExport, labels }: Props) {
+export default function LeadTable({
+  locale,
+  rows,
+  leadHrefBase,
+  assignees,
+  statusLabels,
+  canExport,
+  canDelete = false,
+  labels,
+}: Props) {
   const router = useRouter();
   // Messages with placeholders are filled here, where the values are.
   const t = useTranslations("admin.leads");
@@ -229,6 +241,14 @@ export default function LeadTable({ locale, rows, leadHrefBase, assignees, statu
               <Download size={14} aria-hidden />
               {labels.bulkExport}
             </a>
+          )}
+          {canDelete && (
+            <LeadDeleteControl
+              locale={locale}
+              ids={selectedRows.map((row) => row.id)}
+              name={selectedRows.length === 1 ? selectedRows[0].name : undefined}
+              onDeleted={() => setSelected(new Set())}
+            />
           )}
           <button
             type="button"

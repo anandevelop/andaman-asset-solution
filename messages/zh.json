@@ -1132,7 +1132,33 @@
         "nationalityNone": "未指定"
       },
       "headerDescription": "来自网站表单的咨询 · {count} 条未结线索",
-      "viewLabel": "视图"
+      "viewLabel": "视图",
+      "delete": {
+        "button": "删除潜在客户",
+        "buttonMany": "删除 {count} 个",
+        "titleOne": "删除 {name}？",
+        "titleMany": "删除 {count} 个潜在客户？",
+        "warning": "将永久删除该潜在客户及其备注和时间线，无法撤销，也无法在后台恢复。",
+        "reasonLabel": "原因",
+        "reasons": {
+          "test": "测试数据",
+          "duplicate": "重复",
+          "spam": "垃圾信息",
+          "pdpaRequest": "客户要求删除（PDPA）",
+          "other": "其他"
+        },
+        "reasonHint": "会连同删除人记录在编辑历史中 — 不记录客户姓名。",
+        "confirmWord": "DELETE",
+        "typeToConfirm": "输入 {word} 以确认",
+        "keeps": "预约和活动报名会保留，但不再关联。持有已预订或已售单位的潜在客户无法删除 — 请先释放单位。",
+        "confirm": "永久删除",
+        "cancel": "取消",
+        "done": "已删除 {count} 个",
+        "partial": "已删除 {deleted} · {refused} 个未删除",
+        "refusedUnits": "未删除：{count} 个持有已预订或已售单位。请先释放单位。",
+        "forbidden": "只有管理员可以删除潜在客户。",
+        "failed": "删除失败，请重试。"
+      }
     },
     "leadDetail": {
       "title": "客户",
@@ -3293,7 +3319,8 @@
           "RECORD_GONE": "该记录指向的对象已被删除。"
         }
       },
-      "actionRevealContact": "查看了联系方式"
+      "actionRevealContact": "查看了联系方式",
+      "actionEraseLead": "删除了潜在客户"
     },
     "navGroups": {
       "overview": "概览",

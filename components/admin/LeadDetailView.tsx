@@ -44,6 +44,7 @@ import LeadActivityTimeline, { type TimelineItem } from "@/components/admin/Lead
 import LeadUnitPicker from "@/components/admin/LeadUnitPicker";
 import RevealContact from "@/components/admin/RevealContact";
 import LeadNextStepCard, { type NextStepAction } from "@/components/admin/LeadNextStepCard";
+import LeadDeleteControl from "@/components/admin/LeadDeleteControl";
 
 export type LeadDetailVariant = "page" | "drawer";
 
@@ -362,6 +363,8 @@ export default async function LeadDetailView({
   const isDrawer = variant === "drawer";
   const Heading = isDrawer ? "h2" : "h1";
   const canContact = can(session.role, "viewCustomerContact");
+  // Deleting is ADMIN and above — deleteLeads checks the same on the server.
+  const canDelete = session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN;
   const revealLabels = { show: t("leadDetail.reveal"), failed: t("leadDetail.revealFailed") };
 
   // ── Blocks, arranged per variant below ─────────────────────────────────
@@ -657,6 +660,17 @@ export default async function LeadDetailView({
         <ShieldAlert size={12} aria-hidden />
         {t("leadDetail.privacyLink")}
       </Link>
+      {canDelete && (
+        <div className="border-t border-adm-line pt-3">
+          <LeadDeleteControl
+            locale={locale}
+            ids={[lead.id]}
+            name={lead.name}
+            afterHref={`/${locale}/admin/leads`}
+            buttonClassName="admin-btn-ghost admin-btn-sm text-adm-danger"
+          />
+        </div>
+      )}
     </section>
   );
 
