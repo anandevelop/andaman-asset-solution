@@ -60,7 +60,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getWhyUsPoints } from "@/lib/home-content";
 import { getOrderedVisibleSectionKeys, type HomeSectionKey } from "@/lib/home-sections";
 import { HERO_ROW, outlineFor } from "@/lib/home-outline";
-import { HOME_AUTO_SECTION_LINKS, ITEM_EDIT_HREF, type EditLink } from "@/lib/edit-mode";
+import { HOME_AUTO_SECTION_LINKS, ITEM_EDIT_HREF, refLinks, type EditLink } from "@/lib/edit-mode";
 import EditableSection from "@/components/edit/EditableSection";
 import EditableItem from "@/components/edit/EditableItem";
 import { isDatabaseOffline } from "@/lib/db";
@@ -459,7 +459,7 @@ export default async function HomePage(props: Props) {
     <>
       {/* ── Hero (carousel, falls back to a static hero when there are no
           active slides — see components/HeroCarousel.tsx) ──────────────── */}
-      <EditableSection links={HERO_ROW.editors}>
+      <EditableSection links={refLinks(HERO_ROW.editors)}>
       <HeroCarousel
         slides={heroSlides}
         fallback={{
@@ -511,7 +511,7 @@ export default async function HomePage(props: Props) {
  */
 function sectionEditLinks(key: HomeSectionKey): EditLink[] {
   const editors = outlineFor(key)?.editors ?? [];
-  return editors.length > 0 ? editors : (HOME_AUTO_SECTION_LINKS[key] ?? []);
+  return editors.length > 0 ? refLinks(editors) : (HOME_AUTO_SECTION_LINKS[key] ?? []);
 }
 
 /**

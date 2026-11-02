@@ -18,7 +18,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
-import { ADMIN_LINK_PROPS, withReturnTo } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, adminPath, withReturnTo } from "@/lib/edit-mode";
 import { useEditMode } from "./EditModeProvider";
 
 export default function EditableItem({ href, children }: { href: string; children: ReactNode }) {
@@ -35,7 +35,7 @@ export default function EditableItem({ href, children }: { href: string; childre
       {active && (
         <a
           data-edit-ui
-          href={withReturnTo(`${mode!.adminBase}${href}`, pathname)}
+          href={withReturnTo(`${mode!.adminBase}${adminPath(href)}`, pathname)}
           {...ADMIN_LINK_PROPS}
           title={t("editItem")}
           aria-label={t("editItem")}

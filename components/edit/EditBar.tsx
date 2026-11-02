@@ -21,7 +21,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight, ListOrdered, Pencil, Type } from "lucide-react";
-import { ADMIN_LINK_PROPS, pageEditLink, withReturnTo } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, adminPath, pageEditLink, withReturnTo } from "@/lib/edit-mode";
 import { stripLocale } from "@/lib/public-paths";
 import { useEditMode } from "./EditModeProvider";
 
@@ -105,7 +105,7 @@ export default function EditBar() {
 
         {target && (
           <a
-            href={withReturnTo(`${mode.adminBase}${target.href}`, pathname)}
+            href={withReturnTo(`${mode.adminBase}${adminPath(target.href)}`, pathname)}
             {...ADMIN_LINK_PROPS}
             className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1 font-medium text-white hover:bg-blue-500"
           >

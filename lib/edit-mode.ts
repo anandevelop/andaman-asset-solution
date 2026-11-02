@@ -112,18 +112,47 @@ export type EditLink = {
  * news list when its page forgot to mount a target — no button is better
  * than the wrong one.
  */
+/**
+ * How an admin path travels in the public page.
+ *
+ * These hrefs reach the browser as props of client components, so they sit
+ * in the RSC payload of every cached public page — including for visitors
+ * who never see a button. Written as "/news/ID/edit" they looked like links
+ * to Googlebot, which crawled them as /th/news/ID/edit and reported a pile
+ * of 404s (and /e-brochures/ID/edit, /projects/ID/content…). So they are
+ * carried without slashes ("news~ID~edit") and only turned back into a path
+ * in the browser, when a signed-in editor is shown the button.
+ */
+const SEP = "~";
+
+/** "/news/ID/edit" → "news~ID~edit". */
+export function ref(path: string): string {
+  return path.replace(/^\//, "").split("/").join(SEP);
+}
+
+/** The same for a list of links (home-outline's are written as paths). */
+export function refLinks(links: readonly EditLink[]): EditLink[] {
+  return links.map((link) => ({ ...link, href: ref(link.href) }));
+}
+
+/** "news~ID~edit" → "/news/ID/edit". Paths already in that form pass through. */
+export function adminPath(href: string): string {
+  if (href.startsWith("/")) return href;
+  return `/${href.split(SEP).join("/")}`;
+}
+
 export const PAGE_EDIT_LINKS: Readonly<Record<string, EditLink>> = {
-  "/": { labelKey: "homePage", href: "/pages/home" },
-  "/about": { labelKey: "aboutStory", href: "/pages/about/story" },
-  "/achievements": { labelKey: "aboutAwards", href: "/pages/about/awards" },
-  "/contact": { labelKey: "contactPage", href: "/pages/contact" },
-  "/projects": { labelKey: "projectsBanner", href: "/pages/projects" },
-  "/progress": { labelKey: "progress", href: "/progress" },
-  "/news": { labelKey: "news", href: "/news" },
-  "/events": { labelKey: "events", href: "/events" },
-  "/e-brochure": { labelKey: "brochures", href: "/e-brochures" },
-  "/privacy-policy": { labelKey: "siteCopy", href: "/pages/copy?ns=privacyPolicy" },
-  "/terms": { labelKey: "siteCopy", href: "/pages/copy?ns=terms" },
+  "/": { labelKey: "homePage", href: ref("/pages/home") },
+  "/about": { labelKey: "aboutStory", href: ref("/pages/about/story") },
+  "/achievements": { labelKey: "aboutAwards", href: ref("/pages/about/awards") },
+  "/contact": { labelKey: "contactPage", href: ref("/pages/contact") },
+  "/projects": { labelKey: "projectsBanner", href: ref("/pages/projects") },
+  "/progress": { labelKey: "progress", href: ref("/progress") },
+  "/news": { labelKey: "news", href: ref("/news") },
+  "/events": { labelKey: "events", href: ref("/events") },
+  "/e-brochure": { labelKey: "brochures", href: ref("/e-brochures") },
+  "/privacy-policy": { labelKey: "siteCopy", href: ref("/pages/copy?ns=privacyPolicy") },
+  "/terms": { labelKey: "siteCopy", href: ref("/pages/copy?ns=terms") },
 };
 
 export function pageEditLink(pathname: string): EditLink | null {
@@ -132,11 +161,11 @@ export function pageEditLink(pathname: string): EditLink | null {
 
 /** Item-level editors, keyed by what a card shows. `id` is the row's id. */
 export const ITEM_EDIT_HREF = {
-  project: (id: string) => `/projects/${id}/edit`,
-  projectProgress: (id: string) => `/projects/${id}/progress`,
-  article: (id: string) => `/news/${id}/edit`,
-  event: (id: string) => `/events/${id}/edit`,
-  brochure: (id: string) => `/e-brochures/${id}/edit`,
+  project: (id: string) => ref(`/projects/${id}/edit`),
+  projectProgress: (id: string) => ref(`/projects/${id}/progress`),
+  article: (id: string) => ref(`/news/${id}/edit`),
+  event: (id: string) => ref(`/events/${id}/edit`),
+  brochure: (id: string) => ref(`/e-brochures/${id}/edit`),
 } as const;
 
 /**
@@ -148,58 +177,58 @@ export const ITEM_EDIT_HREF = {
 export function projectSectionLinks(id: string) {
   const base = `/projects/${id}`;
   return {
-    hero: [{ labelKey: "projectOverview", href: `${base}/edit` }],
+    hero: [{ labelKey: "projectOverview", href: ref(`${base}/edit`) }],
     narrative: [
-      { labelKey: "projectContent", href: `${base}/content` },
-      { labelKey: "projectOverview", href: `${base}/edit` },
+      { labelKey: "projectContent", href: ref(`${base}/content`) },
+      { labelKey: "projectOverview", href: ref(`${base}/edit`) },
     ],
-    facilities: [{ labelKey: "projectFacilities", href: `${base}/facilities` }],
-    gallery: [{ labelKey: "projectOverview", href: `${base}/edit` }],
-    unitTypes: [{ labelKey: "projectUnitTypes", href: `${base}/unit-types` }],
+    facilities: [{ labelKey: "projectFacilities", href: ref(`${base}/facilities`) }],
+    gallery: [{ labelKey: "projectOverview", href: ref(`${base}/edit`) }],
+    unitTypes: [{ labelKey: "projectUnitTypes", href: ref(`${base}/unit-types`) }],
     sitePlan: [
-      { labelKey: "projectSitePlan", href: `${base}/site-plan` },
-      { labelKey: "projectUnits", href: `${base}/units` },
+      { labelKey: "projectSitePlan", href: ref(`${base}/site-plan`) },
+      { labelKey: "projectUnits", href: ref(`${base}/units`) },
     ],
     // The map's pin and address are project details; its Nearby tabs are
     // their own tab (lib/nearby.ts).
     location: [
-      { labelKey: "projectOverview", href: `${base}/edit` },
-      { labelKey: "projectNearby", href: `${base}/nearby` },
+      { labelKey: "projectOverview", href: ref(`${base}/edit`) },
+      { labelKey: "projectNearby", href: ref(`${base}/nearby`) },
     ],
-    progress: [{ labelKey: "progress", href: `${base}/progress` }],
+    progress: [{ labelKey: "progress", href: ref(`${base}/progress`) }],
   } satisfies Record<string, EditLink[]>;
 }
 
 /** The About page's bands. */
 export const ABOUT_SECTION_LINKS = {
-  hero: [{ labelKey: "aboutStory", href: "/pages/about/story" }],
+  hero: [{ labelKey: "aboutStory", href: ref("/pages/about/story") }],
   // Counted from the projects unless overridden there; see lib/about-stats.ts.
-  stats: [{ labelKey: "aboutFigures", href: "/pages/about/figures" }],
-  story: [{ labelKey: "aboutStory", href: "/pages/about/story" }],
-  principles: [{ labelKey: "aboutMission", href: "/pages/about/mission" }],
-  timeline: [{ labelKey: "aboutMilestones", href: "/pages/about/milestones" }],
+  stats: [{ labelKey: "aboutFigures", href: ref("/pages/about/figures") }],
+  story: [{ labelKey: "aboutStory", href: ref("/pages/about/story") }],
+  principles: [{ labelKey: "aboutMission", href: ref("/pages/about/mission") }],
+  timeline: [{ labelKey: "aboutMilestones", href: ref("/pages/about/milestones") }],
 } satisfies Record<string, EditLink[]>;
 
 /** The contact page: its words are site copy; its details are settings. */
 export const CONTACT_SECTION_LINKS = {
-  header: [{ labelKey: "siteCopy", href: "/pages/copy?ns=contact" }],
+  header: [{ labelKey: "siteCopy", href: ref("/pages/copy?ns=contact") }],
   details: [
-    { labelKey: "contactPage", href: "/pages/contact" },
-    { labelKey: "siteCopy", href: "/pages/copy?ns=contact" },
+    { labelKey: "contactPage", href: ref("/pages/contact") },
+    { labelKey: "siteCopy", href: ref("/pages/copy?ns=contact") },
   ],
-  map: [{ labelKey: "contactPage", href: "/pages/contact" }],
+  map: [{ labelKey: "contactPage", href: ref("/pages/contact") }],
 } satisfies Record<string, EditLink[]>;
 
 /** /achievements: narrative from content/achievements.ts, awards from the table. */
 export const ACHIEVEMENTS_SECTION_LINKS = {
-  copy: [{ labelKey: "siteCopy", href: "/pages/copy?ns=achievementsPage" }],
-  awards: [{ labelKey: "aboutAwards", href: "/pages/about/awards" }],
+  copy: [{ labelKey: "siteCopy", href: ref("/pages/copy?ns=achievementsPage") }],
+  awards: [{ labelKey: "aboutAwards", href: ref("/pages/about/awards") }],
 } satisfies Record<string, EditLink[]>;
 
 /** /progress: a heading over one card per project. */
 export const PROGRESS_SECTION_LINKS = {
-  header: [{ labelKey: "siteCopy", href: "/pages/copy?ns=progress" }],
-  projects: [{ labelKey: "progress", href: "/progress" }],
+  header: [{ labelKey: "siteCopy", href: ref("/pages/copy?ns=progress") }],
+  projects: [{ labelKey: "progress", href: ref("/progress") }],
 } satisfies Record<string, EditLink[]>;
 
 /**
@@ -208,10 +237,10 @@ export const PROGRESS_SECTION_LINKS = {
  * screen that publishes those rows is still the useful place to land.
  */
 export const HOME_AUTO_SECTION_LINKS: Readonly<Record<string, EditLink[]>> = {
-  FEATURED_PROJECTS: [{ labelKey: "projects", href: "/projects" }],
-  UPCOMING_EVENT: [{ labelKey: "events", href: "/events" }],
-  LATEST_NEWS: [{ labelKey: "news", href: "/news" }],
+  FEATURED_PROJECTS: [{ labelKey: "projects", href: ref("/projects") }],
+  UPCOMING_EVENT: [{ labelKey: "events", href: ref("/events") }],
+  LATEST_NEWS: [{ labelKey: "news", href: ref("/news") }],
 };
 
 /** The closing CTA band mounted site-wide by the (site) layout. */
-export const SITE_CTA_LINKS: EditLink[] = [{ labelKey: "closingCta", href: "/pages/home/cta" }];
+export const SITE_CTA_LINKS: EditLink[] = [{ labelKey: "closingCta", href: ref("/pages/home/cta") }];

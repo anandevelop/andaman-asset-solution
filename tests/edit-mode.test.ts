@@ -27,6 +27,7 @@ import {
   SITE_CTA_LINKS,
   adminBaseFor,
   canSeeEditMode,
+  adminPath,
   isReturnPath,
   pageEditLink,
   projectSectionLinks,
@@ -46,7 +47,7 @@ const ZONES = readdirSync(ADMIN, { withFileTypes: true })
 
 /** "/projects/ID/edit?x=1" → does app/[locale]/admin/(zone)/projects/[id]/edit/page.tsx exist? */
 function adminRouteExists(href: string): boolean {
-  const segments = href.split(/[?#]/)[0].replace(/^\//, "").split("/").filter(Boolean);
+  const segments = adminPath(href).split(/[?#]/)[0].replace(/^\//, "").split("/").filter(Boolean);
 
   const walk = (dir: string, rest: string[]): boolean => {
     if (rest.length === 0) return existsSync(join(dir, "page.tsx"));
@@ -110,10 +111,22 @@ describe("edit-mode links", () => {
   });
 });
 
+describe("hrefs in the public payload", () => {
+  // They sit in every cached public page's RSC payload; a "/news/ID/edit"
+  // there was crawled by Googlebot as /th/news/ID/edit and reported as a 404.
+  it("carry no slash, and come back as the admin path", () => {
+    const all = [...ALL_LINKS.filter((l) => !HOME_OUTLINE.some((r) => r.editors.includes(l))).map((l) => l.href),
+      ...Object.values(ITEM_EDIT_HREF).map((build) => build("abc123"))];
+    for (const href of all) expect(href, href).not.toContain("/");
+    expect(adminPath(ITEM_EDIT_HREF.article("abc123"))).toBe("/news/abc123/edit");
+    expect(adminPath("/pages/home")).toBe("/pages/home");
+  });
+});
+
 describe("pageEditLink", () => {
   it("strips the locale and matches exactly", () => {
-    expect(pageEditLink("/th")?.href).toBe("/pages/home");
-    expect(pageEditLink("/zh/contact/")?.href).toBe("/pages/contact");
+    expect(adminPath(pageEditLink("/th")!.href)).toBe("/pages/home");
+    expect(adminPath(pageEditLink("/zh/contact/")!.href)).toBe("/pages/contact");
     // A detail page must mount <EditTarget>, not fall back to its list.
     expect(pageEditLink("/en/news/some-article")).toBeNull();
   });

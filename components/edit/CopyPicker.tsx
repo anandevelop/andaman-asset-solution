@@ -56,7 +56,7 @@ import {
   type PickedCopy,
 } from "@/app/[locale]/(site)/_actions/site-copy";
 import { normalizeCopyText, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
-import { ADMIN_LINK_PROPS, withReturnTo, type EditLink } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, adminPath, withReturnTo, type EditLink } from "@/lib/edit-mode";
 import CopyValueField from "@/components/copy/CopyValueField";
 import { caseShowing } from "@/lib/icu-skeleton";
 import { useEditMode } from "./EditModeProvider";
@@ -397,7 +397,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
                     <div className="flex flex-col gap-2">
                       {owners.item && (
                         <a
-                          href={withReturnTo(`${adminBase}${owners.item}`, pathname)}
+                          href={withReturnTo(`${adminBase}${adminPath(owners.item)}`, pathname)}
                           {...ADMIN_LINK_PROPS}
                           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 font-medium text-white hover:bg-blue-500"
                         >
@@ -408,7 +408,7 @@ export default function CopyPicker({ locale }: { locale: string }) {
                       {owners.links.map((link) => (
                         <a
                           key={link.href}
-                          href={withReturnTo(`${adminBase}${link.href}`, pathname)}
+                          href={withReturnTo(`${adminBase}${adminPath(link.href)}`, pathname)}
                           {...ADMIN_LINK_PROPS}
                           className="inline-flex items-center gap-2 rounded-md border border-blue-600 px-3 py-2 font-medium text-blue-700 hover:bg-blue-50"
                         >

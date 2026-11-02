@@ -34,7 +34,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
-import { ADMIN_LINK_PROPS, withReturnTo, type EditLink } from "@/lib/edit-mode";
+import { ADMIN_LINK_PROPS, adminPath, withReturnTo, type EditLink } from "@/lib/edit-mode";
 import { useEditMode } from "./EditModeProvider";
 
 export default function EditableSection({
@@ -72,7 +72,7 @@ export default function EditableSection({
             return (
               <a
                 key={link.href}
-                href={withReturnTo(`${mode!.adminBase}${link.href}`, pathname)}
+                href={withReturnTo(`${mode!.adminBase}${adminPath(link.href)}`, pathname)}
                 {...ADMIN_LINK_PROPS}
                 aria-label={label}
                 title={label}
