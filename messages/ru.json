@@ -3157,6 +3157,20 @@
           "NO_TOKEN": "Сначала добавьте channel access token.",
           "NO_RECIPIENTS": "Сначала включите хотя бы один чат.",
           "SEND_FAILED": "LINE отклонил сообщение:"
+        },
+        "deliveries": "Последние уведомления",
+        "deliveriesEmpty": "Уведомлений ещё не было. Отправьте тест или дождитесь следующей заявки.",
+        "kindLead": "Заявка",
+        "kindRegistration": "Регистрация",
+        "kindTest": "Тест",
+        "outcomeSent": "Отправлено",
+        "outcomeFailed": "Ошибка",
+        "outcomeSkipped": "Не отправлено",
+        "reason": {
+          "SWITCHED_OFF": "Уведомления выключены",
+          "NO_TOKEN": "Нет access token",
+          "NO_ACTIVE_CHAT": "В тот момент ни один чат не был включён",
+          "NOT_CONFIGURED": "LINE не настроен"
         }
       }
     },

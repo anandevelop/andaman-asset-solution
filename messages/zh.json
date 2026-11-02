@@ -3157,6 +3157,20 @@
           "NO_TOKEN": "请先添加 Channel access token。",
           "NO_RECIPIENTS": "请先开启至少一个聊天。",
           "SEND_FAILED": "LINE 拒绝了消息："
+        },
+        "deliveries": "最近的提醒",
+        "deliveriesEmpty": "尚未发送过提醒。请发送测试，或等待下一条咨询。",
+        "kindLead": "咨询",
+        "kindRegistration": "活动报名",
+        "kindTest": "测试",
+        "outcomeSent": "已发送",
+        "outcomeFailed": "发送失败",
+        "outcomeSkipped": "未发送",
+        "reason": {
+          "SWITCHED_OFF": "提醒已关闭",
+          "NO_TOKEN": "没有 access token",
+          "NO_ACTIVE_CHAT": "当时没有开启任何聊天",
+          "NOT_CONFIGURED": "尚未设置 LINE"
         }
       }
     },

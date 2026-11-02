@@ -109,9 +109,28 @@ export type LineCardLabels = Record<
   | "err.RATE_LIMITED"
   | "err.NO_TOKEN"
   | "err.NO_RECIPIENTS"
-  | "err.SEND_FAILED",
+  | "err.SEND_FAILED"
+  | "deliveries"
+  | "deliveriesEmpty"
+  | "kindLead"
+  | "kindRegistration"
+  | "kindTest"
+  | "outcomeSent"
+  | "outcomeFailed"
+  | "outcomeSkipped"
+  | "reason.SWITCHED_OFF"
+  | "reason.NO_TOKEN"
+  | "reason.NO_ACTIVE_CHAT"
+  | "reason.NOT_CONFIGURED",
   string
 >;
+
+export type LineCardDelivery = {
+  at: string;
+  kind: "lead" | "registration" | "test";
+  outcome: "sent" | "failed" | "skipped";
+  detail: string;
+};
 
 type Props = {
   locale: string;
@@ -122,6 +141,9 @@ type Props = {
   bot: { displayName: string; basicId: string; pictureUrl?: string } | null;
   webhookUrl: string;
   destinations: LineCardDestination[];
+  deliveries: LineCardDelivery[];
+  /** BCP-47 tag for dates, e.g. th-TH-u-ca-buddhist. */
+  locale_tag: string;
   labels: LineCardLabels;
 };
 
@@ -476,6 +498,50 @@ export default function LineSettingsCard(props: Props) {
           {l.test}
         </button>
         <p className="admin-hint">{l.testHint}</p>
+      </div>
+
+      {/* 5. What happened to the last alerts */}
+      <div>
+        <h4 className="admin-section-title">{l.deliveries}</h4>
+        {props.deliveries.length === 0 ? (
+          <p className="admin-hint mt-1">{l.deliveriesEmpty}</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-adm-line rounded-xs border border-adm-line text-sm">
+            {props.deliveries.map((d, i) => {
+              const reason = l[`reason.${d.detail}` as keyof LineCardLabels];
+              return (
+                <li key={`${d.at}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5">
+                  <span className="w-36 shrink-0 text-xs text-adm-muted">
+                    {new Date(d.at).toLocaleString(props.locale_tag, {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </span>
+                  <span className="w-28 shrink-0 text-adm-text">
+                    {d.kind === "lead" ? l.kindLead : d.kind === "registration" ? l.kindRegistration : l.kindTest}
+                  </span>
+                  <span
+                    className={`shrink-0 font-medium ${
+                      d.outcome === "sent"
+                        ? "text-adm-success"
+                        : d.outcome === "failed"
+                          ? "text-adm-danger"
+                          : "text-adm-warning"
+                    }`}
+                  >
+                    {d.outcome === "sent" ? l.outcomeSent : d.outcome === "failed" ? l.outcomeFailed : l.outcomeSkipped}
+                  </span>
+                  {d.outcome !== "sent" && (
+                    <span className="min-w-0 flex-1 break-words text-xs text-adm-muted">{reason ?? d.detail}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <details className="rounded-xs border border-adm-line bg-adm-text/4 px-4 py-3 text-sm">

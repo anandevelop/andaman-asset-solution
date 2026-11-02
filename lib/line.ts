@@ -17,7 +17,13 @@
 
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getActiveRecipients, getLineConfig } from "@/lib/line-config";
+import {
+  getActiveRecipients,
+  getLineConfig,
+  lineSkipReason,
+  recordLineDelivery,
+  type LineDelivery,
+} from "@/lib/line-config";
 
 const PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const MULTICAST_URL = "https://api.line.me/v2/bot/message/multicast";
@@ -77,11 +83,14 @@ type LineMessage = Record<string, unknown>;
 async function send(
   messages: LineMessage[],
   target?: { token: string; to: string[] },
+  kind: LineDelivery["kind"] = "lead",
 ): Promise<LineSendResult> {
   const active = target ?? (await getActiveRecipients());
 
   if (!active) {
-    console.info("[line] not configured — skipping notification");
+    const reason = (await lineSkipReason()) ?? "NOT_CONFIGURED";
+    console.info(`[line] not sending ${kind} alert: ${reason}`);
+    await recordLineDelivery({ kind, outcome: "skipped", detail: reason });
     return { sent: 0, failed: [] };
   }
   const { token, to } = active;
@@ -141,6 +150,14 @@ async function send(
     outcome.sent += 1;
   }
 
+  await recordLineDelivery({
+    kind,
+    outcome: outcome.failed.length ? "failed" : "sent",
+    detail: outcome.failed.length
+      ? outcome.failed.map((f) => `${f.status ?? "-"} ${f.detail}`).join(" | ")
+      : `${outcome.sent}`,
+  });
+
   return outcome;
 }
 
@@ -163,7 +180,8 @@ function row(label: string, value: string): LineMessage {
     spacing: "sm",
     contents: [
       { type: "text", text: label, color: "#8C9BA5", size: "sm", flex: 2 },
-      { type: "text", text: value, wrap: true, color: "#333333", size: "sm", flex: 5 },
+      // LINE rejects the whole card for one empty text, so never send "".
+      { type: "text", text: value.trim() || "—", wrap: true, color: "#333333", size: "sm", flex: 5 },
     ],
   };
 }
@@ -317,7 +335,7 @@ export async function notifyNewRegistration(registration: {
         extra: registration.agencyName,
         message: registration.whatsapp ? `WhatsApp: ${registration.whatsapp}` : null,
       }),
-    ]);
+    ], undefined, "registration");
   } catch (error) {
     console.error("[line] notifyNewRegistration failed", error);
   }
@@ -387,13 +405,30 @@ export async function sendLineTest(onlyTo?: string): Promise<LineSendResult | { 
   const to = onlyTo ? [onlyTo] : config.destinations.filter((d) => d.enabled).map((d) => d.id);
   if (to.length === 0) return { error: "NO_RECIPIENTS" };
 
+  /*
+    The test sends a sample lead card as well as the text, built by the
+    same leadCard() a real enquiry uses. A text-only test proved the token
+    and the chat but not the card: if LINE refused the card's layout, every
+    real alert failed while the test still passed.
+  */
   return send(
     [
       {
         type: "text",
-        text: "✅ ทดสอบการแจ้งเตือนจากหลังบ้าน Andaman Asset Solution\nห้องนี้จะได้รับการแจ้งเตือนเมื่อมีผู้สนใจรายใหม่",
+        text: "✅ ทดสอบการแจ้งเตือนจากหลังบ้าน Andaman Asset Solution\nห้องนี้จะได้รับการแจ้งเตือนเมื่อมีผู้สนใจรายใหม่ — ตัวอย่างการ์ด:",
       },
+      leadCard({
+        title: "ผู้สนใจรายใหม่ (ตัวอย่าง)",
+        name: "ตัวอย่าง ทดสอบ",
+        email: "test@example.com",
+        phone: "+66812345678",
+        extraLabel: "โครงการ",
+        extra: "The Trinity Village",
+        message: "ข้อความตัวอย่างจากการทดสอบในหลังบ้าน",
+        adminUrl: adminLeadUrl("test"),
+      }),
     ],
     { token: config.accessToken, to },
+    "test",
   );
 }

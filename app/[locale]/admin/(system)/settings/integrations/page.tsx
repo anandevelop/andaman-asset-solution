@@ -25,7 +25,7 @@ import {
 import { updateSettings } from "../actions";
 import SettingsForm, { type SettingGroup } from "@/components/admin/SettingsForm";
 import LineSettingsCard, { type LineCardLabels } from "@/components/admin/LineSettingsCard";
-import { getLineConfig } from "@/lib/line-config";
+import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
 import { fetchLineBotInfo } from "@/lib/line";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -35,21 +35,26 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, current, overridden, line] = await Promise.all([
+  const [t, current, overridden, line, deliveries] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSettingsForEditing(),
     getOverriddenKeys(),
     getLineConfig(),
+    getLineDeliveries(),
   ]);
 
   // Asks LINE which OA the token belongs to: proof the token works, and
   // the name the card shows. Five-second timeout inside, never throws.
   const bot = line.accessToken ? await fetchLineBotInfo(line.accessToken) : null;
 
-  const lineRaw = t.raw("settings.line") as Record<string, string> & { err: Record<string, string> };
+  const lineRaw = t.raw("settings.line") as Record<string, string> & {
+    err: Record<string, string>;
+    reason: Record<string, string>;
+  };
   const lineLabels = {
     ...Object.fromEntries(Object.entries(lineRaw).filter(([, v]) => typeof v === "string")),
     ...Object.fromEntries(Object.entries(lineRaw.err).map(([k, v]) => [`err.${k}`, v])),
+    ...Object.fromEntries(Object.entries(lineRaw.reason).map(([k, v]) => [`reason.${k}`, v])),
   } as LineCardLabels;
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://andamanassetsolution.com").replace(/\/+$/, "");
@@ -122,6 +127,8 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
           enabled,
           source,
         }))}
+        deliveries={deliveries}
+        locale_tag={locale === "th" ? "th-TH-u-ca-buddhist" : locale}
         labels={lineLabels}
       />
 

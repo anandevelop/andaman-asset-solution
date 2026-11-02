@@ -3157,6 +3157,20 @@
           "NO_TOKEN": "ใส่ Channel access token ก่อน",
           "NO_RECIPIENTS": "เปิดอย่างน้อย 1 แชทก่อน",
           "SEND_FAILED": "LINE ปฏิเสธข้อความ:"
+        },
+        "deliveries": "การแจ้งเตือนล่าสุด",
+        "deliveriesEmpty": "ยังไม่มีการส่งแจ้งเตือน ลองกดส่งข้อความทดสอบ หรือรอลีดถัดไป",
+        "kindLead": "ลีดสอบถาม",
+        "kindRegistration": "ลงทะเบียนอีเวนต์",
+        "kindTest": "ทดสอบ",
+        "outcomeSent": "ส่งแล้ว",
+        "outcomeFailed": "ส่งไม่สำเร็จ",
+        "outcomeSkipped": "ไม่ได้ส่ง",
+        "reason": {
+          "SWITCHED_OFF": "ปิดการแจ้งเตือนอยู่",
+          "NO_TOKEN": "ยังไม่มี access token",
+          "NO_ACTIVE_CHAT": "ตอนนั้นยังไม่มีแชทที่เปิดรับแจ้งเตือน",
+          "NOT_CONFIGURED": "ยังไม่ได้ตั้งค่า LINE"
         }
       }
     },

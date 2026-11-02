@@ -290,3 +290,60 @@ export async function recordLineChat(
 
   await writeDestinations(list);
 }
+
+// ── Delivery log ────────────────────────────────────────────────────────
+
+/**
+ * The last few alert attempts, shown on the integrations page. Without it
+ * a lead whose alert never arrived leaves no trace an admin can see: the
+ * reason (switched off, no chat on, LINE refusing the message) was only in
+ * the server's logs.
+ */
+export type LineDelivery = {
+  at: string;
+  kind: "lead" | "registration" | "test";
+  outcome: "sent" | "failed" | "skipped";
+  /** Why it was skipped, or what LINE answered when it failed. */
+  detail: string;
+};
+
+const DELIVERIES_KEY = "line.deliveries";
+const DELIVERIES_KEPT = 10;
+
+export async function getLineDeliveries(): Promise<LineDelivery[]> {
+  const row = await prisma.siteSetting.findUnique({ where: { key: DELIVERIES_KEY } }).catch(() => null);
+  if (!row) return [];
+  try {
+    const list = JSON.parse(row.value);
+    return Array.isArray(list) ? (list as LineDelivery[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Best-effort: a failure to write the log never affects the alert. */
+export async function recordLineDelivery(entry: Omit<LineDelivery, "at">): Promise<void> {
+  try {
+    const list = await getLineDeliveries();
+    const next = [{ ...entry, at: new Date().toISOString(), detail: entry.detail.slice(0, 500) }, ...list].slice(
+      0,
+      DELIVERIES_KEPT,
+    );
+    await prisma.siteSetting.upsert({
+      where: { key: DELIVERIES_KEY },
+      create: { key: DELIVERIES_KEY, value: JSON.stringify(next) },
+      update: { value: JSON.stringify(next) },
+    });
+  } catch (error) {
+    console.error("[line] could not record delivery", error);
+  }
+}
+
+/** Why nothing would be sent right now, or null when alerts can go out. */
+export async function lineSkipReason(): Promise<string | null> {
+  const config = await getLineConfig();
+  if (!config.enabled) return "SWITCHED_OFF";
+  if (!config.accessToken) return "NO_TOKEN";
+  if (!config.destinations.some((d) => d.enabled)) return "NO_ACTIVE_CHAT";
+  return null;
+}

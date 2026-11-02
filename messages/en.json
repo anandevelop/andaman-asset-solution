@@ -3157,6 +3157,20 @@
           "NO_TOKEN": "Add the channel access token first.",
           "NO_RECIPIENTS": "Switch on at least one chat first.",
           "SEND_FAILED": "LINE refused the message:"
+        },
+        "deliveries": "Last alerts",
+        "deliveriesEmpty": "No alert has been attempted yet. Send a test, or wait for the next enquiry.",
+        "kindLead": "Enquiry",
+        "kindRegistration": "Event sign-up",
+        "kindTest": "Test",
+        "outcomeSent": "Sent",
+        "outcomeFailed": "Failed",
+        "outcomeSkipped": "Not sent",
+        "reason": {
+          "SWITCHED_OFF": "Alerts are switched off",
+          "NO_TOKEN": "No access token",
+          "NO_ACTIVE_CHAT": "No chat was switched on at the time",
+          "NOT_CONFIGURED": "LINE is not set up"
         }
       }
     },
