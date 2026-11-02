@@ -3005,22 +3005,25 @@
       "integrationsEnvNote": "SMTP、Spaces、reCAPTCHA、Sentry 和 Redis 由服务器启动时的环境变量设定，无法在此页修改——右侧卡片会标明各自的变量名。",
       "notifications": {
         "title": "团队通知",
-        "subtitle": "选择哪些通过邮件发送，哪些显示在系统提示中。",
+        "subtitle": "选择哪些内容通过邮件、LINE 和铃铛通知发送。",
         "email": "邮件",
         "inApp": "系统内",
-        "needsScheduler": "需要先配置定时任务（Redis）才能开启",
+        "needsScheduler": "暂不可用",
         "emailNotConfigured": "尚未配置 SMTP——邮件开关仍可保存，但在配置邮件服务器之前不会发出任何邮件。",
         "saved": "已保存",
-        "deliveryNote": "只发送一次，不会重试——若当时邮件服务器故障，该邮件就会丢失，因为系统没有后台队列。",
+        "deliveryNote": "只发送一次，不重试。定时提醒（无人认领的潜在客户、即将到期的预订、每周摘要）每 15 分钟检查一次；每周摘要于周一 08:00 起发送。",
         "events": {
           "newLead": "有新客户线索",
-          "unclaimedLead": "线索超过 2 小时无人认领",
+          "unclaimedLead": "潜在客户仍无人认领（按潜在客户分配中设置的小时数，默认 2 小时）",
           "eventRegistration": "有人报名活动",
           "contentInReview": "有内容等待审核",
-          "reservationExpiring": "单元预订即将到期",
-          "weeklySummary": "管理层周报",
+          "reservationExpiring": "单位预订将在 48 小时内到期",
+          "weeklySummary": "管理层每周摘要（周一 08:00）",
           "failedLogins": "异常登录失败"
-        }
+        },
+        "line": "LINE",
+        "lineNotConfigured": "LINE 尚未连接或未开启任何聊天 — LINE 开关可以保存，但在设置完成前不会发送。",
+        "lineSetupLink": "设置 LINE"
       },
       "health": {
         "title": "连接状态",
@@ -3170,8 +3173,12 @@
           "SWITCHED_OFF": "提醒已关闭",
           "NO_TOKEN": "没有 access token",
           "NO_ACTIVE_CHAT": "当时没有开启任何聊天",
-          "NOT_CONFIGURED": "尚未设置 LINE"
-        }
+          "NOT_CONFIGURED": "尚未设置 LINE",
+          "EVENT_OFF": "已在通知设置中关闭此事件的 LINE"
+        },
+        "kindUnclaimed": "无人认领",
+        "kindReservation": "预订",
+        "kindWeekly": "每周摘要"
       }
     },
     "security": {

@@ -53,7 +53,9 @@ const SECRET = process.env.CRON_SECRET;
  * The schedule.
  *
  * `at` is [hour, minute] local. `day` is a day of the month for monthly
- * jobs, and absent for daily ones.
+ * jobs, and absent for daily ones. `every` is a number of minutes for jobs
+ * that repeat through the day, run on the clock's quarter hours (or
+ * whatever the interval divides) rather than drifting from the start time.
  *
  * The audit runs first and the rollup half an hour later: both check the
  * alert rules when they finish (see lib/seo/alerts.ts), and running them
@@ -77,6 +79,12 @@ const JOBS = [
   */
   { name: "seo-inspect", path: "/api/cron/seo-inspect", at: [5, 0] },
   { name: "monthly-report", path: "/api/cron/monthly-report", at: [8, 0], day: 1 },
+  /*
+    Unclaimed leads, expiring reservations, the Monday summary
+    (lib/scheduled-alerts.ts). Every 15 minutes so "unclaimed for 2 hours"
+    is said within a quarter of an hour of being true.
+  */
+  { name: "alerts", path: "/api/cron/alerts", every: 15 },
 ];
 
 function log(message) {
@@ -93,6 +101,10 @@ function log(message) {
  * moved to another region should not turn that into a bug.
  */
 function nextRun(job, now = new Date()) {
+  if (job.every) {
+    const step = job.every * 60_000;
+    return new Date((Math.floor(now.getTime() / step) + 1) * step);
+  }
   const next = new Date(now);
   const [hour, minute] = job.at;
 

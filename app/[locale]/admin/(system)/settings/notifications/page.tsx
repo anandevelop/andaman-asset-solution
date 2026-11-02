@@ -18,6 +18,7 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { isEmailConfigured } from "@/lib/email";
 import { NOTIFICATION_EVENTS, getNotificationPrefs } from "@/lib/notifications";
 import NotificationMatrix from "@/components/admin/NotificationMatrix";
+import { isLineConfigured } from "@/lib/line";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -26,9 +27,10 @@ export default async function AdminNotificationSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, prefs] = await Promise.all([
+  const [t, prefs, lineConfigured] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getNotificationPrefs(),
+    isLineConfigured(),
   ]);
 
   return (
@@ -46,14 +48,19 @@ export default async function AdminNotificationSettingsPage(props: Props) {
         locale={locale}
         prefs={prefs}
         emailConfigured={isEmailConfigured()}
+        lineConfigured={lineConfigured}
         rows={NOTIFICATION_EVENTS.map((event) => ({
           key: event.key,
           label: t(`settings.notifications.events.${event.key}`),
           needsScheduler: event.needsScheduler,
+          channels: event.channels,
         }))}
         labels={{
           email: t("settings.notifications.email"),
           inApp: t("settings.notifications.inApp"),
+          line: t("settings.notifications.line"),
+          lineNotConfigured: t("settings.notifications.lineNotConfigured"),
+          lineSetupLink: t("settings.notifications.lineSetupLink"),
           needsScheduler: t("settings.notifications.needsScheduler"),
           emailNotConfigured: t("settings.notifications.emailNotConfigured"),
           save: t("common.save"),

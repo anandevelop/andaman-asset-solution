@@ -52,7 +52,7 @@ import {
 import { CAPABILITIES } from "@/lib/permissions";
 
 /** The preference object the last save actually wrote. */
-function lastSaved(): Record<string, { email: boolean; inApp: boolean }> {
+function lastSaved(): Record<string, { email: boolean; inApp: boolean; line: boolean }> {
   const call = upsert.mock.calls.at(-1)?.[0] as { create: { value: string } };
   return JSON.parse(call.create.value);
 }
@@ -84,15 +84,15 @@ describe("the notification catalogue", () => {
     }
   });
 
-  it("defaults every scheduler-dependent event to off", () => {
-    for (const event of NOTIFICATION_EVENTS.filter((e) => e.needsScheduler)) {
-      expect(event.defaults, event.key).toEqual({ email: false, inApp: false });
-    }
+  it("has nothing waiting on a scheduler: the cron service runs the timed ones", () => {
+    expect(NOTIFICATION_EVENTS.filter((e) => e.needsScheduler)).toEqual([]);
   });
 
-  it("marks exactly the three timed events as needing a scheduler", () => {
-    expect(NOTIFICATION_EVENTS.filter((e) => e.needsScheduler).map((e) => e.key)).toEqual([
+  it("offers LINE only for the events the sales team acts on", () => {
+    expect(NOTIFICATION_EVENTS.filter((e) => e.channels.includes("line")).map((e) => e.key)).toEqual([
+      "newLead",
       "unclaimedLead",
+      "eventRegistration",
       "reservationExpiring",
       "weeklySummary",
     ]);
@@ -100,32 +100,37 @@ describe("the notification catalogue", () => {
 });
 
 describe("saveNotificationPrefs", () => {
-  it("refuses to store an on switch for an event that needs a scheduler", async () => {
+  it("stores the timed events now that they can be sent", async () => {
     await saveNotificationPrefs({
-      unclaimedLead: { email: true, inApp: true },
-      weeklySummary: { email: true, inApp: true },
+      unclaimedLead: { email: true, inApp: true, line: true },
+      weeklySummary: { email: true, inApp: false, line: false },
     });
 
     const saved = lastSaved();
-    expect(saved.unclaimedLead).toEqual({ email: false, inApp: false });
-    expect(saved.weeklySummary).toEqual({ email: false, inApp: false });
+    expect(saved.unclaimedLead).toEqual({ email: true, inApp: true, line: true });
+    expect(saved.weeklySummary).toEqual({ email: true, inApp: false, line: false });
+  });
+
+  it("never stores LINE for an event that has no LINE channel", async () => {
+    await saveNotificationPrefs({ failedLogins: { email: true, inApp: true, line: true } });
+    expect(lastSaved().failedLogins).toEqual({ email: true, inApp: true, line: false });
   });
 
   it("keeps the switches for events that can actually be sent", async () => {
     await saveNotificationPrefs({
-      newLead: { email: true, inApp: false },
-      failedLogins: { email: false, inApp: true },
+      newLead: { email: true, inApp: false, line: true },
+      failedLogins: { email: false, inApp: true, line: false },
     });
 
     const saved = lastSaved();
-    expect(saved.newLead).toEqual({ email: true, inApp: false });
-    expect(saved.failedLogins).toEqual({ email: false, inApp: true });
+    expect(saved.newLead).toEqual({ email: true, inApp: false, line: true });
+    expect(saved.failedLogins).toEqual({ email: false, inApp: true, line: false });
   });
 
   it("drops a key that is not an event", async () => {
     await saveNotificationPrefs({
-      newLead: { email: true, inApp: true },
-      "../../etc/passwd": { email: true, inApp: true },
+      newLead: { email: true, inApp: true, line: true },
+      "../../etc/passwd": { email: true, inApp: true, line: true },
     } as never);
 
     expect(Object.keys(lastSaved()).sort()).toEqual(
@@ -138,20 +143,22 @@ describe("saveNotificationPrefs", () => {
 
     const saved = lastSaved();
     for (const event of NOTIFICATION_EVENTS) {
-      expect(saved[event.key], event.key).toEqual({ email: false, inApp: false });
+      expect(saved[event.key], event.key).toEqual({ email: false, inApp: false, line: false });
     }
   });
 });
 
 describe("defaultNotificationPrefs", () => {
-  it("switches on the four that work and nothing else", () => {
+  it("keeps LINE on for new leads and sign-ups, as before the switch existed", () => {
     const defaults = defaultNotificationPrefs();
-    const on = Object.entries(defaults)
-      .filter(([, channels]) => channels.email || channels.inApp)
-      .map(([key]) => key);
+    expect(defaults.newLead.line).toBe(true);
+    expect(defaults.eventRegistration.line).toBe(true);
+  });
 
-    expect(on.sort()).toEqual(
-      ["contentInReview", "eventRegistration", "failedLogins", "newLead"].sort(),
-    );
+  it("starts the timed alerts in the bell and LINE, not the inbox", () => {
+    const defaults = defaultNotificationPrefs();
+    expect(defaults.unclaimedLead).toEqual({ email: false, inApp: true, line: true });
+    expect(defaults.reservationExpiring).toEqual({ email: false, inApp: true, line: true });
+    expect(defaults.weeklySummary).toEqual({ email: true, inApp: true, line: false });
   });
 });

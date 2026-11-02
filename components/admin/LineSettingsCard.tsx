@@ -115,6 +115,10 @@ export type LineCardLabels = Record<
   | "kindLead"
   | "kindRegistration"
   | "kindTest"
+  | "kindUnclaimed"
+  | "kindReservation"
+  | "kindWeekly"
+  | "reason.EVENT_OFF"
   | "outcomeSent"
   | "outcomeFailed"
   | "outcomeSkipped"
@@ -127,7 +131,7 @@ export type LineCardLabels = Record<
 
 export type LineCardDelivery = {
   at: string;
-  kind: "lead" | "registration" | "test";
+  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly";
   outcome: "sent" | "failed" | "skipped";
   detail: string;
 };
@@ -521,7 +525,16 @@ export default function LineSettingsCard(props: Props) {
                     })}
                   </span>
                   <span className="w-28 shrink-0 text-adm-text">
-                    {d.kind === "lead" ? l.kindLead : d.kind === "registration" ? l.kindRegistration : l.kindTest}
+                    {
+                      {
+                        lead: l.kindLead,
+                        registration: l.kindRegistration,
+                        test: l.kindTest,
+                        unclaimed: l.kindUnclaimed,
+                        reservation: l.kindReservation,
+                        weekly: l.kindWeekly,
+                      }[d.kind]
+                    }
                   </span>
                   <span
                     className={`shrink-0 font-medium ${

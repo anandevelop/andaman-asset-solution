@@ -24,6 +24,7 @@ import {
   recordLineDelivery,
   type LineDelivery,
 } from "@/lib/line-config";
+import { isEnabled } from "@/lib/notifications";
 
 const PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const MULTICAST_URL = "https://api.line.me/v2/bot/message/multicast";
@@ -297,6 +298,11 @@ export async function notifyNewLead(lead: {
   source: string;
 }): Promise<void> {
   try {
+    // The LINE switch for this event on /admin/settings/notifications.
+    if (!(await isEnabled("newLead", "line"))) {
+      await recordLineDelivery({ kind: "lead", outcome: "skipped", detail: "EVENT_OFF" });
+      return;
+    }
     await send([
       leadCard({
         title: "ผู้สนใจรายใหม่",
@@ -325,6 +331,10 @@ export async function notifyNewRegistration(registration: {
   eventId: string;
 }): Promise<void> {
   try {
+    if (!(await isEnabled("eventRegistration", "line"))) {
+      await recordLineDelivery({ kind: "registration", outcome: "skipped", detail: "EVENT_OFF" });
+      return;
+    }
     await send([
       leadCard({
         title: "ลงทะเบียนกิจกรรมใหม่",
@@ -431,4 +441,64 @@ export async function sendLineTest(onlyTo?: string): Promise<LineSendResult | { 
     { token: config.accessToken, to },
     "test",
   );
+}
+
+/**
+ * A short alert card for the scheduled jobs (lib/scheduled-alerts.ts):
+ * a title, label/value rows and one button into the back office. Never
+ * throws; the outcome lands in the delivery log like every other alert.
+ */
+export async function pushLineAlert(alert: {
+  kind: "unclaimed" | "reservation" | "weekly";
+  title: string;
+  rows: [string, string][];
+  url: string;
+  urlLabel: string;
+}): Promise<void> {
+  try {
+    const https = /^https:\/\//.test(alert.url);
+    await send(
+      [
+        {
+          type: "flex",
+          altText: `${alert.title}: ${alert.rows.map(([, v]) => v).join(" · ")}`.slice(0, 400),
+          contents: {
+            type: "bubble",
+            header: {
+              type: "box",
+              layout: "vertical",
+              backgroundColor: PRIMARY,
+              paddingAll: "14px",
+              contents: [
+                { type: "text", text: "ANDAMAN ASSET", color: ACCENT, size: "xxs", weight: "bold" },
+                { type: "text", text: alert.title, color: "#FFFFFF", size: "md", weight: "bold", margin: "sm", wrap: true },
+              ],
+            },
+            body: { type: "box", layout: "vertical", spacing: "md", contents: alert.rows.map(([l, v]) => row(l, v)) },
+            ...(https
+              ? {
+                  footer: {
+                    type: "box",
+                    layout: "vertical",
+                    contents: [
+                      {
+                        type: "button",
+                        style: "primary",
+                        color: PRIMARY,
+                        height: "sm",
+                        action: { type: "uri", label: alert.urlLabel.slice(0, 20), uri: alert.url },
+                      },
+                    ],
+                  },
+                }
+              : {}),
+          },
+        },
+      ],
+      undefined,
+      alert.kind,
+    );
+  } catch (error) {
+    console.error(`[line] ${alert.kind} alert failed`, error);
+  }
 }

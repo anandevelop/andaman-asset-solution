@@ -3005,22 +3005,25 @@
       "integrationsEnvNote": "SMTP, Spaces, reCAPTCHA, Sentry and Redis are set as environment variables when the server starts, not from this page — the card on the right names the variable for each.",
       "notifications": {
         "title": "Team notifications",
-        "subtitle": "Choose what goes out by email and what appears on the bell.",
+        "subtitle": "Choose what goes out by email, to LINE and on the bell.",
         "email": "Email",
         "inApp": "In app",
-        "needsScheduler": "Needs a scheduler (Redis) before it can be switched on",
+        "needsScheduler": "Not available yet",
         "emailNotConfigured": "SMTP is not configured — the email switches still save, but nothing will be sent until a mail server is set up.",
         "saved": "Saved",
-        "deliveryNote": "Sent once, never retried — if the mail server is down at that moment the message is lost, because there is no background queue.",
+        "deliveryNote": "Sent once, never retried. The timed alerts (unclaimed lead, expiring reservation, weekly summary) are checked every 15 minutes; the weekly summary goes out on Monday from 08:00.",
         "events": {
           "newLead": "A new lead arrives",
-          "unclaimedLead": "A lead has gone unclaimed for 2 hours",
+          "unclaimedLead": "A lead is still unclaimed (after the hours set in lead routing, 2 by default)",
           "eventRegistration": "Somebody registers for an event",
           "contentInReview": "Content is waiting for review",
-          "reservationExpiring": "A unit reservation is about to expire",
-          "weeklySummary": "Weekly summary for management",
+          "reservationExpiring": "A unit reservation expires within 48 hours",
+          "weeklySummary": "Weekly summary for management (Monday 08:00)",
           "failedLogins": "Unusual failed sign-ins"
-        }
+        },
+        "line": "LINE",
+        "lineNotConfigured": "LINE is not connected yet, or no chat is switched on — the LINE switches save, but nothing is sent until it is.",
+        "lineSetupLink": "Set up LINE"
       },
       "health": {
         "title": "Connection status",
@@ -3170,8 +3173,12 @@
           "SWITCHED_OFF": "Alerts are switched off",
           "NO_TOKEN": "No access token",
           "NO_ACTIVE_CHAT": "No chat was switched on at the time",
-          "NOT_CONFIGURED": "LINE is not set up"
-        }
+          "NOT_CONFIGURED": "LINE is not set up",
+          "EVENT_OFF": "Switched off for this event in Notifications"
+        },
+        "kindUnclaimed": "Unclaimed lead",
+        "kindReservation": "Reservation",
+        "kindWeekly": "Weekly summary"
       }
     },
     "security": {

@@ -17,7 +17,11 @@ import { notifyNewLead, verifyLineSignature } from "@/lib/line";
 import { invalidateLineConfig } from "@/lib/line-config";
 
 // No saved settings: the LINE config falls back to the environment.
-vi.mock("@/lib/prisma", () => ({ prisma: { siteSetting: { findMany: async () => [] } } }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    siteSetting: { findMany: async () => [], findUnique: async () => null, upsert: async () => ({}) },
+  },
+}));
 
 const SECRET = "test_channel_secret_abc123";
 

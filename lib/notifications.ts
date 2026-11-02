@@ -13,17 +13,21 @@ import "server-only";
  * no row on that screen that nothing reads, and no notification sent that
  * has no row.
  *
- * THREE OF THEM ARE SWITCHED OFF AT THE SOURCE, AND SAY SO
+ * THREE OF THEM RUN ON A CLOCK
  *
  * "Nobody picked this lead up within two hours", "a unit reservation is
  * about to expire" and "the Monday summary" are not events — they are the
- * *absence* of an event after a period of time, which needs something
- * running on a clock. This application has no scheduler: no cron, no
- * worker, no queue (see the Redis row on the settings screen, which says
- * the same thing from the other end). So those three carry
- * `needsScheduler`, their switches render disabled with the reason, and
- * nothing here will send them. Shipping three switches that quietly do
- * nothing would be worse than shipping four that work.
+ * *absence* of an event after a period of time. They were switched off
+ * here until something ran on a clock; the `cron` service in
+ * docker-compose.prod.yml now calls /api/cron/alerts every 15 minutes and
+ * lib/scheduled-alerts.ts sends them. `needsScheduler` stays on the type
+ * for any future timer that has no job behind it yet.
+ *
+ * LINE IS A CHANNEL HERE TOO
+ *
+ * For the events the sales team acts on. The connection and the chats
+ * live on the integrations page (lib/line-config.ts); these switches say
+ * which events may use it.
  *
  * DELIVERY IS BEST EFFORT AND NOT RETRIED
  *
@@ -45,7 +49,9 @@ import { can, type Capability } from "@/lib/permissions";
  *  one JSON blob for a handful of booleans needs no table of its own. */
 const PREFS_KEY = "notificationPrefs";
 
-export type NotificationChannel = "email" | "inApp";
+export type NotificationChannel = "email" | "inApp" | "line";
+
+export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = ["email", "inApp", "line"];
 
 export type NotificationEvent = {
   key: string;
@@ -64,53 +70,54 @@ export const NOTIFICATION_EVENTS: readonly NotificationEvent[] = [
     key: "newLead",
     capability: "viewAllLeads",
     needsScheduler: false,
-    channels: ["email", "inApp"],
-    defaults: { email: true, inApp: true },
+    channels: ["email", "inApp", "line"],
+    defaults: { email: true, inApp: true, line: true },
   },
   {
     key: "unclaimedLead",
     capability: "viewAllLeads",
-    // "Two hours have passed and nobody has touched it" — a timer.
-    needsScheduler: true,
-    channels: ["email", "inApp"],
-    defaults: { email: false, inApp: false },
+    // "Nobody has touched it" after the routing rules' escalateAfterHours
+    // (2 h by default) — a timer, run by lib/scheduled-alerts.ts.
+    needsScheduler: false,
+    channels: ["email", "inApp", "line"],
+    defaults: { email: false, inApp: true, line: true },
   },
   {
     key: "eventRegistration",
     capability: "viewAllLeads",
     needsScheduler: false,
-    channels: ["email", "inApp"],
-    defaults: { email: true, inApp: true },
+    channels: ["email", "inApp", "line"],
+    defaults: { email: true, inApp: true, line: true },
   },
   {
     key: "contentInReview",
     capability: "publishLive",
     needsScheduler: false,
     channels: ["email", "inApp"],
-    defaults: { email: false, inApp: true },
+    defaults: { email: false, inApp: true, line: false },
   },
   {
     key: "reservationExpiring",
     capability: "viewAllLeads",
-    // A date passing with nothing having happened — a timer.
-    needsScheduler: true,
-    channels: ["email", "inApp"],
-    defaults: { email: false, inApp: false },
+    // Within 48 h of reservationExpiresAt — a timer.
+    needsScheduler: false,
+    channels: ["email", "inApp", "line"],
+    defaults: { email: false, inApp: true, line: true },
   },
   {
     key: "weeklySummary",
     capability: "viewAuditLog",
-    // Every Monday — a timer.
-    needsScheduler: true,
-    channels: ["email", "inApp"],
-    defaults: { email: false, inApp: false },
+    // Monday from 08:00 Bangkok — a timer.
+    needsScheduler: false,
+    channels: ["email", "inApp", "line"],
+    defaults: { email: true, inApp: true, line: false },
   },
   {
     key: "failedLogins",
     capability: "manageUsers",
     needsScheduler: false,
     channels: ["email", "inApp"],
-    defaults: { email: true, inApp: true },
+    defaults: { email: true, inApp: true, line: false },
   },
 ] as const;
 
@@ -169,11 +176,10 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs): Promise<v
   const clean: NotificationPrefs = {};
 
   for (const event of NOTIFICATION_EVENTS) {
-    const incoming = prefs[event.key] ?? {};
-    clean[event.key] = {
-      email: event.needsScheduler ? false : Boolean(incoming.email),
-      inApp: event.needsScheduler ? false : Boolean(incoming.inApp),
-    };
+    const incoming = (prefs[event.key] ?? {}) as Partial<Record<NotificationChannel, boolean>>;
+    const usable = (channel: NotificationChannel) =>
+      !event.needsScheduler && event.channels.includes(channel) && Boolean(incoming[channel]);
+    clean[event.key] = { email: usable("email"), inApp: usable("inApp"), line: usable("line") };
   }
 
   await prisma.siteSetting.upsert({

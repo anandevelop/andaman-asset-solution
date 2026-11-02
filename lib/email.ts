@@ -522,3 +522,27 @@ export async function notifyBuyersOfProgress(args: {
 
   return args.buyers.length;
 }
+
+/**
+ * Staff alert from a scheduled job (lib/scheduled-alerts.ts): unclaimed
+ * lead, expiring reservation, weekly summary. Fire-and-forget like the rest.
+ */
+export async function sendStaffAlertEmail(args: {
+  to: string[];
+  subject: string;
+  heading: string;
+  rows: [string, string][];
+  url: string;
+  urlLabel: string;
+}): Promise<void> {
+  if (args.to.length === 0) return;
+  const html = wrap(`
+    <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:${PRIMARY};">${escapeHtml(args.heading)}</h1>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      ${args.rows.map(([label, value]) => row(label, value)).join("")}
+    </table>
+    <p style="margin:20px 0 0;">${link(args.url, args.urlLabel)}</p>
+  `);
+  const text = [args.heading, ...args.rows.map(([l, v]) => `${l}: ${v}`), "", `${args.urlLabel}: ${args.url}`].join("\n");
+  await sendMail({ to: args.to.join(", "), subject: singleLine(args.subject), html, text });
+}

@@ -23,16 +23,21 @@ import { AlertTriangle, Check, Info, Loader2 } from "lucide-react";
 import { updateNotificationPrefs } from "@/app/[locale]/admin/(system)/settings/notifications/actions";
 import type { NotificationChannel, NotificationPrefs } from "@/lib/notifications";
 
-type Row = { key: string; label: string; needsScheduler: boolean };
+type Row = { key: string; label: string; needsScheduler: boolean; channels: readonly NotificationChannel[] };
 
 type Props = {
   locale: string;
   rows: Row[];
   prefs: NotificationPrefs;
   emailConfigured: boolean;
+  /** LINE connected with at least one chat switched on. */
+  lineConfigured: boolean;
   labels: {
     email: string;
     inApp: string;
+    line: string;
+    lineNotConfigured: string;
+    lineSetupLink: string;
     needsScheduler: string;
     emailNotConfigured: string;
     save: string;
@@ -47,6 +52,7 @@ export default function NotificationMatrix({
   rows,
   prefs: initial,
   emailConfigured,
+  lineConfigured,
   labels,
 }: Props) {
   const router = useRouter();
@@ -114,12 +120,15 @@ export default function NotificationMatrix({
                 <span className={emailConfigured ? "" : "text-adm-muted/60"}>{labels.email}</span>
               </th>
               <th className="w-28 px-4 py-3 text-center font-medium">{labels.inApp}</th>
+              <th className="w-28 px-4 py-3 text-center font-medium">
+                <span className={lineConfigured ? "" : "text-adm-muted/60"}>{labels.line}</span>
+              </th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-adm-line">
             {rows.map((row) => {
-              const value = prefs[row.key] ?? { email: false, inApp: false };
+              const value = prefs[row.key] ?? { email: false, inApp: false, line: false };
 
               return (
                 <tr key={row.key} className={row.needsScheduler ? "bg-adm-text/4" : ""}>
@@ -154,12 +163,39 @@ export default function NotificationMatrix({
                       onChange={() => toggle(row.key, "inApp")}
                     />
                   </td>
+
+                  <td className="px-4 py-3.5 text-center">
+                    {row.channels.includes("line") ? (
+                      <Switch
+                        on={Boolean(value.line) && !row.needsScheduler}
+                        disabled={row.needsScheduler}
+                        label={`${row.label} — ${labels.line}`}
+                        onChange={() => toggle(row.key, "line")}
+                      />
+                    ) : (
+                      <span className="text-xs text-adm-muted/60" aria-hidden>
+                        —
+                      </span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </section>
+
+      {!lineConfigured && (
+        <p className="flex items-start gap-2 rounded-xs border border-adm-line bg-adm-text/4 px-4 py-3 text-sm text-adm-muted">
+          <Info size={15} className="mt-0.5 shrink-0" aria-hidden />
+          <span>
+            {labels.lineNotConfigured}{" "}
+            <a href={`/${locale}/admin/settings/integrations`} className="font-medium text-adm-text underline">
+              {labels.lineSetupLink}
+            </a>
+          </span>
+        </p>
+      )}
 
       {!emailConfigured && (
         <p className="flex items-start gap-2 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
