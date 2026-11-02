@@ -134,6 +134,13 @@ async function send(messages: LineMessage[]): Promise<void> {
 // ── Message builders ────────────────────────────────────────────────────
 
 const ACCENT = "#E8B384";
+
+/** Where "เปิดในหลังบ้าน" points. The Thai admin, which the team uses. */
+function adminLeadUrl(leadId: string): string | null {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXTAUTH_URL ?? "").replace(/\/+$/, "");
+  if (!/^https:\/\//.test(base)) return null; // LINE refuses non-https URIs
+  return `${base}/th/admin/leads?lead=${encodeURIComponent(leadId)}`;
+}
 const PRIMARY = "#083551";
 
 function row(label: string, value: string): LineMessage {
@@ -163,6 +170,8 @@ function leadCard(lead: {
   extraLabel: string;
   extra: string;
   message?: string | null;
+  /** Opens the lead in the back office, where it can be taken and logged. */
+  adminUrl?: string | null;
 }): LineMessage {
   return {
     type: "flex",
@@ -206,9 +215,25 @@ function leadCard(lead: {
       },
       footer: {
         type: "box",
-        layout: "horizontal",
+        layout: "vertical",
         spacing: "sm",
         contents: [
+          ...(lead.adminUrl
+            ? [
+                {
+                  type: "button",
+                  style: "primary",
+                  color: ACCENT,
+                  height: "sm",
+                  action: { type: "uri", label: "เปิดในหลังบ้าน", uri: lead.adminUrl },
+                },
+              ]
+            : []),
+          {
+            type: "box",
+            layout: "horizontal",
+            spacing: "sm",
+            contents: [
           {
             type: "button",
             style: "primary",
@@ -222,6 +247,8 @@ function leadCard(lead: {
             height: "sm",
             action: { type: "uri", label: "อีเมล", uri: `mailto:${lead.email}` },
           },
+            ],
+          },
         ],
       },
     },
@@ -230,6 +257,7 @@ function leadCard(lead: {
 
 /** New enquiry from the lead form. */
 export async function notifyNewLead(lead: {
+  id?: string;
   name: string;
   email: string;
   phone: string;
@@ -247,6 +275,7 @@ export async function notifyNewLead(lead: {
         extraLabel: "โครงการ",
         extra: lead.projectName ?? `— (${lead.source})`,
         message: lead.message,
+        adminUrl: lead.id ? adminLeadUrl(lead.id) : null,
       }),
     ]);
   } catch (error) {

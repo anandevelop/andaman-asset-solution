@@ -198,6 +198,7 @@ export async function POST(request: Request) {
     // Fire-and-forget: the lead is already saved, and a LINE outage must
     // never turn a successful capture into an error for the visitor.
     void notifyNewLead({
+      id: lead.id,
       name: data.name,
       email: data.email,
       phone: data.phone,

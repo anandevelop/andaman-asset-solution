@@ -13,7 +13,7 @@
 
 import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { verifyLineSignature } from "@/lib/line";
+import { notifyNewLead, verifyLineSignature } from "@/lib/line";
 
 const SECRET = "test_channel_secret_abc123";
 
@@ -93,5 +93,63 @@ describe("verifyLineSignature", () => {
 
   it("rejects an empty body signed for different content", () => {
     expect(verifyLineSignature("", sign(BODY))).toBe(false);
+  });
+});
+
+describe("notifyNewLead", () => {
+  const saved = { ...process.env };
+  const realFetch = globalThis.fetch;
+  let bodies: Array<Record<string, unknown>> = [];
+
+  beforeEach(() => {
+    bodies = [];
+    process.env.LINE_CHANNEL_ACCESS_TOKEN = "test-token";
+    process.env.LINE_NOTIFY_TO = "C0123456789abcdef";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://andamanassetsolution.com";
+    globalThis.fetch = (async (_url: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)));
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+  });
+
+  afterEach(() => {
+    process.env = { ...saved };
+    globalThis.fetch = realFetch;
+  });
+
+  const lead = {
+    id: "cmvkbdpdz01sp07nqmq8wtgf1",
+    name: "Isla Chen",
+    email: "isla@example.com",
+    phone: "+85212345678",
+    message: "Interested in a viewing",
+    projectName: "trinity-village",
+    source: "PROJECT_PAGE",
+  };
+
+  it("pushes one card to a group ID, never multicast", async () => {
+    await notifyNewLead(lead);
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0].to).toBe("C0123456789abcdef");
+  });
+
+  it("links the card to the lead in the Thai back office", async () => {
+    await notifyNewLead(lead);
+    expect(JSON.stringify(bodies[0])).toContain(
+      "https://andamanassetsolution.com/th/admin/leads?lead=cmvkbdpdz01sp07nqmq8wtgf1",
+    );
+  });
+
+  it("drops the back-office button when the site URL is not https", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
+    await notifyNewLead(lead);
+    expect(JSON.stringify(bodies[0])).not.toContain("เปิดในหลังบ้าน");
+    expect(JSON.stringify(bodies[0])).toContain("tel:+85212345678");
+  });
+
+  it("does nothing when LINE is not configured", async () => {
+    delete process.env.LINE_NOTIFY_TO;
+    await notifyNewLead(lead);
+    expect(bodies).toHaveLength(0);
   });
 });

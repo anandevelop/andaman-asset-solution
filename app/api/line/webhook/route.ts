@@ -120,8 +120,11 @@ export async function POST(request: Request) {
           }`,
         );
         // Auto-reply to text only. Replying to a sticker with a paragraph
-        // reads as a broken bot.
-        if (event.replyToken && event.message?.type === "text") {
+        // reads as a broken bot. And only in a 1:1 chat: once the OA sits in
+        // the sales team's group to post lead alerts, answering every line
+        // the team types there with the customer greeting would bury the
+        // alerts it is there for.
+        if (event.replyToken && event.message?.type === "text" && event.source?.type === "user") {
           await replyToLine(event.replyToken, AUTO_REPLY);
         }
         break;
