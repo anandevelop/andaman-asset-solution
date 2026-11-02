@@ -46,6 +46,14 @@ const intlMiddleware = createMiddleware({
     redirects.js sends those to /th before this runs.
   */
   localeDetection: false,
+  /*
+    No Link: rel="alternate" header. next-intl's own named x-default as the
+    bare "/", which only ever redirected — while every page's <head> (lib/
+    seo.ts) names /en. Two disagreeing x-defaults, one of them a redirect,
+    is what Search Console reported against "/". The <head> tags remain
+    the single source.
+  */
+  alternateLinks: false,
 });
 
 /** Matches /th/admin, /en/admin/leads, … and captures the locale. */
@@ -179,7 +187,28 @@ async function route(request: NextRequest, event: NextFetchEvent): Promise<NextR
     request.headers.set("x-admin-pathname", pathname);
   }
 
-  return intlMiddleware(request);
+  return permanentLocaleRedirect(intlMiddleware(request), pathname);
+}
+
+/**
+ * A URL with no locale goes to English, and always will
+ * (localeDetection: false above) — so say so permanently. next-intl answers
+ * with a 307, which tells Google the bare URL may come back, so it keeps
+ * "/" in the index instead of consolidating on /en. Only the add-the-default-locale
+ * redirect is upgraded; any other redirect passes through untouched.
+ */
+function permanentLocaleRedirect(response: NextResponse, pathname: string): NextResponse {
+  if (response.status !== 307) return response;
+  const location = response.headers.get("location");
+  if (!location) return response;
+  const target = new URL(location, "http://placeholder");
+  const expected = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
+  if (target.pathname.replace(/\/$/, "") !== expected.replace(/\/$/, "")) return response;
+  const permanent = NextResponse.redirect(location, 308);
+  response.headers.forEach((value, key) => {
+    if (key.toLowerCase() !== "location") permanent.headers.set(key, value);
+  });
+  return permanent;
 }
 
 export const config = {

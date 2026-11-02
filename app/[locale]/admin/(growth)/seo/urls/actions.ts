@@ -30,15 +30,19 @@ import { requireAdminAction } from "@/lib/admin/guard";
 // Excel, and a second CSV reader in this codebase is a second set of
 // edge cases to get wrong. See lib/csv.ts.
 import { parseCsv } from "@/lib/csv";
+import { normaliseRedirectPath } from "@/lib/redirect-paths";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
-/** A path, as stored: locale-relative, leading slash, no host, no query. */
+/** A path, as stored: locale-relative, leading slash, no host, no query.
+ *  A pasted address ("/en/projects/x", or the full URL on this site) is
+ *  normalised to that first — see lib/redirect-paths.ts. */
 const pathField = z
   .string()
   .trim()
   .min(1)
   .max(500)
+  .transform((value) => normaliseRedirectPath(value))
   .refine((value) => value.startsWith("/"), { message: "MUST_START_WITH_SLASH" })
   .refine((value) => !/^\/\//.test(value), { message: "PROTOCOL_RELATIVE" });
 
@@ -49,6 +53,7 @@ const targetField = z
   .trim()
   .min(1)
   .max(1000)
+  .transform((value) => normaliseRedirectPath(value))
   .refine((value) => value.startsWith("/") || /^https?:\/\//i.test(value), {
     message: "MUST_BE_PATH_OR_URL",
   });
@@ -334,14 +339,14 @@ export async function importRedirectsCsv(
   rows.forEach((cells, index) => {
     const lineNumber = index + (startsWithHeader ? 2 : 1);
 
-    const from = (cells[0] ?? "").trim();
-    const to = (cells[1] ?? "").trim();
+    const rawFrom = (cells[0] ?? "").trim();
+    const rawTo = (cells[1] ?? "").trim();
     const statusRaw = (cells[2] ?? "").trim();
     const note = (cells[3] ?? "").trim();
 
     const parsed = redirectInput.safeParse({
-      fromPath: from,
-      toPath: to,
+      fromPath: rawFrom,
+      toPath: rawTo,
       statusCode: statusRaw === "302" ? 302 : 301,
       isActive: true,
       note: note || null,
@@ -349,9 +354,13 @@ export async function importRedirectsCsv(
     });
 
     if (!parsed.success) {
-      skipped.push({ line: lineNumber, from, reason: "INVALID" });
+      skipped.push({ line: lineNumber, from: rawFrom, reason: "INVALID" });
       return;
     }
+
+    // The same normal form as the form: "/en/x" and full URLs → "/x".
+    const from = parsed.data.fromPath;
+    const to = parsed.data.toPath;
 
     if (from === to) {
       skipped.push({ line: lineNumber, from, reason: "LOOP" });

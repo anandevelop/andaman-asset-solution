@@ -28,6 +28,7 @@ import { permanentRedirect, redirect } from "next/navigation";
 import { PathHitKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
+import { redirectDestination, redirectLookupKeys } from "@/lib/redirect-paths";
 
 export type ResolvedRedirect = {
   /** Locale-relative target, e.g. "/projects/new-slug". */
@@ -114,10 +115,17 @@ export async function resolveRedirect(path: string): Promise<ResolvedRedirect | 
   const row = await safeQuery(
     "redirects:resolve",
     () =>
-      prisma.redirect.findUnique({
-        where: { fromPath: path },
-        select: { toPath: true, statusCode: true, isActive: true, expiresAt: true },
-      }),
+      // The locale-relative row first; then the same path saved with a
+      // locale in front, from before fromPath was normalised on save.
+      prisma.redirect
+        .findMany({
+          where: { fromPath: { in: redirectLookupKeys(path) } },
+          select: { fromPath: true, toPath: true, statusCode: true, isActive: true, expiresAt: true },
+        })
+        .then((rows) => {
+          const keys = redirectLookupKeys(path);
+          return rows.sort((a, b) => keys.indexOf(a.fromPath) - keys.indexOf(b.fromPath))[0] ?? null;
+        }),
     null,
   );
 
@@ -128,7 +136,7 @@ export async function resolveRedirect(path: string): Promise<ResolvedRedirect | 
   if (row.expiresAt && row.expiresAt.getTime() <= Date.now()) return null;
 
   void prisma.redirect
-    .update({ where: { fromPath: path }, data: { hits: { increment: 1 }, lastHitAt: new Date() } })
+    .update({ where: { fromPath: row.fromPath }, data: { hits: { increment: 1 }, lastHitAt: new Date() } })
     .catch(() => {});
 
   countPathHit(PathHitKind.REDIRECT, path);
@@ -149,7 +157,9 @@ export async function redirectIfMoved(locale: string, path: string): Promise<voi
   const target = await resolveRedirect(path);
   if (!target) return;
 
-  const destination = `/${locale}${target.toPath}`;
+  // External targets as they are, a target already carrying a locale as it
+  // is (so "/en" no longer becomes /en/en), anything else in this language.
+  const destination = redirectDestination(locale, target.toPath);
 
   // 301 → 308, 302 → 307. See the header on why the row says one and the
   // wire carries the other.
