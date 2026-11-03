@@ -24,6 +24,37 @@ import { useTranslations } from "next-intl";
 import type { Role } from "@prisma/client";
 import { tabBase, visibleTabs } from "@/lib/admin/nav";
 import AdminTabs from "@/components/admin/ui/AdminTabs";
+import {
+  ArrowLeftRight,
+  Bot,
+  Braces,
+  FileText,
+  Gauge,
+  LayoutDashboard,
+  Link2,
+  Network,
+  Settings,
+  Stethoscope,
+  Tags,
+  type LucideIcon,
+} from "lucide-react";
+
+/** Icons for the strips drawn as pills. Keyed by group, then tab. */
+const TAB_ICONS: Partial<Record<string, Record<string, LucideIcon>>> = {
+  seo: {
+    overview: LayoutDashboard,
+    meta: FileText,
+    keywords: Tags,
+    audit: Stethoscope,
+    speed: Gauge,
+    indexing: Network,
+    links: Link2,
+    schema: Braces,
+    urls: ArrowLeftRight,
+    aiSearch: Bot,
+    defaults: Settings,
+  },
+};
 
 export default function PageTabs({
   locale,
@@ -33,6 +64,7 @@ export default function PageTabs({
   badges,
   counts,
   carryParams,
+  variant = "line",
 }: {
   locale: string;
   role: Role;
@@ -67,6 +99,8 @@ export default function PageTabs({
    * next reader cannot account for.
    */
   carryParams?: readonly string[];
+  /** "pill": the analytics-style segmented bar, with TAB_ICONS. */
+  variant?: "line" | "pill";
 }) {
   const t = useTranslations("admin.tabs");
   const pathname = usePathname();
@@ -88,6 +122,7 @@ export default function PageTabs({
 
   return (
     <AdminTabs
+      variant={variant}
       label={t(`${groupKey}.label` as never)}
       tabs={tabs.map(({ key, segment }) => {
         const href = `/${locale}/admin${base}${segment}`;
@@ -101,6 +136,7 @@ export default function PageTabs({
           active: segment === "" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`),
           count: counts?.[key],
           badge: badges?.[key],
+          icon: variant === "pill" ? TAB_ICONS[groupKey]?.[key] : undefined,
         };
       })}
     />

@@ -65,7 +65,7 @@ export default async function AdminSeoLayout({ children, params }: Props) {
         }
       />
 
-      <PageTabs locale={locale} role={session.role} groupKey="seo" baseHref="/seo" />
+      <PageTabs locale={locale} role={session.role} groupKey="seo" baseHref="/seo" variant="pill" />
 
       {children}
     </div>
