@@ -62,6 +62,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       title: brochure.title,
       description: brochure.description ?? undefined,
       type: "article",
+      url: `${siteConfig.url}/${locale}/e-brochure/${brochure.slug}`,
       // No `images` here: opengraph-image.tsx in this same folder
       // generates the card (title, cover photo) and, per Next's
       // file-convention precedence, replaces whatever this field would

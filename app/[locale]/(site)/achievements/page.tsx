@@ -31,7 +31,7 @@ import Reveal from "@/components/Reveal";
 import StatBar from "@/components/StatBar";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { isDatabaseOffline } from "@/lib/db";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getAwards, type Award } from "@/lib/awards";
@@ -76,6 +76,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: t("title"),
     description: t("metaDescription"),
     alternates: localizedAlternates(locale, "/achievements"),
+    openGraph: openGraphFor(locale, "/achievements"),
   };
 }
 

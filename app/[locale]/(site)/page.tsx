@@ -50,7 +50,7 @@ import VisionMission from "@/components/VisionMission";
 import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
-import { localizedAlternates } from "@/lib/seo";
+import { localizedAlternates, openGraphFor } from "@/lib/seo";
 import { getPublishedProjects } from "@/lib/projects";
 import { getPublishedArticles } from "@/lib/news";
 import { getPublishedEvents } from "@/lib/events";
@@ -138,6 +138,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     description: seo.metaDescription[resolvedLocale] ?? seo.metaDescription.en,
     alternates: localizedAlternates(locale, ""),
+    openGraph: openGraphFor(locale, ""),
   };
 }
 

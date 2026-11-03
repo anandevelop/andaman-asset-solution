@@ -41,7 +41,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getPublishedProjects } from "@/lib/projects";
 import { haversineKm, openingWindowFrom, placeEmbedUrl, type LatLng } from "@/lib/map-places";
 import type { Locale } from "@/i18n";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import EditableSection from "@/components/edit/EditableSection";
@@ -71,6 +71,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: t("title"),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/contact"),
+    openGraph: openGraphFor(locale, "/contact"),
   };
 }
 

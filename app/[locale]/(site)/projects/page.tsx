@@ -25,7 +25,7 @@ import ProjectsHero from "@/components/ProjectsHero";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import FeaturedProjectCard from "@/components/FeaturedProjectCard";
 import ProjectFilterBar from "@/components/ProjectFilterBar";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import {
@@ -79,6 +79,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // Always points at the unfiltered page, so link equity from a shared
     // filtered URL consolidates onto one canonical.
     alternates: localizedAlternates(locale, "/projects"),
+    openGraph: openGraphFor(locale, "/projects"),
     robots: robotsMetadata({ index: !filtered }),
   };
 }

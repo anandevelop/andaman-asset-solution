@@ -255,3 +255,34 @@ export function buildManifestIcons(
     },
   ];
 }
+
+/** og:locale for each site language. */
+export const OG_LOCALE: Record<string, string> = {
+  en: "en_US",
+  th: "th_TH",
+  zh: "zh_CN",
+  ru: "ru_RU",
+};
+
+/**
+ * The openGraph block for a page: og:url = the page's canonical URL, plus
+ * the site-wide fields. A page's openGraph replaces the layout's whole
+ * object (Next merges metadata per key, not per field), so a page that set
+ * only `url` would drop og:site_name, og:locale and og:type — hence one
+ * helper. og:title and og:description are left out on purpose: Next fills
+ * them from the page's own title and description. og:image comes from
+ * opengraph-image.tsx in the (site) segment unless `extra` sets one.
+ */
+export function openGraphFor(
+  locale: string,
+  path: string,
+  extra: Record<string, unknown> = {},
+) {
+  return {
+    url: `${siteConfig.url}/${locale}${path}`,
+    siteName: siteConfig.name,
+    locale: OG_LOCALE[locale] ?? "en_US",
+    type: "website" as const,
+    ...extra,
+  };
+}

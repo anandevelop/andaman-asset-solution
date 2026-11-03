@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
-import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates } from "@/lib/seo";
+import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates, OG_LOCALE } from "@/lib/seo";
 import { isSiteIndexable } from "@/lib/indexing";
 import Analytics, { AnalyticsPageview } from "@/components/Analytics";
 import { DISPLAY_PREFS_BOOT_SCRIPT } from "@/lib/admin/display-prefs";
@@ -56,12 +56,6 @@ type Props = {
 };
 
 /** og:locale wants underscore-joined IETF tags, not our bare locale codes. */
-const OG_LOCALE: Record<Locale, string> = {
-  en: "en_US",
-  th: "th_TH",
-  zh: "zh_CN",
-  ru: "ru_RU",
-};
 
 /*
   No generateStaticParams() here, on purpose — and the public pages under
