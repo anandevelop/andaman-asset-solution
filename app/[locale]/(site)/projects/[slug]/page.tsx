@@ -13,6 +13,7 @@ import { LazyMapCard, LazyProgressGallery, LazySitePlanMap } from "@/components/
 import LazyLeadForm from "@/components/LazyLeadForm";
 import JsonLd from "@/components/JsonLd";
 import { progressVideoObjects } from "@/lib/structured-media";
+import { projectSchemaGraph } from "@/lib/project-schema";
 import FaqAccordion from "@/components/FaqAccordion";
 import FacilityCard from "@/components/FacilityCard";
 import FacilityScroller from "@/components/FacilityScroller";
@@ -23,7 +24,7 @@ import type { ElevatorType } from "@/components/unit-types/types";
 import { getFaqs } from "@/lib/faqs";
 import { getAwards } from "@/lib/awards";
 import { getSiteSettings } from "@/lib/settings";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { absoluteAssetUrl, localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
 import {
@@ -411,54 +412,36 @@ export default async function ProjectPage(props: Props) {
       ))}
       <JsonLd
         id="project-schema"
-        data={{
-          "@context": "https://schema.org",
-          "@type": "RealEstateListing",
-          "@id": url,
-          url,
+        data={projectSchemaGraph({
+          locale,
+          inLanguage: intlLocale(locale),
+          pageUrl: url,
+          slug: project.slug,
           name: project.name,
           description: project.description || project.tagline,
-          inLanguage: intlLocale(locale),
-          datePosted: undefined,
-          image: [project.heroImageUrl, ...project.gallery].filter(Boolean),
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: project.location,
-            addressRegion: "Phuket",
-            addressCountry: "TH",
-          },
-          geo:
-            project.latitude !== null && project.longitude !== null
-              ? {
-                  "@type": "GeoCoordinates",
-                  latitude: project.latitude,
-                  longitude: project.longitude,
-                }
-              : undefined,
-          numberOfAccommodationUnits: project.totalUnits ?? undefined,
-          amenityFeature: project.facilities.map((key) => ({
-            "@type": "LocationFeatureSpecification",
-            name: t.has(`facilities.${key}` as any)
-              ? t(`facilities.${key}` as any)
-              : key,
-            value: true,
+          location: project.location,
+          images: [project.heroImageUrl, ...project.gallery].filter((src): src is string => Boolean(src)).map((src) => absoluteAssetUrl(src)),
+          latitude: project.latitude,
+          longitude: project.longitude,
+          totalUnits: project.totalUnits,
+          landAreaSqm: project.landAreaSqm,
+          // The facilities the page shows, in its language; the old key
+          // list only when the project has no facility rows yet.
+          amenities:
+            facilities.length > 0
+              ? facilities.map((facility) => facility.name)
+              : project.facilities.map((key) => (t.has(`facilities.${key}` as any) ? t(`facilities.${key}` as any) : key)),
+          houseTypes: unitTypes.map((type) => ({
+            name: type.name,
+            bedrooms: type.bedrooms,
+            livingAreaSqm: type.livingAreaSqm,
           })),
-          floorSize:
-            project.landAreaSqm !== null
-              ? {
-                  "@type": "QuantitativeValue",
-                  value: project.landAreaSqm,
-                  unitCode: "MTK", // UN/CEFACT code for square metre
-                }
-              : undefined,
-          provider: {
-            "@type": "RealEstateAgent",
-            name: siteConfig.legalName,
-            url: siteConfig.url,
+          organization: {
             telephone: settings.contact.phone,
             email: settings.contact.salesEmail,
+            logoUrl: absoluteAssetUrl(settings.branding.logoUrl) || null,
           },
-        }}
+        })}
       />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}

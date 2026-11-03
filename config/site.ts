@@ -11,6 +11,18 @@ export const siteConfig = {
   name: "Andaman Asset Solution",
   shortName: "Andaman",
   legalName: "Andaman Asset Solution Co., Ltd.",
+
+  /** The company in schema.org terms — lib/project-schema.ts organizationNode. */
+  organization: {
+    foundingDate: "2021",
+    address: {
+      streetAddress: "141/4 Soi Pa Sak 1, Ban Don-Cherngtalay Road",
+      addressLocality: "Choeng Thale, Thalang",
+      addressRegion: "Phuket",
+      postalCode: "83110",
+      addressCountry: "TH",
+    },
+  },
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://andamanassetsolution.com",
   description: {
     en: "Luxury pool villas and premium real estate developments in Phuket, curated by Andaman Asset Solution.",

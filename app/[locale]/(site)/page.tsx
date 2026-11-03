@@ -50,7 +50,9 @@ import VisionMission from "@/components/VisionMission";
 import FaqAccordion from "@/components/FaqAccordion";
 import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n";
-import { localizedAlternates, openGraphFor } from "@/lib/seo";
+import { absoluteAssetUrl, localizedAlternates, openGraphFor } from "@/lib/seo";
+import { organizationNode } from "@/lib/project-schema";
+import JsonLd from "@/components/JsonLd";
 import { getPublishedProjects } from "@/lib/projects";
 import { getPublishedArticles } from "@/lib/news";
 import { getPublishedEvents } from "@/lib/events";
@@ -459,6 +461,19 @@ export default async function HomePage(props: Props) {
 
   return (
     <>
+      {/* The company, under the same @id the project pages' provider
+          points at (lib/project-schema.ts). */}
+      <JsonLd
+        id="organization-schema"
+        data={{
+          "@context": "https://schema.org",
+          ...organizationNode({
+            telephone: settings.contact.phone,
+            email: settings.contact.salesEmail,
+            logoUrl: absoluteAssetUrl(settings.branding.logoUrl) || null,
+          }),
+        }}
+      />
       {/* ── Hero (carousel, falls back to a static hero when there are no
           active slides — see components/HeroCarousel.tsx) ──────────────── */}
       <EditableSection links={refLinks(HERO_ROW.editors)}>
