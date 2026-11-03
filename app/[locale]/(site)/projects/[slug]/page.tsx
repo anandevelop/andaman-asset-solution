@@ -12,6 +12,7 @@ import type { MapListGroup } from "@/components/MapCard";
 import { LazyMapCard, LazyProgressGallery, LazySitePlanMap } from "@/components/LazyProjectSections";
 import LazyLeadForm from "@/components/LazyLeadForm";
 import JsonLd from "@/components/JsonLd";
+import { progressVideoObjects } from "@/lib/structured-media";
 import FaqAccordion from "@/components/FaqAccordion";
 import FacilityCard from "@/components/FacilityCard";
 import FacilityScroller from "@/components/FacilityScroller";
@@ -405,6 +406,9 @@ export default async function ProjectPage(props: Props) {
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}
       />
+      {progressVideoObjects({ locale, projectName: project.name, pageUrl: url, updates: progress }).map((video) => (
+        <JsonLd key={video["@id"]} id={`video-schema-${video["@id"].split("#video-")[1]}`} data={video} />
+      ))}
       <JsonLd
         id="project-schema"
         data={{

@@ -24,6 +24,7 @@ import EBrochureViewer from "@/components/EBrochureViewer";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
+import { brochureDocument } from "@/lib/structured-media";
 import { siteConfig } from "@/config/site";
 import { getBrochureBySlug } from "@/lib/brochures";
 import { DatabaseUnavailableError, isDatabaseOffline } from "@/lib/db";
@@ -104,6 +105,21 @@ export default async function EBrochurePage(props: Props) {
       <JsonLd
         id="breadcrumb-schema"
         data={breadcrumbList(trail)}
+      />
+      <JsonLd
+        id="brochure-schema"
+        data={brochureDocument({
+          locale,
+          pageUrl: url,
+          title: brochure.title,
+          description: brochure.description,
+          fileUrl: brochure.fileUrl,
+          coverImageUrl: brochure.coverImageUrl,
+          updatedAt: brochure.updatedAt,
+          projectName: brochure.projectName,
+          publisherName: siteConfig.name,
+          publisherUrl: siteConfig.url,
+        })}
       />
       <section className="container-luxe pb-6 pt-28 sm:pt-36">
         {/* The trail's middle crumb goes where the back arrow used to.
