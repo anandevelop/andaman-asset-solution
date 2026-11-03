@@ -15,7 +15,7 @@ import { Role } from "@prisma/client";
 import { ExternalLink } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/guard";
 import { collectUrls } from "@/lib/seo/collect";
-import { safeQuery } from "@/lib/db";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { locales } from "@/i18n";
 import { TITLE_MAX_LENGTH } from "@/lib/seo/rules/title-length";
 import { siteConfig } from "@/config/site";
@@ -38,7 +38,10 @@ export default async function SeoMetaPage(props: Props) {
   const { locale } = await props.params;
   const { lang: rawLang, filter } = await props.searchParams;
   await requireAdmin(locale, Role.ADMIN);
-  const t = await getTranslations({ locale, namespace: "admin.seo.meta" });
+  const [t, tAdmin] = await Promise.all([
+    getTranslations({ locale, namespace: "admin.seo.meta" }),
+    getTranslations({ locale, namespace: "admin" }),
+  ]);
 
   const lang = (locales as readonly string[]).includes(rawLang ?? "") ? rawLang! : locale;
   const all = await safeQuery("seo:meta", () => collectUrls(true), []);
@@ -77,6 +80,13 @@ export default async function SeoMetaPage(props: Props) {
         <h2 className="admin-label mb-0">{t("title")}</h2>
         <p className="admin-hint">{t("subtitle", { max: TITLE_MAX_LENGTH, min: DESCRIPTION_MIN, dmax: DESCRIPTION_MAX })}</p>
       </div>
+
+      {/* An empty table here would otherwise read as "every page is fine". */}
+      {isDatabaseOffline() && (
+        <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
+          {tAdmin("common.offline")}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         {locales.map((l) => tab(`${base}?lang=${l}${filter ? `&filter=${filter}` : ""}`, l === lang, l.toUpperCase()))}
