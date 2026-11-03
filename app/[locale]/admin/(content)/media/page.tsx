@@ -20,6 +20,7 @@ import { hasRole } from "@/lib/role-rank";
 import { isDatabaseOffline } from "@/lib/db";
 import { getMediaLibrary } from "@/lib/media";
 import MediaLibrary from "@/components/admin/MediaLibrary";
+import { isAiAltConfigured } from "@/lib/ai-alt";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
@@ -61,6 +62,7 @@ export default async function AdminMediaPage(props: Props) {
           unusedCount={library.unusedCount}
           legacyHostCount={library.legacyHostCount}
           truncated={library.truncated}
+          aiAltEnabled={isAiAltConfigured()}
         />
       </fieldset>
     </div>

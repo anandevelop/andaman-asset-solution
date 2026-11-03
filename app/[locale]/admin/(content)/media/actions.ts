@@ -20,7 +20,9 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { deleteS3Object, objectKeyFromUrl } from "@/lib/s3";
-import { findMediaUsage, isMediaUrlInUse, type MediaUsageRef } from "@/lib/media-usage";
+import { findMediaUsage, findMediaUsageForUrls, isMediaUrlInUse, type MediaUsageRef } from "@/lib/media-usage";
+import { ALT_LOCALES, AltError, draftAltText, isAiAltConfigured } from "@/lib/ai-alt";
+import { isAltTextComplete, MIN_ALT_LENGTH } from "@/lib/media-alt";
 import { getMediaLibrary, type MediaLibraryData } from "@/lib/media";
 import { mediaCreateSchema, mediaDeleteSchema, mediaMetaSchema } from "@/lib/validations";
 
@@ -169,4 +171,87 @@ export async function fetchMediaLibrary(): Promise<
     ...data,
     items: data.items.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })),
   };
+}
+
+export type AiAltResult =
+  | {
+      ok: true;
+      written: number;
+      failed: { id: string; error: string }[];
+      /** Still missing after this batch — the button shows it and can be pressed again. */
+      remaining: number;
+      /** The rows as saved, so the grid updates without a reload. */
+      updated: { id: string; altText: Record<string, string> }[];
+    }
+  | { ok: false; error: "NOT_CONFIGURED" | "FAILED" };
+
+/** Per click: small enough to finish well inside the proxy's 60 s. */
+const AI_ALT_BATCH = 8;
+const AI_ALT_CONCURRENCY = 3;
+
+/**
+ * "AI เขียน alt ที่ขาด": draft alt text for images that are missing it in
+ * any language (or for `ids`, from one image's panel). Only empty or
+ * too-short languages are filled; text a person wrote is never replaced.
+ */
+export async function generateMissingAltText(locale: string, ids?: string[]): Promise<AiAltResult> {
+  await requireAdminAction(Role.EDITOR);
+  if (!isAiAltConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
+
+  try {
+    const rows = await prisma.media.findMany({
+      where: {
+        ...(ids?.length ? { id: { in: ids.slice(0, AI_ALT_BATCH) } } : {}),
+        // Null for rows registered before the column was filled; the
+        // fetch in lib/ai-alt.ts refuses anything that is not an image.
+        OR: [{ mimeType: { startsWith: "image/" } }, { mimeType: null }],
+      },
+      select: { id: true, url: true, tags: true, altText: true },
+      orderBy: { createdAt: "desc" },
+    });
+    const missing = rows.filter(
+      (row) => !isAltTextComplete(row.altText as Record<string, string> | null, ALT_LOCALES),
+    );
+    const batch = missing.slice(0, AI_ALT_BATCH);
+
+    const usage = await findMediaUsageForUrls(batch.map((row) => row.url));
+    const failed: { id: string; error: string }[] = [];
+    const updated: { id: string; altText: Record<string, string> }[] = [];
+
+    let next = 0;
+    async function worker() {
+      while (next < batch.length) {
+        const row = batch[next++];
+        try {
+          const usedOn = (usage.get(row.url) ?? []).map((ref) => ref.label).filter(Boolean);
+          const draft = await draftAltText(row.url, { tags: row.tags, usedOn });
+          const current = (row.altText ?? {}) as Record<string, string>;
+          const merged: Record<string, string> = { ...current };
+          for (const lang of ALT_LOCALES) {
+            if ((current[lang] ?? "").trim().length < MIN_ALT_LENGTH) merged[lang] = draft[lang];
+          }
+          await prisma.media.update({ where: { id: row.id }, data: { altText: merged } });
+          updated.push({ id: row.id, altText: merged });
+        } catch (error) {
+          failed.push({
+            id: row.id,
+            error: error instanceof AltError ? `${error.code}: ${error.message}` : String(error),
+          });
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(AI_ALT_CONCURRENCY, batch.length) }, worker));
+
+    if (updated.length) revalidateMedia(locale);
+    return {
+      ok: true,
+      written: updated.length,
+      failed,
+      remaining: missing.length - updated.length,
+      updated,
+    };
+  } catch (error) {
+    console.error("[generateMissingAltText]", error);
+    return { ok: false, error: "FAILED" };
+  }
 }

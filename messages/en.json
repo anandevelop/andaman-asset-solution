@@ -4004,6 +4004,17 @@
         "oldest": "Oldest upload",
         "name": "File name",
         "largest": "Largest file"
+      },
+      "aiAlt": {
+        "button": "AI: write missing alt ({count})",
+        "running": "Writing alt text…",
+        "thisImage": "AI: fill the empty languages",
+        "hint": "Claude looks at each photo and writes alt text in the four languages that are empty. Up to 8 images per click; text you wrote is kept.",
+        "written": "{count, plural, =0 {Nothing written} one {Wrote alt for # image} other {Wrote alt for # images}}",
+        "someFailed": "{count} failed ({error})",
+        "remaining": "{count} still missing — press again",
+        "notConfigured": "Set ANTHROPIC_API_KEY on the server to use AI alt text",
+        "failed": "Could not write alt text — try again"
       }
     },
     "appointments": {

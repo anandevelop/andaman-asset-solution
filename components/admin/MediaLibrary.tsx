@@ -35,11 +35,17 @@ import {
   FileText,
   Loader2,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 import { locales, LOCALE_DISPLAY_ORDER } from "@/i18n";
-import { deleteMedia, getMediaUsage, updateMediaMeta } from "@/app/[locale]/admin/(content)/media/actions";
+import {
+  deleteMedia,
+  generateMissingAltText,
+  getMediaUsage,
+  updateMediaMeta,
+} from "@/app/[locale]/admin/(content)/media/actions";
 import MediaUploadButton from "@/components/admin/MediaUploadButton";
 import type { MediaUsageRef } from "@/lib/media-usage";
 import AdminImage from "@/components/admin/ui/AdminImage";
@@ -68,6 +74,8 @@ type Props = {
   unusedCount: number;
   legacyHostCount: number;
   truncated: boolean;
+  /** ANTHROPIC_API_KEY is set: the "AI เขียน alt" buttons can run. */
+  aiAltEnabled?: boolean;
   /** Picker mode — see the file header. */
   onSelect?: (item: MediaItem) => void;
 };
@@ -110,10 +118,43 @@ export default function MediaLibrary({
   unusedCount,
   legacyHostCount,
   truncated,
+  aiAltEnabled = false,
   onSelect,
 }: Props) {
   const t = useTranslations("admin.media");
   const [items, setItems] = useState(initialItems);
+  const [aiRunning, startAi] = useTransition();
+  const [aiMessage, setAiMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // Counted from the grid rather than the prop, so it falls as batches land.
+  const missingAltNow = items.filter((i) => !isDocument(i.mimeType) && !isVideo(i.mimeType) && !altComplete(i.altText)).length;
+
+  /** One batch per click — see generateMissingAltText. */
+  function runAiAlt() {
+    setAiMessage(null);
+    startAi(async () => {
+      try {
+        const result = await generateMissingAltText(locale);
+        if (!result.ok) {
+          setAiMessage({ ok: false, text: t(result.error === "NOT_CONFIGURED" ? "aiAlt.notConfigured" : "aiAlt.failed") });
+          return;
+        }
+        const byId = new Map(result.updated.map((u) => [u.id, u.altText]));
+        setItems((prev) => prev.map((i) => (byId.has(i.id) ? { ...i, altText: byId.get(i.id)! } : i)));
+        setAiMessage({
+          ok: result.failed.length === 0,
+          text: [
+            t("aiAlt.written", { count: result.written }),
+            result.failed.length ? t("aiAlt.someFailed", { count: result.failed.length, error: result.failed[0].error }) : "",
+            result.remaining > 0 ? t("aiAlt.remaining", { count: result.remaining }) : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        });
+      } catch (error) {
+        setAiMessage({ ok: false, text: error instanceof Error ? error.message : String(error) });
+      }
+    });
+  }
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -219,6 +260,25 @@ export default function MediaLibrary({
           <span className="flex-1">{t("missingAltBanner", { count: missingAltCount })}</span>
           <span className="shrink-0 text-xs font-semibold underline">{t("missingAltBannerCta")}</span>
         </button>
+      )}
+
+      {!onSelect && missingAltNow > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={runAiAlt}
+            disabled={aiRunning || !aiAltEnabled}
+            title={aiAltEnabled ? t("aiAlt.hint") : t("aiAlt.notConfigured")}
+            className="admin-btn-ghost rounded-full! px-4 py-2 text-sm"
+          >
+            {aiRunning ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Sparkles size={15} aria-hidden />}
+            {aiRunning ? t("aiAlt.running") : t("aiAlt.button", { count: missingAltNow })}
+          </button>
+          {!aiAltEnabled && <span className="text-xs text-adm-muted">{t("aiAlt.notConfigured")}</span>}
+          {aiMessage && (
+            <span className={`text-xs ${aiMessage.ok ? "text-adm-success" : "text-adm-danger"}`}>{aiMessage.text}</span>
+          )}
+        </div>
       )}
 
       {/* Not a "migrate everything" button: scripts/media-legacy-check.ts
@@ -413,6 +473,7 @@ export default function MediaLibrary({
                   setItems((prev) => prev.filter((i) => i.id !== selected.id));
                   setSelectedId(null);
                 }}
+                aiAltEnabled={aiAltEnabled}
               />
             )}
           </aside>
@@ -468,6 +529,7 @@ function MediaDetail({
   onCopied,
   onSaved,
   onDeleted,
+  aiAltEnabled,
 }: {
   locale: string;
   item: MediaItem;
@@ -475,8 +537,31 @@ function MediaDetail({
   onCopied: () => void;
   onSaved: (patch: Partial<MediaItem>) => void;
   onDeleted: () => void;
+  aiAltEnabled: boolean;
 }) {
   const t = useTranslations("admin.media");
+  const [drafting, startDrafting] = useTransition();
+  const [draftError, setDraftError] = useState<string | null>(null);
+
+  /** Fills the empty languages of this one image, saved straight away. */
+  function draftThis() {
+    setDraftError(null);
+    startDrafting(async () => {
+      try {
+        const result = await generateMissingAltText(locale, [item.id]);
+        if (!result.ok) return setDraftError(t(result.error === "NOT_CONFIGURED" ? "aiAlt.notConfigured" : "aiAlt.failed"));
+        const saved = result.updated[0]?.altText;
+        if (saved) {
+          setAlt(Object.fromEntries(locales.map((l) => [l, saved[l] ?? ""])));
+          onSaved({ altText: saved });
+        } else if (result.failed[0]) {
+          setDraftError(result.failed[0].error);
+        }
+      } catch (error) {
+        setDraftError(error instanceof Error ? error.message : String(error));
+      }
+    });
+  }
   const [alt, setAlt] = useState<Record<string, string>>(() =>
     Object.fromEntries(locales.map((l) => [l, item.altText[l] ?? ""])),
   );
@@ -589,6 +674,18 @@ function MediaDetail({
             {saving ? <Loader2 size={13} className="animate-spin" aria-hidden /> : saved ? <Check size={13} aria-hidden /> : null}
             {t("saveAltText")}
           </button>
+          {aiAltEnabled && !altComplete(alt) && (
+            <button
+              type="button"
+              onClick={draftThis}
+              disabled={drafting}
+              className="admin-btn-ghost mt-2 w-full justify-center py-1.5 text-xs"
+            >
+              {drafting ? <Loader2 size={13} className="animate-spin" aria-hidden /> : <Sparkles size={13} aria-hidden />}
+              {drafting ? t("aiAlt.running") : t("aiAlt.thisImage")}
+            </button>
+          )}
+          {draftError && <p className="mt-1 text-xs text-adm-danger">{draftError}</p>}
         </div>
       )}
 

@@ -4004,6 +4004,17 @@
         "oldest": "อัปโหลดเก่าสุด",
         "name": "ชื่อไฟล์",
         "largest": "ไฟล์ใหญ่สุด"
+      },
+      "aiAlt": {
+        "button": "AI เขียน alt ที่ขาด ({count})",
+        "running": "กำลังเขียน alt…",
+        "thisImage": "AI เติมภาษาที่ว่าง",
+        "hint": "Claude ดูภาพแต่ละรูปแล้วเขียน alt ให้ภาษาที่ยังว่าง ครั้งละไม่เกิน 8 รูป ข้อความที่พิมพ์เองจะไม่ถูกแทนที่",
+        "written": "{count, plural, =0 {ยังไม่ได้เขียนรูปไหน} other {เขียน alt แล้ว # รูป}}",
+        "someFailed": "ไม่สำเร็จ {count} รูป ({error})",
+        "remaining": "เหลืออีก {count} รูป — กดอีกครั้ง",
+        "notConfigured": "ตั้ง ANTHROPIC_API_KEY บนเซิร์ฟเวอร์ก่อนใช้ AI เขียน alt",
+        "failed": "เขียน alt ไม่สำเร็จ ลองอีกครั้ง"
       }
     },
     "appointments": {
