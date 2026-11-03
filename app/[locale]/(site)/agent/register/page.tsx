@@ -10,7 +10,8 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { resolveAgentRef } from "@/lib/agents/admin";
-import { breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
+import { breadcrumbList, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import JsonLd from "@/components/JsonLd";
 import Breadcrumb from "@/components/Breadcrumb";
 import { localizedAlternates } from "@/lib/seo";
@@ -32,7 +33,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // page's.
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/agent/register"),
-    openGraph: openGraphFor(locale, "/agent/register"),
+    openGraph: await pageOpenGraph(locale, "/agent/register"),
     robots: { index: false, follow: false, nocache: true },
   };
 }

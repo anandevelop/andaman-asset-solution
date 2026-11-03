@@ -45,7 +45,8 @@ import DbOfflineNotice from "@/components/DbOfflineNotice";
 import MilestonesScroller from "@/components/MilestonesScroller";
 import { isDatabaseOffline } from "@/lib/db";
 import { siteConfig } from "@/config/site";
-import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getPublishedProjects } from "@/lib/projects";
@@ -103,7 +104,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: tNav("about"),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/about"),
-    openGraph: openGraphFor(locale, "/about"),
+    openGraph: await pageOpenGraph(locale, "/about"),
   };
 }
 

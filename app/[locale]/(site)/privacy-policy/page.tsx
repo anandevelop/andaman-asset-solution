@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { locales } from "@/i18n";
-import { breadcrumbList, localizedAlternates, trailFor, openGraphFor } from "@/lib/seo";
+import { breadcrumbList, localizedAlternates, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import JsonLd from "@/components/JsonLd";
 import Breadcrumb from "@/components/Breadcrumb";
 import LegalPolicyPage from "@/components/LegalPolicyPage";
@@ -35,7 +36,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // snippet mid-sentence on "…disclose and retain your".
     description: metaDescription(policy.intro[0]),
     alternates: localizedAlternates(locale, siteConfig.legal.privacyPolicyPath),
-    openGraph: openGraphFor(locale, siteConfig.legal.privacyPolicyPath),
+    openGraph: await pageOpenGraph(locale, siteConfig.legal.privacyPolicyPath),
     robots: robotsMetadata({ index: true }),
   };
 }

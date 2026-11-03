@@ -140,6 +140,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     description: seo.metaDescription[resolvedLocale] ?? seo.metaDescription.en,
     alternates: localizedAlternates(locale, ""),
+    // No image here: the generated card in opengraph-image.tsx is this page's.
     openGraph: openGraphFor(locale, ""),
   };
 }

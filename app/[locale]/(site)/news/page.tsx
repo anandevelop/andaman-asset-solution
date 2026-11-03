@@ -29,7 +29,8 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import NewsSearch from "@/components/NewsSearch";
-import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getArticleCategories, getPublishedArticlePage, parseNewsQuery } from "@/lib/news";
@@ -57,7 +58,7 @@ export async function generateMetadata(props: {
     title: t("title"),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/news"),
-    openGraph: openGraphFor(locale, "/news"),
+    openGraph: await pageOpenGraph(locale, "/news"),
   };
 }
 

@@ -17,7 +17,8 @@ import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
-import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getPublishedEvents, type EventCard } from "@/lib/events";
@@ -51,7 +52,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: t("title"),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/events"),
-    openGraph: openGraphFor(locale, "/events"),
+    openGraph: await pageOpenGraph(locale, "/events"),
   };
 }
 

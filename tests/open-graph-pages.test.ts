@@ -26,7 +26,7 @@ describe("og:url on public pages", () => {
 
   it.each(withCanonical.map((file) => [file.slice(SITE.length)]))("%s sets openGraph with a url", (rel) => {
     const source = readFileSync(join(SITE, rel), "utf8");
-    expect(/openGraphFor\(|openGraph:\s*\{[^}]*\burl:/.test(source)).toBe(true);
+    expect(/pageOpenGraph\(|openGraphFor\(|openGraph:\s*\{[^}]*\burl:/.test(source)).toBe(true);
   });
 
   it("openGraphFor names the canonical URL and the site-wide fields", () => {

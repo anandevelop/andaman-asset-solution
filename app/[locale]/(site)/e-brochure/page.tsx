@@ -20,7 +20,8 @@ import { ArrowRight, BookOpen } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
-import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getPublishedBrochures } from "@/lib/brochures";
@@ -51,7 +52,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: t("title"),
     description: t("metaDescription"),
     alternates: localizedAlternates(locale, "/e-brochure"),
-    openGraph: openGraphFor(locale, "/e-brochure"),
+    openGraph: await pageOpenGraph(locale, "/e-brochure"),
   };
 }
 
