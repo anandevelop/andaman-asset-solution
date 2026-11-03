@@ -26,7 +26,13 @@ import { requireAdminAction } from "@/lib/admin/guard";
 import { prisma } from "@/lib/prisma";
 import { scanAndPersistLinkGraph, checkExternalLinkStatuses } from "@/lib/admin/link-graph";
 import { walkRedirectChain } from "@/lib/redirects";
-import { applyLinkOpportunity, type LinkOpportunityTargetType } from "@/lib/admin/link-opportunities";
+import {
+  applyLinkOpportunities,
+  applyLinkOpportunity,
+  dismissOpportunity,
+  type LinkOpportunityTargetType,
+  type LinkOpportunityVia,
+} from "@/lib/admin/link-opportunities";
 import type { ContentLinkScanResult, ExternalLinkCheckResult } from "@/lib/admin/link-graph";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -109,6 +115,7 @@ export type AddLinkOpportunityInput = {
   targetType: LinkOpportunityTargetType;
   targetId: string;
   targetPath: string;
+  via?: LinkOpportunityVia;
 };
 
 export async function addLinkOpportunity(input: AddLinkOpportunityInput, locale: string): Promise<ActionResult> {
@@ -120,4 +127,40 @@ export async function addLinkOpportunity(input: AddLinkOpportunityInput, locale:
   revalidateLinksPage(locale);
   revalidatePath(`/${locale}/admin/news/${input.sourceId}/edit`);
   return { ok: true };
+}
+
+/** "ข้าม": hide one suggestion from the table for good. */
+export async function dismissLinkOpportunity(id: string, locale: string): Promise<ActionResult> {
+  const session = await requireAdminAction(Role.ADMIN);
+  if (typeof id !== "string" || id.length > 200) return { ok: false, error: "INVALID_INPUT" };
+  try {
+    await dismissOpportunity(id, session.id);
+  } catch (error) {
+    console.error("[dismissLinkOpportunity]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+  revalidateLinksPage(locale);
+  return { ok: true };
+}
+
+/**
+ * "ใส่ทั้งหมด": the ids the table is showing (all, or what the search left).
+ * The server recomputes the suggestions and applies only ids still current.
+ */
+export async function addAllLinkOpportunities(
+  ids: string[],
+  locale: string,
+): Promise<{ ok: true; applied: number; failed: number } | { ok: false; error: string }> {
+  const session = await requireAdminAction(Role.ADMIN);
+  if (!Array.isArray(ids) || ids.length > 1000 || ids.some((id) => typeof id !== "string")) {
+    return { ok: false, error: "INVALID_INPUT" };
+  }
+  try {
+    const result = await applyLinkOpportunities(ids, session.id);
+    revalidateLinksPage(locale);
+    return { ok: true, ...result };
+  } catch (error) {
+    console.error("[addAllLinkOpportunities]", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
 }

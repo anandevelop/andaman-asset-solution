@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 import { RedirectSource } from "@prisma/client";
-import { findRedirectChains, type RedirectChainGroup } from "@/lib/admin/link-health";
+import { findRedirectChains, matchRedirectedLinks, type RedirectChainGroup } from "@/lib/admin/link-health";
 import type { RedirectRow } from "@/lib/admin/url-health";
 
 function row(fromPath: string, toPath: string, overrides: Partial<RedirectRow> = {}): RedirectRow {
@@ -69,5 +69,30 @@ describe("findRedirectChains", () => {
       { terminal: "/c", loop: false, length: 2 },
       { terminal: "/z", loop: false, length: 2 },
     ]);
+  });
+});
+
+describe("matchRedirectedLinks", () => {
+  const redirects = [
+    { fromPath: "/projects/old", toPath: "/projects/mid", isActive: true },
+    { fromPath: "/projects/mid", toPath: "/projects/new", isActive: true },
+    { fromPath: "/th/news/gone", toPath: "/th/news/here", isActive: true },
+    { fromPath: "/projects/off", toPath: "/projects/x", isActive: false },
+  ];
+  const link = (toPath: string) => ({ fromType: "NEWS_ARTICLE", fromId: "a1", toPath });
+
+  it("follows a link to the end of the redirect chain", () => {
+    expect(matchRedirectedLinks([link("/projects/old")], redirects)).toEqual([
+      { fromType: "NEWS_ARTICLE", fromId: "a1", toPath: "/projects/old", finalPath: "/projects/new" },
+    ]);
+  });
+
+  it("matches with or without the locale on either side", () => {
+    expect(matchRedirectedLinks([link("/en/projects/old")], redirects)).toHaveLength(1);
+    expect(matchRedirectedLinks([link("/news/gone")], redirects)[0]?.finalPath).toBe("/th/news/here");
+  });
+
+  it("ignores inactive redirects and links that do not redirect", () => {
+    expect(matchRedirectedLinks([link("/projects/off"), link("/projects/new")], redirects)).toEqual([]);
   });
 });

@@ -38,6 +38,7 @@ import { safeQuery } from "@/lib/db";
 import { getUrlHealth, type UrlHealth, type RedirectRow } from "@/lib/admin/url-health";
 import { resolveContentRefs, resolveLinkSources, type ContentRef } from "@/lib/admin/content-link-index";
 import { walkRedirectChain } from "@/lib/redirects";
+import { redirectLookupKeys } from "@/lib/redirect-paths";
 import { SYSTEM_PATHS } from "@/lib/public-paths";
 
 export type OrphanPage = {
@@ -64,6 +65,21 @@ export type LinkHealthKpis = {
    *  (url-health.ts's own scan vs. lib/admin/link-graph.ts's HTTP probe). */
   brokenLinkCount: number;
   activeRedirectCount: number;
+  /** Distinct pages/articles that link to anything internal. */
+  sourcesWithLinks: number;
+  /** Internal links whose target is the old end of an active redirect. */
+  throughRedirectCount: number;
+};
+
+/** A link that still points at a URL which now redirects: it works, but
+ *  costs a hop and should point at the new address directly. */
+export type RedirectedLink = {
+  fromType: string;
+  fromId: string;
+  sourceLabel: string;
+  adminHref: string | null;
+  toPath: string;
+  finalPath: string;
 };
 
 export type ExternalLinkStatus = {
@@ -88,6 +104,7 @@ export type LinkHealth = {
    *  still null): "not yet checked" and "checked and fine" are different
    *  facts, and only the latter is silently omitted. */
   externalLinks: ExternalLinkStatus[];
+  redirectedLinks: RedirectedLink[];
   /** When lib/admin/link-graph.ts's scan last ran. Only the timestamp is
    *  recoverable after the fact — a scanned page with no links in its body
    *  leaves no ContentLink row at all, so "pages scanned" can't be
@@ -102,7 +119,14 @@ const ADMIN_HREF: Record<OrphanPage["contentType"], (id: string) => string> = {
 };
 
 const EMPTY: LinkHealth = {
-  kpis: { totalInternalLinks: 0, orphanCount: 0, brokenLinkCount: 0, activeRedirectCount: 0 },
+  kpis: {
+    totalInternalLinks: 0,
+    orphanCount: 0,
+    brokenLinkCount: 0,
+    activeRedirectCount: 0,
+    sourcesWithLinks: 0,
+    throughRedirectCount: 0,
+  },
   urlHealth: {
     redirects: [],
     notFound: [],
@@ -115,6 +139,7 @@ const EMPTY: LinkHealth = {
   orphans: [],
   chains: [],
   externalLinks: [],
+  redirectedLinks: [],
   lastScan: null,
 };
 
@@ -239,7 +264,10 @@ export async function getLinkHealth(locale: string): Promise<LinkHealth> {
     async () => {
       const [urlHealth, internalLinkRows, lastScanRow, externalLinks] = await Promise.all([
         getUrlHealth(),
-        prisma.contentLink.findMany({ where: { isInternal: true }, select: { toPath: true } }),
+        prisma.contentLink.findMany({
+          where: { isInternal: true },
+          select: { toPath: true, fromType: true, fromId: true },
+        }),
         // isInternal: true only — checkExternalLinkStatuses() also bumps
         // checkedAt, but on external rows exclusively, so scoping to
         // internal rows here is what keeps "last scan" meaning the
@@ -258,6 +286,8 @@ export async function getLinkHealth(locale: string): Promise<LinkHealth> {
 
       const totalInternalLinks = await prisma.contentLink.count({ where: { isInternal: true } });
       const activeRedirectCount = urlHealth.redirects.filter((row) => row.isActive).length;
+      const redirectedLinks = await findRedirectedLinks(internalLinkRows, urlHealth.redirects);
+      const sourcesWithLinks = new Set(internalLinkRows.map((row) => `${row.fromType}:${row.fromId}`)).size;
 
       return {
         kpis: {
@@ -265,14 +295,53 @@ export async function getLinkHealth(locale: string): Promise<LinkHealth> {
           orphanCount: orphans.length,
           brokenLinkCount: urlHealth.brokenLinks.length + externalLinks.length,
           activeRedirectCount,
+          sourcesWithLinks,
+          throughRedirectCount: redirectedLinks.length,
         },
         urlHealth,
         orphans,
         chains,
         externalLinks,
+        redirectedLinks,
         lastScan: lastScanRow?.checkedAt ? { scannedAt: lastScanRow.checkedAt } : null,
       };
     },
     EMPTY,
   );
+}
+
+/**
+ * Internal links aimed at the old end of an active redirect. A link
+ * "/projects/old" matches a redirect saved as "/projects/old" or as
+ * "/th/projects/old" (redirectLookupKeys), and the other way round.
+ */
+export function matchRedirectedLinks(
+  links: { toPath: string; fromType: string; fromId: string }[],
+  redirects: Pick<RedirectRow, "fromPath" | "toPath" | "isActive">[],
+): { fromType: string; fromId: string; toPath: string; finalPath: string }[] {
+  const active = redirects.filter((row) => row.isActive);
+  const table = new Map(active.map((row) => [row.fromPath, row.toPath]));
+  const out: { fromType: string; fromId: string; toPath: string; finalPath: string }[] = [];
+  for (const link of links) {
+    const path = link.toPath.split(/[?#]/)[0];
+    const bare = path.replace(/^\/(?:en|th|zh|ru)(?=\/|$)/, "") || "/";
+    const hit = [path, ...redirectLookupKeys(bare)].find((key) => table.has(key));
+    if (!hit) continue;
+    const walk = walkRedirectChain(table, hit);
+    out.push({ fromType: link.fromType, fromId: link.fromId, toPath: link.toPath, finalPath: walk.path[walk.path.length - 1] });
+  }
+  return out;
+}
+
+async function findRedirectedLinks(
+  links: { toPath: string; fromType: string; fromId: string }[],
+  redirects: RedirectRow[],
+): Promise<RedirectedLink[]> {
+  const matches = matchRedirectedLinks(links, redirects);
+  if (matches.length === 0) return [];
+  const labels = await resolveLinkSources(matches);
+  return matches.map((m) => {
+    const info = labels.get(`${m.fromType}:${m.fromId}`);
+    return { ...m, sourceLabel: info?.label ?? m.fromId, adminHref: info?.adminHref ?? null };
+  });
 }

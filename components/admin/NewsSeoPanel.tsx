@@ -262,6 +262,7 @@ export default function NewsSeoPanel({
           targetType: opportunity.targetType,
           targetId: opportunity.targetId,
           targetPath: opportunity.targetPath,
+          via: opportunity.via,
         },
         uiLocale,
       );

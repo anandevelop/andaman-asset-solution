@@ -17,15 +17,23 @@
 
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, Link2, Sparkles, Unlink } from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, Link2, Unlink, Unplug } from "lucide-react";
 import { Role } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin/guard";
 import { isDatabaseOffline } from "@/lib/db";
 import { getLinkHealth } from "@/lib/admin/link-health";
-import { findLinkOpportunities } from "@/lib/admin/link-opportunities";
+import { findLinkOpportunities, PER_ARTICLE_LIMIT } from "@/lib/admin/link-opportunities";
 import { intlLocale } from "@/lib/format";
 import RescanButton from "@/components/admin/RescanButton";
-import { rescanLinkGraph, checkExternalLinks, collapseRedirectChain, addLinkOpportunity } from "./actions";
+import LinkSuggestions from "@/components/admin/LinkSuggestions";
+import {
+  rescanLinkGraph,
+  checkExternalLinks,
+  collapseRedirectChain,
+  addLinkOpportunity,
+  addAllLinkOpportunities,
+  dismissLinkOpportunity,
+} from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -106,43 +114,94 @@ export default async function LinkHealthPage(props: Props) {
 
       {/* ── KPIs ─────────────────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-            {t("seo.links.kpiTotalInternalLinks")}
-          </p>
-          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{health.kpis.totalInternalLinks}</p>
-        </div>
-        <div className={`admin-card ${health.kpis.orphanCount > 0 ? "border-adm-warning/30" : ""}`}>
-          <p
-            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.orphanCount > 0 ? "text-adm-warning" : "text-adm-muted"}`}
-          >
-            {t("seo.links.kpiOrphans")}
-          </p>
-          <p
-            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.orphanCount > 0 ? "text-adm-warning" : "text-adm-text"}`}
-          >
-            {health.kpis.orphanCount}
-          </p>
-        </div>
-        <div className={`admin-card ${health.kpis.brokenLinkCount > 0 ? "border-adm-danger/30" : ""}`}>
-          <p
-            className={`text-xs font-medium uppercase tracking-wide ${health.kpis.brokenLinkCount > 0 ? "text-adm-danger" : "text-adm-muted"}`}
-          >
-            {t("seo.links.kpiBrokenLinks")}
-          </p>
-          <p
-            className={`mt-4 text-3xl font-semibold tabular-nums ${health.kpis.brokenLinkCount > 0 ? "text-adm-danger" : "text-adm-text"}`}
-          >
-            {health.kpis.brokenLinkCount}
-          </p>
-        </div>
-        <div className="admin-card">
-          <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
-            {t("seo.links.kpiActiveRedirects")}
-          </p>
-          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{health.kpis.activeRedirectCount}</p>
-        </div>
+        {(
+          [
+            {
+              key: "total",
+              icon: Link2,
+              label: t("seo.links.kpiTotalInternalLinks"),
+              value: health.kpis.totalInternalLinks,
+              hint: t("seo.links.kpiTotalHint", { count: health.kpis.sourcesWithLinks }),
+              tone: "",
+            },
+            {
+              key: "broken",
+              icon: Unplug,
+              label: t("seo.links.kpiBrokenLinks"),
+              value: health.kpis.brokenLinkCount,
+              hint: t("seo.links.kpiBrokenHint"),
+              tone: health.kpis.brokenLinkCount > 0 ? "text-adm-danger" : "",
+            },
+            {
+              key: "redirect",
+              icon: ArrowRightLeft,
+              label: t("seo.links.kpiThroughRedirect"),
+              value: health.kpis.throughRedirectCount,
+              hint: t("seo.links.kpiThroughRedirectHint"),
+              tone: health.kpis.throughRedirectCount > 0 ? "text-adm-warning" : "",
+            },
+            {
+              key: "orphans",
+              icon: Unlink,
+              label: t("seo.links.kpiOrphans"),
+              value: health.kpis.orphanCount,
+              hint: t("seo.links.kpiOrphansHint"),
+              tone: health.kpis.orphanCount > 0 ? "text-adm-warning" : "",
+            },
+          ] as const
+        ).map(({ key, icon: Icon, label, value, hint, tone }) => (
+          <div key={key} className="admin-card">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-adm-muted">{label}</p>
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-adm-solid shadow-[0_0_0_1px_var(--adm-line)]">
+                <Icon size={16} className="text-adm-text" aria-hidden />
+              </span>
+            </div>
+            <p className={`mt-3 text-3xl font-semibold tabular-nums ${tone || "text-adm-text"}`}>{value.toLocaleString()}</p>
+            <p className="mt-1 text-xs text-adm-muted">{hint}</p>
+          </div>
+        ))}
       </div>
+
+      {/* ── Suggestions: mentions that are not links yet ─────────────── */}
+      <LinkSuggestions
+        locale={locale}
+        rows={opportunities.map(
+          ({ id, via, sourceId, sourceLocale, sourceTitle, targetType, targetId, targetTitle, targetPath, matchedText }) => ({
+            id,
+            via,
+            sourceId,
+            sourceLocale,
+            sourceTitle,
+            targetType,
+            targetId,
+            targetTitle,
+            targetPath,
+            matchedText,
+          }),
+        )}
+        labels={{
+          title: t("seo.links.suggest.title"),
+          subtitle: t("seo.links.suggest.subtitle"),
+          rules: t("seo.links.suggest.rules", { max: PER_ARTICLE_LIMIT }),
+          search: t("seo.links.suggest.search"),
+          applyAll: t.raw("seo.links.suggest.applyAll") as string,
+          applyAllConfirm: t.raw("seo.links.suggest.applyAllConfirm") as string,
+          appliedAll: t.raw("seo.links.suggest.appliedAll") as string,
+          colArticle: t("seo.links.suggest.colArticle"),
+          colAnchor: t("seo.links.suggest.colAnchor"),
+          colTarget: t("seo.links.suggest.colTarget"),
+          apply: t("seo.links.suggest.apply"),
+          skip: t("seo.links.suggest.skip"),
+          keyword: t("seo.links.suggest.keyword"),
+          empty: t("seo.links.opportunitiesEmpty"),
+          noMatch: t("seo.links.suggest.noMatch"),
+          error: t("seo.links.addLinkError"),
+        }}
+        addOne={addLinkOpportunity}
+        addAll={addAllLinkOpportunities}
+        dismiss={dismissLinkOpportunity}
+      />
 
       {/* ── Broken links ─────────────────────────────────────────────── */}
       <section className="admin-card overflow-hidden p-0!">
@@ -171,6 +230,37 @@ export default async function LinkHealthPage(props: Props) {
                   )}
                 </p>
                 <p className="mt-0.5 text-xs text-adm-muted">{reasonLabel[link.reason]}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ── Links that go through a redirect ─────────────────────────── */}
+      <section className="admin-card overflow-hidden p-0!">
+        <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
+          <ArrowRightLeft size={15} className="text-adm-muted" aria-hidden />
+          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.redirectedTitle")}</h2>
+        </div>
+        {health.redirectedLinks.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.redirectedEmpty")}</p>
+        ) : (
+          <ul>
+            {health.redirectedLinks.map((link, index) => (
+              <li
+                key={`${link.fromType}:${link.fromId}:${link.toPath}:${index}`}
+                className="flex flex-wrap items-center gap-1.5 border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
+              >
+                <span className="text-adm-text">{link.sourceLabel}</span>
+                <span className="text-adm-muted">·</span>
+                <span className="font-mono text-xs text-adm-muted line-through">{link.toPath}</span>
+                <span className="text-adm-muted">→</span>
+                <span className="font-mono text-xs text-adm-text">{link.finalPath}</span>
+                {link.adminHref && (
+                  <Link href={`/${locale}${link.adminHref}`} className="ml-auto text-xs font-medium text-adm-accent-ink">
+                    {t("seo.issuesFix")}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -272,55 +362,6 @@ export default async function LinkHealthPage(props: Props) {
         )}
       </section>
 
-      {/* ── Link-building opportunities ──────────────────────────────── */}
-      <section className="admin-card overflow-hidden p-0!">
-        <div className="flex items-center gap-2 border-b border-adm-line px-5 py-3.5">
-          <Sparkles size={15} className="text-adm-muted" aria-hidden />
-          <h2 className="text-sm font-semibold text-adm-text">{t("seo.links.opportunitiesTitle")}</h2>
-        </div>
-        {opportunities.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-adm-muted">{t("seo.links.opportunitiesEmpty")}</p>
-        ) : (
-          <ul>
-            {opportunities.map((opportunity) => (
-              <li
-                key={opportunity.id}
-                className="flex flex-wrap items-center justify-between gap-3 border-b border-adm-line px-5 py-3.5 text-sm last:border-b-0"
-              >
-                <div className="min-w-0">
-                  <p className="text-adm-text">
-                    <Link
-                      href={`/${locale}/admin/news/${opportunity.sourceId}/edit`}
-                      className="font-medium text-adm-text hover:text-adm-accent-ink"
-                    >
-                      {opportunity.sourceTitle}
-                    </Link>{" "}
-                    <span className="text-adm-muted" aria-hidden>
-                      →
-                    </span>{" "}
-                    {opportunity.targetTitle}
-                  </p>
-                  <p className="mt-0.5 text-xs text-adm-muted">
-                    {t("seo.links.opportunityMention", { text: opportunity.matchedText })}
-                  </p>
-                </div>
-                <RescanButton
-                  action={addLinkOpportunity.bind(null, {
-                    sourceId: opportunity.sourceId,
-                    sourceLocale: opportunity.sourceLocale,
-                    targetType: opportunity.targetType,
-                    targetId: opportunity.targetId,
-                    targetPath: opportunity.targetPath,
-                  })}
-                  locale={locale}
-                  label={t("seo.links.addLinkButton")}
-                  errorLabel={t("seo.links.addLinkError")}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }

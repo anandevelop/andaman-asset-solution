@@ -193,8 +193,13 @@ export function opportunityWeight(titleWordCount: number, inboundLinkCount: numb
 
 export type LinkOpportunityTargetType = "PROJECT" | "NEWS_ARTICLE" | "EVENT";
 
+/** How the target was recognised in the body: its title, or the focus
+ *  keyword its author set for it (NewsArticleTranslation.focusKeyword). */
+export type LinkOpportunityVia = "title" | "keyword";
+
 export type LinkOpportunity = {
   id: string;
+  via: LinkOpportunityVia;
   sourceId: string;
   sourceLocale: string;
   sourceTitle: string;
@@ -208,8 +213,15 @@ export type LinkOpportunity = {
 
 export type LinkOpportunityScope = { type: "NEWS_ARTICLE"; id: string };
 
-/** Matches url-health.ts's own NOT_FOUND_LIMIT display-cap precedent. */
+/** The editor's own Links tab: one article, a short list. */
 const OPPORTUNITY_LIMIT = 20;
+/** The site-wide table on /admin/seo/links, which has a search box. */
+const SITE_OPPORTUNITY_LIMIT = 500;
+/** At most this many suggestions per article and language: a body with a
+ *  link every other sentence reads as spam, to people and to Google. */
+export const PER_ARTICLE_LIMIT = 5;
+/** A focus keyword shorter than this matches too much to be a signal. */
+const MIN_KEYWORD_LENGTH = 3;
 
 type TargetCandidate = {
   type: LinkOpportunityTargetType;
@@ -217,7 +229,14 @@ type TargetCandidate = {
   path: string;
   locale: string;
   title: string;
+  via: LinkOpportunityVia;
 };
+
+/** "/th/projects/x" and "/projects/x" are the same page for these checks. */
+export function stripLocalePath(path: string): string {
+  const bare = path.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  return bare.replace(/^\/(?:en|th|zh|ru)(?=\/|$)/, "") || "/";
+}
 
 /** Published Project/NewsArticle/Event, one candidate row per (item,
  *  locale) — link *targets* are not restricted to News the way sources
@@ -230,7 +249,13 @@ async function loadTargetCandidates(): Promise<TargetCandidate[]> {
     }),
     prisma.newsArticle.findMany({
       where: { isPublished: true },
-      select: { id: true, slug: true, titleEn: true, titleTh: true, translations: { select: { locale: true, title: true } } },
+      select: {
+        id: true,
+        slug: true,
+        titleEn: true,
+        titleTh: true,
+        translations: { select: { locale: true, title: true, focusKeyword: true } },
+      },
     }),
     prisma.event.findMany({
       where: { isPublished: true },
@@ -247,6 +272,7 @@ async function loadTargetCandidates(): Promise<TargetCandidate[]> {
         path: `/projects/${row.slug}`,
         locale,
         title: resolveTitle(row.translations, locale, "name", row.nameTh, row.nameEn),
+        via: "title",
       });
     }
     for (const row of articles) {
@@ -256,7 +282,14 @@ async function loadTargetCandidates(): Promise<TargetCandidate[]> {
         path: `/news/${row.slug}`,
         locale,
         title: resolveTitle(row.translations, locale, "title", row.titleTh, row.titleEn),
+        via: "title",
       });
+      // The phrase the article is written to rank for is the natural
+      // anchor text for a link to it from another article.
+      const keyword = row.translations.find((tr) => tr.locale === locale)?.focusKeyword?.trim();
+      if (keyword && keyword.length >= MIN_KEYWORD_LENGTH) {
+        candidates.push({ type: "NEWS_ARTICLE", id: row.id, path: `/news/${row.slug}`, locale, title: keyword, via: "keyword" });
+      }
     }
     for (const row of events) {
       candidates.push({
@@ -265,6 +298,7 @@ async function loadTargetCandidates(): Promise<TargetCandidate[]> {
         path: `/events/${row.slug}`,
         locale,
         title: resolveTitle(row.translations, locale, "title", row.titleTh, row.titleEn),
+        via: "title",
       });
     }
   }
@@ -280,7 +314,7 @@ async function loadTargetCandidates(): Promise<TargetCandidate[]> {
  * suggestions while still drafting.
  */
 export async function findLinkOpportunities(scope?: LinkOpportunityScope): Promise<LinkOpportunity[]> {
-  const [targets, sourceArticles, inboundGroups] = await Promise.all([
+  const [targets, sourceArticles, inboundGroups, outboundRows, dismissed] = await Promise.all([
     loadTargetCandidates(),
     prisma.newsArticle.findMany({
       where: scope ? { id: scope.id } : { isPublished: true },
@@ -292,9 +326,27 @@ export async function findLinkOpportunities(scope?: LinkOpportunityScope): Promi
       },
     }),
     prisma.contentLink.groupBy({ by: ["toPath"], where: { isInternal: true }, _count: { toPath: true } }),
+    prisma.contentLink.findMany({
+      where: { isInternal: true, fromType: "NEWS_ARTICLE", ...(scope ? { fromId: scope.id } : {}) },
+      select: { fromId: true, fromLocale: true, toPath: true },
+    }),
+    getDismissedOpportunities(),
   ]);
 
-  const inboundByPath = new Map(inboundGroups.map((row) => [row.toPath, row._count.toPath]));
+  // A keyword suggestion still shows the target's title, not the keyword.
+  const titleOf = new Map(targets.filter((t) => t.via === "title").map((t) => [`${t.type}:${t.id}:${t.locale}`, t.title]));
+  const inboundByPath = new Map<string, number>();
+  for (const row of inboundGroups) {
+    const key = stripLocalePath(row.toPath);
+    inboundByPath.set(key, (inboundByPath.get(key) ?? 0) + row._count.toPath);
+  }
+  // What each article (per language) already links to: never suggested again.
+  const alreadyLinked = new Map<string, Set<string>>();
+  for (const row of outboundRows) {
+    const key = `${row.fromId}:${row.fromLocale}`;
+    if (!alreadyLinked.has(key)) alreadyLinked.set(key, new Set());
+    alreadyLinked.get(key)!.add(stripLocalePath(row.toPath));
+  }
   const opportunities: LinkOpportunity[] = [];
 
   for (const article of sourceArticles) {
@@ -303,20 +355,31 @@ export async function findLinkOpportunities(scope?: LinkOpportunityScope): Promi
     for (const translation of article.translations) {
       if (!translation.content) continue;
 
+      const linked = alreadyLinked.get(`${article.id}:${translation.locale}`);
       const candidatesForLocale = targets.filter(
-        (t) => t.locale === translation.locale && !(t.type === "NEWS_ARTICLE" && t.id === article.id),
+        (t) =>
+          t.locale === translation.locale &&
+          !(t.type === "NEWS_ARTICLE" && t.id === article.id) &&
+          !linked?.has(stripLocalePath(t.path)),
       );
       if (candidatesForLocale.length === 0) continue;
 
       const mentions = scanTitleMentions(translation.content, translation.locale, candidatesForLocale);
+      const found: LinkOpportunity[] = [];
+      const seenTargets = new Set<string>();
 
       for (const mention of mentions) {
         const target = candidatesForLocale[mention.candidateIndex];
-        const inbound = inboundByPath.get(target.path) ?? 0;
+        const id = `${article.id}:${translation.locale}:${target.type}:${target.id}`;
+        // A title and a keyword can both point at one page: one suggestion.
+        if (seenTargets.has(id) || dismissed.has(id)) continue;
+        seenTargets.add(id);
+        const inbound = inboundByPath.get(stripLocalePath(target.path)) ?? 0;
         const weight = opportunityWeight(titleWordCount(target.title, translation.locale), inbound);
 
-        opportunities.push({
-          id: `${article.id}:${translation.locale}:${target.type}:${target.id}`,
+        found.push({
+          id,
+          via: target.via,
           sourceId: article.id,
           sourceLocale: translation.locale,
           sourceTitle: resolveTitle(
@@ -328,16 +391,45 @@ export async function findLinkOpportunities(scope?: LinkOpportunityScope): Promi
           ),
           targetType: target.type,
           targetId: target.id,
-          targetTitle: target.title,
+          targetTitle: target.via === "keyword" ? (titleOf.get(`${target.type}:${target.id}:${translation.locale}`) ?? target.title) : target.title,
           targetPath: target.path,
           matchedText: mention.matchedText,
           weight,
         });
       }
+      opportunities.push(...found.sort((a, b) => b.weight - a.weight).slice(0, PER_ARTICLE_LIMIT));
     }
   }
 
-  return opportunities.sort((a, b) => b.weight - a.weight).slice(0, OPPORTUNITY_LIMIT);
+  return opportunities.sort((a, b) => b.weight - a.weight).slice(0, scope ? OPPORTUNITY_LIMIT : SITE_OPPORTUNITY_LIMIT);
+}
+
+// ── "ข้าม": suggestions an admin has dismissed ───────────────────────────
+
+const DISMISSED_KEY = "links.dismissedOpportunities";
+const DISMISSED_MAX = 3000;
+
+export async function getDismissedOpportunities(): Promise<Set<string>> {
+  const row = await prisma.siteSetting.findUnique({ where: { key: DISMISSED_KEY } }).catch(() => null);
+  if (!row) return new Set();
+  try {
+    const ids = JSON.parse(row.value) as unknown;
+    return new Set(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** Remembered until the list passes DISMISSED_MAX, oldest forgotten first. */
+export async function dismissOpportunity(id: string, actorId?: string): Promise<void> {
+  const ids = [...(await getDismissedOpportunities())].filter((x) => x !== id);
+  ids.push(id);
+  const value = JSON.stringify(ids.slice(-DISMISSED_MAX));
+  await prisma.siteSetting.upsert({
+    where: { key: DISMISSED_KEY },
+    create: { key: DISMISSED_KEY, value, updatedBy: actorId ?? null },
+    update: { value, updatedBy: actorId ?? null },
+  });
 }
 
 // ── The auto-insert mutation ────────────────────────────────────────────
@@ -348,6 +440,8 @@ export type ApplyLinkOpportunityInput = {
   targetType: LinkOpportunityTargetType;
   targetId: string;
   targetPath: string;
+  /** Absent = "title", as before keywords were matched. */
+  via?: LinkOpportunityVia;
 };
 
 export type ApplyLinkOpportunityResult =
@@ -398,6 +492,7 @@ function spliceLink(body: string, mention: TitleMention, targetPath: string, for
 export async function applyLinkOpportunity(
   input: ApplyLinkOpportunityInput,
   createdById: string | null,
+  options: { rescan?: boolean } = {},
 ): Promise<ApplyLinkOpportunityResult> {
   if (input.targetType === "NEWS_ARTICLE" && input.targetId === input.sourceId) {
     return { ok: false, error: "NOT_FOUND" };
@@ -414,7 +509,10 @@ export async function applyLinkOpportunity(
   const translation = article?.translations[0];
   if (!article || !translation?.content) return { ok: false, error: "NOT_FOUND" };
 
-  const targetTitle = await currentTargetTitle(input.targetType, input.targetId, input.sourceLocale);
+  const targetTitle =
+    input.via === "keyword"
+      ? await currentTargetKeyword(input.targetType, input.targetId, input.sourceLocale)
+      : await currentTargetTitle(input.targetType, input.targetId, input.sourceLocale);
   if (!targetTitle) return { ok: false, error: "NOT_FOUND" };
 
   const mentions = scanTitleMentions(translation.content, input.sourceLocale, [{ title: targetTitle }]);
@@ -430,12 +528,50 @@ export async function applyLinkOpportunity(
       where: { articleId_locale: { articleId: article.id, locale: input.sourceLocale } },
       data: { content: finalContent },
     });
-    await scanAndPersistLinkGraph();
+    if (options.rescan !== false) await scanAndPersistLinkGraph();
   } catch {
     return { ok: false, error: "SAVE_FAILED" };
   }
 
   return { ok: true };
+}
+
+/** A published article's current focus keyword in one language. */
+async function currentTargetKeyword(type: LinkOpportunityTargetType, id: string, locale: string): Promise<string | null> {
+  if (type !== "NEWS_ARTICLE") return null;
+  const row = await prisma.newsArticleTranslation.findFirst({
+    where: { articleId: id, locale, article: { isPublished: true } },
+    select: { focusKeyword: true },
+  });
+  const keyword = row?.focusKeyword?.trim();
+  return keyword && keyword.length >= MIN_KEYWORD_LENGTH ? keyword : null;
+}
+
+/**
+ * "ใส่ทั้งหมด": apply every current suggestion whose id is in `ids`,
+ * recomputed here rather than trusted from the page. One rescan at the end
+ * instead of one per link. Each apply re-reads the body, so two links into
+ * one article land one after the other.
+ */
+export async function applyLinkOpportunities(
+  ids: string[],
+  createdById: string | null,
+): Promise<{ applied: number; failed: number }> {
+  const wanted = new Set(ids);
+  const current = (await findLinkOpportunities()).filter((o) => wanted.has(o.id));
+  let applied = 0;
+  let failed = 0;
+  for (const o of current) {
+    const result = await applyLinkOpportunity(
+      { sourceId: o.sourceId, sourceLocale: o.sourceLocale, targetType: o.targetType, targetId: o.targetId, targetPath: o.targetPath, via: o.via },
+      createdById,
+      { rescan: false },
+    );
+    if (result.ok) applied += 1;
+    else failed += 1;
+  }
+  if (applied > 0) await scanAndPersistLinkGraph();
+  return { applied, failed };
 }
 
 // ── The editor's own Links tab (5.4) ────────────────────────────────────

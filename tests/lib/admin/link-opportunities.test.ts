@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  stripLocalePath,
   boundaryRegex,
   excludedSpans,
   opportunityWeight,
@@ -128,5 +129,14 @@ describe("opportunityWeight", () => {
 
   it("caps match quality at a 6+ word title rather than growing without bound", () => {
     expect(opportunityWeight(6, 0)).toBe(opportunityWeight(20, 0));
+  });
+});
+
+describe("stripLocalePath", () => {
+  it("drops the locale, query, hash and trailing slash", () => {
+    expect(stripLocalePath("/th/projects/x/")).toBe("/projects/x");
+    expect(stripLocalePath("/projects/x?a=1#b")).toBe("/projects/x");
+    expect(stripLocalePath("/en")).toBe("/");
+    expect(stripLocalePath("/thailand")).toBe("/thailand");
   });
 });

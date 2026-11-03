@@ -297,6 +297,7 @@ describe("NewsSeoPanel — links tab", () => {
 
   const OPPORTUNITY = {
     id: "opp-1",
+    via: "title" as const,
     sourceId: "article-1",
     sourceLocale: "en",
     sourceTitle: "This article",
@@ -325,6 +326,7 @@ describe("NewsSeoPanel — links tab", () => {
           targetType: "PROJECT",
           targetId: "project-1",
           targetPath: "/projects/trinity-village",
+          via: "title",
         },
         "en",
       );
