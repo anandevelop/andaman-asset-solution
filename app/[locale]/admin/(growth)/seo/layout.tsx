@@ -33,6 +33,8 @@ import { requireAdmin } from "@/lib/admin/guard";
 import PageTabs from "@/components/admin/PageTabs";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
+import SeoHubActions from "@/components/admin/SeoHubActions";
+import { getGoogleConfig } from "@/lib/google-config";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -40,14 +42,27 @@ export default async function AdminSeoLayout({ children, params }: Props) {
   const { locale } = await params;
 
   const session = await requireAdmin(locale, Role.ADMIN);
-  const t = await getTranslations({ locale, namespace: "admin" });
+  const [t, google] = await Promise.all([getTranslations({ locale, namespace: "admin" }), getGoogleConfig()]);
+  const connected = Boolean(google.credentials && google.gscSiteUrl);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow={zoneEyebrow((key) => t(key as never), "seo")}
-        title={t("seo.title")}
-        description={t("seo.hubSubtitle")}
+        title={t("seo.hub.title")}
+        description={t(connected ? "seo.hub.connected" : "seo.hub.notConnected")}
+        actions={
+          <SeoHubActions
+            locale={locale}
+            labels={{
+              report: t("seo.hub.report"),
+              scan: t("seo.hub.scan"),
+              scanStarted: t("seo.hub.scanStarted"),
+              scanRunning: t("seo.hub.scanRunning"),
+              scanFailed: t("seo.hub.scanFailed"),
+            }}
+          />
+        }
       />
 
       <PageTabs locale={locale} role={session.role} groupKey="seo" baseHref="/seo" />

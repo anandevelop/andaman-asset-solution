@@ -238,18 +238,21 @@ export const NAV_TAB_GROUPS = {
    * everything else does.
    */
   seo: [
+    /* "ศูนย์ SEO" (2026-11): the order the team works in — what every page
+       says (meta), what it ranks for, whether it is healthy, whether
+       Google has it, how it links, what it tells machines (schema),
+       where old URLs go, how AI assistants see it, then settings. */
     { key: "overview", segment: "", roles: ROLE_SETS.ADMIN_UP },
-    /* The on-page audit (phase 1). Second, because it is the tab the
-       overview's numbers link into — "70 pages missing a description" is
-       only useful next to the list of which seventy. */
-    { key: "audit", segment: "/audit", roles: ROLE_SETS.ADMIN_UP },
-    /* Crawling and indexing (phase 5). Beside the audit because the two
-       answer halves of one question: the audit says whether a page is
-       worth indexing, this says whether a crawler has even fetched it. */
-    { key: "indexing", segment: "/indexing", roles: ROLE_SETS.ADMIN_UP },
+    { key: "meta", segment: "/meta", roles: ROLE_SETS.ADMIN_UP },
     { key: "keywords", segment: "/keywords", roles: ROLE_SETS.ADMIN_UP },
+    /* The on-page audit (phase 1) — the overview's numbers link into it. */
+    { key: "audit", segment: "/audit", roles: ROLE_SETS.ADMIN_UP },
+    /* Crawling, indexing and the sitemap (phase 5). */
+    { key: "indexing", segment: "/indexing", roles: ROLE_SETS.ADMIN_UP },
     { key: "links", segment: "/links", roles: ROLE_SETS.ADMIN_UP },
+    { key: "schema", segment: "/schema", roles: ROLE_SETS.ADMIN_UP },
     { key: "urls", segment: "/urls", roles: ROLE_SETS.ADMIN_UP },
+    { key: "aiSearch", segment: "/ai-search", roles: ROLE_SETS.ADMIN_UP },
     { key: "defaults", segment: "/defaults", roles: ROLE_SETS.ADMIN_UP },
   ],
   /**

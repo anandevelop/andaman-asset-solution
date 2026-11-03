@@ -825,14 +825,17 @@
         "translations": "Переводы"
       },
       "seo": {
-        "overview": "Обзор",
-        "audit": "Проверка",
-        "indexing": "Индексация",
+        "overview": "Overview",
+        "audit": "Health check",
+        "indexing": "Sitemap & Index",
         "label": "SEO",
-        "keywords": "Ключевые слова",
-        "links": "Внутренние ссылки",
-        "urls": "URL и редиректы",
-        "defaults": "Общие значения"
+        "keywords": "Keywords",
+        "links": "Internal links",
+        "urls": "Redirect & 404",
+        "defaults": "Settings",
+        "meta": "Meta, all pages",
+        "schema": "Schema",
+        "aiSearch": "AI Search"
       },
       "projects": {
         "label": "Объекты",
@@ -3706,6 +3709,78 @@
       "defaults": {
         "brandTerms": "Брендовые слова",
         "brandTermsHint": "Через запятую. Запросы с любым из этих слов считаются брендовыми — от тех, кто уже знает компанию, — и учитываются отдельно. Включите все языки и написания, которыми пользуются клиенты, в том числе тайский: пропущенное слово завышает небрендовую цифру именно на том рынке, где сайт и продаёт."
+      },
+      "hub": {
+        "title": "SEO centre",
+        "connected": "Data from Google Search Console · connected",
+        "notConnected": "Google Search Console not connected — Settings › Integrations",
+        "report": "Report",
+        "scan": "Scan site",
+        "scanStarted": "Scan started — results appear in Health check in a few minutes",
+        "scanRunning": "A scan is already running",
+        "scanFailed": "Could not start the scan"
+      },
+      "meta": {
+        "title": "Meta, all pages",
+        "subtitle": "Title up to {max} characters · description {min}–{dmax} · live from the back office, no scan needed",
+        "all": "All",
+        "onlyIssues": "Needs work",
+        "page": "Page",
+        "metaTitle": "Title",
+        "metaDescription": "Description",
+        "image": "Share image",
+        "missing": "Missing",
+        "staticPage": "Static page — title and description come from site copy and SEO › Settings",
+        "edit": "Edit",
+        "empty": "Nothing to fix"
+      },
+      "schema": {
+        "title": "Schema (structured data)",
+        "subtitle": "The JSON-LD each page gives Google and AI assistants — built from the back office automatically",
+        "page": "Page",
+        "types": "Schema",
+        "source": "Comes from",
+        "check": "Check",
+        "projectsTitle": "Check project pages",
+        "missingTitle": "Pages with no JSON-LD ({count})",
+        "missingNone": "Every page in the last scan has JSON-LD",
+        "templates": {
+          "home": "Home",
+          "project": "Project page",
+          "news": "News article",
+          "event": "Event",
+          "brochure": "E-brochure"
+        },
+        "sources": {
+          "home": "Settings › Contact and Branding · FAQ",
+          "project": "Project overview, content, house types, facilities, map · progress videos",
+          "news": "Article (headline, image, date, tags)",
+          "event": "Event (date, venue)",
+          "brochure": "Brochure (PDF, cover)"
+        }
+      },
+      "aiSearch": {
+        "title": "AI Search",
+        "subtitle": "How ChatGPT, Claude, Perplexity and Gemini see the site",
+        "crawlersTitle": "AI crawlers in the last 30 days",
+        "crawler": "Crawler",
+        "robots": "robots.txt",
+        "hits": "Requests",
+        "pages": "Pages",
+        "lastSeen": "Last seen",
+        "allowed": "Allowed",
+        "never": "Not yet",
+        "robotsNote": "robots.txt allows every crawler except /admin and /api",
+        "llmsBody": "A plain map of the site for AI assistants: the company, each development in a line, and the pages worth reading — built from the project data.",
+        "llmsOpen": "Open llms.txt",
+        "checklistTitle": "What AI assistants read",
+        "checklist": {
+          "schema": "Schema for projects, company, news and events",
+          "faq": "FAQ on the home page (FAQPage)",
+          "meta": "Title and description on every page",
+          "languages": "Four languages with hreflang"
+        },
+        "toSchema": "View Schema"
       }
     },
     "seoTranslations": {

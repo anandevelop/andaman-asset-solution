@@ -826,13 +826,16 @@
       },
       "seo": {
         "overview": "ภาพรวม",
-        "audit": "ตรวจหน้าเว็บ",
-        "indexing": "การเก็บ Index",
+        "audit": "ตรวจสุขภาพ",
+        "indexing": "Sitemap & Index",
         "label": "SEO",
         "keywords": "คีย์เวิร์ด",
         "links": "ลิงก์ภายใน",
-        "urls": "URL และการเปลี่ยนเส้นทาง",
-        "defaults": "ค่าเริ่มต้นทั้งเว็บ"
+        "urls": "Redirect & 404",
+        "defaults": "ตั้งค่า",
+        "meta": "Meta ทุกหน้า",
+        "schema": "Schema",
+        "aiSearch": "AI Search"
       },
       "projects": {
         "label": "โครงการ",
@@ -3706,6 +3709,78 @@
       "defaults": {
         "brandTerms": "คำที่เป็นแบรนด์",
         "brandTermsHint": "คั่นด้วยจุลภาค คำค้นที่มีคำเหล่านี้จะถูกนับเป็นแบรนด์ — คนที่รู้จักบริษัทอยู่แล้ว — และรายงานแยกจากคนอื่น ใส่ให้ครบทุกภาษาและทุกวิธีสะกดที่ลูกค้าใช้ รวมภาษาไทยด้วย เพราะคำที่ตกหล่นจะทำให้ตัวเลข \"ไม่ใช่แบรนด์\" สูงเกินจริงในตลาดที่เว็บขายจริง"
+      },
+      "hub": {
+        "title": "ศูนย์ SEO",
+        "connected": "ข้อมูลจาก Google Search Console · เชื่อมต่อแล้ว",
+        "notConnected": "ยังไม่ได้เชื่อมต่อ Google Search Console — ตั้งค่าที่ ตั้งค่า › การเชื่อมต่อ",
+        "report": "รายงาน",
+        "scan": "สแกนเว็บ",
+        "scanStarted": "เริ่มสแกนแล้ว ใช้เวลาไม่กี่นาที ผลจะขึ้นในแท็บตรวจสุขภาพ",
+        "scanRunning": "กำลังสแกนอยู่ รอให้เสร็จก่อน",
+        "scanFailed": "เริ่มสแกนไม่ได้"
+      },
+      "meta": {
+        "title": "Meta ทุกหน้า",
+        "subtitle": "Title ไม่เกิน {max} ตัวอักษร · Description {min}–{dmax} ตัวอักษร · ข้อมูลล่าสุดจากหลังบ้าน ไม่ต้องสแกน",
+        "all": "ทั้งหมด",
+        "onlyIssues": "เฉพาะที่ต้องแก้",
+        "page": "หน้า",
+        "metaTitle": "Title",
+        "metaDescription": "Description",
+        "image": "รูปแชร์",
+        "missing": "ยังไม่มี",
+        "staticPage": "หน้าคงที่ — Title/Description มาจากข้อความเว็บไซต์และ SEO › ตั้งค่า",
+        "edit": "แก้ไข",
+        "empty": "ไม่มีหน้าที่ต้องแก้"
+      },
+      "schema": {
+        "title": "Schema (ข้อมูลโครงสร้าง)",
+        "subtitle": "JSON-LD ที่แต่ละหน้าส่งให้ Google และ AI — สร้างจากข้อมูลในหลังบ้านอัตโนมัติ",
+        "page": "หน้า",
+        "types": "Schema",
+        "source": "ข้อมูลมาจาก",
+        "check": "ตรวจ",
+        "projectsTitle": "ตรวจหน้าโครงการ",
+        "missingTitle": "หน้าที่ไม่มี JSON-LD เลย ({count})",
+        "missingNone": "ทุกหน้าที่สแกนรอบล่าสุดมี JSON-LD",
+        "templates": {
+          "home": "หน้าแรก",
+          "project": "หน้าโครงการ",
+          "news": "บทความข่าว",
+          "event": "อีเวนต์",
+          "brochure": "E-brochure"
+        },
+        "sources": {
+          "home": "ตั้งค่า › ติดต่อ และ แบรนด์ · FAQ",
+          "project": "ภาพรวม/เนื้อหา/แบบบ้าน/สิ่งอำนวยความสะดวก/แผนที่ของโครงการ · วิดีโอความคืบหน้า",
+          "news": "บทความ (หัวข้อ รูป วันที่ แท็ก)",
+          "event": "อีเวนต์ (วันเวลา สถานที่)",
+          "brochure": "โบรชัวร์ (ไฟล์ PDF ปก)"
+        }
+      },
+      "aiSearch": {
+        "title": "AI Search",
+        "subtitle": "ChatGPT, Claude, Perplexity และ Gemini เห็นเว็บเราอย่างไร",
+        "crawlersTitle": "บอท AI ที่เข้ามา 30 วันล่าสุด",
+        "crawler": "บอท",
+        "robots": "robots.txt",
+        "hits": "ครั้ง",
+        "pages": "หน้า",
+        "lastSeen": "ล่าสุด",
+        "allowed": "อนุญาต",
+        "never": "ยังไม่เคยมา",
+        "robotsNote": "robots.txt อนุญาตทุกบอทยกเว้น /admin และ /api",
+        "llmsBody": "ไฟล์สรุปเว็บสำหรับ AI: บริษัท โครงการพร้อมรายละเอียดสั้น และหน้าที่ควรอ่าน สร้างจากข้อมูลโครงการอัตโนมัติ",
+        "llmsOpen": "เปิด llms.txt",
+        "checklistTitle": "สิ่งที่ AI ใช้อ่านเว็บเรา",
+        "checklist": {
+          "schema": "Schema ของโครงการ บริษัท ข่าว และอีเวนต์",
+          "faq": "FAQ บนหน้าแรก (FAQPage)",
+          "meta": "Title และ Description ทุกหน้า",
+          "languages": "เนื้อหา 4 ภาษาพร้อม hreflang"
+        },
+        "toSchema": "ดู Schema"
       }
     },
     "seoTranslations": {

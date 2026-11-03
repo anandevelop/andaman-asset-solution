@@ -94,12 +94,12 @@ describe("the menu each role sees", () => {
     SUPER_ADMIN: {
       rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/urls"],
     },
     ADMIN: {
       rail: ["analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/urls"],
     },
     EDITOR: {
       rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing", "salesTeam"],
@@ -564,25 +564,21 @@ describe("the project workspace", () => {
 });
 
 describe("the SEO hub", () => {
-  it("offers all seven screens as tabs", () => {
-    /* Three of these had no reliable way in: keywords and links were only
-       reachable from two buttons in the overview's header, and /seo/urls
-       from nowhere at all once settings stopped linking to it.
-
-       /audit joined them with the on-page audit, second because it is
-       where the overview's numbers link into — "70 pages missing a
-       description" is only useful beside the list of which seventy.
-
-       /indexing sits beside it because the two answer halves of one
-       question: the audit says whether a page deserves indexing, indexing
-       says whether a crawler has fetched it at all. */
+  it("offers the SEO centre's ten tabs in working order", () => {
+    /* "ศูนย์ SEO" (2026-11): meta, keywords, health, index, links,
+       schema, redirects, AI search, settings — every screen has a tab,
+       which is what the old strip existed to fix (three of them used to
+       have no reliable way in). */
     expect(visibleTabs(Role.ADMIN, "seo").map((tab) => tab.segment)).toEqual([
       "",
+      "/meta",
+      "/keywords",
       "/audit",
       "/indexing",
-      "/keywords",
       "/links",
+      "/schema",
       "/urls",
+      "/ai-search",
       "/defaults",
     ]);
   });
