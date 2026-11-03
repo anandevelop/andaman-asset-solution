@@ -316,17 +316,17 @@ export async function getPublishedArticleSlugs(): Promise<string[]> {
 
 /** Published-article rows for the sitemap: slug + last modification. */
 export async function getArticleSitemapEntries(): Promise<
-  { slug: string; updatedAt: Date }[]
+  { slug: string; updatedAt: Date; coverImageUrl: string | null }[]
 > {
   return safeQuery(
     "newsArticle.findMany(sitemap)",
     () =>
       prisma.newsArticle.findMany({
         where: publishedWhere(),
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, coverImageUrl: true },
         orderBy: { publishedAt: "desc" },
       }),
-    [] as { slug: string; updatedAt: Date }[],
+    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null }[],
   );
 }
 

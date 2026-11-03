@@ -195,16 +195,16 @@ export async function getBrochureProjectOptions(): Promise<
  * getArticleSitemapEntries.
  */
 export async function getBrochureSitemapEntries(): Promise<
-  { slug: string; updatedAt: Date }[]
+  { slug: string; updatedAt: Date; coverImageUrl: string | null }[]
 > {
   return safeQuery(
     "eBrochure.findMany(sitemap)",
     () =>
       prisma.eBrochure.findMany({
         where: { isPublished: true },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, coverImageUrl: true },
         orderBy: { sortOrder: "asc" },
       }),
-    [] as { slug: string; updatedAt: Date }[],
+    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null }[],
   );
 }

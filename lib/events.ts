@@ -201,17 +201,17 @@ export async function getPublishedEventSlugs(): Promise<string[]> {
 
 /** Published events for the sitemap. */
 export async function getEventSitemapEntries(): Promise<
-  { slug: string; updatedAt: Date }[]
+  { slug: string; updatedAt: Date; coverImageUrl: string | null }[]
 > {
   return safeQuery(
     "event.findMany(sitemap)",
     () =>
       prisma.event.findMany({
         where: publishedWhere(),
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, coverImageUrl: true },
         orderBy: { startsAt: "desc" },
       }),
-    [] as { slug: string; updatedAt: Date }[],
+    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null }[],
   );
 }
 

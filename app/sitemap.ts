@@ -52,8 +52,15 @@ function latest(...dates: (Date | null | undefined)[]): Date {
  */
 function localized(
   path: string,
-  options: { lastModified?: Date; changeFrequency?: Entry["changeFrequency"]; priority?: number } = {},
+  options: {
+    lastModified?: Date;
+    changeFrequency?: Entry["changeFrequency"];
+    priority?: number;
+    /** Photos on the page, for the image sitemap (<image:image>). */
+    images?: (string | null | undefined)[];
+  } = {},
 ): MetadataRoute.Sitemap {
+  const images = imageUrls(options.images ?? []);
   const languages = Object.fromEntries(
     locales.map((locale) => [locale, `${siteConfig.url}/${locale}${path}`]),
   );
@@ -71,7 +78,26 @@ function localized(
     // 0.36000000000000004, and that is what would land in the XML.
     priority: Math.round((options.priority ?? 0.7) * (locale === defaultLocale ? 1 : 0.9) * 100) / 100,
     alternates: { languages },
+    ...(images.length > 0 && { images }),
   }));
+}
+
+/**
+ * Absolute, de-duplicated, at most 20, and XML-escaped: Next writes each
+ * one into <image:loc> as it is, so a "&" in a query string would break
+ * the whole file.
+ */
+function imageUrls(urls: readonly (string | null | undefined)[]): string[] {
+  const out: string[] = [];
+  for (const raw of urls) {
+    const value = raw?.trim();
+    if (!value) continue;
+    const absolute = /^https?:\/\//i.test(value) ? value : `${siteConfig.url}${value.startsWith("/") ? "" : "/"}${value}`;
+    const escaped = absolute.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    if (!out.includes(escaped)) out.push(escaped);
+    if (out.length === 20) break;
+  }
+  return out;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -87,6 +113,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               updatedAt: true,
               sitemapPriority: true,
               sitemapChangeFreq: true,
+              heroImageUrl: true,
+              gallery: true,
             },
             orderBy: { sortOrder: "asc" },
           }),
@@ -95,6 +123,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           updatedAt: Date;
           sitemapPriority: number | null;
           sitemapChangeFreq: string | null;
+          heroImageUrl: string | null;
+          gallery: string[];
         }[],
       ),
       getArticleSitemapEntries(),
@@ -223,6 +253,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency:
           (project.sitemapChangeFreq as Entry["changeFrequency"] | null) ?? "weekly",
         priority: project.sitemapPriority ?? 0.9,
+        images: [project.heroImageUrl, ...project.gallery],
       }),
     ),
 
@@ -232,6 +263,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // An article is written once and rarely revised.
         changeFrequency: "monthly",
         priority: 0.7,
+        images: [article.coverImageUrl],
       }),
     ),
 
@@ -240,6 +272,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: event.updatedAt,
         changeFrequency: "weekly",
         priority: 0.6,
+        images: [event.coverImageUrl],
       }),
     ),
 
@@ -250,6 +283,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: brochure.updatedAt,
         changeFrequency: "monthly",
         priority: 0.6,
+        images: [brochure.coverImageUrl],
       }),
     ),
   ];
