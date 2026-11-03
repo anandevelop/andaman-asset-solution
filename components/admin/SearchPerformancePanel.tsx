@@ -105,7 +105,7 @@ export default function SearchPerformancePanel({ locale, labels }: Props) {
     wait for it.
   */
   const [data, setData] = useState<SearchPerformance | null>(null);
-  const [range, setRange] = useState<SearchRange>("28d");
+  const [range, setRange] = useState<SearchRange>("24h");
   const [type, setType] = useState<SearchType>("web");
   const [tab, setTab] = useState<Breakdown>("query");
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -143,7 +143,7 @@ export default function SearchPerformancePanel({ locale, labels }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchSearchPerformance({ locale, range: "28d", type: "web", breakdown: "query", filters: {} }).then((first) => {
+    fetchSearchPerformance({ locale, range: "24h", type: "web", breakdown: "query", filters: {} }).then((first) => {
       if (!cancelled) setData(first);
     });
     return () => {

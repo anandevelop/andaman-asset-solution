@@ -166,7 +166,7 @@ export default async function AdminAnalyticsPage(props: Props) {
 
   const range: AnalyticsRange = (ANALYTICS_RANGES as readonly string[]).includes(searchParams.range ?? "")
     ? (searchParams.range as AnalyticsRange)
-    : "28";
+    : "1";
   const compare = searchParams.compare === "1";
   const rangeDays = range;
   // Same rounding the dashboard used when it owned this control: the source
