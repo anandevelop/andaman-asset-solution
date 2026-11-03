@@ -11,8 +11,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
 import Link from "next/link";
 
-export const ANALYTICS_RANGES = ["1", "7", "28", "90"] as const;
-export type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
+import { ANALYTICS_RANGES, type AnalyticsRange } from "@/lib/analytics/ranges";
 
 export default function AnalyticsHeaderControls({
   locale,

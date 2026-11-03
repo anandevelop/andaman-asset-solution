@@ -74,7 +74,8 @@ import { BREAKDOWNS, RANGES, SEARCH_TYPES } from "@/lib/seo/search-performance-s
 import { fetchLiveSnapshot } from "./live-actions";
 import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
 import { formatVital, type VitalKey } from "@/lib/analytics/vitals";
-import AnalyticsHeaderControls, { ANALYTICS_RANGES, type AnalyticsRange } from "@/components/admin/AnalyticsHeaderControls";
+import AnalyticsHeaderControls from "@/components/admin/AnalyticsHeaderControls";
+import { ANALYTICS_RANGES, type AnalyticsRange } from "@/lib/analytics/ranges";
 import Link from "next/link";
 import { BarChart3, KeyRound, Megaphone, Search as SearchIcon } from "lucide-react";
 import { getGoogleConfig } from "@/lib/google-config";
