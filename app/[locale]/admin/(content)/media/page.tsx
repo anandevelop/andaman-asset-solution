@@ -33,10 +33,11 @@ export default async function AdminMediaPage(props: Props) {
   const session = await requireAdmin(locale, Role.VIEWER);
   const canWrite = hasRole(session.role, Role.EDITOR);
 
-  const [t, library, aiAltOnUpload] = await Promise.all([
+  const [t, library, aiAltOnUpload, aiAltEnabled] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getMediaLibrary(),
     getAiAltOnUpload(),
+    isAiAltConfigured(),
   ]);
 
   const offline = isDatabaseOffline();
@@ -64,7 +65,7 @@ export default async function AdminMediaPage(props: Props) {
           unusedCount={library.unusedCount}
           legacyHostCount={library.legacyHostCount}
           truncated={library.truncated}
-          aiAltEnabled={isAiAltConfigured()}
+          aiAltEnabled={aiAltEnabled}
           aiAltOnUpload={aiAltOnUpload}
           canDeleteUnused={hasRole(session.role, Role.ADMIN)}
         />

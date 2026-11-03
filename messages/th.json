@@ -3233,6 +3233,32 @@
         "kindReservation": "การจองยูนิต",
         "kindWeekly": "สรุปรายสัปดาห์",
         "kindBackup": "สำรองข้อมูล"
+      },
+      "ai": {
+        "title": "AI (Google Gemini)",
+        "subtitle": "ใช้เขียน alt ของรูปในคลังสื่อ (ปุ่ม “AI เขียน alt ที่ขาด” และ “AI alt ตอนอัปโหลด”) ใช้ key ฟรีจาก Google AI Studio ได้เลย",
+        "statusAdmin": "เชื่อมต่อแล้ว · key บันทึกที่นี่",
+        "statusEnv": "เชื่อมต่อแล้ว · key จากเซิร์ฟเวอร์ (.env)",
+        "statusNone": "ยังไม่เชื่อมต่อ",
+        "undecryptable": "อ่าน key ที่บันทึกไว้ไม่ได้แล้ว (NEXTAUTH_SECRET ถูกเปลี่ยน) กรุณาวาง key ใหม่",
+        "keyLabel": "Gemini API key",
+        "keyPlaceholderNew": "วาง key (ขึ้นต้นด้วย AIza…)",
+        "keyPlaceholderKeep": "•••••••• บันทึกแล้ว — วาง key ใหม่ถ้าต้องการเปลี่ยน",
+        "keyHint": "ระบบจะทดสอบกับ Google ก่อนบันทึก เก็บแบบเข้ารหัส และจะไม่แสดง key อีก",
+        "getKey": "ขอ key ฟรี",
+        "modelLabel": "รุ่นโมเดล",
+        "modelHint": "เว้นว่างเพื่อใช้ค่าเริ่มต้น รุ่น Flash-Lite ใช้ฟรีได้เยอะสุดต่อวัน",
+        "save": "บันทึก",
+        "saved": "บันทึกแล้ว",
+        "removeKey": "ลบ key ที่บันทึกไว้",
+        "err": {
+          "BAD_KEY": "Google ไม่รับ key นี้",
+          "BAD_MODEL": "ไม่มีรุ่นโมเดลชื่อนี้",
+          "UNREACHABLE": "ติดต่อ Google ไม่ได้ ลองอีกครั้ง",
+          "INVALID_INPUT": "ตรวจสอบข้อมูลอีกครั้ง",
+          "FORBIDDEN": "เฉพาะผู้ดูแลระบบ",
+          "SAVE_FAILED": "บันทึกไม่สำเร็จ ลองอีกครั้ง"
+        }
       }
     },
     "security": {
@@ -4016,7 +4042,7 @@
         "written": "{count, plural, =0 {ยังไม่ได้เขียนรูปไหน} other {เขียน alt แล้ว # รูป}}",
         "someFailed": "ไม่สำเร็จ {count} รูป ({error})",
         "remaining": "เหลืออีก {count} รูป — กดอีกครั้ง",
-        "notConfigured": "ตั้ง GEMINI_API_KEY บนเซิร์ฟเวอร์ก่อนใช้ AI เขียน alt",
+        "notConfigured": "ยังไม่ได้ใส่ Gemini key — ตั้งค่าที่ ตั้งค่า → การเชื่อมต่อ",
         "failed": "เขียน alt ไม่สำเร็จ ลองอีกครั้ง"
       },
       "deleteUnused": {

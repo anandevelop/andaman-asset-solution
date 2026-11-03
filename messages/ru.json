@@ -3233,6 +3233,32 @@
         "kindReservation": "Бронь",
         "kindWeekly": "Недельная сводка",
         "kindBackup": "Резервная копия"
+      },
+      "ai": {
+        "title": "AI (Google Gemini)",
+        "subtitle": "Writes image alt text in the media library (“AI: write missing alt”, “AI alt on upload”). The free key from Google AI Studio is enough.",
+        "statusAdmin": "Connected · key saved here",
+        "statusEnv": "Connected · key from the server (.env)",
+        "statusNone": "Not connected",
+        "undecryptable": "The saved key can no longer be read (NEXTAUTH_SECRET changed). Paste it again.",
+        "keyLabel": "Gemini API key",
+        "keyPlaceholderNew": "Paste the key (AIza…)",
+        "keyPlaceholderKeep": "•••••••• saved — paste a new key to replace it",
+        "keyHint": "Checked with Google before it is saved, then stored encrypted and never shown again.",
+        "getKey": "Get a free key",
+        "modelLabel": "Model",
+        "modelHint": "Leave blank for the default. Flash-Lite has the largest free daily allowance.",
+        "save": "Save",
+        "saved": "Saved",
+        "removeKey": "Remove saved key",
+        "err": {
+          "BAD_KEY": "Google rejected this key",
+          "BAD_MODEL": "This model name does not exist",
+          "UNREACHABLE": "Could not reach Google — try again",
+          "INVALID_INPUT": "Check the fields",
+          "FORBIDDEN": "Admins only",
+          "SAVE_FAILED": "Could not save — try again"
+        }
       }
     },
     "security": {
@@ -4016,7 +4042,7 @@
         "written": "{count, plural, =0 {Nothing written} one {Wrote alt for # image} other {Wrote alt for # images}}",
         "someFailed": "{count} failed ({error})",
         "remaining": "{count} still missing — press again",
-        "notConfigured": "Set GEMINI_API_KEY on the server to use AI alt text",
+        "notConfigured": "No Gemini key yet — add it in Settings → Integrations",
         "failed": "Could not write alt text — try again"
       },
       "deleteUnused": {

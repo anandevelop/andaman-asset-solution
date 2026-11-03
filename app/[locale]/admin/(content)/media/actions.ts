@@ -74,7 +74,7 @@ export async function createMedia(
 
   // "AI alt ตอนอัปโหลด": after the response, so the upload is not kept
   // waiting on the model. Checks the switch itself.
-  if (isAiAltConfigured()) after(() => altAfterUpload(media.id));
+  after(() => altAfterUpload(media.id));
 
   revalidateMedia(locale);
   return { ok: true, id: media.id };
@@ -210,7 +210,7 @@ export async function generateMissingAltText(
   skip: string[] = [],
 ): Promise<AiAltResult> {
   await requireAdminAction(Role.EDITOR);
-  if (!isAiAltConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
+  if (!(await isAiAltConfigured())) return { ok: false, error: "NOT_CONFIGURED" };
 
   try {
     const started = Date.now();
@@ -256,7 +256,7 @@ export async function generateMissingAltText(
 /** The "AI alt ตอนอัปโหลด" switch. */
 export async function toggleAiAltOnUpload(locale: string, on: boolean): Promise<ActionResult> {
   const actor = await requireAdminAction(Role.EDITOR);
-  if (on && !aiAltProvider()) return { ok: false, error: "NOT_CONFIGURED" };
+  if (on && !(await aiAltProvider())) return { ok: false, error: "NOT_CONFIGURED" };
   try {
     await setAiAltOnUpload(on, actor.id);
     revalidateMedia(locale);

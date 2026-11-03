@@ -8,6 +8,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/prisma", () => ({ prisma: { siteSetting: { findMany: async () => [] } } }));
 
 import {
   AltError,
@@ -17,6 +18,7 @@ import {
   parseAltReply,
   retryDelayFrom,
 } from "@/lib/ai-alt";
+import { invalidateAiConfig } from "@/lib/ai-config";
 
 const env = { ...process.env };
 afterEach(() => {
@@ -48,14 +50,17 @@ describe("altPrompt", () => {
 });
 
 describe("provider", () => {
-  it("prefers Gemini, falls back to Anthropic, else none", () => {
+  it("prefers Gemini, falls back to Anthropic, else none", async () => {
     process.env.GEMINI_API_KEY = "g";
     process.env.ANTHROPIC_API_KEY = "a";
-    expect(aiAltProvider()).toBe("gemini");
+    invalidateAiConfig();
+    expect(await aiAltProvider()).toBe("gemini");
     process.env.GEMINI_API_KEY = "";
-    expect(aiAltProvider()).toBe("anthropic");
+    invalidateAiConfig();
+    expect(await aiAltProvider()).toBe("anthropic");
     process.env.ANTHROPIC_API_KEY = "";
-    expect(aiAltProvider()).toBeNull();
+    invalidateAiConfig();
+    expect(await aiAltProvider()).toBeNull();
   });
 });
 

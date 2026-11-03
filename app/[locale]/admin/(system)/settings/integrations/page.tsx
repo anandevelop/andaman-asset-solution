@@ -25,6 +25,9 @@ import {
 import { updateSettings } from "../actions";
 import SettingsForm, { type SettingGroup } from "@/components/admin/SettingsForm";
 import LineSettingsCard, { type LineCardLabels } from "@/components/admin/LineSettingsCard";
+import AiSettingsCard, { type AiCardLabels } from "@/components/admin/AiSettingsCard";
+import { DEFAULT_GEMINI_MODEL, getAiConfig } from "@/lib/ai-config";
+import { saveAiSettingsAction } from "./ai-actions";
 import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
 import { fetchLineBotInfo } from "@/lib/line";
 
@@ -35,13 +38,20 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, current, overridden, line, deliveries] = await Promise.all([
+  const [t, current, overridden, line, deliveries, ai] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSettingsForEditing(),
     getOverriddenKeys(),
     getLineConfig(),
     getLineDeliveries(),
+    getAiConfig(),
   ]);
+
+  const aiRaw = t.raw("settings.ai") as Record<string, string> & { err: Record<string, string> };
+  const aiLabels = {
+    ...Object.fromEntries(Object.entries(aiRaw).filter(([, v]) => typeof v === "string")),
+    ...Object.fromEntries(Object.entries(aiRaw.err).map(([k, v]) => [`err.${k}`, v])),
+  } as AiCardLabels;
 
   // Asks LINE which OA the token belongs to: proof the token works, and
   // the name the card shows. Five-second timeout inside, never throws.
@@ -111,6 +121,17 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.integrationsEnvNote")}
       </p>
+
+      <AiSettingsCard
+        locale={locale}
+        keySource={ai.keySource}
+        model={ai.model}
+        modelIsSaved={ai.modelSource === "admin"}
+        defaultModel={DEFAULT_GEMINI_MODEL}
+        undecryptable={ai.undecryptable}
+        labels={aiLabels}
+        save={saveAiSettingsAction.bind(null, locale)}
+      />
 
       <LineSettingsCard
         locale={locale}

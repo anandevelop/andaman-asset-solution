@@ -11,9 +11,10 @@
  *
  * PROVIDER
  *
- * Google Gemini by default — GEMINI_API_KEY from aistudio.google.com, free
- * tier. GEMINI_MODEL picks the model (default gemini-2.5-flash-lite: the
- * free tier's highest daily allowance, and plenty for one sentence).
+ * Google Gemini by default — a key from aistudio.google.com (free tier),
+ * saved at /admin/settings/integrations or as GEMINI_API_KEY; see
+ * lib/ai-config.ts. Default model gemini-2.5-flash-lite: the free tier's
+ * highest daily allowance, and plenty for one sentence.
  * ANTHROPIC_API_KEY is used instead only when no Gemini key is set.
  * Note: on Gemini's free tier Google may use the prompts and images to
  * improve its products — these are already-public website photos.
@@ -32,9 +33,9 @@
 import "server-only";
 import { absoluteAssetUrl } from "@/lib/seo";
 import { siteConfig } from "@/config/site";
+import { getAiConfig } from "@/lib/ai-config";
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -46,14 +47,16 @@ export type AltDraft = Record<AltLocale, string>;
 
 export type AltProvider = "gemini" | "anthropic";
 
-export function aiAltProvider(): AltProvider | null {
-  if (process.env.GEMINI_API_KEY?.trim()) return "gemini";
-  if (process.env.ANTHROPIC_API_KEY?.trim()) return "anthropic";
+/** Gemini when a key is saved in the back office or GEMINI_API_KEY is set. */
+export async function aiAltProvider(): Promise<AltProvider | null> {
+  const config = await getAiConfig();
+  if (config.geminiKey) return "gemini";
+  if (config.anthropicKey) return "anthropic";
   return null;
 }
 
-export function isAiAltConfigured(): boolean {
-  return aiAltProvider() !== null;
+export async function isAiAltConfigured(): Promise<boolean> {
+  return (await aiAltProvider()) !== null;
 }
 
 export class AltError extends Error {
@@ -183,10 +186,10 @@ async function post(url: string, headers: Record<string, string>, body: unknown)
 }
 
 async function callGemini(image: { data: string; mediaType: string }, prompt: string): Promise<string> {
-  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL;
+  const config = await getAiConfig();
   const { response, json } = await post(
-    `${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`,
-    { "x-goog-api-key": process.env.GEMINI_API_KEY!.trim() },
+    `${GEMINI_URL}/${encodeURIComponent(config.model)}:generateContent`,
+    { "x-goog-api-key": config.geminiKey! },
     {
       contents: [
         { role: "user", parts: [{ inline_data: { mime_type: image.mediaType, data: image.data } }, { text: prompt }] },
@@ -208,7 +211,7 @@ async function callGemini(image: { data: string; mediaType: string }, prompt: st
 async function callAnthropic(image: { data: string; mediaType: string }, prompt: string): Promise<string> {
   const { response, json } = await post(
     ANTHROPIC_URL,
-    { "x-api-key": process.env.ANTHROPIC_API_KEY!.trim(), "anthropic-version": "2023-06-01" },
+    { "x-api-key": (await getAiConfig()).anthropicKey!, "anthropic-version": "2023-06-01" },
     {
       model: process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_ANTHROPIC_MODEL,
       max_tokens: 600,
@@ -238,7 +241,7 @@ export async function draftAltText(
   imageUrl: string,
   context: { tags: string[]; usedOn: string[] },
 ): Promise<AltDraft> {
-  const provider = aiAltProvider();
+  const provider = await aiAltProvider();
   if (!provider) throw new AltError("NOT_CONFIGURED");
 
   const image = await imageAsBase64(imageUrl);

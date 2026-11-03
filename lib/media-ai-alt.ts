@@ -67,7 +67,7 @@ export async function setAiAltOnUpload(on: boolean, actorId?: string): Promise<v
 
 /** createMedia's hook: write alt for a fresh upload when the switch is on. */
 export async function altAfterUpload(mediaId: string): Promise<void> {
-  if (!isAiAltConfigured() || !(await getAiAltOnUpload())) return;
+  if (!(await isAiAltConfigured()) || !(await getAiAltOnUpload())) return;
   const row = await prisma.media.findUnique({
     where: { id: mediaId },
     select: { id: true, url: true, tags: true, altText: true, mimeType: true },
