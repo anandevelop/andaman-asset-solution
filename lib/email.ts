@@ -53,6 +53,15 @@ function getTransporter(): Transporter {
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
         : undefined,
+      /*
+        Fail in seconds, not minutes. Nodemailer waits two minutes for a
+        connection by default; on a blocked port that outlived nginx's
+        60-second proxy timeout, so "Send test now" spun and then the whole
+        reports page fell into its error boundary instead of showing why.
+      */
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
     });
   }
   return transporter;
@@ -169,11 +178,23 @@ export async function sendReportEmail(args: {
 
     return { ok: true, recipientCount: args.to.length };
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    return { ok: false, error: explainSmtpError(error) };
   }
+}
+
+/** Ports DigitalOcean blocks outbound on droplets (see .env.example §12). */
+const BLOCKED_PORTS = new Set([25, 465, 587]);
+
+/**
+ * The error as it came, plus the likely cause when the message alone is
+ * not enough to act on: a timeout on a port the host blocks.
+ */
+export function explainSmtpError(error: unknown, port = Number(process.env.SMTP_PORT ?? 587)): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/timeout|ETIMEDOUT|ECONNREFUSED/i.test(message) && BLOCKED_PORTS.has(port)) {
+    return `${message} — port ${port} is blocked on DigitalOcean; use SMTP_PORT=2465 (SMTP_SECURE=true) or 2587 with Resend`;
+  }
+  return message;
 }
 
 /**

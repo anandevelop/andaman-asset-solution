@@ -203,7 +203,14 @@ export default function ReportScheduleCard({
         onClick={() =>
           startTransition(async () => {
             setResult(null);
-            setResult(await action());
+            // A request that dies on the way (a proxy timeout, a dropped
+            // connection) throws here; caught, it is shown on the card
+            // instead of taking the whole page to its error boundary.
+            try {
+              setResult(await action());
+            } catch (error) {
+              setResult({ ok: false, error: error instanceof Error ? error.message : String(error) });
+            }
           })
         }
         className="admin-btn-ghost mt-3"

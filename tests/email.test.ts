@@ -436,3 +436,12 @@ describe("sendRsvpConfirmationEmail", () => {
     },
   );
 });
+
+describe("explainSmtpError", () => {
+  it("names the blocked port on a timeout", async () => {
+    const { explainSmtpError } = await import("@/lib/email");
+    expect(explainSmtpError(new Error("Connection timeout"), 587)).toMatch(/port 587 is blocked.*2465/);
+    expect(explainSmtpError(new Error("Connection timeout"), 2465)).toBe("Connection timeout");
+    expect(explainSmtpError(new Error("Invalid login"), 587)).toBe("Invalid login");
+  });
+});
