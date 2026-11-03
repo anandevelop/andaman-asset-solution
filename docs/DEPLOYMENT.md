@@ -712,3 +712,17 @@ npm run build
 ```
 
 CI runs all four plus `prisma validate` and a Docker build smoke test.
+
+---
+
+## Rolling back
+
+Every push to `main` deploys as soon as the image is smoke-tested and the
+schema, lint, typecheck and unit tests pass (`ci.yml` → `deploy`). The
+end-to-end shards run alongside and no longer hold the deploy up, so a red
+e2e shard can arrive after the commit is already live.
+
+To put the previous build back: GitHub → Actions → **Deploy** → *Run
+workflow*, and give it the sha of the last good commit. Each image is kept
+in GHCR under its commit sha; the workflow points `:latest` at it and the
+server pulls it, exactly as a normal deploy does. Then fix forward.

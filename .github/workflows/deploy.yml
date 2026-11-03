@@ -1,36 +1,62 @@
 name: Deploy
 
-# Runs after CI finishes on main, not on push directly — `docker
-# compose pull` below only makes sense once the `docker` job in
-# ci.yml has actually pushed a new :latest image to GHCR, and that job
-# itself only runs after the build and its smoke test pass. Triggering
-# on push instead would race CI's own image push, sometimes deploying
-# before the new image exists yet.
+# Called by ci.yml's `deploy` job on main, once the image is smoke-tested
+# and the schema, lint, typecheck and unit tests pass (the end-to-end
+# shards run alongside and do not hold it up). Also runnable by hand from
+# the Actions tab, to redeploy a given commit's image — a rollback is the
+# sha of the last good commit.
 on:
-  workflow_run:
-    workflows: ["CI"]
-    branches: [main]
-    types: [completed]
-
-# One deploy at a time, queued rather than cancelled — an in-flight
-# `docker compose up -d` is not something to interrupt.
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  workflow_call:
+    inputs:
+      commit:
+        description: The commit whose image to deploy
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Commit sha whose image (ghcr :<sha>) to deploy
+        required: true
+        type: string
 
 jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    # Only when CI's full run (lint, tests, e2e, build, docker) actually
-    # succeeded — a red CI run should never reach the server.
-    if: github.event.workflow_run.conclusion == 'success'
+    # One deploy at a time, queued rather than cancelled — an in-flight
+    # `docker compose up -d` is not something to interrupt. On the job, so
+    # it holds for both the call from CI and a run by hand.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
     steps:
+      # :latest is what docker-compose.prod.yml pulls. It moves here, not
+      # in the docker job, so it only ever names an image whose commit
+      # passed every gate this deploy waited for. Retagging copies a
+      # manifest — nothing is rebuilt or re-uploaded.
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Point :latest at this commit's image
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/${{ github.repository }}:latest \
+            ghcr.io/${{ github.repository }}:${{ inputs.commit }}
+
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.0
         env:
-          # The commit CI just built and pushed as :latest.
-          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+          # The commit whose image :latest now names.
+          EXPECTED_COMMIT: ${{ inputs.commit }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

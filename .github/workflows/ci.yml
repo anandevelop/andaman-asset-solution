@@ -7,10 +7,12 @@ on:
     branches: [main, develop]
 
 # A new push to the same branch cancels the in-flight run. Nobody needs the
-# result of a commit that has already been superseded.
+# result of a commit that has already been superseded — except on main,
+# where the run deploys: cancelling it could cut `docker compose up -d` off
+# half way. There a newer push waits for the current run to finish.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   NEXT_TELEMETRY_DISABLED: 1
@@ -257,7 +259,10 @@ jobs:
   docker:
     name: Docker build
     runs-on: ubuntu-latest
-    needs: [prisma, quality, test]
+    # No `needs`: it starts at once, beside lint and the unit tests, instead
+    # of after them (~2.5 min saved). Safe because it only pushes the
+    # :<sha> tag — :latest, the one the server pulls, is moved by `deploy`
+    # below, which does wait for lint, typecheck and the unit tests.
     # Only on push: a PR does not need the image, and this is the slowest job.
     if: github.event_name == 'push'
     permissions:
@@ -414,8 +419,27 @@ jobs:
 
       - name: Push image
         if: github.ref == 'refs/heads/main'
-        # :latest is what the compose file pulls; the sha tag is what
-        # makes a rollback possible once :latest has moved on.
-        run: |
-          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}:latest
+        # Only the sha tag. :latest, what the compose file pulls, is moved
+        # by the deploy job once every gate has passed.
+        run: docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  # ── Deploy ────────────────────────────────────────────────────────────
+  # Main only, as soon as the image is smoke-tested and the schema, lint,
+  # typecheck and unit tests are green. It does NOT wait for the end-to-end
+  # shards: they take ~8 minutes and used to hold every deploy for them
+  # (11 min push → live). They still run on every push and on every PR —
+  # where they still block the merge — and a red shard on main shows on the
+  # run and in the commit status, to be fixed forward or rolled back
+  # (docs/DEPLOYMENT.md, "Rolling back").
+  deploy:
+    name: Deploy
+    needs: [prisma, quality, test, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      commit: ${{ github.sha }}
+    secrets: inherit
+
