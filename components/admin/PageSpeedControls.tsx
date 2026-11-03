@@ -217,7 +217,13 @@ export function SpeedScanButton({ initial, labels: l }: { initial: Scan | null; 
   useEffect(() => {
     if (!running) return;
     const timer = setInterval(async () => {
-      const next = await scanStateAction();
+      const next = await scanStateAction().catch(() => undefined);
+      if (next === undefined) return; // a dropped request: try again next tick
+      // Still "running" half an hour on: the scan crashed. Stop waiting.
+      if (next && !next.finishedAt && Date.now() - Date.parse(next.startedAt) > 30 * 60_000) {
+        setScan(null);
+        return;
+      }
       setScan(next);
       if (next?.finishedAt) router.refresh();
     }, 3000);

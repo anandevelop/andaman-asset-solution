@@ -412,9 +412,12 @@ export async function getUrlHealth(): Promise<UrlHealth> {
               hits: true,
             },
           }),
+          // Most-hit first, bounded: the table is written by anonymous
+          // POSTs (app/api/not-found, capped at 5,000 rows there too).
           prisma.notFoundHit.findMany({
             where: { hiddenAt: null },
             orderBy: { hits: "desc" },
+            take: 1000,
             select: { id: true, path: true, referer: true, hits: true, lastHitAt: true },
           }),
           prisma.notFoundHit.count({ where: { hiddenAt: { not: null } } }),

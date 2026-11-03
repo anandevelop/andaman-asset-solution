@@ -25,12 +25,20 @@ export type GaRange = (typeof GA_RANGES)[number];
 
 type DateRange = { startDate: string; endDate: string };
 
-/** GA4 relative dates: "1" = today and yesterday's partial day. */
+/**
+ * GA4 relative dates, both windows the same length. "N daysAgo..today" is
+ * N+1 days, so the current window starts at N-1 days ago. "1" (24 h) has
+ * no hourly window in GA4: it reads today plus yesterday, two days, and
+ * compares with the two days before.
+ *
+ * Until November 2026 the current window was one day longer than the one
+ * it was compared with: +14 % "growth" on flat traffic for 7 days.
+ */
 export function dateRangesFor(range: GaRange, compare: boolean): DateRange[] {
-  const days = Number(range);
-  const current = { startDate: `${days}daysAgo`, endDate: "today" };
+  const days = Math.max(2, Number(range));
+  const current = { startDate: `${days - 1}daysAgo`, endDate: "today" };
   if (!compare) return [current];
-  return [current, { startDate: `${days * 2}daysAgo`, endDate: `${days + 1}daysAgo` }];
+  return [current, { startDate: `${days * 2 - 1}daysAgo`, endDate: `${days}daysAgo` }];
 }
 
 export type Totals = { users: number; sessions: number; views: number; engagementRate: number; avgSessionSec: number };

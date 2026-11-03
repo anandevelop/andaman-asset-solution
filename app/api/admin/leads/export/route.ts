@@ -14,6 +14,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { leadScopeWhere } from "@/lib/leads-board";
 import { LeadStatus, Prisma } from "@prisma/client";
 import { Role } from "@prisma/client";
 import { z } from "zod";
@@ -51,18 +52,16 @@ const querySchema = z.object({
     .pipe(z.array(z.string().regex(/^[a-z0-9]{10,40}$/)).max(100)),
 });
 
-/** "2026-08-01" → Date, or null. Invalid input is ignored, not rejected. */
+/**
+ * "2026-08-01" → the start (or end) of that day in Bangkok, or null.
+ * Invalid input is ignored, not rejected. `new Date("2026-08-01")` is UTC
+ * midnight, i.e. 07:00 in Bangkok, which used to drop the first seven
+ * hours of the start day.
+ */
 function parseDate(value: string | undefined, endOfDay = false): Date | null {
-  if (!value) return null;
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  // `to=2026-08-31` should include everything on the 31st, not stop at
-  // midnight — an off-by-one that silently drops a day of leads.
-  if (endOfDay) date.setHours(23, 59, 59, 999);
-
-  return date;
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}+07:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export async function GET(request: Request) {
@@ -98,7 +97,9 @@ export async function GET(request: Request) {
   const fromDate = parseDate(from);
   const toDate = parseDate(to, true);
 
-  const where: Prisma.LeadInquiryWhereInput = {
+  // Held to the same rows the leads board shows this account.
+  const scope = await leadScopeWhere(actor);
+  const filters: Prisma.LeadInquiryWhereInput = {
     ...(ids.length > 0 ? { id: { in: ids } } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(fromDate || toDate
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
         }
       : {}),
   };
+  const where: Prisma.LeadInquiryWhereInput = scope ? { AND: [scope, filters] } : filters;
 
   try {
     const leads = await prisma.leadInquiry.findMany({

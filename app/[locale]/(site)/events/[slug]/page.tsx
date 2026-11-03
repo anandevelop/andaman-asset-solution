@@ -11,6 +11,7 @@
  */
 
 import type { Metadata } from "next";
+import { fitTitle } from "@/lib/page-open-graph";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -57,7 +58,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const description = truncate(event.metaDescription, 300);
 
   return {
-    title: event.metaTitle,
+    title: await fitTitle(event.metaTitle),
     description,
     alternates: localizedAlternates(locale, `/events/${event.slug}`),
     // Per-locale admin toggle (EventForm's SEO section) — see the

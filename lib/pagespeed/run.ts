@@ -29,7 +29,7 @@ import { siteConfig } from "@/config/site";
 import { pushLineAlert } from "@/lib/line";
 import { getPsiConfig, strategiesFor } from "./config";
 import { parsePsi, type PsiResponse, type Strategy } from "./parse";
-import { CACHE_MS, scanBlocked, startOfDayBangkok, type RunSource, type ScanState } from "./limits";
+import { CACHE_MS, SCAN_STALE_MS, scanBlocked, startOfDayBangkok, type RunSource, type ScanState } from "./limits";
 
 export { CACHE_MS, SCAN_COOLDOWN_MS, scanBlocked, startOfDayBangkok, type RunSource, type ScanState } from "./limits";
 
@@ -155,6 +155,26 @@ export async function runPageSpeed(input: {
 
 // ── The scan: the preset pages on each configured device ────────────────
 
+const LOCK_KEY = "psi.scanLock";
+
+/**
+ * Atomic: creating a row with a fixed primary key succeeds for exactly one
+ * caller. A lock older than SCAN_STALE_MS belongs to a scan that crashed
+ * (the process restarted mid-scan) and is taken over.
+ */
+async function claimScanLock(): Promise<boolean> {
+  const create = () =>
+    prisma.siteSetting.create({ data: { key: LOCK_KEY, value: new Date().toISOString() } }).then(
+      () => true,
+      () => false,
+    );
+  if (await create()) return true;
+  const stale = await prisma.siteSetting.deleteMany({
+    where: { key: LOCK_KEY, updatedAt: { lt: new Date(Date.now() - SCAN_STALE_MS) } },
+  });
+  return stale.count > 0 ? create() : false;
+}
+
 export async function getScanState(): Promise<ScanState | null> {
   const row = await prisma.siteSetting.findUnique({ where: { key: SCAN_KEY } }).catch(() => null);
   if (!row) return null;
@@ -211,6 +231,9 @@ export async function runScan(source: RunSource): Promise<
   if (!config.apiKey) return { ok: false, error: "NO_KEY" };
   const blocked = scanBlocked(await getScanState(), source);
   if (blocked) return { ok: false, error: blocked.reason, until: blocked.until };
+  // Check-then-write above is not enough on its own: two clicks (or two
+  // admins) a moment apart would both pass it. The lock row is the claim.
+  if (!(await claimScanLock())) return { ok: false, error: "RUNNING" };
 
   const pages = await presetPages("th");
   const jobs = pages.flatMap((page) => strategiesFor(config.strategies).map((strategy) => ({ page, strategy })));
@@ -237,6 +260,7 @@ export async function runScan(source: RunSource): Promise<
   } finally {
     state.finishedAt = new Date().toISOString();
     await putScanState(state).catch(() => {});
+    await prisma.siteSetting.deleteMany({ where: { key: LOCK_KEY } }).catch(() => {});
   }
 
   if (source === "scheduled" && config.alertBelow > 0) {
@@ -276,11 +300,36 @@ async function alertOnDrops(
 
 // ── Reads for the speed tab ─────────────────────────────────────────────
 
+/** A run without its two JSON columns: the table never shows them. */
+export type RunSummary = Omit<PageSpeedRun, "field" | "opportunities">;
+
 export type PathSummary = {
   path: string;
-  latest: PageSpeedRun;
+  latest: RunSummary;
   previousPerformance: number | null;
 };
+
+const SUMMARY_SELECT = {
+  id: true,
+  url: true,
+  path: true,
+  strategy: true,
+  source: true,
+  ok: true,
+  error: true,
+  performance: true,
+  accessibility: true,
+  bestPractices: true,
+  seo: true,
+  fcpMs: true,
+  lcpMs: true,
+  tbtMs: true,
+  siMs: true,
+  ttfbMs: true,
+  cls: true,
+  pageBytes: true,
+  createdAt: true,
+} satisfies Prisma.PageSpeedRunSelect;
 
 /** The latest successful run of every path tested in the last 90 days. */
 export async function latestByPath(strategy: Strategy): Promise<PathSummary[]> {
@@ -288,6 +337,7 @@ export async function latestByPath(strategy: Strategy): Promise<PathSummary[]> {
     where: { strategy, ok: true, createdAt: { gte: new Date(Date.now() - 90 * 86_400_000) } },
     orderBy: { createdAt: "desc" },
     take: 2000,
+    select: SUMMARY_SELECT,
   });
   const out = new Map<string, PathSummary>();
   for (const row of rows) {

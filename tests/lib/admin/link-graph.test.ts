@@ -26,7 +26,9 @@ const { findMany, updateMany, createMany, deleteMany, transaction, newsArticleFi
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    contentLink: { findMany, updateMany, createMany, deleteMany },
+    // groupBy (the external check's distinct URLs) answers from the same
+    // mock: both are given [{ toPath }] rows.
+    contentLink: { findMany, groupBy: findMany, updateMany, createMany, deleteMany },
     newsArticle: { findMany: newsArticleFindMany },
     project: { findMany: emptyFindMany },
     event: { findMany: emptyFindMany },

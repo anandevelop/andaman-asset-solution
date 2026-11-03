@@ -83,11 +83,16 @@ export async function getVitalsOverview(rangeDays: number): Promise<VitalsOvervi
         // table because the rollups deliberately do not carry a sha — a
         // day can span two deploys, and averaging across them is the thing
         // the marker exists to make visible.
-        prisma.webVital.findMany({
+        //
+        // groupBy, not findMany + distinct: Prisma applies `distinct` in
+        // memory, so that read every raw row of the window, then kept the
+        // 20 OLDEST deploys. Here the database groups, and the 20 newest
+        // are kept and put back in time order below.
+        prisma.webVital.groupBy({
+          by: ["commitSha"],
           where: { createdAt: { gte: since }, commitSha: { not: null } },
-          select: { commitSha: true, createdAt: true },
-          distinct: ["commitSha"],
-          orderBy: { createdAt: "asc" },
+          _min: { createdAt: true },
+          orderBy: { _min: { createdAt: "desc" } },
           take: 20,
         }),
       ]);
@@ -98,10 +103,14 @@ export async function getVitalsOverview(rangeDays: number): Promise<VitalsOvervi
         overall: overallByDevice(rollups),
         routes: worstRoutes(rollups),
         trend: trendByDay(rollups),
-        deploys: deployRows.map((row) => ({
-          day: row.createdAt.toISOString().slice(0, 10),
-          commitSha: (row.commitSha ?? "").slice(0, 7),
-        })),
+        deploys: deployRows
+          .filter((row) => row._min.createdAt)
+          .map((row) => ({ at: row._min.createdAt as Date, sha: row.commitSha }))
+          .sort((a, b) => a.at.getTime() - b.at.getTime())
+          .map((row) => ({
+            day: row.at.toISOString().slice(0, 10),
+            commitSha: (row.sha ?? "").slice(0, 7),
+          })),
         empty: false,
       };
     },

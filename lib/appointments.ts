@@ -20,6 +20,7 @@ import { AppointmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { LEAD_CANDIDATE_WHERE } from "@/lib/lead-routing";
 import { safeQuery } from "@/lib/db";
+import { BANGKOK_OFFSET_MS } from "@/lib/admin/month-grid";
 
 const DAY_MS = 24 * 60 * 60_000;
 
@@ -39,7 +40,9 @@ export function parseWeekParam(value: string | undefined): Date {
     const parsed = new Date(`${value}T00:00:00Z`);
     if (!Number.isNaN(parsed.getTime())) return mondayOf(parsed);
   }
-  return mondayOf(new Date());
+  // This week in Bangkok: before 07:00 on a Monday the UTC date is still
+  // Sunday, and the calendar opened on last week.
+  return mondayOf(new Date(Date.now() + BANGKOK_OFFSET_MS));
 }
 
 export function weekDays(weekStart: Date): Date[] {
@@ -118,7 +121,9 @@ export async function getWeekAppointments(weekStart: Date): Promise<AppointmentC
     "getWeekAppointments",
     async () => {
       const rows = await prisma.appointment.findMany({
-        where: { scheduledAt: { gte: weekStart, lt: weekEnd } },
+        // The week's Bangkok days: each starts at 00:00 +07, 17:00 UTC
+        // the day before.
+        where: { scheduledAt: { gte: new Date(weekStart.getTime() - BANGKOK_OFFSET_MS), lt: new Date(weekEnd.getTime() - BANGKOK_OFFSET_MS) } },
         orderBy: { scheduledAt: "asc" },
         select: CARD_SELECT,
       });
@@ -134,7 +139,7 @@ export async function getAppointmentsBetween(from: Date, to: Date): Promise<Appo
     "getAppointmentsBetween",
     async () => {
       const rows = await prisma.appointment.findMany({
-        where: { scheduledAt: { gte: from, lt: to } },
+        where: { scheduledAt: { gte: new Date(from.getTime() - BANGKOK_OFFSET_MS), lt: new Date(to.getTime() - BANGKOK_OFFSET_MS) } },
         orderBy: { scheduledAt: "asc" },
         select: CARD_SELECT,
       });

@@ -23,6 +23,7 @@ import "server-only";
 
 import { UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { latestAuditByRecord } from "@/lib/admin/latest-audit";
 import { safeQuery } from "@/lib/db";
 import { sortUnitsWithinGroups } from "@/lib/unit-order";
 
@@ -168,17 +169,7 @@ export async function getAdminProjectUnits(projectId: string): Promise<UnitRow[]
       );
 
       const audits = units.length
-        ? await prisma.auditLog.findMany({
-            where: { model: AUDIT_MODEL, recordId: { in: units.map((unit) => unit.id) } },
-            orderBy: { createdAt: "desc" },
-            distinct: ["recordId"],
-            select: {
-              recordId: true,
-              createdAt: true,
-              actorEmail: true,
-              actor: { select: { name: true } },
-            },
-          })
+        ? await latestAuditByRecord(AUDIT_MODEL, units.map((unit) => unit.id))
         : [];
 
       const auditByUnit = new Map(audits.map((entry) => [entry.recordId, entry]));

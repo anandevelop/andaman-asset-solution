@@ -228,6 +228,7 @@ const EXTERNAL_CHECK_TIMEOUT_MS = 8_000;
  *  external-link count is dozens, not thousands, so no per-host throttling
  *  or queue is worth building for that scale. */
 const EXTERNAL_CHECK_CONCURRENCY = 5;
+const MAX_EXTERNAL_CHECKS = 500;
 
 /** Same numbers as app/api/validate-email/route.ts's MX cache. */
 const CACHE_TTL_MS = 60 * 60_000;
@@ -266,12 +267,32 @@ export async function runWithLimit<T, R>(items: T[], limit: number, worker: (ite
  *  failure or timeout resolves to 0, never throws — matching seo-check.ts's
  *  own status:0 sentinel, so one bad link never kills a batch of a
  *  hundred. */
+/** Hosts the server must never be sent to by a link in an article. */
+export function isPrivateHost(url: string): boolean {
+  let host: string;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return true;
+    host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  } catch {
+    return true;
+  }
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host.endsWith(".local")) return true;
+  if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return true;
+  if (host.includes(":")) return host === "::1" || /^(fc|fd|fe80)/.test(host); // IPv6 literal
+  return !host.includes(".");
+}
+
 async function probe(url: string): Promise<number> {
+  if (isPrivateHost(url)) return 0;
   const attempt = async (method: "HEAD" | "GET"): Promise<number> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), EXTERNAL_CHECK_TIMEOUT_MS);
     try {
-      const response = await fetch(url, { method, signal: controller.signal, redirect: "follow" });
+      // "manual": a 3xx already means the link works, and following it
+      // could walk the server onto an address isPrivateHost would refuse.
+      const response = await fetch(url, { method, signal: controller.signal, redirect: "manual" });
+      await response.body?.cancel().catch(() => {});
       return response.status;
     } catch {
       return 0;
@@ -289,10 +310,13 @@ async function probe(url: string): Promise<number> {
  *  and writes the result back onto every row sharing that URL. A separate
  *  operation from scanAndPersistLinkGraph — see this file's header. */
 export async function checkExternalLinkStatuses(): Promise<ExternalLinkCheckResult> {
-  const rows = await prisma.contentLink.findMany({
+  // groupBy, not distinct (in memory); capped so one press of the button
+  // cannot become thousands of outbound requests.
+  const rows = await prisma.contentLink.groupBy({
+    by: ["toPath"],
     where: { isInternal: false },
-    select: { toPath: true },
-    distinct: ["toPath"],
+    orderBy: { toPath: "asc" },
+    take: MAX_EXTERNAL_CHECKS,
   });
 
   const results = await runWithLimit(

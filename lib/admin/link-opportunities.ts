@@ -515,11 +515,16 @@ export async function applyLinkOpportunity(
       : await currentTargetTitle(input.targetType, input.targetId, input.sourceLocale);
   if (!targetTitle) return { ok: false, error: "NOT_FOUND" };
 
+  // The href comes from the target's own slug, never from the request: a
+  // tampered targetPath would otherwise be written into a published body.
+  const targetPath = await currentTargetPath(input.targetType, input.targetId);
+  if (!targetPath) return { ok: false, error: "NOT_FOUND" };
+
   const mentions = scanTitleMentions(translation.content, input.sourceLocale, [{ title: targetTitle }]);
   const mention = mentions[0];
   if (!mention) return { ok: false, error: "OPPORTUNITY_STALE" };
 
-  const spliced = spliceLink(translation.content, mention, input.targetPath, article.contentFormat);
+  const spliced = spliceLink(translation.content, mention, targetPath, article.contentFormat);
   const finalContent = article.contentFormat === "HTML" ? sanitizeArticleHtml(spliced) : spliced;
 
   try {
@@ -534,6 +539,20 @@ export async function applyLinkOpportunity(
   }
 
   return { ok: true };
+}
+
+/** The public path of a link target, from its current slug. */
+async function currentTargetPath(type: LinkOpportunityTargetType, id: string): Promise<string | null> {
+  if (type === "PROJECT") {
+    const row = await prisma.project.findFirst({ where: { id, deletedAt: null }, select: { slug: true } });
+    return row ? `/projects/${row.slug}` : null;
+  }
+  if (type === "NEWS_ARTICLE") {
+    const row = await prisma.newsArticle.findFirst({ where: { id }, select: { slug: true } });
+    return row ? `/news/${row.slug}` : null;
+  }
+  const row = await prisma.event.findFirst({ where: { id }, select: { slug: true } });
+  return row ? `/events/${row.slug}` : null;
 }
 
 /** A published article's current focus keyword in one language. */

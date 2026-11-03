@@ -56,12 +56,12 @@ describe("readCronSecret", () => {
     expect(readCronSecret(request)).toBe("abc123");
   });
 
-  it("falls back to ?secret= for schedulers that cannot set a header", () => {
+  it("ignores ?secret= in the URL (it would end up in access logs)", () => {
     const request = new Request("https://x.test/api/cron/seo-audit?secret=abc123");
-    expect(readCronSecret(request)).toBe("abc123");
+    expect(readCronSecret(request)).toBeNull();
   });
 
-  it("prefers the header when both are present", () => {
+  it("reads the header even when a query secret is present", () => {
     const request = new Request("https://x.test/api/cron/seo-audit?secret=fromquery", {
       headers: { authorization: "Bearer fromheader" },
     });

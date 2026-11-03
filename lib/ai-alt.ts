@@ -34,6 +34,7 @@ import "server-only";
 import { absoluteAssetUrl } from "@/lib/seo";
 import { siteConfig } from "@/config/site";
 import { getAiConfig } from "@/lib/ai-config";
+import { trustedImageUrl } from "@/lib/trusted-media";
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -156,9 +157,14 @@ export function retryDelayFrom(body: unknown): number | null {
 // ── Calls ───────────────────────────────────────────────────────────────
 
 async function imageAsBase64(url: string): Promise<{ data: string; mediaType: string }> {
+  // Only our own media host or a path on the site: the URL comes from a
+  // media row an editor created, and the server must not be pointed at an
+  // internal address (metadata service, localhost) through it.
+  const trusted = trustedImageUrl(absoluteAssetUrl(url), siteConfig.url);
+  if (!trusted) throw new AltError("IMAGE_FETCH", "not a media-library URL");
   let response: Response;
   try {
-    response = await fetch(absoluteAssetUrl(url), { signal: AbortSignal.timeout(15_000) });
+    response = await fetch(trusted, { signal: AbortSignal.timeout(15_000), redirect: "error" });
   } catch (error) {
     throw new AltError("IMAGE_FETCH", error instanceof Error ? error.message : String(error));
   }

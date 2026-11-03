@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fitTitle } from "@/lib/page-open-graph";
 import { intlLocale } from "@/lib/format";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import { notFound, redirect } from "next/navigation";
@@ -90,7 +91,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const description = project.metaDescription || project.tagline;
 
   return {
-    title,
+    title: await fitTitle(title),
     description,
     alternates: {
       ...localizedAlternates(locale, `/projects/${project.slug}`),

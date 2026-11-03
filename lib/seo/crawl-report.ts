@@ -83,10 +83,25 @@ export async function getCrawlOverview(windowDays = 30): Promise<CrawlOverview> 
     "seo:crawl",
     async () => {
       const [rows, everAny, knownUrls] = await Promise.all([
-        prisma.crawlHit.findMany({
-          where: { hour: { gte: since } },
-          select: { bot: true, path: true, hits: true, notFound: true, hour: true },
-        }),
+        // Grouped in the database: every report below sums by bot and
+        // path and keeps the latest hour, so one row per (bot, path,
+        // notFound) carries the same answer as 30 days of hourly rows.
+        prisma.crawlHit
+          .groupBy({
+            by: ["bot", "path", "notFound"],
+            where: { hour: { gte: since } },
+            _sum: { hits: true },
+            _max: { hour: true },
+          })
+          .then((groups) =>
+            groups.map((g) => ({
+              bot: g.bot,
+              path: g.path,
+              notFound: g.notFound,
+              hits: g._sum.hits ?? 0,
+              hour: g._max.hour ?? since,
+            })),
+          ),
         prisma.crawlHit.count(),
         prisma.seoUrlState.findMany({ select: { url: true } }),
       ]);
@@ -269,10 +284,9 @@ export async function getBotsByPath(
   return safeQuery(
     "seo:crawlByPath",
     async () => {
-      const rows = await prisma.crawlHit.findMany({
+      const rows = await prisma.crawlHit.groupBy({
+        by: ["path", "bot"],
         where: { path: { in: [...paths] }, hour: { gte: since } },
-        select: { path: true, bot: true },
-        distinct: ["path", "bot"],
       });
 
       const byPath = new Map<string, string[]>();

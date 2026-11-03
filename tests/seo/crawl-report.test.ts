@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    crawlHit: { findMany: vi.fn(), count: vi.fn() },
+    crawlHit: { findMany: vi.fn(), groupBy: vi.fn(), count: vi.fn() },
     seoUrlState: { findMany: vi.fn() },
   },
 }));
@@ -28,7 +28,7 @@ vi.mock("@/lib/db", () => ({
 import { prisma } from "@/lib/prisma";
 import { getCrawlOverview } from "@/lib/seo/crawl-report";
 
-const findMany = prisma.crawlHit.findMany as unknown as ReturnType<typeof vi.fn>;
+const groupBy = prisma.crawlHit.groupBy as unknown as ReturnType<typeof vi.fn>;
 const count = prisma.crawlHit.count as unknown as ReturnType<typeof vi.fn>;
 const urlStates = prisma.seoUrlState.findMany as unknown as ReturnType<typeof vi.fn>;
 
@@ -38,7 +38,20 @@ function setup(
   rows: { bot: string; path: string; hits: number; notFound: boolean; hour?: Date }[],
   urls: string[] = [],
 ) {
-  findMany.mockResolvedValue(rows.map((row) => ({ ...row, hour: row.hour ?? hour })));
+  // What Postgres would answer for groupBy(bot, path, notFound): summed
+  // hits and the latest hour per group.
+  const groups = new Map<string, { bot: string; path: string; notFound: boolean; _sum: { hits: number }; _max: { hour: Date } }>();
+  for (const row of rows) {
+    const key = `${row.bot}|${row.path}|${row.notFound}`;
+    const at = row.hour ?? hour;
+    const group = groups.get(key);
+    if (!group) groups.set(key, { bot: row.bot, path: row.path, notFound: row.notFound, _sum: { hits: row.hits }, _max: { hour: at } });
+    else {
+      group._sum.hits += row.hits;
+      if (at > group._max.hour) group._max.hour = at;
+    }
+  }
+  groupBy.mockResolvedValue([...groups.values()]);
   count.mockResolvedValue(rows.length);
   urlStates.mockResolvedValue(urls.map((url) => ({ url })));
 }

@@ -71,14 +71,16 @@ const updateStatusSchema = z.object({
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-/** True once for every action below: can this SALES user touch this row? */
-async function salesMayTouch(userId: string, leadId: string): Promise<boolean> {
-  const lead = await prisma.leadInquiry.findUnique({
-    where: { id: leadId },
-    select: { assignedToId: true },
-  });
-  if (!lead) return false;
-  return lead.assignedToId === null || lead.assignedToId === userId;
+/**
+ * Can this session touch this lead at all? The same rule the board reads
+ * with (lib/leads-board.ts leadScopeWhere): SALES sees the unassigned
+ * pool plus its own, and any account held to projects sees only those
+ * projects' leads, whatever its role. Until November 2026 the write side
+ * checked only the first half, so a project-scoped account could change a
+ * lead from another project by its id.
+ */
+async function mayTouch(session: { id: string; role: Role }, leadId: string): Promise<boolean> {
+  return isLeadVisibleTo(session, leadId);
 }
 
 function revalidateLead(locale: string, id: string) {
@@ -102,7 +104,7 @@ export async function updateLeadStatus(
   const parsed = updateStatusSchema.safeParse({ id, status });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, parsed.data.id))) {
+  if (!(await mayTouch(session, parsed.data.id))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -143,7 +145,7 @@ export async function updateLeadStatus(
 /**
  * Assign a lead to a rep, or clear the assignment (empty string ⇒
  * unassigned). A SALES caller may only claim an unassigned lead for
- * themselves, or release/keep one already theirs — see salesMayTouch and
+ * themselves, or release/keep one already theirs — see mayTouch and
  * the file header.
  */
 export async function assignLead(
@@ -158,10 +160,10 @@ export async function assignLead(
 
   const nextAssignee = parsed.data.assignedToId ? parsed.data.assignedToId : null;
 
+  if (!(await mayTouch(session, parsed.data.id))) return { ok: false, error: "FORBIDDEN" };
   if (session.role === Role.SALES) {
-    const mayTouch = await salesMayTouch(session.id, parsed.data.id);
     const targetIsSelfOrNone = nextAssignee === null || nextAssignee === session.id;
-    if (!mayTouch || !targetIsSelfOrNone) return { ok: false, error: "FORBIDDEN" };
+    if (!targetIsSelfOrNone) return { ok: false, error: "FORBIDDEN" };
   }
 
   const before = await prisma.leadInquiry.findUnique({
@@ -209,7 +211,7 @@ export async function setLeadFollowUp(
   const parsed = leadFollowUpSchema.safeParse({ id, followUpAt });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, parsed.data.id))) {
+  if (!(await mayTouch(session, parsed.data.id))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -272,7 +274,7 @@ export async function addLeadNote(
   const parsed = leadNoteSchema.safeParse({ leadId, body, kind, durationSeconds });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, parsed.data.leadId))) {
+  if (!(await mayTouch(session, parsed.data.leadId))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -309,7 +311,7 @@ export async function setHousePreference(
   const parsed = leadHousePreferenceSchema.safeParse({ id, housePreference });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, parsed.data.id))) {
+  if (!(await mayTouch(session, parsed.data.id))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -371,7 +373,7 @@ export async function reserveUnitForLead(
   const parsed = reserveUnitSchema.safeParse({ leadId, unitId, expiresAt });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, parsed.data.leadId))) {
+  if (!(await mayTouch(session, parsed.data.leadId))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -448,7 +450,7 @@ export async function releaseUnitReservation(
 
   if (!leadId || !unitId) return { ok: false, error: "INVALID_INPUT" };
 
-  if (session.role === Role.SALES && !(await salesMayTouch(session.id, leadId))) {
+  if (!(await mayTouch(session, leadId))) {
     return { ok: false, error: "FORBIDDEN" };
   }
 

@@ -284,7 +284,7 @@ export async function getLinkHealth(locale: string): Promise<LinkHealth> {
       const orphans = await findOrphans(locale, linkedPaths);
       const chains = findRedirectChains(urlHealth.redirects);
 
-      const totalInternalLinks = await prisma.contentLink.count({ where: { isInternal: true } });
+      const totalInternalLinks = internalLinkRows.length;
       const activeRedirectCount = urlHealth.redirects.filter((row) => row.isActive).length;
       const redirectedLinks = await findRedirectedLinks(internalLinkRows, urlHealth.redirects);
       const sourcesWithLinks = new Set(internalLinkRows.map((row) => `${row.fromType}:${row.fromId}`)).size;

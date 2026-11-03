@@ -24,3 +24,16 @@ export async function pageOpenGraph(locale: string, path: string, extra: Record<
     ...extra,
   });
 }
+
+/**
+ * The <title> for a page whose own title may be long. With the site's
+ * template ("%s | Andaman Asset Solution") a project title reached 70–77
+ * characters and Google cut it off mid-word; when the branded title would
+ * pass `max`, the page's own title is used alone (absolute) instead.
+ */
+export async function fitTitle(title: string, max = 60): Promise<string | { absolute: string }> {
+  const { seo } = await getSiteSettings();
+  const template = seo.titleTemplate ?? "";
+  const branded = template.includes("%s") ? template.replace("%s", title) : title;
+  return branded.length <= max ? title : { absolute: title };
+}

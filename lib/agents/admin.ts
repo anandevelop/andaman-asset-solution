@@ -12,6 +12,7 @@
 
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/db";
 
 // CLUB_SITE_URL first: it is read at run time, while NEXT_PUBLIC_SITE_URL
 // is baked into the image as the production domain — staging would
@@ -123,10 +124,17 @@ export async function resolveAgentRef(ref: string | null | undefined): Promise<R
   const slug = (ref ?? "").trim().toLowerCase();
   if (!slug || slug === "web") return { open: true, salesPerson: null };
   if (!/^[a-z0-9-]{1,40}$/.test(slug)) return { open: false };
-  const person = await prisma.salesPerson.findUnique({
-    where: { refSlug: slug },
-    select: { id: true, nameEn: true, nameTh: true, isActive: true, agentLinkEnabled: true },
-  });
+  // safeQuery: this runs on the public sign-up page, which should show
+  // "link closed" during a database blip rather than the error page.
+  const person = await safeQuery(
+    "agents:resolveRef",
+    () =>
+      prisma.salesPerson.findUnique({
+        where: { refSlug: slug },
+        select: { id: true, nameEn: true, nameTh: true, isActive: true, agentLinkEnabled: true },
+      }),
+    null,
+  );
   if (!person || !person.isActive || !person.agentLinkEnabled) return { open: false };
   return { open: true, salesPerson: { id: person.id, nick: salesNick(person) } };
 }

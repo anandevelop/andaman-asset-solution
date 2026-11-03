@@ -73,7 +73,7 @@ export const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
 export function isAllowedContentType(value: string): value is AllowedContentType {
-  return value in ALLOWED_CONTENT_TYPES;
+  return Object.hasOwn(ALLOWED_CONTENT_TYPES, value);
 }
 
 export function isDocumentContentType(value: string): boolean {

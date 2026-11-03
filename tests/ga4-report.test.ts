@@ -10,11 +10,18 @@ vi.mock("@/lib/google-config", () => ({ getGoogleConfig: async () => ({}) }));
 import { dateRangesFor, foldRows } from "@/lib/analytics/ga4-report";
 
 describe("dateRangesFor", () => {
-  it("adds the period before when comparing", () => {
-    expect(dateRangesFor("7", false)).toEqual([{ startDate: "7daysAgo", endDate: "today" }]);
+  it("covers exactly N days, and compares with the N days before", () => {
+    expect(dateRangesFor("7", false)).toEqual([{ startDate: "6daysAgo", endDate: "today" }]);
     expect(dateRangesFor("28", true)).toEqual([
-      { startDate: "28daysAgo", endDate: "today" },
-      { startDate: "56daysAgo", endDate: "29daysAgo" },
+      { startDate: "27daysAgo", endDate: "today" },
+      { startDate: "55daysAgo", endDate: "28daysAgo" },
+    ]);
+  });
+
+  it("reads 24 h as today plus yesterday, against the two days before", () => {
+    expect(dateRangesFor("1", true)).toEqual([
+      { startDate: "1daysAgo", endDate: "today" },
+      { startDate: "3daysAgo", endDate: "2daysAgo" },
     ]);
   });
 });

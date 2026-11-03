@@ -20,6 +20,7 @@
 import { revalidatePath } from "next/cache";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isLeadVisibleTo } from "@/lib/leads-board";
 // Capability rather than rank — EDITOR outranks SALES, so a rank check
 // here would let a content editor act on customer records. See
 // lib/permissions.ts.
@@ -54,6 +55,12 @@ export async function createAppointment(locale: string, input: unknown): Promise
 
   const scheduledAt = new Date(parsed.data.scheduledAt);
   if (Number.isNaN(scheduledAt.getTime())) return { ok: false, error: "INVALID_DATE" };
+
+  // A lead from outside this account's scope cannot be attached either —
+  // the same rule as every write in leads/actions.ts.
+  if (parsed.data.leadId && !(await isLeadVisibleTo(session, parsed.data.leadId))) {
+    return { ok: false, error: "FORBIDDEN" };
+  }
 
   const requestedAssignee = parsed.data.assignedToId || null;
 

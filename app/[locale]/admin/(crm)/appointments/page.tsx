@@ -77,9 +77,8 @@ const STATUS_BORDER: Record<AppointmentStatus, string> = {
   NO_SHOW: "border-adm-danger/30 bg-adm-danger-bg",
 };
 
-function dayKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
+/** The Bangkok calendar day (lib/admin/month-grid.ts dayKey). */
+const dayKey = monthDayKey;
 
 /** A month-view chip per appointment status, from the status tokens. */
 const CHIP_TONE: Record<AppointmentStatus, string> = {

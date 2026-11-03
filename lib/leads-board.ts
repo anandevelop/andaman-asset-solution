@@ -176,7 +176,7 @@ export async function isLeadVisibleTo(session: { id: string; role: Role }, leadI
  * Queried here rather than passed in so no call site can forget it; there
  * are two, and the duplication is what this function replaces.
  */
-async function leadScopeWhere(session: {
+export async function leadScopeWhere(session: {
   id: string;
   role: Role;
 }): Promise<Prisma.LeadInquiryWhereInput | undefined> {

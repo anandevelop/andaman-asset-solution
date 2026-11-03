@@ -28,10 +28,8 @@
  *
  * ACCEPTED SHAPES
  *
- * `Authorization: Bearer <secret>`, which is what a scheduler sends, and
- * `?secret=` for the platforms that cannot set a header. The query form is
- * the weaker of the two — it lands in access logs — so it is accepted but
- * noted here rather than documented as the normal way in.
+ * `Authorization: Bearer <secret>` only, which is what scripts/cron.mjs
+ * sends. `?secret=` was dropped in November 2026: it landed in access logs.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -62,16 +60,15 @@ export function isAuthorisedCron(provided: string | null, expected: string | und
   return secretMatches(provided, secret) ? { ok: true } : { ok: false, reason: "denied" };
 }
 
-/** The secret this request presented, from either accepted shape. */
+/**
+ * The secret this request presented: `Authorization: Bearer …` only.
+ * A `?secret=` query used to be accepted too; a secret in a URL ends up in
+ * nginx access logs and proxy logs, and scripts/cron.mjs never used it.
+ */
 export function readCronSecret(request: Request): string | null {
   const header = request.headers.get("authorization");
   if (header?.startsWith("Bearer ")) return header.slice("Bearer ".length).trim() || null;
-
-  try {
-    return new URL(request.url).searchParams.get("secret");
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 /**

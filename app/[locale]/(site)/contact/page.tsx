@@ -42,7 +42,7 @@ import { getPublishedProjects } from "@/lib/projects";
 import { haversineKm, openingWindowFrom, placeEmbedUrl, type LatLng } from "@/lib/map-places";
 import type { Locale } from "@/i18n";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
-import { pageOpenGraph } from "@/lib/page-open-graph";
+import { fitTitle, pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import EditableSection from "@/components/edit/EditableSection";
@@ -69,7 +69,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "contact" });
 
   return {
-    title: t("title"),
+    title: await fitTitle(t("title")),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/contact"),
     openGraph: await pageOpenGraph(locale, "/contact"),

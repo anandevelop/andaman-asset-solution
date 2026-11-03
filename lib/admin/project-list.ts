@@ -33,6 +33,7 @@ import "server-only";
 
 import { ContentStatus, Prisma, ProjectStatus, PropertyType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { latestAuditByRecord } from "@/lib/admin/latest-audit";
 import { safeQuery } from "@/lib/db";
 import { getTranslation } from "@/lib/get-translation";
 import { localeFills, type LocaleFill } from "@/lib/locale-completeness";
@@ -277,20 +278,7 @@ export async function getAdminProjectList(
       // Last editor, one query for the page. `distinct` keeps the newest
       // entry per project because the ordering is applied first.
       const audits = visible.length
-        ? await prisma.auditLog.findMany({
-            where: {
-              model: AUDIT_MODEL_NAME.PROJECT,
-              recordId: { in: visible.map((row) => row.project.id) },
-            },
-            orderBy: { createdAt: "desc" },
-            distinct: ["recordId"],
-            select: {
-              recordId: true,
-              createdAt: true,
-              actorEmail: true,
-              actor: { select: { name: true } },
-            },
-          })
+        ? await latestAuditByRecord(AUDIT_MODEL_NAME.PROJECT, visible.map((row) => row.project.id))
         : [];
 
       const auditByProject = new Map(audits.map((entry) => [entry.recordId, entry]));

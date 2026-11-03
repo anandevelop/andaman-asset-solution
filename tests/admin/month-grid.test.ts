@@ -54,3 +54,12 @@ describe("the month parameter", () => {
     expect(toMonthParam(addMonths(new Date(Date.UTC(2026, 0, 1)), -1))).toBe("2025-12");
   });
 });
+
+describe("dayKey in Bangkok", () => {
+  it("puts an early-morning Bangkok appointment on its own day", () => {
+    // 06:30 on 3 Nov in Bangkok is 23:30 on 2 Nov in UTC.
+    expect(dayKey(new Date("2026-11-02T23:30:00Z"))).toBe("2026-11-03");
+    expect(dayKey(new Date("2026-11-03T16:59:00Z"))).toBe("2026-11-03");
+    expect(dayKey(new Date("2026-11-03T17:00:00Z"))).toBe("2026-11-04");
+  });
+});

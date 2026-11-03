@@ -17,6 +17,7 @@
  */
 
 import type { Metadata } from "next";
+import { fitTitle } from "@/lib/page-open-graph";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -75,7 +76,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const alternates = localizedAlternates(locale, `/news/${article.slug}`);
 
   return {
-    title: article.metaTitle,
+    title: await fitTitle(article.metaTitle),
     description,
     alternates: article.canonicalUrl ? { ...alternates, canonical: article.canonicalUrl } : alternates,
     // Per-locale admin toggle (NewsForm's SEO section) — see the

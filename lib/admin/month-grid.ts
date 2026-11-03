@@ -31,9 +31,17 @@ export function addMonths(monthStart: Date, delta: number): Date {
   return new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + delta, 1));
 }
 
-/** "2026-09-30" — the key appointments are bucketed under. */
+/**
+ * "2026-09-30" — the Bangkok calendar day a moment falls on, the key
+ * appointments are bucketed under. A grid cell's own date is UTC midnight,
+ * which is 07:00 the same day in Bangkok, so it keys the same. Until
+ * November 2026 this was the UTC date, and a 06:30 viewing landed in the
+ * day before's cell.
+ */
+export const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
 export function dayKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return new Date(date.getTime() + BANGKOK_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 /**

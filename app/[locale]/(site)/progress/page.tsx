@@ -25,7 +25,7 @@ import Reveal from "@/components/Reveal";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import { siteConfig } from "@/config/site";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
-import { pageOpenGraph } from "@/lib/page-open-graph";
+import { fitTitle, pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { getProjectsWithProgress } from "@/lib/projects";
@@ -58,7 +58,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "progress" });
 
   return {
-    title: t("title"),
+    title: await fitTitle(t("title")),
     description: t("subtitle"),
     alternates: localizedAlternates(locale, "/progress"),
     openGraph: await pageOpenGraph(locale, "/progress"),

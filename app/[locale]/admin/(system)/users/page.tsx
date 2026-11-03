@@ -83,15 +83,16 @@ export default async function AdminUsersPage(props: Props) {
   const lastSignIns = await safeQuery(
     "admin:users:lastSignIn",
     () =>
-      prisma.auditLog.findMany({
+      // groupBy, not findMany + distinct: Prisma's distinct runs in memory
+      // and read every sign-in ever recorded.
+      prisma.auditLog.groupBy({
+        by: ["actorId"],
         where: { action: AUTH_LOGIN, actorId: { in: users.map((user) => user.id) } },
-        orderBy: { createdAt: "desc" },
-        distinct: ["actorId"],
-        select: { actorId: true, createdAt: true },
+        _max: { createdAt: true },
       }),
     [],
   );
-  const lastSignInBy = new Map(lastSignIns.map((row) => [row.actorId, row.createdAt]));
+  const lastSignInBy = new Map(lastSignIns.map((row) => [row.actorId, row._max.createdAt]));
 
   const offline = isDatabaseOffline();
 

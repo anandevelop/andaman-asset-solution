@@ -48,6 +48,22 @@ function stripLocale(path: string): string {
   return match[2] || "/";
 }
 
+/** The 404 worklist holds at most this many distinct paths. */
+const MAX_NOT_FOUND_ROWS = 5000;
+
+/** A plain URL path: no whitespace, quotes or angle brackets. */
+const PLAUSIBLE_PATH = /^\/[^\s<>"'`\\]*$/;
+
+async function recordNotFound(path: string, referer: string | null): Promise<void> {
+  const updated = await prisma.notFoundHit.updateMany({
+    where: { path },
+    data: { hits: { increment: 1 }, lastHitAt: new Date(), referer },
+  });
+  if (updated.count > 0 || !PLAUSIBLE_PATH.test(path)) return;
+  if ((await prisma.notFoundHit.count()) >= MAX_NOT_FOUND_ROWS) return;
+  await prisma.notFoundHit.create({ data: { path, referer, hits: 1 } });
+}
+
 export async function POST(request: Request) {
   const ip = clientIp(request.headers);
   const limit = rateLimit(`not-found:${ip}`, RATE_LIMIT);
@@ -101,14 +117,13 @@ export async function POST(request: Request) {
     // No redirect covers this path — log it as a candidate for one. Best
     // effort: a failed upsert here must never surface as an error to a
     // visitor who has already hit a dead end.
-    const referer = request.headers.get("referer");
-    await prisma.notFoundHit
-      .upsert({
-        where: { path },
-        create: { path, referer, hits: 1 },
-        update: { hits: { increment: 1 }, lastHitAt: new Date(), referer },
-      })
-      .catch(() => {});
+    //
+    // Anyone can POST here, so a new path only becomes a new row while the
+    // table is under MAX_NOT_FOUND_ROWS and the path looks like one a
+    // browser could have been on. A script inventing paths stops adding
+    // rows at the cap; hits on paths already listed still count.
+    const referer = request.headers.get("referer")?.slice(0, 500) ?? null;
+    await recordNotFound(path, referer).catch(() => {});
 
     // The rolling half of the same count. Redirect.hits and
     // NotFoundHit.hits answer "has this ever happened"; PathHitDay answers
