@@ -3523,10 +3523,10 @@ model PageSpeedRun {
   id String @id @default(cuid())
 
   /// The full URL Google fetched.
-  url  String
+  url      String
   /// Its path with the locale, "/th/projects/victory": what the speed tab
   /// groups by.
-  path String
+  path     String
   /// "mobile" | "desktop".
   strategy String
   /// "scheduled" | "manual" | "test".
