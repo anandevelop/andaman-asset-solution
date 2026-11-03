@@ -161,10 +161,10 @@ export const siteConfig = {
     /** <meta name="keywords"> per language — one list used to carry
      *  English and Thai into every locale, and nothing for ZH/RU. */
     keywords: {
-      en: ["Phuket pool villa", "premium real estate Phuket", "villa for sale Phuket"],
-      th: ["พูลวิลล่าภูเก็ต", "อสังหาริมทรัพย์ภูเก็ต", "บ้านเดี่ยวภูเก็ต"],
-      zh: ["普吉岛泳池别墅", "普吉岛房产", "普吉岛别墅出售"],
-      ru: ["вилла с бассейном Пхукет", "недвижимость на Пхукете", "купить виллу на Пхукете"],
+      en: ["pool villas Phuket", "Phuket property developer", "pool villa for sale Phuket", "Andaman Asset Solution"],
+      th: ["พูลวิลล่า ภูเก็ต", "บ้านพร้อมสระว่ายน้ำ ภูเก็ต", "อสังหาริมทรัพย์ภูเก็ต", "Andaman Asset Solution"],
+      zh: ["普吉岛泳池别墅", "普吉岛房地产", "普吉岛别墅出售", "Andaman Asset Solution"],
+      ru: ["виллы с бассейном Пхукет", "недвижимость Пхукет", "купить виллу на Пхукете", "Andaman Asset Solution"],
     },
     ogImage: "/og-image.jpg",
     twitterHandle: "@andamanasset",

@@ -2909,7 +2909,8 @@
         "notifications": "การแจ้งเตือน",
         "integrations": "การเชื่อมต่อภายนอก",
         "privacy": "ความเป็นส่วนตัวและ PDPA",
-        "system": "ระบบและการสำรองข้อมูล"
+        "system": "ระบบและการสำรองข้อมูล",
+        "metaKeywords": "คีย์เวิร์ด (meta keywords)"
       },
       "fields": {
         "phone": "เบอร์โทร (สำหรับลิงก์ tel:)",
@@ -2960,7 +2961,12 @@
         "metaDescriptionTh": "Meta description (ไทย)",
         "metaDescriptionEn": "Meta description (อังกฤษ)",
         "metaDescriptionZh": "Meta description (จีน)",
-        "metaDescriptionRu": "Meta description (รัสเซีย)"
+        "metaDescriptionRu": "Meta description (รัสเซีย)",
+        "keywordsTh": "คีย์เวิร์ด (ไทย)",
+        "keywordsEn": "คีย์เวิร์ด (อังกฤษ)",
+        "keywordsZh": "คีย์เวิร์ด (จีน)",
+        "keywordsRu": "คีย์เวิร์ด (รัสเซีย)",
+        "keywordsHint": "คั่นด้วยจุลภาค Google แทบไม่ใช้แท็กนี้จัดอันดับแล้ว แต่ยังใส่ไว้ให้ครบ"
       },
       "company": {
         "title": "ข้อมูลบริษัท",

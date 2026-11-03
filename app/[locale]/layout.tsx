@@ -150,7 +150,11 @@ export async function generateMetadata(
       template: seo.titleTemplate,
     },
     description,
-    keywords: [...(siteConfig.seo.keywords[resolvedLocale] ?? siteConfig.seo.keywords.en)],
+    // Edited per language in /admin/seo/defaults; config/site.ts behind it.
+    keywords: (seo.keywords[resolvedLocale] ?? seo.keywords.en)
+      .split(/[,،、，\n]/)
+      .map((word) => word.trim())
+      .filter(Boolean),
     alternates: localizedAlternates(locale, ""),
     /*
       No title or description here. A page that sets its own title but no

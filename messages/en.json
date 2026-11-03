@@ -2909,7 +2909,8 @@
         "notifications": "Notifications",
         "integrations": "External connections",
         "privacy": "Privacy and PDPA",
-        "system": "System and backups"
+        "system": "System and backups",
+        "metaKeywords": "Meta keywords"
       },
       "fields": {
         "phone": "Phone (for tel: links)",
@@ -2960,7 +2961,12 @@
         "metaDescriptionTh": "Meta description (Thai)",
         "metaDescriptionEn": "Meta description (English)",
         "metaDescriptionZh": "Meta description (Chinese)",
-        "metaDescriptionRu": "Meta description (Russian)"
+        "metaDescriptionRu": "Meta description (Russian)",
+        "keywordsTh": "Keywords (Thai)",
+        "keywordsEn": "Keywords (English)",
+        "keywordsZh": "Keywords (Chinese)",
+        "keywordsRu": "Keywords (Russian)",
+        "keywordsHint": "Comma-separated. Search engines give this tag little weight; it is kept for completeness."
       },
       "company": {
         "title": "Company profile",

@@ -72,6 +72,11 @@ export const SETTING_KEYS = [
   "seo.metaDescriptionRu",
   "seo.titleTemplate",
   "seo.twitterHandle",
+  /* <meta name="keywords"> per language, comma-separated. */
+  "seo.keywordsTh",
+  "seo.keywordsEn",
+  "seo.keywordsZh",
+  "seo.keywordsRu",
   /* Comma-separated words that mean somebody already knows this company —
      see lib/seo/brand.ts. Every click figure is split on it, and the
      non-brand half is the one the reports lead with. */
@@ -173,6 +178,8 @@ export type SiteSettings = {
    */
   seo: {
     metaTitle: { th: string; en: string; zh: string; ru: string };
+    /** Comma-separated, as typed in /admin/seo/defaults. */
+    keywords: { th: string; en: string; zh: string; ru: string };
     metaDescription: { th: string; en: string; zh: string; ru: string };
     titleTemplate: string;
     twitterHandle: string;
@@ -240,6 +247,10 @@ export function defaultSettings(): Record<SettingKey, string> {
     "seo.metaDescriptionRu": siteConfig.description.ru,
     "seo.titleTemplate": siteConfig.seo.titleTemplate,
     "seo.twitterHandle": siteConfig.seo.twitterHandle,
+    "seo.keywordsTh": siteConfig.seo.keywords.th.join(", "),
+    "seo.keywordsEn": siteConfig.seo.keywords.en.join(", "),
+    "seo.keywordsZh": siteConfig.seo.keywords.zh.join(", "),
+    "seo.keywordsRu": siteConfig.seo.keywords.ru.join(", "),
     /* Empty by default, and the consequence is stated on the screen: with
        no terms every search counts as non-brand, which overstates the one
        figure the split exists to protect. Guessing at brand names here
@@ -428,6 +439,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         en: values["seo.metaDescriptionEn"],
         zh: values["seo.metaDescriptionZh"],
         ru: values["seo.metaDescriptionRu"],
+      },
+      keywords: {
+        th: values["seo.keywordsTh"],
+        en: values["seo.keywordsEn"],
+        zh: values["seo.keywordsZh"],
+        ru: values["seo.keywordsRu"],
       },
       titleTemplate: values["seo.titleTemplate"],
       twitterHandle: values["seo.twitterHandle"],

@@ -2909,7 +2909,8 @@
         "notifications": "通知",
         "integrations": "外部连接",
         "privacy": "隐私与 PDPA",
-        "system": "系统与备份"
+        "system": "系统与备份",
+        "metaKeywords": "Meta 关键词"
       },
       "fields": {
         "phone": "电话（用于tel:链接）",
@@ -2960,7 +2961,12 @@
         "metaDescriptionTh": "Meta 描述（泰语）",
         "metaDescriptionEn": "Meta 描述（英语）",
         "metaDescriptionZh": "Meta 描述（中文）",
-        "metaDescriptionRu": "Meta 描述（俄语）"
+        "metaDescriptionRu": "Meta 描述（俄语）",
+        "keywordsTh": "关键词（泰文）",
+        "keywordsEn": "关键词（英文）",
+        "keywordsZh": "关键词（中文）",
+        "keywordsRu": "关键词（俄文）",
+        "keywordsHint": "用逗号分隔。搜索引擎几乎不再参考此标签，保留以求完整。"
       },
       "company": {
         "title": "公司简介",

@@ -1839,6 +1839,11 @@ export const SETTING_VALIDATORS: Partial<Record<SettingKey, z.ZodType<string>>> 
   "seo.metaDescriptionEn": z.string().max(META_DESCRIPTION_MAX),
   "seo.metaDescriptionZh": z.string().max(META_DESCRIPTION_MAX),
   "seo.metaDescriptionRu": z.string().max(META_DESCRIPTION_MAX),
+
+  "seo.keywordsTh": z.string().max(500),
+  "seo.keywordsEn": z.string().max(500),
+  "seo.keywordsZh": z.string().max(500),
+  "seo.keywordsRu": z.string().max(500),
 };
 
 /*

@@ -2909,7 +2909,8 @@
         "notifications": "Уведомления",
         "integrations": "Внешние подключения",
         "privacy": "Приватность и PDPA",
-        "system": "Система и резервные копии"
+        "system": "Система и резервные копии",
+        "metaKeywords": "Мета-ключевые слова"
       },
       "fields": {
         "phone": "Телефон (для ссылок tel:)",
@@ -2960,7 +2961,12 @@
         "metaDescriptionTh": "Meta description (тайский)",
         "metaDescriptionEn": "Meta description (английский)",
         "metaDescriptionZh": "Meta description (китайский)",
-        "metaDescriptionRu": "Meta description (русский)"
+        "metaDescriptionRu": "Meta description (русский)",
+        "keywordsTh": "Ключевые слова (тайский)",
+        "keywordsEn": "Ключевые слова (английский)",
+        "keywordsZh": "Ключевые слова (китайский)",
+        "keywordsRu": "Ключевые слова (русский)",
+        "keywordsHint": "Через запятую. Поисковики почти не учитывают этот тег; он оставлен для полноты."
       },
       "company": {
         "title": "Профиль компании",

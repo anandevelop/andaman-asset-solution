@@ -176,6 +176,14 @@ export default async function AdminSeoDefaultsPage(props: Props) {
         }),
       ],
     },
+    {
+      title: t("settings.groups.metaKeywords"),
+      fields: (["Th", "En", "Zh", "Ru"] as const).map((suffix) =>
+        field(`seo.keywords${suffix}`, t(`settings.fields.keywords${suffix}`), {
+          hint: t("settings.fields.keywordsHint"),
+        }),
+      ),
+    },
   ];
 
   return (
