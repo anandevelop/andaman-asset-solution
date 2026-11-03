@@ -3833,7 +3833,13 @@
         "vitals": "Core Web Vitals",
         "traffic": "ทราฟฟิก",
         "content": "เนื้อหา",
-        "leads": "ลีด"
+        "leads": "ลีด",
+        "now": "ตอนนี้",
+        "real": "ข้อมูลจริง",
+        "ga": "Google Analytics",
+        "search": "Search Console",
+        "meta": "Meta Pixel · โฆษณา",
+        "api": "เชื่อมต่อ API"
       },
       "totalViews": "การเข้าชมหน้าเว็บ",
       "totalViewsHint": "ครั้งใน 30 วัน",
@@ -3999,6 +4005,55 @@
         "noAccessHint": "ใน Search Console เปิด {property} → การตั้งค่า → ผู้ใช้และสิทธิ์ → เพิ่มผู้ใช้ แล้วใส่\n{email}\nสิทธิ์แบบจำกัด (Restricted)",
         "failed": "Search Console ไม่ตอบกลับ",
         "clickToFilter": "คลิกที่แถวเพื่อกรองรายงานด้วยค่านั้น"
+      },
+      "hub": {
+        "title": "วิเคราะห์เว็บไซต์",
+        "subtitle": "ข้อมูลจาก Google Analytics 4, Google Search Console และ Meta Pixel",
+        "range1": "24 ชม.",
+        "range7": "7 วัน",
+        "range28": "28 วัน",
+        "range90": "90 วัน",
+        "compare": "เทียบช่วงก่อนหน้า",
+        "export": "ส่งออก",
+        "connected": "เชื่อมต่อแล้ว",
+        "notConnected": "ยังไม่เชื่อมต่อ",
+        "setup": "ตั้งค่า",
+        "connect": "เชื่อมต่อ"
+      },
+      "ga": {
+        "loading": "กำลังดึงข้อมูลจาก Google Analytics…",
+        "state_NOT_CONFIGURED": "ยังไม่ได้เชื่อม GA4 — ใส่ GA4 Property ID และไฟล์ service account ใน ตั้งค่า › การเชื่อมต่อ",
+        "state_NO_ACCESS": "Google ไม่ให้สิทธิ์อ่าน GA4 — เพิ่ม service account เป็น Viewer ใน GA4 และเปิด Google Analytics Data API",
+        "state_FAILED": "ดึงข้อมูล GA4 ไม่สำเร็จ",
+        "addViewer": "GA4 › ผู้ดูแลระบบ › การจัดการสิทธิ์เข้าถึง › เพิ่ม:",
+        "toSettings": "ไปที่การเชื่อมต่อ",
+        "kpi_users": "ผู้ใช้",
+        "kpi_sessions": "เซสชัน",
+        "kpi_views": "การดูหน้า",
+        "kpi_engagement": "อัตราการมีส่วนร่วม",
+        "kpi_duration": "เวลาเฉลี่ย/เซสชัน",
+        "noPrevious": "ไม่มีข้อมูลช่วงก่อน",
+        "vsPrevious": "จากช่วงก่อน",
+        "dailyTitle": "ผู้ใช้ตามช่วงเวลา",
+        "topPages": "หน้าที่คนดูมากสุด",
+        "channels": "มาจากช่องทางไหน",
+        "countries": "ประเทศ",
+        "devices": "อุปกรณ์",
+        "empty": "ยังไม่มีข้อมูล",
+        "updated": "อัปเดต"
+      },
+      "meta": {
+        "pixel": "Meta Pixel ID",
+        "leadsFromMeta": "ลีดจาก Facebook/Instagram ({days} วัน)",
+        "paid": "ลีดจากโฆษณา (utm_medium = cpc/paid)",
+        "campaigns": "แคมเปญที่ได้ลีด",
+        "noCampaigns": "ยังไม่มีลีดจาก Facebook/Instagram ในช่วงนี้",
+        "note": "นับจากลีดในระบบ (utm_source หรือหน้าที่มาจาก facebook/instagram) ใส่ utm_source=facebook&utm_medium=cpc&utm_campaign=… ในลิงก์โฆษณาเพื่อให้แยกแคมเปญได้"
+      },
+      "api": {
+        "title": "การเชื่อมต่อ API",
+        "note": "ใส่และทดสอบทุกค่าที่ ตั้งค่า › การเชื่อมต่อ · Meta Conversions API ยังไม่ได้เปิดใช้",
+        "open": "ไปที่การเชื่อมต่อ"
       }
     },
     "urls": {

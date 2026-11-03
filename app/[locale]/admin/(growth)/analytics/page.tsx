@@ -67,7 +67,6 @@ import {
 } from "@/lib/reports";
 import { getCookieConsentStats } from "@/lib/cookie-consent-stats";
 import { getCompanyStats } from "@/lib/company-stats";
-import { isRangeDays, type RangeDays } from "@/lib/dashboard-range";
 import { intlLocale } from "@/lib/format";
 import AnalyticsTabs from "@/components/admin/AnalyticsTabs";
 import type { SearchPanelLabels } from "@/components/admin/SearchPerformancePanel";
@@ -75,13 +74,18 @@ import { BREAKDOWNS, RANGES, SEARCH_TYPES } from "@/lib/seo/search-performance-s
 import { fetchLiveSnapshot } from "./live-actions";
 import { getVitalsOverview, getConsentCoverage, type VitalFigure } from "@/lib/analytics/vitals-report";
 import { formatVital, type VitalKey } from "@/lib/analytics/vitals";
-import DashboardControls from "@/components/admin/DashboardControls";
+import AnalyticsHeaderControls, { ANALYTICS_RANGES, type AnalyticsRange } from "@/components/admin/AnalyticsHeaderControls";
+import Link from "next/link";
+import { BarChart3, KeyRound, Megaphone, Search as SearchIcon } from "lucide-react";
+import { getGoogleConfig } from "@/lib/google-config";
+import { getSiteSettings } from "@/lib/settings";
+import { getMetaLeads } from "@/lib/analytics/meta-leads";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; compare?: string }>;
 };
 
 type AdminT = Awaited<ReturnType<typeof getTranslations<"admin">>>;
@@ -159,12 +163,26 @@ export default async function AdminAnalyticsPage(props: Props) {
   /** Stays on the server — only its output crosses into VitalsPanel. */
   const vitalsSamples = (count: number) => t("analytics.vitals.samples", { count });
 
-  const rangeDays: RangeDays = isRangeDays(searchParams.range) ? searchParams.range : "30";
+  const range: AnalyticsRange = (ANALYTICS_RANGES as readonly string[]).includes(searchParams.range ?? "")
+    ? (searchParams.range as AnalyticsRange)
+    : "28";
+  const compare = searchParams.compare === "1";
+  const rangeDays = range;
   // Same rounding the dashboard used when it owned this control: the source
   // and conversion reports bucket by month, so a day count becomes the
   // number of months it reaches back into — "7" and "30" both mean this
   // month, "365" the full 12-month window.
   const rangeMonths = Math.max(1, Math.ceil(Number(rangeDays) / 30));
+
+  const [google, settings, metaLeads] = await Promise.all([
+    getGoogleConfig(),
+    getSiteSettings(),
+    getMetaLeads(Number(range)),
+  ]);
+  const ga4Connected = Boolean(google.credentials && google.ga4PropertyId);
+  const gscConnected = Boolean(google.credentials && google.gscSiteUrl);
+  const pixelId = settings.analytics.metaPixelId?.trim() || null;
+  const integrations = `/${locale}/admin/settings/integrations`;
 
   const [trend, topArticlesView, conversions, companyStats, eventRsvp, cookieStats, leadsData, vitals, vitalsCoverage] =
     await Promise.all([
@@ -213,29 +231,70 @@ export default async function AdminAnalyticsPage(props: Props) {
     <div className="space-y-8">
       <AdminPageHeader
         eyebrow={zoneEyebrow((key) => t(key as never), "analytics")}
-        title={t("analytics.title")}
-        description={t("analytics.subtitle")}
+        title={t("analytics.hub.title")}
+        description={t("analytics.hub.subtitle")}
         actions={
-          <>
-            {/* The dashboard's own header control, moved here with the reports
-            it scopes. The CSV export travels with the range picker because
-            it downloads exactly the selected window — see the component's
-            header for why the two are one control and not two. */}
-        <DashboardControls
-          currentRange={rangeDays}
-          labels={{
-            rangeLabel: t("dashboard.rangeLabel"),
-            range7: t("dashboard.range7"),
-            range30: t("dashboard.range30"),
-            range90: t("dashboard.range90"),
-            range365: t("dashboard.range365"),
-            exportReport: t("dashboard.exportReport"),
-            exportCsv: t("dashboard.exportCsv"),
-          }}
-        />
-          </>
+          <AnalyticsHeaderControls
+            locale={locale}
+            range={range}
+            compare={compare}
+            labels={{
+              ranges: {
+                "1": t("analytics.hub.range1"),
+                "7": t("analytics.hub.range7"),
+                "28": t("analytics.hub.range28"),
+                "90": t("analytics.hub.range90"),
+              },
+              compare: t("analytics.hub.compare"),
+              export: t("analytics.hub.export"),
+            }}
+          />
         }
       />
+
+      {/* What is connected, at a glance, each with a way to fix it. */}
+      <div className="grid gap-3 lg:grid-cols-3">
+        {[
+          {
+            key: "ga4",
+            icon: <BarChart3 size={17} aria-hidden />,
+            title: "Google Analytics 4",
+            on: ga4Connected,
+            detail: ga4Connected ? google.ga4PropertyId : null,
+            action: t("analytics.hub.setup"),
+          },
+          {
+            key: "gsc",
+            icon: <SearchIcon size={17} aria-hidden />,
+            title: "Google Search Console",
+            on: gscConnected,
+            detail: gscConnected ? google.gscSiteUrl : null,
+            action: t("analytics.hub.setup"),
+          },
+          {
+            key: "meta",
+            icon: <Megaphone size={17} aria-hidden />,
+            title: "Meta Pixel + Conversions API",
+            on: Boolean(pixelId),
+            detail: pixelId,
+            action: pixelId ? t("analytics.hub.setup") : t("analytics.hub.connect"),
+          },
+        ].map((card) => (
+          <div key={card.key} className="admin-card flex items-center gap-3 py-3.5!">
+            <span className="text-adm-muted">{card.icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-adm-text">{card.title}</p>
+              <p className={`truncate text-xs ${card.on ? "text-adm-success" : "text-adm-muted"}`}>
+                {card.on ? t("analytics.hub.connected") : t("analytics.hub.notConnected")}
+                {card.detail ? ` · ${card.detail}` : ""}
+              </p>
+            </div>
+            <Link href={integrations} className="shrink-0 text-sm font-medium text-adm-text hover:underline">
+              {card.action}
+            </Link>
+          </div>
+        ))}
+      </div>
 
       {offline && (
         <p className="rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-4 py-3 text-sm text-adm-warning">
@@ -246,6 +305,74 @@ export default async function AdminAnalyticsPage(props: Props) {
       <AnalyticsTabs
         locale={locale}
         canViewLeads={canViewLeads}
+        range={range}
+        compare={compare}
+        ga={{
+          labels: Object.fromEntries(
+            Object.entries(t.raw("analytics.ga") as Record<string, string>).map(([key, value]) => [key, value]),
+          ),
+        }}
+        metaPanel={
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: t("analytics.meta.pixel"), value: pixelId ?? t("analytics.hub.notConnected") },
+                { label: t("analytics.meta.leadsFromMeta", { days: range === "1" ? 1 : Number(range) }), value: `${metaLeads.fromMeta} / ${metaLeads.total}` },
+                { label: t("analytics.meta.paid"), value: String(metaLeads.paid) },
+              ].map((kpi) => (
+                <div key={kpi.label} className="admin-card py-4!">
+                  <p className="text-xs text-adm-muted">{kpi.label}</p>
+                  <p className="mt-1 truncate text-xl font-semibold text-adm-text">{kpi.value}</p>
+                </div>
+              ))}
+            </div>
+            <section className="admin-card p-0!">
+              <h3 className="border-b border-adm-line px-5 py-3 text-sm font-semibold text-adm-text">{t("analytics.meta.campaigns")}</h3>
+              {metaLeads.campaigns.length === 0 ? (
+                <p className="px-5 py-6 text-center text-sm text-adm-muted">{t("analytics.meta.noCampaigns")}</p>
+              ) : (
+                <ul>
+                  {metaLeads.campaigns.map((row) => (
+                    <li key={row.name} className="flex justify-between border-b border-adm-line px-5 py-2.5 text-sm last:border-b-0">
+                      <span className="text-adm-text">{row.name}</span>
+                      <span className="tabular-nums text-adm-text">{row.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            <p className="text-xs text-adm-muted">{t("analytics.meta.note")}</p>
+          </div>
+        }
+        apiPanel={
+          <section className="admin-card space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+              <KeyRound size={15} aria-hidden />
+              {t("analytics.api.title")}
+            </h3>
+            <ul className="space-y-3 text-sm">
+              {[
+                { name: "GA4 Measurement ID", on: Boolean(settings.analytics.gaMeasurementId), value: settings.analytics.gaMeasurementId },
+                { name: "GA4 Data API", on: ga4Connected, value: google.ga4PropertyId },
+                { name: "Search Console API", on: gscConnected, value: google.gscSiteUrl },
+                { name: "Service account", on: Boolean(google.credentials), value: google.credentials?.email ?? null },
+                { name: "Meta Pixel", on: Boolean(pixelId), value: pixelId },
+                { name: "Meta Conversions API", on: false, value: null },
+              ].map((row) => (
+                <li key={row.name} className="flex flex-wrap items-center justify-between gap-2 border-b border-adm-line pb-3 last:border-b-0 last:pb-0">
+                  <span className="font-medium text-adm-text">{row.name}</span>
+                  <span className={`text-xs ${row.on ? "text-adm-success" : "text-adm-muted"}`}>
+                    {row.on ? `${t("analytics.hub.connected")}${row.value ? ` · ${row.value}` : ""}` : t("analytics.hub.notConnected")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-adm-muted">{t("analytics.api.note")}</p>
+            <Link href={integrations} className="admin-btn w-fit">
+              {t("analytics.api.open")}
+            </Link>
+          </section>
+        }
         vitals={{
           overall: vitals.overall.map((group) => ({
             device: group.device,
@@ -383,11 +510,12 @@ export default async function AdminAnalyticsPage(props: Props) {
           weekOverWeek: weekOverWeek ?? { thisWeek: 0, lastWeek: 0, changePercent: null },
         }}
         labels={{
-          tab_realtime: t("analytics.tabs.realtime"),
-          tab_vitals: t("analytics.tabs.vitals"),
-          tab_traffic: t("analytics.tabs.traffic"),
-          tab_content: t("analytics.tabs.content"),
-          tab_leads: t("analytics.tabs.leads"),
+          tab_now: t("analytics.tabs.now"),
+          tab_real: t("analytics.tabs.real"),
+          tab_ga: t("analytics.tabs.ga"),
+          tab_search: t("analytics.tabs.search"),
+          tab_meta: t("analytics.tabs.meta"),
+          tab_api: t("analytics.tabs.api"),
           totalViewsHint: t("analytics.totalViewsHint"),
           trendTitle: t("analytics.trendTitle"),
           trendSubtitle: t("analytics.trendSubtitle"),

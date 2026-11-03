@@ -22,6 +22,7 @@ import { requireAdminAction } from "@/lib/admin/guard";
 import { loadSearchPerformance, type SearchPerformance } from "@/lib/seo/search-performance";
 import { BREAKDOWNS, RANGES, SEARCH_TYPES } from "@/lib/seo/search-performance-shape";
 import { locales } from "@/i18n";
+import { GA_RANGES, loadGa4Report, type Ga4Report } from "@/lib/analytics/ga4-report";
 
 const text = z.string().trim().max(200).optional();
 
@@ -48,4 +49,14 @@ export async function fetchSearchPerformance(input: SearchPerformanceInput): Pro
 
   const { locale, ...params } = parsed.data;
   return loadSearchPerformance(params, locale);
+}
+
+// ── Google Analytics tab ────────────────────────────────────────────────
+
+
+export async function fetchGa4Report(range: string, compare: boolean): Promise<Ga4Report> {
+  await requireAdminAction(Role.ADMIN);
+  const parsed = z.enum(GA_RANGES).safeParse(range);
+  if (!parsed.success) return { ok: false, reason: "FAILED", detail: "invalid range" };
+  return loadGa4Report(parsed.data, Boolean(compare));
 }

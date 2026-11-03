@@ -106,8 +106,9 @@ describe("/admin/analytics", () => {
   });
 
   it("took the range picker and honours the parameter it sets", () => {
-    expect(analytics).toContain("DashboardControls");
-    expect(analytics).toContain("isRangeDays(searchParams.range)");
+    // Since 2026-11 its own control: 24 h / 7 / 28 / 90 days + compare.
+    expect(analytics).toContain("AnalyticsHeaderControls");
+    expect(analytics).toContain("ANALYTICS_RANGES as readonly string[]).includes(searchParams.range");
 
     // And actually applies it — a picker whose value nothing reads is the
     // same dead control, just moved.

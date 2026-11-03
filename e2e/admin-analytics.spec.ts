@@ -30,8 +30,8 @@ import { signIn } from "./sign-in";
 
 /** Tab buttons in display order, per locale. */
 const TABS = {
-  en: ["Live", "Web Vitals", "Traffic", "Content", "Leads"],
-  th: ["เรียลไทม์", "Core Web Vitals", "ทราฟฟิก", "เนื้อหา", "ลีด"],
+  en: ["Now", "First-party", "Google Analytics", "Search Console", "Meta Pixel · Ads", "API connections"],
+  th: ["ตอนนี้", "ข้อมูลจริง", "Google Analytics", "Search Console", "Meta Pixel · โฆษณา", "เชื่อมต่อ API"],
 } as const;
 
 /*
@@ -47,12 +47,14 @@ const TABS = {
 */
 const OWNED_TEXT = {
   en: {
-    Live: /on the site right now|nobody is on the site/i,
-    "Web Vitals": /core web vitals|no measurements rolled up/i,
+    Now: /on the site right now|nobody is on the site/i,
+    "First-party": /core web vitals|no measurements rolled up/i,
+    "Google Analytics": /GA4/,
   },
   th: {
-    เรียลไทม์: /กำลังอยู่ในเว็บตอนนี้|ตอนนี้ไม่มีใครอยู่ในเว็บ/,
-    "Core Web Vitals": /core web vitals|ยังไม่มีข้อมูลที่สรุปรายวัน/i,
+    ตอนนี้: /กำลังอยู่ในเว็บตอนนี้|ตอนนี้ไม่มีใครอยู่ในเว็บ/,
+    ข้อมูลจริง: /core web vitals|ยังไม่มีข้อมูลที่สรุปรายวัน/i,
+    "Google Analytics": /GA4/,
   },
 } as const;
 

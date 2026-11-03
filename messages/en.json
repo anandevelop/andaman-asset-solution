@@ -3833,7 +3833,13 @@
         "vitals": "Web Vitals",
         "traffic": "Traffic",
         "content": "Content",
-        "leads": "Leads"
+        "leads": "Leads",
+        "now": "Now",
+        "real": "First-party",
+        "ga": "Google Analytics",
+        "search": "Search Console",
+        "meta": "Meta Pixel · Ads",
+        "api": "API connections"
       },
       "totalViews": "Page views",
       "totalViewsHint": "in 30 days",
@@ -3999,6 +4005,55 @@
         "noAccessHint": "In Search Console, open {property} → Settings → Users and permissions → Add user, and add\n{email}\nwith Restricted permission.",
         "failed": "Search Console did not answer",
         "clickToFilter": "Click a row to filter the report by it."
+      },
+      "hub": {
+        "title": "Website analytics",
+        "subtitle": "Data from Google Analytics 4, Google Search Console and Meta Pixel",
+        "range1": "24 h",
+        "range7": "7 days",
+        "range28": "28 days",
+        "range90": "90 days",
+        "compare": "Compare previous period",
+        "export": "Export",
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "setup": "Settings",
+        "connect": "Connect"
+      },
+      "ga": {
+        "loading": "Loading Google Analytics…",
+        "state_NOT_CONFIGURED": "GA4 is not connected — add the GA4 Property ID and the service account file in Settings › Integrations",
+        "state_NO_ACCESS": "Google refused access to GA4 — add the service account as a Viewer in GA4 and enable the Google Analytics Data API",
+        "state_FAILED": "Could not load GA4",
+        "addViewer": "GA4 › Admin › Property access management › add:",
+        "toSettings": "Open integrations",
+        "kpi_users": "Users",
+        "kpi_sessions": "Sessions",
+        "kpi_views": "Page views",
+        "kpi_engagement": "Engagement rate",
+        "kpi_duration": "Avg. session",
+        "noPrevious": "No previous data",
+        "vsPrevious": "vs previous",
+        "dailyTitle": "Users over time",
+        "topPages": "Top pages",
+        "channels": "Channels",
+        "countries": "Countries",
+        "devices": "Devices",
+        "empty": "No data yet",
+        "updated": "Updated"
+      },
+      "meta": {
+        "pixel": "Meta Pixel ID",
+        "leadsFromMeta": "Leads from Facebook/Instagram ({days} days)",
+        "paid": "Leads from ads (utm_medium = cpc/paid)",
+        "campaigns": "Campaigns that brought leads",
+        "noCampaigns": "No leads from Facebook/Instagram in this period",
+        "note": "Counted from the leads themselves (utm_source, or a facebook/instagram referrer). Tag ad links with utm_source=facebook&utm_medium=cpc&utm_campaign=… to split campaigns."
+      },
+      "api": {
+        "title": "API connections",
+        "note": "Enter and test every value in Settings › Integrations · Meta Conversions API is not enabled yet",
+        "open": "Open integrations"
       }
     },
     "urls": {

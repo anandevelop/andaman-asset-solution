@@ -11,7 +11,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Activity, KeyRound, LineChart, Megaphone, Search } from "lucide-react";
+import GaReportPanel, { type GaPanelLabels } from "./GaReportPanel";
 import Link from "next/link";
 import ProgressRing from "@/components/admin/ui/ProgressRing";
 import { MonthlyLeadsChart, LeadSourceChart, TrendChart, type MonthlyPoint, type SourcePoint, type TrendPoint } from "./DashboardCharts";
@@ -25,7 +27,11 @@ import type { LiveSnapshotDto } from "@/lib/analytics/live-visit";
 import SearchPerformancePanel, { type SearchPanelLabels } from "./SearchPerformancePanel";
 import type { Locale } from "@/i18n";
 
-type Tab = "traffic" | "content" | "leads" | "realtime" | "vitals";
+/* "วิเคราะห์เว็บไซต์" (2026-11): ตอนนี้ · ข้อมูลจริง · Google Analytics ·
+   Search Console · Meta Pixel · โฆษณา · เชื่อมต่อ API. "ข้อมูลจริง" is the
+   site's own first-party numbers — page views, content, leads, Core Web
+   Vitals — which used to be four tabs of their own. */
+type Tab = "now" | "real" | "ga" | "search" | "meta" | "api";
 
 export type TopArticle = { id: string; title: string; views30: number; leads: number };
 export type ContentConversionRow = {
@@ -53,6 +59,14 @@ export type EventRsvpRow = {
 type Props = {
   locale: string;
   canViewLeads: boolean;
+
+  /** The header's range ("1" = 24 h) and "เทียบช่วงก่อนหน้า". */
+  range: string;
+  compare: boolean;
+  ga: { labels: GaPanelLabels };
+  /** Rendered on the server — no data fetching in this file. */
+  metaPanel: ReactNode;
+  apiPanel: ReactNode;
 
   /** Google Search Console's Performance report, at the top of Traffic. */
   search: { labels: SearchPanelLabels };
@@ -105,18 +119,39 @@ type Props = {
   };
 };
 
-export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, content, leads, labels, realtime, vitals }: Props) {
-  const [tab, setTab] = useState<Tab>("traffic");
+const TAB_ICONS: Record<Tab, ReactNode> = {
+  now: <span className="size-2 rounded-full bg-adm-success" aria-hidden />,
+  real: <Activity size={15} aria-hidden />,
+  ga: <LineChart size={15} aria-hidden />,
+  search: <Search size={15} aria-hidden />,
+  meta: <Megaphone size={15} aria-hidden />,
+  api: <KeyRound size={15} aria-hidden />,
+};
 
-  /* Realtime first: it is the only tab that answers a question about right
-     now, and the one somebody opens this screen to glance at. */
-  const TABS: Tab[] = canViewLeads
-    ? ["realtime", "vitals", "traffic", "content", "leads"]
-    : ["realtime", "vitals", "traffic", "content"];
+export default function AnalyticsTabs({
+  locale,
+  canViewLeads,
+  range,
+  compare,
+  ga,
+  metaPanel,
+  apiPanel,
+  search,
+  traffic,
+  content,
+  leads,
+  labels,
+  realtime,
+  vitals,
+}: Props) {
+  /* "ตอนนี้" first: the only tab about right now, and the one somebody
+     opens this screen to glance at. */
+  const [tab, setTab] = useState<Tab>("now");
+  const TABS: Tab[] = ["now", "real", "ga", "search", "meta", "api"];
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 rounded-xs border border-adm-line bg-adm-solid p-1">
+      <div className="flex w-fit max-w-full flex-wrap gap-1 rounded-full border border-adm-line bg-adm-solid p-1">
         {TABS.map((key) => (
           <button
             key={key}
@@ -124,20 +159,29 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
             onClick={() => setTab(key)}
             aria-pressed={tab === key}
             className={[
-              "rounded-xs px-3.5 py-2 text-sm transition-colors",
-              tab === key ? "bg-adm-strong font-semibold text-adm-on-strong" : "text-adm-muted hover:text-adm-text",
+              "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors",
+              tab === key ? "bg-white font-semibold text-adm-text shadow-xs" : "text-adm-muted hover:text-adm-text",
             ].join(" ")}
           >
+            {TAB_ICONS[key]}
             {labels[`tab_${key}`]}
           </button>
         ))}
       </div>
 
-      {tab === "realtime" && (
+      {tab === "ga" && <GaReportPanel locale={locale} range={range} compare={compare} labels={ga.labels} />}
+
+      {tab === "search" && <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />}
+
+      {tab === "meta" && metaPanel}
+
+      {tab === "api" && apiPanel}
+
+      {tab === "now" && (
         <RealtimePanel labels={realtime.labels} fetchSnapshot={realtime.fetchSnapshot} />
       )}
 
-      {tab === "vitals" && (
+      {tab === "real" && (
         <div className="space-y-6">
           <VitalsPanel
             labels={vitals.labels}
@@ -188,9 +232,8 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
           Consent moved to Core Web Vitals, and the "configured" tiles were
           dropped, since Settings → Integrations shows the same three values
           as fields that can be edited. */}
-      {tab === "traffic" && (
+      {tab === "real" && (
         <div className="space-y-6">
-          <SearchPerformancePanel locale={locale as Locale} labels={search.labels} />
 
           {/* The site's own count, under Google's: every public page, with
               no consent needed, so it is the larger and the steadier of the
@@ -214,7 +257,7 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
         </div>
       )}
 
-      {tab === "content" && (
+      {tab === "real" && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatTile label={labels.projectsDelivered} value={content.companyStats.projectsDelivered} />
@@ -341,7 +384,7 @@ export default function AnalyticsTabs({ locale, canViewLeads, search, traffic, c
         </div>
       )}
 
-      {tab === "leads" && canViewLeads && (
+      {tab === "real" && canViewLeads && (
         <div className="space-y-6">
           <div className="admin-card">
             <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">
