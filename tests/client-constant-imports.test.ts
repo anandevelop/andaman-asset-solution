@@ -8,8 +8,19 @@
  * belong in a plain module under lib/.
  */
 
-import { globSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+
+/** Every file under `dir` whose name matches `ext` (node:fs globSync is not in this @types/node). */
+function files(dir: string, ext: RegExp, found: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) files(path, ext, found);
+    else if (ext.test(entry.name)) found.push(path);
+  }
+  return found;
+}
 
 const isClient = (source: string) => /^\s*["']use client["']/.test(source);
 
@@ -20,12 +31,12 @@ const ALLOWED = new Set(["EMPTY_BROCHURE"]);
 describe("server files import no constants from client modules", () => {
   it("finds none", () => {
     const clientFiles = new Set(
-      [...globSync("components/**/*.tsx"), ...globSync("app/**/*.tsx")].filter((file) =>
+      [...files("components", /\.tsx$/), ...files("app", /\.tsx$/)].filter((file) =>
         isClient(readFileSync(file, "utf8")),
       ),
     );
     const offenders: string[] = [];
-    for (const file of [...globSync("app/**/*.{ts,tsx}"), ...globSync("lib/**/*.{ts,tsx}")]) {
+    for (const file of [...files("app", /\.tsx?$/), ...files("lib", /\.tsx?$/)]) {
       const source = readFileSync(file, "utf8");
       if (isClient(source)) continue;
       for (const match of source.matchAll(/import\s+(?:\w+\s*,\s*)?\{([^}]*)\}\s+from\s+"@\/([^"]+)"/g)) {
