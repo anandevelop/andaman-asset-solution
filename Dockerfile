@@ -121,6 +121,11 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 
+# Set by CI only — the "Lint & typecheck" job already ran tsc on this
+# commit and the deploy waits for it. See next.config.js.
+ARG SKIP_BUILD_TYPECHECK=0
+ENV SKIP_BUILD_TYPECHECK=$SKIP_BUILD_TYPECHECK
+
 # DATABASE_URL is already set above, ahead of prisma generate.
 RUN npm run build
 

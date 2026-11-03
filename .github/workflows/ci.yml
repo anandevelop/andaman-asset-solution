@@ -310,8 +310,33 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Two commits back is enough to see what this push changed.
+          fetch-depth: 2
 
       - uses: docker/setup-buildx-action@v3
+
+      # Writing the BuildKit cache (mode=max) took ~2 of the job's ~5½
+      # minutes — uploading the builder stage, which changes on every
+      # commit and is never reused. The layer worth keeping is `npm ci`,
+      # and it only changes with the lockfile. So the cache is written when
+      # package.json, the lockfile or the Dockerfile changed — and every
+      # 15th run, so a cache GitHub evicted (10 GB per repo) comes back
+      # without waiting for a dependency bump. Otherwise it is only read.
+      - name: Decide whether to refresh the build cache
+        id: cache
+        run: |
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "write=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git fetch --depth=1 origin "$BEFORE" 2>/dev/null || { echo "write=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          if git diff --name-only "$BEFORE" HEAD | grep -qE '^(package(-lock)?\.json|Dockerfile|\.dockerignore)$' \
+            || [ $(( ${{ github.run_number }} % 15 )) -eq 0 ]; then
+            echo "write=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "write=false" >> "$GITHUB_OUTPUT"
+          fi
 
       # Read once and reuse, so the smoke-tested image and the published one
       # cannot disagree about what version they are.
@@ -335,9 +360,10 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ steps.cache.outputs.write == 'true' && 'type=gha,mode=max' || '' }}
           build-args: |
             ${{ env.IMAGE_BUILD_ARGS }}
+            SKIP_BUILD_TYPECHECK=1
             GIT_COMMIT_SHA=${{ github.sha }}
             APP_VERSION=${{ env.APP_VERSION }}
 

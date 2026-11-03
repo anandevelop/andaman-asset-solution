@@ -237,6 +237,15 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
 
+  /*
+    The CI image build skips `next build`'s own TypeScript pass (~40 s):
+    the "Lint & typecheck" job runs the same `tsc` on the same commit and
+    the deploy waits for it, so the image never ships unchecked. Only the
+    Docker job sets SKIP_BUILD_TYPECHECK; local, e2e and any other build
+    still type-check.
+  */
+  typescript: { ignoreBuildErrors: process.env.SKIP_BUILD_TYPECHECK === "1" },
+
   // Read by lib/runtime-headers.ts; see the note above securityHeaders.
   env: {
     CSP_POLICY_REPORT_ONLY: buildCsp(false),
