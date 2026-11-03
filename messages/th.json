@@ -4007,14 +4007,23 @@
       },
       "aiAlt": {
         "button": "AI เขียน alt ที่ขาด ({count})",
+        "progress": "AI กำลังเขียน {done}/{total}",
+        "waiting": "AI กำลังเขียน {done}/{total} · รอ {sec} วิ",
+        "onUpload": "AI alt ตอนอัปโหลด",
         "running": "กำลังเขียน alt…",
         "thisImage": "AI เติมภาษาที่ว่าง",
-        "hint": "Claude ดูภาพแต่ละรูปแล้วเขียน alt ให้ภาษาที่ยังว่าง ครั้งละไม่เกิน 8 รูป ข้อความที่พิมพ์เองจะไม่ถูกแทนที่",
+        "hint": "Gemini ดูภาพทีละรูปแล้วเขียน alt ให้ภาษาที่ยังว่าง ข้อความที่พิมพ์เองจะไม่ถูกแทนที่ ทำต่อจนครบ กดอีกครั้งเพื่อหยุด",
         "written": "{count, plural, =0 {ยังไม่ได้เขียนรูปไหน} other {เขียน alt แล้ว # รูป}}",
         "someFailed": "ไม่สำเร็จ {count} รูป ({error})",
         "remaining": "เหลืออีก {count} รูป — กดอีกครั้ง",
-        "notConfigured": "ตั้ง ANTHROPIC_API_KEY บนเซิร์ฟเวอร์ก่อนใช้ AI เขียน alt",
+        "notConfigured": "ตั้ง GEMINI_API_KEY บนเซิร์ฟเวอร์ก่อนใช้ AI เขียน alt",
         "failed": "เขียน alt ไม่สำเร็จ ลองอีกครั้ง"
+      },
+      "deleteUnused": {
+        "button": "ลบรูปที่ไม่ได้ใช้ ({count})",
+        "confirm": "กดอีกครั้งเพื่อลบ {count} รูป",
+        "done": "{count, plural, =0 {ไม่มีรูปถูกลบ} other {ลบแล้ว # รูป}}",
+        "failed": "ลบไม่สำเร็จ ลองอีกครั้ง"
       }
     },
     "appointments": {

@@ -1,14 +1,27 @@
 /**
  * tests/ai-alt.test.ts
  *
- * The prompt and the reply parsing behind "AI เขียน alt ที่ขาด".
+ * The prompt, reply parsing, provider choice and pacing behind the media
+ * library's AI alt text.
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { AltError, altPrompt, isAiAltConfigured, parseAltReply } from "@/lib/ai-alt";
+import {
+  AltError,
+  aiAltProvider,
+  altIntervalMs,
+  altPrompt,
+  parseAltReply,
+  retryDelayFrom,
+} from "@/lib/ai-alt";
+
+const env = { ...process.env };
+afterEach(() => {
+  process.env = { ...env };
+});
 
 describe("parseAltReply", () => {
   it("reads the four languages, even with text around the JSON", () => {
@@ -34,13 +47,28 @@ describe("altPrompt", () => {
   });
 });
 
-describe("isAiAltConfigured", () => {
-  it("follows ANTHROPIC_API_KEY", () => {
-    const before = process.env.ANTHROPIC_API_KEY;
+describe("provider", () => {
+  it("prefers Gemini, falls back to Anthropic, else none", () => {
+    process.env.GEMINI_API_KEY = "g";
+    process.env.ANTHROPIC_API_KEY = "a";
+    expect(aiAltProvider()).toBe("gemini");
+    process.env.GEMINI_API_KEY = "";
+    expect(aiAltProvider()).toBe("anthropic");
     process.env.ANTHROPIC_API_KEY = "";
-    expect(isAiAltConfigured()).toBe(false);
-    process.env.ANTHROPIC_API_KEY = "sk-test";
-    expect(isAiAltConfigured()).toBe(true);
-    process.env.ANTHROPIC_API_KEY = before;
+    expect(aiAltProvider()).toBeNull();
+  });
+});
+
+describe("pacing", () => {
+  it("spaces calls from AI_ALT_RPM", () => {
+    process.env.AI_ALT_RPM = "15";
+    expect(altIntervalMs()).toBe(4000);
+    process.env.AI_ALT_RPM = "nonsense";
+    expect(altIntervalMs()).toBe(6000);
+  });
+
+  it("reads Gemini's retryDelay", () => {
+    expect(retryDelayFrom({ error: { details: [{ "@type": "x" }, { retryDelay: "23s" }] } })).toBe(23);
+    expect(retryDelayFrom({ error: {} })).toBeNull();
   });
 });

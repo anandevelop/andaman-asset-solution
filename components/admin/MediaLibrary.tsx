@@ -24,7 +24,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { isAltTextComplete } from "@/lib/media-alt";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -42,7 +42,9 @@ import {
 import { locales, LOCALE_DISPLAY_ORDER } from "@/i18n";
 import {
   deleteMedia,
+  deleteUnusedMedia,
   generateMissingAltText,
+  toggleAiAltOnUpload,
   getMediaUsage,
   updateMediaMeta,
 } from "@/app/[locale]/admin/(content)/media/actions";
@@ -74,8 +76,12 @@ type Props = {
   unusedCount: number;
   legacyHostCount: number;
   truncated: boolean;
-  /** ANTHROPIC_API_KEY is set: the "AI เขียน alt" buttons can run. */
+  /** An AI key (GEMINI_API_KEY) is set: the "AI" buttons can run. */
   aiAltEnabled?: boolean;
+  /** The saved "AI alt ตอนอัปโหลด" switch. */
+  aiAltOnUpload?: boolean;
+  /** ADMIN and above — deleteUnusedMedia's own floor. */
+  canDeleteUnused?: boolean;
   /** Picker mode — see the file header. */
   onSelect?: (item: MediaItem) => void;
 };
@@ -86,6 +92,11 @@ function isDocument(mimeType: string | null): boolean {
 
 function isVideo(mimeType: string | null): boolean {
   return Boolean(mimeType?.startsWith("video/"));
+}
+
+/** What the AI and "delete unused" buttons work on — the server's rule too. */
+function isImageLike(mimeType: string | null): boolean {
+  return !mimeType || mimeType.startsWith("image/");
 }
 
 function formatBytes(bytes: number | null): string {
@@ -119,40 +130,110 @@ export default function MediaLibrary({
   legacyHostCount,
   truncated,
   aiAltEnabled = false,
+  aiAltOnUpload = false,
+  canDeleteUnused = false,
   onSelect,
 }: Props) {
   const t = useTranslations("admin.media");
   const [items, setItems] = useState(initialItems);
-  const [aiRunning, startAi] = useTransition();
-  const [aiMessage, setAiMessage] = useState<{ ok: boolean; text: string } | null>(null);
-  // Counted from the grid rather than the prop, so it falls as batches land.
-  const missingAltNow = items.filter((i) => !isDocument(i.mimeType) && !isVideo(i.mimeType) && !altComplete(i.altText)).length;
+  // Counted from the grid rather than the props, so they fall as work lands.
+  const missingAltNow = items.filter((i) => isImageLike(i.mimeType) && !altComplete(i.altText)).length;
+  const unusedNow = items.filter((i) => isImageLike(i.mimeType) && i.usageCount === 0).length;
 
-  /** One batch per click — see generateMissingAltText. */
-  function runAiAlt() {
+  // ── AI alt: a loop of server batches, with progress and a stop ─────────
+  const [ai, setAi] = useState<{ running: boolean; done: number; total: number; waitSec: number }>({
+    running: false,
+    done: 0,
+    total: 0,
+    waitSec: 0,
+  });
+  const [aiMessage, setAiMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const stopRef = useRef(false);
+
+  async function runAiAlt() {
+    if (ai.running) {
+      stopRef.current = true; // finishes the batch in flight, then stops
+      return;
+    }
+    stopRef.current = false;
     setAiMessage(null);
-    startAi(async () => {
-      try {
-        const result = await generateMissingAltText(locale);
+    const total = missingAltNow;
+    let done = 0;
+    const skip: string[] = [];
+    let lastError = "";
+    setAi({ running: true, done, total, waitSec: 0 });
+
+    try {
+      while (!stopRef.current) {
+        const result = await generateMissingAltText(locale, undefined, skip);
         if (!result.ok) {
-          setAiMessage({ ok: false, text: t(result.error === "NOT_CONFIGURED" ? "aiAlt.notConfigured" : "aiAlt.failed") });
-          return;
+          lastError = t(result.error === "NOT_CONFIGURED" ? "aiAlt.notConfigured" : "aiAlt.failed");
+          break;
         }
         const byId = new Map(result.updated.map((u) => [u.id, u.altText]));
         setItems((prev) => prev.map((i) => (byId.has(i.id) ? { ...i, altText: byId.get(i.id)! } : i)));
-        setAiMessage({
-          ok: result.failed.length === 0,
-          text: [
-            t("aiAlt.written", { count: result.written }),
-            result.failed.length ? t("aiAlt.someFailed", { count: result.failed.length, error: result.failed[0].error }) : "",
-            result.remaining > 0 ? t("aiAlt.remaining", { count: result.remaining }) : "",
-          ]
-            .filter(Boolean)
-            .join(" · "),
-        });
-      } catch (error) {
-        setAiMessage({ ok: false, text: error instanceof Error ? error.message : String(error) });
+        done += result.written;
+        skip.push(...result.failed.map((f) => f.id));
+        if (result.failed[0]) lastError = result.failed[0].error;
+        setAi((prev) => ({ ...prev, done }));
+
+        if (result.retryAfterSec) {
+          // The free tier's per-minute cap: count down, then carry on.
+          for (let s = result.retryAfterSec; s > 0 && !stopRef.current; s -= 1) {
+            setAi((prev) => ({ ...prev, waitSec: s }));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          setAi((prev) => ({ ...prev, waitSec: 0 }));
+          continue;
+        }
+        if (result.remaining <= 0 || (result.written === 0 && result.failed.length === 0)) break;
       }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+
+    setAi((prev) => ({ ...prev, running: false, waitSec: 0 }));
+    setAiMessage({
+      ok: skip.length === 0 && !lastError,
+      text: [
+        t("aiAlt.written", { count: done }),
+        skip.length ? t("aiAlt.someFailed", { count: skip.length, error: lastError }) : lastError,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    });
+  }
+
+  // ── AI alt on upload ──────────────────────────────────────────────────
+  const [onUpload, setOnUpload] = useState(aiAltOnUpload);
+  const [togglingUpload, startToggle] = useTransition();
+  function flipOnUpload() {
+    const next = !onUpload;
+    setOnUpload(next);
+    startToggle(async () => {
+      const result = await toggleAiAltOnUpload(locale, next);
+      if (!result.ok) setOnUpload(!next);
+    });
+  }
+
+  // ── Delete unused images: two-step, no browser dialog ─────────────────
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingUnused, startDeleteUnused] = useTransition();
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  function runDeleteUnused() {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 5000);
+      return;
+    }
+    setConfirmDelete(false);
+    startDeleteUnused(async () => {
+      const result = await deleteUnusedMedia(locale);
+      if (!result.ok) return setDeleteMessage(t("deleteUnused.failed"));
+      const gone = new Set(result.deletedIds);
+      setItems((prev) => prev.filter((i) => !gone.has(i.id)));
+      if (selectedId && gone.has(selectedId)) setSelectedId(null);
+      setDeleteMessage(t("deleteUnused.done", { count: result.deleted }));
     });
   }
   const [query, setQuery] = useState("");
@@ -244,8 +325,65 @@ export default function MediaLibrary({
             </button>
           )}
         </div>
-        <MediaUploadButton locale={locale} label={t("upload")} onUploaded={handleUploaded} />
+        <div className="flex flex-wrap items-center gap-2.5">
+          {!onSelect && aiAltEnabled && (
+            <label className="mr-1 inline-flex cursor-pointer items-center gap-2 text-xs text-adm-muted">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={onUpload}
+                onClick={flipOnUpload}
+                disabled={togglingUpload}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${onUpload ? "bg-adm-fill" : "bg-adm-line-strong"}`}
+              >
+                <span
+                  className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${onUpload ? "translate-x-5.5" : "translate-x-0.5"}`}
+                />
+              </button>
+              {t("aiAlt.onUpload")}
+            </label>
+          )}
+
+          {!onSelect && (missingAltNow > 0 || ai.running) && (
+            <button
+              type="button"
+              onClick={runAiAlt}
+              disabled={!aiAltEnabled}
+              title={aiAltEnabled ? t("aiAlt.hint") : t("aiAlt.notConfigured")}
+              className="admin-btn-ghost rounded-full! px-4"
+            >
+              {ai.running ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Sparkles size={15} aria-hidden />}
+              {ai.running
+                ? ai.waitSec > 0
+                  ? t("aiAlt.waiting", { done: ai.done, total: ai.total, sec: ai.waitSec })
+                  : t("aiAlt.progress", { done: ai.done, total: ai.total })
+                : t("aiAlt.button", { count: missingAltNow })}
+            </button>
+          )}
+
+          {!onSelect && canDeleteUnused && unusedNow > 0 && (
+            <button
+              type="button"
+              onClick={runDeleteUnused}
+              disabled={deletingUnused}
+              className={`admin-btn-ghost rounded-full! px-4 ${confirmDelete ? "border-adm-danger! text-adm-danger!" : ""}`}
+            >
+              {deletingUnused ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Trash2 size={15} aria-hidden />}
+              {confirmDelete ? t("deleteUnused.confirm", { count: unusedNow }) : t("deleteUnused.button", { count: unusedNow })}
+            </button>
+          )}
+
+          <MediaUploadButton locale={locale} label={t("upload")} onUploaded={handleUploaded} />
+        </div>
       </div>
+
+      {!onSelect && (aiMessage || deleteMessage || (!aiAltEnabled && missingAltNow > 0)) && (
+        <p className="-mt-2 flex flex-wrap justify-end gap-x-3 text-xs">
+          {!aiAltEnabled && missingAltNow > 0 && <span className="text-adm-muted">{t("aiAlt.notConfigured")}</span>}
+          {aiMessage && <span className={aiMessage.ok ? "text-adm-success" : "text-adm-danger"}>{aiMessage.text}</span>}
+          {deleteMessage && <span className="text-adm-muted">{deleteMessage}</span>}
+        </p>
+      )}
 
       {/* Health banners and the "unused" filter are maintenance tools for
           the standalone library page — noise inside a picker whose only
@@ -260,25 +398,6 @@ export default function MediaLibrary({
           <span className="flex-1">{t("missingAltBanner", { count: missingAltCount })}</span>
           <span className="shrink-0 text-xs font-semibold underline">{t("missingAltBannerCta")}</span>
         </button>
-      )}
-
-      {!onSelect && missingAltNow > 0 && (
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={runAiAlt}
-            disabled={aiRunning || !aiAltEnabled}
-            title={aiAltEnabled ? t("aiAlt.hint") : t("aiAlt.notConfigured")}
-            className="admin-btn-ghost rounded-full! px-4 py-2 text-sm"
-          >
-            {aiRunning ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Sparkles size={15} aria-hidden />}
-            {aiRunning ? t("aiAlt.running") : t("aiAlt.button", { count: missingAltNow })}
-          </button>
-          {!aiAltEnabled && <span className="text-xs text-adm-muted">{t("aiAlt.notConfigured")}</span>}
-          {aiMessage && (
-            <span className={`text-xs ${aiMessage.ok ? "text-adm-success" : "text-adm-danger"}`}>{aiMessage.text}</span>
-          )}
-        </div>
       )}
 
       {/* Not a "migrate everything" button: scripts/media-legacy-check.ts

@@ -21,8 +21,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { deleteS3Object, objectKeyFromUrl } from "@/lib/s3";
 import { findMediaUsage, findMediaUsageForUrls, isMediaUrlInUse, type MediaUsageRef } from "@/lib/media-usage";
-import { ALT_LOCALES, AltError, draftAltText, isAiAltConfigured } from "@/lib/ai-alt";
-import { isAltTextComplete, MIN_ALT_LENGTH } from "@/lib/media-alt";
+import { after } from "next/server";
+import { AltError, aiAltProvider, isAiAltConfigured } from "@/lib/ai-alt";
+import { altAfterUpload, fillAlt, imagesMissingAlt, setAiAltOnUpload } from "@/lib/media-ai-alt";
 import { getMediaLibrary, type MediaLibraryData } from "@/lib/media";
 import { mediaCreateSchema, mediaDeleteSchema, mediaMetaSchema } from "@/lib/validations";
 
@@ -70,6 +71,10 @@ export async function createMedia(
     },
     select: { id: true },
   });
+
+  // "AI alt ตอนอัปโหลด": after the response, so the upload is not kept
+  // waiting on the model. Checks the switch itself.
+  if (isAiAltConfigured()) after(() => altAfterUpload(media.id));
 
   revalidateMedia(locale);
   return { ok: true, id: media.id };
@@ -178,80 +183,138 @@ export type AiAltResult =
       ok: true;
       written: number;
       failed: { id: string; error: string }[];
-      /** Still missing after this batch — the button shows it and can be pressed again. */
+      /** Still missing after this batch, not counting `skip`. */
       remaining: number;
       /** The rows as saved, so the grid updates without a reload. */
       updated: { id: string; altText: Record<string, string> }[];
+      /** Set when the provider said slow down: wait this long, then go on. */
+      retryAfterSec?: number;
     }
   | { ok: false; error: "NOT_CONFIGURED" | "FAILED" };
 
-/** Per click: small enough to finish well inside the proxy's 60 s. */
-const AI_ALT_BATCH = 8;
-const AI_ALT_CONCURRENCY = 3;
+/** Stop starting new images after this long, to finish inside the proxy's 60 s. */
+const AI_ALT_BUDGET_MS = 40_000;
+const AI_ALT_MAX_PER_CALL = 8;
 
 /**
- * "AI เขียน alt ที่ขาด": draft alt text for images that are missing it in
- * any language (or for `ids`, from one image's panel). Only empty or
- * too-short languages are filled; text a person wrote is never replaced.
+ * One batch of "AI เขียน alt ที่ขาด". The page calls it in a loop, showing
+ * done/total, until nothing is left or the admin stops it. `ids` limits it
+ * to those images (the panel button); `skip` is what already failed this
+ * run, so a broken file is not retried forever. Calls are paced by
+ * lib/ai-alt.ts for the free tier; on a 429 the batch ends early with
+ * retryAfterSec and the page waits.
  */
-export async function generateMissingAltText(locale: string, ids?: string[]): Promise<AiAltResult> {
+export async function generateMissingAltText(
+  locale: string,
+  ids?: string[],
+  skip: string[] = [],
+): Promise<AiAltResult> {
   await requireAdminAction(Role.EDITOR);
   if (!isAiAltConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
 
   try {
-    const rows = await prisma.media.findMany({
-      where: {
-        ...(ids?.length ? { id: { in: ids.slice(0, AI_ALT_BATCH) } } : {}),
-        // Null for rows registered before the column was filled; the
-        // fetch in lib/ai-alt.ts refuses anything that is not an image.
-        OR: [{ mimeType: { startsWith: "image/" } }, { mimeType: null }],
-      },
-      select: { id: true, url: true, tags: true, altText: true },
-      orderBy: { createdAt: "desc" },
-    });
-    const missing = rows.filter(
-      (row) => !isAltTextComplete(row.altText as Record<string, string> | null, ALT_LOCALES),
-    );
-    const batch = missing.slice(0, AI_ALT_BATCH);
+    const started = Date.now();
+    const missing = (await imagesMissingAlt(skip.slice(0, 2000))).filter((row) => !ids?.length || ids.includes(row.id));
+    const usage = await findMediaUsageForUrls(missing.slice(0, AI_ALT_MAX_PER_CALL).map((row) => row.url));
 
-    const usage = await findMediaUsageForUrls(batch.map((row) => row.url));
     const failed: { id: string; error: string }[] = [];
     const updated: { id: string; altText: Record<string, string> }[] = [];
+    let retryAfterSec: number | undefined;
 
-    let next = 0;
-    async function worker() {
-      while (next < batch.length) {
-        const row = batch[next++];
-        try {
-          const usedOn = (usage.get(row.url) ?? []).map((ref) => ref.label).filter(Boolean);
-          const draft = await draftAltText(row.url, { tags: row.tags, usedOn });
-          const current = (row.altText ?? {}) as Record<string, string>;
-          const merged: Record<string, string> = { ...current };
-          for (const lang of ALT_LOCALES) {
-            if ((current[lang] ?? "").trim().length < MIN_ALT_LENGTH) merged[lang] = draft[lang];
-          }
-          await prisma.media.update({ where: { id: row.id }, data: { altText: merged } });
-          updated.push({ id: row.id, altText: merged });
-        } catch (error) {
-          failed.push({
-            id: row.id,
-            error: error instanceof AltError ? `${error.code}: ${error.message}` : String(error),
-          });
+    for (const row of missing.slice(0, AI_ALT_MAX_PER_CALL)) {
+      if (Date.now() - started > AI_ALT_BUDGET_MS) break;
+      try {
+        const usedOn = (usage.get(row.url) ?? []).map((ref) => ref.label);
+        updated.push({ id: row.id, altText: await fillAlt(row, usedOn) });
+      } catch (error) {
+        if (error instanceof AltError && error.code === "RATE_LIMIT") {
+          retryAfterSec = error.retryAfterSec ?? 60;
+          break;
         }
+        failed.push({
+          id: row.id,
+          error: error instanceof AltError ? `${error.code}: ${error.message}` : String(error),
+        });
       }
     }
-    await Promise.all(Array.from({ length: Math.min(AI_ALT_CONCURRENCY, batch.length) }, worker));
 
     if (updated.length) revalidateMedia(locale);
     return {
       ok: true,
       written: updated.length,
       failed,
-      remaining: missing.length - updated.length,
+      remaining: missing.length - updated.length - failed.length,
       updated,
+      ...(retryAfterSec !== undefined && { retryAfterSec }),
     };
   } catch (error) {
     console.error("[generateMissingAltText]", error);
+    return { ok: false, error: "FAILED" };
+  }
+}
+
+/** The "AI alt ตอนอัปโหลด" switch. */
+export async function toggleAiAltOnUpload(locale: string, on: boolean): Promise<ActionResult> {
+  const actor = await requireAdminAction(Role.EDITOR);
+  if (on && !aiAltProvider()) return { ok: false, error: "NOT_CONFIGURED" };
+  try {
+    await setAiAltOnUpload(on, actor.id);
+    revalidateMedia(locale);
+    return { ok: true };
+  } catch (error) {
+    console.error("[toggleAiAltOnUpload]", error);
+    return { ok: false, error: "FAILED" };
+  }
+}
+
+export type DeleteUnusedResult =
+  | { ok: true; deleted: number; skipped: number; deletedIds: string[] }
+  | { ok: false; error: string };
+
+/**
+ * "ลบรูปที่ไม่ได้ใช้": every library file nothing on the site references.
+ * Usage is re-scanned here, not taken from the grid — something may have
+ * been wired to one of them since the page loaded — and each file is
+ * checked once more just before it goes. Bucket object first, then row,
+ * the same order and best-effort rule as deleteMedia. ADMIN and above: it
+ * is the one action on this page that removes many files at once.
+ */
+export async function deleteUnusedMedia(locale: string): Promise<DeleteUnusedResult> {
+  await requireAdminAction(Role.ADMIN);
+
+  try {
+    // Images only, as the button says: an unused brochure PDF is a
+    // decision for the e-brochure screen, not a bulk clean-up.
+    const rows = await prisma.media.findMany({
+      where: { OR: [{ mimeType: { startsWith: "image/" } }, { mimeType: null }] },
+      select: { id: true, url: true },
+    });
+    const usage = await findMediaUsageForUrls(rows.map((row) => row.url));
+    const unused = rows.filter((row) => (usage.get(row.url) ?? []).length === 0);
+
+    const deletedIds: string[] = [];
+    let skipped = 0;
+    for (const row of unused) {
+      if (await isMediaUrlInUse(row.url)) {
+        skipped += 1;
+        continue;
+      }
+      const objectKey = objectKeyFromUrl(row.url);
+      if (objectKey) {
+        try {
+          await deleteS3Object(objectKey);
+        } catch (error) {
+          console.error("[deleteUnusedMedia] failed to delete S3 object", objectKey, error);
+        }
+      }
+      await prisma.media.delete({ where: { id: row.id } });
+      deletedIds.push(row.id);
+    }
+
+    revalidateMedia(locale);
+    return { ok: true, deleted: deletedIds.length, skipped, deletedIds };
+  } catch (error) {
+    console.error("[deleteUnusedMedia]", error);
     return { ok: false, error: "FAILED" };
   }
 }

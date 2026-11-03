@@ -21,6 +21,7 @@ import { isDatabaseOffline } from "@/lib/db";
 import { getMediaLibrary } from "@/lib/media";
 import MediaLibrary from "@/components/admin/MediaLibrary";
 import { isAiAltConfigured } from "@/lib/ai-alt";
+import { getAiAltOnUpload } from "@/lib/media-ai-alt";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
@@ -32,9 +33,10 @@ export default async function AdminMediaPage(props: Props) {
   const session = await requireAdmin(locale, Role.VIEWER);
   const canWrite = hasRole(session.role, Role.EDITOR);
 
-  const [t, library] = await Promise.all([
+  const [t, library, aiAltOnUpload] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getMediaLibrary(),
+    getAiAltOnUpload(),
   ]);
 
   const offline = isDatabaseOffline();
@@ -63,6 +65,8 @@ export default async function AdminMediaPage(props: Props) {
           legacyHostCount={library.legacyHostCount}
           truncated={library.truncated}
           aiAltEnabled={isAiAltConfigured()}
+          aiAltOnUpload={aiAltOnUpload}
+          canDeleteUnused={hasRole(session.role, Role.ADMIN)}
         />
       </fieldset>
     </div>

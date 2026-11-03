@@ -4007,14 +4007,23 @@
       },
       "aiAlt": {
         "button": "AI: write missing alt ({count})",
+        "progress": "AI writing {done}/{total}",
+        "waiting": "AI writing {done}/{total} · waiting {sec}s",
+        "onUpload": "AI alt on upload",
         "running": "Writing alt text…",
         "thisImage": "AI: fill the empty languages",
-        "hint": "Claude looks at each photo and writes alt text in the four languages that are empty. Up to 8 images per click; text you wrote is kept.",
+        "hint": "Gemini looks at each photo and writes alt text in the languages that are empty; text you wrote is kept. Runs until done — press again to stop.",
         "written": "{count, plural, =0 {Nothing written} one {Wrote alt for # image} other {Wrote alt for # images}}",
         "someFailed": "{count} failed ({error})",
         "remaining": "{count} still missing — press again",
-        "notConfigured": "Set ANTHROPIC_API_KEY on the server to use AI alt text",
+        "notConfigured": "Set GEMINI_API_KEY on the server to use AI alt text",
         "failed": "Could not write alt text — try again"
+      },
+      "deleteUnused": {
+        "button": "Delete unused images ({count})",
+        "confirm": "Click again to delete {count} images",
+        "done": "{count, plural, =0 {Nothing deleted} one {Deleted # image} other {Deleted # images}}",
+        "failed": "Could not delete — try again"
       }
     },
     "appointments": {
