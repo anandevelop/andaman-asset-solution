@@ -247,6 +247,8 @@ export const NAV_TAB_GROUPS = {
     { key: "keywords", segment: "/keywords", roles: ROLE_SETS.ADMIN_UP },
     /* The on-page audit (phase 1) — the overview's numbers link into it. */
     { key: "audit", segment: "/audit", roles: ROLE_SETS.ADMIN_UP },
+    /* PageSpeed Insights: lab scores and Chrome field data, per page. */
+    { key: "speed", segment: "/speed", roles: ROLE_SETS.ADMIN_UP },
     /* Crawling, indexing and the sitemap (phase 5). */
     { key: "indexing", segment: "/indexing", roles: ROLE_SETS.ADMIN_UP },
     { key: "links", segment: "/links", roles: ROLE_SETS.ADMIN_UP },

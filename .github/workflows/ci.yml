@@ -178,6 +178,9 @@ jobs:
       NEXTAUTH_SECRET: e2e-ci-placeholder-secret-000000000000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_DEFAULT_LOCALE: en
+      # Lets /admin/seo/speed render past its "connect a key" state. A
+      # placeholder: no test presses the buttons that would call Google.
+      PAGESPEED_API_KEY: e2e-placeholder
       # Tells global-setup.ts that the step below already did the work, so
       # it does not truncate the fixtures the production build was just
       # prerendered from. See the note on its default export.

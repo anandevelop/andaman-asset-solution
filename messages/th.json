@@ -835,7 +835,8 @@
         "defaults": "ตั้งค่า",
         "meta": "Meta ทุกหน้า",
         "schema": "Schema",
-        "aiSearch": "AI Search"
+        "aiSearch": "AI Search",
+        "speed": "ความเร็ว"
       },
       "projects": {
         "label": "โครงการ",
@@ -3235,7 +3236,8 @@
         "kindUnclaimed": "ลีดไม่มีคนรับ",
         "kindReservation": "การจองยูนิต",
         "kindWeekly": "สรุปรายสัปดาห์",
-        "kindBackup": "สำรองข้อมูล"
+        "kindBackup": "สำรองข้อมูล",
+        "kindPagespeed": "ความเร็วเว็บ"
       },
       "ai": {
         "title": "AI (Google Gemini)",
@@ -3303,6 +3305,56 @@
           "invalid_grant": "กุญแจใช้ไม่ได้ (ถูกลบหรือหมดอายุ) — สร้างกุญแจใหม่ใน Google Cloud",
           "BAD_PRIVATE_KEY": "private_key ในไฟล์เสียหาย — ดาวน์โหลดไฟล์ใหม่",
           "NO_CREDENTIALS": "ยังไม่มีกุญแจ — เลือกไฟล์ .json ของ service account"
+        }
+      },
+      "pagespeed": {
+        "title": "PageSpeed Insights",
+        "subtitle": "วัดคะแนนความเร็ว (มือถือ / เดสก์ท็อป) และ Core Web Vitals ของทุกหน้า ดูได้ที่ SEO › ความเร็ว · ใช้ฟรี {quota} ครั้ง/วัน ต่อ 1 key",
+        "statusAdmin": "เชื่อมต่อแล้ว · key บันทึกที่นี่",
+        "statusEnv": "เชื่อมต่อแล้ว · key จากเซิร์ฟเวอร์ (.env)",
+        "statusNone": "ยังไม่เชื่อมต่อ",
+        "undecryptable": "อ่าน key ที่บันทึกไว้ไม่ได้แล้ว (NEXTAUTH_SECRET เปลี่ยน) กรุณาวางใหม่",
+        "keyLabel": "API key",
+        "keyPlaceholderNew": "วาง key (AIza…)",
+        "keyPlaceholderKeep": "•••••••• บันทึกแล้ว — วาง key ใหม่เพื่อแทนที่",
+        "keyHint": "เก็บแบบเข้ารหัส · ลงท้าย …{last}",
+        "keyHintNone": "Google Cloud → APIs & Services → Credentials → API key และเปิดใช้ PageSpeed Insights API",
+        "scheduleLabel": "สแกนอัตโนมัติ",
+        "strategiesLabel": "อุปกรณ์",
+        "schedule": {
+          "weekly": "ทุกสัปดาห์ (จันทร์ 06:00)",
+          "daily": "ทุกวัน (06:00)",
+          "off": "ปิด"
+        },
+        "strategies": {
+          "both": "มือถือ + เดสก์ท็อป",
+          "mobile": "มือถือเท่านั้น",
+          "desktop": "เดสก์ท็อปเท่านั้น"
+        },
+        "scheduleHint": "หน้าแรก โครงการ หน้าโครงการ ข่าว ข่าวล่าสุด ความคืบหน้า เกี่ยวกับเรา ติดต่อ ≈ 16 ครั้งต่อรอบ",
+        "alertLabel": "แจ้งเตือนทาง LINE เมื่อคะแนนมือถือของหน้าใดตกต่ำกว่า",
+        "alertThreshold": "เกณฑ์คะแนน",
+        "capLabel": "เพดานของเราต่อวัน",
+        "capUnit": "ครั้ง",
+        "usage": "ใช้ไปวันนี้ {used} / {cap} ครั้ง (Google ให้ {quota})",
+        "test": "ทดสอบการเชื่อมต่อ",
+        "testing": "กำลังทดสอบ… (ไม่เกิน 1 นาที)",
+        "testOk": "key ใช้ได้ · หน้าแรก (มือถือ) ได้ {score} คะแนน ({seconds} วิ)",
+        "testCached": "key ใช้ได้ · หน้าแรก (มือถือ) ได้ {score} คะแนน (ผลภายใน 5 นาทีล่าสุด)",
+        "getKey": "วิธีสร้าง API key",
+        "save": "บันทึก",
+        "saved": "บันทึกแล้ว",
+        "removeKey": "ลบ key",
+        "err": {
+          "NO_KEY": "บันทึก key ก่อน",
+          "BAD_KEY": "Google ไม่รับ key นี้",
+          "RATE_LIMITED": "Google จำกัดความถี่ ลองใหม่ใน 1 นาที",
+          "DAILY_CAP": "ถึงเพดานของวันนี้แล้ว",
+          "FETCH_FAILED": "Google ทดสอบหน้านี้ไม่ได้",
+          "UNREACHABLE": "ติดต่อ Google ไม่ได้",
+          "INVALID_INPUT": "ตรวจค่าที่กรอกอีกครั้ง",
+          "FORBIDDEN": "เฉพาะผู้ดูแล",
+          "SAVE_FAILED": "บันทึกไม่สำเร็จ"
         }
       }
     },
@@ -3781,6 +3833,108 @@
           "languages": "เนื้อหา 4 ภาษาพร้อม hreflang"
         },
         "toSchema": "ดู Schema"
+      },
+      "speed": {
+        "title": "ความเร็วเว็บไซต์",
+        "subtitle": {
+          "weekly": "PageSpeed Insights: ผลทดสอบ Lighthouse และผู้ใช้จริงบน Chrome (28 วัน) · สแกนอัตโนมัติทุกจันทร์ 06:00",
+          "daily": "PageSpeed Insights: ผลทดสอบ Lighthouse และผู้ใช้จริงบน Chrome (28 วัน) · สแกนอัตโนมัติทุกวัน 06:00",
+          "off": "PageSpeed Insights: ผลทดสอบ Lighthouse และผู้ใช้จริงบน Chrome (28 วัน) · ปิดสแกนอัตโนมัติ"
+        },
+        "lastScan": "สแกนล่าสุด {time}",
+        "noKey": "ยังไม่ได้เชื่อมต่อ PageSpeed Insights — ใส่ API key ที่ ตั้งค่า › การเชื่อมต่อ",
+        "goToSettings": "ไปหน้าการเชื่อมต่อ",
+        "picker": {
+          "device": "อุปกรณ์",
+          "mobile": "มือถือ",
+          "desktop": "เดสก์ท็อป",
+          "language": "ภาษา",
+          "pagesLabel": "หน้าที่ตรวจ",
+          "allPages": "ทั้งเว็บ (เฉลี่ย)",
+          "projectPage": "หน้าโครงการ…",
+          "pastePlaceholder": "วางลิงก์หน้าอื่นของเว็บ…",
+          "check": "ตรวจ",
+          "badUrl": "ลิงก์นี้ไม่ใช่หน้าของเว็บเรา"
+        },
+        "preset": {
+          "home": "หน้าแรก",
+          "projects": "โครงการทั้งหมด",
+          "project": "หน้าโครงการ",
+          "news": "ข่าวสาร",
+          "latestNews": "ข่าวล่าสุด",
+          "progress": "ความคืบหน้า",
+          "about": "เกี่ยวกับเรา",
+          "contact": "ติดต่อเรา"
+        },
+        "averageTitle": "เฉลี่ย {count} หน้า",
+        "thisPage": "หน้านี้",
+        "cat": {
+          "performance": "ประสิทธิภาพ",
+          "accessibility": "การเข้าถึง",
+          "bestPractices": "แนวทางปฏิบัติ",
+          "seo": "SEO"
+        },
+        "bands": "เกณฑ์ของ Google: 90–100 ดี · 50–89 ควรปรับ · 0–49 แย่",
+        "notTested": "ยังไม่เคยตรวจหน้านี้ กด “ตรวจตอนนี้”",
+        "noRunsYet": "ยังไม่มีผล — กดสแกนทั้งหมด หรือเลือกหน้าแล้วกดตรวจ",
+        "lastFailed": "ตรวจครั้งล่าสุดไม่สำเร็จ ({time}): {error}",
+        "openGoogle": "เปิดรายงานเต็มที่ Google",
+        "field": {
+          "title": "Core Web Vitals จากผู้ใช้จริง (28 วัน)",
+          "overall": {
+            "FAST": "ผ่าน",
+            "AVERAGE": "ควรปรับ",
+            "SLOW": "ไม่ผ่าน"
+          },
+          "lcp": "LCP · โหลดเนื้อหาหลัก",
+          "inp": "INP · ตอบสนองการกด",
+          "cls": "CLS · หน้าไม่เลื่อน",
+          "note": "แถบ = สัดส่วนผู้ใช้ ดี / ควรปรับ / แย่ · Google ใช้ค่านี้จัดอันดับ",
+          "originNote": "หน้านี้มีผู้เข้าชมผ่าน Chrome น้อย จึงแสดงค่าของทั้งเว็บแทน",
+          "none": "Chrome ยังมีข้อมูลผู้ใช้จริงไม่พอ",
+          "pickPage": "เลือกหน้าเพื่อดูข้อมูลผู้ใช้จริง"
+        },
+        "lab": {
+          "title": "ผลทดสอบ (Lighthouse)",
+          "pageSize": "ขนาดหน้า"
+        },
+        "sec": "วิ",
+        "history": "คะแนน {count} ครั้งล่าสุด",
+        "fixes": {
+          "title": "สิ่งที่ควรแก้ (เรียงตามเวลาที่ประหยัดได้)",
+          "none": "ไม่มีจุดที่ต้องแก้มาก"
+        },
+        "table": {
+          "title": "รายหน้า",
+          "page": "หน้า",
+          "score": "คะแนน",
+          "change": "เทียบครั้งก่อน",
+          "tested": "ตรวจเมื่อ"
+        },
+        "limitsNote": "ลิมิต: ตรวจพร้อมกันทีละ 2 หน้า · หน้าเดิมภายใน 5 นาทีใช้ผลเดิม · สแกนทั้งหมดได้ทุก 10 นาที · เพดานต่อวันตั้งได้ที่ ตั้งค่า › การเชื่อมต่อ",
+        "action": {
+          "testNow": "ตรวจตอนนี้",
+          "testAgain": "ตรวจอีกครั้ง",
+          "forceTest": "ไม่ใช้ผล 5 นาทีล่าสุด",
+          "testing": "กำลังตรวจ…",
+          "testingHint": "Google ใช้เวลา 10–60 วินาทีต่อหน้า",
+          "tested": "ตรวจเสร็จแล้ว",
+          "cachedResult": "เพิ่งตรวจไปไม่ถึง 5 นาที แสดงผลเดิม",
+          "scanAll": "สแกนทั้งหมดตอนนี้",
+          "scanning": "กำลังสแกน {done}/{total}"
+        },
+        "err": {
+          "NO_KEY": "ยังไม่มี API key — ใส่ที่ ตั้งค่า › การเชื่อมต่อ",
+          "DAILY_CAP": "ถึงเพดานของวันนี้แล้ว ลองพรุ่งนี้ หรือเพิ่มเพดานในตั้งค่า",
+          "RATE_LIMITED": "Google จำกัดความถี่ ลองใหม่ใน 1 นาที",
+          "BAD_KEY": "Google ไม่รับ API key",
+          "FETCH_FAILED": "Google โหลดหน้านี้ไม่ได้",
+          "UNREACHABLE": "ติดต่อ Google ไม่ได้",
+          "RUNNING": "กำลังสแกนอยู่แล้ว",
+          "COOLDOWN": "เพิ่งสแกนไป สแกนได้อีกครั้งตอน {time}",
+          "BAD_URL": "ลิงก์นี้ไม่ใช่หน้าของเว็บเรา",
+          "FORBIDDEN": "เฉพาะผู้ดูแล"
+        }
       }
     },
     "seoTranslations": {

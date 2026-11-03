@@ -34,7 +34,11 @@ const PAGES = [
   "/admin/seo/keywords",
   "/admin/seo/links",
   "/admin/seo/urls",
+  "/admin/seo/speed",
+  "/admin/seo/speed?path=all&device=desktop",
+  "/admin/seo/speed?path=/en/contact&lang=en",
   "/admin/seo/defaults",
+  "/admin/settings/integrations",
   "/admin/reports",
 ];
 

@@ -31,6 +31,10 @@ import { saveAiSettingsAction } from "./ai-actions";
 import GoogleSettingsCard from "@/components/admin/GoogleSettingsCard";
 import { getGoogleConfig } from "@/lib/google-config";
 import { saveGoogleSettingsAction, testGoogleConnectionAction } from "./google-actions";
+import PageSpeedSettingsCard from "@/components/admin/PageSpeedSettingsCard";
+import { GOOGLE_DAILY_QUOTA, getPsiConfig } from "@/lib/pagespeed/config";
+import { callsToday } from "@/lib/pagespeed/run";
+import { savePsiSettingsAction, testPsiAction } from "./psi-actions";
 import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
 import { fetchLineBotInfo } from "@/lib/line";
 
@@ -41,7 +45,7 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, current, overridden, line, deliveries, ai, google] = await Promise.all([
+  const [t, current, overridden, line, deliveries, ai, google, psi, psiUsage] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSettingsForEditing(),
     getOverriddenKeys(),
@@ -49,7 +53,17 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
     getLineDeliveries(),
     getAiConfig(),
     getGoogleConfig(),
+    getPsiConfig(),
+    callsToday().catch(() => 0),
   ]);
+
+  const flatten = (raw: Record<string, unknown>, prefix = ""): Record<string, string> =>
+    Object.fromEntries(
+      Object.entries(raw).flatMap(([k, v]) =>
+        typeof v === "string" ? [[`${prefix}${k}`, v]] : Object.entries(flatten(v as Record<string, unknown>, `${prefix}${k}.`)),
+      ),
+    );
+  const psiLabels = flatten(t.raw("settings.pagespeed") as Record<string, unknown>);
 
   const googleRaw = t.raw("settings.google") as Record<string, unknown>;
   const googleLabels: Record<string, string> = {};
@@ -149,6 +163,21 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         labels={googleLabels}
         save={saveGoogleSettingsAction.bind(null, locale)}
         test={testGoogleConnectionAction}
+      />
+
+      <PageSpeedSettingsCard
+        keySource={psi.keySource}
+        keyHint={psi.keyHint}
+        undecryptable={psi.undecryptable}
+        schedule={psi.schedule}
+        strategies={psi.strategies}
+        alertBelow={psi.alertBelow}
+        dailyCap={psi.dailyCap}
+        usageToday={psiUsage}
+        googleQuota={GOOGLE_DAILY_QUOTA}
+        labels={psiLabels}
+        save={savePsiSettingsAction.bind(null, locale)}
+        test={testPsiAction}
       />
 
       <AiSettingsCard

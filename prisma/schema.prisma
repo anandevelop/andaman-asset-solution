@@ -3511,3 +3511,56 @@ model Agent {
   @@index([status])
   @@map("agents")
 }
+
+/// One PageSpeed Insights call: Google's Lighthouse run of one URL on one
+/// device, plus the Chrome field data (CrUX) Google returned with it.
+///
+/// One row per API call, failed ones included, so "how many calls today"
+/// is a count of these rows: the daily cap and the usage line on the
+/// settings card both read it. A result served from the five-minute cache
+/// writes nothing.
+model PageSpeedRun {
+  id String @id @default(cuid())
+
+  /// The full URL Google fetched.
+  url  String
+  /// Its path with the locale, "/th/projects/victory": what the speed tab
+  /// groups by.
+  path String
+  /// "mobile" | "desktop".
+  strategy String
+  /// "scheduled" | "manual" | "test".
+  source   String
+
+  ok    Boolean
+  /// What went wrong when ok is false ("RATE_LIMITED", "FETCH_FAILED", …).
+  error String?
+
+  /// Lighthouse category scores, 0–100.
+  performance   Int?
+  accessibility Int?
+  bestPractices Int?
+  seo           Int?
+
+  /// Lab metrics. Milliseconds, except cls (x1000, like WebVital) and
+  /// pageBytes.
+  fcpMs     Int?
+  lcpMs     Int?
+  tbtMs     Int?
+  siMs      Int?
+  ttfbMs    Int?
+  cls       Int?
+  pageBytes Int?
+
+  /// CrUX field data for this URL (or the whole origin, flagged inside):
+  /// { scope, overall, metrics: { lcp: { p75, category, good, ni, poor } … } }.
+  field         Json?
+  /// The fixes Lighthouse suggests, worst first: [{ id, title, savingsMs }].
+  opportunities Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([path, strategy, createdAt])
+  @@index([createdAt])
+  @@map("pagespeed_runs")
+}

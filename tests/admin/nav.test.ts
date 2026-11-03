@@ -94,12 +94,12 @@ describe("the menu each role sees", () => {
     SUPER_ADMIN: {
       rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
     },
     ADMIN: {
       rail: ["analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/urls"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
     },
     EDITOR: {
       rail: ["dashboard", "events", "media", "news", "pages", "projects", "publishing", "salesTeam"],
@@ -574,6 +574,7 @@ describe("the SEO hub", () => {
       "/meta",
       "/keywords",
       "/audit",
+      "/speed",
       "/indexing",
       "/links",
       "/schema",

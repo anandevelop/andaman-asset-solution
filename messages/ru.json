@@ -835,7 +835,8 @@
         "defaults": "Settings",
         "meta": "Meta, all pages",
         "schema": "Schema",
-        "aiSearch": "AI Search"
+        "aiSearch": "AI Search",
+        "speed": "Speed"
       },
       "projects": {
         "label": "Объекты",
@@ -3235,7 +3236,8 @@
         "kindUnclaimed": "Лид без ответственного",
         "kindReservation": "Бронь",
         "kindWeekly": "Недельная сводка",
-        "kindBackup": "Резервная копия"
+        "kindBackup": "Резервная копия",
+        "kindPagespeed": "PageSpeed"
       },
       "ai": {
         "title": "AI (Google Gemini)",
@@ -3303,6 +3305,56 @@
           "invalid_grant": "The key no longer works (deleted or expired) — create a new one in Google Cloud",
           "BAD_PRIVATE_KEY": "The private_key in the file is damaged — download it again",
           "NO_CREDENTIALS": "No key yet — pick the service account .json"
+        }
+      },
+      "pagespeed": {
+        "title": "PageSpeed Insights",
+        "subtitle": "Speed scores (mobile / desktop) and Core Web Vitals for every page, in SEO › Speed. Free: {quota} calls a day per key.",
+        "statusAdmin": "Connected · key saved here",
+        "statusEnv": "Connected · key from the server (.env)",
+        "statusNone": "Not connected",
+        "undecryptable": "The saved key can no longer be read (NEXTAUTH_SECRET changed). Paste it again.",
+        "keyLabel": "API key",
+        "keyPlaceholderNew": "Paste the key (AIza…)",
+        "keyPlaceholderKeep": "•••••••• saved — paste a new key to replace it",
+        "keyHint": "Stored encrypted · ends …{last}",
+        "keyHintNone": "Google Cloud → APIs & Services → Credentials → API key, with the PageSpeed Insights API enabled.",
+        "scheduleLabel": "Automatic scan",
+        "strategiesLabel": "Devices",
+        "schedule": {
+          "weekly": "Weekly (Monday 06:00)",
+          "daily": "Daily (06:00)",
+          "off": "Off"
+        },
+        "strategies": {
+          "both": "Mobile + desktop",
+          "mobile": "Mobile only",
+          "desktop": "Desktop only"
+        },
+        "scheduleHint": "Home, projects, a project page, news, the latest article, progress, about and contact: about 16 calls a round.",
+        "alertLabel": "LINE alert when a page’s mobile score drops below",
+        "alertThreshold": "Score threshold",
+        "capLabel": "Our own daily limit",
+        "capUnit": "calls",
+        "usage": "Used today: {used} / {cap} calls (Google allows {quota})",
+        "test": "Test connection",
+        "testing": "Testing… (up to a minute)",
+        "testOk": "Key works · home page on mobile scored {score} ({seconds} s)",
+        "testCached": "Key works · home page on mobile scored {score} (result from the last 5 minutes)",
+        "getKey": "How to create an API key",
+        "save": "Save",
+        "saved": "Saved",
+        "removeKey": "Remove key",
+        "err": {
+          "NO_KEY": "Save a key first",
+          "BAD_KEY": "Google refused the key",
+          "RATE_LIMITED": "Google is rate limiting, try again in a minute",
+          "DAILY_CAP": "Daily limit reached",
+          "FETCH_FAILED": "Google could not test the page",
+          "UNREACHABLE": "Could not reach Google",
+          "INVALID_INPUT": "Check the values",
+          "FORBIDDEN": "Admins only",
+          "SAVE_FAILED": "Could not save"
         }
       }
     },
@@ -3781,6 +3833,108 @@
           "languages": "Four languages with hreflang"
         },
         "toSchema": "View Schema"
+      },
+      "speed": {
+        "title": "Site speed",
+        "subtitle": {
+          "weekly": "PageSpeed Insights: lab test and real Chrome users (28 days) · scans every Monday 06:00",
+          "daily": "PageSpeed Insights: lab test and real Chrome users (28 days) · scans daily at 06:00",
+          "off": "PageSpeed Insights: lab test and real Chrome users (28 days) · automatic scan off"
+        },
+        "lastScan": "last scan {time}",
+        "noKey": "Connect PageSpeed Insights first: paste the API key in Settings › Integrations.",
+        "goToSettings": "Go to Integrations",
+        "picker": {
+          "device": "Device",
+          "mobile": "Mobile",
+          "desktop": "Desktop",
+          "language": "Language",
+          "pagesLabel": "Page",
+          "allPages": "Whole site (average)",
+          "projectPage": "Project page…",
+          "pastePlaceholder": "Paste a link to any page of the site…",
+          "check": "Check",
+          "badUrl": "That is not a page of this site."
+        },
+        "preset": {
+          "home": "Home",
+          "projects": "All projects",
+          "project": "Project page",
+          "news": "News",
+          "latestNews": "Latest article",
+          "progress": "Progress",
+          "about": "About",
+          "contact": "Contact"
+        },
+        "averageTitle": "Average of {count} pages",
+        "thisPage": "This page",
+        "cat": {
+          "performance": "Performance",
+          "accessibility": "Accessibility",
+          "bestPractices": "Best practices",
+          "seo": "SEO"
+        },
+        "bands": "Google bands: 90–100 good · 50–89 needs work · 0–49 poor",
+        "notTested": "Not tested yet. Press “Test now”.",
+        "noRunsYet": "Nothing tested yet. Scan everything, or pick a page and test it.",
+        "lastFailed": "Last test failed ({time}): {error}",
+        "openGoogle": "Full report on Google",
+        "field": {
+          "title": "Core Web Vitals from real users (28 days)",
+          "overall": {
+            "FAST": "Pass",
+            "AVERAGE": "Needs work",
+            "SLOW": "Fail"
+          },
+          "lcp": "LCP · main content loads",
+          "inp": "INP · responds to taps",
+          "cls": "CLS · layout stays still",
+          "note": "Bar = share of visits good / needs work / poor. This is what Google ranks on.",
+          "originNote": "Too few Chrome visits to this page, so this is the whole site.",
+          "none": "Chrome has too few visits to report field data yet.",
+          "pickPage": "Pick a page to see its field data."
+        },
+        "lab": {
+          "title": "Lab test",
+          "pageSize": "Page size"
+        },
+        "sec": "s",
+        "history": "Last {count} tests",
+        "fixes": {
+          "title": "What to fix (biggest saving first)",
+          "none": "Nothing significant to fix."
+        },
+        "table": {
+          "title": "Per page",
+          "page": "Page",
+          "score": "Score",
+          "change": "vs previous",
+          "tested": "Tested"
+        },
+        "limitsNote": "Limits: two pages at a time · the same page within 5 minutes reuses the last result · a full scan once every 10 minutes · daily limit set in Settings › Integrations.",
+        "action": {
+          "testNow": "Test now",
+          "testAgain": "Test again",
+          "forceTest": "Ignore the 5-minute cache",
+          "testing": "Testing…",
+          "testingHint": "Google takes 10–60 seconds per page.",
+          "tested": "Done",
+          "cachedResult": "Tested less than 5 minutes ago, showing that result",
+          "scanAll": "Scan everything now",
+          "scanning": "Scanning {done}/{total}"
+        },
+        "err": {
+          "NO_KEY": "No API key: add one in Settings › Integrations",
+          "DAILY_CAP": "Daily limit reached, try tomorrow or raise it in Settings",
+          "RATE_LIMITED": "Google is rate limiting, try again in a minute",
+          "BAD_KEY": "Google refused the API key",
+          "FETCH_FAILED": "Google could not load the page",
+          "UNREACHABLE": "Could not reach Google",
+          "RUNNING": "A scan is already running",
+          "COOLDOWN": "Scanned recently, next scan from {time}",
+          "BAD_URL": "That is not a page of this site",
+          "FORBIDDEN": "Admins only"
+        }
       }
     },
     "seoTranslations": {

@@ -98,6 +98,36 @@ async function wipe(prisma: PrismaClient) {
 }
 
 async function seed(prisma: PrismaClient) {
+  // One PageSpeed result, so /admin/seo/speed renders its rings, lab tiles,
+  // fixes and table rather than only the empty state. CI sets a placeholder
+  // PAGESPEED_API_KEY; nothing in the suite presses a button that calls Google.
+  await prisma.pageSpeedRun.create({
+    data: {
+      url: "http://127.0.0.1:3100/th",
+      path: "/th",
+      strategy: "mobile",
+      source: "scheduled",
+      ok: true,
+      performance: 87,
+      accessibility: 96,
+      bestPractices: 100,
+      seo: 100,
+      fcpMs: 1800,
+      lcpMs: 2600,
+      tbtMs: 180,
+      siMs: 3400,
+      ttfbMs: 120,
+      cls: 20,
+      pageBytes: 3_355_443,
+      field: {
+        scope: "url",
+        overall: "FAST",
+        metrics: { lcp: { p75: 2100, category: "FAST", good: 0.82, ni: 0.13, poor: 0.05 } },
+      },
+      opportunities: [{ id: "uses-optimized-images", title: "Serve smaller images", savingsMs: 2400 }],
+    },
+  });
+
   for (const [index, project] of PROJECTS.entries()) {
     const { isPublished, ...rest } = project as (typeof PROJECTS)[number] & {
       isPublished?: boolean;

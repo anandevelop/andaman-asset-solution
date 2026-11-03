@@ -119,6 +119,7 @@ export type LineCardLabels = Record<
   | "kindReservation"
   | "kindWeekly"
   | "kindBackup"
+  | "kindPagespeed"
   | "reason.EVENT_OFF"
   | "outcomeSent"
   | "outcomeFailed"
@@ -132,7 +133,7 @@ export type LineCardLabels = Record<
 
 export type LineCardDelivery = {
   at: string;
-  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup";
+  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed";
   outcome: "sent" | "failed" | "skipped";
   detail: string;
 };
@@ -535,6 +536,7 @@ export default function LineSettingsCard(props: Props) {
                         reservation: l.kindReservation,
                         weekly: l.kindWeekly,
                         backup: l.kindBackup,
+                        pagespeed: l.kindPagespeed,
                       }[d.kind]
                     }
                   </span>

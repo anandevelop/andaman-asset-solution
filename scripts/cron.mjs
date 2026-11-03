@@ -78,6 +78,11 @@ const JOBS = [
     behind it that the long first sync does not overlap with it.
   */
   { name: "seo-inspect", path: "/api/cron/seo-inspect", at: [5, 0] },
+  /*
+    PageSpeed Insights (lib/pagespeed/run.ts). Daily at 06:00; the route
+    itself skips the days the settings card's schedule says to skip.
+  */
+  { name: "pagespeed", path: "/api/cron/pagespeed", at: [6, 0] },
   { name: "monthly-report", path: "/api/cron/monthly-report", at: [8, 0], day: 1 },
   /*
     Unclaimed leads, expiring reservations, the Monday summary
