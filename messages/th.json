@@ -3259,6 +3259,48 @@
           "FORBIDDEN": "เฉพาะผู้ดูแลระบบ",
           "SAVE_FAILED": "บันทึกไม่สำเร็จ ลองอีกครั้ง"
         }
+      },
+      "google": {
+        "title": "ค่าการเชื่อมต่อ Google",
+        "statusAdmin": "เชื่อมต่อแล้ว · บันทึกที่นี่",
+        "statusEnv": "เชื่อมต่อแล้ว · จาก .env บนเซิร์ฟเวอร์",
+        "undecryptable": "อ่านกุญแจที่บันทึกไว้ไม่ได้แล้ว (NEXTAUTH_SECRET ถูกเปลี่ยน) กรุณาเลือกไฟล์ .json ใหม่",
+        "gaMeasurementId": "GA4 Measurement ID (ติดตั้งโค้ดบนเว็บ)",
+        "gaMeasurementIdHint": "GA4 › ผู้ดูแลระบบ › สตรีมข้อมูล › เว็บ",
+        "ga4PropertyId": "GA4 Property ID (ดึงรายงาน)",
+        "ga4PropertyIdHint": "GA4 › ผู้ดูแลระบบ › รายละเอียดพร็อพเพอร์ตี้ (ตัวเลข)",
+        "gscSiteUrl": "Search Console พร็อพเพอร์ตี้",
+        "gscSiteUrlHint": "แบบโดเมน: sc-domain:… · แบบ URL: https://…/ (มี / ท้าย)",
+        "serviceAccount": "Service Account (ไฟล์ JSON) — ใช้ดึงข้อมูล GA4 + Search Console",
+        "jsonPlaceholderNone": "วางเนื้อหาไฟล์ .json ของ service account หรือกดเลือกไฟล์",
+        "jsonPlaceholderEnv": "ใช้กุญแจจาก .env บนเซิร์ฟเวอร์ ({email}) · วางหรือเลือกไฟล์ .json เพื่อใช้แทน",
+        "jsonPlaceholderSaved": "ใช้กุญแจที่บันทึกไว้ ({email}) · วางหรือเลือกไฟล์ .json ใหม่เพื่อเปลี่ยน",
+        "pickFile": "เลือกไฟล์ .json",
+        "storedNote": "เก็บแบบเข้ารหัสบนเซิร์ฟเวอร์ · ไม่ส่งกลับมาที่เบราว์เซอร์อีก",
+        "removeAccount": "ลบกุญแจที่บันทึกไว้",
+        "test": "ทดสอบการเชื่อมต่อ Google",
+        "save": "บันทึก",
+        "saved": "บันทึกแล้ว",
+        "stepToken": "กุญแจ service account",
+        "ok": "ใช้ได้",
+        "skipped": "ยังไม่ได้กรอก",
+        "err": {
+          "NOT_JSON": "ไฟล์ไม่ใช่ JSON",
+          "NOT_SERVICE_ACCOUNT": "ไฟล์นี้ไม่ใช่กุญแจ service account (ต้องมี client_email และ private_key)",
+          "BAD_PROPERTY_ID": "GA4 Property ID ต้องเป็นตัวเลขเท่านั้น (ไม่ใช่ G-…)",
+          "BAD_MEASUREMENT_ID": "Measurement ID ต้องขึ้นต้นด้วย G-",
+          "INVALID_INPUT": "ตรวจสอบข้อมูลอีกครั้ง",
+          "FORBIDDEN": "เฉพาะผู้ดูแลระบบ",
+          "SAVE_FAILED": "บันทึกไม่สำเร็จ ลองอีกครั้ง"
+        },
+        "hint": {
+          "NO_ACCESS": "ยังไม่ได้เพิ่มอีเมล service account เป็นผู้ใช้ — Search Console › การตั้งค่า › ผู้ใช้และสิทธิ์ / GA4 › ผู้ดูแลระบบ › การจัดการสิทธิ์เข้าถึง (Viewer)",
+          "API_DISABLED": "เปิด API ใน Google Cloud ของโปรเจกต์นี้ก่อน: Search Console API และ Google Analytics Data API",
+          "NOT_FOUND": "ชื่อพร็อพเพอร์ตี้ไม่ตรง — แบบโดเมนใช้ sc-domain:… แบบ URL ต้องมี / ท้าย",
+          "invalid_grant": "กุญแจใช้ไม่ได้ (ถูกลบหรือหมดอายุ) — สร้างกุญแจใหม่ใน Google Cloud",
+          "BAD_PRIVATE_KEY": "private_key ในไฟล์เสียหาย — ดาวน์โหลดไฟล์ใหม่",
+          "NO_CREDENTIALS": "ยังไม่มีกุญแจ — เลือกไฟล์ .json ของ service account"
+        }
       }
     },
     "security": {

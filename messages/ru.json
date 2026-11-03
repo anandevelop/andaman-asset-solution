@@ -3259,6 +3259,48 @@
           "FORBIDDEN": "Admins only",
           "SAVE_FAILED": "Could not save — try again"
         }
+      },
+      "google": {
+        "title": "Google connection",
+        "statusAdmin": "Connected · saved here",
+        "statusEnv": "Connected · from the server's .env",
+        "undecryptable": "The saved key can no longer be read (NEXTAUTH_SECRET changed). Pick the .json file again.",
+        "gaMeasurementId": "GA4 Measurement ID (site tag)",
+        "gaMeasurementIdHint": "GA4 › Admin › Data streams › Web",
+        "ga4PropertyId": "GA4 Property ID (reporting)",
+        "ga4PropertyIdHint": "GA4 › Admin › Property details (number)",
+        "gscSiteUrl": "Search Console property",
+        "gscSiteUrlHint": "Domain: sc-domain:… · URL prefix: https://…/ (with trailing /)",
+        "serviceAccount": "Service account (JSON key) — reads GA4 + Search Console",
+        "jsonPlaceholderNone": "Paste the service account .json, or pick the file",
+        "jsonPlaceholderEnv": "Using the key from the server's .env ({email}) · paste or pick a .json to use another",
+        "jsonPlaceholderSaved": "Using the saved key ({email}) · paste or pick a new .json to replace it",
+        "pickFile": "Pick .json file",
+        "storedNote": "Stored encrypted on the server · never sent back to the browser",
+        "removeAccount": "Remove saved key",
+        "test": "Test Google connection",
+        "save": "Save",
+        "saved": "Saved",
+        "stepToken": "Service account key",
+        "ok": "works",
+        "skipped": "not filled in",
+        "err": {
+          "NOT_JSON": "That is not JSON",
+          "NOT_SERVICE_ACCOUNT": "Not a service account key (needs client_email and private_key)",
+          "BAD_PROPERTY_ID": "GA4 Property ID is digits only (not G-…)",
+          "BAD_MEASUREMENT_ID": "Measurement ID starts with G-",
+          "INVALID_INPUT": "Check the fields",
+          "FORBIDDEN": "Admins only",
+          "SAVE_FAILED": "Could not save — try again"
+        },
+        "hint": {
+          "NO_ACCESS": "Add the service account's email as a user — Search Console › Settings › Users and permissions / GA4 › Admin › Property access management (Viewer)",
+          "API_DISABLED": "Enable the API in this Google Cloud project: Search Console API and Google Analytics Data API",
+          "NOT_FOUND": "Property name does not match — domain is sc-domain:…, URL prefix needs a trailing /",
+          "invalid_grant": "The key no longer works (deleted or expired) — create a new one in Google Cloud",
+          "BAD_PRIVATE_KEY": "The private_key in the file is damaged — download it again",
+          "NO_CREDENTIALS": "No key yet — pick the service account .json"
+        }
       }
     },
     "security": {

@@ -17,6 +17,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { getGoogleConfig } from "@/lib/google-config";
 import { NextResponse } from "next/server";
 import { guardCron } from "@/lib/seo/cron-auth";
 import { syncSearchConsole } from "@/lib/seo/search-sync";
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
   const denied = guardCron(request);
   if (denied) return denied;
 
-  const siteUrl = process.env.GSC_SITE_URL?.trim();
+  const siteUrl = (await getGoogleConfig()).gscSiteUrl;
 
   if (!siteUrl) {
     /*

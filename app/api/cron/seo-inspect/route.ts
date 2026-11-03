@@ -18,6 +18,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { getGoogleConfig } from "@/lib/google-config";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardCron } from "@/lib/seo/cron-auth";
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
   const denied = guardCron(request);
   if (denied) return denied;
 
-  const siteUrl = process.env.GSC_SITE_URL?.trim();
+  const siteUrl = (await getGoogleConfig()).gscSiteUrl;
   if (!siteUrl) return NextResponse.json({ ok: true, skipped: "GSC_SITE_URL not set" });
 
   try {

@@ -28,6 +28,9 @@ import LineSettingsCard, { type LineCardLabels } from "@/components/admin/LineSe
 import AiSettingsCard, { type AiCardLabels } from "@/components/admin/AiSettingsCard";
 import { DEFAULT_GEMINI_MODEL, getAiConfig } from "@/lib/ai-config";
 import { saveAiSettingsAction } from "./ai-actions";
+import GoogleSettingsCard from "@/components/admin/GoogleSettingsCard";
+import { getGoogleConfig } from "@/lib/google-config";
+import { saveGoogleSettingsAction, testGoogleConnectionAction } from "./google-actions";
 import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
 import { fetchLineBotInfo } from "@/lib/line";
 
@@ -38,14 +41,22 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, current, overridden, line, deliveries, ai] = await Promise.all([
+  const [t, current, overridden, line, deliveries, ai, google] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSettingsForEditing(),
     getOverriddenKeys(),
     getLineConfig(),
     getLineDeliveries(),
     getAiConfig(),
+    getGoogleConfig(),
   ]);
+
+  const googleRaw = t.raw("settings.google") as Record<string, unknown>;
+  const googleLabels: Record<string, string> = {};
+  for (const [key, value] of Object.entries(googleRaw)) {
+    if (typeof value === "string") googleLabels[key] = value;
+    else for (const [sub, text] of Object.entries(value as Record<string, string>)) googleLabels[`${key}.${sub}`] = text;
+  }
 
   const aiRaw = t.raw("settings.ai") as Record<string, string> & { err: Record<string, string> };
   const aiLabels = {
@@ -85,11 +96,6 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
       title: t("settings.groups.analytics"),
       fields: [
         field(
-          "analytics.gaMeasurementId",
-          t("settings.fields.gaMeasurementId"),
-          t("settings.fields.gaMeasurementIdHint"),
-        ),
-        field(
           "analytics.metaPixelId",
           t("settings.fields.metaPixelId"),
           t("settings.fields.metaPixelIdHint"),
@@ -121,6 +127,29 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         <Info size={16} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
         {t("settings.integrationsEnvNote")}
       </p>
+
+      {/* GA4 tag + property, Search Console, service account. The tag ID
+          used to be a field in the analytics group below; it lives with
+          the rest of the Google connection now. */}
+      <GoogleSettingsCard
+        initial={{
+          gaMeasurementId: overridden.includes("analytics.gaMeasurementId") ? current["analytics.gaMeasurementId"] : "",
+          ga4PropertyId: google.ga4Source === "admin" ? (google.ga4PropertyId ?? "") : "",
+          gscSiteUrl: google.gscSource === "admin" ? (google.gscSiteUrl ?? "") : "",
+        }}
+        account={{
+          email: google.credentials?.email ?? null,
+          source: google.credentialsSource,
+          undecryptable: google.undecryptable,
+        }}
+        envHints={{
+          ga4PropertyId: google.ga4Source === "env" ? google.ga4PropertyId : null,
+          gscSiteUrl: google.gscSource === "env" ? google.gscSiteUrl : null,
+        }}
+        labels={googleLabels}
+        save={saveGoogleSettingsAction.bind(null, locale)}
+        test={testGoogleConnectionAction}
+      />
 
       <AiSettingsCard
         locale={locale}

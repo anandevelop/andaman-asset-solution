@@ -35,6 +35,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { getGoogleConfig } from "@/lib/google-config";
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
@@ -136,12 +137,10 @@ const NO_DATA: Unavailable = { available: false, reason: "noData" };
  * is as useless as a property with no credentials, and either one missing
  * means "not finished being set up" rather than "Google has nothing".
  */
-function searchConsoleConfigured(): boolean {
-  return Boolean(
-    process.env.GOOGLE_SA_EMAIL?.trim() &&
-      process.env.GOOGLE_SA_PRIVATE_KEY?.trim() &&
-      process.env.GSC_SITE_URL?.trim(),
-  );
+async function searchConsoleConfigured(): Promise<boolean> {
+  // Back office first, environment behind it — lib/google-config.ts.
+  const config = await getGoogleConfig();
+  return Boolean(config.credentials && config.gscSiteUrl);
 }
 
 type LeadRow = {
@@ -158,6 +157,7 @@ export async function getReportData(options: {
 }): Promise<ReportData> {
   const { period, locale, audience } = options;
   const previous = precedingPeriod(period);
+  const gscConfigured = await searchConsoleConfigured();
 
   const [
     leads,
@@ -206,15 +206,15 @@ export async function getReportData(options: {
     },
     topIssues: topIssuesOf(audit?.failCountByRule),
     vitals,
-    rows: buildRows(leads, projects, slugToProjectId, locale),
+    rows: buildRows(leads, projects, slugToProjectId, locale, gscConfigured),
     /*
       Phase 6 hardcoded both of these as unavailable, because phase 4 did
       not exist yet. It does now, so the report says which of the two
       reasons applies instead of claiming Google is unconnected on a
       deployment where the credentials work.
     */
-    search: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
-    indexing: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
+    search: gscConfigured ? NO_DATA : NOT_CONFIGURED,
+    indexing: gscConfigured ? NO_DATA : NOT_CONFIGURED,
     note: note ?? draftNoteView(),
   };
 }
@@ -389,6 +389,7 @@ function buildRows(
   projects: readonly { id: string; nameEn: string; nameTh: string }[],
   slugToProjectId: ReadonlyMap<string, string>,
   locale: string,
+  gscConfigured: boolean,
 ): ReportRow[] {
   const counts = new Map<string, { google: number; all: number }>();
 
@@ -426,7 +427,7 @@ function buildRows(
       return {
         key: project.id,
         name: pickLocale(locale, project.nameTh, project.nameEn),
-        googleClicks: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
+        googleClicks: gscConfigured ? NO_DATA : NOT_CONFIGURED,
         googleLeads: entry.google,
         allLeads: entry.all,
         rate: null,
@@ -438,7 +439,7 @@ function buildRows(
     rows.push({
       key: "news",
       name: "news",
-      googleClicks: searchConsoleConfigured() ? NO_DATA : NOT_CONFIGURED,
+      googleClicks: gscConfigured ? NO_DATA : NOT_CONFIGURED,
       googleLeads: news.google,
       allLeads: news.all,
       rate: null,

@@ -16,7 +16,13 @@
  */
 
 import crypto from "node:crypto";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The back-office half of the Google settings (lib/google-config.ts) is
+// empty here, so the environment variables these tests set are what counts.
+vi.mock("@/lib/google-config", () => ({
+  getGoogleConfig: async () => ({ credentials: null, credentialsSource: null, gscSiteUrl: null, gscSource: null }),
+}));
 import {
   buildAssertion,
   getAccessToken,

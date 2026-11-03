@@ -28,7 +28,8 @@
 
 import "server-only";
 import isoCountries from "i18n-iso-countries";
-import { googleCredentials } from "@/lib/seo/google-client";
+import { resolveGoogleCredentials } from "@/lib/seo/google-client";
+import { getGoogleConfig } from "@/lib/google-config";
 import { intlLocale } from "@/lib/format";
 import { querySearchAnalytics, type QueryOptions, type SearchRow } from "@/lib/seo/search-console";
 import {
@@ -81,8 +82,10 @@ const MAX_ROWS = 5_000;
 const TTL_MS = 10 * 60_000;
 const cache = new Map<string, { at: number; value: SearchPerformance }>();
 
-export function searchConsoleSiteUrl(): string | null {
-  return process.env.GSC_SITE_URL?.trim() || null;
+/** Saved in the back office (lib/google-config.ts), else GSC_SITE_URL. */
+export async function searchConsoleSiteUrl(): Promise<string | null> {
+  const config = await getGoogleConfig();
+  return (config.gscSource === "admin" ? config.gscSiteUrl : null) ?? (process.env.GSC_SITE_URL?.trim() || null);
 }
 
 export async function loadSearchPerformance(
@@ -90,8 +93,8 @@ export async function loadSearchPerformance(
   locale: string,
   now: Date = new Date(),
 ): Promise<SearchPerformance> {
-  const siteUrl = searchConsoleSiteUrl();
-  if (!siteUrl || !googleCredentials()) return { ok: false, reason: "NOT_CONFIGURED" };
+  const siteUrl = await searchConsoleSiteUrl();
+  if (!siteUrl || !(await resolveGoogleCredentials())) return { ok: false, reason: "NOT_CONFIGURED" };
 
   const cacheKey = JSON.stringify([siteUrl, locale, params]);
   const hit = cache.get(cacheKey);
@@ -156,7 +159,7 @@ async function load(
       fetchedAt: now.toISOString(),
     };
   } catch (error) {
-    return asFailure(error, siteUrl);
+    return await asFailure(error, siteUrl);
   }
 }
 
@@ -239,8 +242,8 @@ export async function loadSearchSummary(
   locale: string,
   limit = 10,
 ): Promise<SearchSummary> {
-  const siteUrl = searchConsoleSiteUrl();
-  if (!siteUrl || !googleCredentials()) return { ok: false, reason: "NOT_CONFIGURED" };
+  const siteUrl = await searchConsoleSiteUrl();
+  if (!siteUrl || !(await resolveGoogleCredentials())) return { ok: false, reason: "NOT_CONFIGURED" };
 
   const start = Date.parse(`${window.startDate}T00:00:00Z`);
   const end = Date.parse(`${window.endDate}T00:00:00Z`);
@@ -290,7 +293,7 @@ export async function loadSearchSummary(
       withheldClicks: Math.max(0, total.clicks - queries.rows.reduce((sum, row) => sum + row.clicks, 0)),
     };
   } catch (error) {
-    return asFailure(error, siteUrl);
+    return await asFailure(error, siteUrl);
   }
 }
 
@@ -320,10 +323,10 @@ async function query(options: QueryOptions) {
   return result;
 }
 
-function asFailure(error: unknown, siteUrl: string): Exclude<SearchPerformance, { ok: true }> {
+async function asFailure(error: unknown, siteUrl: string): Promise<Exclude<SearchPerformance, { ok: true }>> {
   const detail = error instanceof Error ? error.message : String(error);
   if (detail.startsWith("403")) {
-    return { ok: false, reason: "NO_ACCESS", siteUrl, serviceAccount: googleCredentials()?.email ?? null, detail };
+    return { ok: false, reason: "NO_ACCESS", siteUrl, serviceAccount: (await resolveGoogleCredentials())?.email ?? null, detail };
   }
   console.error("[search-performance] Search Console query failed", detail);
   return { ok: false, reason: "FAILED", detail };

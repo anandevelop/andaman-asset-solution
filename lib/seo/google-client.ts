@@ -32,6 +32,7 @@
 
 import "server-only";
 import crypto from "node:crypto";
+import { getGoogleConfig } from "@/lib/google-config";
 
 /** Read-only scopes. Nothing this application does needs write access to
  *  a Search Console property, and a token that cannot change anything is
@@ -138,8 +139,18 @@ export type TokenResult =
  * and admin panels, and both want to record "Google said 403 because the
  * property is not shared with this service account" rather than crash.
  */
+/**
+ * The service account in effect: saved in the back office
+ * (lib/google-config.ts), else the environment's.
+ */
+export async function resolveGoogleCredentials(): Promise<GoogleCredentials | null> {
+  const config = await getGoogleConfig();
+  // The environment read live, not from the 30-second cache.
+  return (config.credentialsSource === "admin" ? config.credentials : null) ?? googleCredentials();
+}
+
 export async function getAccessToken(scope: string): Promise<TokenResult> {
-  const credentials = googleCredentials();
+  const credentials = await resolveGoogleCredentials();
   if (!credentials) return { ok: false, error: "NOT_CONFIGURED" };
 
   const cached = cache.get(scope);
@@ -206,3 +217,33 @@ export async function getAccessToken(scope: string): Promise<TokenResult> {
 export function resetTokenCache(): void {
   cache.clear();
 }
+
+/**
+ * A token for credentials that are not saved yet — the integrations card's
+ * "test" button checks a pasted key file before anyone saves it. No cache:
+ * it is called once per click.
+ */
+export async function tokenFor(credentials: GoogleCredentials, scope: string): Promise<TokenResult> {
+  let assertion: string;
+  try {
+    assertion = buildAssertion(credentials, scope);
+  } catch (error) {
+    return { ok: false, error: `BAD_PRIVATE_KEY: ${error instanceof Error ? error.message : String(error)}` };
+  }
+  try {
+    const response = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    const body = (await response.json()) as { access_token?: string; error?: string; error_description?: string };
+    if (!response.ok || !body.access_token) {
+      return { ok: false, error: `${body.error ?? response.status}: ${body.error_description ?? "no detail"}` };
+    }
+    return { ok: true, token: body.access_token };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
