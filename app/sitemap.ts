@@ -23,9 +23,15 @@ import { getArticleSitemapEntries } from "@/lib/news";
 import { getEventSitemapEntries } from "@/lib/events";
 import { getBrochureSitemapEntries } from "@/lib/brochures";
 
-// Regenerate hourly. A sitemap that lags a new article by an hour is fine;
-// one rebuilt on every crawler hit is a self-inflicted load problem.
-export const revalidate = 3600;
+/*
+  Rendered per request, like robots.txt. With `revalidate` Next prerendered
+  it at build time, where the CI build has no database: every safeQuery
+  fell back to [], and production served a sitemap of the nine static
+  pages only — no project, article, event or brochure, no images — as a
+  cache HIT. It is a handful of indexed queries and crawlers fetch it a
+  few times a day.
+*/
+export const dynamic = "force-dynamic";
 
 type Entry = MetadataRoute.Sitemap[number];
 
