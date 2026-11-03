@@ -30,6 +30,7 @@ import { identifyBot } from "./lib/seo/bots";
 import { recordCrawlHit } from "./lib/seo/crawl-log";
 import { stripLocale } from "./lib/public-paths";
 import { applyRuntimeHeaders } from "./lib/runtime-headers";
+import { isProbePath } from "./lib/probe-paths";
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -73,6 +74,22 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
 
 async function route(request: NextRequest, event: NextFetchEvent): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl;
+
+  /*
+    A scanner asking for /id_rsa, /proc/self/environ, /wp-login … (see
+    lib/probe-paths.ts). A bare 404 before the locale redirect, the crawl
+    log and any page render: nothing of the kind exists here, and the
+    answer should cost nothing and teach the scanner nothing. Paths with a
+    dot (/.env, /.git/…) never reach this proxy — the matcher below skips
+    them — and get Next's own 404; the reverse proxy in front blocks them
+    first (docs/DEPLOYMENT.md §5).
+  */
+  if (isProbePath(pathname)) {
+    return new NextResponse("Not Found", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" },
+    });
+  }
 
   /*
     Crawl logging — phase 5.

@@ -30,6 +30,7 @@ import { safeQuery } from "@/lib/db";
 import { getOverriddenKeys } from "@/lib/settings";
 import { locales } from "@/i18n";
 import { TITLE_MAX_LENGTH } from "@/lib/seo/rules/title-length";
+import { isProbePath } from "@/lib/probe-paths";
 
 const LOCALE_COUNT = locales.length;
 
@@ -259,7 +260,10 @@ export async function getSeoAudit(): Promise<SeoAudit> {
             },
           }),
           prisma.redirect.count({ where: { isActive: true } }),
-          prisma.notFoundHit.count(),
+          // Probe paths (/.env, /id_rsa …) are not dead ends to fix.
+          prisma.notFoundHit
+            .findMany({ where: { hiddenAt: null }, select: { path: true } })
+            .then((rows) => rows.filter((row) => !isProbePath(row.path)).length),
           getOverriddenKeys(),
         ]);
 

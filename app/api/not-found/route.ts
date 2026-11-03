@@ -30,6 +30,7 @@ import { countPathHit } from "@/lib/redirects";
 import { isDatabaseOfflineError } from "@/lib/db";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { locales } from "@/i18n";
+import { isProbePath } from "@/lib/probe-paths";
 
 const RATE_LIMIT = RATE_LIMITS.notFound;
 
@@ -66,6 +67,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400 });
   }
+
+  // Not a dead end worth a redirect: a probe for a secret file.
+  if (isProbePath(path)) return NextResponse.json({ redirectTo: null });
 
   try {
     const redirect = await prisma.redirect.findUnique({

@@ -318,6 +318,72 @@ sent (anything to the left is whatever the client chose to send). With
 from the end. Caddy with no `trusted_proxies` replaces the header with the
 single address it saw, which is the same entry.
 
+### Block scanner paths at the proxy
+
+Bots ask every site for `/.env`, `/.git/config`, `/id_rsa`,
+`/proc/self/environ`, `/wp-login.php`. None of these exist in the image
+(`.dockerignore` keeps `.env`, `.git`, `Dockerfile` and the compose files
+out of the build, and only `public/` is served as files), and the app
+already answers them with a bare 404 (`lib/probe-paths.ts`, checked first
+in `proxy.ts`). Refusing them in nginx as well means they never reach Node
+and stop filling the access log. Inside the `server { … }` that proxies the
+site, **above** `location /`:
+
+```nginx
+# Dot-files and dot-folders, except the ACME / security.txt folder.
+location ~ /\.(?!well-known/) { access_log off; log_not_found off; return 404; }
+
+# Kernel files, keys, container files, other CMSs' admin scripts.
+location ~* ^/(proc|etc|root)/ { access_log off; return 404; }
+location ~* (id_rsa|id_dsa|id_ecdsa|id_ed25519|authorized_keys)(\.pub)?$ { access_log off; return 404; }
+location ~* (^|/)(dockerfile|docker-compose[^/]*\.ya?ml)$ { access_log off; return 404; }
+location ~* \.(env|pem|key|sql|bak|old|swp|php\d?|asp|aspx|jsp|cgi)$ { access_log off; return 404; }
+```
+
+Then `docker compose -f docker-compose.prod.yml exec nginx nginx -t` and
+`… exec nginx nginx -s reload`.
+
+### Rate limit and ban repeat scanners
+
+nginx, in the `http { … }` block (one zone, ~10 MB holds ~160k addresses):
+
+```nginx
+limit_req_zone $binary_remote_addr zone=perip:10m rate=10r/s;
+limit_req_status 429;
+```
+
+and inside `location /`: `limit_req zone=perip burst=40 nodelay;`.
+40 lets a page and its assets load at once; a scanner walking a word list
+gets 429s. (The default `limit_req_status` is 503 — set 429 so a limited
+request is not mistaken for the site being down.)
+
+fail2ban on the host, reading nginx's access log, bans an address that
+keeps hitting the blocked paths. `/etc/fail2ban/filter.d/nginx-probe.conf`:
+
+```ini
+[Definition]
+failregex = ^<HOST> .* "(GET|POST|HEAD) /(\.env|\.git|\.aws|\.ssh|id_rsa|proc/|wp-login|wp-admin|xmlrpc\.php|phpmyadmin)
+ignoreregex =
+```
+
+and in `/etc/fail2ban/jail.local`:
+
+```ini
+[nginx-probe]
+enabled  = true
+filter   = nginx-probe
+logpath  = /opt/app/logs/nginx/access.log   ; wherever the nginx container's log is mounted
+maxretry = 3
+findtime = 10m
+bantime  = 1d
+```
+
+For the filter to see these, keep `access_log` **on** for the blocked
+locations above (drop `access_log off`) — or skip fail2ban and use
+Cloudflare instead: proxied DNS plus the managed WAF rules drop these at
+the edge, before they reach the droplet (see the note below on client IPs
+behind Cloudflare).
+
 **Behind Cloudflare** the proxy's peer is a Cloudflare edge, so every
 visitor shares a few rate-limit buckets. Either grey-cloud the record, or
 set `CLIENT_IP_HEADER=cf-connecting-ip`, and then the origin must accept

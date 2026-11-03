@@ -27,6 +27,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
+import { isProbePath } from "@/lib/probe-paths";
 import { SEARCH_BOTS, type BotName } from "@/lib/seo/bots";
 
 export type Unavailable = { available: false; reason: "google" };
@@ -217,7 +218,7 @@ function notFoundOf(rows: readonly Row[]): BotNotFound[] {
   const byPath = new Map<string, { hits: number; bots: Set<string>; lastSeen: Date }>();
 
   for (const row of rows) {
-    if (!row.notFound) continue;
+    if (!row.notFound || isProbePath(row.path)) continue;
 
     const entry = byPath.get(row.path) ?? { hits: 0, bots: new Set<string>(), lastSeen: row.hour };
     entry.hits += row.hits;

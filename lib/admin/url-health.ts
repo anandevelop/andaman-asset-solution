@@ -35,6 +35,7 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { hitDay } from "@/lib/redirects";
 import { isLegacyHostUrl } from "@/lib/media";
+import { isProbePath } from "@/lib/probe-paths";
 import { extractLinks, isCheckableLink, type ExtractedLink } from "@/lib/content-links";
 import {
   STATIC_PATHS,
@@ -448,7 +449,8 @@ export async function getUrlHealth(): Promise<UrlHealth> {
       */
       const livePaths = [...index.live];
 
-      const notFound: NotFoundRow[] = notFoundRows.map((row) => {
+      // Rows written before lib/probe-paths.ts existed stay out of the list.
+      const notFound: NotFoundRow[] = notFoundRows.filter((row) => !isProbePath(row.path)).map((row) => {
         const path = stripLocale(row.path);
         const draft = index.drafts.get(path);
 

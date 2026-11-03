@@ -31,6 +31,7 @@ import { redirectIfMoved } from "@/lib/redirects";
 import { locales } from "@/i18n";
 import { identifyBot } from "@/lib/seo/bots";
 import { flushCrawlHits, recordCrawlHit } from "@/lib/seo/crawl-log";
+import { isProbePath } from "@/lib/probe-paths";
 
 // Every request is a lookup against a table an admin edits, so there is
 // nothing here worth caching — and caching it would mean a redirect
@@ -73,7 +74,8 @@ export default async function CatchAllPage(props: Props) {
     bursts of the latter. This is already past every redirect lookup, so
     nothing is waiting on it but the 404 page's own render.
   */
-  const bot = identifyBot((await headers()).get("user-agent"));
+  // A scanner's /.env is not a broken link of ours (lib/probe-paths.ts).
+  const bot = isProbePath(path) ? null : identifyBot((await headers()).get("user-agent"));
   if (bot) {
     recordCrawlHit({ bot, path, notFound: true });
     await flushCrawlHits();
