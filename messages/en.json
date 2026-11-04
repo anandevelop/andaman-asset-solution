@@ -3519,7 +3519,7 @@
         "openGraphTwitter": "Open Graph + Twitter card",
         "searchConsoleVerification": "Search Console verification",
         "redirectSystem": "Redirect system for renamed slugs",
-        "imageSitemap": "Image sitemap"
+        "imageSitemap": "Images in sitemap.xml"
       },
       "structuredDataListTitle": "Structured data (schema)",
       "completenessTitle": "Completeness by page type",

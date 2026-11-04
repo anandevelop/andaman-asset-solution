@@ -101,8 +101,7 @@ export type SeoAudit = {
  * grepping every literal "@type" in the codebase while building this
  * dashboard. BreadcrumbList moved from missing to implemented in this same
  * SEO pass (app/[locale]/(site)/**\/page.tsx); VideoObject and
- * AggregateRating are the two schema types the site has content for
- * (project hero videos, no rating source yet) but no markup emitting yet.
+ * DigitalDocument followed in November 2026 (lib/structured-media.ts).
  *
  * NewsArticle/BlogPosting/Report replace the single "Article" row from
  * before lib/article-schema.ts existed: a news article's @type is now
@@ -120,8 +119,12 @@ const STRUCTURED_DATA: { type: string; implemented: boolean }[] = [
   { type: "Event", implemented: true },
   { type: "FAQPage", implemented: true },
   { type: "BreadcrumbList", implemented: true },
-  { type: "VideoObject", implemented: false },
-  { type: "AggregateRating", implemented: false },
+  // Progress videos on project pages (lib/structured-media.ts).
+  { type: "VideoObject", implemented: true },
+  // E-brochures (lib/structured-media.ts).
+  { type: "DigitalDocument", implemented: true },
+  // AggregateRating is not listed: the site has no reviews to rate, and
+  // Google ignores ratings a business publishes about itself.
 ];
 
 const EMPTY_AUDIT: SeoAudit = {
@@ -342,7 +345,9 @@ export async function getSeoAudit(): Promise<SeoAudit> {
         { key: "openGraphTwitter", implemented: true },
         { key: "searchConsoleVerification", implemented: searchConsoleVerified },
         { key: "redirectSystem", implemented: true },
-        { key: "imageSitemap", implemented: false },
+        // <image:image> entries inside sitemap.xml itself (app/sitemap.ts):
+        // project hero + gallery, news/event/e-brochure covers.
+        { key: "imageSitemap", implemented: true },
       ];
 
       const redirects = { active: activeRedirects, openNotFoundHits };
@@ -380,7 +385,6 @@ export async function getSeoAudit(): Promise<SeoAudit> {
       if (missingOgImageCount > 0) {
         issues.push({ id: "og-image", severity: "minor", key: "missingOgImage", count: missingOgImageCount });
       }
-      issues.push({ id: "image-sitemap", severity: "minor", key: "imageSitemapMissing" });
 
       const severityRank: Record<SeoIssue["severity"], number> = { critical: 0, warning: 1, minor: 2 };
       issues.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);

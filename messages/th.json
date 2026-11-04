@@ -3519,7 +3519,7 @@
         "openGraphTwitter": "Open Graph + Twitter card",
         "searchConsoleVerification": "ยืนยันสิทธิ์ Search Console",
         "redirectSystem": "ระบบ redirect เมื่อเปลี่ยน slug",
-        "imageSitemap": "sitemap สำหรับรูปภาพ"
+        "imageSitemap": "รูปภาพใน sitemap.xml"
       },
       "structuredDataListTitle": "ข้อมูลโครงสร้าง (Schema)",
       "completenessTitle": "ความครบถ้วนตามประเภทหน้า",
