@@ -67,7 +67,7 @@ export default function AnalyticsHeaderControls({
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${compare ? "bg-adm-fill" : "bg-adm-line-strong"}`}
         >
           <span
-            className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${compare ? "translate-x-5.5" : "translate-x-0.5"}`}
+            className={`absolute left-0 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${compare ? "translate-x-5.5" : "translate-x-0.5"}`}
           />
         </button>
         {labels.compare}

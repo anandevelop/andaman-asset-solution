@@ -337,7 +337,7 @@ export default function MediaLibrary({
                 className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${onUpload ? "bg-adm-fill" : "bg-adm-line-strong"}`}
               >
                 <span
-                  className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${onUpload ? "translate-x-5.5" : "translate-x-0.5"}`}
+                  className={`absolute left-0 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${onUpload ? "translate-x-5.5" : "translate-x-0.5"}`}
                 />
               </button>
               {t("aiAlt.onUpload")}
