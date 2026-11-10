@@ -52,7 +52,10 @@ export default async function Corporate() {
     <section className="container-luxe py-20 sm:py-28">
       <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.6fr] lg:gap-16">
         <Reveal>
-          <p className="eyebrow">{t("eyebrow")}</p>
+          <p className="eyebrow flex items-center gap-3">
+            <span aria-hidden className="h-px w-8 bg-gold" />
+            {t("eyebrow")}
+          </p>
 
           {/*
             Sentence case, unlike CompanyIntro's heading above it. That one
@@ -81,7 +84,7 @@ export default async function Corporate() {
             {services.map((service, index) => (
               <li
                 key={service.id}
-                className="group relative aspect-3/4 w-full overflow-hidden rounded-xs shadow-card"
+                className="group relative aspect-3/4 w-full overflow-hidden rounded-3xl shadow-card ring-1 ring-ink/5 transition-all duration-500 hover:-translate-y-1 hover:shadow-cardHover"
               >
                 <ImageWithSkeleton
                   src={service.imageUrl}
@@ -91,19 +94,16 @@ export default async function Corporate() {
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
-                {/* Explicit stops rather than an even ramp. Two of these
-                    four photographs are pale interiors, and a gradient
-                    spread evenly over the whole card leaves white type on
-                    something close to white. This holds near-opaque under
-                    the caption, then clears by just past halfway so the
-                    picture is still a picture. */}
-                <div className="absolute inset-0 bg-linear-to-t from-white/95 from-8% via-white/55 via-28% to-transparent to-62%" />
-
-                <div className="absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
+                {/* No wash over the photograph: the caption sits on its
+                    own frosted panel, so the picture stays a picture and
+                    the ink type has the same footing on a pale interior
+                    as on a blue sky. */}
+                <div className="absolute inset-x-2 bottom-2 rounded-2xl border border-white/70 bg-white/60 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_24px_-14px_rgba(0,0,0,0.4)] backdrop-blur-xl backdrop-saturate-150 sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-3">
                   {/* Position, not an id — "01" is where this card sits in
                       the row, so it is derived from the row rather than
                       stored and left to drift when the order changes. */}
-                  <span className="block text-[10px] font-medium tracking-[0.2em] text-ink-muted sm:text-xs">
+                  <span className="flex items-center gap-2 text-[10px] font-medium tracking-[0.2em] text-ink sm:text-xs">
+                    <i aria-hidden className="h-[2px] w-4 rounded-full bg-gold" />
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="mt-1 block text-sm font-light leading-snug text-ink sm:text-base">
