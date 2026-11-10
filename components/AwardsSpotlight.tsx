@@ -247,7 +247,7 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                         onMouseEnter={() => selectAward(index)}
                         className={`relative grid w-full grid-cols-[34px_1fr_auto] items-baseline gap-3.5 border-b
                             border-ink/10 px-3 py-4 text-left transition-colors duration-300 ${
-                              active ? "spotlight-row-active bg-ink/[0.05]" : "hover:bg-ink/[0.03]"
+                              active ? "spotlight-row-active bg-gold-100/70" : "hover:bg-gold-100/40"
                             }`}
                       >
                         <span
@@ -274,7 +274,7 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                         <span className="text-[11px] font-light text-ink-muted">{award.year}</span>
                         <span
                           aria-hidden
-                          className="spotlight-bar pointer-events-none absolute bottom-[-1px] left-0 h-px w-0"
+                          className="spotlight-bar pointer-events-none absolute bottom-[-1px] left-0 h-[2px] w-0"
                         />
                       </button>
                     </li>

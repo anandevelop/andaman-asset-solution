@@ -1900,7 +1900,7 @@
    whenever a different row becomes active, and freezes in place while the
    pointer is anywhere over the list. */
   .spotlight-bar {
-    background: var(--color-ink);
+    background: var(--color-gold);
   }
   .spotlight-row-active .spotlight-bar {
     animation: fill 5.5s linear forwards;
