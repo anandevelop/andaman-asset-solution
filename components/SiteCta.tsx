@@ -108,7 +108,7 @@ function CtaLink({
 }
 
 const PRIMARY_CLASS =
-  "group inline-flex items-center justify-center gap-3 bg-accent px-9 py-4 text-xs font-medium uppercase tracking-[0.18em] text-primary transition-colors duration-300 hover:bg-accent-500";
+  "group btn-glass gap-3 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em]";
 
 const SECONDARY_CLASS =
   "inline-flex items-center justify-center border border-ink/35 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:border-ink hover:bg-ink/5";

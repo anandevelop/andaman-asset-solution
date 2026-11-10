@@ -580,7 +580,7 @@ export default async function ProjectPage(props: Props) {
             <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
               <a
                 href="#enquire"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:bg-accent-500 lg:w-auto"
+                className="btn-glass w-full px-7 py-3.5 text-sm font-medium uppercase tracking-wide lg:w-auto"
               >
                 {t("arrangeViewing")}
                 <ArrowRight size={16} aria-hidden />
