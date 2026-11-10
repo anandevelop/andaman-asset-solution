@@ -557,38 +557,11 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
               })}
             </div>
 
-            {/* Language + contact — pushed to the bottom of the panel
+            {/* Contact — pushed to the bottom of the panel
                 (mt-auto on the flex-col above) rather than sitting right
                 under the menu list, so the two groups read as separate
                 concerns even on a tall phone screen with room to spare. */}
             <div className="nav-fade-in mt-auto flex flex-col gap-6 pt-10 sm:pt-12">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  {t("language")}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2.5">
-                  {locales.map((code) => (
-                    <Link
-                      key={code}
-                      href={localizedPath(code)}
-                      hrefLang={code}
-                      lang={code}
-                      onClick={() => setOpen(false)}
-                      aria-current={code === locale ? "true" : undefined}
-                      className={[
-                        "rounded-full border px-4 py-2 text-sm transition-colors",
-                        code === locale
-                          ? "border-gold bg-gold-100 font-medium text-ink"
-                          : "border-ink/15 bg-white/60 text-ink/80 hover:border-gold hover:text-ink",
-                      ].join(" ")}
-                    >
-                      {LOCALE_LABELS[code]}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-
               <div className="flex flex-col gap-3">
               <a
                 href={whatsappUrl}
