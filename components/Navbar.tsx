@@ -524,7 +524,7 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
                 return (
                   <div
                     key={item.key}
-                    className="nav-item-in border-b border-ink/10 first:border-t"
+                    className="nav-item-in border-b border-ink/10"
                     style={{ animationDelay: `${i * 0.06 + 0.1}s` }}
                   >
                     <Link
