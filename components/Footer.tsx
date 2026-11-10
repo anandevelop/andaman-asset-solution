@@ -151,7 +151,7 @@ export default async function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={label}
-                  className="flex h-11 w-11 items-center justify-center border border-ink/20 text-ink-muted transition-colors duration-300 hover:border-ink hover:bg-ink/5 hover:text-ink"
+                  className="btn-glass h-11 w-11 text-ink/75 hover:text-ink"
                 >
                   <Icon size={16} strokeWidth={1.5} aria-hidden />
                 </a>
