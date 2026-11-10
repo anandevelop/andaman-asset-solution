@@ -34,6 +34,13 @@
   --color-accent-800: #333333;
   --color-accent: #a8a8a8;
 
+  /* The one colour in the black-and-white theme: used for fills, rules
+     and markers, never for text (it is ~2.7:1 on white). */
+  --color-gold-100: #f6ecd6;
+  --color-gold-300: #e2c387;
+  --color-gold: #c99a3c;
+  --color-gold-700: #9a7426;
+
   --color-surface: #f9f9fa;
   --color-surface-raised: #ffffff;
   --color-surface-muted: #f0f1f3;

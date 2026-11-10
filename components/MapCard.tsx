@@ -360,8 +360,8 @@ export default function MapCard({
                     pinHidden ? "opacity-0" : "opacity-100"
                   }`}
                 >
-                  <span className="map-pin-ring absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-accent-600 opacity-0" />
-                  <span className="map-pin-ring map-pin-ring-delayed absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-accent-600 opacity-0" />
+                  <span className="map-pin-ring absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-gold opacity-0" />
+                  <span className="map-pin-ring map-pin-ring-delayed absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-gold opacity-0" />
                   <span className="absolute -left-3 -top-1 h-2 w-6 rounded-[50%] bg-primary-900/35 blur-[2px]" />
                   <span className="map-pin-body absolute -left-[23px] -top-[60px] h-[60px] w-[46px] origin-bottom">
                     <svg viewBox="0 0 46 60" className="block h-full w-full drop-shadow-[0_6px_10px_rgba(4,29,44,0.35)]">
@@ -371,7 +371,7 @@ export default function MapCard({
                         stroke="#fff"
                         strokeWidth="2.5"
                       />
-                      <circle cx="23" cy="22.5" r="12" fill="#c47b3a" />
+                      <circle cx="23" cy="22.5" r="12" fill="#c99a3c" />
                       <path
                         d="M16.5 25.5l6.5-6.5 6.5 6.5M19.5 25.5l3.5-3.5 3.5 3.5"
                         fill="none"
@@ -411,7 +411,7 @@ export default function MapCard({
                     <span className="truncate">{route?.from}</span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2.5 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-ink sm:mt-2 sm:text-[13px]">
-                    <i className="h-[9px] w-[9px] flex-none rounded-full border-2 border-accent-600 bg-accent-600" />
+                    <i className="h-[9px] w-[9px] flex-none rounded-full border-2 border-gold bg-gold" />
                     <span className="truncate">{route?.to}</span>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export default function MapCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     tabIndex={route ? undefined : -1}
-                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-accent-600 px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink transition-colors hover:bg-accent-700 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
+                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-gold px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink transition-colors hover:bg-accent-700 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
                   >
                     {t("openRoute")}
                     <span aria-hidden>↗</span>
@@ -480,7 +480,7 @@ export default function MapCard({
                 <button
                   type="button"
                   onClick={copy}
-                  className="cursor-pointer rounded-full border border-ink/20 px-[7px] py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-ink-muted transition-colors hover:border-accent sm:px-[9px] sm:py-[5px] sm:text-[10px]"
+                  className="cursor-pointer rounded-full border border-ink/20 px-[7px] py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-ink-muted transition-colors hover:border-gold sm:px-[9px] sm:py-[5px] sm:text-[10px]"
                 >
                   {copyState === "copied"
                     ? t("copied")
@@ -519,9 +519,9 @@ export default function MapCard({
             <button
               type="button"
               onClick={locate}
-              className="flex w-full cursor-pointer items-center gap-2.5 border border-ink/16 px-3 py-2.5 text-left transition-colors hover:border-accent hover:bg-ink/5 sm:gap-3 sm:px-4 sm:py-3.5"
+              className="flex w-full cursor-pointer items-center gap-2.5 border border-ink/16 px-3 py-2.5 text-left transition-colors hover:border-gold hover:bg-ink/5 sm:gap-3 sm:px-4 sm:py-3.5"
             >
-              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-accent text-primary-900 sm:h-[38px] sm:w-[38px]">
+              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-gold text-ink sm:h-[38px] sm:w-[38px]">
                 <Navigation size={14} aria-hidden />
               </span>
               <span className="min-w-0">
@@ -549,7 +549,7 @@ export default function MapCard({
                   onClick={() => setActiveGroupId(group.id)}
                   className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-2 pb-2.5 pt-2 text-[9.5px] font-medium uppercase tracking-[0.1em] transition-colors sm:px-2.5 sm:pb-3 sm:pt-2.5 sm:text-[11px] sm:tracking-[0.12em] ${
                     group.id === activeGroupId
-                      ? "border-accent text-ink"
+                      ? "border-gold text-ink"
                       : "border-transparent text-ink-muted hover:text-ink"
                   }`}
                 >
@@ -580,7 +580,7 @@ export default function MapCard({
                           hasIcon
                             ? "grid-cols-[auto_1fr_auto] items-center"
                             : "grid-cols-[1fr_auto]"
-                        } ${active ? "bg-[rgba(232,179,132,0.14)]" : "hover:bg-ink/5"}`}
+                        } ${active ? "bg-gold-100/70" : "hover:bg-ink/5"}`}
                       >
                         {hasIcon && (
                           <span className="grid h-11 w-11 flex-none place-items-center rounded-xs bg-ink/5 text-ink">
@@ -636,7 +636,7 @@ export default function MapCard({
                             }`}
                           >
                             <b
-                              className="block h-full bg-gradient-to-r from-accent to-accent-600 transition-[width] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                              className="block h-full bg-gradient-to-r from-gold-300 to-gold transition-[width] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
                               style={{
                                 width: barsIn
                                   ? `${Math.min(item.durationMin / 35, 1) * 100}%`
