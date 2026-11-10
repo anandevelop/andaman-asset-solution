@@ -367,7 +367,7 @@ export default function MapCard({
                     <svg viewBox="0 0 46 60" className="block h-full w-full drop-shadow-[0_6px_10px_rgba(4,29,44,0.35)]">
                       <path
                         d="M23 59C23 59 3 36.5 3 22.5A20 20 0 0 1 43 22.5C43 36.5 23 59 23 59Z"
-                        fill="#083551"
+                        fill="#141414"
                         stroke="#fff"
                         strokeWidth="2.5"
                       />

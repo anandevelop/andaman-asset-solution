@@ -132,7 +132,7 @@ export default function FloorCar({
                 <span
                   key={room.id}
                   style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                  className={`${base} ${position} pointer-events-none border-accent/45 bg-[#041d2c]/75`}
+                  className={`${base} ${position} pointer-events-none border-accent/45 bg-[#050505]/75`}
                 >
                   {room.name}
                 </span>
@@ -153,7 +153,7 @@ export default function FloorCar({
                 className={`${base} ${position} inline-flex items-center transition-colors ${
                   open
                     ? "border-accent bg-accent/15"
-                    : "border-accent/45 bg-[#041d2c]/75 hover:border-accent hover:bg-accent/15"
+                    : "border-accent/45 bg-[#050505]/75 hover:border-accent hover:bg-accent/15"
                 }`}
               >
                 {room.name}

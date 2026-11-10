@@ -328,7 +328,7 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
           `primary` — naming the numbered step instead meant the header
           would quietly stop being the brand colour the day the scale was
           retuned. The opacity mattered more: 95% over a light page
-          rendered #153f5a rather than #083551, and over the home page's
+          rendered #1f1f1f rather than #083551, and over the home page's
           hero photograph it rendered whatever the photograph happened to
           be, so the header was a slightly different colour on almost every
           page. `backdrop-blur-md` went with it — with nothing showing

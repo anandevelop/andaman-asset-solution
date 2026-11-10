@@ -228,7 +228,7 @@ export default function UnitTypesElevator({
   return (
     <section
       id="unit-types"
-      className="scroll-mt-24 bg-[#041d2c] py-14 text-white sm:py-20"
+      className="scroll-mt-24 bg-[#050505] py-14 text-white sm:py-20"
     >
       <div ref={host} className="container-luxe @container">
         <p className="eyebrow text-accent">{labels.eyebrow}</p>
@@ -248,7 +248,7 @@ export default function UnitTypesElevator({
                 className={`rounded-xs border px-3.5 py-2 text-left transition-colors ${
                   index === typeIndex
                     ? "border-accent shadow-[inset_0_-2px_0_var(--color-accent)]"
-                    : "border-[#c3d3dd]/25 hover:border-accent/60"
+                    : "border-[#d4d4d4]/25 hover:border-accent/60"
                 }`}
               >
                 <b className="block text-[13px] font-medium text-white">{candidate.name}</b>
@@ -266,7 +266,7 @@ export default function UnitTypesElevator({
           <div
             role="group"
             aria-label={labels.viewMode}
-            className="inline-flex rounded-xs border border-[#c3d3dd]/25 p-0.5"
+            className="inline-flex rounded-xs border border-[#d4d4d4]/25 p-0.5"
           >
             {(["plan", "3d"] as const).map((value) => (
               <button
@@ -279,7 +279,7 @@ export default function UnitTypesElevator({
                   closeRoom();
                 }}
                 className={`rounded-xs px-3.5 py-1.5 text-[12.5px] transition-colors ${
-                  mode === value ? "bg-accent font-medium text-[#062a41]" : "text-white/65 hover:text-white"
+                  mode === value ? "bg-accent font-medium text-[#0f0f0f]" : "text-white/65 hover:text-white"
                 }`}
               >
                 {value === "plan" ? labels.viewPlan : labels.view3d}
@@ -291,7 +291,7 @@ export default function UnitTypesElevator({
 
         {/* ── The board ───────────────────────────────────────────── */}
         <div
-          className="relative mt-6 grid grid-cols-1 border border-[#c3d3dd]/20 @min-[1000px]:grid-cols-[80px_1fr_260px]"
+          className="relative mt-6 grid grid-cols-1 border border-[#d4d4d4]/20 @min-[1000px]:grid-cols-[80px_1fr_260px]"
           style={{
             /* Two grids, not one: the 40px major lines read as a drawing
                board, and the 8px minor ones are what make it read as
@@ -300,7 +300,7 @@ export default function UnitTypesElevator({
               "linear-gradient(rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
               "linear-gradient(90deg,rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
               "linear-gradient(rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px," +
-              "linear-gradient(90deg,rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px,#062a41",
+              "linear-gradient(90deg,rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px,#0f0f0f",
           }}
         >
           <LiftPanel
@@ -341,7 +341,7 @@ export default function UnitTypesElevator({
             {/* A drawing of a building carries its orientation. */}
             <span
               aria-hidden
-              className="absolute right-5 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-[#c3d3dd]/35 font-mono text-[10px] font-medium text-[#c3d3dd]/80"
+              className="absolute right-5 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-[#d4d4d4]/35 font-mono text-[10px] font-medium text-[#d4d4d4]/80"
             >
               N
             </span>
@@ -367,7 +367,7 @@ export default function UnitTypesElevator({
           {/* Mono for the keys and the schedule, Roboto for the values — the
               mockup's .tb .v. With the values in mono too, "Ground Floor"
               and 178.09 read as code rather than as a drawing's title block. */}
-          <div className="border-t border-[#c3d3dd]/15 font-mono @min-[1000px]:border-l @min-[1000px]:border-t-0">
+          <div className="border-t border-[#d4d4d4]/15 font-mono @min-[1000px]:border-l @min-[1000px]:border-t-0">
             <Row label={labels.project} value={projectName} />
 
             <div className="grid grid-cols-3">
@@ -379,7 +379,7 @@ export default function UnitTypesElevator({
             <Row label={labels.floor} value={floor.name} />
 
             {show3d && (
-              <div className="border-b border-[#c3d3dd]/15 bg-accent/5 px-4 py-2.5">
+              <div className="border-b border-[#d4d4d4]/15 bg-accent/5 px-4 py-2.5">
                 <Key>
                   {room3d
                     ? `${labels.room} ${String(pickedIndex >= 0 ? pickedIndex + 1 : room3d.n).padStart(2, "0")}`
@@ -399,7 +399,7 @@ export default function UnitTypesElevator({
               </div>
             )}
 
-            <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
+            <div className="border-b border-[#d4d4d4]/15 px-4 py-2.5">
               <Key>{labels.areaThisFloor}</Key>
               <div className="mt-1 font-sans text-[28px] font-extralight leading-none text-white">
                 {floor.areaLabel ?? "—"}
@@ -421,7 +421,7 @@ export default function UnitTypesElevator({
                   >
                     <b
                       className={`h-2.5 transition-[background-color,width] duration-700 ${
-                        index === floorIndex ? "bg-accent" : "bg-[#c3d3dd]/20"
+                        index === floorIndex ? "bg-accent" : "bg-[#d4d4d4]/20"
                       }`}
                       style={{ width: `${Math.max(candidate.areaRatio * 130, 4)}px` }}
                     />
@@ -482,7 +482,7 @@ export default function UnitTypesElevator({
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#c3d3dd]/55">
+    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#d4d4d4]/55">
       {children}
     </div>
   );
@@ -490,7 +490,7 @@ function Key({ children }: { children: React.ReactNode }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
+    <div className="border-b border-[#d4d4d4]/15 px-4 py-2.5">
       <Key>{label}</Key>
       <div className="mt-1 font-sans text-[13.5px] text-white">{value}</div>
     </div>
@@ -500,8 +500,8 @@ function Row({ label, value }: { label: string; value: string }) {
 function Cell({ label, value, bordered }: { label: string; value: string; bordered?: boolean }) {
   return (
     <div
-      className={`border-b border-[#c3d3dd]/15 px-4 py-2.5 ${
-        bordered ? "border-l border-l-[#c3d3dd]/15" : ""
+      className={`border-b border-[#d4d4d4]/15 px-4 py-2.5 ${
+        bordered ? "border-l border-l-[#d4d4d4]/15" : ""
       }`}
     >
       <Key>{label}</Key>
@@ -534,7 +534,7 @@ function ScheduleRow({
   );
 
   const shell =
-    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-[#c3d3dd]/12 py-[3px] text-left font-mono text-[10.5px]";
+    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-[#d4d4d4]/12 py-[3px] text-left font-mono text-[10.5px]";
 
   if (!room.photoUrl) {
     // `open` without a photo is the room tapped in the 3D view.

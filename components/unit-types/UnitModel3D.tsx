@@ -118,7 +118,7 @@ export default function UnitModel3D({
   return (
     <div ref={stage} className="relative h-full min-h-[inherit] w-full overflow-hidden">
       {!ready && (
-        <p className="absolute inset-0 grid place-items-center font-mono text-[11px] uppercase tracking-[0.16em] text-[#c3d3dd]/55">
+        <p className="absolute inset-0 grid place-items-center font-mono text-[11px] uppercase tracking-[0.16em] text-[#d4d4d4]/55">
           {labels.loading}
         </p>
       )}
@@ -157,14 +157,14 @@ export default function UnitModel3D({
               if (b.id === "reset") scene.current?.reset();
               else scene.current?.zoom(b.id === "in" ? 0.75 : 1 / 0.75);
             }}
-            className="grid h-9 w-9 place-items-center rounded-xs border border-[#c3d3dd]/25 bg-[#062a41]/85 text-white/75 transition-colors hover:border-accent/60 hover:text-accent disabled:opacity-40"
+            className="grid h-9 w-9 place-items-center rounded-xs border border-[#d4d4d4]/25 bg-[#0f0f0f]/85 text-white/75 transition-colors hover:border-accent/60 hover:text-accent disabled:opacity-40"
           >
             {b.icon}
           </button>
         ))}
       </div>
 
-      <p className="pointer-events-none absolute bottom-4 right-4 z-[2] hidden font-mono text-[9px] uppercase tracking-[0.14em] text-[#c3d3dd]/40 @min-[1000px]:block">
+      <p className="pointer-events-none absolute bottom-4 right-4 z-[2] hidden font-mono text-[9px] uppercase tracking-[0.14em] text-[#d4d4d4]/40 @min-[1000px]:block">
         {labels.hint}
       </p>
     </div>
@@ -177,8 +177,8 @@ function Control({ on, onClick, children }: { on: boolean; onClick: () => void; 
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`rounded-xs border bg-[#062a41]/85 px-2 py-1 text-[11px] transition-colors ${
-        on ? "border-accent/60 text-accent" : "border-[#c3d3dd]/25 text-white/65 hover:text-white"
+      className={`rounded-xs border bg-[#0f0f0f]/85 px-2 py-1 text-[11px] transition-colors ${
+        on ? "border-accent/60 text-accent" : "border-[#d4d4d4]/25 text-white/65 hover:text-white"
       }`}
     >
       {children}

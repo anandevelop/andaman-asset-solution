@@ -52,7 +52,7 @@ import { formatNumber } from "@/lib/format";
 const STATUS_TONE: Record<string, string> = {
   UPCOMING: "bg-primary-800 text-white",
   UNDER_CONSTRUCTION: "bg-primary-800 text-white",
-  READY_TO_MOVE_IN: "bg-emerald-700 text-white",
+  READY_TO_MOVE_IN: "bg-surface-raised text-ink ring-1 ring-ink",
   SOLD_OUT: "bg-ink text-white",
 };
 

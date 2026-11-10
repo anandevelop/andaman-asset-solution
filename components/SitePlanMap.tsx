@@ -128,7 +128,7 @@ const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string 
 const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
 /** The selection ring — sand, so it contrasts against every marker colour
  *  above rather than just the navy one. */
-const SELECTION_RING = "#e8b384";
+const SELECTION_RING = "#141414";
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
