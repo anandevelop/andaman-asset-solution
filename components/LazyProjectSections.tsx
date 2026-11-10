@@ -34,7 +34,7 @@ import type MapCardType from "@/components/MapCard";
 import type ProgressGalleryType from "@/components/ProgressGallery";
 
 function Placeholder({ className }: { className: string }) {
-  return <div aria-hidden className={`w-full bg-primary/3 ${className}`} />;
+  return <div aria-hidden className={`w-full bg-surface-raised/3 ${className}`} />;
 }
 
 const SITE_PLAN_H = "min-h-[900px] md:min-h-[640px]";

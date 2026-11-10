@@ -631,11 +631,13 @@ class PlanMapEngine {
       ctx.shadowOffsetY = 1.5;
       ctx.beginPath();
       ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = tone.dot;
+      // Light dot, status-coloured ring: the unit code inside is dark
+      // text, never white.
+      ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.shadowColor = "transparent";
-      ctx.lineWidth = clamp(r * 0.17, 1, 2.4);
-      ctx.strokeStyle = isSelected ? "#ffffff" : "rgba(255,255,255,.88)";
+      ctx.lineWidth = clamp(r * 0.3, 1.6, 3.4);
+      ctx.strokeStyle = tone.dot;
       ctx.stroke();
       if (isSelected) {
         ctx.beginPath();
@@ -649,7 +651,7 @@ class PlanMapEngine {
         ctx.font = `600 ${fontSize.toFixed(1)}px Roboto, system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#0a0a0a";
         ctx.fillText(u.code, px, py + fontSize * 0.06);
       }
       ctx.restore();
@@ -709,7 +711,7 @@ function useCountUp(target: number, reduced: boolean): number {
 }
 
 function toolButtonClass(extra = ""): string {
-  return `flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5 ${extra}`;
+  return `flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-surface-muted ${extra}`;
 }
 
 function ZoomControls({
@@ -754,7 +756,7 @@ function ZoomControls({
             aria-label={b.label}
             aria-pressed={b.pressed}
             onClick={b.onClick}
-            className="flex h-8 w-9 items-center justify-center border-r border-primary/10 bg-white text-primary transition-colors last:border-r-0 hover:bg-primary/5"
+            className="flex h-8 w-9 items-center justify-center border-r border-primary/10 bg-white text-primary transition-colors last:border-r-0 hover:bg-surface-muted"
           >
             {b.icon}
           </button>
@@ -843,19 +845,19 @@ function StatusChips({
             onClick={() => onChange(value)}
             className={`inline-flex shrink-0 items-center gap-2 rounded-xs border px-3.5 py-2 text-xs font-medium transition-colors ${
               active
-                ? "border-primary bg-primary text-white"
+                ? "border-primary bg-surface-raised text-ink"
                 : "border-primary/15 bg-white text-ink/70 hover:border-primary/35 hover:text-primary"
             }`}
           >
             {dotColor && (
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ background: active ? "#fff" : dotColor }}
+                style={{ background: dotColor }}
                 aria-hidden
               />
             )}
             {label}
-            <span className={active ? "text-white/70" : "text-ink/40"}>{counts[value]}</span>
+            <span className={active ? "text-ink-muted" : "text-ink/40"}>{counts[value]}</span>
           </button>
         );
       })}
@@ -1307,7 +1309,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
                 {hintVisible && (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-3.5 z-[3] -translate-x-1/2 whitespace-nowrap rounded-full bg-primary/85 px-3.5 py-1.5 text-[11.5px] text-white backdrop-blur-sm transition-opacity"
+                    className="pointer-events-none absolute left-1/2 top-3.5 z-[3] -translate-x-1/2 whitespace-nowrap rounded-full bg-surface-raised/85 px-3.5 py-1.5 text-[11.5px] text-ink backdrop-blur-sm transition-opacity border border-ink"
                   >
                     {labels.hint}
                   </div>
@@ -1322,12 +1324,12 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
                 <div
                   ref={tipRef}
                   role="status"
-                  className="site-plan-tip pointer-events-none absolute z-[6] whitespace-nowrap rounded-xs bg-primary-900 px-3 py-2.5 text-xs leading-relaxed text-white shadow-lg"
+                  className="site-plan-tip pointer-events-none absolute z-[6] whitespace-nowrap rounded-xs bg-surface-raised px-3 py-2.5 text-xs leading-relaxed text-ink shadow-lg border border-ink"
                 >
                   {tooltipUnit && (
                     <>
                       <b className="text-sm font-medium">{tooltipUnit.code}</b>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/75">
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink-muted">
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_TONE[tooltipUnit.status].dot }} aria-hidden />
                         {tooltipUnit.status === "AVAILABLE" ? labels.available : tooltipUnit.status === "RESERVED" ? labels.reserved : labels.sold}
                         {tooltipUnit.land !== null && ` · ${labels.detailLand} ${tooltipUnit.land} ${t("units.sqm")}`}

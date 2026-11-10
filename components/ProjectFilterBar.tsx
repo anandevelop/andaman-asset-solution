@@ -126,7 +126,7 @@ export default function ProjectFilterBar({
     [
       "rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors",
       active
-        ? "border-primary bg-primary text-white"
+        ? "border-primary bg-surface-raised text-ink"
         : "border-primary/15 text-ink/70 hover:border-primary/40 hover:text-primary",
     ].join(" ");
 

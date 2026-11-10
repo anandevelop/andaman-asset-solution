@@ -79,13 +79,13 @@ export default function FacilityCard({ facility }: { facility: ProjectFacilitySu
         className="object-cover"
       />
 
-      <div className="absolute inset-0 bg-linear-to-t from-primary-900/80 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-white/90 via-transparent to-transparent" />
 
       {/* text-sm on mobile — these cards run as narrow as ~2.2-across on a
           phone (see FacilityScroller's card-width math), and the previous
           text-lg bold routinely wrapped a two-word name like "Communal
           Pool" into a cramped two-liner that ate most of the card. */}
-      <span className="absolute bottom-0 left-0 p-3 text-sm font-bold uppercase leading-snug tracking-wide text-white sm:p-5 sm:text-lg">
+      <span className="absolute bottom-0 left-0 p-3 text-sm font-bold uppercase leading-snug tracking-wide text-ink sm:p-5 sm:text-lg">
         {facility.name}
       </span>
     </div>

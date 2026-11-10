@@ -50,10 +50,10 @@ import { formatNumber } from "@/lib/format";
  * clears 5:1 contrast at minimum.
  */
 const STATUS_TONE: Record<string, string> = {
-  UPCOMING: "bg-primary-800 text-white",
-  UNDER_CONSTRUCTION: "bg-primary-800 text-white",
+  UPCOMING: "bg-surface-raised text-ink",
+  UNDER_CONSTRUCTION: "bg-surface-raised text-ink",
   READY_TO_MOVE_IN: "bg-surface-raised text-ink ring-1 ring-ink",
-  SOLD_OUT: "bg-ink text-white",
+  SOLD_OUT: "bg-surface-raised text-ink",
 };
 
 const SIGNAL_ICON = {
@@ -118,7 +118,7 @@ export default function FeaturedProjectCard({
       href={`/${locale}/projects/${project.slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
     >
-      <div className="relative aspect-4/3 w-full overflow-hidden bg-primary/5">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-surface-raised/5">
         {project.heroImageUrl && (
           <ImageWithSkeleton
             src={project.heroImageUrl}
@@ -140,7 +140,7 @@ export default function FeaturedProjectCard({
         </span>
 
         {labels.signal && SignalIcon && (
-          <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-xs bg-primary-900/80 px-3 py-1.5 text-[11px] font-light text-white backdrop-blur-xs">
+          <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-xs bg-surface-raised/80 px-3 py-1.5 text-[11px] font-light text-ink backdrop-blur-xs border border-ink">
             <SignalIcon size={13} strokeWidth={1.5} aria-hidden />
             {labels.signal}
           </span>

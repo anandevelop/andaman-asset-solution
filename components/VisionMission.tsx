@@ -58,7 +58,7 @@ export default async function VisionMission() {
   ].filter((tile): tile is { key: string; value: string } => tile !== null);
 
   return (
-    <section className="bg-primary py-16 text-white sm:py-20">
+    <section className="bg-surface-raised py-16 text-ink sm:py-20">
       <div className="container-luxe">
         <Reveal>
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
@@ -67,7 +67,7 @@ export default async function VisionMission() {
               {/* text-white overrides the global h1–h4 { @apply
                   text-primary } rule in app/globals.css, which would
                   otherwise render this navy-on-navy. */}
-              <h2 className="text-3xl font-light text-white sm:text-4xl">{t("title")}</h2>
+              <h2 className="text-3xl font-light text-ink sm:text-4xl">{t("title")}</h2>
 
               <div className="mt-9 space-y-9">
                 {(
@@ -77,12 +77,12 @@ export default async function VisionMission() {
                   ] as const
                 ).map(({ label, body }) => (
                   <div key={label}>
-                    <h3 className="text-xs font-medium uppercase tracking-[0.22em] text-accent">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.22em] text-ink">
                       {label}
                     </h3>
                     {/* A quotation in the source deck and still one here,
                         so it is marked up as one and announced as one. */}
-                    <blockquote className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
+                    <blockquote className="mt-3 text-sm leading-relaxed text-ink sm:text-base">
                       {body}
                     </blockquote>
                   </div>
@@ -96,12 +96,12 @@ export default async function VisionMission() {
                   showing through a gap, rather than borders on each tile:
                   a border per tile doubles up where two meet and reads as
                   a heavier line down the middle than around the edge. */}
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-white/10 bg-white/10">
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-ink/10 bg-ink/5">
                 {tiles.map((tile, index) => (
                   <div
                     key={tile.key}
                     className={[
-                      "bg-primary px-6 py-8 sm:px-8 sm:py-10",
+                      "bg-surface-raised px-6 py-8 sm:px-8 sm:py-10 border border-ink",
                       /* An odd number of figures — which is what happens
                          until somebody fills in the founding year — would
                          otherwise leave a phantom half-cell of the
@@ -111,10 +111,10 @@ export default async function VisionMission() {
                       tiles.length % 2 === 1 && index === tiles.length - 1 ? "col-span-2" : "",
                     ].join(" ")}
                   >
-                    <dd className="text-4xl font-light leading-none text-white sm:text-5xl">
+                    <dd className="text-4xl font-light leading-none text-ink sm:text-5xl">
                       {tile.value}
                     </dd>
-                    <dt className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-white/60">
+                    <dt className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-muted">
                       {t(`stats.${tile.key}` as never)}
                     </dt>
                   </div>

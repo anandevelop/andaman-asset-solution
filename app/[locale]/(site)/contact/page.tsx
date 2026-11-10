@@ -337,7 +337,7 @@ export default async function ContactPage(props: Props) {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-primary mt-4 w-full bg-[#25D366]! text-white! hover:bg-[#1FBF5C]!"
+                  className="btn-primary mt-4 w-full bg-[#25D366]! text-ink! hover:bg-[#1FBF5C]!"
                 >
                   {tChat("whatsappLabel")}
                 </a>

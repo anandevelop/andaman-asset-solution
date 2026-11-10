@@ -180,15 +180,15 @@
 }
 
 @utility btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs bg-primary px-7 py-3.5
-      text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300
-      hover:bg-primary-700 focus-visible:outline-accent;
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border-2 border-ink bg-surface-raised px-7 py-3.5
+      text-sm font-medium uppercase tracking-wide text-ink transition-colors duration-300
+      hover:bg-surface-muted focus-visible:outline-accent;
 }
 
 @utility btn-outline {
   @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/25
       bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
-      transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-white;
+      transition-colors duration-300 hover:border-primary hover:bg-surface-muted hover:text-ink;
 }
 
 @utility btn-hero {
@@ -201,8 +201,8 @@
      reads as restrained against any photo. Resolves to the same solid,
      obvious accent fill on hover/focus that .btn-primary gives, so the
      affordance doesn't get lost along with the boldness. */
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-white/50
-      bg-white/10 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-white
+  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-ink
+      bg-surface-raised/90 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-ink
       backdrop-blur-md transition-all duration-300 hover:border-accent hover:bg-accent
       hover:text-primary focus-visible:outline-accent;
 }
@@ -250,11 +250,11 @@
        retuning further if copy legibility ever regresses. */
   background: linear-gradient(
     to top,
-    rgba(4, 29, 44, 0.55) 0%,
-    rgba(4, 29, 44, 0.42) 20%,
-    rgba(4, 29, 44, 0.24) 40%,
-    rgba(4, 29, 44, 0.06) 60%,
-    rgba(4, 29, 44, 0) 72%
+    rgba(255, 255, 255, 0.83) 0%,
+    rgba(255, 255, 255, 0.63) 20%,
+    rgba(255, 255, 255, 0.36) 40%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0.0) 72%
   );
 
   @media (min-width: 640px) {
@@ -264,9 +264,9 @@
     /* Lightened from 0.66/0.22 — see the mobile .hero-scrim comment above. */
     background: linear-gradient(
       to top,
-      rgba(4, 29, 44, 0.4) 0%,
-      rgba(4, 29, 44, 0.12) 11%,
-      rgba(4, 29, 44, 0) 22%
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.18) 11%,
+      rgba(255, 255, 255, 0.0) 22%
     );
   }
 }
@@ -280,12 +280,12 @@
        "the hero photo is too dark." Same shape, softer ramp. */
   background: radial-gradient(
     100% 155% at 0% 100%,
-    rgba(4, 29, 44, 0.62) 0%,
-    rgba(4, 29, 44, 0.5) 26%,
-    rgba(4, 29, 44, 0.32) 42%,
-    rgba(4, 29, 44, 0.14) 58%,
-    rgba(4, 29, 44, 0.02) 72%,
-    rgba(4, 29, 44, 0) 84%
+    rgba(255, 255, 255, 0.93) 0%,
+    rgba(255, 255, 255, 0.75) 26%,
+    rgba(255, 255, 255, 0.48) 42%,
+    rgba(255, 255, 255, 0.21) 58%,
+    rgba(255, 255, 255, 0.03) 72%,
+    rgba(255, 255, 255, 0.0) 84%
   );
 }
 
@@ -315,20 +315,20 @@
   background:
     linear-gradient(
       to bottom,
-      rgba(4, 29, 44, 0.3) 0%,
-      rgba(4, 29, 44, 0.14) 6%,
-      rgba(4, 29, 44, 0) 15%
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.21) 6%,
+      rgba(255, 255, 255, 0.0) 15%
     ),
     linear-gradient(
       to top,
-      rgba(4, 29, 44, 0.94) 0%,
-      rgba(4, 29, 44, 0.92) 14%,
-      rgba(4, 29, 44, 0.88) 28%,
-      rgba(4, 29, 44, 0.82) 42%,
-      rgba(4, 29, 44, 0.74) 52%,
-      rgba(4, 29, 44, 0.48) 64%,
-      rgba(4, 29, 44, 0.16) 76%,
-      rgba(4, 29, 44, 0) 88%
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.95) 14%,
+      rgba(255, 255, 255, 0.95) 28%,
+      rgba(255, 255, 255, 0.95) 42%,
+      rgba(255, 255, 255, 0.95) 52%,
+      rgba(255, 255, 255, 0.72) 64%,
+      rgba(255, 255, 255, 0.24) 76%,
+      rgba(255, 255, 255, 0.0) 88%
     );
 
   @media (min-width: 640px) {
@@ -344,24 +344,24 @@
     background:
       radial-gradient(
         ellipse 130% 162% at 0% 100%,
-        rgba(4, 29, 44, 0.94) 0%,
-        rgba(4, 29, 44, 0.88) 24%,
-        rgba(4, 29, 44, 0.7) 44%,
-        rgba(4, 29, 44, 0.36) 64%,
-        rgba(4, 29, 44, 0) 84%
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 255, 255, 0.95) 24%,
+        rgba(255, 255, 255, 0.95) 44%,
+        rgba(255, 255, 255, 0.54) 64%,
+        rgba(255, 255, 255, 0.0) 84%
       ),
       linear-gradient(
         to bottom,
-        rgba(4, 29, 44, 0.3) 0%,
-        rgba(4, 29, 44, 0.14) 7%,
-        rgba(4, 29, 44, 0) 17%
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.21) 7%,
+        rgba(255, 255, 255, 0.0) 17%
       ),
       linear-gradient(
         to top,
-        rgba(4, 29, 44, 0.56) 0%,
-        rgba(4, 29, 44, 0.36) 11%,
-        rgba(4, 29, 44, 0.14) 24%,
-        rgba(4, 29, 44, 0) 40%
+        rgba(255, 255, 255, 0.84) 0%,
+        rgba(255, 255, 255, 0.54) 11%,
+        rgba(255, 255, 255, 0.21) 24%,
+        rgba(255, 255, 255, 0.0) 40%
       );
   }
 }
@@ -377,11 +377,11 @@
      behind every label against all five photos: 4.5:1 or better. */
   background: linear-gradient(
     to top,
-    rgba(4, 29, 44, 0.9) 0%,
-    rgba(4, 29, 44, 0.62) 12%,
-    rgba(4, 29, 44, 0.22) 30%,
-    rgba(4, 29, 44, 0.02) 58%,
-    rgba(4, 29, 44, 0) 100%
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.93) 12%,
+    rgba(255, 255, 255, 0.33) 30%,
+    rgba(255, 255, 255, 0.03) 58%,
+    rgba(255, 255, 255, 0.0) 100%
   );
 }
 

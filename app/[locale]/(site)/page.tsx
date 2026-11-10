@@ -260,7 +260,7 @@ export default async function HomePage(props: Props) {
 
     WHY_US: () =>
       whyUsPoints.length > 0 && (
-        <section className="bg-primary-900/3 py-20 sm:py-28">
+        <section className="bg-surface-raised/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
               <p className="eyebrow">{t("why.eyebrow")}</p>
@@ -272,7 +272,7 @@ export default async function HomePage(props: Props) {
               </p>
             </Reveal>
 
-            <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-xs border border-primary/10 bg-primary/10 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-xs border border-primary/10 bg-surface-raised/10 sm:grid-cols-2 lg:grid-cols-4">
               {whyUsPoints.map((point, index) => {
                 const Icon = WHY_US_ICONS[point.icon];
 
@@ -309,7 +309,7 @@ export default async function HomePage(props: Props) {
               href={`/${locale}/events/${nextEvent.slug}`}
               className="group grid overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.1fr_1fr]"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:h-full">
+              <div className="relative aspect-video w-full overflow-hidden bg-surface-raised/5 lg:aspect-auto lg:h-full">
                 {nextEvent.coverImageUrl && (
                   <ImageWithSkeleton
                     src={nextEvent.coverImageUrl}
@@ -399,7 +399,7 @@ export default async function HomePage(props: Props) {
                   href={`/${locale}/news/${article.slug}`}
                   className="group flex h-full flex-col overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
                 >
-                  <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
+                  <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5">
                     {article.coverImageUrl && (
                       <ImageWithSkeleton
                         src={article.coverImageUrl}

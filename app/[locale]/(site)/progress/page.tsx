@@ -143,7 +143,7 @@ export default async function ProgressIndexPage(props: Props) {
                       narrow, cropped-looking strip. A true aspect ratio
                       plus sm:items-center on the row keeps the image its
                       own natural height instead of stretching to match. */}
-                  <div className="relative aspect-video w-full overflow-hidden bg-primary/5">
+                  <div className="relative aspect-video w-full overflow-hidden bg-surface-raised/5">
                     {(project.latest?.image ?? project.heroImageUrl) && (
                       <ImageWithSkeleton
                         src={(project.latest?.image ?? project.heroImageUrl)!}

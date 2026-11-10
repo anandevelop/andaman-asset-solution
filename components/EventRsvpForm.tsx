@@ -161,14 +161,14 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
         className="flex flex-col items-center gap-3 py-10 text-center"
       >
         <CheckCircle2 size={30} strokeWidth={1.5} className="text-emerald-400" aria-hidden />
-        <p className="text-sm leading-relaxed text-white/80">{t("success")}</p>
+        <p className="text-sm leading-relaxed text-ink">{t("success")}</p>
       </motion.div>
     );
   }
 
   if (soldOut && status !== "full") {
     return (
-      <p className="rounded-xs border border-white/15 bg-white/5 px-5 py-8 text-center text-sm text-white/70">
+      <p className="rounded-xs border border-ink/15 bg-ink/5 px-5 py-8 text-center text-sm text-ink-muted">
         {t("soldOut")}
       </p>
     );
@@ -180,13 +180,13 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           client-supplied reference design. Copy lives in i18n
           (events.rsvp.eyebrow/title/subtitle) rather than the parent page,
           so the form is a self-contained drop-in on any event. */}
-      <p className="text-center text-[11px] font-medium uppercase tracking-widest2 text-accent-300">
+      <p className="text-center text-[11px] font-medium uppercase tracking-widest2 text-ink">
         {t("eyebrow")}
       </p>
-      <h2 className="mt-3 text-center text-2xl font-semibold uppercase tracking-widest2 text-white">
+      <h2 className="mt-3 text-center text-2xl font-semibold uppercase tracking-widest2 text-ink">
         {t("title")}
       </h2>
-      <p className="mt-1.5 text-center text-xs font-medium uppercase tracking-wide text-white/50">
+      <p className="mt-1.5 text-center text-xs font-medium uppercase tracking-wide text-ink-muted">
         {remaining !== null ? tEvent("seatsLeft", { count: remaining }) : t("subtitle")}
       </p>
 
@@ -274,11 +274,11 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           inputProps={register("email")}
         />
 
-        <label className="flex items-start gap-3 text-sm text-white/70">
+        <label className="flex items-start gap-3 text-sm text-ink-muted">
           <input
             type="checkbox"
             {...register("consentGiven")}
-            className="mt-0.5 h-4 w-4 rounded-xs border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/40"
+            className="mt-0.5 h-4 w-4 rounded-xs border-ink/30 bg-transparent text-ink focus:ring-accent-400/40"
           />
           <span className="text-xs leading-relaxed">
             {t("consent")}{" "}
@@ -291,7 +291,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
               href={`/${locale}${siteConfig.legal.privacyPolicyPath}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-300 underline underline-offset-2"
+              className="text-ink underline underline-offset-2"
             >
               {t("privacyPolicy")}
             </a>
@@ -342,7 +342,7 @@ function Field({
     <div>
       <label
         htmlFor={id}
-        className="text-xs font-medium uppercase tracking-wide text-white/60"
+        className="text-xs font-medium uppercase tracking-wide text-ink-muted"
       >
         {label}
       </label>
@@ -350,7 +350,7 @@ function Field({
         <Icon
           size={16}
           strokeWidth={1.75}
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-accent-300"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink"
           aria-hidden
         />
         <input
@@ -359,7 +359,7 @@ function Field({
           autoComplete={autoComplete}
           placeholder={label}
           {...inputProps}
-          className="w-full rounded-xs border-b border-white/15 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 focus:border-accent-400 focus:outline-hidden focus:ring-0"
+          className="w-full rounded-xs border-b border-ink/15 bg-ink/5 py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-accent-400 focus:outline-hidden focus:ring-0"
         />
       </div>
       {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}

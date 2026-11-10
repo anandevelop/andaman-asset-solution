@@ -105,7 +105,7 @@ export default function FloorCar({
               priority={priority}
               loading={priority ? undefined : "lazy"}
               sizes="(min-width: 1000px) 60vw, 100vw"
-              className="object-fill drop-shadow-[0_0_6px_rgba(160,200,225,.25)]"
+              className="object-fill invert"
             />
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function FloorCar({
             const open = openRoomId === room.id;
 
             const base =
-              "absolute whitespace-nowrap border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.06em] text-[#ffd9a8]";
+              "absolute whitespace-nowrap border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.06em] text-ink";
             const position = `${ANCHOR_CLASS[anchor]}`;
 
             if (!room.photoUrl) {
@@ -132,7 +132,7 @@ export default function FloorCar({
                 <span
                   key={room.id}
                   style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                  className={`${base} ${position} pointer-events-none border-accent/45 bg-[#050505]/75`}
+                  className={`${base} ${position} pointer-events-none border-ink/45 bg-surface-raised/75`}
                 >
                   {room.name}
                 </span>
@@ -153,7 +153,7 @@ export default function FloorCar({
                 className={`${base} ${position} inline-flex items-center transition-colors ${
                   open
                     ? "border-accent bg-accent/15"
-                    : "border-accent/45 bg-[#050505]/75 hover:border-accent hover:bg-accent/15"
+                    : "border-ink/45 bg-surface-raised/75 hover:border-accent hover:bg-accent/15"
                 }`}
               >
                 {room.name}

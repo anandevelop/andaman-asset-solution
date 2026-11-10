@@ -110,7 +110,7 @@ export default async function EBrochureIndexPage(props: Props) {
                   href={`/${locale}/e-brochure/${brochure.slug}`}
                   className="group block"
                 >
-                  <div className="relative aspect-3/4 w-full overflow-hidden rounded-xs bg-primary-900/6 shadow-card">
+                  <div className="relative aspect-3/4 w-full overflow-hidden rounded-xs bg-surface-raised/6 shadow-card">
                     {brochure.coverImageUrl ? (
                       <ImageWithSkeleton
                         src={brochure.coverImageUrl}

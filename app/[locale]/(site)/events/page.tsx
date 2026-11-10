@@ -93,11 +93,11 @@ export default async function EventsPage(props: Props) {
       <EditableItem href={ITEM_EDIT_HREF.event(event.id)}>
       <Link
         href={`/${locale}/events/${event.slug}`}
-        className={`group flex h-full flex-col overflow-hidden rounded-xs border border-white/10 bg-primary shadow-card transition-all hover:shadow-cardHover ${
+        className={`group flex h-full flex-col overflow-hidden rounded-xs border border-ink/10 bg-surface-raised shadow-card transition-all hover:shadow-cardHover ${
           muted ? "opacity-70 hover:opacity-100" : ""
         }`}
       >
-        <div className="relative aspect-16/10 w-full overflow-hidden bg-primary-900">
+        <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised">
           {event.coverImageUrl && (
             <ImageWithSkeleton
               src={event.coverImageUrl}
@@ -113,15 +113,15 @@ export default async function EventsPage(props: Props) {
           {/* Fades the photo into the card's navy panel below it, rather
               than cutting off on a hard edge — an invitation's photo and
               its text block read as one piece, not two stacked ones. */}
-          <div className="absolute inset-x-0 bottom-0 h-14 bg-linear-to-t from-primary to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-14 bg-linear-to-t from-white to-transparent" />
 
           {!muted && event.seatsLeft !== null && (
             <span
               className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wide ${
                 event.seatsLeft === 0
-                  ? "bg-ink/70 text-white"
+                  ? "bg-surface-raised/70 text-ink"
                   : event.seatsLeft <= 5
-                    ? "bg-amber-500/90 text-white"
+                    ? "bg-amber-500/90 text-ink"
                     : "bg-white/90 text-primary"
               }`}
             >
@@ -133,29 +133,29 @@ export default async function EventsPage(props: Props) {
         </div>
 
         <div className="flex flex-1 flex-col p-6">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest2 text-accent-300">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest2 text-ink">
             <CalendarDays size={12} aria-hidden />
             <time dateTime={event.startsAt.toISOString()}>
               {dateFormat.format(event.startsAt)}
             </time>
           </p>
 
-          <h2 className="mt-3 text-xl font-light text-white">{event.title}</h2>
+          <h2 className="mt-3 text-xl font-light text-ink">{event.title}</h2>
 
           {event.location && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-white/50">
-              <MapPin size={12} className="text-accent-300/70" aria-hidden />
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
+              <MapPin size={12} className="text-ink" aria-hidden />
               {event.location}
             </p>
           )}
 
           <div className="my-4 h-px w-10 bg-accent/40" aria-hidden />
 
-          <p className="line-clamp-2 text-sm leading-relaxed text-white/60">
+          <p className="line-clamp-2 text-sm leading-relaxed text-ink-muted">
             {event.description}
           </p>
 
-          <span className="mt-auto flex items-center gap-1.5 pt-6 text-xs font-medium uppercase tracking-widest2 text-accent-300 transition-colors group-hover:text-accent-200">
+          <span className="mt-auto flex items-center gap-1.5 pt-6 text-xs font-medium uppercase tracking-widest2 text-ink transition-colors group-hover:text-ink">
             {muted ? t("viewEvent") : t("reserve")}
             <ArrowRight
               size={14}
@@ -254,7 +254,7 @@ export default async function EventsPage(props: Props) {
 
       {/* ── Past ─────────────────────────────────────────────────────── */}
       {past.length > 0 && (
-        <section className="bg-primary-900/3 py-16 sm:py-24">
+        <section className="bg-surface-raised/3 py-16 sm:py-24">
           <div className="container-luxe">
             <Reveal>
               <h2 className="text-2xl font-light text-primary sm:text-3xl">

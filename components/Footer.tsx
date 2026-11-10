@@ -42,7 +42,7 @@ import type { Locale } from "@/i18n";
  * <span>s with no href: text styled as links that had never gone
  * anywhere, on every page of the site.
  *
- * `text-white/55`, not the `text-white/40` every muted label here used to
+ * `text-ink-muted`, not the `text-ink-muted` every muted label here used to
  * be: white at 40% over this footer's #083551 lands on #6b8697, 3.34:1 —
  * a fail for the 11-12px labels and legal links it was used on, and what
  * axe flagged on every page (the footer renders everywhere). 55% is
@@ -90,12 +90,12 @@ export default async function Footer() {
     { key: "eBrochure", href: "/e-brochure" },
   ] as const;
 
-  const columnHeading = "text-[11px] font-semibold uppercase tracking-[0.18em] text-white";
+  const columnHeading = "text-[11px] font-semibold uppercase tracking-[0.18em] text-ink";
   const columnLink =
-    "text-sm font-light text-white/70 transition-colors duration-300 hover:text-white";
+    "text-sm font-light text-ink-muted transition-colors duration-300 hover:text-ink";
 
   return (
-    <footer className="bg-primary text-white">
+    <footer className="bg-surface-raised text-ink">
       <div className="container-luxe grid gap-12 py-16 lg:grid-cols-12 lg:gap-8 lg:py-20">
         {/* ── Brand ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-5 lg:pr-12">
@@ -115,16 +115,14 @@ export default async function Footer() {
             alt={siteConfig.legalName}
             width={180}
             height={36}
-            className={`h-8 w-auto ${
-              settings.branding.logoUrl === siteConfig.branding.logo ? "brightness-0 invert" : ""
-            }`}
+            className="h-8 w-auto brightness-0"
           />
 
           {/* Its own line rather than siteConfig.description, which is the
               SERP snippet and the PWA install blurb as well — three
               artefacts written to three different budgets, and tuning the
               snippet should not silently rewrite the footer. */}
-          <p className="mt-6 max-w-sm text-sm font-light leading-relaxed text-white/60">
+          <p className="mt-6 max-w-sm text-sm font-light leading-relaxed text-ink-muted">
             {t("blurb")}
           </p>
 
@@ -134,7 +132,7 @@ export default async function Footer() {
                 white reads as the third, neutral option. */}
             <Link
               href={`/${locale}/contact`}
-              className="group inline-flex items-center gap-3 bg-white px-7 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-primary transition-colors duration-300 hover:bg-white/90"
+              className="group inline-flex items-center gap-3 border border-ink bg-white px-7 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-ink transition-colors duration-300 hover:bg-surface-muted"
             >
               {t("contactUs")}
               <ArrowRight
@@ -153,7 +151,7 @@ export default async function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={label}
-                  className="flex h-11 w-11 items-center justify-center border border-white/20 text-white/70 transition-colors duration-300 hover:border-white/50 hover:bg-white/5 hover:text-white"
+                  className="flex h-11 w-11 items-center justify-center border border-ink/20 text-ink-muted transition-colors duration-300 hover:border-ink hover:bg-ink/5 hover:text-ink"
                 >
                   <Icon size={16} strokeWidth={1.5} aria-hidden />
                 </a>
@@ -209,16 +207,16 @@ export default async function Footer() {
               <Phone
                 size={15}
                 strokeWidth={1.5}
-                className="mt-0.5 shrink-0 text-accent transition-colors group-hover:text-white"
+                className="mt-0.5 shrink-0 text-ink transition-colors group-hover:text-ink"
                 aria-hidden
               />
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                   {t("phone")}
                 </span>
                 <a
                   href={`tel:${settings.contact.phone}`}
-                  className="leading-relaxed text-white/80 transition-colors group-hover:text-white"
+                  className="leading-relaxed text-ink transition-colors group-hover:text-ink"
                 >
                   {settings.contact.phoneDisplay}
                 </a>
@@ -229,16 +227,16 @@ export default async function Footer() {
               <Mail
                 size={15}
                 strokeWidth={1.5}
-                className="mt-0.5 shrink-0 text-accent transition-colors group-hover:text-white"
+                className="mt-0.5 shrink-0 text-ink transition-colors group-hover:text-ink"
                 aria-hidden
               />
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                   {t("sales")}
                 </span>
                 <a
                   href={`mailto:${salesEmail}`}
-                  className="wrap-break-word leading-relaxed text-white/80 transition-colors group-hover:text-white"
+                  className="wrap-break-word leading-relaxed text-ink transition-colors group-hover:text-ink"
                 >
                   {salesEmail}
                 </a>
@@ -250,14 +248,14 @@ export default async function Footer() {
                 <MapPin
                   size={15}
                   strokeWidth={1.5}
-                  className="mt-0.5 shrink-0 text-accent transition-colors group-hover:text-white"
+                  className="mt-0.5 shrink-0 text-ink transition-colors group-hover:text-ink"
                   aria-hidden
                 />
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                     {t("office")}
                   </span>
-                  <span className="leading-relaxed text-white/80 transition-colors group-hover:text-white">
+                  <span className="leading-relaxed text-ink transition-colors group-hover:text-ink">
                     {address}
                   </span>
                 </div>
@@ -269,14 +267,14 @@ export default async function Footer() {
                 <Clock
                   size={15}
                   strokeWidth={1.5}
-                  className="mt-0.5 shrink-0 text-accent transition-colors group-hover:text-white"
+                  className="mt-0.5 shrink-0 text-ink transition-colors group-hover:text-ink"
                   aria-hidden
                 />
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                     {t("openingHours")}
                   </span>
-                  <span className="leading-relaxed text-white/80 transition-colors group-hover:text-white">
+                  <span className="leading-relaxed text-ink transition-colors group-hover:text-ink">
                     {officeHours}
                   </span>
                 </div>
@@ -289,17 +287,17 @@ export default async function Footer() {
       {/* ── Legal ─────────────────────────────────────────────────────
           `pb-24` on phones clears the floating chat buttons, which sit
           bottom-right and would otherwise land on top of these links. */}
-      <div className="border-t border-white/10">
+      <div className="border-t border-ink/10">
         <div className="container-luxe flex flex-col items-center justify-between gap-4 py-6 pb-24 md:flex-row md:pb-6">
-          <p className="text-center text-xs font-light text-white/55 md:text-left">
+          <p className="text-center text-xs font-light text-ink-muted md:text-left">
             © {new Date().getFullYear()} {siteConfig.legalName} — {t("rightsReserved")}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-light text-white/55 md:gap-6">
-            <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-white">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-light text-ink-muted md:gap-6">
+            <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-ink">
               {t("privacyPolicy")}
             </Link>
-            <Link href={`/${locale}/terms`} className="transition-colors hover:text-white">
+            <Link href={`/${locale}/terms`} className="transition-colors hover:text-ink">
               {t("terms")}
             </Link>
             <CookiePreferencesLink label={t("cookiesPreferences")} />

@@ -97,16 +97,16 @@ export default async function Corporate() {
                     something close to white. This holds near-opaque under
                     the caption, then clears by just past halfway so the
                     picture is still a picture. */}
-                <div className="absolute inset-0 bg-linear-to-t from-primary-900/90 from-8% via-primary-900/45 via-28% to-transparent to-62%" />
+                <div className="absolute inset-0 bg-linear-to-t from-white/95 from-8% via-white/55 via-28% to-transparent to-62%" />
 
                 <div className="absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
                   {/* Position, not an id — "01" is where this card sits in
                       the row, so it is derived from the row rather than
                       stored and left to drift when the order changes. */}
-                  <span className="block text-[10px] font-medium tracking-[0.2em] text-white/70 sm:text-xs">
+                  <span className="block text-[10px] font-medium tracking-[0.2em] text-ink-muted sm:text-xs">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="mt-1 block text-sm font-light leading-snug text-white sm:text-base">
+                  <span className="mt-1 block text-sm font-light leading-snug text-ink sm:text-base">
                     {service.label}
                   </span>
                 </div>

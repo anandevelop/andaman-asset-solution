@@ -136,7 +136,7 @@ export default function LeadSuccessDialog({
           exit={reducedMotion ? undefined : { opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-6 backdrop-blur-[3px]"
-          style={{ backgroundColor: "rgba(4,29,44,0.62)" }}
+          style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
           onClick={onClose}
         >
           <motion.div
@@ -198,7 +198,7 @@ export default function LeadSuccessDialog({
                 <button
                   type="button"
                   onClick={onClose}
-                  className={`${BUTTON} bg-primary text-white hover:bg-primary-700`}
+                  className={`${BUTTON} bg-surface-raised text-ink hover:bg-surface-muted`}
                 >
                   {t("close")}
                 </button>

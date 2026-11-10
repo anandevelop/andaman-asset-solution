@@ -104,7 +104,7 @@ const LABEL_SWAP_MS = 400;
 
 /** Legibility over sky and white walls, where most of these frames put type.
  *  rgba(4,29,44) is primary-900. */
-const TEXT_SHADOW = "[text-shadow:0_1px_8px_rgba(4,29,44,0.75)]";
+const TEXT_SHADOW = "[text-shadow:0_1px_8px_rgba(255,255,255,0.75)]";
 
 /**
  * The incoming layer's opacity at progress k ∈ [0, 1]: a sine ease-in-out,
@@ -553,7 +553,7 @@ function Carousel({
       {labelSlide.label && (
         <div className="absolute inset-x-0 top-[18%] z-20 max-[900px]:hidden">
           <div
-            className={`container-luxe flex items-center gap-[14px] text-xs font-normal uppercase tracking-widest2 text-white ${TEXT_SHADOW}`}
+            className={`container-luxe flex items-center gap-[14px] text-xs font-normal uppercase tracking-widest2 text-ink ${TEXT_SHADOW}`}
           >
             <span aria-hidden className="h-px w-10 bg-white/70" />
             <span
@@ -580,7 +580,7 @@ function Carousel({
           className="pointer-events-none absolute bottom-[46px] left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[10px] opacity-70 xl:flex"
         >
           <span
-            className={`text-[10px] leading-none font-normal uppercase tracking-[0.3em] text-white ${TEXT_SHADOW}`}
+            className={`text-[10px] leading-none font-normal uppercase tracking-[0.3em] text-ink ${TEXT_SHADOW}`}
           >
             {scrollLabel}
           </span>
@@ -614,7 +614,7 @@ function Carousel({
 
             <ol
               onKeyDown={handleRailKey}
-              className={`m-0 flex list-none gap-7 p-0 text-white ${TEXT_SHADOW} max-[900px]:w-full max-[900px]:gap-[14px] ${
+              className={`m-0 flex list-none gap-7 p-0 text-ink ${TEXT_SHADOW} max-[900px]:w-full max-[900px]:gap-[14px] ${
                 compactRail ? "w-full max-w-[764px]" : ""
               }`}
             >
@@ -649,7 +649,7 @@ function Carousel({
                         motionReady={motionReady}
                         onEnded={reduced ? undefined : advance}
                       />
-                      <span className="block text-[11px] leading-none tracking-[0.2em] text-accent">
+                      <span className="block text-[11px] leading-none tracking-[0.2em] text-ink">
                         {number}
                       </span>
                       {name && (
@@ -858,7 +858,7 @@ function HeroCopy({
         }`}
       >
         <p
-          className={`mb-[22px] flex items-center gap-[14px] text-xs font-medium uppercase tracking-widest2 text-accent max-sm:mb-4 max-sm:gap-2.5 max-sm:text-[10px] max-sm:tracking-[0.22em] ${TEXT_SHADOW}`}
+          className={`mb-[22px] flex items-center gap-[14px] text-xs font-medium uppercase tracking-widest2 text-ink max-sm:mb-4 max-sm:gap-2.5 max-sm:text-[10px] max-sm:tracking-[0.22em] ${TEXT_SHADOW}`}
         >
           {/* Grows with scaleX from a rule that already has its 48px box.
               Animating `width` instead pushes the eyebrow text along beside
@@ -882,7 +882,7 @@ function HeroCopy({
             call as the <h1> in components/CompanyIntro.tsx.
           */
           <p
-            className={`${HEADLINE_TIERS[headlineTier(lines)].className} leading-[1.04] font-light tracking-wider text-white`}
+            className={`${HEADLINE_TIERS[headlineTier(lines)].className} leading-[1.04] font-light tracking-wider text-ink`}
           >
             {lines.map((line, i) => (
               <span
@@ -902,7 +902,7 @@ function HeroCopy({
 
         {slide.tagline && (
           <p
-            className={`mt-[26px] max-w-[440px] translate-y-4 text-[17px] leading-[1.65] max-sm:mt-4 max-sm:text-sm max-sm:leading-[1.6] text-white/[0.86] opacity-0 transition-all delay-[350ms] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100 ${TEXT_SHADOW}`}
+            className={`mt-[26px] max-w-[440px] translate-y-4 text-[17px] leading-[1.65] max-sm:mt-4 max-sm:text-sm max-sm:leading-[1.6] text-ink opacity-0 transition-all delay-[350ms] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[phase=in]/copy:translate-y-0 group-data-[phase=in]/copy:opacity-100 ${TEXT_SHADOW}`}
           >
             {slide.tagline}
           </p>
@@ -912,7 +912,7 @@ function HeroCopy({
           <HeroCarouselCta slide={slide} />
           <Link
             href={viewing.href}
-            className={`border-b border-white/40 pb-1 text-xs font-medium uppercase tracking-[0.2em] text-white transition-colors hover:border-accent hover:text-accent max-sm:text-[10px] max-sm:tracking-[0.18em] ${TEXT_SHADOW}`}
+            className={`border-b border-ink/40 pb-1 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-colors hover:border-accent hover:text-ink max-sm:text-[10px] max-sm:tracking-[0.18em] ${TEXT_SHADOW}`}
           >
             {viewing.label}
           </Link>
@@ -1036,11 +1036,11 @@ function StaticFallbackHero({
   return (
     <section className="relative flex h-[88vh] min-h-[560px] w-full items-end overflow-hidden">
       <ImageWithSkeleton src={imageUrl} alt="" fill fetchPriority="high" loading="eager" sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-linear-to-t from-primary-900/95 via-primary-900/50 to-primary-900/30" />
+      <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/60 to-white/40" />
 
       <div className="container-luxe relative z-10 pb-20 sm:pb-28">
         <Reveal>
-          <p className="eyebrow text-accent-200 tracking-widest uppercase">{eyebrow}</p>
+          <p className="eyebrow text-ink tracking-widest uppercase">{eyebrow}</p>
         </Reveal>
 
         <Reveal delay={0.1}>
@@ -1048,13 +1048,13 @@ function StaticFallbackHero({
               the Carousel path above renders the same slot as a <p>. The
               page's heading lives in components/CompanyIntro.tsx so it is
               present whether or not any hero slides are configured. */}
-          <p className="mt-4 max-w-3xl whitespace-pre-line text-4xl font-light leading-[1.08] text-white sm:text-6xl">
+          <p className="mt-4 max-w-3xl whitespace-pre-line text-4xl font-light leading-[1.08] text-ink sm:text-6xl">
             {title}
           </p>
         </Reveal>
 
         <Reveal delay={0.2}>
-          <p className="mt-6 max-w-lg text-sm leading-relaxed text-white/90 sm:text-base">
+          <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink sm:text-base">
             {subtitle}
           </p>
         </Reveal>
@@ -1071,7 +1071,7 @@ function StaticFallbackHero({
 
             <Link
               href={ctaSecondaryHref}
-              className="btn-outline border-white/50! text-white! hover:border-white! hover:bg-white/10!"
+              className="btn-outline border-ink! text-ink! hover:border-ink! hover:bg-ink/5!"
             >
               {ctaSecondaryLabel}
             </Link>

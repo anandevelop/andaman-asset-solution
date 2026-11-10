@@ -218,9 +218,9 @@ export default async function EventPage(props: Props) {
             className="object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-primary-900/90 via-primary-900/40 to-primary-900/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/50 to-white/30" />
 
-        <div className="container-luxe relative z-10 pb-12 pt-32 text-white sm:pb-16">
+        <div className="container-luxe relative z-10 pb-12 pt-32 text-ink sm:pb-16">
           <Reveal>
             {/* On the photograph, so `onImage`. The trail's middle crumb
                 goes where the back arrow used to, and says where you are
@@ -229,10 +229,10 @@ export default async function EventPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <p className="eyebrow mt-6 text-accent-200">
+            <p className="eyebrow mt-6 text-ink">
               {event.isPast ? t("pastLabel") : dateFormat.format(event.startsAt)}
             </p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-light leading-[1.1] text-white sm:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-light leading-[1.1] text-ink sm:text-5xl">
               {event.title}
             </h1>
           </Reveal>
@@ -271,18 +271,18 @@ export default async function EventPage(props: Props) {
               wrapper only owns the card chrome, not the copy. */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <Reveal delay={0.15}>
-              <div className="rounded-xs bg-primary p-6 shadow-cardHover sm:p-8">
+              <div className="rounded-xs bg-surface-raised p-6 shadow-cardHover sm:p-8">
                 {event.isPast ? (
                   <>
-                    <h2 className="text-lg font-light text-white">
+                    <h2 className="text-lg font-light text-ink">
                       {t("pastTitle")}
                     </h2>
-                    <p className="mt-3 text-sm leading-relaxed text-white/70">
+                    <p className="mt-3 text-sm leading-relaxed text-ink-muted">
                       {t("pastBody")}
                     </p>
                     <Link
                       href={`/${locale}/events`}
-                      className="mt-6 flex w-full items-center justify-center rounded-xs border border-white/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-primary"
+                      className="mt-6 flex w-full items-center justify-center rounded-xs border border-ink/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-ink transition-colors hover:bg-white hover:text-primary"
                     >
                       {t("seeUpcoming")}
                     </Link>

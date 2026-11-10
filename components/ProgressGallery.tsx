@@ -174,7 +174,7 @@ function PhotoRow({
             // FacilityScroller's 4-across math, so there's no fractional
             // sliver of a 5th photo poking in at the edge on desktop.
             className="relative aspect-4/3 w-full shrink-0 snap-start overflow-hidden
-              rounded-xs bg-primary/5 shadow-card sm:w-[calc((100%-16px)/2)]
+              rounded-xs bg-surface-raised/5 shadow-card sm:w-[calc((100%-16px)/2)]
               lg:w-[calc((100%-3*16px)/4)]"
           >
             <button
@@ -232,7 +232,7 @@ function PhotoRow({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/95 p-4 sm:p-10"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-surface-raised/95 p-4 sm:p-10"
             onClick={closeLightbox}
             role="dialog"
             aria-modal="true"
@@ -241,7 +241,7 @@ function PhotoRow({
               type="button"
               onClick={closeLightbox}
               aria-label={labels.close}
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-6 sm:top-6"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-ink/5 text-ink transition-colors hover:bg-ink/10 sm:right-6 sm:top-6"
             >
               <X size={20} aria-hidden />
             </button>
@@ -255,7 +255,7 @@ function PhotoRow({
                     showPrev();
                   }}
                   aria-label={labels.previous}
-                  className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:left-6"
+                  className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/40 text-ink transition-colors hover:bg-ink/10 sm:left-6"
                 >
                   <ChevronLeft size={20} aria-hidden />
                 </button>
@@ -267,7 +267,7 @@ function PhotoRow({
                     showNext();
                   }}
                   aria-label={labels.next}
-                  className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:right-6"
+                  className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/40 text-ink transition-colors hover:bg-ink/10 sm:right-6"
                 >
                   <ChevronRight size={20} aria-hidden />
                 </button>
@@ -293,7 +293,7 @@ function PhotoRow({
             </motion.div>
 
             <p
-              className="absolute inset-x-0 bottom-4 z-10 text-center text-xs font-medium uppercase tracking-widest2 text-white/70 sm:bottom-6"
+              className="absolute inset-x-0 bottom-4 z-10 text-center text-xs font-medium uppercase tracking-widest2 text-ink-muted sm:bottom-6"
               onClick={(event) => event.stopPropagation()}
             >
               {openIndex + 1} / {images.length}
@@ -332,8 +332,8 @@ export default function ProgressGallery({ months, locale, emptyLabel, labels }: 
             aria-pressed={active === i}
             className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors ${
               active === i
-                ? "bg-primary text-white"
-                : "bg-white text-ink/70 hover:bg-primary/5"
+                ? "bg-surface-raised text-ink"
+                : "bg-white text-ink/70 hover:bg-surface-muted"
             }`}
           >
             {formatMonthYear(locale, m.year, m.month)}
@@ -351,7 +351,7 @@ export default function ProgressGallery({ months, locale, emptyLabel, labels }: 
           className="pt-8"
         >
           {month.videoEmbedUrl && (
-            <div className="relative mb-8 aspect-video w-full overflow-hidden rounded-lg bg-primary-900 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.35)]">
+            <div className="relative mb-8 aspect-video w-full overflow-hidden rounded-lg bg-surface-raised shadow-[0_20px_50px_-15px_rgba(0,0,0,0.35)]">
               <iframe
                 src={month.videoEmbedUrl}
                 title={`${label} drone footage`}
@@ -362,8 +362,8 @@ export default function ProgressGallery({ months, locale, emptyLabel, labels }: 
               />
               <span
                 className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5
-                  rounded-full bg-primary-900/70 px-3 py-1.5 text-[11px] font-medium uppercase
-                  tracking-wide text-white backdrop-blur-xs sm:left-6 sm:top-6"
+                  rounded-full bg-surface-raised/70 px-3 py-1.5 text-[11px] font-medium uppercase
+                  tracking-wide text-ink backdrop-blur-xs sm:left-6 sm:top-6 border border-ink"
               >
                 <Youtube size={13} aria-hidden />
                 {labels.video}

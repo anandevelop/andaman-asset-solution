@@ -107,7 +107,7 @@ export default async function NewsPage(props: Props) {
 
   const chipClass = (active: boolean) =>
     active
-      ? "rounded-full bg-primary px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-white"
+      ? "rounded-full bg-surface-raised px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-ink border border-ink"
       : "rounded-full border border-primary/15 bg-white px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-ink/70 transition-colors hover:border-primary/40 hover:text-primary";
 
   // The wide treatment only makes sense where "newest" does: page one, and
@@ -192,7 +192,7 @@ export default async function NewsPage(props: Props) {
                     href={`/${locale}/news/${lead.slug}`}
                     className="group grid overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.05fr_1fr]"
                   >
-                    <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:min-h-[340px]">
+                    <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5 lg:aspect-auto lg:min-h-[340px]">
                       {lead.coverImageUrl && (
                         <ImageWithSkeleton
                           src={lead.coverImageUrl}
@@ -271,7 +271,7 @@ export default async function NewsPage(props: Props) {
                         href={`/${locale}/news/${article.slug}`}
                         className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
                       >
-                        <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
+                        <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5">
                           {article.coverImageUrl && (
                             <ImageWithSkeleton
                               src={article.coverImageUrl}
@@ -348,7 +348,7 @@ export default async function NewsPage(props: Props) {
                             aria-current={number === page.page ? "page" : undefined}
                             className={
                               number === page.page
-                                ? "flex h-9 w-9 items-center justify-center rounded-xs bg-primary text-sm font-medium text-white"
+                                ? "flex h-9 w-9 items-center justify-center rounded-xs bg-surface-raised text-sm font-medium text-ink"
                                 : "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/15 bg-white text-sm text-ink/70 transition-colors hover:border-primary/40 hover:text-primary"
                             }
                           >

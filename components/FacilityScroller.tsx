@@ -95,7 +95,7 @@ export default function FacilityScroller({ facilities }: Props) {
     "absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center " +
     "rounded-full border border-primary/10 bg-white text-primary shadow-card " +
     "transition-[opacity,background-color,color] " +
-    "hover:border-primary hover:bg-primary hover:text-white " +
+    "hover:border-primary hover:bg-surface-muted hover:text-ink " +
     "disabled:pointer-events-none disabled:opacity-0 sm:flex";
 
   return (

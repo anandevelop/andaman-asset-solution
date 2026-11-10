@@ -19,7 +19,7 @@ export default function CookiePreferencesLink({ label }: { label: string }) {
     <button
       type="button"
       onClick={openConsentManager}
-      className="transition-colors hover:text-white"
+      className="transition-colors hover:text-ink"
     >
       {label}
     </button>

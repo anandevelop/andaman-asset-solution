@@ -66,7 +66,7 @@ function GalleryPhoto({
 
       <span
         aria-hidden
-        className="absolute inset-x-0 bottom-0 block p-4 text-left text-sm font-light uppercase leading-snug tracking-[0.06em] text-white sm:p-5 sm:text-base lg:text-lg"
+        className="absolute inset-x-0 bottom-0 block p-4 text-left text-sm font-light uppercase leading-snug tracking-[0.06em] text-ink sm:p-5 sm:text-base lg:text-lg"
       >
         {slide.label}
       </span>

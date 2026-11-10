@@ -118,7 +118,7 @@ export default function UnitModel3D({
   return (
     <div ref={stage} className="relative h-full min-h-[inherit] w-full overflow-hidden">
       {!ready && (
-        <p className="absolute inset-0 grid place-items-center font-mono text-[11px] uppercase tracking-[0.16em] text-[#d4d4d4]/55">
+        <p className="absolute inset-0 grid place-items-center font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted">
           {labels.loading}
         </p>
       )}
@@ -157,14 +157,14 @@ export default function UnitModel3D({
               if (b.id === "reset") scene.current?.reset();
               else scene.current?.zoom(b.id === "in" ? 0.75 : 1 / 0.75);
             }}
-            className="grid h-9 w-9 place-items-center rounded-xs border border-[#d4d4d4]/25 bg-[#0f0f0f]/85 text-white/75 transition-colors hover:border-accent/60 hover:text-accent disabled:opacity-40"
+            className="grid h-9 w-9 place-items-center rounded-xs border border-ink/25 bg-surface-raised/85 text-ink-muted transition-colors hover:border-accent/60 hover:text-ink disabled:opacity-40"
           >
             {b.icon}
           </button>
         ))}
       </div>
 
-      <p className="pointer-events-none absolute bottom-4 right-4 z-[2] hidden font-mono text-[9px] uppercase tracking-[0.14em] text-[#d4d4d4]/40 @min-[1000px]:block">
+      <p className="pointer-events-none absolute bottom-4 right-4 z-[2] hidden font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted @min-[1000px]:block">
         {labels.hint}
       </p>
     </div>
@@ -177,8 +177,8 @@ function Control({ on, onClick, children }: { on: boolean; onClick: () => void; 
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`rounded-xs border bg-[#0f0f0f]/85 px-2 py-1 text-[11px] transition-colors ${
-        on ? "border-accent/60 text-accent" : "border-[#d4d4d4]/25 text-white/65 hover:text-white"
+      className={`rounded-xs border bg-surface-raised/85 px-2 py-1 text-[11px] transition-colors ${
+        on ? "border-accent/60 text-ink" : "border-ink/25 text-ink-muted hover:text-ink"
       }`}
     >
       {children}

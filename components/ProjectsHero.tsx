@@ -129,7 +129,7 @@ export default function ProjectsHero({
       // no scroll for it to wait on.
       animate="visible"
       variants={container}
-      className="relative isolate flex aspect-[3/4] min-h-[610px] w-full flex-col overflow-hidden bg-primary sm:aspect-[16/10] sm:min-h-[570px] lg:aspect-[2/1] lg:max-h-[740px] lg:min-h-[640px]"
+      className="relative isolate flex aspect-[3/4] min-h-[610px] w-full flex-col overflow-hidden bg-surface-raised sm:aspect-[16/10] sm:min-h-[570px] lg:aspect-[2/1] lg:max-h-[740px] lg:min-h-[640px]"
     >
       {image && (
         <>
@@ -164,7 +164,7 @@ export default function ProjectsHero({
           <div className="min-w-0 max-w-[640px]">
             <motion.div
               variants={enter}
-              className="mb-3.5 [text-shadow:0_1px_10px_rgba(4,29,44,.8)]"
+              className="mb-3.5 [text-shadow:0_1px_10px_rgba(255,255,255,.8)]"
             >
               {breadcrumb}
             </motion.div>
@@ -172,7 +172,7 @@ export default function ProjectsHero({
             <motion.div variants={enter} className="flex items-center gap-3.5">
               {/* accent-200, not the utility's own accent-700: that gold is
                   tuned for a light background and disappears on a photo. */}
-              <p className="eyebrow shrink-0 text-accent-200 [text-shadow:0_1px_14px_rgba(4,29,44,.7)]">
+              <p className="eyebrow shrink-0 text-ink [text-shadow:0_1px_14px_rgba(255,255,255,.7)]">
                 {eyebrow}
               </p>
               {/* Draws itself in after the eyebrow lands — a cue that the
@@ -195,14 +195,14 @@ export default function ProjectsHero({
 
             <motion.h1
               variants={enter}
-              className="mt-3 text-[clamp(34px,10vw,44px)] font-extralight leading-[1.06] tracking-[-0.01em] text-white [text-shadow:0_2px_26px_rgba(4,29,44,.45)] sm:text-[clamp(48px,6.2vw,72px)]"
+              className="mt-3 text-[clamp(34px,10vw,44px)] font-extralight leading-[1.06] tracking-[-0.01em] text-ink [text-shadow:0_2px_26px_rgba(255,255,255,.45)] sm:text-[clamp(48px,6.2vw,72px)]"
             >
               {title}
             </motion.h1>
 
             <motion.p
               variants={enter}
-              className="mt-3.5 max-w-[46ch] text-[14.5px] font-light leading-[1.78] text-white/85 [text-shadow:0_1px_14px_rgba(4,29,44,.7)] sm:text-[16.5px] sm:leading-[1.75]"
+              className="mt-3.5 max-w-[46ch] text-[14.5px] font-light leading-[1.78] text-ink [text-shadow:0_1px_14px_rgba(255,255,255,.7)] sm:text-[16.5px] sm:leading-[1.75]"
             >
               {subtitle}
             </motion.p>
@@ -216,13 +216,13 @@ export default function ProjectsHero({
             {stats.length > 0 && (
               <motion.dl
                 variants={enter}
-                className="mt-5 grid max-w-[560px] grid-cols-3 border-t border-white/25"
+                className="mt-5 grid max-w-[560px] grid-cols-3 border-t border-ink/25"
               >
                 {stats.map((stat, i) => (
                   <div
                     key={stat.label}
                     className={`min-w-0 pt-4 lg:pt-5 ${
-                      i > 0 ? "border-l border-white/25 pl-3 sm:pl-[18px] lg:pl-7" : ""
+                      i > 0 ? "border-l border-ink/25 pl-3 sm:pl-[18px] lg:pl-7" : ""
                     }`}
                   >
                     {/* white/80, not the mockup's /66: that was measured
@@ -231,16 +231,16 @@ export default function ProjectsHero({
                         /66 lands at 3.9:1, under AA. Measured 5.0:1 here.
                         The photo is data-driven, so re-measure whenever the
                         first project changes. */}
-                    <dt className="text-[9.5px] font-medium uppercase tracking-[0.14em] text-white/80 [text-shadow:0_1px_14px_rgba(4,29,44,.7)] sm:text-[10px] sm:tracking-[0.2em]">
+                    <dt className="text-[9.5px] font-medium uppercase tracking-[0.14em] text-ink [text-shadow:0_1px_14px_rgba(255,255,255,.7)] sm:text-[10px] sm:tracking-[0.2em]">
                       {stat.label}
                     </dt>
                     {/* The narrow sizes are not cosmetic: at 360px the third
                         column has ~104px for "92,353 sq.m" once the rule is
                         deducted, and at the desktop size the grid pushes
                         wider than its container and the unit gets clipped. */}
-                    <dd className="mt-1.5 flex items-baseline gap-1.5 text-[22px] font-extralight leading-none text-white [text-shadow:0_1px_16px_rgba(4,29,44,.6)] sm:text-[26px] lg:text-[34px]">
+                    <dd className="mt-1.5 flex items-baseline gap-1.5 text-[22px] font-extralight leading-none text-ink [text-shadow:0_1px_16px_rgba(255,255,255,.6)] sm:text-[26px] lg:text-[34px]">
                       {stat.value}
-                      <span className="text-[11px] font-normal text-white/60 sm:text-xs">
+                      <span className="text-[11px] font-normal text-ink-muted sm:text-xs">
                         {stat.unit}
                       </span>
                     </dd>
@@ -256,10 +256,10 @@ export default function ProjectsHero({
           {credit && (
             <motion.p
               variants={enter}
-              className="hidden shrink-0 items-center gap-2 whitespace-nowrap border border-white/35 bg-primary-900/45 px-3.5 py-2 text-[11.5px] tracking-[0.06em] text-white backdrop-blur-md lg:flex"
+              className="hidden shrink-0 items-center gap-2 whitespace-nowrap border border-ink/35 bg-surface-raised/45 px-3.5 py-2 text-[11.5px] tracking-[0.06em] text-ink backdrop-blur-md lg:flex"
             >
               {credit.name}
-              <span className="text-white/60">· {credit.suffix}</span>
+              <span className="text-ink-muted">· {credit.suffix}</span>
             </motion.p>
           )}
         </div>
@@ -301,7 +301,7 @@ export default function ProjectsHero({
                      the section it picks up the body's ink and the name
                      vanishes into the dark card with nothing to show for
                      it. */
-                  className="flex h-full items-center gap-3 border border-white/20 bg-primary-900/45 p-2.5 text-white backdrop-blur-[10px] transition-colors hover:border-accent/55 hover:bg-primary-900/60"
+                  className="flex h-full items-center gap-3 border border-ink/20 bg-surface-raised/45 p-2.5 text-ink backdrop-blur-[10px] transition-colors hover:border-accent/55 hover:bg-surface-muted"
                 >
                   {shortcut.imageUrl && (
                     <Image
@@ -316,10 +316,10 @@ export default function ProjectsHero({
                     <span className="block truncate text-[13.5px] font-medium">
                       {shortcut.name}
                     </span>
-                    <span className="mt-0.5 block truncate text-[11.5px] text-white/60">
+                    <span className="mt-0.5 block truncate text-[11.5px] text-ink-muted">
                       {shortcut.location}
                     </span>
-                    <span className="mt-1.5 flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.1em] text-white/80">
+                    <span className="mt-1.5 flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.1em] text-ink">
                       <span
                         aria-hidden
                         className={`block h-[5px] w-[5px] shrink-0 rounded-full ${
@@ -331,7 +331,7 @@ export default function ProjectsHero({
                   </span>
                   <span className="shrink-0 text-right text-[19px] font-light leading-none">
                     {shortcut.units}
-                    <span className="mt-0.5 block text-[10px] font-normal tracking-[0.12em] text-white/50">
+                    <span className="mt-0.5 block text-[10px] font-normal tracking-[0.12em] text-ink-muted">
                       {shortcut.unitsLabel}
                     </span>
                   </span>
