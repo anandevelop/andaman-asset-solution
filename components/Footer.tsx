@@ -77,10 +77,10 @@ export default async function Footer() {
   /** The square outline buttons under the CTA — every channel this site
    *  actually has a link for, and none it does not. */
   const channels = [
-    { key: "whatsapp", href: whatsappUrl, label: "WhatsApp", Icon: MessageCircle, external: true },
-    { key: "facebook", href: settings.social.facebook, label: "Facebook", Icon: Facebook, external: true },
-    { key: "instagram", href: settings.social.instagram, label: "Instagram", Icon: Instagram, external: true },
-    { key: "youtube", href: settings.social.youtube, label: "YouTube", Icon: Youtube, external: true },
+    { key: "whatsapp", href: whatsappUrl, label: "WhatsApp", Icon: MessageCircle, tone: "text-[#25D366]", external: true },
+    { key: "facebook", href: settings.social.facebook, label: "Facebook", Icon: Facebook, tone: "text-[#1877F2]", external: true },
+    { key: "instagram", href: settings.social.instagram, label: "Instagram", Icon: Instagram, tone: "text-[#E4405F]", external: true },
+    { key: "youtube", href: settings.social.youtube, label: "YouTube", Icon: Youtube, tone: "text-[#FF0000]", external: true },
   ].filter((channel) => Boolean(channel.href));
 
   const companyLinks = [
@@ -147,14 +147,14 @@ export default async function Footer() {
             </Link>
 
             <div className="flex items-center gap-2">
-              {channels.map(({ key, href, label, Icon }) => (
+              {channels.map(({ key, href, label, Icon, tone }) => (
                 <a
                   key={key}
                   href={href}
                   target="_blank"
                   rel="noreferrer"
                   aria-label={label}
-                  className="flex h-11 w-11 items-center justify-center border border-white/20 text-white/70 transition-colors duration-300 hover:border-white/50 hover:bg-white/5 hover:text-white"
+                  className={`flex h-11 w-11 items-center justify-center border border-white/20 ${tone} transition-colors duration-300 hover:border-white/50 hover:bg-white/5`}
                 >
                   <Icon size={16} strokeWidth={1.5} aria-hidden />
                 </a>
