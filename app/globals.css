@@ -2293,11 +2293,3 @@
 .u3d-lbl.is-off {
   display: none;
 }
-
-/* Preview branch theme/bw-preview: the public site in black and white.
-   Tokens above are greyscale; this also greys photos and video inside the
-   public <main id="main"> (the admin has no #main). */
-#main img,
-#main video {
-  filter: grayscale(1);
-}
