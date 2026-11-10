@@ -58,7 +58,7 @@ export default async function VisionMission() {
   ].filter((tile): tile is { key: string; value: string } => tile !== null);
 
   return (
-    <section className="bg-surface-raised py-16 text-ink sm:py-20">
+    <section className="bg-linear-to-br from-surface-raised from-40% to-gold-100 py-16 text-ink sm:py-20">
       <div className="container-luxe">
         <Reveal>
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
@@ -77,12 +77,13 @@ export default async function VisionMission() {
                   ] as const
                 ).map(({ label, body }) => (
                   <div key={label}>
-                    <h3 className="text-xs font-medium uppercase tracking-[0.22em] text-ink">
+                    <h3 className="flex items-center gap-3 text-xs font-medium uppercase tracking-[0.22em] text-ink">
+                      <span aria-hidden className="h-px w-8 bg-gold" />
                       {label}
                     </h3>
                     {/* A quotation in the source deck and still one here,
                         so it is marked up as one and announced as one. */}
-                    <blockquote className="mt-3 text-sm leading-relaxed text-ink sm:text-base">
+                    <blockquote className="mt-3 text-sm leading-relaxed text-ink/85 sm:text-base">
                       {body}
                     </blockquote>
                   </div>
@@ -92,26 +93,31 @@ export default async function VisionMission() {
 
             {/* ── The figures ─────────────────────────────────────── */}
             <div>
-              {/* Hairlines drawn with the container's own background
-                  showing through a gap, rather than borders on each tile:
-                  a border per tile doubles up where two meet and reads as
-                  a heavier line down the middle than around the edge. */}
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-ink bg-ink">
+              {/* Four frosted cards with air between them, the same glass
+                  as the site's buttons, over the section's faint gold
+                  wash. Each carries a short gold rule, like the labels on
+                  the left. */}
+              <dl className="grid grid-cols-2 gap-3 sm:gap-4">
                 {tiles.map((tile, index) => (
                   <div
                     key={tile.key}
                     className={[
-                      "bg-surface-raised px-6 py-8 sm:px-8 sm:py-10",
+                      "rounded-2xl border border-white/70 bg-white/55 px-6 py-7 backdrop-blur-xl backdrop-saturate-150 sm:px-8 sm:py-9",
+                      "shadow-[0_0_0_1px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.95),0_18px_40px_-22px_rgba(0,0,0,0.3)]",
                       /* An odd number of figures — which is what happens
                          until somebody fills in the founding year — would
                          otherwise leave a phantom half-cell of the
                          container's own hairline colour in the corner,
                          reading as a tile that failed to load. The last
-                         one takes the whole row instead. */
+                         one takes the whole row instead. (The tiles are
+                         separate cards now, but a lone half-width card
+                         looks just as unfinished.) */
                       tiles.length % 2 === 1 && index === tiles.length - 1 ? "col-span-2" : "",
                     ].join(" ")}
                   >
-                    <dd className="text-4xl font-light leading-none text-ink sm:text-5xl">
+                    {/* The gold rule is a pseudo-element: a <dl> group may
+                        only hold dt and dd. */}
+                    <dd className="text-4xl font-light leading-none text-ink before:mb-5 before:block before:h-[3px] before:w-8 before:rounded-full before:bg-gold before:content-[''] sm:text-5xl">
                       {tile.value}
                     </dd>
                     <dt className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-muted">
