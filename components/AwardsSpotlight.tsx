@@ -247,7 +247,7 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                         onMouseEnter={() => selectAward(index)}
                         className={`relative grid w-full grid-cols-[34px_1fr_auto] items-baseline gap-3.5 border-b
                             border-ink/10 px-3 py-4 text-left transition-colors duration-300 ${
-                              active ? "spotlight-row-active bg-white/[0.055]" : "hover:bg-white/[0.035]"
+                              active ? "spotlight-row-active bg-ink/[0.05]" : "hover:bg-ink/[0.03]"
                             }`}
                       >
                         <span

@@ -1516,7 +1516,9 @@
     bottom: -5px;
     width: 10px;
     height: 10px;
-    background: var(--color-primary-900);
+    background: #ffffff;
+    border-right: 1px solid var(--color-ink);
+    border-bottom: 1px solid var(--color-ink);
     transform: translateX(-50%) rotate(45deg);
   }
   .site-plan-tip-on {
@@ -1761,17 +1763,17 @@
   .spotlight-section {
     background: linear-gradient(
       180deg,
-      var(--color-primary-900) 0%,
-      var(--color-primary) 60%,
-      var(--color-primary-900) 100%
+      #ffffff 0%,
+      var(--color-surface-muted) 60%,
+      #ffffff 100%
     );
   }
 
   .spotlight-cone {
     background: linear-gradient(
       180deg,
-      rgba(255, 236, 210, 0.22),
-      rgba(232, 179, 132, 0.06) 70%,
+      rgba(0, 0, 0, 0.07),
+      rgba(0, 0, 0, 0.02) 70%,
       transparent
     );
     clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
@@ -1782,7 +1784,7 @@
   .spotlight-pool {
     background: radial-gradient(
       closest-side,
-      rgba(232, 179, 132, 0.38),
+      rgba(0, 0, 0, 0.12),
       transparent
     );
   }
@@ -1819,8 +1821,8 @@
   }
 
   .spotlight-spark {
-    background: var(--color-accent);
-    box-shadow: 0 0 8px var(--color-accent);
+    background: var(--color-ink);
+    box-shadow: none;
     animation: rise linear infinite;
   }
 
@@ -1828,7 +1830,7 @@
    whenever a different row becomes active, and freezes in place while the
    pointer is anywhere over the list. */
   .spotlight-bar {
-    background: var(--color-accent);
+    background: var(--color-ink);
   }
   .spotlight-row-active .spotlight-bar {
     animation: fill 5.5s linear forwards;
