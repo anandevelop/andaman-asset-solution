@@ -584,9 +584,9 @@ function Carousel({
           >
             {scrollLabel}
           </span>
-          <span className="relative block h-[46px] w-px overflow-hidden bg-linear-to-b from-transparent to-white">
+          <span className="relative block h-[46px] w-px overflow-hidden bg-linear-to-b from-transparent to-ink/30">
             <span
-              className="absolute top-[-40%] left-0 block h-[40%] w-px bg-accent"
+              className="absolute top-[-40%] left-0 block h-[40%] w-px bg-gold"
               // Moves by transform, not `top` — see the hero-scroll-drip
               // comment in app/globals.css.
               style={{
@@ -968,9 +968,9 @@ function RailBar({
   };
 
   return (
-    <span aria-hidden className="mb-3 block h-[2px] overflow-hidden bg-white/[0.22]">
+    <span aria-hidden className="mb-3 block h-[2px] overflow-hidden bg-ink/15">
       <span
-        className={`block h-full ${state === "current" ? "bg-accent" : "bg-white"}`}
+        className={`block h-full ${state === "current" ? "bg-gold" : "bg-gold-700"}`}
         style={style}
         onAnimationEnd={state === "current" && slide.mediaType === "IMAGE" ? onEnded : undefined}
       />
