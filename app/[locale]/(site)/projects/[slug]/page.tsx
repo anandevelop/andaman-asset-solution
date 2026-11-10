@@ -498,7 +498,7 @@ export default async function ProjectPage(props: Props) {
             />
           )
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-white/50 via-white/0 to-white/0" />
+        <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/45 to-white/20" />
 
         {/* Top-left rather than in the copy stack below: matches the
             reference layout's own uppercase, letter-spaced trail. A small
@@ -510,8 +510,7 @@ export default async function ProjectPage(props: Props) {
           <Breadcrumb items={trail} tone="onImage" className="uppercase tracking-wide" />
         </div>
 
-        <div className="container-luxe relative z-10 pb-28 sm:pb-36">
-          <div className="glass-panel flex w-fit max-w-full flex-col items-start p-6 text-left text-ink sm:p-10">
+        <div className="container-luxe relative z-10 flex flex-col items-start pb-28 text-left text-ink sm:pb-36">
           {/* Unit-type badge — the first type by the admin's own sortOrder
               (same order the Unit Types section below iterates), not a
               "starting from" pick. Hidden for a project with no unit types
@@ -533,7 +532,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.15}>
-            <div className="mt-6 h-px w-32 bg-ink/20" />
+            <div className="mt-6 h-px w-32 bg-white/25" />
           </Reveal>
 
           <Reveal delay={0.2}>
@@ -644,7 +643,6 @@ export default async function ProjectPage(props: Props) {
               </div>
             </div>
           </Reveal>
-          </div>
         </div>
       </section>
       </EditableSection>
