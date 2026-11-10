@@ -180,15 +180,13 @@
 }
 
 @utility btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border-2 border-ink bg-surface-raised px-7 py-3.5
-      text-sm font-medium uppercase tracking-wide text-ink transition-colors duration-300
-      hover:bg-surface-muted focus-visible:outline-accent;
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
 }
 
 @utility btn-outline {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/25
-      bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
-      transition-colors duration-300 hover:border-primary hover:bg-surface-muted hover:text-ink;
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
 }
 
 @utility btn-glass {
@@ -245,10 +243,8 @@
      reads as restrained against any photo. Resolves to the same solid,
      obvious accent fill on hover/focus that .btn-primary gives, so the
      affordance doesn't get lost along with the boldness. */
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-ink
-      bg-surface-raised/90 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-ink
-      backdrop-blur-md transition-all duration-300 hover:border-accent hover:bg-accent
-      hover:text-primary focus-visible:outline-accent;
+
+  @apply btn-glass px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em];
 }
 
 @utility hero-scrim {

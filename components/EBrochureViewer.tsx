@@ -504,7 +504,7 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       download
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 rounded-xs border border-primary/15 bg-white px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-surface-muted"
+      className="btn-glass px-4 py-2 text-sm font-medium"
     >
       <FileDown size={16} aria-hidden />
       {t("download")}

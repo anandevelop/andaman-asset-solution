@@ -283,7 +283,7 @@ export default async function ArticlePage(props: Props) {
               <p className="mt-2 text-sm leading-relaxed text-ink/70">{t("cta.body")}</p>
               <Link
                 href={`/${locale}/contact?utm_source=news&utm_medium=article&utm_campaign=${encodeURIComponent(article.slug)}`}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-xs bg-surface-raised px-6 py-3 text-xs font-medium uppercase tracking-wide text-ink transition-colors hover:bg-surface-muted border border-ink"
+                className="btn-glass mt-5 gap-1.5 px-6 py-3 text-xs font-medium uppercase tracking-wide"
               >
                 {t("cta.button")}
               </Link>

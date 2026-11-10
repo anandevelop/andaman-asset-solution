@@ -111,7 +111,7 @@ const PRIMARY_CLASS =
   "group btn-glass gap-3 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em]";
 
 const SECONDARY_CLASS =
-  "inline-flex items-center justify-center border border-ink/35 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:border-ink hover:bg-ink/5";
+  "btn-glass px-9 py-4 text-xs font-medium uppercase tracking-[0.18em]";
 
 export default async function SiteCta({
   block = null,

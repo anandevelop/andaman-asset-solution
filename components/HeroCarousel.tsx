@@ -1071,7 +1071,7 @@ function StaticFallbackHero({
 
             <Link
               href={ctaSecondaryHref}
-              className="btn-outline border-ink! text-ink! hover:border-ink! hover:bg-ink/5!"
+              className="btn-outline"
             >
               {ctaSecondaryLabel}
             </Link>

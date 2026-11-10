@@ -132,7 +132,7 @@ export default async function Footer() {
                 white reads as the third, neutral option. */}
             <Link
               href={`/${locale}/contact`}
-              className="group inline-flex items-center gap-3 border border-ink bg-white px-7 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-ink transition-colors duration-300 hover:bg-surface-muted"
+              className="group btn-glass gap-3 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.16em]"
             >
               {t("contactUs")}
               <ArrowRight

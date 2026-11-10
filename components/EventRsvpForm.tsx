@@ -304,7 +304,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-6 py-4 text-sm font-semibold uppercase tracking-widest2 text-primary transition-colors hover:bg-accent-500 disabled:opacity-60"
+          className="btn-glass flex w-full px-6 py-4 text-sm font-semibold uppercase tracking-widest2 disabled:opacity-60"
         >
           {status === "submitting" ? (
             <>

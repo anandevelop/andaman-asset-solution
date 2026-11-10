@@ -282,7 +282,7 @@ export default async function EventPage(props: Props) {
                     </p>
                     <Link
                       href={`/${locale}/events`}
-                      className="mt-6 flex w-full items-center justify-center rounded-xs border border-ink/30 px-6 py-3 text-sm font-medium uppercase tracking-wide text-ink transition-colors hover:bg-white hover:text-primary"
+                      className="btn-glass mt-6 flex w-full px-6 py-3 text-sm font-medium uppercase tracking-wide"
                     >
                       {t("seeUpcoming")}
                     </Link>

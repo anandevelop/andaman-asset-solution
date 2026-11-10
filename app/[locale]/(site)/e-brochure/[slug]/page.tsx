@@ -150,7 +150,7 @@ export default async function EBrochurePage(props: Props) {
           <a
             href={brochure.fileUrl}
             download
-            className="mt-4 inline-flex items-center gap-2 rounded-xs border border-primary/15 bg-white px-4 py-2 text-sm font-medium text-primary"
+            className="btn-glass mt-4 px-4 py-2 text-sm font-medium"
           >
             <FileDown size={16} aria-hidden />
             {t("download")}
