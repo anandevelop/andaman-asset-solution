@@ -5,11 +5,10 @@ import {
   Clock,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
 } from "lucide-react";
 // lucide dropped every brand mark in 1.0 — see components/BrandGlyphs.tsx.
-import { Facebook, Instagram, Youtube } from "@/components/BrandGlyphs";
+import { Facebook, Instagram, WhatsApp, Youtube } from "@/components/BrandGlyphs";
 import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings";
 import { getPublishedProjects } from "@/lib/projects";
@@ -77,7 +76,7 @@ export default async function Footer() {
   /** The square outline buttons under the CTA — every channel this site
    *  actually has a link for, and none it does not. */
   const channels = [
-    { key: "whatsapp", href: whatsappUrl, label: "WhatsApp", Icon: MessageCircle, external: true },
+    { key: "whatsapp", href: whatsappUrl, label: "WhatsApp", Icon: WhatsApp, external: true },
     { key: "facebook", href: settings.social.facebook, label: "Facebook", Icon: Facebook, external: true },
     { key: "instagram", href: settings.social.instagram, label: "Instagram", Icon: Instagram, external: true },
     { key: "youtube", href: settings.social.youtube, label: "YouTube", Icon: Youtube, external: true },
