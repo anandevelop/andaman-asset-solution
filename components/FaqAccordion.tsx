@@ -51,7 +51,7 @@ export default function FaqAccordion({
       id={id}
       className={
         tone === "muted"
-          ? "scroll-mt-24 bg-primary/3 py-20 sm:py-28"
+          ? "scroll-mt-24 bg-linear-to-b from-surface-muted/60 to-gold-100/70 py-20 sm:py-28"
           : "scroll-mt-24 py-20 sm:py-28"
       }
     >
@@ -87,7 +87,11 @@ export default function FaqAccordion({
             question/answer reads awkwardly once you're actually reading
             it, the outer column is what needed centering, not the text. */}
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow">{labels.eyebrow}</p>
+          <p className="eyebrow flex items-center justify-center gap-3">
+            <span aria-hidden className="h-px w-8 bg-gold" />
+            {labels.eyebrow}
+            <span aria-hidden className="h-px w-8 bg-gold" />
+          </p>
           <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
             {labels.title}
           </h2>
@@ -102,33 +106,37 @@ export default function FaqAccordion({
           {groups.map(([category, entries]) => (
             <div key={category ?? "other"}>
               {grouped && category && (
-                <h3 className="mb-4 text-center text-xs font-semibold uppercase tracking-widest2 text-accent-700">
+                <h3 className="mb-4 text-center text-xs font-semibold uppercase tracking-widest2 text-ink">
                   {labels.categories?.[category] ?? category}
                 </h3>
               )}
 
-              <div className="divide-y divide-primary/8 border-y border-primary/10">
+              <div className="space-y-3">
                 {entries.map((faq, index) => (
                   <Reveal key={faq.id} delay={Math.min(index, 5) * 0.05}>
-                    <details className="group">
+                    {/* Each question is its own frosted card; the open one
+                        takes a gold ring and its chevron disc fills. */}
+                    <details className="group rounded-2xl border border-white/70 bg-white/65 shadow-[0_0_0_1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.95),0_14px_30px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150 transition-shadow open:shadow-[0_0_0_1px_var(--color-gold),inset_0_1px_0_rgba(255,255,255,0.95),0_18px_36px_-20px_rgba(0,0,0,0.3)]">
                       <summary
-                        className="flex cursor-pointer list-none items-start justify-between gap-6 py-6 text-left transition-colors hover:text-accent-800 [&::-webkit-details-marker]:hidden"
+                        className="flex cursor-pointer list-none items-center justify-between gap-6 rounded-2xl px-5 py-5 text-left sm:px-6 [&::-webkit-details-marker]:hidden"
                       >
-                        <span className="text-base font-light leading-snug text-primary group-hover:text-accent-800">
+                        <span className="text-base font-light leading-snug text-primary">
                           {faq.question}
                         </span>
 
-                        <ChevronDown
-                          size={16}
-                          strokeWidth={1.5}
-                          aria-hidden
-                          className="mt-0.5 shrink-0 text-accent-700 transition-transform duration-300 group-open:rotate-180"
-                        />
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-colors duration-300 group-hover:bg-gold group-open:bg-gold">
+                          <ChevronDown
+                            size={16}
+                            strokeWidth={1.5}
+                            aria-hidden
+                            className="transition-transform duration-300 group-open:rotate-180"
+                          />
+                        </span>
                       </summary>
 
                       {/* Sanitized in lib/faqs.ts. */}
                       <div
-                        className="prose-article pb-6 pr-8 text-sm"
+                        className="prose-article px-5 pb-6 pr-10 text-sm sm:px-6"
                         dangerouslySetInnerHTML={{ __html: faq.answerHtml }}
                       />
                     </details>
