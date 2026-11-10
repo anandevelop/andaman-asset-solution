@@ -512,7 +512,7 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
           ref={menuRef}
           id={MOBILE_MENU_ID}
           aria-label={t("mobileMenu")}
-          className="nav-menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-linear-to-b from-surface-raised from-55% to-gold-100 pt-16 sm:pt-18 lg:hidden"
+          className="nav-menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-surface-raised pt-16 sm:pt-18 lg:hidden"
         >
           <div className="container-luxe flex min-h-full flex-col px-6 pb-8 pt-6 sm:pb-12 sm:pt-8">
             {/* Menu list — numbered rows on a hairline divider, a

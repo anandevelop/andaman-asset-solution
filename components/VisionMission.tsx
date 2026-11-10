@@ -58,7 +58,7 @@ export default async function VisionMission() {
   ].filter((tile): tile is { key: string; value: string } => tile !== null);
 
   return (
-    <section className="bg-linear-to-br from-surface-raised from-40% to-gold-100 py-16 text-ink sm:py-20">
+    <section className="bg-surface-raised py-16 text-ink sm:py-20">
       <div className="container-luxe">
         <Reveal>
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">

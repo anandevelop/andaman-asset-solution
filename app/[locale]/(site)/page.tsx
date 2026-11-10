@@ -260,7 +260,7 @@ export default async function HomePage(props: Props) {
 
     WHY_US: () =>
       whyUsPoints.length > 0 && (
-        <section className="bg-linear-to-bl from-gold-100 to-surface-raised to-60% py-20 sm:py-28">
+        <section className="bg-primary/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
               <p className="eyebrow flex items-center gap-3">
