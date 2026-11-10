@@ -153,15 +153,14 @@ export default function ProjectsHero({
             sizes="100vw"
             className="object-cover object-[50%_58%]"
           />
-          <div aria-hidden className="projects-hero-scrim absolute inset-0" />
-        </>
+                  </>
       )}
 
       {/* flex-1 + justify-end pins the copy to the bottom of whatever
           height the ratio settles on, with the shortcut bar below it. */}
       <div className="container-luxe relative flex flex-1 flex-col justify-end pb-[18px] pt-5 sm:pb-6 lg:pb-[30px]">
         <div className="flex items-end justify-between gap-6">
-          <div className="min-w-0 max-w-[640px]">
+          <div className="glass-panel min-w-0 max-w-[640px] p-6 sm:p-8">
             <motion.div
               variants={enter}
               className="mb-3.5 [text-shadow:0_1px_10px_rgba(255,255,255,.8)]"

@@ -542,8 +542,9 @@ function Carousel({
         slide, so it does not fade with the slide. The second layer is `sm`
         and up only: it is the corner ellipse under the left-aligned copy.
       */}
+      {/* The corner ellipse is gone: the copy sits on a glass panel now.
+          The bottom ramp stays, for the rail along the bottom edge. */}
       <div className="hero-scrim pointer-events-none absolute inset-0 z-[3]" />
-      <div className="hero-scrim-side pointer-events-none absolute inset-0 z-[3] hidden sm:block" />
 
       {/* ── Slide label ───────────────────────────────────────────────
           Which development is on screen, credited above the pitch rather
@@ -857,6 +858,7 @@ function HeroCopy({
           phase === "out" ? "opacity-0" : ""
         }`}
       >
+        <div className="glass-panel w-fit max-w-full p-6 sm:p-9 lg:p-11">
         <p
           className={`mb-[22px] flex items-center gap-[14px] text-xs font-medium uppercase tracking-widest2 text-ink max-sm:mb-4 max-sm:gap-2.5 max-sm:text-[10px] max-sm:tracking-[0.22em] ${TEXT_SHADOW}`}
         >
@@ -916,6 +918,7 @@ function HeroCopy({
           >
             {viewing.label}
           </Link>
+        </div>
         </div>
       </div>
     </div>
@@ -1036,9 +1039,10 @@ function StaticFallbackHero({
   return (
     <section className="relative flex h-[88vh] min-h-[560px] w-full items-end overflow-hidden">
       <ImageWithSkeleton src={imageUrl} alt="" fill fetchPriority="high" loading="eager" sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/60 to-white/40" />
+      <div className="absolute inset-0 bg-linear-to-t from-white/40 via-white/0 to-white/0" />
 
       <div className="container-luxe relative z-10 pb-20 sm:pb-28">
+        <div className="glass-panel w-fit max-w-full p-6 sm:p-10">
         <Reveal>
           <p className="eyebrow text-ink tracking-widest uppercase">{eyebrow}</p>
         </Reveal>
@@ -1077,6 +1081,7 @@ function StaticFallbackHero({
             </Link>
           </div>
         </Reveal>
+        </div>
       </div>
     </section>
   );
