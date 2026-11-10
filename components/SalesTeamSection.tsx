@@ -65,9 +65,9 @@ function WhatsAppGlyph({ size = 14, className }: { size?: number; className?: st
   );
 }
 
-const ICON_BUTTON =
-  "flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] border border-ink/30 " +
-  "text-ink transition-colors hover:border-ink hover:bg-ink/5 hover:text-ink";
+// Same liquid-glass pill as the Chat button beside it, so the row reads
+// as one set: round icon buttons, one wide pill.
+const ICON_BUTTON = "btn-glass h-11 w-11 shrink-0 text-ink";
 
 /** Splits a trailing nickname in parentheses — e.g. "Mr.Sunthorn Areeras
  *  (Nhong)" — off into its own accent-colored, lighter-weight span. Names
