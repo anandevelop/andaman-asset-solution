@@ -167,7 +167,7 @@ export default function ProjectsHero({
           <div className="min-w-0 max-w-[640px]">
             <motion.div
               variants={enter}
-              className="mb-3.5 [text-shadow:0_1px_10px_rgba(255,255,255,.8)]"
+              className="mb-3.5"
             >
               {breadcrumb}
             </motion.div>

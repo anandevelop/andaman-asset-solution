@@ -57,7 +57,9 @@ export default async function Breadcrumb({
      links and ProjectFilterBar's labels use the same value) — /55 measures
      3.6:1, which an axe run on the e-brochure page's breadcrumb caught. */
   const base = onImage
-    ? "text-ink [text-shadow:0_1px_6px_rgba(255,255,255,0.9)]"
+    ? /* A small liquid-glass pill rather than a glow: the glow smudged
+         over flat sky, the pill reads the same on any photo. */
+      "w-fit max-w-full rounded-full border border-white/70 bg-white/55 px-4 py-2 text-ink backdrop-blur-xl backdrop-saturate-150 shadow-[0_0_0_1px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.95),0_8px_24px_-12px_rgba(0,0,0,0.3)]"
     : "text-ink/65";
   const linkTone = onImage ? "hover:text-ink" : "hover:text-primary";
   const currentTone = onImage ? "text-ink" : "text-primary";
