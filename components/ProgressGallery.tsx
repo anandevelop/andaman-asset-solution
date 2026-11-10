@@ -174,7 +174,7 @@ function PhotoRow({
             // FacilityScroller's 4-across math, so there's no fractional
             // sliver of a 5th photo poking in at the edge on desktop.
             className="relative aspect-4/3 w-full shrink-0 snap-start overflow-hidden
-              rounded-xs bg-surface-raised/5 shadow-card sm:w-[calc((100%-16px)/2)]
+              rounded-xs bg-primary/5 shadow-card sm:w-[calc((100%-16px)/2)]
               lg:w-[calc((100%-3*16px)/4)]"
           >
             <button

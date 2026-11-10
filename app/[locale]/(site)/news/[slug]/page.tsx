@@ -262,7 +262,7 @@ export default async function ArticlePage(props: Props) {
                 {article.tags.map((tag) => (
                   <li
                     key={tag}
-                    className="rounded-full bg-surface-raised/5 px-3 py-1 text-xs text-ink/70 border border-ink"
+                    className="rounded-full bg-primary/5 px-3 py-1 text-xs text-ink/70 border border-ink"
                   >
                     {tag}
                   </li>
@@ -309,7 +309,7 @@ export default async function ArticlePage(props: Props) {
                     href={`/${locale}/news/${item.slug}`}
                     className="group flex h-full flex-col overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
                   >
-                    <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5">
+                    <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
                       {item.coverImageUrl && (
                         <ImageWithSkeleton
                           src={item.coverImageUrl}

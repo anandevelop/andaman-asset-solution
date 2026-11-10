@@ -118,7 +118,7 @@ export default function FeaturedProjectCard({
       href={`/${locale}/projects/${project.slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
     >
-      <div className="relative aspect-4/3 w-full overflow-hidden bg-surface-raised/5">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-primary/5">
         {project.heroImageUrl && (
           <ImageWithSkeleton
             src={project.heroImageUrl}

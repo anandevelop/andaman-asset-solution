@@ -96,12 +96,12 @@ export default async function VisionMission() {
                   showing through a gap, rather than borders on each tile:
                   a border per tile doubles up where two meet and reads as
                   a heavier line down the middle than around the edge. */}
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-ink/10 bg-ink/5">
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-ink bg-ink">
                 {tiles.map((tile, index) => (
                   <div
                     key={tile.key}
                     className={[
-                      "bg-surface-raised px-6 py-8 sm:px-8 sm:py-10 border border-ink",
+                      "bg-surface-raised px-6 py-8 sm:px-8 sm:py-10",
                       /* An odd number of figures — which is what happens
                          until somebody fills in the founding year — would
                          otherwise leave a phantom half-cell of the

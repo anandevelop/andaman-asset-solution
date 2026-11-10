@@ -192,7 +192,7 @@ export default async function NewsPage(props: Props) {
                     href={`/${locale}/news/${lead.slug}`}
                     className="group grid overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg lg:grid-cols-[1.05fr_1fr]"
                   >
-                    <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5 lg:aspect-auto lg:min-h-[340px]">
+                    <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5 lg:aspect-auto lg:min-h-[340px]">
                       {lead.coverImageUrl && (
                         <ImageWithSkeleton
                           src={lead.coverImageUrl}
@@ -271,7 +271,7 @@ export default async function NewsPage(props: Props) {
                         href={`/${locale}/news/${article.slug}`}
                         className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
                       >
-                        <div className="relative aspect-16/10 w-full overflow-hidden bg-surface-raised/5">
+                        <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
                           {article.coverImageUrl && (
                             <ImageWithSkeleton
                               src={article.coverImageUrl}
