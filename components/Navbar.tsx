@@ -537,12 +537,6 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
                           : ""
                       }`}
                     >
-                      <span
-                        className={`text-xs tabular-nums ${active ? "font-medium text-gold-700" : "text-ink-muted"}`}
-                        aria-hidden
-                      >
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
                       <span className={mobileLinkClass(active)}>{t(item.key as any)}</span>
                       {active ? (
                         <span
