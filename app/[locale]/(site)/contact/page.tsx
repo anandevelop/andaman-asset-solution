@@ -287,14 +287,16 @@ export default async function ContactPage(props: Props) {
               <h2 className="text-xl font-light text-primary">{t("detailsTitle")}</h2>
               <dl className="mt-6 space-y-5">
                 {details.map(({ key, icon: Icon, label, value, href }) => (
-                  <div key={key} className="flex gap-3.5">
-                    <Icon
-                      size={16}
-                      className="mt-0.5 shrink-0 text-accent-700"
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
+                  /* dt and dd are direct children of the group, which is what
+                     a <dl> allows; the icon lives inside the dt and is
+                     positioned into the gutter. */
+                  <div key={key} className="relative min-w-0 pl-[30px]">
                       <dt className="text-[11px] font-medium uppercase tracking-wide text-ink/65">
+                        <Icon
+                          size={16}
+                          className="absolute left-0 top-0.5 text-accent-700"
+                          aria-hidden
+                        />
                         {label}
                       </dt>
                       <dd className="mt-0.5 text-sm text-ink/75">
@@ -312,7 +314,6 @@ export default async function ContactPage(props: Props) {
                           value
                         )}
                       </dd>
-                    </div>
                   </div>
                 ))}
               </dl>
@@ -337,7 +338,7 @@ export default async function ContactPage(props: Props) {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-primary mt-4 w-full"
+                  className="btn-whatsapp mt-4 w-full px-7 py-3.5 text-sm font-medium uppercase tracking-wide"
                 >
                   {tChat("whatsappLabel")}
                 </a>

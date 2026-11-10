@@ -897,7 +897,7 @@ function DetailPanel({
 
       {unit.unitTypeName && (
         <>
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailType}</p>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailType}</p>
           <p className="mt-0.5 text-xs text-ink">
             {[
               unit.unitTypeName,
@@ -912,14 +912,14 @@ function DetailPanel({
 
       <div className="mt-2 grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLand}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailLand}</p>
           <p className="mt-0.5 text-xs text-ink">
             {unit.landAreaSqm !== null ? `${unit.landAreaSqm} ${t("units.sqm")}` : "—"}
           </p>
         </div>
         {unit.unitTypeLivingAreaSqm !== null && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLiving}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailLiving}</p>
             <p className="mt-0.5 text-xs text-ink">
               {unit.unitTypeLivingAreaSqm} {t("units.sqm")}
             </p>

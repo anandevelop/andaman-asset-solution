@@ -114,11 +114,11 @@ test.describe("Filtering", () => {
 
 test.describe("Sorting", () => {
   test("orders by newest first", async ({ page }) => {
-    await page.goto(LISTING);
-
-    await page.getByLabel("Sort").selectOption("newest");
+    // No sort control on the page any more; the URL parameter still sorts.
+    await page.goto(`${LISTING}?sort=newest`);
 
     await expect(page).toHaveURL(/sort=newest/);
+    await expect(card(page, "e2e-trinity-village")).toBeVisible();
   });
 });
 

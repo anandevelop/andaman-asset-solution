@@ -110,7 +110,7 @@ export default function LocaleNotFound() {
         <Compass size={22} aria-hidden />
       </span>
 
-      <p className="mt-8 font-sans text-6xl font-light tracking-tight text-primary/20 sm:text-7xl">
+      <p className="mt-8 font-sans text-6xl font-light tracking-tight text-primary/55 sm:text-7xl">
         {t.code}
       </p>
 

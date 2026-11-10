@@ -63,8 +63,8 @@ export default function GlobalError({ error, reset }: Props) {
           alignItems: "center",
           justifyContent: "center",
           padding: "2rem",
-          backgroundColor: "#083551",
-          color: "#ffffff",
+          backgroundColor: "#ffffff",
+          color: "#0a0a0a",
           // No webfont: next/font is configured in the layout that failed.
           fontFamily:
             "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -118,7 +118,7 @@ export default function GlobalError({ error, reset }: Props) {
               margin: 0,
               fontSize: "0.9rem",
               lineHeight: 1.7,
-              color: "rgba(255,255,255,0.7)",
+              color: "#555555",
             }}
           >
             {t.body}
@@ -138,7 +138,6 @@ export default function GlobalError({ error, reset }: Props) {
               onClick={reset}
               style={{
                 appearance: "none",
-                border: "none",
                 cursor: "pointer",
                 padding: "0.875rem 1.75rem",
                 fontSize: "0.8rem",
@@ -146,8 +145,9 @@ export default function GlobalError({ error, reset }: Props) {
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 borderRadius: "2px",
-                backgroundColor: "#e8b384",
-                color: "#083551",
+                backgroundColor: "#ffffff",
+                border: "1.5px solid #0a0a0a",
+                color: "#0a0a0a",
                 fontFamily: "inherit",
               }}
             >
@@ -163,8 +163,8 @@ export default function GlobalError({ error, reset }: Props) {
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 borderRadius: "2px",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "#ffffff",
+                border: "1px solid rgba(10,10,10,0.3)",
+                color: "#0a0a0a",
                 textDecoration: "none",
               }}
             >
@@ -179,7 +179,7 @@ export default function GlobalError({ error, reset }: Props) {
               style={{
                 marginTop: "2rem",
                 fontSize: "0.7rem",
-                color: "rgba(255,255,255,0.35)",
+                color: "#555555",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
               }}
             >

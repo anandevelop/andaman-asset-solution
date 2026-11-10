@@ -203,6 +203,9 @@ export default async function ProjectsPage(props: Props) {
 
       {/* ── Grid ─────────────────────────────────────────────────────── */}
       <section className="container-luxe py-14 sm:py-20">
+        {/* The cards are h3s; this gives them a parent between the page's
+            h1 and themselves without adding a visible heading. */}
+        <h2 className="sr-only">{tNav("projects")}</h2>
         {isDatabaseOffline() && <DbOfflineNotice />}
 
         {projects.length === 0 ? (

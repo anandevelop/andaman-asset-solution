@@ -88,7 +88,7 @@ export default async function LoginPage(props: Props) {
   const notes = [t("note2fa"), t("noteSession"), t("noteAudit")];
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-[#041d2c] text-white">
+    <main data-admin-login className="relative flex min-h-screen flex-col bg-[#041d2c] text-white">
       <LoginBackdrop />
 
       <header className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-10 sm:py-6">

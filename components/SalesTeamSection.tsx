@@ -311,7 +311,7 @@ export default async function SalesTeamSection() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="sales-chat btn-glass flex h-11 flex-1 gap-2 text-[11px] font-medium tracking-[0.18em] uppercase"
+                      className="sales-chat btn-whatsapp flex h-11 flex-1 gap-2 text-[11px] font-medium tracking-[0.18em] uppercase"
                     >
                       <WhatsAppGlyph size={15} className="sales-chat-icon" />
                       {t("chat")}

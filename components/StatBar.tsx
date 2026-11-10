@@ -49,7 +49,7 @@ export default function StatBar({ stats, tone = "plain" }: Props) {
           <p
             className={
               elevated
-                ? "mt-2 text-[10px] font-normal uppercase tracking-widest2 text-ink/45"
+                ? "mt-2 text-[10px] font-normal uppercase tracking-widest2 text-ink-muted"
                 : "mt-1 text-[11px] font-medium uppercase tracking-widest2 text-ink/65"
             }
           >

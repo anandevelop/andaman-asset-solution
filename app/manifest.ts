@@ -42,7 +42,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     scope: "/",
     display: "standalone",
     background_color: "#f9f9fa",
-    theme_color: "#083551",
+    theme_color: "#ffffff",
     lang: siteConfig.defaultLocale,
     dir: "ltr",
     categories: ["business", "lifestyle", "travel"],

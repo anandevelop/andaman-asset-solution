@@ -454,7 +454,7 @@ export default function MapCard({
               </div>
             </>
           ) : (
-            <div className="flex h-full min-h-[280px] w-full items-center justify-center bg-surface-raised/4 px-6 text-center text-sm text-ink/50">
+            <div className="flex h-full min-h-[280px] w-full items-center justify-center bg-primary/4 px-6 text-center text-sm text-ink-muted">
               <MapPin size={20} className="mr-2 shrink-0" aria-hidden />
               {origin.name}
             </div>

@@ -115,7 +115,7 @@ export default async function Footer() {
             alt={siteConfig.legalName}
             width={180}
             height={36}
-            className="h-8 w-auto brightness-0"
+            className={`h-8 w-auto ${settings.branding.logoUrl === siteConfig.branding.logo ? "brightness-0" : ""}`}
           />
 
           {/* Its own line rather than siteConfig.description, which is the

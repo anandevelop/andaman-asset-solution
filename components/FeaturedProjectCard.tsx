@@ -50,10 +50,10 @@ import { formatNumber } from "@/lib/format";
  * clears 5:1 contrast at minimum.
  */
 const STATUS_TONE: Record<string, string> = {
-  UPCOMING: "bg-surface-raised text-ink",
-  UNDER_CONSTRUCTION: "bg-surface-raised text-ink",
+  UPCOMING: "bg-surface-raised text-ink ring-1 ring-ink/35",
+  UNDER_CONSTRUCTION: "bg-gold-100 text-ink ring-1 ring-gold",
   READY_TO_MOVE_IN: "bg-surface-raised text-ink ring-1 ring-ink",
-  SOLD_OUT: "bg-surface-raised text-ink",
+  SOLD_OUT: "bg-surface-muted text-ink-muted ring-1 ring-ink/20 line-through",
 };
 
 const SIGNAL_ICON = {
