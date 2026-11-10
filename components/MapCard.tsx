@@ -371,7 +371,7 @@ export default function MapCard({
                         stroke="#fff"
                         strokeWidth="2.5"
                       />
-                      <circle cx="23" cy="22.5" r="12" fill="#c99a3c" />
+                      <circle cx="23" cy="22.5" r="12" fill="#cfa75f" />
                       <path
                         d="M16.5 25.5l6.5-6.5 6.5 6.5M19.5 25.5l3.5-3.5 3.5 3.5"
                         fill="none"
