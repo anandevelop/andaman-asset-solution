@@ -34,14 +34,14 @@ const LISTING = "/en/projects";
   to <main> is no longer enough either, because the hero is inside it.
 
   Where each link goes does separate them, and says what the test means: a
-  card is a link to that project's page, while a shortcut is an in-page
-  anchor (#project-<slug>) and the footer entry is neither in the grid nor
-  the point. A substring match rather than `$=` so a trailing slash on the
+  card is a link inside the grid's #project-<slug> item, while the hero
+  shortcuts now link to the same page from outside it and the footer entry
+  is neither in the grid nor the point. A substring match rather than `$=` so a trailing slash on the
   built URLs cannot quietly empty the locator and turn every one of these
   assertions green for the wrong reason.
 */
 function card(page: Page, slug: string) {
-  return page.getByRole("main").locator(`a[href*="/projects/${slug}"]`);
+  return page.locator(`#project-${slug} a[href*="/projects/${slug}"]`).first();
 }
 
 test.describe("Project listing", () => {

@@ -166,6 +166,7 @@ export default async function ProjectsPage(props: Props) {
               ? t("hero.villasShort")
               : t("hero.unitsShort"),
           imageUrl: project.heroImageUrl,
+          href: `/${locale}/projects/${project.slug}`,
         }));
 
   // One array for the trail a visitor reads and the one Google reads.

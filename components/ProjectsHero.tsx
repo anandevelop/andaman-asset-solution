@@ -28,6 +28,7 @@ import type { ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import ImageWithSkeleton from "@/components/ImageWithSkeleton";
 import Image from "next/image";
+import Link from "next/link";
 
 export type ProjectShortcut = {
   slug: string;
@@ -43,6 +44,8 @@ export type ProjectShortcut = {
   /** "villas" or "units", chosen by the caller from the property type. */
   unitsLabel: string;
   imageUrl: string | null;
+  /** The project's own page, already localized. */
+  href: string;
 };
 
 export type HeroStat = {
@@ -295,8 +298,8 @@ export default function ProjectsHero({
                    a 390px screen, each card a different width. */
                 className="min-w-0 flex-[0_0_74%] snap-start md:flex-[0_0_46%] lg:flex-auto"
               >
-                <a
-                  href={`#project-${shortcut.slug}`}
+                <Link
+                  href={shortcut.href}
                   /* text-white declared here rather than inherited: left to
                      the section it picks up the body's ink and the name
                      vanishes into the dark card with nothing to show for
@@ -335,7 +338,7 @@ export default function ProjectsHero({
                       {shortcut.unitsLabel}
                     </span>
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
