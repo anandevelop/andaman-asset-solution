@@ -58,15 +58,6 @@ test.describe("Project listing", () => {
     await expect(page.getByText(DRAFT_PROJECT.nameEn)).toHaveCount(0);
   });
 
-  test("announces the result count", async ({ page }) => {
-    await page.goto(LISTING);
-
-    // aria-live, so a filter change is announced to a screen reader rather
-    // than silently swapping the cards below the fold.
-    const count = page.locator("[aria-live=polite]").first();
-    await expect(count).toHaveText(`${PUBLISHED_PROJECTS.length} projects`);
-  });
-
   test("has no automatically detectable accessibility violations", async ({ page }) => {
     await page.goto(LISTING);
     await expectNoA11yViolations(page);
@@ -74,71 +65,6 @@ test.describe("Project listing", () => {
 });
 
 test.describe("Filtering", () => {
-  test("narrows to a property type and reflects it in the URL", async ({ page }) => {
-    await page.goto(LISTING);
-
-    await page.getByRole("button", { name: "Pool Villa", exact: true }).click();
-
-    await expect(page).toHaveURL(/[?&]type=POOL_VILLA/);
-
-    const expected = PUBLISHED_PROJECTS.filter(
-      (project) => project.propertyType === "POOL_VILLA",
-    );
-
-    for (const project of expected) {
-      await expect(card(page, project.slug)).toBeVisible();
-    }
-
-    // Everything else must be gone, not merely reordered.
-    for (const project of PUBLISHED_PROJECTS.filter(
-      (candidate) => candidate.propertyType !== "POOL_VILLA",
-    )) {
-      await expect(card(page, project.slug)).toHaveCount(0);
-    }
-  });
-
-  test("marks the active chip as pressed", async ({ page }) => {
-    await page.goto(LISTING);
-
-    const chip = page.getByRole("button", { name: "Pool Villa", exact: true });
-    await expect(chip).toHaveAttribute("aria-pressed", "false");
-
-    await chip.click();
-
-    // aria-pressed, not a colour change: the state has to be perceivable
-    // without seeing the border.
-    await expect(chip).toHaveAttribute("aria-pressed", "true");
-  });
-
-  test("clears the filter when the active chip is tapped again", async ({ page }) => {
-    await page.goto(LISTING);
-
-    const chip = page.getByRole("button", { name: "Pool Villa", exact: true });
-    await chip.click();
-    await expect(page).toHaveURL(/type=POOL_VILLA/);
-
-    await chip.click();
-
-    await expect(page).not.toHaveURL(/type=/);
-    await expect(card(page, PUBLISHED_PROJECTS[1].slug)).toBeVisible();
-  });
-
-  test("combines a property type with a status", async ({ page }) => {
-    await page.goto(LISTING);
-
-    await page.getByRole("button", { name: "Pool Villa", exact: true }).click();
-    await page.getByRole("button", { name: "Ready to Move In", exact: true }).click();
-
-    await expect(page).toHaveURL(/type=POOL_VILLA/);
-    await expect(page).toHaveURL(/status=READY_TO_MOVE_IN/);
-
-    // Layan Reserve is the only fixture in both sets. Trinity Village is
-    // also a pool villa but is under construction, so its absence is what
-    // proves the two filters intersect rather than union.
-    await expect(card(page, "e2e-layan-reserve")).toBeVisible();
-    await expect(card(page, "e2e-trinity-village")).toHaveCount(0);
-  });
-
   test("offers a way out of an empty result", async ({ page }) => {
     // A dead end with no exit is the worst state a filter UI can reach:
     // nothing on screen, and no obvious undo. TOWNHOME's only fixture is
@@ -151,17 +77,6 @@ test.describe("Filtering", () => {
 
     await expect(page).toHaveURL(/\/en\/projects$/);
     await expect(card(page, "e2e-trinity-village")).toBeVisible();
-  });
-
-  test("reproduces a filtered view from the URL alone", async ({ page }) => {
-    // The shareable-link contract. Nothing is clicked here.
-    await page.goto(`${LISTING}?type=POOL_VILLA&sort=newest`);
-
-    await expect(
-      page.getByRole("button", { name: "Pool Villa", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-
-    await expect(page.getByLabel("Sort")).toHaveValue("newest");
   });
 
   test("keeps filtered pages out of the index", async ({ page }) => {

@@ -24,25 +24,18 @@ import Reveal from "@/components/Reveal";
 import ProjectsHero from "@/components/ProjectsHero";
 import DbOfflineNotice from "@/components/DbOfflineNotice";
 import FeaturedProjectCard from "@/components/FeaturedProjectCard";
-import ProjectFilterBar from "@/components/ProjectFilterBar";
 import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
 import { pageOpenGraph } from "@/lib/page-open-graph";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import {
-  getProjectFacets,
   getProjectPortfolioSummary,
   getPublishedProjects,
 } from "@/lib/projects";
 import { formatNumber } from "@/lib/format";
 import { projectCtaKey, projectSignalLabel } from "@/lib/project-card-labels";
 import { isDatabaseOffline } from "@/lib/db";
-import {
-  SORT_OPTIONS,
-  hasActiveFilters,
-  parseProjectFilters,
-} from "@/lib/project-filters";
-import { PROPERTY_TYPES, PROJECT_STATUSES } from "@/lib/validations";
+import { hasActiveFilters, parseProjectFilters } from "@/lib/project-filters";
 import { robotsMetadata } from "@/lib/indexing";
 import { getSiteSettings } from "@/lib/settings";
 import { resolveProjectsHero } from "@/lib/projects-hero";
@@ -97,11 +90,10 @@ export default async function ProjectsPage(props: Props) {
 
   const filters = parseProjectFilters(searchParams);
 
-  const [t, tNav, projects, facets, portfolio, allProjects, settings] = await Promise.all([
+  const [t, tNav, projects, portfolio, allProjects, settings] = await Promise.all([
     getTranslations("projects"),
     getTranslations("nav"),
     getPublishedProjects(locale, filters),
-    getProjectFacets(),
     getProjectPortfolioSummary(),
     /*
       The unfiltered list, for the hero's photograph and its shortcut bar.
@@ -176,14 +168,6 @@ export default async function ProjectsPage(props: Props) {
           imageUrl: project.heroImageUrl,
         }));
 
-  // Pre-translate every label the client filter bar needs — see the note
-  // on server/client boundaries in that component.
-  const labelMap = <T extends readonly string[]>(
-    values: T,
-    prefix: string,
-  ): Record<string, string> =>
-    Object.fromEntries(values.map((value) => [value, t(`${prefix}.${value}` as never)]));
-
   // One array for the trail a visitor reads and the one Google reads.
   const trail = trailFor(locale, [
     { name: tNav("home"), path: "" },
@@ -215,34 +199,6 @@ export default async function ProjectsPage(props: Props) {
         shortcutsLabel={t("hero.shortcutsLabel")}
       />
       </EditableSection>
-
-      {/* ── Filters ──────────────────────────────────────────────────── */}
-      {/* Hidden with fewer than two projects: a filter bar over a single
-          card is noise, and every control would be a no-op. */}
-      {facets.total > 1 && (
-        <div className="container-luxe mt-8">
-          <ProjectFilterBar
-            locale={locale}
-            available={{
-              propertyTypes: facets.propertyTypes,
-              statuses: facets.statuses,
-            }}
-            resultCount={projects.length}
-            labels={{
-              heading: t("filters.heading"),
-              propertyType: t("specs.type"),
-              status: t("filters.status"),
-              sort: t("filters.sort"),
-              all: t("filters.all"),
-              clear: t("filters.clear"),
-              results: t("filters.results", { count: projects.length }),
-              propertyTypes: labelMap(PROPERTY_TYPES, "propertyType"),
-              statuses: labelMap(PROJECT_STATUSES, "status"),
-              sortOptions: labelMap(SORT_OPTIONS, "filters.sortOptions"),
-            }}
-          />
-        </div>
-      )}
 
       {/* ── Grid ─────────────────────────────────────────────────────── */}
       <section className="container-luxe py-14 sm:py-20">
