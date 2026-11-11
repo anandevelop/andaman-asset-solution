@@ -103,7 +103,7 @@ export default async function Corporate() {
                       the row, so it is derived from the row rather than
                       stored and left to drift when the order changes. */}
                   <span className="flex items-center gap-2 text-[9px] font-medium tracking-[0.2em] text-ink sm:text-[10px]">
-                    <i aria-hidden className="h-[2px] w-4 rounded-full bg-gold" />
+                    <i aria-hidden className="h-[2px] w-4 rounded-full bg-ink" />
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   {/* Two lines reserved on every card: "Project Management"
