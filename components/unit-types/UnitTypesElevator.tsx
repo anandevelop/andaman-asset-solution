@@ -266,7 +266,7 @@ export default function UnitTypesElevator({
           <div
             role="group"
             aria-label={labels.viewMode}
-            className="inline-flex rounded-xs border border-ink/25 p-0.5"
+            className="inline-flex rounded-full border border-white/70 bg-white/60 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150"
           >
             {(["plan", "3d"] as const).map((value) => (
               <button
@@ -278,8 +278,10 @@ export default function UnitTypesElevator({
                   setRoom3d(null);
                   closeRoom();
                 }}
-                className={`rounded-xs px-3.5 py-1.5 text-[12.5px] transition-colors ${
-                  mode === value ? "bg-accent font-medium text-[#0f0f0f]" : "text-ink-muted hover:text-ink"
+                className={`rounded-full px-4 py-1.5 text-[12.5px] transition-colors ${
+                  mode === value
+                    ? "bg-gold-100 font-medium text-ink ring-1 ring-gold"
+                    : "text-ink-muted hover:text-ink"
                 }`}
               >
                 {value === "plan" ? labels.viewPlan : labels.view3d}
