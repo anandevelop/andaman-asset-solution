@@ -48,12 +48,12 @@ export default function LiftPanel({
       {/* Narrow screens: the label alone. The rolling digit only repeated
           the highlighted button beside it — in a row, the button already
           says which floor this is — and doubled the panel's height. */}
-      <span className="pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-ink-muted @min-[1000px]:hidden">
+      <span className="pl-[0.32em] text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted @min-[1000px]:hidden">
         {labels.floor}
       </span>
 
       <div className="relative hidden w-16 pb-3.5 text-center @min-[1000px]:block">
-        <span className="mb-2 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-ink-muted">
+        <span className="mb-2 block pl-[0.32em] text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted">
           {labels.floor}
         </span>
 
@@ -75,7 +75,7 @@ export default function LiftPanel({
         </div>
 
         {/* Sand hairline under the display. */}
-        <span className="absolute bottom-0 left-1/2 h-px w-[22px] -translate-x-1/2 bg-accent opacity-70" />
+        <span className="absolute bottom-0 left-1/2 h-[2px] w-[22px] -translate-x-1/2 rounded-full bg-gold" />
 
         {direction !== 0 && (
           <span
@@ -114,7 +114,7 @@ export default function LiftPanel({
               */
               className={`h-8 w-8 rounded-full border text-[13px] font-light tracking-[0.04em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                 active
-                  ? "border-accent/70 text-ink"
+                  ? "border-gold bg-gold-100 font-medium text-ink"
                   : "border-transparent text-ink-muted hover:border-ink/25 hover:text-ink"
               }`}
             >

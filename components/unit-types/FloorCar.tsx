@@ -105,7 +105,7 @@ export default function FloorCar({
               priority={priority}
               loading={priority ? undefined : "lazy"}
               sizes="(min-width: 1000px) 60vw, 100vw"
-              className="object-fill invert"
+              className="object-fill brightness-0"
             />
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function FloorCar({
             const open = openRoomId === room.id;
 
             const base =
-              "absolute whitespace-nowrap border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.06em] text-ink";
+              "absolute whitespace-nowrap rounded-full border px-2.5 py-1 font-sans text-[11px] leading-none text-ink shadow-[0_2px_6px_-2px_rgba(0,0,0,0.3)]";
             const position = `${ANCHOR_CLASS[anchor]}`;
 
             if (!room.photoUrl) {
@@ -132,7 +132,7 @@ export default function FloorCar({
                 <span
                   key={room.id}
                   style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                  className={`${base} ${position} pointer-events-none border-ink/45 bg-surface-raised/75`}
+                  className={`${base} ${position} pointer-events-none border-ink/15 bg-white`}
                 >
                   {room.name}
                 </span>
@@ -152,8 +152,8 @@ export default function FloorCar({
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
                 className={`${base} ${position} inline-flex items-center transition-colors ${
                   open
-                    ? "border-accent bg-accent/15"
-                    : "border-ink/45 bg-surface-raised/75 hover:border-accent hover:bg-accent/15"
+                    ? "border-gold bg-gold-100"
+                    : "border-ink/15 bg-white hover:border-gold hover:bg-gold-100"
                 }`}
               >
                 {room.name}

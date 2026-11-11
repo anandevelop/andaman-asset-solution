@@ -247,8 +247,8 @@ export default function UnitTypesElevator({
                 aria-pressed={index === typeIndex}
                 className={`rounded-xs border px-3.5 py-2 text-left transition-colors ${
                   index === typeIndex
-                    ? "border-accent shadow-[inset_0_-2px_0_var(--color-accent)]"
-                    : "border-ink/25 hover:border-accent/60"
+                    ? "border-gold shadow-[inset_0_-2px_0_var(--color-gold)]"
+                    : "border-ink/25 hover:border-gold"
                 }`}
               >
                 <b className="block text-[13px] font-medium text-ink">{candidate.name}</b>
@@ -293,16 +293,15 @@ export default function UnitTypesElevator({
 
         {/* ── The board ───────────────────────────────────────────── */}
         <div
-          className="relative mt-6 grid grid-cols-1 border border-ink/20 @min-[1000px]:grid-cols-[80px_1fr_260px]"
+          className="relative mt-6 grid grid-cols-1 overflow-hidden rounded-2xl border border-ink/10 shadow-card @min-[1000px]:grid-cols-[80px_1fr_280px]"
           style={{
-            /* Two grids, not one: the 40px major lines read as a drawing
-               board, and the 8px minor ones are what make it read as
-               *squared paper* rather than a table. */
+            /* One faint 40px grid. The 8px minor grid that sat under it
+               made dark-on-white read as graph paper and fought the
+               drawing; on a white board the major lines are enough to say
+               "plan". */
             background:
-              "linear-gradient(rgba(0,0,0,.07) 1px,transparent 1px) 0 0/40px 40px," +
-              "linear-gradient(90deg,rgba(0,0,0,.07) 1px,transparent 1px) 0 0/40px 40px," +
-              "linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px) 0 0/8px 8px," +
-              "linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px) 0 0/8px 8px,#ffffff",
+              "linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px) 0 0/40px 40px," +
+              "linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px) 0 0/40px 40px,#ffffff",
           }}
         >
           <LiftPanel
@@ -369,7 +368,7 @@ export default function UnitTypesElevator({
           {/* Mono for the keys and the schedule, Roboto for the values — the
               mockup's .tb .v. With the values in mono too, "Ground Floor"
               and 178.09 read as code rather than as a drawing's title block. */}
-          <div className="border-t border-ink/15 font-mono @min-[1000px]:border-l @min-[1000px]:border-t-0">
+          <div className="border-t border-ink/10 bg-white/80 font-sans @min-[1000px]:border-l @min-[1000px]:border-t-0">
             <Row label={labels.project} value={projectName} />
 
             <div className="grid grid-cols-3">
@@ -381,7 +380,7 @@ export default function UnitTypesElevator({
             <Row label={labels.floor} value={floor.name} />
 
             {show3d && (
-              <div className="border-b border-ink/15 bg-accent/5 px-4 py-2.5">
+              <div className="border-b border-ink/15 bg-gold-100/60 px-4 py-2.5">
                 <Key>
                   {room3d
                     ? `${labels.room} ${String(pickedIndex >= 0 ? pickedIndex + 1 : room3d.n).padStart(2, "0")}`
@@ -417,13 +416,13 @@ export default function UnitTypesElevator({
                 {floors.map((candidate, index) => (
                   <div
                     key={candidate.id}
-                    className={`flex items-center gap-2 font-mono text-[10.5px] transition-colors ${
+                    className={`flex items-center gap-2 font-sans text-xs tabular-nums transition-colors ${
                       index === floorIndex ? "text-ink" : "text-ink-muted"
                     }`}
                   >
                     <b
                       className={`h-2.5 transition-[background-color,width] duration-700 ${
-                        index === floorIndex ? "bg-accent" : "bg-ink/15"
+                        index === floorIndex ? "bg-gold" : "bg-ink/15"
                       }`}
                       style={{ width: `${Math.max(candidate.areaRatio * 130, 4)}px` }}
                     />
@@ -484,7 +483,7 @@ export default function UnitTypesElevator({
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">
+    <div className="font-sans text-[10.5px] font-medium uppercase tracking-[0.12em] text-ink-muted">
       {children}
     </div>
   );
@@ -536,11 +535,11 @@ function ScheduleRow({
   );
 
   const shell =
-    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-ink/12 py-[3px] text-left font-mono text-[10.5px]";
+    "grid w-full grid-cols-[24px_1fr_auto] gap-2 border-b border-ink/8 py-1.5 text-left font-sans text-[12.5px] tabular-nums";
 
   if (!room.photoUrl) {
     // `open` without a photo is the room tapped in the 3D view.
-    return <li className={`${shell} ${open ? "text-accent" : "text-ink-muted"}`}>{content}</li>;
+    return <li className={`${shell} ${open ? "font-medium text-ink" : "text-ink-muted"}`}>{content}</li>;
   }
 
   return (
