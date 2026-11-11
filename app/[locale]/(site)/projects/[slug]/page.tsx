@@ -517,7 +517,7 @@ export default async function ProjectPage(props: Props) {
               yet, or whose first type has no living area set. */}
           {heroUnitType && heroUnitType.livingAreaSqm !== null && (
             <Reveal>
-              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-ink/40 bg-ink/5 px-4 py-1.5 text-[11px] uppercase tracking-widest2 backdrop-blur-sm sm:text-xs">
+              <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/75 px-4 py-1.5 text-[11px] font-medium uppercase tracking-widest2 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-8px_rgba(0,0,0,0.35)] ring-1 ring-white/80 backdrop-blur-md backdrop-saturate-150 sm:text-xs">
                 {heroUnitType.name}
                 <span aria-hidden>·</span>
                 {formatNumber(locale, heroUnitType.livingAreaSqm)} {t("units.sqm")}
