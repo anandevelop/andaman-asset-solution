@@ -40,9 +40,9 @@ const ALL_REJECTED: ConsentDecision = { analytics: false, marketing: false };
 // (the back-office's denser rhythm, not this component's home) — same
 // palette and rounded-xs corners as both, sized for a banner.
 const PRIMARY_BTN =
-  "inline-flex items-center justify-center rounded-xs bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-primary-700 sm:text-sm";
+  "inline-flex items-center justify-center rounded-xs bg-surface-raised px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-ink transition-colors hover:bg-surface-muted sm:text-sm border border-ink";
 const GHOST_BTN =
-  "inline-flex items-center justify-center rounded-xs border border-primary/20 px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-primary/5 sm:text-sm";
+  "inline-flex items-center justify-center rounded-xs border border-primary/20 px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-surface-muted sm:text-sm";
 
 export default function CookieConsentBanner() {
   const t = useTranslations("cookieConsent");

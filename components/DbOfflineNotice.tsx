@@ -19,7 +19,7 @@ export default function DbOfflineNotice() {
       <p className="mt-2 text-sm leading-relaxed text-ink/70">
         This block is development-only. Start Postgres and load the seed data:
       </p>
-      <pre className="mt-3 overflow-x-auto rounded-xs bg-primary-900/6 p-4 text-xs leading-relaxed text-ink/80">
+      <pre className="mt-3 overflow-x-auto rounded-xs bg-surface-raised/6 p-4 text-xs leading-relaxed text-ink/80">
         {`npm run db:up
 npm run prisma:migrate
 npm run prisma:seed`}

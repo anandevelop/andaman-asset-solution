@@ -202,34 +202,34 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-[72px]">
           <div>
             <Reveal>
-              <p className="text-[10px] font-normal uppercase tracking-[0.32em] text-accent">
+              <p className="text-[10px] font-normal uppercase tracking-[0.32em] text-ink">
                 {labels.eyebrow}
               </p>
-              <h2 className="mt-2.5 text-[32px] leading-tight font-light text-white">{labels.title}</h2>
-              <p className="mt-[18px] max-w-[460px] text-[13px] leading-[1.75] font-light text-white/60">
+              <h2 className="mt-2.5 text-[32px] leading-tight font-light text-ink">{labels.title}</h2>
+              <p className="mt-[18px] max-w-[460px] text-[13px] leading-[1.75] font-light text-ink-muted">
                 {labels.intro}
               </p>
             </Reveal>
 
             <Reveal delay={0.15} onEnter={() => setStatsActive(true)} className="mt-10 flex gap-11">
               <div>
-                <p className="text-[40px] leading-none font-extralight tabular-nums text-white">
+                <p className="text-[40px] leading-none font-extralight tabular-nums text-ink">
                   {awardsCountDisplay}
                 </p>
-                <p className="mt-2 text-[9px] tracking-[0.28em] text-white/50 uppercase">
+                <p className="mt-2 text-[9px] tracking-[0.28em] text-ink-muted uppercase">
                   {labels.awardsCountLabel}
                 </p>
               </div>
               <div>
-                <p className="text-[40px] leading-none font-extralight tabular-nums text-white">{yearDisplay}</p>
-                <p className="mt-2 text-[9px] tracking-[0.28em] text-white/50 uppercase">{labels.yearLabel}</p>
+                <p className="text-[40px] leading-none font-extralight tabular-nums text-ink">{yearDisplay}</p>
+                <p className="mt-2 text-[9px] tracking-[0.28em] text-ink-muted uppercase">{labels.yearLabel}</p>
               </div>
             </Reveal>
 
             <Reveal delay={0.25}>
               <ol
                 role="list"
-                className={`mt-11 list-none border-t border-white/10 p-0 ${
+                className={`mt-11 list-none border-t border-ink/10 p-0 ${
                   isHovering ? "spotlight-list-paused" : ""
                 }`}
                 onMouseEnter={handleListMouseEnter}
@@ -246,13 +246,13 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                         onClick={() => selectAward(index)}
                         onMouseEnter={() => selectAward(index)}
                         className={`relative grid w-full grid-cols-[34px_1fr_auto] items-baseline gap-3.5 border-b
-                            border-white/10 px-3 py-4 text-left transition-colors duration-300 ${
-                              active ? "spotlight-row-active bg-white/[0.055]" : "hover:bg-white/[0.035]"
+                            border-ink/10 px-3 py-4 text-left transition-colors duration-300 ${
+                              active ? "spotlight-row-active bg-gold-100/70" : "hover:bg-gold-100/40"
                             }`}
                       >
                         <span
                           className={`text-[10px] tracking-[0.2em] transition-colors duration-300 ${
-                            active ? "text-accent" : "text-white/35"
+                            active ? "text-ink" : "text-ink-muted"
                           }`}
                         >
                           {String(index + 1).padStart(2, "0")}
@@ -260,21 +260,21 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                         <span>
                           <span
                             className={`block text-sm leading-snug font-light transition-colors duration-300 ${
-                              active ? "text-white" : "text-white/70"
+                              active ? "text-ink" : "text-ink-muted"
                             }`}
                           >
                             {award.title}
                           </span>
                           {award.projectName && (
-                            <span className="mt-0.5 block text-[10px] tracking-[0.14em] text-white/40 uppercase">
+                            <span className="mt-0.5 block text-[10px] tracking-[0.14em] text-ink-muted uppercase">
                               {award.projectName}
                             </span>
                           )}
                         </span>
-                        <span className="text-[11px] font-light text-white/40">{award.year}</span>
+                        <span className="text-[11px] font-light text-ink-muted">{award.year}</span>
                         <span
                           aria-hidden
-                          className="spotlight-bar pointer-events-none absolute bottom-[-1px] left-0 h-px w-0"
+                          className="spotlight-bar pointer-events-none absolute bottom-[-1px] left-0 h-[2px] w-0"
                         />
                       </button>
                     </li>
@@ -317,14 +317,14 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                   {shown.trophyImageUrl ? (
                     <ImageWithSkeleton
                       src={shown.trophyImageUrl}
-                      alt={`${shown.organization} trophy: ${shown.title}`}
+                      alt={`${shown.title} — ${shown.organization}`}
                       fill
                       sizes="400px"
                       className="object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.45)]"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <Trophy size={96} strokeWidth={1} className="text-accent" aria-hidden />
+                      <Trophy size={96} strokeWidth={1} className="text-ink" aria-hidden />
                     </div>
                   )}
                 </div>
@@ -335,9 +335,9 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                   isLeaving ? "spotlight-leaving" : ""
                 }`}
               >
-                <p className="text-[10px] tracking-[0.3em] text-accent uppercase">{shown.organization}</p>
-                <p className="mt-2.5 text-xl leading-snug font-light text-white">{shown.title}</p>
-                <p className="mt-1.5 text-xs font-light text-white/55">
+                <p className="text-[10px] tracking-[0.3em] text-ink uppercase">{shown.organization}</p>
+                <p className="mt-2.5 text-xl leading-snug font-light text-ink">{shown.title}</p>
+                <p className="mt-1.5 text-xs font-light text-ink-muted">
                   {shown.projectName ? `${shown.projectName} · ${shown.year}` : shown.year}
                 </p>
               </div>

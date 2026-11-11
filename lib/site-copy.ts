@@ -27,29 +27,37 @@ import { contentCopyDefaults } from "@/lib/site-copy-content";
 
 export const SITE_COPY_TAG = "site-copy";
 
+/** Throws when the database can't answer, so that nothing is cached —
+ *  an empty result cached here wiped every admin copy edit off the site
+ *  for up to an hour after a database blip. */
 async function readOverrides(locale: string): Promise<Record<string, string>> {
+  const rows = await prisma.siteCopy.findMany({
+    where: { locale },
+    select: { key: true, value: true },
+  });
+  const out: Record<string, string> = {};
+  for (const row of rows) {
+    if (isEditableKey(row.key) && row.value.trim().length > 0) out[row.key] = row.value;
+  }
+  return out;
+}
+
+const readOverridesCached = unstable_cache(readOverrides, ["site-copy"], {
+  tags: [SITE_COPY_TAG],
+  // Backstop only. updateTag() in the save action is the mechanism.
+  revalidate: 3600,
+});
+
+/** The overrides for one locale, as `{ "home.corporate.title": "…" }`.
+ *  messages/ defaults (no overrides) for this render if the read fails. */
+export async function getCopyOverrides(locale: string): Promise<Record<string, string>> {
   try {
-    const rows = await prisma.siteCopy.findMany({
-      where: { locale },
-      select: { key: true, value: true },
-    });
-    const out: Record<string, string> = {};
-    for (const row of rows) {
-      if (isEditableKey(row.key) && row.value.trim().length > 0) out[row.key] = row.value;
-    }
-    return out;
+    return await readOverridesCached(locale);
   } catch (error) {
     console.error("[site-copy] falling back to messages/ defaults", error);
     return {};
   }
 }
-
-/** The overrides for one locale, as `{ "home.corporate.title": "…" }`. */
-export const getCopyOverrides = unstable_cache(readOverrides, ["site-copy"], {
-  tags: [SITE_COPY_TAG],
-  // Backstop only. updateTag() in the save action is the mechanism.
-  revalidate: 3600,
-});
 
 /** Uncached, for the editor: it must show what was just saved. */
 export async function getCopyOverridesForEditing(

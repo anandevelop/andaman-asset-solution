@@ -20,6 +20,7 @@
  */
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
@@ -107,6 +108,7 @@ export default function SiteCopyForm({ action, groups, focusKey, markReviewed }:
     if (result.ok) setEdits({});
     return result;
   }, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
   const focusRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [reviewing, startReviewing] = useTransition();
@@ -170,7 +172,7 @@ export default function SiteCopyForm({ action, groups, focusKey, markReviewed }:
         : t("errors.unknownTag", { name: problem.name });
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={keepValues} action={formAction} className="space-y-4">
       {state.ok && (
         <SaveToast tone="success" token={state}>
           <CheckCircle2 size={16} aria-hidden />

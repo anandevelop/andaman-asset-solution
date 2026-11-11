@@ -108,7 +108,10 @@ export async function getExecutiveData(period: Period, locale: string): Promise<
       [] as { source: string; _count: { _all: number } }[],
     ),
     getLeadPipeline(),
-    getEventRsvpSummary(locale, 24),
+    // Filtered by the period in the query: taking the 24 newest and then
+    // filtering left an older period with nothing once 24 later events
+    // (future ones included) existed.
+    getEventRsvpSummary(locale, 100, { start: period.start, end: period.end }),
   ]);
 
   // Every day of the period, zero-filled, so the chart's x-axis is the period.

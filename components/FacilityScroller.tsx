@@ -24,6 +24,8 @@ import type { ProjectFacilitySummary } from "@/lib/projects";
 
 type Props = {
   facilities: ProjectFacilitySummary[];
+  /** The arrows' names, in the page's language. */
+  labels?: { previous: string; next: string };
 };
 
 // A couple of px of slack on the edge checks — scrollWidth/clientWidth can
@@ -32,7 +34,7 @@ type Props = {
 // (or enabled with nowhere left to go) right at the end of the track.
 const EDGE_EPSILON_PX = 2;
 
-export default function FacilityScroller({ facilities }: Props) {
+export default function FacilityScroller({ facilities, labels }: Props) {
   const trackRef = useRef<HTMLUListElement>(null);
   const firstCardRef = useRef<HTMLLIElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -95,7 +97,7 @@ export default function FacilityScroller({ facilities }: Props) {
     "absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center " +
     "rounded-full border border-primary/10 bg-white text-primary shadow-card " +
     "transition-[opacity,background-color,color] " +
-    "hover:border-primary hover:bg-primary hover:text-white " +
+    "hover:border-primary hover:bg-surface-muted hover:text-ink " +
     "disabled:pointer-events-none disabled:opacity-0 sm:flex";
 
   return (
@@ -122,7 +124,7 @@ export default function FacilityScroller({ facilities }: Props) {
 
       <button
         type="button"
-        aria-label="Previous"
+        aria-label={labels?.previous ?? "Previous"}
         onClick={() => scrollByOneCard(-1)}
         disabled={!canScrollLeft}
         className={`${buttonClass} -left-5`}
@@ -131,7 +133,7 @@ export default function FacilityScroller({ facilities }: Props) {
       </button>
       <button
         type="button"
-        aria-label="Next"
+        aria-label={labels?.next ?? "Next"}
         onClick={() => scrollByOneCard(1)}
         disabled={!canScrollRight}
         className={`${buttonClass} -right-5`}

@@ -210,7 +210,7 @@ export default function LegalPolicyPage({
                     section together would instead strand on its own
                     page). */}
                 <div className="flex items-start gap-3 print:break-inside-avoid print:break-after-avoid">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xs bg-primary text-sm font-medium text-white">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xs bg-surface-raised text-sm font-medium text-ink">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <h2 className="pt-0.5 text-xl font-medium text-primary sm:text-2xl">

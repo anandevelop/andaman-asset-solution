@@ -10,6 +10,7 @@
  */
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -52,6 +53,7 @@ export default function AgentForm({
   const router = useRouter();
   const [flash, show] = useFlash();
   const [state, formAction, saving] = useActionState<AgentFormState, FormData>(saveAgent.bind(null, locale, values.id), { ok: false });
+  const keepValues = useKeepValuesOnError(state, !state.ok);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +65,7 @@ export default function AgentForm({
   const h5 = "mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-adm-muted";
 
   return (
-    <form action={formAction} noValidate>
+    <form ref={keepValues} action={formAction} noValidate>
       {flash}
       <div className="mb-6">
         <h5 className={h5}>{t("sectionInfo")}</h5>

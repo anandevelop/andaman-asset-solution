@@ -316,18 +316,41 @@ export async function getPublishedArticleSlugs(): Promise<string[]> {
 
 /** Published-article rows for the sitemap: slug + last modification. */
 export async function getArticleSitemapEntries(): Promise<
-  { slug: string; updatedAt: Date; coverImageUrl: string | null }[]
+  {
+    slug: string;
+    updatedAt: Date;
+    coverImageUrl: string | null;
+    canonicalUrl: string | null;
+    /** Locales whose translation is noIndex — left out of the sitemap. */
+    noIndexLocales: string[];
+  }[]
 > {
-  return safeQuery(
+  const rows = await safeQuery(
     "newsArticle.findMany(sitemap)",
     () =>
       prisma.newsArticle.findMany({
         where: publishedWhere(),
-        select: { slug: true, updatedAt: true, coverImageUrl: true },
+        select: {
+          slug: true,
+          updatedAt: true,
+          coverImageUrl: true,
+          canonicalUrl: true,
+          translations: { where: { noIndex: true }, select: { locale: true } },
+        },
         orderBy: { publishedAt: "desc" },
       }),
-    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null }[],
+    [] as {
+      slug: string;
+      updatedAt: Date;
+      coverImageUrl: string | null;
+      canonicalUrl: string | null;
+      translations: { locale: string }[];
+    }[],
   );
+  return rows.map(({ translations, ...row }) => ({
+    ...row,
+    noIndexLocales: (translations ?? []).map((t) => t.locale),
+  }));
 }
 
 /** Distinct categories in use, for the listing filter chips. */

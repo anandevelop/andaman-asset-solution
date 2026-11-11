@@ -348,7 +348,7 @@ export default function MapCard({
                   onMouseEnter={() => setPinHidden(true)}
                   className="absolute inset-0 h-full w-full border-0 grayscale contrast-125"
                 />
-                <div className="pointer-events-none absolute inset-0 bg-primary/40 mix-blend-color" />
+                <div className="pointer-events-none absolute inset-0 bg-surface-raised/40 mix-blend-color" />
               </div>
 
               {/* Our pin, over Google's. Tip at the exact centre of the
@@ -360,18 +360,18 @@ export default function MapCard({
                     pinHidden ? "opacity-0" : "opacity-100"
                   }`}
                 >
-                  <span className="map-pin-ring absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-accent-600 opacity-0" />
-                  <span className="map-pin-ring map-pin-ring-delayed absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-accent-600 opacity-0" />
+                  <span className="map-pin-ring absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-gold opacity-0" />
+                  <span className="map-pin-ring map-pin-ring-delayed absolute -left-[34px] -top-[34px] h-[68px] w-[68px] rounded-full border-2 border-gold opacity-0" />
                   <span className="absolute -left-3 -top-1 h-2 w-6 rounded-[50%] bg-primary-900/35 blur-[2px]" />
                   <span className="map-pin-body absolute -left-[23px] -top-[60px] h-[60px] w-[46px] origin-bottom">
                     <svg viewBox="0 0 46 60" className="block h-full w-full drop-shadow-[0_6px_10px_rgba(4,29,44,0.35)]">
                       <path
                         d="M23 59C23 59 3 36.5 3 22.5A20 20 0 0 1 43 22.5C43 36.5 23 59 23 59Z"
-                        fill="#083551"
+                        fill="#141414"
                         stroke="#fff"
                         strokeWidth="2.5"
                       />
-                      <circle cx="23" cy="22.5" r="12" fill="#c47b3a" />
+                      <circle cx="23" cy="22.5" r="12" fill="#cfa75f" />
                       <path
                         d="M16.5 25.5l6.5-6.5 6.5 6.5M19.5 25.5l3.5-3.5 3.5 3.5"
                         fill="none"
@@ -384,7 +384,7 @@ export default function MapCard({
                   {/* Above the pin on a phone, beside it from sm up: the
                       company name is long enough to run off a 390px screen
                       when it sits to the right. */}
-                  <span className="map-pin-tag absolute left-0 top-[-94px] -translate-x-1/2 whitespace-nowrap rounded-xs bg-primary px-[9px] py-1.5 text-[9.5px] font-medium uppercase tracking-[0.12em] text-white shadow-[0_8px_20px_-6px_rgba(4,29,44,0.5)] sm:left-8 sm:top-[-54px] sm:translate-x-0 sm:px-3 sm:py-[7px] sm:text-[11px]">
+                  <span className="map-pin-tag absolute left-0 top-[-94px] -translate-x-1/2 whitespace-nowrap rounded-xs bg-surface-raised px-[9px] py-1.5 text-[9.5px] font-medium uppercase tracking-[0.12em] text-ink shadow-[0_8px_20px_-6px_rgba(4,29,44,0.5)] sm:left-8 sm:top-[-54px] sm:translate-x-0 sm:px-3 sm:py-[7px] sm:text-[11px] border border-ink">
                     {origin.name}
                   </span>
                 </div>
@@ -411,7 +411,7 @@ export default function MapCard({
                     <span className="truncate">{route?.from}</span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2.5 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-ink sm:mt-2 sm:text-[13px]">
-                    <i className="h-[9px] w-[9px] flex-none rounded-full border-2 border-accent-600 bg-accent-600" />
+                    <i className="h-[9px] w-[9px] flex-none rounded-full border-2 border-gold bg-gold" />
                     <span className="truncate">{route?.to}</span>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export default function MapCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     tabIndex={route ? undefined : -1}
-                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-accent-600 px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-accent-700 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
+                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-gold px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink transition-colors hover:bg-accent-700 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
                   >
                     {t("openRoute")}
                     <span aria-hidden>↗</span>
@@ -454,7 +454,7 @@ export default function MapCard({
               </div>
             </>
           ) : (
-            <div className="flex h-full min-h-[280px] w-full items-center justify-center bg-primary-900/4 px-6 text-center text-sm text-ink/50">
+            <div className="flex h-full min-h-[280px] w-full items-center justify-center bg-primary/4 px-6 text-center text-sm text-ink-muted">
               <MapPin size={20} className="mr-2 shrink-0" aria-hidden />
               {origin.name}
             </div>
@@ -462,25 +462,25 @@ export default function MapCard({
         </div>
 
         {/* ── Panel ───────────────────────────────────────────────── */}
-        <aside className="flex min-w-0 flex-col gap-3.5 bg-primary px-4 pb-3.5 pt-[18px] text-white sm:gap-5 sm:px-[26px] sm:pb-[22px] sm:pt-7">
+        <aside className="flex min-w-0 flex-col gap-3.5 bg-surface-raised px-4 pb-3.5 pt-[18px] text-ink sm:gap-5 sm:px-[26px] sm:pb-[22px] sm:pt-7">
           <div>
             {/* text-white explicitly: the base layer in app/globals.css
                 gives every h1–h4 `text-primary`, which on this navy panel
                 is the panel. The heading rendered invisible without it. */}
-            <h3 className="text-[15px] font-medium tracking-[0.02em] text-white sm:text-lg">
+            <h3 className="text-[15px] font-medium tracking-[0.02em] text-ink sm:text-lg">
               {origin.name}
             </h3>
-            <p className="mt-1 text-xs leading-[1.5] text-white/70 sm:mt-1.5 sm:text-sm">
+            <p className="mt-1 text-xs leading-[1.5] text-ink-muted sm:mt-1.5 sm:text-sm">
               {origin.address}
             </p>
 
             {point && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-accent-200 sm:mt-3 sm:gap-2.5 sm:text-xs">
+              <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-ink sm:mt-3 sm:gap-2.5 sm:text-xs">
                 <span>{formatCoordinates(point)}</span>
                 <button
                   type="button"
                   onClick={copy}
-                  className="cursor-pointer rounded-full border border-white/20 px-[7px] py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-white/70 transition-colors hover:border-accent sm:px-[9px] sm:py-[5px] sm:text-[10px]"
+                  className="cursor-pointer rounded-full border border-ink/20 px-[7px] py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-ink-muted transition-colors hover:border-gold sm:px-[9px] sm:py-[5px] sm:text-[10px]"
                 >
                   {copyState === "copied"
                     ? t("copied")
@@ -493,8 +493,8 @@ export default function MapCard({
 
             {status && (
               <span
-                className={`mt-2 inline-flex items-center gap-2 rounded-full bg-white/6 px-[11px] py-1.5 text-[11px] font-medium tracking-[0.06em] sm:mt-3 ${
-                  status.isOpen ? "" : "text-white/85"
+                className={`mt-2 inline-flex items-center gap-2 rounded-full bg-ink/5 px-[11px] py-1.5 text-[11px] font-medium tracking-[0.06em] sm:mt-3 ${
+                  status.isOpen ? "" : "text-ink"
                 }`}
               >
                 <i
@@ -519,16 +519,16 @@ export default function MapCard({
             <button
               type="button"
               onClick={locate}
-              className="flex w-full cursor-pointer items-center gap-2.5 border border-white/16 px-3 py-2.5 text-left transition-colors hover:border-accent hover:bg-white/4 sm:gap-3 sm:px-4 sm:py-3.5"
+              className="flex w-full cursor-pointer items-center gap-2.5 border border-ink/16 px-3 py-2.5 text-left transition-colors hover:border-gold hover:bg-ink/5 sm:gap-3 sm:px-4 sm:py-3.5"
             >
-              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-accent text-primary-900 sm:h-[38px] sm:w-[38px]">
+              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-gold text-ink sm:h-[38px] sm:w-[38px]">
                 <Navigation size={14} aria-hidden />
               </span>
               <span className="min-w-0">
                 <b className="block text-xs font-medium tracking-[0.04em] sm:text-[13px]">
                   {geoTitle}
                 </b>
-                <span className="mt-0.5 block text-[11px] text-white/60 sm:mt-[3px] sm:text-xs">
+                <span className="mt-0.5 block text-[11px] text-ink-muted sm:mt-[3px] sm:text-xs">
                   {geoHint}
                 </span>
               </span>
@@ -539,7 +539,7 @@ export default function MapCard({
             <div
               role="group"
               aria-label={t("categories")}
-              className="map-tabs flex gap-1 overflow-x-auto border-b border-white/12"
+              className="map-tabs flex gap-1 overflow-x-auto border-b border-ink/12"
             >
               {groups.map((group) => (
                 <button
@@ -549,8 +549,8 @@ export default function MapCard({
                   onClick={() => setActiveGroupId(group.id)}
                   className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-2 pb-2.5 pt-2 text-[9.5px] font-medium uppercase tracking-[0.1em] transition-colors sm:px-2.5 sm:pb-3 sm:pt-2.5 sm:text-[11px] sm:tracking-[0.12em] ${
                     group.id === activeGroupId
-                      ? "border-accent text-white"
-                      : "border-transparent text-white/55 hover:text-white/80"
+                      ? "border-gold text-ink"
+                      : "border-transparent text-ink-muted hover:text-ink"
                   }`}
                 >
                   {group.label}
@@ -562,7 +562,7 @@ export default function MapCard({
           {visibleGroups.map((group) => (
             <div key={group.id} className="min-w-0">
               {groupLayout === "stacked" && (
-                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-accent-200">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-ink">
                   {group.label}
                 </p>
               )}
@@ -580,10 +580,10 @@ export default function MapCard({
                           hasIcon
                             ? "grid-cols-[auto_1fr_auto] items-center"
                             : "grid-cols-[1fr_auto]"
-                        } ${active ? "bg-[rgba(232,179,132,0.14)]" : "hover:bg-white/5"}`}
+                        } ${active ? "bg-gold-100/70" : "hover:bg-ink/5"}`}
                       >
                         {hasIcon && (
-                          <span className="grid h-11 w-11 flex-none place-items-center rounded-xs bg-white/8 text-accent">
+                          <span className="grid h-11 w-11 flex-none place-items-center rounded-xs bg-ink/5 text-ink">
                             {item.icon === "plane" ? (
                               <Plane size={18} aria-hidden />
                             ) : (
@@ -595,7 +595,7 @@ export default function MapCard({
                         <span className="min-w-0">
                           <span className="block truncate text-[13px] sm:text-sm">{item.name}</span>
                           {item.meta && (
-                            <span className="mt-px block truncate text-[10px] text-white/50 sm:mt-[3px] sm:text-[11px]">
+                            <span className="mt-px block truncate text-[10px] text-ink-muted sm:mt-[3px] sm:text-[11px]">
                               {item.meta}
                             </span>
                           )}
@@ -605,7 +605,7 @@ export default function MapCard({
                           {item.durationMin !== null ? (
                             <>
                               {item.durationMin}
-                              <small className="text-[10px] font-normal text-white/60 sm:text-[11px]">
+                              <small className="text-[10px] font-normal text-ink-muted sm:text-[11px]">
                                 {" "}
                                 {t("min")}
                               </small>
@@ -613,13 +613,13 @@ export default function MapCard({
                           ) : item.distanceKm !== null ? (
                             <>
                               {formatKm(item.distanceKm)}
-                              <small className="text-[10px] font-normal text-white/60 sm:text-[11px]">
+                              <small className="text-[10px] font-normal text-ink-muted sm:text-[11px]">
                                 {" "}
                                 {t("km")}
                               </small>
                             </>
                           ) : (
-                            <small className="text-[10px] font-normal text-white/60 sm:text-[11px]">
+                            <small className="text-[10px] font-normal text-ink-muted sm:text-[11px]">
                               {t("route")} ↗
                             </small>
                           )}
@@ -631,12 +631,12 @@ export default function MapCard({
                             simply fills it. */}
                         {item.durationMin !== null && (
                           <span
-                            className={`h-0.5 overflow-hidden rounded-[3px] bg-white/8 sm:h-[3px] ${
+                            className={`h-0.5 overflow-hidden rounded-[3px] bg-ink/5 sm:h-[3px] ${
                               hasIcon ? "col-start-2 col-span-2" : "col-span-full"
                             }`}
                           >
                             <b
-                              className="block h-full bg-gradient-to-r from-accent to-accent-600 transition-[width] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                              className="block h-full bg-gradient-to-r from-gold-300 to-gold transition-[width] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
                               style={{
                                 width: barsIn
                                   ? `${Math.min(item.durationMin / 35, 1) * 100}%`
@@ -653,29 +653,29 @@ export default function MapCard({
             </div>
           ))}
 
-          <p className="text-[10px] tracking-[0.06em] text-white/45 sm:text-[11px]">{note}</p>
+          <p className="text-[10px] tracking-[0.06em] text-ink-muted sm:text-[11px]">{note}</p>
         </aside>
       </div>
 
-      <div className="grid grid-cols-2 divide-x divide-white/15 bg-primary text-white">
+      <div className="grid grid-cols-2 divide-x divide-ink/15 bg-surface-raised text-ink">
         <a
           href={viewUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-[7px] px-2 py-3.5 text-[10.5px] font-medium uppercase tracking-[0.1em] transition-colors hover:bg-primary-700 sm:gap-2.5 sm:px-3 sm:py-[19px] sm:text-[13px] sm:tracking-[0.14em]"
+          className="flex items-center justify-center gap-[7px] px-2 py-3.5 text-[10.5px] font-medium uppercase tracking-[0.1em] transition-colors hover:bg-surface-muted sm:gap-2.5 sm:px-3 sm:py-[19px] sm:text-[13px] sm:tracking-[0.14em]"
         >
-          <MapPin size={13} className="text-accent sm:hidden" aria-hidden />
-          <MapPin size={16} className="hidden text-accent sm:block" aria-hidden />
+          <MapPin size={13} className="text-ink sm:hidden" aria-hidden />
+          <MapPin size={16} className="hidden text-ink sm:block" aria-hidden />
           {labels.viewOnMaps}
         </a>
         <a
           href={directionsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-[7px] px-2 py-3.5 text-[10.5px] font-medium uppercase tracking-[0.1em] transition-colors hover:bg-primary-700 sm:gap-2.5 sm:px-3 sm:py-[19px] sm:text-[13px] sm:tracking-[0.14em]"
+          className="flex items-center justify-center gap-[7px] px-2 py-3.5 text-[10.5px] font-medium uppercase tracking-[0.1em] transition-colors hover:bg-surface-muted sm:gap-2.5 sm:px-3 sm:py-[19px] sm:text-[13px] sm:tracking-[0.14em]"
         >
-          <Navigation size={13} className="text-accent sm:hidden" aria-hidden />
-          <Navigation size={16} className="hidden text-accent sm:block" aria-hidden />
+          <Navigation size={13} className="text-ink sm:hidden" aria-hidden />
+          <Navigation size={16} className="hidden text-ink sm:block" aria-hidden />
           {labels.getDirections}
         </a>
       </div>
@@ -699,7 +699,7 @@ function OpeningLabel({ text }: { text: string }) {
   return (
     <>
       {text.slice(0, at).trimEnd()}{" "}
-      <small className="font-normal text-white/55">{text.slice(at)}</small>
+      <small className="font-normal text-ink-muted">{text.slice(at)}</small>
     </>
   );
 }

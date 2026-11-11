@@ -43,17 +43,17 @@ export default function LiftPanel({
     /* @min-[1000px]:self-start — the panel belongs at the top of the shaft's height,
        like a real lift's. Left to the grid it stretches and centres, which
        floats the FLOOR display halfway down a 560px column. */
-    <div className="flex items-center justify-center gap-4 self-stretch border-b border-[#c3d3dd]/12 px-4 py-3 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-6 @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-7">
+    <div className="flex items-center justify-center gap-4 self-stretch border-b border-ink/12 px-4 py-3 @min-[1000px]:h-full @min-[1000px]:flex-col @min-[1000px]:justify-start @min-[1000px]:gap-6 @min-[1000px]:border-b-0 @min-[1000px]:border-r @min-[1000px]:px-0 @min-[1000px]:py-7">
       {/* ── FLOOR display ──────────────────────────────────────────── */}
       {/* Narrow screens: the label alone. The rolling digit only repeated
           the highlighted button beside it — in a row, the button already
           says which floor this is — and doubled the panel's height. */}
-      <span className="pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40 @min-[1000px]:hidden">
+      <span className="pl-[0.32em] text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted @min-[1000px]:hidden">
         {labels.floor}
       </span>
 
       <div className="relative hidden w-16 pb-3.5 text-center @min-[1000px]:block">
-        <span className="mb-2 block pl-[0.32em] text-[8.5px] font-medium uppercase tracking-[0.32em] text-white/40">
+        <span className="mb-2 block pl-[0.32em] text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted">
           {labels.floor}
         </span>
 
@@ -65,7 +65,7 @@ export default function LiftPanel({
             {floors.map((floor) => (
               <span
                 key={floor.id}
-                className="block text-[32px] font-extralight leading-[44px] tracking-[0.02em] text-[#f3dcc4]"
+                className="block text-[32px] font-extralight leading-[44px] tracking-[0.02em] text-ink"
                 style={{ height: DIGIT_HEIGHT }}
               >
                 {floor.shortLabel}
@@ -75,12 +75,12 @@ export default function LiftPanel({
         </div>
 
         {/* Sand hairline under the display. */}
-        <span className="absolute bottom-0 left-1/2 h-px w-[22px] -translate-x-1/2 bg-accent opacity-70" />
+        <span className="absolute bottom-0 left-1/2 h-[2px] w-[22px] -translate-x-1/2 rounded-full bg-gold" />
 
         {direction !== 0 && (
           <span
             aria-hidden
-            className={`absolute -top-0.5 right-0.5 text-[8px] text-accent transition-opacity ${
+            className={`absolute -top-0.5 right-0.5 text-[8px] text-ink transition-opacity ${
               moving ? "animate-pulse opacity-90" : "opacity-0"
             }`}
           >
@@ -114,8 +114,8 @@ export default function LiftPanel({
               */
               className={`h-8 w-8 rounded-full border text-[13px] font-light tracking-[0.04em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                 active
-                  ? "border-accent/70 text-accent"
-                  : "border-transparent text-white/60 hover:border-[#c3d3dd]/25 hover:text-white"
+                  ? "border-gold bg-gold-100 font-medium text-ink"
+                  : "border-transparent text-ink-muted hover:border-ink/25 hover:text-ink"
               }`}
             >
               {floor.shortLabel}

@@ -17,16 +17,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 
-const { findMany, groupBy } = vi.hoisted(() => ({
+const { findMany, findUnique, groupBy, aggregate } = vi.hoisted(() => ({
   findMany: vi.fn(),
+  findUnique: vi.fn(),
   groupBy: vi.fn(),
+  aggregate: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: { event: { findMany }, eventRegistration: { groupBy } },
+  prisma: { event: { findMany, findUnique }, eventRegistration: { groupBy, aggregate } },
 }));
 
-import { getPublishedEvents } from "@/lib/events";
+import {
+  countTakenSeats,
+  getEventBySlug,
+  getEventSitemapEntries,
+  getPublishedEvents,
+  getPublishedEventSlugs,
+} from "@/lib/events";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -55,8 +63,11 @@ const seats = (eventId: string, partySize: number | null) => ({
 
 beforeEach(() => {
   findMany.mockReset();
+  findUnique.mockReset();
   groupBy.mockReset();
   groupBy.mockResolvedValue([]);
+  aggregate.mockReset();
+  aggregate.mockResolvedValue({ _sum: { partySize: null } });
 });
 
 describe("seat counting", () => {
@@ -177,5 +188,56 @@ describe("when the database is unreachable", () => {
       upcoming: [],
       past: [],
     });
+  });
+});
+
+describe("sitemap entries", () => {
+  it("lists the locales whose translation is noIndex", async () => {
+    const updatedAt = new Date("2026-11-01T00:00:00Z");
+    findMany.mockResolvedValue([
+      { slug: "open-house", updatedAt, coverImageUrl: null, translations: [{ locale: "ru" }] },
+      { slug: "launch", updatedAt, coverImageUrl: "/c.jpg", translations: [] },
+    ]);
+
+    await expect(getEventSitemapEntries()).resolves.toEqual([
+      { slug: "open-house", updatedAt, coverImageUrl: null, noIndexLocales: ["ru"] },
+      { slug: "launch", updatedAt, coverImageUrl: "/c.jpg", noIndexLocales: [] },
+    ]);
+    // Only the noIndex translations are fetched — the rest are not needed.
+    const [{ select }] = findMany.mock.calls[0];
+    expect(select.translations).toEqual({ where: { noIndex: true }, select: { locale: true } });
+  });
+
+  it("degrades to no entries when the database is unreachable", async () => {
+    findMany.mockRejectedValue(new Prisma.PrismaClientInitializationError("down", "7.0.0"));
+    await expect(getEventSitemapEntries()).resolves.toEqual([]);
+  });
+
+  it("returns the published slugs", async () => {
+    findMany.mockResolvedValue([{ slug: "a" }, { slug: "b" }]);
+    await expect(getPublishedEventSlugs()).resolves.toEqual(["a", "b"]);
+  });
+});
+
+describe("one event by slug", () => {
+  it("returns null for an unpublished event", async () => {
+    findUnique.mockResolvedValue(row({ isPublished: false }));
+    await expect(getEventBySlug("open-house", "en")).resolves.toBeNull();
+  });
+
+  it("returns null for a missing event", async () => {
+    findUnique.mockResolvedValue(null);
+    await expect(getEventBySlug("missing", "en")).resolves.toBeNull();
+  });
+
+  it("counts the seats already taken", async () => {
+    findUnique.mockResolvedValue(row({ isPublished: true, capacity: 10 }));
+    aggregate.mockResolvedValue({ _sum: { partySize: 4 } });
+    const event = await getEventBySlug("open-house", "en");
+    expect(event?.seatsLeft).toBe(6);
+  });
+
+  it("countTakenSeats treats no registrations as zero", async () => {
+    await expect(countTakenSeats("evt-1")).resolves.toBe(0);
   });
 });

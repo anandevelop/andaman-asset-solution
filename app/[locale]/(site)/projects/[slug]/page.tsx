@@ -498,7 +498,7 @@ export default async function ProjectPage(props: Props) {
             />
           )
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-primary-900/90 via-primary-900/35 to-primary-900/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/45 to-white/20" />
 
         {/* Top-left rather than in the copy stack below: matches the
             reference layout's own uppercase, letter-spaced trail. A small
@@ -510,14 +510,14 @@ export default async function ProjectPage(props: Props) {
           <Breadcrumb items={trail} tone="onImage" className="uppercase tracking-wide" />
         </div>
 
-        <div className="container-luxe relative z-10 flex flex-col items-start pb-28 text-left text-white sm:pb-36">
+        <div className="container-luxe relative z-10 flex flex-col items-start pb-28 text-left text-ink sm:pb-36">
           {/* Unit-type badge — the first type by the admin's own sortOrder
               (same order the Unit Types section below iterates), not a
               "starting from" pick. Hidden for a project with no unit types
               yet, or whose first type has no living area set. */}
           {heroUnitType && heroUnitType.livingAreaSqm !== null && (
             <Reveal>
-              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 py-1.5 text-[11px] uppercase tracking-widest2 backdrop-blur-sm sm:text-xs">
+              <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/75 px-4 py-1.5 text-[11px] font-medium uppercase tracking-widest2 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-8px_rgba(0,0,0,0.35)] ring-1 ring-white/80 backdrop-blur-md backdrop-saturate-150 sm:text-xs">
                 {heroUnitType.name}
                 <span aria-hidden>·</span>
                 {formatNumber(locale, heroUnitType.livingAreaSqm)} {t("units.sqm")}
@@ -526,7 +526,7 @@ export default async function ProjectPage(props: Props) {
           )}
 
           <Reveal delay={0.1}>
-            <h1 className="max-w-2xl text-white text-4xl font-light leading-[1.05] sm:text-6xl">
+            <h1 className="max-w-2xl text-ink text-4xl font-light leading-[1.05] sm:text-6xl">
               {project.name}
             </h1>
           </Reveal>
@@ -536,7 +536,7 @@ export default async function ProjectPage(props: Props) {
           </Reveal>
 
           <Reveal delay={0.2}>
-            <p className="mt-5 flex flex-wrap items-center gap-1.5 text-sm text-white/85 sm:text-base">
+            <p className="mt-5 flex flex-wrap items-center gap-1.5 text-sm text-ink sm:text-base">
               <MapPin size={15} className="shrink-0" aria-hidden />
               {project.location}
               {/* Same site-wide, code-owned distances the "Nearby
@@ -580,7 +580,7 @@ export default async function ProjectPage(props: Props) {
             <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
               <a
                 href="#enquire"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xs bg-accent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:bg-accent-500 lg:w-auto"
+                className="btn-glass w-full px-7 py-3.5 text-sm font-medium uppercase tracking-wide lg:w-auto"
               >
                 {t("arrangeViewing")}
                 <ArrowRight size={16} aria-hidden />
@@ -716,7 +716,7 @@ export default async function ProjectPage(props: Props) {
           text-only fallback when there's no image. ────────────────────── */}
       {project.aboutThisProject && (
         <EditableSection links={editLinks.narrative}>
-        <section className="bg-primary-900/3 py-20 sm:py-28">
+        <section className="bg-surface-raised/3 py-20 sm:py-28">
           <div className="container-luxe">
             {project.aboutThisProjectImageUrl ? (
               <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -802,7 +802,10 @@ export default async function ProjectPage(props: Props) {
                 ))}
               </ul>
             ) : (
-              <FacilityScroller facilities={facilities} />
+              <FacilityScroller
+                facilities={facilities}
+                labels={{ previous: t("galleryPrevious"), next: t("galleryNext") }}
+              />
             )}
           </div>
         </section>
@@ -1024,7 +1027,7 @@ export default async function ProjectPage(props: Props) {
       {/* ── Construction progress (from ProjectProgress) ─────────────── */}
       {/* id targeted by /progress — scroll-mt clears the sticky navbar. */}
       <EditableSection links={editLinks.progress}>
-      <section id="progress" className="scroll-mt-24 bg-primary-900/3 py-20 sm:py-28">
+      <section id="progress" className="scroll-mt-24 bg-surface-raised/3 py-20 sm:py-28">
         <div className="container-luxe">
           <Reveal>
             <p className="eyebrow">{t("galleryTitle")}</p>
@@ -1042,6 +1045,9 @@ export default async function ProjectPage(props: Props) {
                 previous: t("galleryPrevious"),
                 next: t("galleryNext"),
                 video: t("progressVideoLabel"),
+                // A template the component fills per photo — a function
+                // cannot cross from this server page to the client one.
+                photoAlt: t("galleryPhotoAlt", { name: "{name}", number: "{number}" }),
               }}
             />
           </Reveal>

@@ -29,7 +29,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useModalFocus } from "@/components/a11y/use-modal-focus";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Images, Loader2, Maximize2, X } from "lucide-react";
@@ -104,6 +105,8 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const close = useCallback(() => setOpenIndex(null), []);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  useModalFocus(openIndex !== null, lightboxRef);
   const showPrev = useCallback(
     () => setOpenIndex((i) => (i === null ? null : (i - 1 + images.length) % images.length)),
     [images.length],
@@ -185,7 +188,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 priority={i === 0}
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-primary-900/0 opacity-0 transition-all duration-300 group-hover:bg-primary-900/30 group-hover:opacity-100">
+              <div className="absolute inset-0 flex items-center justify-center bg-surface-raised/0 opacity-0 transition-all duration-300 group-hover:bg-surface-muted group-hover:opacity-100">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-primary shadow-cardHover sm:h-9 sm:w-9">
                   <Maximize2 size={14} aria-hidden />
                 </span>
@@ -211,7 +214,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 sizes="(max-width: 640px) 50vw, 33vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-primary-900/0 opacity-0 transition-all duration-300 group-hover:bg-primary-900/30 group-hover:opacity-100">
+              <div className="absolute inset-0 flex items-center justify-center bg-surface-raised/0 opacity-0 transition-all duration-300 group-hover:bg-surface-muted group-hover:opacity-100">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-primary shadow-cardHover sm:h-9 sm:w-9">
                   <Maximize2 size={14} aria-hidden />
                 </span>
@@ -237,16 +240,18 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/95 p-4 sm:p-10"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-surface-raised/95 p-4 sm:p-10"
             onClick={close}
+            ref={lightboxRef}
             role="dialog"
             aria-modal="true"
+            aria-label={projectName}
           >
             <button
               type="button"
               onClick={close}
               aria-label={labels.close}
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-6 sm:top-6"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-ink/5 text-ink transition-colors hover:bg-ink/10 sm:right-6 sm:top-6"
             >
               <X size={20} aria-hidden />
             </button>
@@ -262,7 +267,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 showPrev();
               }}
               aria-label={labels.previous}
-              className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:left-6"
+              className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/40 text-ink transition-colors hover:bg-ink/10 sm:left-6"
             >
               <ChevronLeft size={20} aria-hidden />
             </button>
@@ -274,7 +279,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                 showNext();
               }}
               aria-label={labels.next}
-              className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-white/20 sm:right-6"
+              className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/40 text-ink transition-colors hover:bg-ink/10 sm:right-6"
             >
               <ChevronRight size={20} aria-hidden />
             </button>
@@ -290,7 +295,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               {!mainReady && (
                 <Loader2
                   size={28}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-white/60"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-ink-muted"
                   aria-hidden
                 />
               )}
@@ -313,7 +318,7 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
               className="absolute inset-x-0 bottom-4 z-10 flex flex-col items-center gap-3 sm:bottom-6"
               onClick={(event) => event.stopPropagation()}
             >
-              <p className="text-xs font-medium uppercase tracking-widest2 text-white/70">
+              <p className="text-xs font-medium uppercase tracking-widest2 text-ink-muted">
                 {openIndex + 1} / {images.length}
               </p>
               <div
@@ -327,8 +332,8 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
                     onClick={() => setOpenIndex(i)}
                     aria-label={labels.photoAlt[i] ?? projectName}
                     aria-current={i === openIndex}
-                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs bg-white/10 transition-opacity sm:h-14 sm:w-14 ${
-                      i === openIndex ? "opacity-100 ring-2 ring-white" : "opacity-45 hover:opacity-75"
+                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-xs bg-ink/5 transition-opacity sm:h-14 sm:w-14 ${
+                      i === openIndex ? "opacity-100 ring-2 ring-ink" : "opacity-45 hover:opacity-75"
                     }`}
                   >
                     {/* Only once the large photo is in, and lazily: see the

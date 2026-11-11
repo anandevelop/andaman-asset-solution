@@ -13,6 +13,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LeadStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { leadScopeWhere } from "@/lib/leads-board";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import MobileShell from "@/components/admin/mobile/MobileShell";
@@ -34,13 +35,17 @@ export default async function MobileLeadsPage(props: Props) {
   const t = await getTranslations({ locale, namespace: "admin.mobile" });
   const tRoot = await getTranslations({ locale, namespace: "admin" });
 
+  const projectScope = await leadScopeWhere(session);
   const leads = await safeQuery(
     "mobile:myLeads",
     () =>
       prisma.leadInquiry.findMany({
         where: {
-          status: { in: OPEN_STATUSES },
-          OR: [{ assignedToId: session.id }, { assignedToId: null }],
+          AND: [
+            { status: { in: OPEN_STATUSES } },
+            { OR: [{ assignedToId: session.id }, { assignedToId: null }] },
+            ...(projectScope ? [projectScope] : []),
+          ],
         },
         orderBy: [{ followUpAt: "asc" }, { createdAt: "desc" }],
         take: 60,

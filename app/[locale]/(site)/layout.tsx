@@ -100,8 +100,8 @@ export default async function SiteLayout({ children, params }: Props) {
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-60
-          focus:rounded-xs focus:bg-primary focus:px-5 focus:py-3 focus:text-sm
-          focus:font-medium focus:text-white"
+          focus:rounded-xs focus:bg-surface-muted focus:px-5 focus:py-3 focus:text-sm
+          focus:font-medium focus:text-ink"
       >
         {t("skipToContent")}
       </a>

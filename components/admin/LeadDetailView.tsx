@@ -23,6 +23,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { LeadStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isLeadVisibleTo } from "@/lib/leads-board";
 import { safeQuery, isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { initialsFrom, intlLocale } from "@/lib/format";
@@ -125,7 +126,10 @@ export default async function LeadDetailView({
     return notHere;
   }
 
-  if (session.role === Role.SALES && lead.assignedToId && lead.assignedToId !== session.id) {
+  // The board's own visibility rule (SALES pool + per-account project
+  // scope), not a SALES-only owner check: a rep or admin held to Project A
+  // must not read a Project B lead just by having its id.
+  if (!(await isLeadVisibleTo(session, lead.id))) {
     if (variant === "page") notFound();
     return notHere;
   }

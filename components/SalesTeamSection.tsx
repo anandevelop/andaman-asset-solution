@@ -65,9 +65,9 @@ function WhatsAppGlyph({ size = 14, className }: { size?: number; className?: st
   );
 }
 
-const ICON_BUTTON =
-  "flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] border border-white/30 " +
-  "text-white/85 transition-colors hover:border-white/70 hover:bg-white/10 hover:text-white";
+// Same liquid-glass pill as the Chat button beside it, so the row reads
+// as one set: round icon buttons, one wide pill.
+const ICON_BUTTON = "btn-glass h-11 w-11 shrink-0 text-ink";
 
 /** Splits a trailing nickname in parentheses — e.g. "Mr.Sunthorn Areeras
  *  (Nhong)" — off into its own accent-colored, lighter-weight span. Names
@@ -78,7 +78,7 @@ function renderName(name: string) {
   const [, main, nickname] = match;
   return (
     <>
-      {main} <span className="font-light text-accent">{nickname}</span>
+      {main} <span className="font-light text-ink">{nickname}</span>
     </>
   );
 }
@@ -174,7 +174,7 @@ export default async function SalesTeamSection() {
               >
                 <div
                   className="sales-card relative flex h-full flex-col gap-5 overflow-hidden rounded-[14px]
-                      border border-primary bg-primary px-[22px] pt-[26px] pb-[22px]
+                      border border-primary bg-surface-raised px-[22px] pt-[26px] pb-[22px]
                       transition-[transform,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]
                       hover:-translate-y-2 hover:border-accent/70 hover:shadow-[0_30px_60px_-24px_rgba(4,29,44,0.55)]"
                 >
@@ -238,7 +238,7 @@ export default async function SalesTeamSection() {
                         <span
                           aria-hidden
                           className="absolute top-3 left-3 flex h-[68px] w-[68px] items-center justify-center
-                              rounded-full border border-accent/60 bg-white/5 text-lg font-medium text-accent"
+                              rounded-full border border-accent/60 bg-ink/5 text-lg font-medium text-ink"
                         >
                           {name.trim().charAt(0)}
                         </span>
@@ -257,30 +257,30 @@ export default async function SalesTeamSection() {
                     </span>
 
                     <div className="min-w-0">
-                      <p className="text-sm leading-snug font-normal text-white">{renderName(name)}</p>
-                      <p className="mt-1 text-[9px] leading-normal font-normal tracking-[0.2em] text-white/55 uppercase">
+                      <p className="text-sm leading-snug font-normal text-ink">{renderName(name)}</p>
+                      <p className="mt-1 text-[9px] leading-normal font-normal tracking-[0.2em] text-ink-muted uppercase">
                         {position}
                       </p>
                     </div>
                   </div>
 
-                  <div className="h-px bg-white/14" />
+                  <div className="h-px bg-ink/7" />
 
-                  <div className="flex flex-col gap-2 text-xs font-light text-white/85">
+                  <div className="flex flex-col gap-2 text-xs font-light text-ink">
                     <a
                       href={`tel:${person.phoneNumber}`}
-                      className="flex items-center gap-2.5 transition-colors hover:text-white"
+                      className="flex items-center gap-2.5 transition-colors hover:text-ink"
                     >
-                      <Phone size={13} strokeWidth={1.5} className="shrink-0 text-accent" aria-hidden />
+                      <Phone size={13} strokeWidth={1.5} className="shrink-0 text-ink" aria-hidden />
                       {person.phoneNumber}
                     </a>
 
                     {person.email && (
                       <a
                         href={`mailto:${person.email}`}
-                        className="flex items-center gap-2.5 transition-colors hover:text-white"
+                        className="flex items-center gap-2.5 transition-colors hover:text-ink"
                       >
-                        <Mail size={13} strokeWidth={1.5} className="shrink-0 text-accent" aria-hidden />
+                        <Mail size={13} strokeWidth={1.5} className="shrink-0 text-ink" aria-hidden />
                         <span className="truncate">{person.email}</span>
                       </a>
                     )}
@@ -311,10 +311,7 @@ export default async function SalesTeamSection() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="sales-chat flex h-11 flex-1 items-center justify-center gap-2 rounded-[4px]
-                          bg-[#25D366] text-[11px] font-medium tracking-[0.18em] text-white uppercase
-                          transition-[background-color,box-shadow] duration-300 hover:bg-[#1ebe5d]
-                          hover:shadow-[0_12px_26px_-10px_rgba(37,211,102,0.8)]"
+                      className="sales-chat btn-whatsapp flex h-11 flex-1 gap-2 text-[11px] font-medium tracking-[0.18em] uppercase"
                     >
                       <WhatsAppGlyph size={15} className="sales-chat-icon" />
                       {t("chat")}

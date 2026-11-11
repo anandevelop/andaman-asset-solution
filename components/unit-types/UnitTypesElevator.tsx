@@ -228,12 +228,12 @@ export default function UnitTypesElevator({
   return (
     <section
       id="unit-types"
-      className="scroll-mt-24 bg-[#041d2c] py-14 text-white sm:py-20"
+      className="scroll-mt-24 bg-surface-raised py-14 text-ink sm:py-20"
     >
       <div ref={host} className="container-luxe @container">
-        <p className="eyebrow text-accent">{labels.eyebrow}</p>
-        <h2 className="mt-2.5 text-2xl font-light text-white sm:text-3xl">{type.title}</h2>
-        <p className="mt-2 text-[13px] text-white/55">{type.subtitle}</p>
+        <p className="eyebrow text-ink">{labels.eyebrow}</p>
+        <h2 className="mt-2.5 text-2xl font-light text-ink sm:text-3xl">{type.title}</h2>
+        <p className="mt-2 text-[13px] text-ink-muted">{type.subtitle}</p>
 
         <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
         {/* Type chips — pointless with a single type. */}
@@ -247,12 +247,12 @@ export default function UnitTypesElevator({
                 aria-pressed={index === typeIndex}
                 className={`rounded-xs border px-3.5 py-2 text-left transition-colors ${
                   index === typeIndex
-                    ? "border-accent shadow-[inset_0_-2px_0_var(--color-accent)]"
-                    : "border-[#c3d3dd]/25 hover:border-accent/60"
+                    ? "border-gold shadow-[inset_0_-2px_0_var(--color-gold)]"
+                    : "border-ink/25 hover:border-gold"
                 }`}
               >
-                <b className="block text-[13px] font-medium text-white">{candidate.name}</b>
-                <span className="mt-0.5 block text-[11px] text-white/55">
+                <b className="block text-[13px] font-medium text-ink">{candidate.name}</b>
+                <span className="mt-0.5 block text-[11px] text-ink-muted">
                   {candidate.chipMeta}
                 </span>
               </button>
@@ -266,7 +266,7 @@ export default function UnitTypesElevator({
           <div
             role="group"
             aria-label={labels.viewMode}
-            className="inline-flex rounded-xs border border-[#c3d3dd]/25 p-0.5"
+            className="inline-flex rounded-full border border-white/70 bg-white/60 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150"
           >
             {(["plan", "3d"] as const).map((value) => (
               <button
@@ -278,8 +278,10 @@ export default function UnitTypesElevator({
                   setRoom3d(null);
                   closeRoom();
                 }}
-                className={`rounded-xs px-3.5 py-1.5 text-[12.5px] transition-colors ${
-                  mode === value ? "bg-accent font-medium text-[#062a41]" : "text-white/65 hover:text-white"
+                className={`rounded-full px-4 py-1.5 text-[12.5px] transition-colors ${
+                  mode === value
+                    ? "bg-gold-100 font-medium text-ink ring-1 ring-gold"
+                    : "text-ink-muted hover:text-ink"
                 }`}
               >
                 {value === "plan" ? labels.viewPlan : labels.view3d}
@@ -291,16 +293,15 @@ export default function UnitTypesElevator({
 
         {/* ── The board ───────────────────────────────────────────── */}
         <div
-          className="relative mt-6 grid grid-cols-1 border border-[#c3d3dd]/20 @min-[1000px]:grid-cols-[80px_1fr_260px]"
+          className="relative mt-6 grid grid-cols-1 overflow-hidden rounded-2xl border border-ink/10 shadow-card @min-[1000px]:grid-cols-[80px_1fr_280px]"
           style={{
-            /* Two grids, not one: the 40px major lines read as a drawing
-               board, and the 8px minor ones are what make it read as
-               *squared paper* rather than a table. */
+            /* One faint 40px grid. The 8px minor grid that sat under it
+               made dark-on-white read as graph paper and fought the
+               drawing; on a white board the major lines are enough to say
+               "plan". */
             background:
-              "linear-gradient(rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
-              "linear-gradient(90deg,rgba(195,211,221,.06) 1px,transparent 1px) 0 0/40px 40px," +
-              "linear-gradient(rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px," +
-              "linear-gradient(90deg,rgba(195,211,221,.03) 1px,transparent 1px) 0 0/8px 8px,#062a41",
+              "linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px) 0 0/40px 40px," +
+              "linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px) 0 0/40px 40px,#ffffff",
           }}
         >
           <LiftPanel
@@ -341,7 +342,7 @@ export default function UnitTypesElevator({
             {/* A drawing of a building carries its orientation. */}
             <span
               aria-hidden
-              className="absolute right-5 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-[#c3d3dd]/35 font-mono text-[10px] font-medium text-[#c3d3dd]/80"
+              className="absolute right-5 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-ink/35 font-mono text-[10px] font-medium text-ink-muted"
             >
               N
             </span>
@@ -367,7 +368,7 @@ export default function UnitTypesElevator({
           {/* Mono for the keys and the schedule, Roboto for the values — the
               mockup's .tb .v. With the values in mono too, "Ground Floor"
               and 178.09 read as code rather than as a drawing's title block. */}
-          <div className="border-t border-[#c3d3dd]/15 font-mono @min-[1000px]:border-l @min-[1000px]:border-t-0">
+          <div className="border-t border-ink/10 bg-white/80 font-sans @min-[1000px]:border-l @min-[1000px]:border-t-0">
             <Row label={labels.project} value={projectName} />
 
             <div className="grid grid-cols-3">
@@ -379,19 +380,19 @@ export default function UnitTypesElevator({
             <Row label={labels.floor} value={floor.name} />
 
             {show3d && (
-              <div className="border-b border-[#c3d3dd]/15 bg-accent/5 px-4 py-2.5">
+              <div className="border-b border-ink/15 bg-gold-100/60 px-4 py-2.5">
                 <Key>
                   {room3d
                     ? `${labels.room} ${String(pickedIndex >= 0 ? pickedIndex + 1 : room3d.n).padStart(2, "0")}`
                     : labels.room}
                 </Key>
-                <div className="mt-1 font-sans text-[13.5px] text-white">
+                <div className="mt-1 font-sans text-[13.5px] text-ink">
                   {/* The admin's name for the room — so all four languages —
                       and the model's own only when no room matches. */}
                   {room3d ? (picked?.name ?? room3d.name) : labels.tapRoom3d}
                 </div>
                 {room3d && (
-                  <div className="mt-0.5 text-[10.5px] text-white/50">
+                  <div className="mt-0.5 text-[10.5px] text-ink-muted">
                     {picked?.areaLabel ?? room3d.sqm.toFixed(2)} {labels.sqm} ·{" "}
                     {room3d.share.toFixed(1)}% {labels.ofFloor}
                   </div>
@@ -399,12 +400,12 @@ export default function UnitTypesElevator({
               </div>
             )}
 
-            <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
+            <div className="border-b border-ink/15 px-4 py-2.5">
               <Key>{labels.areaThisFloor}</Key>
-              <div className="mt-1 font-sans text-[28px] font-extralight leading-none text-white">
+              <div className="mt-1 font-sans text-[28px] font-extralight leading-none text-ink">
                 {floor.areaLabel ?? "—"}
                 {floor.areaLabel && (
-                  <small className="ml-1 text-[11px] text-white/50">{labels.sqm}</small>
+                  <small className="ml-1 text-[11px] text-ink-muted">{labels.sqm}</small>
                 )}
               </div>
             </div>
@@ -415,13 +416,13 @@ export default function UnitTypesElevator({
                 {floors.map((candidate, index) => (
                   <div
                     key={candidate.id}
-                    className={`flex items-center gap-2 font-mono text-[10.5px] transition-colors ${
-                      index === floorIndex ? "text-white" : "text-white/55"
+                    className={`flex items-center gap-2 font-sans text-xs tabular-nums transition-colors ${
+                      index === floorIndex ? "text-ink" : "text-ink-muted"
                     }`}
                   >
                     <b
                       className={`h-2.5 transition-[background-color,width] duration-700 ${
-                        index === floorIndex ? "bg-accent" : "bg-[#c3d3dd]/20"
+                        index === floorIndex ? "bg-gold" : "bg-ink/15"
                       }`}
                       style={{ width: `${Math.max(candidate.areaRatio * 130, 4)}px` }}
                     />
@@ -435,7 +436,7 @@ export default function UnitTypesElevator({
                   <div className="mt-3">
                     <Key>{labels.total}</Key>
                   </div>
-                  <div className="mt-1 font-sans text-[13.5px] text-white">
+                  <div className="mt-1 font-sans text-[13.5px] text-ink">
                     {type.totalAreaLabel} {labels.sqm}
                   </div>
                 </>
@@ -482,7 +483,7 @@ export default function UnitTypesElevator({
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#c3d3dd]/55">
+    <div className="font-sans text-[10.5px] font-medium uppercase tracking-[0.12em] text-ink-muted">
       {children}
     </div>
   );
@@ -490,9 +491,9 @@ function Key({ children }: { children: React.ReactNode }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-[#c3d3dd]/15 px-4 py-2.5">
+    <div className="border-b border-ink/15 px-4 py-2.5">
       <Key>{label}</Key>
-      <div className="mt-1 font-sans text-[13.5px] text-white">{value}</div>
+      <div className="mt-1 font-sans text-[13.5px] text-ink">{value}</div>
     </div>
   );
 }
@@ -500,12 +501,12 @@ function Row({ label, value }: { label: string; value: string }) {
 function Cell({ label, value, bordered }: { label: string; value: string; bordered?: boolean }) {
   return (
     <div
-      className={`border-b border-[#c3d3dd]/15 px-4 py-2.5 ${
-        bordered ? "border-l border-l-[#c3d3dd]/15" : ""
+      className={`border-b border-ink/15 px-4 py-2.5 ${
+        bordered ? "border-l border-l-ink/15" : ""
       }`}
     >
       <Key>{label}</Key>
-      <div className="mt-1 font-sans text-[13.5px] text-white">{value}</div>
+      <div className="mt-1 font-sans text-[13.5px] text-ink">{value}</div>
     </div>
   );
 }
@@ -523,22 +524,22 @@ function ScheduleRow({
 }) {
   const content = (
     <>
-      <span className="text-accent">{String(index + 1).padStart(2, "0")}</span>
+      <span className="text-ink">{String(index + 1).padStart(2, "0")}</span>
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="truncate">{room.name}</span>
         {/* Says "this one opens a photo" before anybody has to hover. */}
-        {room.photoUrl && <ImageIcon size={11} aria-hidden className="shrink-0 text-accent/80" />}
+        {room.photoUrl && <ImageIcon size={11} aria-hidden className="shrink-0 text-ink" />}
       </span>
-      <b className="font-normal text-white">{room.areaLabel ?? "—"}</b>
+      <b className="font-normal text-ink">{room.areaLabel ?? "—"}</b>
     </>
   );
 
   const shell =
-    "grid w-full grid-cols-[24px_1fr_auto] gap-1.5 border-b border-dashed border-[#c3d3dd]/12 py-[3px] text-left font-mono text-[10.5px]";
+    "grid w-full grid-cols-[24px_1fr_auto] gap-2 border-b border-ink/8 py-1.5 text-left font-sans text-[12.5px] tabular-nums";
 
   if (!room.photoUrl) {
     // `open` without a photo is the room tapped in the 3D view.
-    return <li className={`${shell} ${open ? "text-accent" : "text-white/75"}`}>{content}</li>;
+    return <li className={`${shell} ${open ? "font-medium text-ink" : "text-ink-muted"}`}>{content}</li>;
   }
 
   return (
@@ -549,7 +550,7 @@ function ScheduleRow({
         data-room-id={room.id}
         aria-expanded={open}
         onClick={(event) => onOpen(event.currentTarget)}
-        className={`${shell} transition-colors ${open ? "text-white" : "text-white/75 hover:text-white"}`}
+        className={`${shell} transition-colors ${open ? "text-ink" : "text-ink-muted hover:text-ink"}`}
       >
         {content}
       </button>

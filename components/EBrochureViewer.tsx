@@ -82,7 +82,7 @@ const IN_PAGE_HEIGHT_SHARE = 0.8;
 const IN_PAGE_HEIGHT_CAP_REM = 46;
 
 const TOOLBAR_BUTTON =
-  "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40";
+  "flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40";
 
 /** Zoom buttons must be children of TransformWrapper — useControls needs it. */
 function ZoomControls({ t }: { t: Translate }) {
@@ -144,6 +144,8 @@ export default function EBrochureViewer({ fileUrl }: Props) {
   const [portraitScreen, setPortraitScreen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  /** The viewer was the last thing clicked or focused — see the keyboard effect. */
+  const usingViewerRef = useRef(false);
   const chromeRef = useRef<HTMLDivElement>(null);
   const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
   const flipHandle = useRef<FlipbookHandle | null>(null);
@@ -459,6 +461,15 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       const target = event.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
 
+      // The arrows turn pages from anywhere on the page, as before. PageUp/
+      // PageDown/Home/End are how a keyboard user scrolls the page itself,
+      // so those only turn pages in fullscreen or once the viewer was the
+      // last thing clicked or focused — otherwise the whole brochure page
+      // could not be scrolled. (Last-used rather than "has focus": End on
+      // the Next button disables it, and the browser drops focus to body.)
+      const owned = isFullscreen || usingViewerRef.current;
+      if (!owned && /^(PageUp|PageDown|Home|End)$/.test(event.key)) return;
+
       switch (event.key) {
         case "ArrowRight":
         case "PageDown":
@@ -484,9 +495,20 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       event.preventDefault();
     }
 
+    // Which part of the page the visitor last used: the viewer or not.
+    function onUse(event: Event) {
+      usingViewerRef.current = !!containerRef.current?.contains(event.target as Node);
+    }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [status, next, previous, goTo, pageCount, showThumbnails]);
+    document.addEventListener("pointerdown", onUse, true);
+    document.addEventListener("focusin", onUse, true);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onUse, true);
+      document.removeEventListener("focusin", onUse, true);
+    };
+  }, [status, next, previous, goTo, pageCount, showThumbnails, isFullscreen]);
 
   const pageLabel = useCallback(
     (index: number) => t("goToPage", { page: index + 1 }),
@@ -504,7 +526,7 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       download
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 rounded-xs border border-primary/15 bg-white px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+      className="btn-glass px-4 py-2 text-sm font-medium"
     >
       <FileDown size={16} aria-hidden />
       {t("download")}
@@ -737,7 +759,7 @@ export default function EBrochureViewer({ fileUrl }: Props) {
                       className={`flex h-16 w-12 shrink-0 items-center justify-center rounded-xs border text-xs tabular-nums transition-colors ${
                         index === currentIndex
                           ? "border-accent-700 bg-accent/10 text-accent-800"
-                          : "border-primary/10 bg-white text-ink-muted hover:bg-primary/5"
+                          : "border-primary/10 bg-white text-ink-muted hover:bg-surface-muted"
                       }`}
                     >
                       {index + 1}

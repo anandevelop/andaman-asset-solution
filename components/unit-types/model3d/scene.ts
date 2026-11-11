@@ -18,9 +18,11 @@ import type { BuildHelpers, FloorDef, ProjectDef, RoomDef, Seg, TypeDef, ViewNam
 
 const FH = 3.6; // floor-to-floor (m)
 const WH = 3.2; // wall height (m)
+// Black-and-white theme: charcoal floors, pale grey walls, gold for the
+// room you pick. Water keeps a muted blue so a pool still reads as a pool.
 const C = {
-  slab: 0x1c3c5e, out: 0x1a3550, park: 0x152f4a, green: 0x1d4a45, wall: 0x9fb1c4,
-  edge: 0xb9cadb, faint: 0x5f7d9b, gold: 0xe8b98a, water: 0x3f8ec2, glass: 0x8fc3e6, poolEdge: 0x7fb6dd,
+  slab: 0x1f1f1f, out: 0x2b2b2b, park: 0x171717, green: 0x27322a, wall: 0xc4c4c4,
+  edge: 0xdedede, faint: 0x737373, gold: 0xcfa75f, water: 0x4f8fa8, glass: 0xd2dadd, poolEdge: 0xa7c4cf,
 };
 const WALL_SCALE = [1, 1.1 / WH, 0]; // Full · Cutaway · Off
 
@@ -61,7 +63,7 @@ export class UnitScene {
   // shared materials
   private wallMat = new THREE.MeshStandardMaterial({ color: C.wall, roughness: 0.85 });
   private glassMat = new THREE.MeshStandardMaterial({ color: C.glass, transparent: true, opacity: 0.12, depthWrite: false });
-  private furnMat = solid(0x24476b, 0.6);
+  private furnMat = solid(0x3a3a3a, 0.6);
 
   // current pixel → metre mapping while building
   private S = 1 / 50; private OX = 0; private OY = 0; private cur: THREE.Object3D = this.scene;
@@ -95,7 +97,7 @@ export class UnitScene {
     this.controls.minDistance = 5;
     this.controls.maxDistance = 140;
 
-    this.scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x0e2236, 1.5));
+    this.scene.add(new THREE.HemisphereLight(0xf2f2f2, 0x111111, 1.5));
     const sun = new THREE.DirectionalLight(0xffffff, 1.4);
     sun.position.set(-18, 34, 22);
     sun.castShadow = true;
@@ -299,7 +301,7 @@ export class UnitScene {
         const segs: Seg[] = [[868, 575, 1018, 575], [868, 575, 868, 695], [1018, 575, 1018, 695]];
         for (const [a, b, c, d] of segs) {
           const hz = b === d;
-          const m = this.box(hz ? a : a - 6, hz ? b - 6 : b, hz ? c : a + 6, hz ? b + 6 : d, 0, WH, solid(0x3d5570));
+          const m = this.box(hz ? a : a - 6, hz ? b - 6 : b, hz ? c : a + 6, hz ? b + 6 : d, 0, WH, solid(0x4a4a4a));
           this.edges(m, C.edge, 0.9);
         }
         if (cab) F(885, 590, 1000, 680, 0.1, 2.4);

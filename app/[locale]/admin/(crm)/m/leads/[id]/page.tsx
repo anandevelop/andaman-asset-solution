@@ -19,6 +19,7 @@ import { getTranslations } from "next-intl/server";
 import { CalendarPlus, Mail, Phone } from "lucide-react";
 import { LeadStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isLeadVisibleTo } from "@/lib/leads-board";
 import { DatabaseUnavailableError, isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
@@ -71,7 +72,9 @@ export default async function MobileLeadDetailPage(props: Props) {
 
   // Same not-found-not-forbidden rule as the desktop detail page — see
   // that page's file header for why.
-  if (session.role === Role.SALES && lead.assignedToId && lead.assignedToId !== session.id) {
+  // Same rule as the desktop page and the board: SALES pool plus the
+  // account's project scope.
+  if (!(await isLeadVisibleTo(session, lead.id))) {
     notFound();
   }
 

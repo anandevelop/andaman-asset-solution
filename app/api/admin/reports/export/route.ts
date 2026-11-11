@@ -44,7 +44,14 @@ export const dynamic = "force-dynamic";
 const RATE_LIMIT = { limit: 3, windowMs: 60_000 };
 
 export async function GET(request: Request) {
-  const session = await requireAdminAction(Role.ADMIN);
+  // Caught like every other admin export: an anonymous, EDITOR or
+  // 2FA-pending request is a 403, not an unhandled 500.
+  let session;
+  try {
+    session = await requireAdminAction(Role.ADMIN);
+  } catch {
+    return NextResponse.json({ error: "UNAUTHORISED" }, { status: 403 });
+  }
 
   if (
     !rateLimit(

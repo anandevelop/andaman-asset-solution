@@ -260,10 +260,13 @@ export default async function HomePage(props: Props) {
 
     WHY_US: () =>
       whyUsPoints.length > 0 && (
-        <section className="bg-primary-900/3 py-20 sm:py-28">
+        <section className="bg-primary/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
-              <p className="eyebrow">{t("why.eyebrow")}</p>
+              <p className="eyebrow flex items-center gap-3">
+                <span aria-hidden className="h-px w-8 bg-gold" />
+                {t("why.eyebrow")}
+              </p>
               <h2 className="mt-3 max-w-2xl text-3xl font-light text-primary sm:text-4xl">
                 {t("why.title")}
               </h2>
@@ -272,19 +275,18 @@ export default async function HomePage(props: Props) {
               </p>
             </Reveal>
 
-            <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-xs border border-primary/10 bg-primary/10 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {whyUsPoints.map((point, index) => {
                 const Icon = WHY_US_ICONS[point.icon];
 
                 return (
                   <Reveal key={point.id} delay={index * 0.08}>
-                    <div className="flex h-full flex-col bg-white p-7">
-                      <Icon
-                        size={24}
-                        strokeWidth={1.5}
-                        className="text-accent-700"
-                        aria-hidden
-                      />
+                    {/* Frosted cards with air between them, as in Vision &
+                        Mission; the icon sits on a gold disc. */}
+                    <div className="flex h-full flex-col rounded-3xl border border-white/70 bg-white/60 p-7 shadow-[0_0_0_1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.95),0_18px_40px_-22px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150 transition-transform duration-500 hover:-translate-y-1">
+                      <span className="grid h-12 w-12 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold">
+                        <Icon size={22} strokeWidth={1.5} aria-hidden />
+                      </span>
                       <h3 className="mt-5 text-base font-medium text-primary">
                         {point.title}
                       </h3>
@@ -374,7 +376,10 @@ export default async function HomePage(props: Props) {
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
-                <p className="eyebrow">{t("news.eyebrow")}</p>
+                <p className="eyebrow flex items-center gap-3">
+                  <span aria-hidden className="h-px w-8 bg-gold" />
+                  {t("news.eyebrow")}
+                </p>
                 <h2 className="mt-3 text-3xl font-light text-primary sm:text-4xl">
                   {t("news.title")}
                 </h2>
@@ -382,10 +387,12 @@ export default async function HomePage(props: Props) {
 
               <Link
                 href={`/${locale}/news`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent-700 transition-colors hover:text-accent-800"
+                className="group/all inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink"
               >
                 {t("news.viewAll")}
-                <ArrowRight size={14} aria-hidden />
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-100 ring-1 ring-gold transition-all duration-300 group-hover/all:translate-x-1 group-hover/all:bg-gold">
+                  <ArrowRight size={14} aria-hidden />
+                </span>
               </Link>
             </div>
 
@@ -397,7 +404,7 @@ export default async function HomePage(props: Props) {
                 <EditableItem href={ITEM_EDIT_HREF.article(article.id)}>
                 <Link
                   href={`/${locale}/news/${article.slug}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-xs border border-primary/10 bg-white shadow-card transition-shadow hover:shadow-lg"
+                  className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-ink/5 transition-all duration-500 hover:-translate-y-1 hover:shadow-cardHover"
                 >
                   <div className="relative aspect-16/10 w-full overflow-hidden bg-primary/5">
                     {article.coverImageUrl && (
@@ -409,26 +416,40 @@ export default async function HomePage(props: Props) {
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     )}
+                    {/* The category rides on the photo as a frosted pill,
+                        like the status chip on a project card. */}
+                    {article.category && (
+                      <span className="absolute left-4 top-4 rounded-full bg-white/75 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-8px_rgba(0,0,0,0.35)] ring-1 ring-white/80 backdrop-blur-md backdrop-saturate-150">
+                        {article.category}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink/65">
-                      {article.category && (
-                        <span className="text-accent-700">{article.category}</span>
-                      )}
-                      {article.publishedAt && (
-                        <time dateTime={article.publishedAt.toISOString()}>
-                          {shortDate.format(article.publishedAt)}
-                        </time>
-                      )}
-                    </div>
-
-                    <h3 className="mt-2 text-lg font-light leading-snug text-primary">
+                  <div className="flex flex-1 flex-col p-6 sm:p-7">
+                    <h3 className="text-lg font-light leading-snug text-primary">
                       {article.title}
                     </h3>
                     <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink/70">
                       {article.excerpt}
                     </p>
+
+                    {/* Date on the left, the card's one gold mark on the
+                        right — the same footer as a project card. */}
+                    <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+                      {article.publishedAt ? (
+                        <time
+                          dateTime={article.publishedAt.toISOString()}
+                          className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-muted"
+                        >
+                          {shortDate.format(article.publishedAt)}
+                        </time>
+                      ) : (
+                        <span />
+                      )}
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold">
+                        <ArrowRight size={14} aria-hidden />
+                      </span>
+                    </div>
                   </div>
                 </Link>
                 </EditableItem>

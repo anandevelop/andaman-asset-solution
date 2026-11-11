@@ -19,10 +19,11 @@
  * fetch — see that function's own comment.
  */
 
-import { ContentStatus, LeadStatus } from "@prisma/client";
+import { ContentStatus, LeadStatus, type Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { getMyAppointmentsToday } from "@/lib/appointments";
+import { leadScopeWhere } from "@/lib/leads-board";
 
 export type AdminNavCounts = {
   /** Unassigned leads that are not yet won or lost — needs an owner. */
@@ -54,9 +55,13 @@ export type ReviewQueueBreakdown = {
  */
 export async function getReviewQueueBreakdown(): Promise<ReviewQueueBreakdown> {
   const where = { contentStatus: ContentStatus.IN_REVIEW } as const;
+  // Projects and articles are soft-deleted and keep their IN_REVIEW status;
+  // the publishing queue filters them out, so the badge must too. (Events
+  // and brochures have no deletedAt.)
+  const live = { ...where, deletedAt: null } as const;
   const [project, news, event, brochure] = await Promise.all([
-    safeQuery("adminNav:reviewQueue:project", () => prisma.project.count({ where }), 0),
-    safeQuery("adminNav:reviewQueue:news", () => prisma.newsArticle.count({ where }), 0),
+    safeQuery("adminNav:reviewQueue:project", () => prisma.project.count({ where: live }), 0),
+    safeQuery("adminNav:reviewQueue:news", () => prisma.newsArticle.count({ where: live }), 0),
     safeQuery("adminNav:reviewQueue:event", () => prisma.event.count({ where }), 0),
     safeQuery("adminNav:reviewQueue:brochure", () => prisma.eBrochure.count({ where }), 0),
   ]);
@@ -64,13 +69,19 @@ export async function getReviewQueueBreakdown(): Promise<ReviewQueueBreakdown> {
   return { project, news, event, brochure, total: project + news + event + brochure };
 }
 
-export async function getAdminNavCounts(userId: string): Promise<AdminNavCounts> {
+export async function getAdminNavCounts(user: { id: string; role: Role }): Promise<AdminNavCounts> {
+  const userId = user.id;
+  // Same scope as /admin/leads, so the badge never counts leads this
+  // account cannot open.
+  const scope = await leadScopeWhere(user);
   const [newLeads, appointmentsToday, reviewQueue] = await Promise.all([
     safeQuery(
       "adminNav:newLeads",
       () =>
         prisma.leadInquiry.count({
-          where: { assignedToId: null, status: { notIn: CLOSED_LEAD_STATUSES } },
+          where: {
+            AND: [{ assignedToId: null, status: { notIn: CLOSED_LEAD_STATUSES } }, ...(scope ? [scope] : [])],
+          },
         }),
       0,
     ),

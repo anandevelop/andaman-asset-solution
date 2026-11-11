@@ -50,10 +50,10 @@ import { formatNumber } from "@/lib/format";
  * clears 5:1 contrast at minimum.
  */
 const STATUS_TONE: Record<string, string> = {
-  UPCOMING: "bg-primary-800 text-white",
-  UNDER_CONSTRUCTION: "bg-primary-800 text-white",
-  READY_TO_MOVE_IN: "bg-emerald-700 text-white",
-  SOLD_OUT: "bg-ink text-white",
+  UPCOMING: "bg-white/75 text-ink ring-1 ring-white/80",
+  UNDER_CONSTRUCTION: "bg-gold-100/90 text-ink ring-1 ring-gold",
+  READY_TO_MOVE_IN: "bg-white/85 text-ink ring-1 ring-ink",
+  SOLD_OUT: "bg-surface-muted/90 text-ink-muted ring-1 ring-ink/20 line-through",
 };
 
 const SIGNAL_ICON = {
@@ -116,7 +116,7 @@ export default function FeaturedProjectCard({
   return (
     <Link
       href={`/${locale}/projects/${project.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-xs bg-white shadow-card transition-shadow hover:shadow-lg"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-ink/5 transition-all duration-500 hover:-translate-y-1 hover:shadow-cardHover"
     >
       <div className="relative aspect-4/3 w-full overflow-hidden bg-primary/5">
         {project.heroImageUrl && (
@@ -132,7 +132,7 @@ export default function FeaturedProjectCard({
         )}
 
         <span
-          className={`absolute left-4 top-4 rounded-xs px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] shadow-xs ${
+          className={`absolute left-4 top-4 rounded-full px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md backdrop-saturate-150 ${
             STATUS_TONE[project.status] ?? "bg-white text-ink"
           }`}
         >
@@ -140,14 +140,14 @@ export default function FeaturedProjectCard({
         </span>
 
         {labels.signal && SignalIcon && (
-          <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-xs bg-primary-900/80 px-3 py-1.5 text-[11px] font-light text-white backdrop-blur-xs">
+          <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/65 px-3.5 py-1.5 text-[11px] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-8px_rgba(0,0,0,0.35)] ring-1 ring-white/70 backdrop-blur-md backdrop-saturate-150">
             <SignalIcon size={13} strokeWidth={1.5} aria-hidden />
             {labels.signal}
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
         <p className="flex items-center gap-1.5 text-xs text-ink/65">
           <MapPin size={12} aria-hidden /> {project.location}
         </p>
@@ -165,20 +165,20 @@ export default function FeaturedProjectCard({
           <dl className="mt-5 grid grid-cols-3 gap-x-4 border-t border-primary/10 pb-5 pt-5">
             {specs.map((spec) => (
               <div key={spec.key}>
-                <dt className="text-xs text-ink/60">{spec.label}</dt>
+                <dt className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-muted">{spec.label}</dt>
                 <dd className="mt-1 text-base font-light text-primary">{spec.value}</dd>
               </div>
             ))}
           </dl>
         )}
 
-        <span className="mt-auto inline-flex items-center gap-2 border-t border-primary/10 pt-6 text-xs font-medium uppercase tracking-[0.14em] text-accent-700">
+        <span className="mt-auto flex items-center justify-between gap-3 border-t border-primary/10 pt-5 text-xs font-medium uppercase tracking-[0.14em] text-ink">
           {labels.cta}
-          <ArrowRight
-            size={14}
-            className="transition-transform group-hover:translate-x-1"
-            aria-hidden
-          />
+          {/* The one gold mark on the card: a round arrow that slides on
+              hover, echoing the gold rules elsewhere on the site. */}
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold">
+            <ArrowRight size={14} aria-hidden />
+          </span>
         </span>
       </div>
     </Link>

@@ -199,8 +199,8 @@ export default async function AchievementsPage(props: Props) {
                   sizes="100vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-primary-900/75 via-primary-900/10 to-transparent" />
-                <p className="absolute bottom-4 left-4 text-xs text-white/85 sm:bottom-6 sm:left-6 sm:text-sm">
+                <div className="absolute inset-0 bg-linear-to-t from-white/85 via-white/20 to-transparent" />
+                <p className="absolute bottom-4 left-4 text-xs text-ink sm:bottom-6 sm:left-6 sm:text-sm">
                   {t("heroCaption")}
                 </p>
               </div>
@@ -289,7 +289,7 @@ export default async function AchievementsPage(props: Props) {
           {/* ── Corporate Awards ─────────────────────────────────────── */}
           {corporateAwards.length > 0 && (
             <EditableSection links={ACHIEVEMENTS_SECTION_LINKS.awards}>
-            <section className="bg-primary-900/3 py-20 sm:py-28">
+            <section className="bg-surface-raised/3 py-20 sm:py-28">
               <div className="container-luxe">
                 <Reveal>
                   <h2 className="text-xl font-medium text-primary sm:text-2xl">

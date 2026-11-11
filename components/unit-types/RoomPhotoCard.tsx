@@ -173,7 +173,7 @@ export default function RoomPhotoCard({
         through the data attribute the same function sets.
       */
       style={{ left: 0, top: 0, visibility: "hidden" }}
-      className="fixed z-60 w-80 overflow-visible rounded-xs border border-accent/30 bg-[#062538] shadow-[0_30px_70px_-20px_rgba(0,0,0,.7)] data-[sheet=true]:inset-x-3 data-[sheet=true]:bottom-3 data-[sheet=true]:top-auto data-[sheet=true]:w-auto data-[sheet=true]:visible"
+      className="fixed z-60 w-80 overflow-visible rounded-xs border border-accent/30 bg-surface-raised shadow-[0_30px_70px_-20px_rgba(0,0,0,.7)] data-[sheet=true]:inset-x-3 data-[sheet=true]:bottom-3 data-[sheet=true]:top-auto data-[sheet=true]:w-auto data-[sheet=true]:visible"
     >
       <RoomPhoto
         // Keyed by the photo, so stepping to the next room mounts a fresh
@@ -189,45 +189,45 @@ export default function RoomPhotoCard({
           type="button"
           onClick={onClose}
           aria-label={labels.close}
-          className="absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center rounded-full border border-white/25 bg-[#041d2c]/60 text-lg font-light text-white backdrop-blur-sm transition-colors hover:bg-[#041d2c]/85"
+          className="absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center rounded-full border border-ink/25 bg-surface-raised/60 text-lg font-light text-ink backdrop-blur-sm transition-colors hover:bg-surface-muted"
         >
           ×
         </button>
       </RoomPhoto>
 
       <div className="px-4 pb-3 pt-3.5">
-        <p className="mb-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-accent">
+        <p className="mb-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-ink">
           {context}
         </p>
 
         <div className="flex items-baseline justify-between gap-3">
-          <b className="text-[21px] font-light leading-tight text-white">{room.name}</b>
+          <b className="text-[21px] font-light leading-tight text-ink">{room.name}</b>
           {room.areaLabel && (
-            <span className="whitespace-nowrap text-base font-light text-white">
+            <span className="whitespace-nowrap text-base font-light text-ink">
               {room.areaLabel}
-              <small className="ml-1 text-[11px] text-white/50">{labels.sqm}</small>
+              <small className="ml-1 text-[11px] text-ink-muted">{labels.sqm}</small>
             </span>
           )}
         </div>
 
         {total > 1 && (
-          <div className="mt-3 flex items-center justify-between border-t border-[#c3d3dd]/15 pt-2.5">
+          <div className="mt-3 flex items-center justify-between border-t border-ink/15 pt-2.5">
             <button
               type="button"
               onClick={() => onStep(-1)}
               aria-label={labels.previousRoom}
-              className="grid h-7 w-7 place-items-center rounded-full border border-[#c3d3dd]/30 text-lg font-light text-white transition-colors hover:border-accent hover:bg-accent/15"
+              className="grid h-7 w-7 place-items-center rounded-full border border-ink/30 text-lg font-light text-ink transition-colors hover:border-accent hover:bg-accent/15"
             >
               ‹
             </button>
-            <span className="font-mono text-[11px] tracking-[0.14em] text-white/50">
+            <span className="font-mono text-[11px] tracking-[0.14em] text-ink-muted">
               {index + 1} / {total}
             </span>
             <button
               type="button"
               onClick={() => onStep(1)}
               aria-label={labels.nextRoom}
-              className="grid h-7 w-7 place-items-center rounded-full border border-[#c3d3dd]/30 text-lg font-light text-white transition-colors hover:border-accent hover:bg-accent/15"
+              className="grid h-7 w-7 place-items-center rounded-full border border-ink/30 text-lg font-light text-ink transition-colors hover:border-accent hover:bg-accent/15"
             >
               ›
             </button>
@@ -240,7 +240,7 @@ export default function RoomPhotoCard({
       <i
         ref={caretRef}
         aria-hidden
-        className="absolute top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border border-l-0 border-t-0 border-accent/30 bg-[#062538] data-[hidden=true]:hidden [[data-below='true']_&]:bottom-full [[data-below='true']_&]:top-auto [[data-below='true']_&]:translate-y-1.5 [[data-below='true']_&]:border-l [[data-below='true']_&]:border-t [[data-below='true']_&]:border-b-0 [[data-below='true']_&]:border-r-0 [[data-sheet='true']_&]:hidden"
+        className="absolute top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border border-l-0 border-t-0 border-accent/30 bg-[#0a0a0a] data-[hidden=true]:hidden [[data-below='true']_&]:bottom-full [[data-below='true']_&]:top-auto [[data-below='true']_&]:translate-y-1.5 [[data-below='true']_&]:border-l [[data-below='true']_&]:border-t [[data-below='true']_&]:border-b-0 [[data-below='true']_&]:border-r-0 [[data-sheet='true']_&]:hidden"
       />
     </div>
   );
@@ -267,7 +267,7 @@ function RoomPhoto({
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative aspect-16/10 overflow-hidden rounded-t-xs bg-[#041d2c]">
+    <div className="relative aspect-16/10 overflow-hidden rounded-t-xs bg-surface-raised">
       <Image
         src={src}
         alt={alt}
@@ -279,7 +279,7 @@ function RoomPhoto({
         }`}
       />
       {children}
-      <span className="pointer-events-none absolute bottom-2.5 left-2.5 rounded-xs bg-[#041d2c]/60 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-white backdrop-blur-sm">
+      <span className="pointer-events-none absolute bottom-2.5 left-2.5 rounded-xs bg-surface-raised/60 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-ink backdrop-blur-sm border border-ink">
         {badge}
       </span>
     </div>

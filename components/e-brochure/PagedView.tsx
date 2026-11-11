@@ -34,7 +34,7 @@ export default function PagedView({ pages, currentIndex, pageLabel }: Props) {
 
   return (
     <div
-      className="relative mx-auto w-full overflow-hidden rounded-xs bg-primary-900/4 shadow-card"
+      className="relative mx-auto w-full overflow-hidden rounded-xs bg-surface-raised/4 shadow-card"
       style={{
         aspectRatio: pages.aspectRatio,
         /*

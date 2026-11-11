@@ -15,6 +15,7 @@
  */
 
 import { useActionState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
@@ -97,12 +98,13 @@ export default function CorporateServiceForm({
 }: Props) {
   const t = useTranslations("admin");
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
 
   const err = (name: string) => state.fields?.[name] ?? null;
 
   return (
     <>
-      <form action={formAction} className="space-y-5">
+      <form ref={keepValues} action={formAction} className="space-y-5">
         <input type="hidden" name="locale" value={lang} />
 
         {state.ok && (

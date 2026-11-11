@@ -34,6 +34,13 @@
   --color-accent-800: #7a4a20;
   --color-accent: #e8b384;
 
+  /* The one colour in the black-and-white theme: used for fills, rules
+     and markers, never for text (it is ~2.7:1 on white). */
+  --color-gold-100: #f7efdc;
+  --color-gold-300: #e0c690;
+  --color-gold: #cfa75f;
+  --color-gold-700: #a8854a;
+
   --color-surface: #f9f9fa;
   --color-surface-raised: #ffffff;
   --color-surface-muted: #f0f1f3;
@@ -48,8 +55,8 @@
 
   --container-container: 1440px;
 
-  --shadow-card: 0 10px 40px -12px rgba(8, 53, 81, 0.18);
-  --shadow-cardHover: 0 20px 60px -16px rgba(8, 53, 81, 0.28);
+  --shadow-card: 0 10px 40px -12px rgba(0, 0, 0, 0.14);
+  --shadow-cardHover: 0 20px 60px -16px rgba(0, 0, 0, 0.22);
 
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-shimmer: shimmer 2.5s linear infinite;
@@ -72,6 +79,35 @@
       background-position: 200% 0;
     }
   }
+}
+
+/* Black-and-white theme, public site only. The back office and its login
+   mark themselves (data-admin-root / data-admin-login) and keep the navy and
+   gold tokens declared in @theme above. */
+:root:not(:has([data-admin-root], [data-admin-login])) {
+  --color-primary-50: #f2f2f2;
+  --color-primary-100: #e0e0e0;
+  --color-primary-200: #c2c2c2;
+  --color-primary-300: #9e9e9e;
+  --color-primary-400: #757575;
+  --color-primary-500: #545454;
+  --color-primary-600: #3b3b3b;
+  --color-primary-700: #262626;
+  --color-primary-800: #141414;
+  --color-primary-900: #050505;
+  --color-primary: #141414;
+  --color-accent-50: #f7f7f7;
+  --color-accent-100: #ebebeb;
+  --color-accent-200: #d6d6d6;
+  --color-accent-300: #bdbdbd;
+  --color-accent-400: #a8a8a8;
+  --color-accent-500: #8a8a8a;
+  --color-accent-600: #666666;
+  --color-accent-700: #4d4d4d;
+  --color-accent-800: #333333;
+  --color-accent: #a8a8a8;
+  --color-ink: #0a0a0a;
+  --color-ink-muted: #555555;
 }
 
 /*
@@ -180,15 +216,100 @@
 }
 
 @utility btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs bg-primary px-7 py-3.5
-      text-sm font-medium uppercase tracking-wide text-white transition-colors duration-300
-      hover:bg-primary-700 focus-visible:outline-accent;
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
 }
 
 @utility btn-outline {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-primary/25
-      bg-transparent px-7 py-3.5 text-sm font-medium uppercase tracking-wide text-primary
-      transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-white;
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
+}
+
+@utility btn-glass {
+  /* Liquid glass: a translucent, blurred and saturated pane with a bright
+     top edge, a faint lower edge and a soft drop, so it reads as a lens
+     over a photograph and still has an edge on a white section. Ink text,
+     never white. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 55%, rgba(255, 255, 255, 0.4) 100%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    inset 0 0 18px rgba(255, 255, 255, 0.35),
+    0 10px 30px -12px rgba(0, 0, 0, 0.35);
+  color: var(--color-ink);
+  transition:
+    background 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s;
+
+  &:hover {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.5) 55%, rgba(255, 255, 255, 0.62) 100%);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+      inset 0 0 18px rgba(255, 255, 255, 0.5),
+      0 14px 34px -12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@utility glass-bar {
+  /* The sticky navbar: frosted white so the page shows through as it
+     scrolls underneath, a hairline and a bright lip along the bottom. */
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 30px -18px rgba(0, 0, 0, 0.3);
+
+  @media (prefers-reduced-transparency: reduce) {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@utility btn-whatsapp {
+  /* WhatsApp's own green, with ink text (10:1) rather than white (2:1). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: #25d366;
+  color: var(--color-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 10px 24px -12px rgba(18, 140, 70, 0.7);
+  transition: background 0.3s;
+
+  &:hover,
+  &:active {
+    background: #1ebe5d;
+  }
 }
 
 @utility btn-hero {
@@ -201,10 +322,8 @@
      reads as restrained against any photo. Resolves to the same solid,
      obvious accent fill on hover/focus that .btn-primary gives, so the
      affordance doesn't get lost along with the boldness. */
-  @apply inline-flex items-center justify-center gap-2 rounded-xs border border-white/50
-      bg-white/10 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-white
-      backdrop-blur-md transition-all duration-300 hover:border-accent hover:bg-accent
-      hover:text-primary focus-visible:outline-accent;
+
+  @apply btn-glass px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em];
 }
 
 @utility hero-scrim {
@@ -250,11 +369,11 @@
        retuning further if copy legibility ever regresses. */
   background: linear-gradient(
     to top,
-    rgba(4, 29, 44, 0.55) 0%,
-    rgba(4, 29, 44, 0.42) 20%,
-    rgba(4, 29, 44, 0.24) 40%,
-    rgba(4, 29, 44, 0.06) 60%,
-    rgba(4, 29, 44, 0) 72%
+    rgba(255, 255, 255, 0.83) 0%,
+    rgba(255, 255, 255, 0.63) 20%,
+    rgba(255, 255, 255, 0.36) 40%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0.0) 72%
   );
 
   @media (min-width: 640px) {
@@ -264,9 +383,9 @@
     /* Lightened from 0.66/0.22 — see the mobile .hero-scrim comment above. */
     background: linear-gradient(
       to top,
-      rgba(4, 29, 44, 0.4) 0%,
-      rgba(4, 29, 44, 0.12) 11%,
-      rgba(4, 29, 44, 0) 22%
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.18) 11%,
+      rgba(255, 255, 255, 0.0) 22%
     );
   }
 }
@@ -280,12 +399,12 @@
        "the hero photo is too dark." Same shape, softer ramp. */
   background: radial-gradient(
     100% 155% at 0% 100%,
-    rgba(4, 29, 44, 0.62) 0%,
-    rgba(4, 29, 44, 0.5) 26%,
-    rgba(4, 29, 44, 0.32) 42%,
-    rgba(4, 29, 44, 0.14) 58%,
-    rgba(4, 29, 44, 0.02) 72%,
-    rgba(4, 29, 44, 0) 84%
+    rgba(255, 255, 255, 0.93) 0%,
+    rgba(255, 255, 255, 0.75) 26%,
+    rgba(255, 255, 255, 0.48) 42%,
+    rgba(255, 255, 255, 0.21) 58%,
+    rgba(255, 255, 255, 0.03) 72%,
+    rgba(255, 255, 255, 0.0) 84%
   );
 }
 
@@ -315,20 +434,20 @@
   background:
     linear-gradient(
       to bottom,
-      rgba(4, 29, 44, 0.3) 0%,
-      rgba(4, 29, 44, 0.14) 6%,
-      rgba(4, 29, 44, 0) 15%
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.21) 6%,
+      rgba(255, 255, 255, 0.0) 15%
     ),
     linear-gradient(
       to top,
-      rgba(4, 29, 44, 0.94) 0%,
-      rgba(4, 29, 44, 0.92) 14%,
-      rgba(4, 29, 44, 0.88) 28%,
-      rgba(4, 29, 44, 0.82) 42%,
-      rgba(4, 29, 44, 0.74) 52%,
-      rgba(4, 29, 44, 0.48) 64%,
-      rgba(4, 29, 44, 0.16) 76%,
-      rgba(4, 29, 44, 0) 88%
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.95) 14%,
+      rgba(255, 255, 255, 0.95) 28%,
+      rgba(255, 255, 255, 0.95) 42%,
+      rgba(255, 255, 255, 0.95) 52%,
+      rgba(255, 255, 255, 0.72) 64%,
+      rgba(255, 255, 255, 0.24) 76%,
+      rgba(255, 255, 255, 0.0) 88%
     );
 
   @media (min-width: 640px) {
@@ -344,24 +463,24 @@
     background:
       radial-gradient(
         ellipse 130% 162% at 0% 100%,
-        rgba(4, 29, 44, 0.94) 0%,
-        rgba(4, 29, 44, 0.88) 24%,
-        rgba(4, 29, 44, 0.7) 44%,
-        rgba(4, 29, 44, 0.36) 64%,
-        rgba(4, 29, 44, 0) 84%
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 255, 255, 0.95) 24%,
+        rgba(255, 255, 255, 0.95) 44%,
+        rgba(255, 255, 255, 0.54) 64%,
+        rgba(255, 255, 255, 0.0) 84%
       ),
       linear-gradient(
         to bottom,
-        rgba(4, 29, 44, 0.3) 0%,
-        rgba(4, 29, 44, 0.14) 7%,
-        rgba(4, 29, 44, 0) 17%
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.21) 7%,
+        rgba(255, 255, 255, 0.0) 17%
       ),
       linear-gradient(
         to top,
-        rgba(4, 29, 44, 0.56) 0%,
-        rgba(4, 29, 44, 0.36) 11%,
-        rgba(4, 29, 44, 0.14) 24%,
-        rgba(4, 29, 44, 0) 40%
+        rgba(255, 255, 255, 0.84) 0%,
+        rgba(255, 255, 255, 0.54) 11%,
+        rgba(255, 255, 255, 0.21) 24%,
+        rgba(255, 255, 255, 0.0) 40%
       );
   }
 }
@@ -377,11 +496,11 @@
      behind every label against all five photos: 4.5:1 or better. */
   background: linear-gradient(
     to top,
-    rgba(4, 29, 44, 0.9) 0%,
-    rgba(4, 29, 44, 0.62) 12%,
-    rgba(4, 29, 44, 0.22) 30%,
-    rgba(4, 29, 44, 0.02) 58%,
-    rgba(4, 29, 44, 0) 100%
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.93) 12%,
+    rgba(255, 255, 255, 0.33) 30%,
+    rgba(255, 255, 255, 0.03) 58%,
+    rgba(255, 255, 255, 0.0) 100%
   );
 }
 
@@ -1475,7 +1594,7 @@
 
   .skeleton-shimmer {
     overflow: hidden;
-    background-color: rgba(8, 53, 81, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
   }
   .skeleton-shimmer::after {
     content: "";
@@ -1484,7 +1603,7 @@
     background-image: linear-gradient(
       100deg,
       transparent 30%,
-      rgba(8, 53, 81, 0.07) 50%,
+      rgba(0, 0, 0, 0.07) 50%,
       transparent 70%
     );
     animation: skeleton-shimmer-slide 1.6s ease-in-out infinite;
@@ -1516,7 +1635,9 @@
     bottom: -5px;
     width: 10px;
     height: 10px;
-    background: var(--color-primary-900);
+    background: #ffffff;
+    border-right: 1px solid var(--color-ink);
+    border-bottom: 1px solid var(--color-ink);
     transform: translateX(-50%) rotate(45deg);
   }
   .site-plan-tip-on {
@@ -1761,17 +1882,17 @@
   .spotlight-section {
     background: linear-gradient(
       180deg,
-      var(--color-primary-900) 0%,
-      var(--color-primary) 60%,
-      var(--color-primary-900) 100%
+      #ffffff 0%,
+      var(--color-surface-muted) 60%,
+      #ffffff 100%
     );
   }
 
   .spotlight-cone {
     background: linear-gradient(
       180deg,
-      rgba(255, 236, 210, 0.22),
-      rgba(232, 179, 132, 0.06) 70%,
+      rgba(207, 167, 95, 0.34),
+      rgba(207, 167, 95, 0.1) 70%,
       transparent
     );
     clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
@@ -1782,7 +1903,7 @@
   .spotlight-pool {
     background: radial-gradient(
       closest-side,
-      rgba(232, 179, 132, 0.38),
+      rgba(190, 152, 88, 0.42),
       transparent
     );
   }
@@ -1819,8 +1940,8 @@
   }
 
   .spotlight-spark {
-    background: var(--color-accent);
-    box-shadow: 0 0 8px var(--color-accent);
+    background: var(--color-gold);
+    box-shadow: 0 0 8px rgba(207, 167, 95, 0.8);
     animation: rise linear infinite;
   }
 
@@ -1828,7 +1949,7 @@
    whenever a different row becomes active, and freezes in place while the
    pointer is anywhere over the list. */
   .spotlight-bar {
-    background: var(--color-accent);
+    background: var(--color-gold);
   }
   .spotlight-row-active .spotlight-bar {
     animation: fill 5.5s linear forwards;
@@ -2039,7 +2160,7 @@
 
   /* Visible keyboard focus everywhere — accessibility floor */
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-ink);
     outline-offset: 3px;
   }
 }
@@ -2273,10 +2394,12 @@
   height: 18px;
   padding: 0 3px;
   border-radius: 9999px;
-  border: 1px solid rgb(195 211 221 / 0.55);
-  background: rgb(6 42 65 / 0.85);
-  color: #c7d5e3;
-  font: 400 9px ui-monospace, Menlo, monospace;
+  border: 1px solid rgb(0 0 0 / 0.15);
+  background: #ffffff;
+  color: var(--color-ink);
+  box-shadow: 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  font: 500 9px var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 @media (min-width: 640px) {
   .u3d-lbl {
@@ -2286,9 +2409,9 @@
   }
 }
 .u3d-lbl.is-on {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: #062a41;
+  border-color: var(--color-gold);
+  background: var(--color-gold);
+  color: var(--color-ink);
 }
 .u3d-lbl.is-off {
   display: none;

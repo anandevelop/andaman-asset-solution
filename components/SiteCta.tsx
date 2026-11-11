@@ -108,10 +108,10 @@ function CtaLink({
 }
 
 const PRIMARY_CLASS =
-  "group inline-flex items-center justify-center gap-3 bg-accent px-9 py-4 text-xs font-medium uppercase tracking-[0.18em] text-primary transition-colors duration-300 hover:bg-accent-500";
+  "group btn-glass gap-3 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em]";
 
 const SECONDARY_CLASS =
-  "inline-flex items-center justify-center border border-white/35 px-9 py-4 text-xs font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:border-white/70 hover:bg-white/10";
+  "btn-glass px-9 py-4 text-xs font-medium uppercase tracking-[0.18em]";
 
 export default async function SiteCta({
   block = null,
@@ -180,7 +180,7 @@ export default async function SiteCta({
   if (block && !copy) return null;
 
   return (
-    <section className="relative overflow-hidden bg-primary py-24 text-white sm:py-32">
+    <section className="relative overflow-hidden bg-surface-raised py-24 text-ink sm:py-32">
       {image && (
         <ImageWithSkeleton src={image} alt="" fill sizes="100vw" className="object-cover" />
       )}
@@ -190,26 +190,26 @@ export default async function SiteCta({
           the copy's own corner is darker still. The wash is kept light
           enough that the villa is still recognisably a villa — the picture
           is half the argument this section is making. */}
-      <div className="absolute inset-0 bg-primary/55" aria-hidden />
+      <div className="absolute inset-0 bg-surface-raised/55" aria-hidden />
       <div
-        className="absolute inset-0 bg-linear-to-r from-primary-900/80 via-primary-900/30 to-transparent"
+        className="absolute inset-0 bg-linear-to-r from-white/90 via-white/40 to-transparent"
         aria-hidden
       />
 
       <div className="container-luxe relative z-10">
         <Reveal>
           {eyebrow && (
-            <p className="text-xs font-medium uppercase tracking-widest2 text-accent">
+            <p className="text-xs font-medium uppercase tracking-widest2 text-ink">
               {eyebrow}
             </p>
           )}
 
-          <h2 className="mt-5 max-w-2xl text-4xl font-light leading-[1.1] text-white sm:text-5xl">
+          <h2 className="mt-5 max-w-2xl text-4xl font-light leading-[1.1] text-ink sm:text-5xl">
             {title}
           </h2>
 
           {subtitle && (
-            <p className="mt-6 max-w-md text-sm leading-relaxed text-white/80 sm:text-base">
+            <p className="mt-6 max-w-md text-sm leading-relaxed text-ink sm:text-base">
               {subtitle}
             </p>
           )}

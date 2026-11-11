@@ -121,14 +121,18 @@ type View = "map" | "list" | "3d";
 // existing token to reuse, since nothing else in this app needed a
 // deliberately-receding neutral before this map did.
 const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string }> = {
-  AVAILABLE: { dot: "#296682", soft: "#DFE9EF", text: "#20536B" },
-  RESERVED: { dot: "#C47B3A", soft: "#FAEEDF", text: "#9C602C" },
-  SOLD: { dot: "#B6BDC1", soft: "#F3F4F5", text: "#77838A" },
+  // Available is left uncoloured (neutral grey); taken plots carry a pale
+  // tint — gold for reserved, red for sold. Text stays ink. The 3D embeds
+  // (public/embed/*-3d.html) carry the same three as --st-available/
+  // reserved/sold.
+  AVAILABLE: { dot: "#DADADA", soft: "#F3F3F3", text: "#0A0A0A" },
+  RESERVED: { dot: "#E8D3A6", soft: "#F9F1E1", text: "#0A0A0A" },
+  SOLD: { dot: "#F0A8A8", soft: "#FCEBEB", text: "#0A0A0A" },
 };
 const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
 /** The selection ring — sand, so it contrasts against every marker colour
  *  above rather than just the navy one. */
-const SELECTION_RING = "#e8b384";
+const SELECTION_RING = "#141414";
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
@@ -348,6 +352,11 @@ class PlanMapEngine {
     cv.addEventListener(
       "wheel",
       (e) => {
+        // A plain wheel scrolls the page: the plan fills most of a phone
+        // screen and used to trap anyone scrolling past it. Ctrl/⌘ + wheel
+        // (and a trackpad pinch, which arrives as ctrlKey) zooms, and in
+        // fullscreen, where there is no page to scroll, the wheel always does.
+        if (!e.ctrlKey && !e.metaKey && !document.fullscreenElement) return;
         e.preventDefault();
         const r = this.box.getBoundingClientRect();
         this.zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
@@ -631,11 +640,13 @@ class PlanMapEngine {
       ctx.shadowOffsetY = 1.5;
       ctx.beginPath();
       ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = tone.dot;
+      // Light dot, status-coloured ring: the unit code inside is dark
+      // text, never white.
+      ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.shadowColor = "transparent";
-      ctx.lineWidth = clamp(r * 0.17, 1, 2.4);
-      ctx.strokeStyle = isSelected ? "#ffffff" : "rgba(255,255,255,.88)";
+      ctx.lineWidth = clamp(r * 0.3, 1.6, 3.4);
+      ctx.strokeStyle = tone.dot;
       ctx.stroke();
       if (isSelected) {
         ctx.beginPath();
@@ -649,7 +660,7 @@ class PlanMapEngine {
         ctx.font = `600 ${fontSize.toFixed(1)}px Roboto, system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#0a0a0a";
         ctx.fillText(u.code, px, py + fontSize * 0.06);
       }
       ctx.restore();
@@ -709,7 +720,7 @@ function useCountUp(target: number, reduced: boolean): number {
 }
 
 function toolButtonClass(extra = ""): string {
-  return `flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-primary/5 ${extra}`;
+  return `flex h-9 w-9 items-center justify-center rounded-xs border border-primary/10 bg-white text-primary shadow-card transition-colors hover:bg-surface-muted ${extra}`;
 }
 
 function ZoomControls({
@@ -754,7 +765,7 @@ function ZoomControls({
             aria-label={b.label}
             aria-pressed={b.pressed}
             onClick={b.onClick}
-            className="flex h-8 w-9 items-center justify-center border-r border-primary/10 bg-white text-primary transition-colors last:border-r-0 hover:bg-primary/5"
+            className="flex h-8 w-9 items-center justify-center border-r border-primary/10 bg-white text-primary transition-colors last:border-r-0 hover:bg-surface-muted"
           >
             {b.icon}
           </button>
@@ -841,21 +852,21 @@ function StatusChips({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(value)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-xs border px-3.5 py-2 text-xs font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
               active
-                ? "border-primary bg-primary text-white"
-                : "border-primary/15 bg-white text-ink/70 hover:border-primary/35 hover:text-primary"
+                ? "border-gold bg-gold-100 text-ink"
+                : "border-primary/15 bg-white text-ink/70 hover:border-gold hover:text-ink"
             }`}
           >
             {dotColor && (
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ background: active ? "#fff" : dotColor }}
+                style={{ background: dotColor }}
                 aria-hidden
               />
             )}
             {label}
-            <span className={active ? "text-white/70" : "text-ink/40"}>{counts[value]}</span>
+            <span className={active ? "text-ink-muted" : "text-ink/40"}>{counts[value]}</span>
           </button>
         );
       })}
@@ -895,7 +906,7 @@ function DetailPanel({
 
       {unit.unitTypeName && (
         <>
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailType}</p>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailType}</p>
           <p className="mt-0.5 text-xs text-ink">
             {[
               unit.unitTypeName,
@@ -910,14 +921,14 @@ function DetailPanel({
 
       <div className="mt-2 grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLand}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailLand}</p>
           <p className="mt-0.5 text-xs text-ink">
             {unit.landAreaSqm !== null ? `${unit.landAreaSqm} ${t("units.sqm")}` : "—"}
           </p>
         </div>
         {unit.unitTypeLivingAreaSqm !== null && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink/45">{labels.detailLiving}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{labels.detailLiving}</p>
             <p className="mt-0.5 text-xs text-ink">
               {unit.unitTypeLivingAreaSqm} {t("units.sqm")}
             </p>
@@ -1238,7 +1249,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
     <div ref={cardRef} className="@container site-plan-fullscreen-card">
       {/* ── View toggle + status filter chips ───────────────────────── */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-xs bg-surface-muted p-1">
+        <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-full border border-white/70 bg-white/60 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150">
           {(
             [
               ...(scene3dSrc ? [{ value: "3d" as View, label: labels.view3d, icon: Box }] : []),
@@ -1251,8 +1262,8 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
               type="button"
               aria-pressed={view === value}
               onClick={() => setView(value)}
-              className={`inline-flex items-center gap-1.5 rounded-xs px-3.5 py-2 text-xs font-medium transition-colors ${
-                view === value ? "bg-white text-primary shadow-card" : "text-ink/60 hover:text-primary"
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                view === value ? "bg-gold-100 text-ink ring-1 ring-gold" : "text-ink-muted hover:text-ink"
               }`}
             >
               <Icon size={13} aria-hidden />
@@ -1298,7 +1309,11 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
             <div className="site-plan-fs-fill relative">
               <div
                 ref={mapboxRef}
-                className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
+                className={`relative aspect-[10/11] w-full ${
+                  // Vertical swipes scroll the page outside fullscreen;
+                  // sideways drags and pinches still reach the plan.
+                  isFullscreen ? "touch-none" : "touch-pan-y"
+                } overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
                   dragging ? "cursor-grabbing" : "cursor-grab"
                 } site-plan-fullscreen-mapbox`}
               >
@@ -1307,7 +1322,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
                 {hintVisible && (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-3.5 z-[3] -translate-x-1/2 whitespace-nowrap rounded-full bg-primary/85 px-3.5 py-1.5 text-[11.5px] text-white backdrop-blur-sm transition-opacity"
+                    className="pointer-events-none absolute left-1/2 top-3.5 z-[3] -translate-x-1/2 whitespace-nowrap rounded-full bg-surface-raised/85 px-3.5 py-1.5 text-[11.5px] text-ink backdrop-blur-sm transition-opacity border border-ink"
                   >
                     {labels.hint}
                   </div>
@@ -1322,12 +1337,12 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
                 <div
                   ref={tipRef}
                   role="status"
-                  className="site-plan-tip pointer-events-none absolute z-[6] whitespace-nowrap rounded-xs bg-primary-900 px-3 py-2.5 text-xs leading-relaxed text-white shadow-lg"
+                  className="site-plan-tip pointer-events-none absolute z-[6] whitespace-nowrap rounded-xs bg-surface-raised px-3 py-2.5 text-xs leading-relaxed text-ink shadow-lg border border-ink"
                 >
                   {tooltipUnit && (
                     <>
                       <b className="text-sm font-medium">{tooltipUnit.code}</b>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/75">
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink-muted">
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_TONE[tooltipUnit.status].dot }} aria-hidden />
                         {tooltipUnit.status === "AVAILABLE" ? labels.available : tooltipUnit.status === "RESERVED" ? labels.reserved : labels.sold}
                         {tooltipUnit.land !== null && ` · ${labels.detailLand} ${tooltipUnit.land} ${t("units.sqm")}`}

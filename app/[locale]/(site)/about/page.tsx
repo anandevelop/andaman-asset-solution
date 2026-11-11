@@ -195,7 +195,7 @@ export default async function AboutPage(props: Props) {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-linear-to-t from-primary-900/85 via-primary-900/20 to-primary-900/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-white/95 via-white/30 to-white/20" />
 
         <div className="container-luxe absolute inset-x-0 top-28 z-10 sm:top-32">
           <Breadcrumb items={trail} tone="onImage" />
@@ -208,11 +208,11 @@ export default async function AboutPage(props: Props) {
             covers the last line of copy instead of just empty padding. */}
         <div className="container-luxe relative z-10 pb-28 sm:pb-32">
           <Reveal>
-            <p className="eyebrow text-accent-200">{t("eyebrow")}</p>
-            <h1 className="mt-3 max-w-2xl text-4xl font-light text-white sm:text-5xl">
+            <p className="eyebrow text-ink">{t("eyebrow")}</p>
+            <h1 className="mt-3 max-w-2xl text-4xl font-light text-ink sm:text-5xl">
               {t("title")}
             </h1>
-            <p className="mt-6 max-w-lg text-sm leading-relaxed text-white/80 sm:text-base">
+            <p className="mt-6 max-w-lg text-sm leading-relaxed text-ink sm:text-base">
               {t("subtitle")}
             </p>
           </Reveal>
@@ -288,7 +288,7 @@ export default async function AboutPage(props: Props) {
       {/* ── Principles ───────────────────────────────────────────────── */}
       {principles.length > 0 && (
         <EditableSection links={ABOUT_SECTION_LINKS.principles}>
-        <section className="bg-primary-900/3 py-20 sm:py-28">
+        <section className="bg-surface-raised/3 py-20 sm:py-28">
           <div className="container-luxe">
             <Reveal>
               <p className="eyebrow">{t("mission.eyebrow")}</p>
@@ -397,7 +397,7 @@ export default async function AboutPage(props: Props) {
 
                   return (
                     <div key={milestone.id} style={{ gridColumn: index + 1, gridRow: 1 }}>
-                      <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs bg-primary-900/4 shadow-card">
+                      <div className="relative aspect-4/5 w-full overflow-hidden rounded-xs bg-surface-raised/4 shadow-card">
                         {milestone.imageUrl ? (
                           <ImageWithSkeleton
                             src={milestone.imageUrl}

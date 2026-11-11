@@ -201,18 +201,33 @@ export async function getPublishedEventSlugs(): Promise<string[]> {
 
 /** Published events for the sitemap. */
 export async function getEventSitemapEntries(): Promise<
-  { slug: string; updatedAt: Date; coverImageUrl: string | null }[]
+  {
+    slug: string;
+    updatedAt: Date;
+    coverImageUrl: string | null;
+    /** Locales whose translation is noIndex — left out of the sitemap. */
+    noIndexLocales: string[];
+  }[]
 > {
-  return safeQuery(
+  const rows = await safeQuery(
     "event.findMany(sitemap)",
     () =>
       prisma.event.findMany({
         where: publishedWhere(),
-        select: { slug: true, updatedAt: true, coverImageUrl: true },
+        select: {
+          slug: true,
+          updatedAt: true,
+          coverImageUrl: true,
+          translations: { where: { noIndex: true }, select: { locale: true } },
+        },
         orderBy: { startsAt: "desc" },
       }),
-    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null }[],
+    [] as { slug: string; updatedAt: Date; coverImageUrl: string | null; translations: { locale: string }[] }[],
   );
+  return rows.map(({ translations, ...row }) => ({
+    ...row,
+    noIndexLocales: (translations ?? []).map((t) => t.locale),
+  }));
 }
 
 /**

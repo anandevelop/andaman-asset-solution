@@ -100,7 +100,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Paints the Safari/Android browser chrome in the brand navy.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#083551" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#041d2c" },
   ],
   colorScheme: "light",

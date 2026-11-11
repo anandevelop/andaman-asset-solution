@@ -265,12 +265,19 @@ describe("presigned upload headers", () => {
       slug: "trinity-village",
     });
 
-    const sent = Object.keys(presigned.headers).map((header) => header.toLowerCase());
+    // content-length is sent by the browser itself (a forbidden header for
+    // scripts), so it is signed without being in `headers`.
+    const sent = [...Object.keys(presigned.headers).map((header) => header.toLowerCase()), "content-length"];
     const missing = signedHeaders(presigned.uploadUrl).filter(
       (header) => !sent.includes(header),
     );
 
     expect(missing).toEqual([]);
+  });
+
+  it("signs content-length when the size is known, so a different-sized body is refused", async () => {
+    const presigned = await getPresignedUploadUrl({ contentType: "image/webp", size: 12345 });
+    expect(signedHeaders(presigned.uploadUrl)).toContain("content-length");
   });
 
   it("tells the browser to download a PDF rather than render it", async () => {
@@ -318,3 +325,4 @@ describe("size caps by type", () => {
     expect(MAX_DOCUMENT_BYTES).toBeLessThan(MAX_VIDEO_BYTES);
   });
 });
+

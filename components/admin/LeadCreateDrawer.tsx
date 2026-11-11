@@ -19,6 +19,7 @@
  */
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, UserPlus, X } from "lucide-react";
@@ -56,6 +57,7 @@ export default function LeadCreateDrawer({
   const [state, formAction, pending] = useActionState<CreateLeadState, FormData>(createLead.bind(null, locale), {
     status: "idle",
   });
+  const keepValues = useKeepValuesOnError(state, state.status === "invalid" || state.status === "error");
   const [phoneCountry, setPhoneCountry] = useState("TH");
   const [nationality, setNationality] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ export default function LeadCreateDrawer({
           </button>
         </div>
 
-        <form action={formAction} className="flex flex-1 flex-col overflow-hidden">
+        <form ref={keepValues} action={formAction} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
             <div>
               <label htmlFor="lead-name" className="admin-label">

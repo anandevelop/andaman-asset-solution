@@ -26,7 +26,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { safeQuery } from "@/lib/db";
 import { siteConfig } from "@/config/site";
 
 /**
@@ -313,31 +312,7 @@ async function readMergedSettings(): Promise<Record<SettingKey, string>> {
   const merged = defaultSettings();
 
   try {
-    // Guarded explicitly so the cause is named in the log rather than
-    // surfacing as "cannot read properties of undefined" three frames up.
-    if (!prisma.siteSetting) {
-      console.error(
-        "[settings] prisma.siteSetting is undefined — the Prisma Client " +
-          "predates the site_settings migration. Run `npx prisma migrate dev` " +
-          "(or `migrate deploy` in production) and restart. Serving " +
-          "config/site.ts defaults meanwhile.",
-      );
-      return merged;
-    }
-
-    const rows = await safeQuery(
-      "siteSetting.findMany",
-      () => prisma.siteSetting.findMany({ select: { key: true, value: true } }),
-      [] as { key: string; value: string }[],
-    );
-
-    for (const row of rows) {
-      // An unknown key is ignored, and a blank value falls back — clearing
-      // a field in the admin should restore the default, not empty the site.
-      if (isSettingKey(row.key) && row.value.trim().length > 0) {
-        merged[row.key] = row.value.trim();
-      }
-    }
+    return await readStoredSettings();
   } catch (error) {
     // A missing table (P2021) before the migration lands, a dropped
     // connection, anything else — the site still renders.
@@ -348,15 +323,59 @@ async function readMergedSettings(): Promise<Record<SettingKey, string>> {
 }
 
 /**
+ * The stored settings over the defaults — and a throw, not a fallback, when
+ * the database can't answer. This is what goes into the cache: a fallback
+ * returned from inside unstable_cache was cached as if it were the real
+ * settings, so a Postgres restart during a deploy served the default phone
+ * number and contacts for up to an hour. Thrown, nothing is cached, and the
+ * caller falls back for this one render only.
+ */
+async function readStoredSettings(): Promise<Record<SettingKey, string>> {
+  const merged = defaultSettings();
+
+  // Guarded explicitly so the cause is named in the log rather than
+  // surfacing as "cannot read properties of undefined" three frames up.
+  if (!prisma.siteSetting) {
+    throw new Error(
+      "prisma.siteSetting is undefined — the Prisma Client predates the " +
+        "site_settings migration. Run `npx prisma migrate dev` (or `migrate " +
+        "deploy` in production) and restart.",
+    );
+  }
+
+  const rows = await prisma.siteSetting.findMany({ select: { key: true, value: true } });
+
+  for (const row of rows) {
+    // An unknown key is ignored, and a blank value falls back — clearing
+    // a field in the admin should restore the default, not empty the site.
+    if (isSettingKey(row.key) && row.value.trim().length > 0) {
+      merged[row.key] = row.value.trim();
+    }
+  }
+
+  return merged;
+}
+
+/**
  * Cached across requests. `revalidateTag("site-settings")` in the admin
  * action clears it, so a saved change is live on the next render rather
  * than after a timeout.
  */
-const readCached = unstable_cache(readMergedSettings, ["site-settings"], {
+const readCachedStrict = unstable_cache(readStoredSettings, ["site-settings"], {
   tags: ["site-settings"],
   // Backstop only. The tag is the mechanism.
   revalidate: 3600,
 });
+
+/** The cached settings, or — when the database can't answer — the
+ *  defaults for this render only (readMergedSettings logs why). */
+async function readCached(): Promise<Record<SettingKey, string>> {
+  try {
+    return await readCachedStrict();
+  } catch {
+    return readMergedSettings();
+  }
+}
 
 /**
  * A stored coordinate as a number, or null.

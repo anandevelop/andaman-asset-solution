@@ -97,7 +97,7 @@ export default function NewsSearch({
             push.current("");
           }}
           aria-label={labels.clear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/45 transition-colors hover:text-primary"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted transition-colors hover:text-primary"
         >
           <X size={14} aria-hidden />
         </button>

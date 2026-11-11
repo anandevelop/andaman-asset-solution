@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations, useLocale } from "next-intl";
+import { useValidationMessage } from "@/components/forms/use-validation-message";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { honeypotValue, leadInquirySchema, type LeadInquiryInput } from "@/lib/validations";
@@ -205,6 +206,7 @@ function Field({
 
 export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props) {
   const t = useTranslations("leadForm");
+  const vm = useValidationMessage();
   const locale = useLocale();
   const pathname = usePathname();
   const getRecaptchaToken = useRecaptchaToken();
@@ -475,15 +477,15 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
   // schema is shared with the server and cannot call useTranslations, so
   // it emits an identifiable code and this is the one place that turns it
   // into the locale-appropriate sentence.
-  const phoneError = errors.phone?.message === "PHONE_INVALID" ? t("phoneInvalid") : errors.phone?.message;
+  const phoneError = errors.phone?.message === "PHONE_INVALID" ? t("phoneInvalid") : vm(errors.phone?.message);
   const messageError =
-    errors.message?.message === "LINK_DETECTED" ? t("messageLinkError") : errors.message?.message;
+    errors.message?.message === "LINK_DETECTED" ? t("messageLinkError") : vm(errors.message?.message);
   // Same sentinel pattern, for the one server-side rejection that can
   // land on this field: app/api/leads/route.ts's own DISPOSABLE_EMAIL,
   // for a script posting straight at the API (or the rare case where the
   // inline check's own blur-triggered request never ran).
   const emailError =
-    errors.email?.message === "DISPOSABLE_EMAIL" ? t("emailCheck.disposable") : errors.email?.message;
+    errors.email?.message === "DISPOSABLE_EMAIL" ? t("emailCheck.disposable") : vm(errors.email?.message);
   const phonePlaceholder = phonePlaceholderFor(phoneCountry) ?? undefined;
 
   // For the "no_mx" hint's {domain} — read live rather than stored
@@ -608,7 +610,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
       />
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field id="name" label={t("name")} error={errors.name?.message} required>
+        <Field id="name" label={t("name")} error={vm(errors.name?.message)} required>
           {(a11y) => <input id="name" autoComplete="name" {...a11y} {...register("name")} className={INPUT} />}
         </Field>
 
@@ -640,7 +642,10 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
                           // Re-derive rather than just swapping the country:
                           // the digits already typed need to be re-read
                           // against the newly chosen country's own rules.
-                          setValue("phone", derivePhone(phoneText, next).phone);
+                          // Re-validated once an error is showing, so it clears
+                          // the moment the number is right (setValue alone
+                          // never re-runs the resolver).
+                          setValue("phone", derivePhone(phoneText, next).phone, { shouldValidate: !!errors.phone });
                         }}
                         locale={locale as Locale}
                         placeholder={DEFAULT_PHONE_COUNTRY}
@@ -679,7 +684,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
                     const text = sanitizePhoneInput(event.target.value);
                     setPhoneText(text);
                     const derived = derivePhone(text, phoneCountry);
-                    setValue("phone", derived.phone);
+                    setValue("phone", derived.phone, { shouldValidate: !!errors.phone });
                     // A visitor who typed their own "+"/"00" number gets the
                     // dropdown swung to match — see derivePhone/
                     // detectFromInternational for why that check runs first.
@@ -736,7 +741,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
           }}
         </Field>
 
-        <Field id="nationality" label={t("nationality")} error={errors.nationality?.message}>
+        <Field id="nationality" label={t("nationality")} error={vm(errors.nationality?.message)}>
           {(a11y) => (
             <Controller
               name="nationality"
@@ -812,7 +817,7 @@ export default function LeadForm({ projectSlug, source = "PROJECT_PAGE" }: Props
       </div>
       {errors.consentGiven && (
         <p id="consentGiven-error" className="-mt-3 text-xs text-red-700">
-          {errors.consentGiven.message}
+          {vm(errors.consentGiven.message)}
         </p>
       )}
 

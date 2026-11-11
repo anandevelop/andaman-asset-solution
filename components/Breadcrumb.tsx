@@ -57,11 +57,11 @@ export default async function Breadcrumb({
      links and ProjectFilterBar's labels use the same value) — /55 measures
      3.6:1, which an axe run on the e-brochure page's breadcrumb caught. */
   const base = onImage
-    ? "text-white/90 [text-shadow:0_1px_6px_rgba(0,0,0,0.75)]"
+    ? "text-ink"
     : "text-ink/65";
-  const linkTone = onImage ? "hover:text-white" : "hover:text-primary";
-  const currentTone = onImage ? "text-white" : "text-primary";
-  const dividerTone = onImage ? "text-white/60" : "text-ink/30";
+  const linkTone = onImage ? "hover:text-ink" : "hover:text-primary";
+  const currentTone = onImage ? "text-ink" : "text-primary";
+  const dividerTone = onImage ? "text-ink-muted" : "text-ink/30";
 
   return (
     <nav aria-label={t("breadcrumb")} className={`text-xs ${base} ${className}`}>

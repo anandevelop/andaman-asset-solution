@@ -7,6 +7,7 @@
  */
 
 import { useActionState, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useTranslations } from "next-intl";
 import { Check, Link2, Loader2 } from "lucide-react";
 import { AGENT_NOTICE_VERSION, PRIVACY_EMAIL } from "@/lib/agents/constants";
@@ -22,6 +23,7 @@ export default function RegisterForm({ locale, refSlug, closed }: { locale: stri
   const [state, formAction, pending] = useActionState<AgentRegisterState, FormData>(registerAgent.bind(null, locale, refSlug), {
     status: "idle",
   });
+  const keepValues = useKeepValuesOnError(state, state.status === "error");
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [round, setRound] = useState(0);
 
@@ -56,6 +58,7 @@ export default function RegisterForm({ locale, refSlug, closed }: { locale: stri
 
   return (
     <form
+      ref={keepValues}
       action={(data) => {
         setRound(0);
         formAction(data);

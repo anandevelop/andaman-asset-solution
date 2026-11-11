@@ -262,7 +262,7 @@ export default async function ArticlePage(props: Props) {
                 {article.tags.map((tag) => (
                   <li
                     key={tag}
-                    className="rounded-full bg-primary/5 px-3 py-1 text-xs text-ink/70"
+                    className="rounded-full bg-primary/5 px-3 py-1 text-xs text-ink/70 border border-ink"
                   >
                     {tag}
                   </li>
@@ -278,12 +278,12 @@ export default async function ArticlePage(props: Props) {
                 contact page mounts, so no schema or new tracking pipe is
                 needed, only that this link carries them. See
                 lib/news-leads.ts for the read side. */}
-            <div className="mt-12 rounded-xs border border-primary/10 bg-primary-900/3 px-6 py-7 text-center sm:px-10">
+            <div className="mt-12 rounded-xs border border-primary/10 bg-surface-raised/3 px-6 py-7 text-center sm:px-10">
               <p className="text-base font-medium text-primary">{t("cta.title")}</p>
               <p className="mt-2 text-sm leading-relaxed text-ink/70">{t("cta.body")}</p>
               <Link
                 href={`/${locale}/contact?utm_source=news&utm_medium=article&utm_campaign=${encodeURIComponent(article.slug)}`}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-xs bg-primary px-6 py-3 text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-primary/90"
+                className="btn-glass mt-5 gap-1.5 px-6 py-3 text-xs font-medium uppercase tracking-wide"
               >
                 {t("cta.button")}
               </Link>
@@ -294,7 +294,7 @@ export default async function ArticlePage(props: Props) {
 
       {/* ── Related ──────────────────────────────────────────────────── */}
       {related.length > 0 && (
-        <section className="bg-primary-900/3 py-16 sm:py-24">
+        <section className="bg-surface-raised/3 py-16 sm:py-24">
           <div className="container-luxe">
             <Reveal>
               <h2 className="text-2xl font-light text-primary sm:text-3xl">

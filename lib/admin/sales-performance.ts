@@ -30,6 +30,7 @@ import "server-only";
 import { LeadStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
+import { pickLocale } from "@/lib/locale";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -197,7 +198,7 @@ export async function getSalesPerformance(
 
           if (lead.project) {
             const set = projects.get(row.salesPersonId) ?? new Set<string>();
-            set.add(locale === "th" ? lead.project.nameTh : lead.project.nameEn);
+            set.add(pickLocale(locale, lead.project.nameTh, lead.project.nameEn));
             projects.set(row.salesPersonId, set);
           }
         });
