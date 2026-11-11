@@ -29,7 +29,8 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useModalFocus } from "@/components/a11y/use-modal-focus";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Images, Loader2, Maximize2, X } from "lucide-react";
@@ -104,6 +105,8 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const close = useCallback(() => setOpenIndex(null), []);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  useModalFocus(openIndex !== null, lightboxRef);
   const showPrev = useCallback(
     () => setOpenIndex((i) => (i === null ? null : (i - 1 + images.length) % images.length)),
     [images.length],
@@ -239,8 +242,10 @@ export default function ProjectGallery({ images, projectName, labels }: Props) {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/95 p-4 sm:p-10"
             onClick={close}
+            ref={lightboxRef}
             role="dialog"
             aria-modal="true"
+            aria-label={projectName}
           >
             <button
               type="button"

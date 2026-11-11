@@ -393,11 +393,14 @@ export type EventRsvpSummary = {
 export async function getEventRsvpSummary(
   locale: string,
   limit = 8,
+  /** Only events starting in [start, end) — then `limit` caps that window, not the newest overall. */
+  window?: { start: Date; end: Date },
 ): Promise<EventRsvpSummary[]> {
   const rows = await safeQuery(
     "report:eventRsvp",
     () =>
       prisma.event.findMany({
+        ...(window && { where: { startsAt: { gte: window.start, lt: window.end } } }),
         orderBy: { startsAt: "desc" },
         take: limit,
         select: {

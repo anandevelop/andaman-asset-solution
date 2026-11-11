@@ -158,6 +158,9 @@ test.describe("Viewer", () => {
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("status")).toContainText("Page 2");
 
+    // Home/End turn pages once the viewer is in use; before that they
+    // scroll the page, like anywhere else on the site.
+    await page.getByRole("button", { name: "Previous page" }).focus();
     await page.keyboard.press("End");
     await expect(page.getByRole("status")).toContainText(
       `Page ${SAMPLE_PDF_PAGE_COUNT}`,
@@ -175,6 +178,7 @@ test.describe("Viewer", () => {
     // silently jumping to the back cover.
     await expect(page.getByRole("button", { name: "Previous page" })).toBeDisabled();
 
+    await page.getByRole("button", { name: "Next page" }).focus();
     await page.keyboard.press("End");
     await expect(page.getByRole("button", { name: "Next page" })).toBeDisabled();
   });

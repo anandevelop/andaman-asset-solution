@@ -16,6 +16,7 @@
  */
 
 import { useActionState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { UnitFormState } from "@/app/[locale]/admin/(catalog)/projects/[id]/units/actions";
@@ -86,6 +87,7 @@ export default function UnitForm({
   labels,
 }: Props) {
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
 
   // The server reports a taken unit number as a field error rather than a
   // failed save, since it names something the person can fix.
@@ -93,7 +95,7 @@ export default function UnitForm({
     state.fields?.unitNumber === "DUPLICATE" ? labels.duplicate : state.fields?.unitNumber;
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={keepValues} action={formAction} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="admin-label" htmlFor="unit-number">

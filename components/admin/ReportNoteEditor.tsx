@@ -22,6 +22,7 @@
  */
 
 import { useActionState, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { Sparkles } from "lucide-react";
 import type { NoteResult } from "@/app/[locale]/admin/(growth)/reports/actions";
@@ -66,8 +67,10 @@ export default function ReportNoteEditor({
     null,
   );
 
+  const keepValues = useKeepValuesOnError(state, !!state && !state.ok);
+
   return (
-    <form action={formAction} className="admin-card print:hidden">
+    <form ref={keepValues} action={formAction} className="admin-card print:hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="admin-label mb-0">{labels.title}</h3>
 

@@ -91,15 +91,37 @@ export function walkRedirectChain(table: Map<string, string>, start: string, max
  * redirect into an error page.
  */
 export function countPathHit(kind: PathHitKind, path: string): void {
+  void bumpPathHit(kind, path).catch(() => {});
+}
+
+/**
+ * New paths per kind per day. The page-view and not-found endpoints are
+ * public: anyone can POST an invented slug, and each one used to become a
+ * row, without limit and never pruned. A path already counted today always
+ * counts; past this many distinct paths a day, new ones are dropped. The
+ * whole site is a few hundred real URLs across four locales.
+ */
+export const MAX_NEW_PATHS_PER_DAY = 2000;
+
+/** Count one hit on `path` today, within MAX_NEW_PATHS_PER_DAY. */
+export async function bumpPathHit(kind: PathHitKind, path: string): Promise<void> {
   const day = hitDay();
 
-  void prisma.pathHitDay
-    .upsert({
-      where: { kind_path_day: { kind, path, day } },
-      create: { kind, path, day, hits: 1 },
-      update: { hits: { increment: 1 } },
-    })
-    .catch(() => {});
+  const existing = await prisma.pathHitDay.updateMany({
+    where: { kind, path, day },
+    data: { hits: { increment: 1 } },
+  });
+  if (existing.count > 0) return;
+
+  const today = await prisma.pathHitDay.count({ where: { kind, day } });
+  if (today >= MAX_NEW_PATHS_PER_DAY) return;
+
+  // upsert, not create: two first hits on the same path can race here.
+  await prisma.pathHitDay.upsert({
+    where: { kind_path_day: { kind, path, day } },
+    create: { kind, path, day, hits: 1 },
+    update: { hits: { increment: 1 } },
+  });
 }
 
 /**

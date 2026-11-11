@@ -887,10 +887,24 @@ export const eventSchema = z
 
 export type EventInput = z.infer<typeof eventSchema>;
 
+/**
+ * A calendar year typed by a Thai admin: 2568 is the Buddhist-era year, so
+ * it is taken as 2025 rather than refused ("max 2100") or — in a form
+ * that let it through — stored as a year five centuries away. Anything
+ * from 2400 to 2700 can only be BE; no year this site records is near it.
+ */
+export function toCeYear(value: number): number {
+  return Number.isInteger(value) && value >= 2400 && value <= 2700 ? value - 543 : value;
+}
+
+function ceYear(min: number) {
+  return z.coerce.number().int().transform(toCeYear).pipe(z.number().min(min).max(2100));
+}
+
 export const projectProgressSchema = z.object({
   projectId: z.string().min(1),
   month: z.coerce.number().int().min(1).max(12),
-  year: z.coerce.number().int().min(2000).max(2100),
+  year: ceYear(2000),
   // A YouTube link, loosely validated like every other admin-pasted URL
   // field in this file (heroVideoUrl, brochureUrl, googleMapsUrl) rather
   // than enforcing a youtube.com/youtu.be host here — lib/youtube.ts
@@ -1077,7 +1091,7 @@ export type ProjectUnitInput = z.infer<typeof projectUnitSchema>;
 export const progressDetailSchema = z.object({
   id: z.string().max(40).optional(),
   month: z.coerce.number().int().min(1).max(12),
-  year: z.coerce.number().int().min(2000).max(2100),
+  year: ceYear(2000),
   // Null is "not recorded this month", which is different from 0%.
   percentComplete: z.coerce.number().int().min(0).max(100).nullable(),
   /* partialRecord, not record: a progress entry is written in one language
@@ -1177,7 +1191,7 @@ export const companyProfileSchema = z.object({
     .string()
     .trim()
     .max(4)
-    .transform((value) => (value === "" ? null : Number(value)))
+    .transform((value) => (value === "" ? null : toCeYear(Number(value))))
     .refine(
       (value) => value === null || (Number.isInteger(value) && value >= 1900 && value <= 2100),
       { message: "Enter a four-digit year" },
@@ -1474,7 +1488,7 @@ export const awardSchema = z.object({
   organization: z.string().trim().min(2, "Organization is required").max(160),
   // Null for company-level awards not tied to any one development.
   projectName: optionalText(200),
-  year: z.coerce.number().int().min(1990).max(2100),
+  year: ceYear(1990),
   trophyImageUrl: optionalText(600),
   isActive: z.coerce.boolean(),
   sortOrder: z.coerce.number().int().min(-9999).max(9999),
@@ -1489,7 +1503,7 @@ export type AwardInput = z.infer<typeof awardSchema>;
 // ─────────────────────────────────────────────────────────────────────────
 
 export const milestoneSchema = z.object({
-  year: z.coerce.number().int().min(1990).max(2100),
+  year: ceYear(1990),
   projectName: z.string().trim().min(1, "Project name is required").max(160),
   brand: optionalText(160),
   imageUrl: optionalText(600),

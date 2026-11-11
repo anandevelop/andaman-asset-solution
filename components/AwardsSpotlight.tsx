@@ -317,7 +317,7 @@ export default function AwardsSpotlight({ awards, awardsCount, latestYear, label
                   {shown.trophyImageUrl ? (
                     <ImageWithSkeleton
                       src={shown.trophyImageUrl}
-                      alt={`${shown.organization} trophy: ${shown.title}`}
+                      alt={`${shown.title} — ${shown.organization}`}
                       fill
                       sizes="400px"
                       className="object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.45)]"

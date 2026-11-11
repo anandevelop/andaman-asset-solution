@@ -50,6 +50,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Youtube } from "@/components/BrandGlyphs";
 import type { ProgressMonth } from "@/lib/projects";
 import { formatMonthYear } from "@/lib/format";
+import { useModalFocus } from "@/components/a11y/use-modal-focus";
 
 type Labels = {
   close: string;
@@ -57,7 +58,12 @@ type Labels = {
   next: string;
   /** Small badge overlaid on the featured video, e.g. "Drone footage". */
   video: string;
+  /** "{name} — photo {number}", in the page's language. */
+  photoAlt: string;
 };
+
+const photoAlt = (labels: Labels, name: string, number: number) =>
+  labels.photoAlt.replace("{name}", name).replace("{number}", String(number));
 
 type Props = {
   /** Published ProjectProgress rows, chronological. Fetched server-side by
@@ -129,6 +135,8 @@ function PhotoRow({
   };
 
   const closeLightbox = useCallback(() => setOpenIndex(null), []);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  useModalFocus(openIndex !== null, lightboxRef);
   const showPrev = useCallback(
     () => setOpenIndex((i) => (i === null ? null : (i - 1 + images.length) % images.length)),
     [images.length],
@@ -181,11 +189,11 @@ function PhotoRow({
               type="button"
               onClick={() => setOpenIndex(i)}
               className="group relative block h-full w-full"
-              aria-label={`${label} construction progress photo ${i + 1}`}
+              aria-label={photoAlt(labels, label, i + 1)}
             >
               <Image
                 src={src}
-                alt={`${label} construction progress photo ${i + 1}`}
+                alt={photoAlt(labels, label, i + 1)}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -234,8 +242,10 @@ function PhotoRow({
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/95 p-4 sm:p-10"
             onClick={closeLightbox}
+            ref={lightboxRef}
             role="dialog"
             aria-modal="true"
+            aria-label={label}
           >
             <button
               type="button"
@@ -284,7 +294,7 @@ function PhotoRow({
             >
               <Image
                 src={images[openIndex]}
-                alt={`${label} construction progress photo ${openIndex + 1}`}
+                alt={photoAlt(labels, label, openIndex + 1)}
                 fill
                 sizes="90vw"
                 className="object-contain"

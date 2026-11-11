@@ -156,11 +156,21 @@ export default function Navbar({ phone, phoneDisplay, whatsapp, logoUrl }: Props
       options[nextIndex]?.focus();
     };
 
+    // Tabbing out of the menu closes it, as a click outside does — it used
+    // to stay open over the page with focus somewhere else entirely.
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as Node;
+      if (langMenuRef.current?.contains(target) || langButtonRef.current?.contains(target)) return;
+      setLangOpen(false);
+    };
+
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("focusin", onFocusIn);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("focusin", onFocusIn);
     };
   }, [langOpen]);
 

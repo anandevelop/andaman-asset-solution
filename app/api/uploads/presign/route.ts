@@ -42,7 +42,10 @@ const bodySchema = z.object({
   filename: z.string().trim().min(1).max(255),
   contentType: z.string().trim().min(1).max(100),
   /** Checked here so an oversized file is refused before it is uploaded. */
-  size: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  // Required: it is signed into the upload URL, so a client cannot declare
+  // a small file and then send a large one (or leave it out to skip the
+  // limit). Every uploader in the app already sends it.
+  size: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   /** Folder within the bucket, e.g. "projects" | "news" | "progress". */
   prefix: z.string().trim().max(80).optional(),
   /** Second path segment — usually the record's slug. */
@@ -118,7 +121,7 @@ export async function POST(request: Request) {
   // Documents get a larger allowance than photographs.
   const maxBytes = maxBytesFor(contentType);
 
-  if (size !== undefined && size > maxBytes) {
+  if (size > maxBytes) {
     return NextResponse.json(
       { ok: false, error: "FILE_TOO_LARGE", maxBytes },
       { status: 413 },
@@ -126,7 +129,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const presigned = await getPresignedUploadUrl({ contentType, prefix, slug });
+    const presigned = await getPresignedUploadUrl({ contentType, prefix, slug, size });
 
     return NextResponse.json(
       { ok: true, ...presigned },

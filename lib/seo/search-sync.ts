@@ -37,6 +37,7 @@
 
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { weightedPositions } from "@/lib/seo/weighted-position";
 import {
   earliestAvailable,
   latestSettled,
@@ -189,19 +190,14 @@ async function updateKeywordRanks(startDate: string, endDate: string): Promise<n
 
   if (keywords.length === 0) return 0;
 
-  const stats = await prisma.seoQueryStat.groupBy({
-    by: ["query"],
-    where: { date: { gte: new Date(startDate), lte: new Date(endDate) } },
-    _sum: { impressions: true },
-    _avg: { position: true },
+  const byQuery = await weightedPositions({
+    date: { gte: new Date(startDate), lte: new Date(endDate) },
   });
-
-  const byQuery = new Map(stats.map((row) => [row.query.toLowerCase(), row]));
 
   let ranked = 0;
 
   for (const keyword of keywords) {
-    const stat = byQuery.get(keyword.phrase.trim().toLowerCase());
+    const weighted = byQuery.get(keyword.phrase.trim().toLowerCase());
 
     /*
       No data is not a rank of zero, and not a fall. A phrase nobody
@@ -209,9 +205,9 @@ async function updateKeywordRanks(startDate: string, endDate: string): Promise<n
       shows when it was checked, so a stale number is visibly stale rather
       than silently wrong.
     */
-    if (!stat?._avg.position) continue;
+    if (!weighted) continue;
 
-    const position = Math.round(stat._avg.position);
+    const position = Math.round(weighted);
 
     await prisma.keyword.update({
       where: { id: keyword.id },

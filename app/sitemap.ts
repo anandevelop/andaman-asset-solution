@@ -64,17 +64,27 @@ function localized(
     priority?: number;
     /** Photos on the page, for the image sitemap (<image:image>). */
     images?: (string | null | undefined)[];
+    /**
+     * Locales whose translation is marked noIndex. The page there answers
+     * with <meta robots="noindex">, so listing it (or pointing hreflang at
+     * it) only asks Google to crawl a page it is told to drop.
+     */
+    noIndexLocales?: readonly string[];
   } = {},
 ): MetadataRoute.Sitemap {
   const images = imageUrls(options.images ?? []);
-  const languages = Object.fromEntries(
-    locales.map((locale) => [locale, `${siteConfig.url}/${locale}${path}`]),
+  const indexed = locales.filter((locale) => !options.noIndexLocales?.includes(locale));
+  if (indexed.length === 0) return [];
+  const languages: Record<string, string> = Object.fromEntries(
+    indexed.map((locale) => [locale, `${siteConfig.url}/${locale}${path}`]),
   );
   // x-default: the entry a crawler (or a browser with no locale match)
-  // should fall back to. The Thai build is the canonical entry point.
-  languages["x-default"] = `${siteConfig.url}/${defaultLocale}${path}`;
+  // should fall back to. The Thai build is the canonical entry point —
+  // unless that one is noindex, then the first locale that is indexed.
+  const fallback = indexed.includes(defaultLocale) ? defaultLocale : indexed[0];
+  languages["x-default"] = `${siteConfig.url}/${fallback}${path}`;
 
-  return locales.map((locale) => ({
+  return indexed.map((locale) => ({
     url: `${siteConfig.url}/${locale}${path}`,
     lastModified: options.lastModified ?? FALLBACK_LAST_MODIFIED,
     changeFrequency: options.changeFrequency ?? "weekly",
@@ -121,6 +131,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               sitemapChangeFreq: true,
               heroImageUrl: true,
               gallery: true,
+              canonicalUrl: true,
+              translations: { where: { noIndex: true }, select: { locale: true } },
             },
             orderBy: { sortOrder: "asc" },
           }),
@@ -131,6 +143,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           sitemapChangeFreq: string | null;
           heroImageUrl: string | null;
           gallery: string[];
+          canonicalUrl: string | null;
+          translations: { locale: string }[];
         }[],
       ),
       getArticleSitemapEntries(),
@@ -253,8 +267,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* Per-project overrides win when set from the SEO tab; otherwise the
        section defaults below apply, which is the case for every project
        until somebody decides one of them deserves otherwise. */
-    ...projects.flatMap((project) =>
+    // A page whose canonical is set to another address is, by its own
+    // declaration, not the original — the sitemap lists canonical URLs only.
+    ...projects.filter((project) => !project.canonicalUrl?.trim()).flatMap((project) =>
       localized(`/projects/${project.slug}`, {
+        noIndexLocales: project.translations.map((t) => t.locale),
         lastModified: project.updatedAt,
         changeFrequency:
           (project.sitemapChangeFreq as Entry["changeFrequency"] | null) ?? "weekly",
@@ -263,8 +280,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
     ),
 
-    ...articles.flatMap((article) =>
+    ...articles.filter((article) => !article.canonicalUrl?.trim()).flatMap((article) =>
       localized(`/news/${article.slug}`, {
+        noIndexLocales: article.noIndexLocales,
         lastModified: article.updatedAt,
         // An article is written once and rarely revised.
         changeFrequency: "monthly",
@@ -275,6 +293,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     ...events.flatMap((event) =>
       localized(`/events/${event.slug}`, {
+        noIndexLocales: event.noIndexLocales,
         lastModified: event.updatedAt,
         changeFrequency: "weekly",
         priority: 0.6,

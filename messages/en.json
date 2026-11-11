@@ -326,7 +326,7 @@
     "sitePlanViewMap": "Map",
     "sitePlanViewList": "Unit list",
     "sitePlanView3d": "3D",
-    "sitePlanHint": "Drag to pan · scroll to zoom · tap a marker for details",
+    "sitePlanHint": "Drag to pan · Ctrl/⌘ + scroll or pinch to zoom · tap a marker for details",
     "sitePlanCanvasLabel": "Interactive site plan",
     "sitePlanStatusTitle": "Plot status",
     "sitePlanTotalUnitsLabel": "Total units",
@@ -5164,5 +5164,18 @@
       "closed": "This link is no longer active",
       "closedText": "Please contact our sales team for a new registration link."
     }
+  },
+  "validation": {
+    "nameShort": "Name is too short",
+    "agencyShort": "Agency / company is too short",
+    "email": "Enter a valid email address",
+    "phone": "Enter a valid phone number",
+    "whatsapp": "Enter a valid WhatsApp number",
+    "country": "Unknown country",
+    "consent": "Consent is required to submit this form",
+    "consentRegister": "Consent is required to register",
+    "tooLong": "This is too long",
+    "tooShort": "This is too short",
+    "invalid": "Please check this field"
   }
 }

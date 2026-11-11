@@ -43,6 +43,7 @@
  */
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import {
@@ -203,6 +204,7 @@ export default function SitePlanDrawer({
 }: Props) {
   const router = useRouter();
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
   const prevStateRef = useRef(state);
 
   const outerRef = useRef<HTMLDivElement>(null);
@@ -445,7 +447,7 @@ export default function SitePlanDrawer({
           )}
         </div>
 
-        <form action={formAction} className="space-y-4 border-t border-adm-line pt-5">
+        <form ref={keepValues} action={formAction} className="space-y-4 border-t border-adm-line pt-5">
           <input type="hidden" name="unitId" value={selectedUnitId ?? ""} />
           <input type="hidden" name="shapePoints" value={JSON.stringify(points)} />
 
