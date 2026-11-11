@@ -40,6 +40,18 @@ export function addMonths(monthStart: Date, delta: number): Date {
  */
 export const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
 
+/**
+ * Today in Bangkok as a [start, end) pair of UTC instants. Every "today"
+ * list in the back office (the rep's day, the dashboard, the mobile app)
+ * takes its window from here, so none of them rolls over at 07:00.
+ */
+export function bangkokToday(now = new Date()): { start: Date; end: Date } {
+  const local = new Date(now.getTime() + BANGKOK_OFFSET_MS);
+  local.setUTCHours(0, 0, 0, 0);
+  const start = new Date(local.getTime() - BANGKOK_OFFSET_MS);
+  return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+}
+
 export function dayKey(date: Date): string {
   return new Date(date.getTime() + BANGKOK_OFFSET_MS).toISOString().slice(0, 10);
 }

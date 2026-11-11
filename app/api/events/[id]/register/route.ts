@@ -186,16 +186,22 @@ export async function POST(request: Request, props: Params) {
           consentVersion: data.consentVersion ?? siteConfig.legal.consentVersion,
         };
 
-        return tx.eventRegistration.upsert({
-          where: { eventId_email: { eventId: event.id, email: data.email } },
-          create: { ...values, eventId: event.id, status: EventStatus.PENDING },
-          // Re-submitting after cancelling should reinstate the booking.
-          update: {
-            ...values,
-            ...(existing?.status === EventStatus.CANCELLED
-              ? { status: EventStatus.PENDING }
-              : {}),
-          },
+        // An address that already holds a booking keeps the details it was
+        // made with. This endpoint is public and proves nothing about who
+        // owns the email, so overwriting would let anyone who knows a
+        // registrant's address replace their name, phone and consent (and
+        // whatever lead is later made from the row). A repeat submission is
+        // answered as success; a cancelled booking is reinstated as it was.
+        if (existing) {
+          return tx.eventRegistration.update({
+            where: { id: existing.id },
+            data: existing.status === EventStatus.CANCELLED ? { status: EventStatus.PENDING } : {},
+            select: { id: true, status: true },
+          });
+        }
+
+        return tx.eventRegistration.create({
+          data: { ...values, eventId: event.id, status: EventStatus.PENDING },
           select: { id: true, status: true },
         });
       },
@@ -285,7 +291,9 @@ export async function POST(request: Request, props: Params) {
     // a retry signal, not a client mistake.
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034"
+      // P2002: the same address submitted twice at once — the second
+      // create hits the (eventId, email) unique key. Same retry answer.
+      (error.code === "P2034" || error.code === "P2002")
     ) {
       return NextResponse.json(
         { ok: false, error: "WRITE_CONFLICT" },

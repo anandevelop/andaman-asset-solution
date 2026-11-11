@@ -15,7 +15,9 @@
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
-import { hasRole } from "@/lib/role-rank";
+import { can, canFully } from "@/lib/permissions";
+import { leadScopeWhere } from "@/lib/leads-board";
+import { maskPhone } from "@/lib/contact-mask";
 
 export type SearchHit = {
   id: string;
@@ -73,21 +75,30 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
       take: PER_GROUP_LIMIT,
       select: { id: true, url: true },
     }),
-    // Leads carry a customer's name, phone and email — SALES and above
-    // only, matching /admin/leads' own guard exactly.
-    hasRole(session.role, Role.SALES)
-      ? prisma.leadInquiry.findMany({
-          where: {
-            AND: [
-              { OR: [{ name: contains }, { phone: contains }, { email: contains }] },
-              session.role === Role.SALES
-                ? { OR: [{ assignedToId: null }, { assignedToId: session.id }] }
-                : {},
-            ],
-          },
-          take: PER_GROUP_LIMIT,
-          select: { id: true, name: true, phone: true, status: true },
-        })
+    // Leads carry a customer's name, phone and email. Gated on the same
+    // capability /admin/leads uses — not on rank: EDITOR and ADMIN outrank
+    // SALES, and a rank check let content editors search every customer.
+    // Rows are narrowed by leadScopeWhere (SALES pool + project scope), the
+    // same rule as the board, and phones are masked here as they are there;
+    // the full number is one click away behind the audited reveal.
+    can(session.role, "viewAllLeads")
+      ? leadScopeWhere(session).then((scope) =>
+          prisma.leadInquiry.findMany({
+            where: {
+              AND: [
+                // Searching by email or phone stays possible for accounts
+                // that see every contact; SALES (own leads only) matches on
+                // name alone, so a hit can't confirm a stranger's number.
+                canFully(session.role, "viewCustomerContact")
+                  ? { OR: [{ name: contains }, { phone: contains }, { email: contains }] }
+                  : { name: contains },
+                ...(scope ? [scope] : []),
+              ],
+            },
+            take: PER_GROUP_LIMIT,
+            select: { id: true, name: true, phone: true, status: true },
+          }),
+        )
       : Promise.resolve([]),
   ]);
 
@@ -119,7 +130,7 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
         id: l.id,
         group: "leads" as const,
         title: l.name,
-        subtitle: l.phone,
+        subtitle: maskPhone(l.phone),
         href: `/leads/${l.id}`,
         badge: l.status,
       })),

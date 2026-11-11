@@ -189,24 +189,6 @@ export async function updateSettings(
   return { ok: true, message: "SAVED" };
 }
 
-/** Guarded write-through for a stray key — used by nothing yet, but the
- *  validation lives in one place if a future caller needs it. */
-export async function setSetting(key: string, value: string): Promise<boolean> {
-  await requireAdminAction(Role.ADMIN);
-
-  if (!isSettingKey(key)) return false;
-
-  await prisma.siteSetting.upsert({
-    where: { key },
-    create: { key, value },
-    update: { value },
-  });
-
-  updateTag("site-settings");
-  revalidatePublicSite();
-  return true;
-}
-
 // ── Diagnostics ─────────────────────────────────────────────────────────
 
 export type TestEmailResult = { ok: boolean; message: string };

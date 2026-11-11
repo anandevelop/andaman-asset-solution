@@ -170,12 +170,25 @@ export async function saveRoutingRules(rules: LeadRoutingRules, updatedBy: strin
  */
 export async function decideAssignee(lead: {
   commsLanguage: string | null;
+  /** The lead's development, if any. A rep held to certain projects
+   *  (User.scopedProjects) cannot see a lead outside them on the board, so
+   *  handing them one would strand it — owned, so no "unclaimed" alert, and
+   *  invisible to the owner. Only accounts that can see the lead qualify. */
+  projectId?: string | null;
 }): Promise<RoutingDecision> {
   const rules = await getRoutingRules();
   if (!rules.enabled) return { userId: null, reason: "disabled" };
 
   const candidates = await prisma.user.findMany({
-    where: LEAD_CANDIDATE_WHERE,
+    where: {
+      ...LEAD_CANDIDATE_WHERE,
+      // Unscoped accounts see every lead; a scoped one only its projects'
+      // (and never a lead with no project — see leadScopeWhere).
+      OR: [
+        { scopedProjects: { none: {} } },
+        ...(lead.projectId ? [{ scopedProjects: { some: { id: lead.projectId } } }] : []),
+      ],
+    },
     select: {
       id: true,
       _count: {
@@ -223,9 +236,10 @@ export async function decideAssignee(lead: {
 export async function assignCapturedLead(
   leadId: string,
   commsLanguage: string | null,
+  projectId: string | null = null,
 ): Promise<void> {
   try {
-    const decision = await decideAssignee({ commsLanguage });
+    const decision = await decideAssignee({ commsLanguage, projectId });
     if (!decision.userId) return;
 
     await prisma.leadInquiry.update({

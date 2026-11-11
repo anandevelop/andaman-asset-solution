@@ -16,13 +16,14 @@ import "server-only";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { AppointmentStatus, LeadStatus, type Role, UnitStatus } from "@prisma/client";
+import { AppointmentStatus, LeadStatus, type Prisma, type Role, UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { CLOSED_LEAD_STATUSES } from "@/lib/admin-nav-counts";
 import { SEAT_TAKING_STATUSES } from "@/lib/events";
 import { AUTH_MODEL } from "@/lib/audit/events";
 import { DAY_MS, utcDayStart } from "@/lib/admin/dashboard-model";
+import { bangkokToday } from "@/lib/admin/month-grid";
 
 /** How many rows of each kind the inbox shows. The counts beside them
  *  are exact; the list is a starting point, not the whole backlog. */
@@ -40,8 +41,14 @@ export type UnassignedLeadRow = {
   project: { nameEn: string; nameTh: string } | null;
 };
 
-export async function getUnassignedLeads(): Promise<{ count: number; rows: UnassignedLeadRow[] }> {
-  const where = { assignedToId: null, status: { notIn: CLOSED_LEAD_STATUSES } };
+/** `scope` is the caller's leadScopeWhere(): an account held to some
+ *  projects sees only their leads here, as it does on /admin/leads. */
+type LeadScope = Prisma.LeadInquiryWhereInput | undefined;
+const scoped = (scope: LeadScope, where: Prisma.LeadInquiryWhereInput): Prisma.LeadInquiryWhereInput =>
+  scope ? { AND: [scope, where] } : where;
+
+export async function getUnassignedLeads(scope?: LeadScope): Promise<{ count: number; rows: UnassignedLeadRow[] }> {
+  const where = scoped(scope, { assignedToId: null, status: { notIn: CLOSED_LEAD_STATUSES } });
   const [count, rows] = await Promise.all([
     safeQuery("dashboard:unassigned:count", () => prisma.leadInquiry.count({ where }), 0),
     safeQuery(
@@ -115,8 +122,7 @@ export type TodayEventRow = {
 /** Events running at any point today: started today, or started earlier
  *  and not yet ended. */
 export async function getTodayEvents(): Promise<TodayEventRow[]> {
-  const start = utcDayStart(new Date());
-  const end = new Date(start.getTime() + DAY_MS);
+  const { start, end } = bangkokToday();
 
   return safeQuery(
     "dashboard:todayEvents",
@@ -150,20 +156,20 @@ export async function getTodayEvents(): Promise<TodayEventRow[]> {
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
 /** Leads that are still somebody's job: everything but WON and LOST. */
-export async function getOpenLeadCount(): Promise<number> {
+export async function getOpenLeadCount(scope?: LeadScope): Promise<number> {
   return safeQuery(
     "dashboard:openLeads",
-    () => prisma.leadInquiry.count({ where: { status: { notIn: CLOSED_LEAD_STATUSES } } }),
+    () => prisma.leadInquiry.count({ where: scoped(scope, { status: { notIn: CLOSED_LEAD_STATUSES } }) }),
     0,
   );
 }
 
 /** New leads per UTC day over the window — the open-leads card's line. */
-export async function getLeadArrivals(days: number): Promise<{ day: Date; count: number }[]> {
+export async function getLeadArrivals(days: number, scope?: LeadScope): Promise<{ day: Date; count: number }[]> {
   const from = new Date(utcDayStart(new Date()).getTime() - (days - 1) * DAY_MS);
   const rows = await safeQuery(
     "dashboard:leadArrivals",
-    () => prisma.leadInquiry.findMany({ where: { createdAt: { gte: from } }, select: { createdAt: true } }),
+    () => prisma.leadInquiry.findMany({ where: scoped(scope, { createdAt: { gte: from } }), select: { createdAt: true } }),
     [],
   );
   return rows.map((row) => ({ day: row.createdAt, count: 1 }));
@@ -171,10 +177,10 @@ export async function getLeadArrivals(days: number): Promise<{ day: Date; count:
 
 /* ── Pipeline and stock ─────────────────────────────────────────────── */
 
-export async function getLeadStatusCounts(): Promise<Partial<Record<LeadStatus, number>>> {
+export async function getLeadStatusCounts(scope?: LeadScope): Promise<Partial<Record<LeadStatus, number>>> {
   const rows = await safeQuery(
     "dashboard:funnel",
-    () => prisma.leadInquiry.groupBy({ by: ["status"], _count: { _all: true } }),
+    () => prisma.leadInquiry.groupBy({ by: ["status"], where: scope, _count: { _all: true } }),
     [],
   );
   return Object.fromEntries(rows.map((row) => [row.status, row._count._all]));

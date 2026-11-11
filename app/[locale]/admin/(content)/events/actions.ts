@@ -26,6 +26,7 @@ import { resolveIsPublished } from "@/lib/publishing-gate";
 import { eventSchema, fieldErrors } from "@/lib/validations";
 import { SEAT_TAKING_STATUSES, countTakenSeats } from "@/lib/events";
 import { revalidatePublicSite } from "@/lib/revalidate-site";
+import { leadScopeWhere, scopedProjectIdsOf } from "@/lib/leads-board";
 
 export type EventFormState = {
   ok: boolean;
@@ -203,6 +204,45 @@ export async function deleteEvent(locale: string, id: string): Promise<void> {
 
 // ── Registration status ─────────────────────────────────────────────────
 
+/**
+ * Change a registration — only one belonging to `eventId` — and, when the
+ * change moves it from a status that holds no seat (CANCELLED) into one
+ * that does, refuse if the event is already full. Serializable for the
+ * same reason as the public RSVP: two approvals at once must not both see
+ * the last seat free.
+ */
+async function moveRegistration(
+  eventId: string,
+  registrationId: string,
+  data: Prisma.EventRegistrationUpdateInput & { status?: EventStatus },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return prisma.$transaction(
+    async (tx) => {
+      const row = await tx.eventRegistration.findFirst({
+        where: { id: registrationId, eventId },
+        select: { status: true, partySize: true, event: { select: { capacity: true } } },
+      });
+      if (!row) return { ok: false as const, error: "NOT_FOUND" };
+
+      const seatTaking = (s: EventStatus) => (SEAT_TAKING_STATUSES as readonly EventStatus[]).includes(s);
+      const next = data.status ?? row.status;
+      if (row.event.capacity !== null && !seatTaking(row.status) && seatTaking(next)) {
+        const taken = await tx.eventRegistration.aggregate({
+          where: { eventId, id: { not: registrationId }, status: { in: [...SEAT_TAKING_STATUSES] } },
+          _sum: { partySize: true },
+        });
+        if ((taken._sum.partySize ?? 0) + row.partySize > row.event.capacity) {
+          return { ok: false as const, error: "CAPACITY_EXCEEDED" };
+        }
+      }
+
+      await tx.eventRegistration.update({ where: { id: registrationId }, data });
+      return { ok: true as const };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
 export type RegistrationResult = { ok: true } | { ok: false; error: string };
 
 /**
@@ -223,10 +263,8 @@ export async function updateRegistrationStatus(
   }
 
   try {
-    await prisma.eventRegistration.update({
-      where: { id },
-      data: { status: status as EventStatus },
-    });
+    const moved = await moveRegistration(eventId, id, { status: status as EventStatus });
+    if (!moved.ok) return moved;
   } catch {
     return { ok: false, error: "UPDATE_FAILED" };
   }
@@ -284,17 +322,27 @@ export async function createLeadFromRegistration(
   if (registration.leadId) return { ok: true, leadId: registration.leadId };
 
   try {
+    // Reuse a lead for this address only if this account may see it (SALES
+    // pool + project scope); linking to a hidden one would hand a rep its id
+    // and write a note on a lead they can't open.
+    const scope = await leadScopeWhere(session);
     const existing = await prisma.leadInquiry.findFirst({
-      where: { email: registration.email.toLowerCase() },
+      where: { AND: [{ email: registration.email.toLowerCase() }, ...(scope ? [scope] : [])] },
       select: { id: true },
       orderBy: { createdAt: "desc" },
     });
 
-    const leadId =
-      existing?.id ??
-      (
-        await prisma.leadInquiry.create({
-          data: {
+    // A project-scoped account can only see leads in its projects, and a
+    // lead with no project is outside every scope; give the new lead the
+    // account's (first) project so the person who made it can open it.
+    const [scopedProject] = await scopedProjectIdsOf(session.id);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const leadId =
+        existing?.id ??
+        (
+          await tx.leadInquiry.create({
+            data: {
             name: registration.name,
             email: registration.email.toLowerCase(),
             phone: registration.phone,
@@ -311,25 +359,39 @@ export async function createLeadFromRegistration(
             consentGiven: registration.consentGiven,
             consentedAt: registration.consentedAt,
             consentVersion: registration.consentVersion,
+            ...(scopedProject ? { projectId: scopedProject } : {}),
           },
           select: { id: true },
         })
-      ).id;
+        ).id;
 
-    await prisma.eventRegistration.update({
-      where: { id: registrationId },
-      data: { leadId },
-    });
+      // Claim the registration only if it is still unlinked. A double
+      // click (or two people) both passed the leadId check above; the
+      // second claim matches nothing and rolls its lead back, so no
+      // orphan duplicate is left behind.
+      const claimed = await tx.eventRegistration.updateMany({
+        where: { id: registrationId, leadId: null },
+        data: { leadId },
+      });
+      if (claimed.count === 0) throw new AlreadyLinked();
 
-    // Says where the lead came from, on the lead's own timeline.
-    await prisma.leadNote.create({
-      data: {
-        leadId,
-        authorId: session.id,
-        kind: "SYSTEM",
-        body: `Created from an event registration — ${registration.event.titleEn}.`,
-      },
+      // Says where the lead came from, on the lead's own timeline.
+      await tx.leadNote.create({
+        data: {
+          leadId,
+          authorId: session.id,
+          kind: "SYSTEM",
+          body: `Created from an event registration — ${registration.event.titleEn}.`,
+        },
+      });
+      return leadId;
+    }).catch(async (error) => {
+      if (!(error instanceof AlreadyLinked)) throw error;
+      const linked = await prisma.eventRegistration.findUnique({ where: { id: registrationId }, select: { leadId: true } });
+      return linked?.leadId ?? null;
     });
+    if (!result) return { ok: false, error: "CREATE_FAILED" };
+    const leadId = result;
 
     revalidatePath(`/${locale}/admin/events/${registration.event.id}/registrations`);
     revalidatePath(`/${locale}/admin/leads`);
@@ -358,19 +420,26 @@ export async function setRegistrationCheckedIn(
   await requireCapabilityAction("viewAllLeads");
 
   try {
-    const result = await prisma.eventRegistration.updateMany({
-      where: { id: registrationId, eventId },
-      data: {
-        checkedInAt: checkedIn ? new Date() : null,
-        ...(checkedIn ? { status: "ATTENDED" as const } : {}),
-      },
+    const moved = await moveRegistration(eventId, registrationId, {
+      checkedInAt: checkedIn ? new Date() : null,
+      ...(checkedIn ? { status: EventStatus.ATTENDED } : {}),
     });
-    if (result.count === 0) return { ok: false, error: "NOT_FOUND" };
+    if (!moved.ok) return moved;
   } catch (error) {
     console.error("[setRegistrationCheckedIn]", error);
     return { ok: false, error: "SAVE_FAILED" };
   }
 
   revalidatePath(`/${locale}/admin/events/${eventId}/registrations`);
+  // A cancelled booking checked in takes a seat back: seats-left on the
+  // public pages changes.
+  if (checkedIn) {
+    for (const target of locales) revalidatePath(`/${target}/events`);
+    revalidatePublicSite();
+  }
   return { ok: true };
 }
+
+/** Thrown inside createLeadFromRegistration's transaction to roll back a
+ *  lead created by the loser of a double click. */
+class AlreadyLinked extends Error {}

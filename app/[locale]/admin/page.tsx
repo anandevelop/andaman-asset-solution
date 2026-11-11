@@ -80,6 +80,7 @@ import Sparkline from "@/components/admin/Sparkline";
 import WorkInbox from "@/components/admin/WorkInbox";
 import { LEAD_STATUS_DOT, LEAD_STATUS_TEXT } from "@/lib/admin/lead-status-tone";
 import AdminImage from "@/components/admin/ui/AdminImage";
+import { leadScopeWhere } from "@/lib/leads-board";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -141,6 +142,9 @@ export default async function AdminDashboardPage(props: Props) {
 
   const modelLabels = t.raw("auditModels") as AuditModelLabels;
   const now = new Date();
+  // Project scope (and the SALES pool) for every lead figure below, so the
+  // dashboard never shows more than /admin/leads would.
+  const leadScope = await leadScopeWhere(session);
 
   const [
     unassigned,
@@ -157,15 +161,15 @@ export default async function AdminDashboardPage(props: Props) {
     keywords,
     activity,
   ] = await Promise.all([
-    can.leads ? getUnassignedLeads() : EMPTY_QUEUE,
+    can.leads ? getUnassignedLeads(leadScope) : EMPTY_QUEUE,
     can.leads ? getOverdueAppointments(session) : EMPTY_QUEUE,
     can.events ? getTodayEvents() : [],
-    getOpenLeadCount(),
-    getLeadArrivals(LEAD_DAYS),
+    getOpenLeadCount(leadScope),
+    getLeadArrivals(LEAD_DAYS, leadScope),
     getPageViewTrend(VIEW_DAYS),
     getCookieConsentStats(),
     getProjectStock(),
-    can.leads ? getLeadStatusCounts() : ({} as Partial<Record<LeadStatus, number>>),
+    can.leads ? getLeadStatusCounts(leadScope) : ({} as Partial<Record<LeadStatus, number>>),
     can.pages ? getTranslationStatusReport() : null,
     can.analytics ? safeQuery("dashboard:live", getLiveSnapshot, EMPTY_SNAPSHOT) : null,
     can.seo ? getTopKeywords() : [],

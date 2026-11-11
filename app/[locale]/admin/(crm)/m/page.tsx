@@ -19,6 +19,8 @@ import { getTranslations } from "next-intl/server";
 import { Navigation, Phone } from "lucide-react";
 import { LeadStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { leadScopeWhere } from "@/lib/leads-board";
+import { bangkokToday } from "@/lib/admin/month-grid";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { intlLocale } from "@/lib/format";
@@ -37,8 +39,6 @@ const OPEN_STATUSES: LeadStatus[] = [
   "NEGOTIATING",
 ];
 
-const DAY_MS = 24 * 60 * 60_000;
-
 export default async function MobileTodayPage(props: Props) {
   const { locale } = await props.params;
   const session = await requireCapability(locale, "viewAllLeads");
@@ -46,9 +46,13 @@ export default async function MobileTodayPage(props: Props) {
   const tRoot = await getTranslations({ locale, namespace: "admin" });
 
   const now = new Date();
-  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const endOfToday = new Date(startOfToday.getTime() + DAY_MS);
-  const scope = { OR: [{ assignedToId: session.id }, { assignedToId: null }] };
+  // Bangkok's day, not UTC's (which turns over at 07:00 local).
+  const { start: startOfToday, end: endOfToday } = bangkokToday(now);
+  // Mine or unassigned — and inside this account's project scope.
+  const projectScope = await leadScopeWhere(session);
+  const scope = {
+    AND: [{ OR: [{ assignedToId: session.id }, { assignedToId: null }] }, ...(projectScope ? [projectScope] : [])],
+  };
 
   const [overdueLeads, dueTodayLeads, todayAppointments, unassignedCount] = await Promise.all([
     safeQuery(
@@ -80,7 +84,10 @@ export default async function MobileTodayPage(props: Props) {
     getMyAppointmentsToday(session.id),
     safeQuery(
       "mobile:unassignedCount",
-      () => prisma.leadInquiry.count({ where: { assignedToId: null, status: { in: OPEN_STATUSES } } }),
+      () =>
+        prisma.leadInquiry.count({
+          where: { AND: [{ assignedToId: null, status: { in: OPEN_STATUSES } }, ...(projectScope ? [projectScope] : [])] },
+        }),
       0,
     ),
   ]);
@@ -89,8 +96,9 @@ export default async function MobileTodayPage(props: Props) {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: "Asia/Bangkok",
   });
-  const timeFormat = new Intl.DateTimeFormat(intlLocale(locale), { hour: "2-digit", minute: "2-digit" });
+  const timeFormat = new Intl.DateTimeFormat(intlLocale(locale), { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
 
   function hoursOverdue(followUpAt: Date | null): number {
     if (!followUpAt) return 0;

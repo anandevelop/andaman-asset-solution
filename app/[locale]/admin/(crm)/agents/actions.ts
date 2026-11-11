@@ -148,7 +148,11 @@ export async function setAgentLink(locale: string, salesPersonId: string, enable
 }
 
 export async function exportAgentsCsv(locale: string): Promise<AgentActionResult> {
-  return guarded(Role.SALES, async () => {
+  // Every co-agent's phone, WhatsApp and email in one file: the same
+  // exportCustomerData capability as the lead export, not the SALES floor
+  // that lets a rep reveal one masked number at a time (and is rate-limited
+  // for it — see revealAgentPhone).
+  return guarded(Role.ADMIN, async () => {
     const t = await getTranslations({ locale, namespace: "coAgents.agents" });
     const agents = await prisma.agent.findMany({
       orderBy: { createdAt: "asc" },
