@@ -11,7 +11,7 @@
 :root{
   --page:#ffffff; --surface:#ffffff; --line:#e6e6e6; --fg:#0a0a0a; --muted:#555555; --brown:#555555;
   --navy:#0a0a0a; --sand:#cfa75f; --gold-soft:#f7efdc;
-  --st-available:#cfa75f; --st-reserved:#3b3b3b; --st-sold:#bdbdbd;
+  --st-available:#2e9e5b; --st-reserved:#cfa75f; --st-sold:#d64545;
   --scene:#f3f3f3; --scene-night:#06131c;
   --glass:0 0 0 1px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.95),0 8px 20px -12px rgba(0,0,0,.3);
   --font:fcVision,"fcVision Fallback","IBM Plex Sans Thai",Roboto,system-ui,sans-serif;
@@ -41,7 +41,7 @@ button,a{font:inherit;color:inherit}
 .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lb{position:absolute;transform:translate(-50%,-100%);font-size:8.5px;font-weight:600;padding:0 4px;border-radius:7px;color:var(--fg);white-space:nowrap;pointer-events:auto;cursor:pointer;border:1.5px solid var(--st-available);line-height:1.5;letter-spacing:.01em;background:#fff;font-variant-numeric:tabular-nums;transition:opacity .2s}
 .lb[data-st="reserved"]{border-color:var(--st-reserved)}
-.lb[data-st="sold"]{border-color:var(--st-sold);background:#f0f0f0;color:var(--muted)}
+.lb[data-st="sold"]{border-color:var(--st-sold)}
 .lb.dim{opacity:.18 !important}
 .lb.sel{outline:2px solid var(--fg);transform:translate(-50%,-100%) scale(1.25);z-index:2}
 .poi{position:absolute;transform:translate(-50%,-100%);font-size:10px;font-weight:500;padding:2px 6px;background:rgba(255,255,255,.94);color:var(--fg);border:1px solid var(--line);white-space:nowrap;pointer-events:auto;cursor:pointer;border-radius:999px}
@@ -602,7 +602,7 @@ function detail(){
   } else {
     const list=units.filter(x=>filter==="all"||x.status===filter), pos=list.findIndex(x=>x.k===selected);
     el.innerHTML = `<div class="dhead"><p class="eyebrow" style="margin:0">${T.plot}</p><button class="back" id="u-back"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>${T.back}</button></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>${u.id}</h3><span class="pill" style="border-color:var(${STC[u.status]})${u.status==="available"?";background:var(--gold-soft)":""}">${T[u.status]}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>${u.id}</h3><span class="pill" style="border-color:var(${STC[u.status]})">${T[u.status]}</span></div>
       <dl class="dl">
         <div><dt>${T.land}</dt><dd>${u.land} ${T.sqm}</dd></div>
         <div><dt>${T.usable}</dt><dd>${houseOf(u).area} ${T.sqm}</dd></div>
