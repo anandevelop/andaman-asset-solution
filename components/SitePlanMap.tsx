@@ -121,14 +121,13 @@ type View = "map" | "list" | "3d";
 // existing token to reuse, since nothing else in this app needed a
 // deliberately-receding neutral before this map did.
 const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string }> = {
-  // Traffic-light statuses on the black-and-white theme: green available,
-  // gold reserved, red sold. Text stays ink, never the dot colour (none of
-  // these reaches 4.5:1 on white as type). The 3D embeds
+  // Available is left uncoloured (neutral grey); taken plots carry a pale
+  // tint — gold for reserved, red for sold. Text stays ink. The 3D embeds
   // (public/embed/*-3d.html) carry the same three as --st-available/
   // reserved/sold.
-  AVAILABLE: { dot: "#2E9E5B", soft: "#E3F4EA", text: "#0A0A0A" },
-  RESERVED: { dot: "#CFA75F", soft: "#F7EFDC", text: "#0A0A0A" },
-  SOLD: { dot: "#D64545", soft: "#FBE7E7", text: "#0A0A0A" },
+  AVAILABLE: { dot: "#DADADA", soft: "#F3F3F3", text: "#0A0A0A" },
+  RESERVED: { dot: "#E8D3A6", soft: "#F9F1E1", text: "#0A0A0A" },
+  SOLD: { dot: "#F0A8A8", soft: "#FCEBEB", text: "#0A0A0A" },
 };
 const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
 /** The selection ring — sand, so it contrasts against every marker colour
