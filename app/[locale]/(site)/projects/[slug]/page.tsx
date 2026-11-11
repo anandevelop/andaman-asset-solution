@@ -802,7 +802,10 @@ export default async function ProjectPage(props: Props) {
                 ))}
               </ul>
             ) : (
-              <FacilityScroller facilities={facilities} />
+              <FacilityScroller
+                facilities={facilities}
+                labels={{ previous: t("galleryPrevious"), next: t("galleryNext") }}
+              />
             )}
           </div>
         </section>
@@ -1042,6 +1045,9 @@ export default async function ProjectPage(props: Props) {
                 previous: t("galleryPrevious"),
                 next: t("galleryNext"),
                 video: t("progressVideoLabel"),
+                // A template the component fills per photo — a function
+                // cannot cross from this server page to the client one.
+                photoAlt: t("galleryPhotoAlt", { name: "{name}", number: "{number}" }),
               }}
             />
           </Reveal>

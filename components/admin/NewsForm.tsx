@@ -43,6 +43,7 @@
  */
 
 import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import ArticlePreview from "@/components/admin/ArticlePreview";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -370,6 +371,7 @@ export default function NewsForm({
   const t = useTranslations("admin");
   const tUpload = useTranslations("admin.upload");
   const [state, formAction, isPending] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
 
   const err = (name: string) => {
     const code = state.fields?.[name];
@@ -738,7 +740,7 @@ export default function NewsForm({
         />
       )}
 
-      <form id="news-form" action={formAction} className="space-y-8">
+      <form id="news-form" ref={keepValues} action={formAction} className="space-y-8">
         <input type="hidden" name="locale" value={lang} />
         <input type="hidden" name="contentFormat" value={contentFormat} />
         <input type="hidden" name="schemaType" value={schemaType} />

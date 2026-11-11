@@ -21,6 +21,7 @@
  */
 
 import { useActionState, useState, useTransition } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Loader2, MapPin, Plus, Trash2 } from "lucide-react";
@@ -78,6 +79,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
   const t = useTranslations("admin.nearby");
   const tCommon = useTranslations("admin.common");
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
   const [categories, setCategories] = useState<Category[]>(initial);
   // A project on the shared list edits nothing until it asks for its own.
   const [editing, setEditing] = useState(scope === "shared" || source === "project");
@@ -105,7 +107,7 @@ export default function NearbyEditor({ action, revert, source, scope, initial, c
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form ref={keepValues} action={formAction} className="space-y-5">
       <input type="hidden" name="payload" value={JSON.stringify(categories)} />
 
       {state.ok && (

@@ -182,7 +182,7 @@ const GLB_TEX = {"LightStoneFloor": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
    Config via query string on the iframe src:
      ?lang=th|en          interface language (default th)
      ?data=/api/units.json  optional JSON [{id:"R01",status:"available|reserved|sold",land:228}, ...]
-     ?enquire=/th/projects/the-victory#enquire   where the CTA goes when not handled by the parent page
+     ?enquire=/th/projects/victory#enquire   where the CTA goes when not handled by the parent page
    Parent page messages (window.postMessage):
      → in:  {type:"rp3d:setUnits", units:[...same shape as data...]}
      ← out: {type:"rp3d:select", unit:"R01", status:"available", land:228}
@@ -190,7 +190,7 @@ const GLB_TEX = {"LightStoneFloor": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
    ===================================================================== */
 const Q = new URLSearchParams(location.search);
 const LANG = Q.get("lang")==="en" ? "en" : "th";
-const ENQUIRE = Q.get("enquire") || `/${LANG}/projects/the-victory#enquire`;
+const ENQUIRE = Q.get("enquire") || `/${LANG}/projects/victory#enquire`;
 const T = {
   th:{all:"ทั้งหมด",available:"ว่าง",reserved:"จองแล้ว",sold:"ขายแล้ว",day:"☀ กลางวัน",night:"☾ กลางคืน",labels:"เลขแปลง",reset:"มุมมองรวม",
       hint:"ลากเพื่อหมุน · สกรอลล์เพื่อซูม · แตะบ้านเพื่อดูแปลง",status:"สถานะแปลง",units:"ยูนิตทั้งหมด",unitWord:"หลัง",pct:p=>`ขายแล้ว + จองแล้ว ${p}% ของทั้งหมด`,

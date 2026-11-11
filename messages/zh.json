@@ -326,7 +326,7 @@
     "sitePlanViewMap": "总平面图",
     "sitePlanViewList": "地块列表",
     "sitePlanView3d": "3D",
-    "sitePlanHint": "拖动平移 · 滚动缩放 · 点击标记查看详情",
+    "sitePlanHint": "拖动平移 · Ctrl/⌘ + 滚动或双指缩放 · 点击标记查看详情",
     "sitePlanCanvasLabel": "互动式总平面图",
     "sitePlanStatusTitle": "地块状态",
     "sitePlanTotalUnitsLabel": "总单位数",
@@ -5164,5 +5164,18 @@
       "closed": "此链接已停止接收登记",
       "closedText": "请联系销售团队获取新的登记链接。"
     }
+  },
+  "validation": {
+    "nameShort": "姓名太短",
+    "agencyShort": "机构 / 公司名称太短",
+    "email": "请输入有效的电子邮箱",
+    "phone": "请输入有效的电话号码",
+    "whatsapp": "请输入有效的 WhatsApp 号码",
+    "country": "请从列表中选择国家",
+    "consent": "提交表单前请先同意相关条款",
+    "consentRegister": "报名前请先同意相关条款",
+    "tooLong": "内容过长",
+    "tooShort": "内容过短",
+    "invalid": "请检查此项"
   }
 }

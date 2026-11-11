@@ -17,6 +17,7 @@
  */
 
 import { useActionState, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
@@ -158,9 +159,10 @@ function SubmitButton({ label }: { label: string }) {
 export default function SettingsForm({ action, groups, labels }: Props) {
   const t = useTranslations("admin");
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form ref={keepValues} action={formAction} className="space-y-6">
       {state.ok && (
         <SaveToast tone="success" token={state}>
           <CheckCircle2 size={16} aria-hidden />

@@ -27,6 +27,10 @@ export function pickLocale(
   th: string | null | undefined,
   en: string | null | undefined,
 ): string {
-  const value = locale === "th" ? th ?? en : en ?? th;
+  // Blank counts as missing: the admin forms save an emptied field as ""
+  // rather than null, and `"" ?? en` is "" — the Thai report showed a
+  // nameless row for every project typed in English only.
+  const filled = (v: string | null | undefined) => (v?.trim() ? v : undefined);
+  const value = locale === "th" ? filled(th) ?? filled(en) : filled(en) ?? filled(th);
   return value ?? "";
 }

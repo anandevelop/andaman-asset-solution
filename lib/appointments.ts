@@ -20,7 +20,7 @@ import { AppointmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { LEAD_CANDIDATE_WHERE } from "@/lib/lead-routing";
 import { safeQuery } from "@/lib/db";
-import { BANGKOK_OFFSET_MS } from "@/lib/admin/month-grid";
+import { BANGKOK_OFFSET_MS, bangkokToday } from "@/lib/admin/month-grid";
 
 const DAY_MS = 24 * 60 * 60_000;
 
@@ -196,9 +196,9 @@ export async function getUnassignedAppointments(): Promise<AppointmentCard[]> {
  * the whole team's.
  */
 export async function getMyAppointmentsToday(userId: string): Promise<AppointmentCard[]> {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const end = new Date(start.getTime() + DAY_MS);
+  // Bangkok's day: the UTC one turned over at 07:00 local and dropped a
+  // 06:30 viewing into yesterday.
+  const { start, end } = bangkokToday();
   return safeQuery(
     "getMyAppointmentsToday",
     async () => {
@@ -224,9 +224,9 @@ export async function getMyAppointmentsToday(userId: string): Promise<Appointmen
  * day's schedule, not one person's slice of it.
  */
 export async function getTodayAppointmentsCompanyWide(): Promise<AppointmentCard[]> {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const end = new Date(start.getTime() + DAY_MS);
+  // Bangkok's day: the UTC one turned over at 07:00 local and dropped a
+  // 06:30 viewing into yesterday.
+  const { start, end } = bangkokToday();
   return safeQuery(
     "getTodayAppointmentsCompanyWide",
     async () => {

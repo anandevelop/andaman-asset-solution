@@ -129,6 +129,8 @@ export default function CopyPicker({ locale }: { locale: string }) {
   const [owners, setOwners] = useState<{ item: string | null; links: EditLink[] }>({ item: null, links: [] });
 
   const clicked = useRef<Element | null>(null);
+  /** Bumped per lookup, so a stale response can tell it is stale. */
+  const lookup = useRef(0);
   const hovered = useRef<Element | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   /** Mirrors `dirty.length > 0` for the event handlers below. */
@@ -219,12 +221,18 @@ export default function CopyPicker({ locale }: { locale: string }) {
 
       const candidates = candidatesFrom(el);
       setSeen(candidates);
+      // Only the answer for the element clicked last counts: a slow lookup
+      // for an earlier click must not land on top of the newer one.
+      const request = ++lookup.current;
       findCopyForText(locale, candidates)
         .then((matches) => {
+          if (request !== lookup.current) return;
           setPicked(matches.length > 0 ? { status: "found", matches } : { status: "none" });
           armPreview(matches[0]);
         })
-        .catch(() => setPicked({ status: "error" }));
+        .catch(() => {
+          if (request === lookup.current) setPicked({ status: "error" });
+        });
     };
 
     document.addEventListener("mouseover", over, true);

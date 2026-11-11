@@ -38,6 +38,18 @@ import { revalidatePublicSite } from "@/lib/revalidate-site";
 export type UnitActionResult = { ok: true } | { ok: false; error: string };
 
 /**
+ * A SALES rep may change or extend a unit only if it is free or held by
+ * them. Another rep's hold is theirs to release — through the lead it was
+ * reserved for (releaseUnitReservation checks the lead), or by a manager.
+ * Ranks above SALES are unrestricted. Used inside the write's own WHERE so
+ * the check and the update cannot be split by a concurrent change.
+ */
+function notHeldByAnotherRep(session: { id: string; role: Role }) {
+  if (session.role !== Role.SALES) return {};
+  return { OR: [{ reservedById: null }, { reservedById: session.id }] };
+}
+
+/**
  * What a status change means for the three reservation columns.
  *
  * AVAILABLE — the hold is over; nobody is waiting on this plot, so all
@@ -130,14 +142,14 @@ export async function updateUnitStatusMobile(
   unitId: string,
   status: string,
 ): Promise<MobileUnitStatusResult> {
-  await requireAdminAction(Role.SALES);
+  const session = await requireAdminAction(Role.SALES);
 
   const parsed = unitStatusPatchSchema.safeParse({ status });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
 
   try {
     const result = await prisma.projectUnit.updateMany({
-      where: { id: unitId, projectId },
+      where: { id: unitId, projectId, ...notHeldByAnotherRep(session) },
       data: { status: parsed.data.status, ...reservationPatchFor(parsed.data.status) },
     });
     if (result.count === 0) return { ok: false, error: "SAVE_FAILED" };
@@ -190,7 +202,7 @@ export async function extendReservation(
   unitId: string,
   expiresAt: string,
 ): Promise<UnitActionResult> {
-  await requireAdminAction(Role.SALES);
+  const session = await requireAdminAction(Role.SALES);
 
   const parsed = extendSchema.safeParse({ unitId, expiresAt });
   if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
@@ -199,7 +211,7 @@ export async function extendReservation(
   if (date && Number.isNaN(date.getTime())) return { ok: false, error: "INVALID_INPUT" };
 
   const unit = await prisma.projectUnit.findFirst({
-    where: { id: parsed.data.unitId, projectId },
+    where: { id: parsed.data.unitId, projectId, ...notHeldByAnotherRep(session) },
     select: { status: true },
   });
   if (!unit) return { ok: false, error: "NOT_FOUND" };

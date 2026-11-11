@@ -15,6 +15,7 @@
  */
 
 import { useActionState, useState } from "react";
+import { useKeepValuesOnError } from "@/components/forms/use-keep-values-on-error";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
@@ -81,6 +82,7 @@ export default function UserForm({
 }: Props) {
   const t = useTranslations("admin");
   const [state, formAction] = useActionState(action, INITIAL);
+  const keepValues = useKeepValuesOnError(state, !state.ok);
 
   /*
     Tracked in state rather than read once at mount: the sales-profile field
@@ -126,7 +128,7 @@ export default function UserForm({
   })();
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form ref={keepValues} action={formAction} className="space-y-5">
       {banner && (
         <SaveToast tone={banner.tone === "ok" ? "success" : "error"} token={state}>
           {banner.tone === "ok" ? (

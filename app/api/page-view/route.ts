@@ -41,9 +41,8 @@
 import { NextResponse } from "next/server";
 import { PathHitKind } from "@prisma/client";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { isDatabaseOfflineError } from "@/lib/db";
-import { hitDay } from "@/lib/redirects";
+import { bumpPathHit } from "@/lib/redirects";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { isCountablePublicPath, stripLocale } from "@/lib/public-paths";
 import { recordLiveVisit, visitHash } from "@/lib/analytics/live-visit";
@@ -123,13 +122,9 @@ export async function POST(request: Request) {
     // Awaited rather than fired and forgotten: this handler has nothing
     // else to do, and an un-awaited write in a serverless request can be
     // cut off when the response is returned.
-    await prisma.pathHitDay.upsert({
-      where: {
-        kind_path_day: { kind: PathHitKind.PAGE_VIEW, path, day: hitDay() },
-      },
-      create: { kind: PathHitKind.PAGE_VIEW, path, day: hitDay(), hits: 1 },
-      update: { hits: { increment: 1 } },
-    });
+    // Capped: a new path is only added while today is under
+    // MAX_NEW_PATHS_PER_DAY (see lib/redirects.ts) — this endpoint is public.
+    await bumpPathHit(PathHitKind.PAGE_VIEW, path);
   } catch (error) {
     // A reader must never see anything go wrong because a counter did.
     if (!isDatabaseOfflineError(error)) {

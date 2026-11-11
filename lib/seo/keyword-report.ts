@@ -29,6 +29,7 @@
 
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { weightedPositions } from "@/lib/seo/weighted-position";
 import { safeQuery } from "@/lib/db";
 
 export type QueryStat = {
@@ -139,13 +140,14 @@ export async function getKeywordReport(days = 28): Promise<KeywordReport> {
   return safeQuery(
     "seo:keywordReport",
     async () => {
-      const [grouped, latest, total] = await Promise.all([
+      const [grouped, positions, latest, total] = await Promise.all([
         prisma.seoQueryStat.groupBy({
           by: ["query"],
           where: { date: { gte: since } },
           _sum: { clicks: true, impressions: true },
           _avg: { position: true },
         }),
+        weightedPositions({ date: { gte: since } }),
         prisma.seoQueryStat.findFirst({ orderBy: { date: "desc" }, select: { date: true } }),
         prisma.seoQueryStat.count(),
       ]);
@@ -163,7 +165,9 @@ export async function getKeywordReport(days = 28): Promise<KeywordReport> {
             // daily CTRs weights a quiet Tuesday the same as a busy
             // Saturday and is not this window's click-through rate.
             ctr: impressions === 0 ? 0 : clicks / impressions,
-            position: row._avg.position ?? 0,
+            // Impression-weighted (see lib/seo/weighted-position.ts), with
+            // the plain mean only for a query that had no impressions.
+            position: positions.get(row.query.toLowerCase()) ?? row._avg.position ?? 0,
           };
         })
         .sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions);

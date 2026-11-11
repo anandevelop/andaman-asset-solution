@@ -204,7 +204,7 @@ export default async function AgentsPage(props: Props) {
         description={t("subtitle")}
         actions={
           <>
-            <AgentExportButton locale={locale} />
+            {canAdmin && <AgentExportButton locale={locale} />}
             <Link href={href({ links: "1" })} scroll={false} className="admin-btn-ghost">
               <Link2 size={15} aria-hidden /> {t("links")}
             </Link>

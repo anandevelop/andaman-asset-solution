@@ -88,7 +88,7 @@ export default async function AdminLayout(props: Props) {
   // exactly the roles that link does. Through safeQuery because it is a
   // nicety on every page — Postgres blinking must not take the chrome down.
   const [counts, t, feed, liveCount, requestHeaders] = await Promise.all([
-    getAdminNavCounts(user.id),
+    getAdminNavCounts(user),
     getTranslations({ locale, namespace: "admin" }),
     // More than the old dropdown's ten: the drawer folds repeats and test
     // rows away, so it needs enough to fill a screen after doing so.

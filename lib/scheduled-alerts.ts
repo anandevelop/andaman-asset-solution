@@ -31,7 +31,7 @@
  */
 
 import "server-only";
-import { LeadStatus, Role, UnitStatus } from "@prisma/client";
+import { AppointmentStatus, LeadStatus, Role, UnitStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { can, type Capability } from "@/lib/permissions";
 import { getRoutingRules } from "@/lib/lead-routing";
@@ -122,10 +122,18 @@ async function unclaimedLeads(now: Date, sent: Record<string, string>): Promise<
   const rules = await getRoutingRules();
   const afterHours = rules.escalateAfterHours || 2;
 
+  // Leave out the ones already alerted in the query itself. Taking the
+  // oldest 50 and filtering afterwards stalled for good once 50 leads were
+  // alerted and still unclaimed: every newer one sat behind them.
+  const alerted = Object.keys(sent)
+    .filter((key) => key.startsWith("unclaimed:"))
+    .map((key) => key.slice("unclaimed:".length));
+
   const leads = await prisma.leadInquiry.findMany({
     where: {
       status: LeadStatus.NEW,
       assignedToId: null,
+      ...(alerted.length > 0 && { id: { notIn: alerted } }),
       createdAt: { lte: new Date(now.getTime() - afterHours * HOUR), gte: new Date(now.getTime() - 14 * DAY) },
     },
     orderBy: { createdAt: "asc" },
@@ -296,8 +304,15 @@ async function weeklySummary(now: Date, sent: Record<string, string>): Promise<n
     prisma.leadInquiry.count({ where: { status: LeadStatus.WON, updatedAt: { gte: since } } }),
     prisma.leadInquiry.count({ where: { status: LeadStatus.LOST, updatedAt: { gte: since } } }),
     prisma.leadInquiry.count({ where: { status: LeadStatus.NEW, assignedToId: null } }),
-    prisma.appointment.count({ where: { scheduledAt: { gte: since, lte: now } } }),
-    prisma.projectUnit.groupBy({ by: ["status"], _count: { _all: true } }),
+    // A viewing that was cancelled or the client never came is not one held.
+    prisma.appointment.count({
+      where: {
+        scheduledAt: { gte: since, lte: now },
+        status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW] },
+      },
+    }),
+    // Units of a project in the bin are not stock.
+    prisma.projectUnit.groupBy({ by: ["status"], where: { project: { deletedAt: null } }, _count: { _all: true } }),
     getPageViewTrend(7),
   ]);
   const unitCount = (s: UnitStatus) => units.find((u) => u.status === s)?._count._all ?? 0;

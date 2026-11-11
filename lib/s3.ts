@@ -393,6 +393,10 @@ export async function getPresignedUploadUrl(options: {
   contentType: AllowedContentType;
   prefix?: string;
   slug?: string;
+  /** The file's exact size in bytes. Signed into the URL, so Spaces
+   *  rejects a PUT whose body is any other length — the size the presign
+   *  route checked against the limit is then the size that lands. */
+  size?: number;
 }): Promise<PresignedUpload> {
   const config = readS3Config();
   if (!config) throw new Error("S3_NOT_CONFIGURED");
@@ -431,6 +435,7 @@ export async function getPresignedUploadUrl(options: {
     // upload gets a fresh UUID key.
     CacheControl: "public, max-age=31536000, immutable",
     ...(contentDisposition ? { ContentDisposition: contentDisposition } : {}),
+    ...(options.size !== undefined ? { ContentLength: options.size } : {}),
   });
 
   const uploadUrl = await getSignedUrl(getClient(config), command, {
@@ -438,7 +443,13 @@ export async function getPresignedUploadUrl(options: {
     // Every header the browser is expected to send. Anything the signature
     // covers has to appear in `headers` below too — tests/s3.test.ts
     // compares the two and fails if they drift.
-    signableHeaders: new Set(["content-type", "x-amz-acl"]),
+    // content-length when known: the browser always sends it (and may not
+    // set it by hand), so it is signed but not listed in `headers`.
+    signableHeaders: new Set([
+      "content-type",
+      "x-amz-acl",
+      ...(options.size !== undefined ? ["content-length"] : []),
+    ]),
   });
 
   return {

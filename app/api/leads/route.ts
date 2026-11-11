@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       than a lost one. assignCapturedLead swallows its own errors for the
       same reason.
     */
-    void assignCapturedLead(lead.id, data.commsLanguage ?? null);
+    void assignCapturedLead(lead.id, data.commsLanguage ?? null, projectId);
 
     // Fire-and-forget: the lead is already saved, and a LINE outage must
     // never turn a successful capture into an error for the visitor.

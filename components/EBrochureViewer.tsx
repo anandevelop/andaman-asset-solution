@@ -144,6 +144,8 @@ export default function EBrochureViewer({ fileUrl }: Props) {
   const [portraitScreen, setPortraitScreen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  /** The viewer was the last thing clicked or focused — see the keyboard effect. */
+  const usingViewerRef = useRef(false);
   const chromeRef = useRef<HTMLDivElement>(null);
   const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
   const flipHandle = useRef<FlipbookHandle | null>(null);
@@ -459,6 +461,15 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       const target = event.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
 
+      // The arrows turn pages from anywhere on the page, as before. PageUp/
+      // PageDown/Home/End are how a keyboard user scrolls the page itself,
+      // so those only turn pages in fullscreen or once the viewer was the
+      // last thing clicked or focused — otherwise the whole brochure page
+      // could not be scrolled. (Last-used rather than "has focus": End on
+      // the Next button disables it, and the browser drops focus to body.)
+      const owned = isFullscreen || usingViewerRef.current;
+      if (!owned && /^(PageUp|PageDown|Home|End)$/.test(event.key)) return;
+
       switch (event.key) {
         case "ArrowRight":
         case "PageDown":
@@ -484,9 +495,20 @@ export default function EBrochureViewer({ fileUrl }: Props) {
       event.preventDefault();
     }
 
+    // Which part of the page the visitor last used: the viewer or not.
+    function onUse(event: Event) {
+      usingViewerRef.current = !!containerRef.current?.contains(event.target as Node);
+    }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [status, next, previous, goTo, pageCount, showThumbnails]);
+    document.addEventListener("pointerdown", onUse, true);
+    document.addEventListener("focusin", onUse, true);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onUse, true);
+      document.removeEventListener("focusin", onUse, true);
+    };
+  }, [status, next, previous, goTo, pageCount, showThumbnails, isFullscreen]);
 
   const pageLabel = useCallback(
     (index: number) => t("goToPage", { page: index + 1 }),

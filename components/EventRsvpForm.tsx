@@ -32,6 +32,7 @@ import { useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocale, useTranslations } from "next-intl";
+import { useValidationMessage } from "@/components/forms/use-validation-message";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2,
@@ -70,6 +71,7 @@ type Status =
 
 export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
   const t = useTranslations("events.rsvp");
+  const vm = useValidationMessage();
   // seatsLeft lives on the parent namespace — the listing cards and this
   // form should never disagree about how availability is phrased.
   const tEvent = useTranslations("events");
@@ -233,7 +235,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           id="rsvp-name"
           label={t("name")}
           icon={User}
-          error={errors.name?.message}
+          error={vm(errors.name?.message)}
           inputProps={register("name")}
         />
 
@@ -241,7 +243,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           id="rsvp-agency"
           label={t("agencyName")}
           icon={Building2}
-          error={errors.agencyName?.message}
+          error={vm(errors.agencyName?.message)}
           inputProps={register("agencyName")}
         />
 
@@ -251,7 +253,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           icon={Phone}
           type="tel"
           autoComplete="tel"
-          error={errors.phone?.message}
+          error={vm(errors.phone?.message)}
           inputProps={register("phone")}
         />
 
@@ -260,7 +262,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           label={t("whatsapp")}
           icon={MessageCircle}
           type="tel"
-          error={errors.whatsapp?.message}
+          error={vm(errors.whatsapp?.message)}
           inputProps={register("whatsapp")}
         />
 
@@ -270,7 +272,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           icon={Mail}
           type="email"
           autoComplete="email"
-          error={errors.email?.message}
+          error={vm(errors.email?.message)}
           inputProps={register("email")}
         />
 
@@ -298,7 +300,7 @@ export default function EventRsvpForm({ eventId, seatsLeft }: Props) {
           </span>
         </label>
         {errors.consentGiven && (
-          <p className="text-xs text-red-300">{errors.consentGiven.message}</p>
+          <p className="text-xs text-red-300">{vm(errors.consentGiven.message)}</p>
         )}
 
         <button

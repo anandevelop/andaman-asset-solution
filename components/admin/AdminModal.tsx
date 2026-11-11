@@ -41,6 +41,27 @@ export default function AdminModal({ open, onClose, titleId, title, closeLabel, 
 
   useEffect(() => setMounted(true), []);
 
+  // Into the dialog on open (unless a field inside took focus itself, as
+  // an autoFocus search box does), and back to the opener on close.
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = requestAnimationFrame(() => {
+      const panel = panelRef.current;
+      if (!panel || panel.contains(document.activeElement)) return;
+      (panel.querySelector<HTMLElement>(FOCUSABLE) ?? panel).focus();
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [open, mounted]);
+
+  // Only a click that both starts and ends on the backdrop closes it: a
+  // text selection dragged out of a field and released outside the panel
+  // fires `click` on the backdrop too, and threw away the half-filled form.
+  const pressedOnBackdrop = useRef(false);
+
   useEffect(() => {
     if (!open) return;
 
@@ -86,13 +107,20 @@ export default function AdminModal({ open, onClose, titleId, title, closeLabel, 
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-6 pt-16 backdrop-blur-[3px]"
       style={{ backgroundColor: "rgba(4,29,44,0.62)" }}
-      onClick={onClose}
+      onPointerDown={(event) => {
+        pressedOnBackdrop.current = event.target === event.currentTarget;
+      }}
+      onClick={(event) => {
+        if (pressedOnBackdrop.current && event.target === event.currentTarget) onClose();
+        pressedOnBackdrop.current = false;
+      }}
     >
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
         className={`relative w-full rounded-xs bg-adm-solid p-6 shadow-cardHover ${className ?? "max-w-lg"}`}
       >

@@ -404,8 +404,15 @@ export async function reserveUnitForLead(
   }
 
   try {
-    await prisma.projectUnit.update({
-      where: { id: parsed.data.unitId },
+    // The availability check above is repeated in the WHERE: two reps
+    // reserving the same plot at the same moment both pass the read, and
+    // an unconditional update let the second silently take it from the
+    // first. Now only one write matches; the other gets UNIT_UNAVAILABLE.
+    const claimed = await prisma.projectUnit.updateMany({
+      where: {
+        id: parsed.data.unitId,
+        OR: [{ status: "AVAILABLE" }, { reservedByLeadId: parsed.data.leadId }],
+      },
       data: {
         status: "RESERVED",
         reservedByLeadId: parsed.data.leadId,
@@ -413,6 +420,7 @@ export async function reserveUnitForLead(
         reservationExpiresAt: parsedDate,
       },
     });
+    if (claimed.count === 0) return { ok: false, error: "UNIT_UNAVAILABLE" };
   } catch {
     return { ok: false, error: "UPDATE_FAILED" };
   }

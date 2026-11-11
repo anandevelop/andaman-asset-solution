@@ -352,6 +352,11 @@ class PlanMapEngine {
     cv.addEventListener(
       "wheel",
       (e) => {
+        // A plain wheel scrolls the page: the plan fills most of a phone
+        // screen and used to trap anyone scrolling past it. Ctrl/⌘ + wheel
+        // (and a trackpad pinch, which arrives as ctrlKey) zooms, and in
+        // fullscreen, where there is no page to scroll, the wheel always does.
+        if (!e.ctrlKey && !e.metaKey && !document.fullscreenElement) return;
         e.preventDefault();
         const r = this.box.getBoundingClientRect();
         this.zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
@@ -1304,7 +1309,11 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
             <div className="site-plan-fs-fill relative">
               <div
                 ref={mapboxRef}
-                className={`relative aspect-[10/11] w-full touch-none overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
+                className={`relative aspect-[10/11] w-full ${
+                  // Vertical swipes scroll the page outside fullscreen;
+                  // sideways drags and pinches still reach the plan.
+                  isFullscreen ? "touch-none" : "touch-pan-y"
+                } overflow-hidden border border-primary/10 bg-white @min-[560px]:aspect-video ${
                   dragging ? "cursor-grabbing" : "cursor-grab"
                 } site-plan-fullscreen-mapbox`}
               >
