@@ -121,9 +121,13 @@ type View = "map" | "list" | "3d";
 // existing token to reuse, since nothing else in this app needed a
 // deliberately-receding neutral before this map did.
 const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string }> = {
-  AVAILABLE: { dot: "#296682", soft: "#DFE9EF", text: "#20536B" },
-  RESERVED: { dot: "#C47B3A", soft: "#FAEEDF", text: "#9C602C" },
-  SOLD: { dot: "#B6BDC1", soft: "#F3F4F5", text: "#77838A" },
+  // Black-and-white theme: gold is "you can buy this", ink is "taken for
+  // now", grey recedes. Text is ink or a dark grey, never the dot colour —
+  // gold on white is 2.3:1. The 3D embeds (public/embed/*-3d.html) carry
+  // the same three colours as --st-available/reserved/sold.
+  AVAILABLE: { dot: "#CFA75F", soft: "#F7EFDC", text: "#0A0A0A" },
+  RESERVED: { dot: "#3B3B3B", soft: "#EBEBEB", text: "#0A0A0A" },
+  SOLD: { dot: "#BDBDBD", soft: "#F3F3F3", text: "#555555" },
 };
 const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
 /** The selection ring — sand, so it contrasts against every marker colour
@@ -843,10 +847,10 @@ function StatusChips({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(value)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-xs border px-3.5 py-2 text-xs font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
               active
-                ? "border-primary bg-surface-raised text-ink"
-                : "border-primary/15 bg-white text-ink/70 hover:border-primary/35 hover:text-primary"
+                ? "border-gold bg-gold-100 text-ink"
+                : "border-primary/15 bg-white text-ink/70 hover:border-gold hover:text-ink"
             }`}
           >
             {dotColor && (
@@ -1240,7 +1244,7 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
     <div ref={cardRef} className="@container site-plan-fullscreen-card">
       {/* ── View toggle + status filter chips ───────────────────────── */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-xs bg-surface-muted p-1">
+        <div role="group" aria-label={`${labels.viewMap} / ${labels.viewList}`} className="inline-flex gap-1 rounded-full border border-white/70 bg-white/60 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150">
           {(
             [
               ...(scene3dSrc ? [{ value: "3d" as View, label: labels.view3d, icon: Box }] : []),
@@ -1253,8 +1257,8 @@ export default function SitePlanMap({ projectName, masterPlanImageUrl, units, la
               type="button"
               aria-pressed={view === value}
               onClick={() => setView(value)}
-              className={`inline-flex items-center gap-1.5 rounded-xs px-3.5 py-2 text-xs font-medium transition-colors ${
-                view === value ? "bg-white text-primary shadow-card" : "text-ink/60 hover:text-primary"
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                view === value ? "bg-gold-100 text-ink ring-1 ring-gold" : "text-ink-muted hover:text-ink"
               }`}
             >
               <Icon size={13} aria-hidden />
