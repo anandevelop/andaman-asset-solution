@@ -47,6 +47,9 @@ import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { isCountablePublicPath, stripLocale } from "@/lib/public-paths";
 import { recordLiveVisit, visitHash } from "@/lib/analytics/live-visit";
 import { localeOf } from "@/lib/analytics/locale-of";
+import { recordVisit } from "@/lib/analytics/traffic-store";
+import { visitOriginSchema } from "@/lib/analytics/origin-schema";
+import { isBot } from "@/lib/seo/bots";
 
 /*
   Which paths are counted now lives in lib/public-paths.ts —
@@ -69,6 +72,9 @@ const bodySchema = z.object({
   /** True for the 15-second heartbeat, false/absent for the first beacon
    *  of a page. A heartbeat must not count a second read of the page. */
   heartbeat: z.boolean().optional(),
+  /** Only on the first page of a visit: where it came from
+   *  (lib/analytics/visit-origin.ts). Counted once per visit. */
+  visit: visitOriginSchema.optional(),
 });
 
 export async function POST(request: Request) {
@@ -81,6 +87,7 @@ export async function POST(request: Request) {
   let locale: string;
   let dwellMs = 0;
   let heartbeat = false;
+  let visit: z.infer<typeof visitOriginSchema> | undefined;
   try {
     const parsed = bodySchema.safeParse(await request.json());
     if (!parsed.success) return new NextResponse(null, { status: 204 });
@@ -88,6 +95,7 @@ export async function POST(request: Request) {
     locale = localeOf(parsed.data.path);
     dwellMs = parsed.data.dwellMs ?? 0;
     heartbeat = parsed.data.heartbeat ?? false;
+    visit = parsed.data.visit;
   } catch {
     return new NextResponse(null, { status: 204 });
   }
@@ -117,6 +125,18 @@ export async function POST(request: Request) {
   // A heartbeat is the same reader still reading. Counting it would turn
   // the read count into a measure of how long people stay.
   if (heartbeat) return new NextResponse(null, { status: 204 });
+
+  // Where the visit came from. A headless crawler that runs JavaScript can
+  // still announce itself in the user agent; it is not a visitor.
+  if (visit && !isBot(request.headers.get("user-agent"))) {
+    try {
+      await recordVisit(visit, path);
+    } catch (error) {
+      if (!isDatabaseOfflineError(error)) {
+        console.error("[page-view] failed to record visit source", error);
+      }
+    }
+  }
 
   try {
     // Awaited rather than fired and forgotten: this handler has nothing

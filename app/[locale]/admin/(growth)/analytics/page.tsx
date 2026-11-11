@@ -248,6 +248,7 @@ export default async function AdminAnalyticsPage(props: Props) {
               },
               compare: t("analytics.hub.compare"),
               export: t("analytics.hub.export"),
+              sources: t("trafficSources.title"),
             }}
           />
         }

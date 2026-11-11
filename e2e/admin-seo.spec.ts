@@ -40,6 +40,8 @@ const PAGES = [
   "/admin/seo/defaults",
   "/admin/settings/integrations",
   "/admin/reports",
+  "/admin/analytics/sources",
+  "/admin/analytics/sources?days=90",
 ];
 
 /*

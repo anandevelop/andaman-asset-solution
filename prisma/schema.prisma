@@ -3564,3 +3564,60 @@ model PageSpeedRun {
   @@index([createdAt])
   @@map("pagespeed_runs")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Traffic sources and contact clicks (2026-11)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Where a visit came from, as lib/analytics/traffic-source.ts classifies
+/// the referring host and utm tags. AI is its own channel: a visitor who
+/// clicked a link in ChatGPT, Gemini, Perplexity or Claude.
+enum TrafficChannel {
+  AI
+  SEARCH
+  SOCIAL
+  CAMPAIGN
+  REFERRAL
+  DIRECT
+}
+
+/// Visits per day, by source and landing page. One row per (day, source,
+/// landing path) with a number on it — no IP, no visitor id, nothing that
+/// could follow one person, the same rule PathHitDay keeps.
+///
+/// Written by app/api/page-view on the first page of a visit only, so a
+/// visit is counted once however many pages it reads.
+model TrafficVisitDay {
+  id          String         @id @default(cuid())
+  day         DateTime       @db.Date
+  channel     TrafficChannel
+  /// Short key: "google", "chatgpt", "line", "direct", or the referring
+  /// host itself for a site the classifier does not name.
+  source      String
+  /// Locale-stripped, like every other path counted here.
+  landingPath String
+  visits      Int            @default(1)
+
+  @@unique([day, source, landingPath])
+  @@index([day])
+  @@map("traffic_visit_days")
+}
+
+/// Clicks on the things that turn a reader into an enquiry — call, LINE,
+/// WhatsApp, email, map, the enquiry form — per day, page and the source
+/// the visit came from. Written by app/api/click.
+model ContactClickDay {
+  id      String         @id @default(cuid())
+  day     DateTime       @db.Date
+  /// lib/analytics/click-actions.ts: "phone", "line", "whatsapp", …
+  action  String
+  /// The page the click happened on, locale-stripped.
+  path    String
+  channel TrafficChannel
+  source  String
+  clicks  Int            @default(1)
+
+  @@unique([day, action, path, source])
+  @@index([day])
+  @@map("contact_click_days")
+}

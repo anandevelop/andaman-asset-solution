@@ -8,7 +8,7 @@
  */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Waypoints } from "lucide-react";
 import Link from "next/link";
 
 import { ANALYTICS_RANGES, type AnalyticsRange } from "@/lib/analytics/ranges";
@@ -22,7 +22,7 @@ export default function AnalyticsHeaderControls({
   locale: string;
   range: AnalyticsRange;
   compare: boolean;
-  labels: { ranges: Record<AnalyticsRange, string>; compare: string; export: string };
+  labels: { ranges: Record<AnalyticsRange, string>; compare: string; export: string; sources?: string };
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -72,6 +72,13 @@ export default function AnalyticsHeaderControls({
         </button>
         {labels.compare}
       </label>
+
+      {labels.sources && (
+        <Link href={`/${locale}/admin/analytics/sources`} className="admin-btn-ghost rounded-full! px-4">
+          <Waypoints size={14} aria-hidden />
+          {labels.sources}
+        </Link>
+      )}
 
       <Link href={`/${locale}/admin/analytics/report?range=${reportRange}`} className="admin-btn-ghost rounded-full! px-4">
         <Download size={14} aria-hidden />

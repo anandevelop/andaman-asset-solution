@@ -144,6 +144,8 @@ describe("RATE_LIMITS policies", () => {
         "notFound",
         // app/api/page-view/route.ts — the article read counter.
         "pageView",
+        // app/api/click/route.ts — contact clicks by traffic source.
+        "click",
         "presign",
         "rsvp",
         "twoFactor",

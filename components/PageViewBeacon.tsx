@@ -36,6 +36,8 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { LANDING_STORAGE_KEY, type LandingAttribution } from "@/lib/analytics/landing";
+import { captureOrigin, sendClick } from "@/lib/analytics/visit-origin";
+import { actionForHref, isClickAction } from "@/lib/analytics/click-actions";
 
 /** Matches LIVE_VISIT_TTL_MS/60 in lib/analytics/live-visit.ts: four
  *  heartbeats have to fit inside the window a visit is considered live
@@ -107,8 +109,31 @@ export default function PageViewBeacon() {
     counted.current = pathname;
 
     captureLanding(pathname);
-    send({ path: pathname });
+    // `visit` only on the first page of the visit: that is the one place
+    // the source is known and the one time the visit is counted.
+    const origin = captureOrigin();
+    send(origin ? { path: pathname, visit: origin } : { path: pathname });
   }, [pathname]);
+
+  // Contact clicks, by delegation: any tel:/LINE/WhatsApp/map/PDF link on
+  // any page, or anything marked data-track="…", is counted without the
+  // button itself knowing (lib/analytics/click-actions.ts).
+  useEffect(() => {
+    function onClick(event: MouseEvent) {
+      const target = event.target as Element | null;
+      const marked = target?.closest?.("[data-track]");
+      const named = marked?.getAttribute("data-track");
+      if (isClickAction(named)) {
+        sendClick(named);
+        return;
+      }
+      const link = target?.closest?.("a[href]") as HTMLAnchorElement | null;
+      const action = link ? actionForHref(link.href) : null;
+      if (action) sendClick(action);
+    }
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
 
   // The heartbeat is its own effect, keyed on the path, so arriving at a
   // new page restarts the clock — dwellMs is time on *this* page, which is

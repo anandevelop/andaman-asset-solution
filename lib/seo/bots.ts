@@ -53,6 +53,17 @@ export const BOTS = [
   "claudebot",
   "perplexitybot",
   "bytespider",
+  // AI fetching a page because a person asked it to, right now — the
+  // nearest thing to an "AI click" a server can see.
+  "chatgpt-user",
+  "oai-searchbot",
+  "claude-user",
+  "claude-searchbot",
+  "perplexity-user",
+  "meta-externalagent",
+  "mistralai-user",
+  "duckassistbot",
+  "amazonbot",
   "other",
 ] as const;
 
@@ -87,6 +98,17 @@ const PATTERNS: readonly [BotName, string][] = [
   ["mj12bot", "mj12bot"],
   ["dotbot", "dotbot"],
   ["petalbot", "petalbot"],
+  // Before gptbot/claudebot/perplexitybot: these carry the same company
+  // name and are a different thing — a fetch on a person's behalf.
+  ["chatgpt-user", "chatgpt-user"],
+  ["oai-searchbot", "oai-searchbot"],
+  ["claude-user", "claude-user"],
+  ["claude-searchbot", "claude-searchbot"],
+  ["perplexity-user", "perplexity-user"],
+  ["meta-externalagent", "meta-externalagent"],
+  ["mistralai-user", "mistralai-user"],
+  ["duckassistbot", "duckassistbot"],
+  ["amazonbot", "amazonbot"],
   ["gptbot", "gptbot"],
   ["claudebot", "claudebot"],
   ["perplexitybot", "perplexitybot"],
@@ -148,4 +170,27 @@ export const SEARCH_BOTS: readonly BotName[] = [
   "baiduspider",
   "duckduckbot",
   "applebot",
+];
+
+/** AI fetching a page for a person who just asked about it. */
+export const AI_AGENT_BOTS: readonly BotName[] = [
+  "chatgpt-user",
+  "claude-user",
+  "perplexity-user",
+  "mistralai-user",
+];
+
+/** AI search indexes and training crawlers: not a person, but how the
+ *  assistants come to know the site at all. */
+export const AI_CRAWLER_BOTS: readonly BotName[] = [
+  "gptbot",
+  "oai-searchbot",
+  "claudebot",
+  "claude-searchbot",
+  "perplexitybot",
+  "google-other",
+  "meta-externalagent",
+  "duckassistbot",
+  "amazonbot",
+  "bytespider",
 ];

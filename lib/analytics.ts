@@ -27,6 +27,8 @@
 
 /** Build-time default — components/Analytics.tsx prefers the admin
  *  Settings value when one is saved (see app/[locale]/layout.tsx). */
+import { sendClick } from "@/lib/analytics/visit-origin";
+
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
@@ -146,6 +148,9 @@ export function trackPageview(url: string, title?: string): void {
 // ── Named helpers, so call sites stay readable ──────────────────────────
 
 export function trackLead(params: { source?: string; projectSlug?: string }): void {
+  // First-party count, by traffic source (app/api/click) — needs no consent
+  // and no third-party script, unlike the two below.
+  sendClick("lead_submit");
   track("lead_submit", {
     source: params.source,
     project: params.projectSlug,
@@ -157,6 +162,7 @@ export function trackLead(params: { source?: string; projectSlug?: string }): vo
 }
 
 export function trackRsvp(params: { eventId: string }): void {
+  sendClick("event_rsvp");
   // Every registration is exactly one seat since the agent-partner RSVP
   // redesign (no more client-supplied party size) — see EventRsvpForm.
   track("event_rsvp", {

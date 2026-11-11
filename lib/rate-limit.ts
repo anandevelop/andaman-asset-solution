@@ -234,6 +234,10 @@ export const RATE_LIMITS = {
    */
   pageView: { limit: 60, windowMs: 60_000 },
 
+  /** Contact-click counter (app/api/click). Nobody presses call thirty
+   *  times a minute; this only stops a script turning it into a write loop. */
+  click: { limit: 30, windowMs: 60_000 },
+
   /** Inline email check. Generous — one visitor may correct the field a few times. */
   emailCheck: { limit: 30, windowMs: 10 * 60_000 },
 } as const;

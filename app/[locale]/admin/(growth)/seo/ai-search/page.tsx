@@ -27,6 +27,13 @@ const AI_BOTS: { bot: string; name: string; owner: string }[] = [
   { bot: "perplexitybot", name: "PerplexityBot", owner: "Perplexity" },
   { bot: "google-other", name: "Google-Other", owner: "Google · Gemini / AI Overviews" },
   { bot: "bytespider", name: "Bytespider", owner: "ByteDance" },
+  { bot: "chatgpt-user", name: "ChatGPT-User", owner: "OpenAI · opened for a ChatGPT user" },
+  { bot: "oai-searchbot", name: "OAI-SearchBot", owner: "OpenAI · ChatGPT search" },
+  { bot: "claude-user", name: "Claude-User", owner: "Anthropic · opened for a Claude user" },
+  { bot: "claude-searchbot", name: "Claude-SearchBot", owner: "Anthropic · Claude search" },
+  { bot: "perplexity-user", name: "Perplexity-User", owner: "Perplexity · opened for a user" },
+  { bot: "meta-externalagent", name: "Meta-ExternalAgent", owner: "Meta AI" },
+  { bot: "amazonbot", name: "Amazonbot", owner: "Amazon · Alexa / Rufus" },
 ];
 
 export default async function SeoAiSearchPage(props: Props) {
