@@ -124,7 +124,7 @@ export default function FaqAccordion({
                           {faq.question}
                         </span>
 
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-colors duration-300 group-hover:bg-gold group-hover:text-gold-100 group-open:bg-gold group-open:text-gold-100">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-[0.75px] ring-gold/45 transition-colors duration-300 group-hover:bg-gold group-hover:text-gold-100 group-open:bg-gold group-open:text-gold-100">
                           <ChevronDown
                             size={16}
                             strokeWidth={1.5}

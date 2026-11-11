@@ -284,7 +284,7 @@ export default async function HomePage(props: Props) {
                     {/* Frosted cards with air between them, as in Vision &
                         Mission; the icon sits on a gold disc. */}
                     <div className="flex h-full flex-col rounded-3xl border border-white/70 bg-white/60 p-7 shadow-[0_0_0_1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.95),0_18px_40px_-22px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150 transition-transform duration-500 hover:-translate-y-1">
-                      <span className="grid h-12 w-12 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold">
+                      <span className="grid h-12 w-12 place-items-center rounded-full bg-gold-100 text-ink ring-[0.75px] ring-gold/45">
                         <Icon size={22} strokeWidth={1.5} aria-hidden />
                       </span>
                       <h3 className="mt-5 text-base font-medium text-primary">
@@ -390,7 +390,7 @@ export default async function HomePage(props: Props) {
                 className="group/all inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink"
               >
                 {t("news.viewAll")}
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-100 ring-1 ring-gold transition-all duration-300 group-hover/all:translate-x-1 group-hover/all:bg-gold group-hover/all:text-gold-100">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-100 ring-[0.75px] ring-gold/45 transition-all duration-300 group-hover/all:translate-x-1 group-hover/all:bg-gold group-hover/all:text-gold-100">
                   <ArrowRight size={14} aria-hidden />
                 </span>
               </Link>
@@ -446,7 +446,7 @@ export default async function HomePage(props: Props) {
                       ) : (
                         <span />
                       )}
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold group-hover:text-gold-100">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-[0.75px] ring-gold/45 transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold group-hover:text-gold-100">
                         <ArrowRight size={14} aria-hidden />
                       </span>
                     </div>
