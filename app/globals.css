@@ -2394,10 +2394,12 @@
   height: 18px;
   padding: 0 3px;
   border-radius: 9999px;
-  border: 1px solid rgb(195 211 221 / 0.55);
-  background: rgb(6 42 65 / 0.85);
-  color: #c7d5e3;
-  font: 400 9px ui-monospace, Menlo, monospace;
+  border: 1px solid rgb(0 0 0 / 0.15);
+  background: #ffffff;
+  color: var(--color-ink);
+  box-shadow: 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  font: 500 9px var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 @media (min-width: 640px) {
   .u3d-lbl {
@@ -2407,9 +2409,9 @@
   }
 }
 .u3d-lbl.is-on {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: #062a41;
+  border-color: var(--color-gold);
+  background: var(--color-gold);
+  color: var(--color-ink);
 }
 .u3d-lbl.is-off {
   display: none;
