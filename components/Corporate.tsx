@@ -110,7 +110,10 @@ export default async function Corporate() {
                     <i aria-hidden className="h-[2px] w-4 rounded-full bg-gold" />
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="mt-1 block text-sm font-light leading-snug text-ink sm:text-base">
+                  {/* Two lines reserved on every card: "Project Management"
+                      wraps and the others do not, which left the captions at
+                      different heights across the row. */}
+                  <span className="mt-1 block min-h-[2lh] text-sm font-light leading-snug text-ink sm:text-base">
                     {service.label}
                   </span>
                 </div>
