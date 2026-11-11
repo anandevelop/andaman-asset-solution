@@ -10,8 +10,8 @@
 /* Embed for andamanassetsolution — matches the site's black-and-white theme: ink text (never white), gold accent, rounded glass-like controls. --navy and --sand keep their names; they now hold ink and gold. */
 :root{
   --page:#ffffff; --surface:#ffffff; --line:#e6e6e6; --fg:#0a0a0a; --muted:#555555; --brown:#555555;
-  --navy:#0a0a0a; --sand:#cfa75f; --gold-soft:#f7efdc;
-  --st-available:#dadada; --st-reserved:#e8d3a6; --st-sold:#f0a8a8;
+  --navy:#0a0a0a; --sand:#e8b384; --gold-soft:#fbf4ed;
+  --st-available:#dadada; --st-reserved:#efcaa9; --st-sold:#f0a8a8;
   --scene:#f3f3f3; --scene-night:#06131c;
   --glass:0 0 0 1px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.95),0 8px 20px -12px rgba(0,0,0,.3);
   --font:fcVision,"fcVision Fallback","IBM Plex Sans Thai",Roboto,system-ui,sans-serif;
@@ -498,7 +498,7 @@ if(FASCIA.length){ const f=new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferG
 
 
 // selection outline
-const selBox = new THREE.LineSegments(new THREE.EdgesGeometry(BX(1,1,1)), new THREE.LineBasicMaterial({color:0xcfa75f}));
+const selBox = new THREE.LineSegments(new THREE.EdgesGeometry(BX(1,1,1)), new THREE.LineBasicMaterial({color:0xe8b384}));
 selBox.visible=false; scene.add(selBox);
 
 const curve = new THREE.CatmullRomCurve3(PATH,false,"catmullrom",0.2);

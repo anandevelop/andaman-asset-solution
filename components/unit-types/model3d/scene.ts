@@ -22,7 +22,7 @@ const WH = 3.2; // wall height (m)
 // room you pick. Water keeps a muted blue so a pool still reads as a pool.
 const C = {
   slab: 0x1f1f1f, out: 0x2b2b2b, park: 0x171717, green: 0x27322a, wall: 0xc4c4c4,
-  edge: 0xdedede, faint: 0x737373, gold: 0xcfa75f, water: 0x4f8fa8, glass: 0xd2dadd, poolEdge: 0xa7c4cf,
+  edge: 0xdedede, faint: 0x737373, gold: 0xe8b384, water: 0x4f8fa8, glass: 0xd2dadd, poolEdge: 0xa7c4cf,
 };
 const WALL_SCALE = [1, 1.1 / WH, 0]; // Full · Cutaway · Off
 
