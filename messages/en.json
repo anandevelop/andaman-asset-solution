@@ -411,6 +411,7 @@
       "title": "Things buyers ask us",
       "subtitle": "If yours is not here, ask it directly — we would rather answer now than later.",
       "categories": {
+        "general": "General",
         "ownership": "Ownership",
         "payment": "Payment & finance",
         "construction": "Construction",

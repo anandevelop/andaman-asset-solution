@@ -411,6 +411,7 @@
       "title": "买家常问的问题",
       "subtitle": "如果您的问题不在此列，请直接向我们提问——我们更愿意现在就解答，而不是拖到以后。",
       "categories": {
+        "general": "常见问题",
         "ownership": "产权",
         "payment": "付款与融资",
         "construction": "施工",

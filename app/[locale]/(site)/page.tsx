@@ -471,6 +471,7 @@ export default async function HomePage(props: Props) {
           title: tProjects("faq.title"),
           subtitle: tProjects("faq.subtitle"),
           categories: {
+            general: tProjects("faq.categories.general"),
             ownership: tProjects("faq.categories.ownership"),
             payment: tProjects("faq.categories.payment"),
             construction: tProjects("faq.categories.construction"),

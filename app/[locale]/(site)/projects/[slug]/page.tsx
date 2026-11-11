@@ -1069,6 +1069,7 @@ export default async function ProjectPage(props: Props) {
           eyebrow: t("faq.eyebrow"),
           title: t("faq.title"),
           categories: {
+            general: t("faq.categories.general"),
             ownership: t("faq.categories.ownership"),
             payment: t("faq.categories.payment"),
             construction: t("faq.categories.construction"),

@@ -43,7 +43,10 @@ export default function FaqAccordion({
 }: Props) {
   if (faqs.length === 0) return null;
 
-  const groups = groupByCategory(faqs);
+  // Uncategorised questions first, under "General": with only some
+  // questions given a category, the rest used to trail after the last
+  // heading with no heading of their own, as if they belonged to it.
+  const groups = groupByCategory(faqs).sort(([a], [b]) => (a === null ? -1 : b === null ? 1 : 0));
   const grouped = groups.length > 1;
 
   return (
@@ -105,9 +108,9 @@ export default function FaqAccordion({
         <div className="mx-auto mt-14 max-w-2xl space-y-10">
           {groups.map(([category, entries]) => (
             <div key={category ?? "other"}>
-              {grouped && category && (
+              {grouped && (category || labels.categories?.general) && (
                 <h3 className="mb-4 text-center text-xs font-semibold uppercase tracking-widest2 text-ink">
-                  {labels.categories?.[category] ?? category}
+                  {category ? (labels.categories?.[category] ?? category) : labels.categories?.general}
                 </h3>
               )}
 
