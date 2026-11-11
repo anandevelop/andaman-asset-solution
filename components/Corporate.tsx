@@ -91,29 +91,25 @@ export default async function Corporate() {
                   alt={service.imageAlt}
                   fill
                   sizes="(max-width: 1024px) 45vw, 20vw"
-                  // The uploaded line drawings sit on navy; grayscale plus a
-                  // little contrast takes the navy to near-black and keeps
-                  // the white lines white, so the tiles match the black-
-                  // and-white theme without re-uploading the artwork.
-                  className="object-cover grayscale contrast-[1.45] transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* No wash over the photograph: the caption sits on its
                     own frosted panel, so the picture stays a picture and
                     the ink type has the same footing on a pale interior
                     as on a blue sky. */}
-                <div className="absolute inset-x-2 bottom-2 rounded-2xl border border-white/80 bg-white/85 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_24px_-14px_rgba(0,0,0,0.4)] backdrop-blur-xl backdrop-saturate-150 sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-3">
+                <div className="absolute inset-x-2 bottom-2 rounded-2xl border border-white/80 bg-white/85 px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_24px_-14px_rgba(0,0,0,0.4)] backdrop-blur-xl backdrop-saturate-150 sm:inset-x-3 sm:bottom-3 sm:px-3.5 sm:py-2.5">
                   {/* Position, not an id — "01" is where this card sits in
                       the row, so it is derived from the row rather than
                       stored and left to drift when the order changes. */}
-                  <span className="flex items-center gap-2 text-[10px] font-medium tracking-[0.2em] text-ink sm:text-xs">
+                  <span className="flex items-center gap-2 text-[9px] font-medium tracking-[0.2em] text-ink sm:text-[10px]">
                     <i aria-hidden className="h-[2px] w-4 rounded-full bg-gold" />
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   {/* Two lines reserved on every card: "Project Management"
                       wraps and the others do not, which left the captions at
                       different heights across the row. */}
-                  <span className="mt-1 block min-h-[2lh] text-sm font-light leading-snug text-ink sm:text-base">
+                  <span className="mt-0.5 block min-h-[2lh] text-xs font-light leading-snug text-ink sm:text-sm">
                     {service.label}
                   </span>
                 </div>
