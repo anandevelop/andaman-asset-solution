@@ -176,7 +176,7 @@ export default function FeaturedProjectCard({
           {labels.cta}
           {/* The one gold mark on the card: a round arrow that slides on
               hover, echoing the gold rules elsewhere on the site. */}
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold group-hover:text-gold-100">
             <ArrowRight size={14} aria-hidden />
           </span>
         </span>

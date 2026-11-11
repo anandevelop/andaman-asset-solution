@@ -390,7 +390,7 @@ export default async function HomePage(props: Props) {
                 className="group/all inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink"
               >
                 {t("news.viewAll")}
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-100 ring-1 ring-gold transition-all duration-300 group-hover/all:translate-x-1 group-hover/all:bg-gold">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-100 ring-1 ring-gold transition-all duration-300 group-hover/all:translate-x-1 group-hover/all:bg-gold group-hover/all:text-gold-100">
                   <ArrowRight size={14} aria-hidden />
                 </span>
               </Link>
@@ -446,7 +446,7 @@ export default async function HomePage(props: Props) {
                       ) : (
                         <span />
                       )}
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-100 text-ink ring-1 ring-gold transition-all duration-300 group-hover:translate-x-1 group-hover:bg-gold group-hover:text-gold-100">
                         <ArrowRight size={14} aria-hidden />
                       </span>
                     </div>

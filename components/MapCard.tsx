@@ -371,11 +371,11 @@ export default function MapCard({
                         stroke="#fff"
                         strokeWidth="2.5"
                       />
-                      <circle cx="23" cy="22.5" r="12" fill="#e8b384" />
+                      <circle cx="23" cy="22.5" r="12" fill="#fff" />
                       <path
                         d="M16.5 25.5l6.5-6.5 6.5 6.5M19.5 25.5l3.5-3.5 3.5 3.5"
                         fill="none"
-                        stroke="#fff"
+                        stroke="#0a0a0a"
                         strokeWidth="1.8"
                         strokeLinejoin="round"
                       />

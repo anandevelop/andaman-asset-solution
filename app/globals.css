@@ -36,10 +36,10 @@
 
   /* The one colour in the black-and-white theme: used for fills, rules
      and markers, never for text (it is ~2.7:1 on white). */
-  --color-gold-100: #fbf4ed;
-  --color-gold-300: #f2d4ba;
-  --color-gold: #e8b384;
-  --color-gold-700: #b58c67;
+  --color-gold-100: #f2f2f2;
+  --color-gold-300: #cfcfcf;
+  --color-gold: #0a0a0a;
+  --color-gold-700: #3a3a3a;
 
   --color-surface: #f9f9fa;
   --color-surface-raised: #ffffff;
@@ -1891,8 +1891,8 @@
   .spotlight-cone {
     background: linear-gradient(
       180deg,
-      rgba(232, 179, 132, 0.34),
-      rgba(232, 179, 132, 0.1) 70%,
+      rgba(10, 10, 10, 0.14),
+      rgba(10, 10, 10, 0.04) 70%,
       transparent
     );
     clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
@@ -1941,7 +1941,7 @@
 
   .spotlight-spark {
     background: var(--color-gold);
-    box-shadow: 0 0 8px rgba(232, 179, 132, 0.8);
+    box-shadow: 0 0 8px rgba(10, 10, 10, 0.35);
     animation: rise linear infinite;
   }
 

@@ -168,7 +168,7 @@ export default function LeadSuccessDialog({
             <div className="flex flex-col items-center gap-[18px]">
               <span
                 className="flex h-16 w-16 items-center justify-center rounded-full bg-gold-100"
-                style={{ boxShadow: "0 0 0 8px rgba(232,179,132,0.16)" }}
+                style={{ boxShadow: "0 0 0 8px rgba(10,10,10,0.08)" }}
               >
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <motion.path
