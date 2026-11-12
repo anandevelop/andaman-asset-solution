@@ -44,6 +44,7 @@ const PAGES = [
   "/admin/analytics?tab=sources&range=90",
   // The old address of that tab, kept as a redirect.
   "/admin/analytics/sources",
+  "/admin/leads/suspect",
 ];
 
 /*

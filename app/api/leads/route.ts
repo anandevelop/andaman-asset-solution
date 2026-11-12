@@ -14,18 +14,16 @@
  */
 
 import { NextResponse } from "next/server";
-import { LeadSource, PathHitKind, Prisma } from "@prisma/client";
+import { PathHitKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { leadInquiryServerSchema, fieldErrors } from "@/lib/validations";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { emailDomain, isDisposableDomain } from "@/lib/email-quality";
 import { isDatabaseOfflineError } from "@/lib/db";
 import { verifyRecaptcha, describeOutcome } from "@/lib/recaptcha";
-import { notifyNewLead } from "@/lib/line";
-import { notifyNewLeadByEmail } from "@/lib/email";
-import { siteConfig } from "@/config/site";
-import { assignCapturedLead } from "@/lib/lead-routing";
-import { isEnabled, notifyAdmins } from "@/lib/notifications";
+import { announceLead, leadCreateData, noticeOf } from "@/lib/leads/capture";
+import { holdSuspect, isBlockedSender, recentSubmissionCount } from "@/lib/leads/suspect";
+import { isSuspect, spamSignals } from "@/lib/leads/spam-signals";
 import { countPathHit } from "@/lib/redirects";
 
 export const runtime = "nodejs";
@@ -33,13 +31,6 @@ export const dynamic = "force-dynamic";
 
 // Policy lives in lib/rate-limit.ts alongside every other limit.
 const RATE_LIMIT = RATE_LIMITS.leads;
-
-/** Trim to Postgres-friendly length; empty string → null. */
-function nullify(value: string | undefined | null, max = 500): string | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  return trimmed.length === 0 ? null : trimmed.slice(0, max);
-}
 
 export async function POST(request: Request) {
   const ip = clientIp(request.headers);
@@ -138,100 +129,42 @@ export async function POST(request: Request) {
       projectId = project.id;
     }
 
-    const lead = await prisma.leadInquiry.create({
-      data: {
-        name: data.name,
-        email: data.email.toLowerCase(),
-        phone: data.phone,
-        // Pairs with `phone`: the ISO2 CountrySelect.tsx resolved the dial
-        // code from, kept alongside it rather than re-derived from `phone`
-        // on every read. See LeadInquiry.phoneCountry in schema.prisma.
-        phoneCountry: data.phoneCountry?.toUpperCase() ?? null,
-        // ISO2 now, not free text — see LeadInquiry.nationality's comment
-        // in schema.prisma for why existing free-text rows are untouched.
-        nationality: nullify(data.nationality?.toUpperCase(), 2),
-        message: nullify(data.message, 2000),
-
-        projectId,
-        source:
-          (data.source as LeadSource | undefined) ??
-          (projectId ? LeadSource.PROJECT_PAGE : LeadSource.OTHER),
-
-        // PDPA consent trail. The version the visitor actually saw is sent
-        // by the form; siteConfig is the fallback for older clients.
-        consentGiven: data.consentGiven,
-        consentedAt: new Date(),
-        consentVersion: data.consentVersion ?? siteConfig.legal.consentVersion,
-
-        utmSource: nullify(data.utmSource, 120),
-        utmMedium: nullify(data.utmMedium, 120),
-        utmCampaign: nullify(data.utmCampaign, 160),
-        ipAddress: ip === "unknown" ? null : ip,
-        userAgent: nullify(request.headers.get("user-agent"), 500),
-
-        // Which language version of the site the form was on, and the
-        // page's own path — real signals from the request, not typed by
-        // the visitor. See LeadInquiry.commsLanguage/sourcePath.
-        commsLanguage: data.commsLanguage ?? null,
-        sourcePath: nullify(data.sourcePath, 300),
-
-        // Where the visit began, as opposed to where the form was — see
-        // LeadInquiry.landingPath in schema.prisma. Null for every lead
-        // created before this shipped, and not backfillable.
-        landingPath: nullify(data.landingPath, 500),
-        landingReferrer: nullify(data.landingReferrer, 255),
-      },
-      select: { id: true },
+    const createData = leadCreateData(data, {
+      projectId,
+      ip,
+      userAgent: request.headers.get("user-agent"),
     });
+    const notice = noticeOf(data, projectId);
+    const quietSuccess = NextResponse.json({ ok: true }, { status: 201 });
 
     /*
-      Hand the lead to a rep, if the team has automatic routing switched on.
-
-      After the create and outside its transaction on purpose: the capture
-      has already succeeded and the visitor is owed a response, so a
-      routing failure must leave an unassigned lead on the board rather
-      than a lost one. assignCapturedLead swallows its own errors for the
-      same reason.
+      A sender an admin has marked as spam: answered like a success and
+      stored nowhere, the honeypot's treatment, so nothing is learned.
     */
-    void assignCapturedLead(lead.id, data.commsLanguage ?? null, projectId);
+    if (await isBlockedSender(data.email, data.phone)) return quietSuccess;
 
-    // Fire-and-forget: the lead is already saved, and a LINE outage must
-    // never turn a successful capture into an error for the visitor.
-    void notifyNewLead({
-      id: lead.id,
+    /*
+      Looks like a test or spam ("test", asdf, 0812345678 — see
+      lib/leads/spam-signals.ts): held for an admin on /admin/leads/suspect
+      instead of becoming a lead. Nobody is notified or assigned, and no
+      report counts it, until somebody lets it through. The visitor sees
+      the same success as anyone — a real person caught by a rule is not
+      told they look fake, and is a click away from being let in.
+    */
+    const signals = spamSignals({
       name: data.name,
       email: data.email,
       phone: data.phone,
-      message: data.message || null,
-      projectName: data.projectSlug ?? null,
-      source: data.source ?? (projectId ? "PROJECT_PAGE" : "OTHER"),
+      message: data.message,
+      recentSubmissions: await recentSubmissionCount(data.email, data.phone),
     });
+    if (isSuspect(signals)) {
+      await holdSuspect(createData, notice, signals);
+      return quietSuccess;
+    }
 
-    /*
-      Both channels are switches on /admin/settings/notifications, and both
-      are read here rather than inside the senders so the preference lives
-      in one place. Fire-and-forget for the same reason as the two above:
-      the lead is saved, and nothing about telling somebody may turn a
-      successful capture into an error for the visitor.
-    */
-    void isEnabled("newLead", "email").then((on) => {
-      if (!on) return;
-      return notifyNewLeadByEmail({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        message: data.message || null,
-        projectName: data.projectSlug ?? null,
-        source: data.source ?? (projectId ? "PROJECT_PAGE" : "OTHER"),
-      });
-    });
-
-    void notifyAdmins({
-      event: "newLead",
-      title: data.name,
-      body: data.projectSlug ?? data.email,
-      href: `/admin/leads/${lead.id}`,
-    });
+    const lead = await prisma.leadInquiry.create({ data: createData, select: { id: true } });
+    announceLead(lead.id, notice);
 
     return NextResponse.json(
       { ok: true, id: lead.id },

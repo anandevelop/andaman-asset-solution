@@ -848,7 +848,8 @@
       "leads": {
         "label": "Leads & appointments",
         "pipeline": "Pipeline",
-        "appointments": "Appointment calendar"
+        "appointments": "Appointment calendar",
+        "suspect": "Suspected spam"
       }
     },
     "common": {
@@ -4966,6 +4967,31 @@
         "event_rsvp": "Event registration"
       },
       "howCounted": "How this is counted: no cookies and nothing that identifies a person — just a day, a page, a source and a number. A visit's source is the site that linked to it or its utm tags; ChatGPT adds utm_source=chatgpt.com to its links. Some apps (LINE, Messenger, some AI apps) hide where a visit came from, so those land under Direct. Days are UTC."
+    },
+    "suspectLeads": {
+      "title": "Suspected spam",
+      "subtitle": "Enquiries that looked like a test or spam when they arrived. Nobody has been notified or assigned, and reports do not count them. Unreviewed ones are deleted after {days} days.",
+      "empty": "Nothing held. Every recent enquiry looked genuine.",
+      "release": "It's real — make it a lead",
+      "spam": "Spam",
+      "confirmSpam": "Spam and block this email & phone",
+      "remove": "Delete",
+      "cancel": "Cancel",
+      "failed": "That did not work. Try again.",
+      "reasons": {
+        "name_test": "Name says test",
+        "name_mash": "Name is keyboard mashing",
+        "name_placeholder": "Placeholder name",
+        "email_test": "Email says test",
+        "email_placeholder": "Placeholder email",
+        "phone_sequence": "Phone digits in sequence",
+        "phone_repeat": "Phone digits repeated",
+        "phone_pattern": "Phone digits in a pattern",
+        "repeat_submit": "Sent 3+ times in a day",
+        "message_test": "Message is a test word",
+        "email_typo": "Email domain looks mistyped"
+      },
+      "howItWorks": "How it works: the enquiry form still shows the visitor a normal success. \"It's real\" makes it a lead now — routed to a rep and announced on LINE and email as if it had just arrived. \"Spam\" deletes it and quietly ignores that email and phone from now on. \"Delete\" removes it without blocking anyone (for the team's own tests)."
     }
   },
   "legalPage": {

@@ -3621,3 +3621,60 @@ model ContactClickDay {
   @@index([day])
   @@map("contact_click_days")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Suspected spam and test enquiries (2026-11)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// An enquiry that looked like a test or spam when it arrived ("test",
+/// "asdf", 0812345678, test@test.com — lib/leads/spam-signals.ts), held
+/// here instead of in LeadInquiry.
+///
+/// Held apart on purpose: every lead count, report, alert and routing rule
+/// reads LeadInquiry, and none of them has to learn to skip these. Nobody
+/// is notified and nobody is assigned until an admin looks at it on
+/// /admin/leads/suspect and either lets it through — then it becomes an
+/// ordinary lead, routed and announced as if it had just arrived — or
+/// marks it spam, which deletes it and blocks its email and phone.
+///
+/// Personal data like any lead; lib/leads/suspect.ts deletes rows older
+/// than SUSPECT_RETENTION_DAYS whenever the review screen is opened.
+model SuspectLead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  /// For the review list. The full submission is in `input`.
+  name    String
+  email   String
+  phone   String
+  message String?
+  projectId String?
+
+  /// Codes from lib/leads/spam-signals.ts, e.g. "name_test", "phone_sequence".
+  reasons String[]
+
+  /// The LeadInquiry the submission would have created, ready to create
+  /// as-is if an admin lets it through (dates as ISO strings).
+  input Json
+  /// What the new-lead notifications need: project slug, source.
+  notice Json
+
+  @@index([createdAt])
+  @@map("suspect_leads")
+}
+
+/// An email address or phone number an admin marked as spam. A submission
+/// carrying either is answered as if it succeeded and stored nowhere —
+/// the same quiet treatment as the honeypot, so a sender learns nothing.
+model LeadBlock {
+  id        String   @id @default(cuid())
+  /// "email" or "phone".
+  kind      String
+  /// Lowercased email, or the phone in E.164 as the form sends it.
+  value     String
+  createdAt DateTime @default(now())
+  createdById String?
+
+  @@unique([kind, value])
+  @@map("lead_blocks")
+}

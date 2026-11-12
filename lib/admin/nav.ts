@@ -305,6 +305,15 @@ export const NAV_TAB_GROUPS = {
       roles: ROLE_SETS.CRM,
       capability: "viewAllLeads",
     },
+    {
+      /* Enquiries held as a likely test or spam (lib/leads/suspect.ts).
+         Admins only: letting one through or blocking a sender is a call
+         about the whole pipeline, not one rep's. */
+      key: "suspect",
+      segment: "/leads/suspect",
+      roles: ROLE_SETS.ADMIN_UP,
+      capability: "viewAllLeads",
+    },
   ],
 } as const satisfies Record<string, readonly NavTab[]>;
 

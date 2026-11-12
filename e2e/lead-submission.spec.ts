@@ -21,6 +21,7 @@ import { pgAdapter } from "../lib/prisma-adapter";
 import { expect, test } from "./harness";
 import { expectNoA11yViolations } from "./a11y";
 import { LEAD_PROJECT } from "./fixtures";
+import { uniqueThaiMobile } from "./phones";
 
 const PROJECT_URL = `/en/projects/${LEAD_PROJECT.slug}`;
 
@@ -82,13 +83,14 @@ async function fillEnquiry(
   page: import("@playwright/test").Page,
   overrides: Partial<{ name: string; email: string; phone: string; message: string }> = {},
 ) {
+  const mobile = uniqueThaiMobile();
   const values = {
     name: "Somchai Prasert",
     email: uniqueEmail("lead"),
     // The national number as a visitor types it; toE164() (via the
     // TH-default CountrySelect below) turns this into "+66812345678" —
     // see the "writes the enquiry" test for the assertion on that shape.
-    phone: "0812345678",
+    phone: mobile.typed,
     message: "Please send the floor plans for the four-bedroom type.",
     ...overrides,
   };
@@ -106,7 +108,7 @@ async function fillEnquiry(
 
   // The E.164 value this assembles to, not what was typed — every caller
   // that asserts against the database needs the stored shape.
-  return { ...values, phone: "+66812345678" };
+  return { ...values, phone: overrides.phone ? values.phone : mobile.e164 };
 }
 
 test.describe("Lead submission", () => {
@@ -138,6 +140,21 @@ test.describe("Lead submission", () => {
 
     // Every new lead starts as NEW; the admin board depends on it.
     expect(lead!.status).toBe("NEW");
+  });
+
+  test("holds an enquiry that looks like a test instead of making it a lead", async ({ page }) => {
+    await openEnquiryForm(page);
+
+    const values = await fillEnquiry(page, { name: "Test Tester" });
+    await page.getByRole("button", { name: "Request viewing" }).click();
+
+    // The visitor sees the same thank-you as anyone: a real person caught
+    // by a rule is not told they look fake.
+    await expect(page.getByRole("dialog").getByText("Thank you")).toBeVisible();
+
+    expect(await db().leadInquiry.findFirst({ where: { email: values.email } })).toBeNull();
+    const held = await db().suspectLead.findFirstOrThrow({ where: { email: values.email } });
+    expect(held.reasons).toContain("name_test");
   });
 
   test("records the PDPA consent trail", async ({ page }) => {

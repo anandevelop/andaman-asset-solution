@@ -848,7 +848,8 @@
       "leads": {
         "label": "客户与预约",
         "pipeline": "客户管道",
-        "appointments": "预约日历"
+        "appointments": "预约日历",
+        "suspect": "疑似垃圾"
       }
     },
     "common": {
@@ -4966,6 +4967,31 @@
         "event_rsvp": "活动报名"
       },
       "howCounted": "统计方式：不使用 Cookie，不保存可识别个人的信息，只记录日期、页面、来源和数量。来源取自链接来源网站或 utm 标签（ChatGPT 会自动加 utm_source=chatgpt.com）。部分应用（LINE、Messenger、部分 AI 应用）会隐藏来源，因此计入“直接访问”。日期按 UTC。"
+    },
+    "suspectLeads": {
+      "title": "疑似垃圾",
+      "subtitle": "提交时看起来像测试或垃圾的咨询。尚未通知任何人、未分配，也不计入报表。未处理的将在 {days} 天后删除。",
+      "empty": "没有被拦下的咨询。最近的咨询看起来都是真实的。",
+      "release": "是真实客户",
+      "spam": "垃圾",
+      "confirmSpam": "确认垃圾并屏蔽此邮箱和电话",
+      "remove": "删除",
+      "cancel": "取消",
+      "failed": "操作失败，请重试。",
+      "reasons": {
+        "name_test": "姓名含 test",
+        "name_mash": "姓名为乱打",
+        "name_placeholder": "占位姓名",
+        "email_test": "邮箱含 test",
+        "email_placeholder": "占位邮箱",
+        "phone_sequence": "电话为连号",
+        "phone_repeat": "电话数字重复",
+        "phone_pattern": "电话为规律数字",
+        "repeat_submit": "一天内提交 3 次以上",
+        "message_test": "留言为测试词",
+        "email_typo": "邮箱域名疑似拼错"
+      },
+      "howItWorks": "说明：访客仍会看到正常的提交成功。“是真实客户”会立即创建为线索，分配给销售并发送 LINE 和邮件通知。“垃圾”会删除并在今后静默忽略该邮箱和电话。“删除”仅删除，不屏蔽（适用于团队自己的测试）。"
     }
   },
   "legalPage": {

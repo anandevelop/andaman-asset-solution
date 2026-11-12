@@ -21,6 +21,7 @@
  */
 
 import { expect, test } from "./harness";
+import { uniqueThaiMobile } from "./phones";
 import { alertBanner, nextAccount, signIn, submitCredentials } from "./sign-in";
 import { LEAD_PROJECT } from "./fixtures";
 
@@ -183,9 +184,11 @@ test.describe("The activity log", () => {
     // The form loads as it nears the viewport (components/LazyLeadForm.tsx).
     await page.locator("#enquire").scrollIntoViewIfNeeded();
 
-    const email = `audit-probe-${Date.now()}@example.com`;
+    // example.test, not example.com, and a fresh number: either of the
+    // obvious placeholders would be held as a test enquiry instead.
+    const email = `audit-probe-${Date.now()}@example.test`;
     await page.getByLabel("Full name").fill("Audit Probe Visitor");
-    await page.getByLabel("Phone number").fill("0812345678");
+    await page.getByLabel("Phone number").fill(uniqueThaiMobile().typed);
     await page.getByLabel("Email address").fill(email);
     await page.getByLabel("Message (optional)").fill("Sent with no session at all.");
     await page.getByRole("checkbox").check();

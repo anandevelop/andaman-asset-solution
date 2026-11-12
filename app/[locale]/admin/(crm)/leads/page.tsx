@@ -20,7 +20,7 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { getMyAppointmentsToday } from "@/lib/appointments";
 import { LeadSource, LeadStatus, Prisma, Role } from "@prisma/client";
-import { isDatabaseOffline } from "@/lib/db";
+import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
 import { can } from "@/lib/permissions";
 import { intlLocale } from "@/lib/format";
@@ -43,6 +43,7 @@ import {
 } from "@/lib/leads-board";
 import LeadTable, { type LeadRowView } from "@/components/admin/LeadTable";
 import PageTabs from "@/components/admin/PageTabs";
+import { countSuspects } from "@/lib/leads/suspect";
 import LeadFilters from "@/components/admin/LeadFilters";
 import LeadExportButton from "@/components/admin/LeadExportButton";
 import LeadViewToggle from "@/components/admin/LeadViewToggle";
@@ -154,6 +155,12 @@ export default async function AdminLeadsPage(props: Props) {
      page, and one extra scoped query is cheaper than lifting the whole
      counts object through a context. */
   const appointmentsToday = (await getMyAppointmentsToday(session.id)).length;
+  // Held enquiries waiting for an admin (lib/leads/suspect.ts); the tab
+  // itself is admins-only, so nobody else is shown a count.
+  const suspectCount =
+    session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN
+      ? await safeQuery("leads:suspectCount", () => countSuspects(), 0)
+      : 0;
 
   const view = resolveLeadsView(searchParams.view, (await cookies()).get(LEADS_VIEW_COOKIE)?.value);
   const status = parseStatus(searchParams.status);
@@ -338,7 +345,7 @@ export default async function AdminLeadsPage(props: Props) {
       locale={locale}
       role={session.role}
       groupKey="leads"
-      badges={{ appointments: appointmentsToday }}
+      badges={{ appointments: appointmentsToday, suspect: suspectCount }}
       counts={{ pipeline: openLeadCount }}
       carryParams={["project", "assignedTo"]}
     />
