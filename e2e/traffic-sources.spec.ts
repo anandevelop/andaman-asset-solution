@@ -2,7 +2,7 @@
  * e2e/traffic-sources.spec.ts
  * ─────────────────────────────────────────────────────────────────────────
  * A visit from ChatGPT that presses "call" ends up on
- * /admin/analytics/sources as an AI visit with an AI click — the whole
+ * the "Sources & clicks" tab of /admin/analytics as an AI visit with an AI click — the whole
  * path: the beacon on the first page, the delegated click listener, both
  * public endpoints, the day tables and the report.
  * ─────────────────────────────────────────────────────────────────────────
@@ -41,9 +41,9 @@ test("a visit from ChatGPT and its call click are counted as AI", async ({ brows
   await signIn(page);
   await expect(page).toHaveURL(/\/admin/);
 
-  await page.goto("/en/admin/analytics/sources?days=7");
+  await page.goto("/en/admin/analytics?tab=sources&range=7");
   await expect(page.getByText(/something went wrong/i)).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Traffic sources & clicks" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sources & clicks" })).toHaveAttribute("aria-pressed", "true");
 
   // The source row and the AI people list both name ChatGPT.
   await expect(page.getByText("ChatGPT", { exact: true }).first()).toBeVisible();

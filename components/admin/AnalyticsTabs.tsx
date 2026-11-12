@@ -12,7 +12,7 @@
  */
 
 import { useState, type ReactNode } from "react";
-import { Activity, KeyRound, LineChart, Megaphone, Search } from "lucide-react";
+import { Activity, KeyRound, LineChart, Megaphone, Search, Waypoints } from "lucide-react";
 import GaReportPanel, { type GaPanelLabels } from "./GaReportPanel";
 import Link from "next/link";
 import ProgressRing from "@/components/admin/ui/ProgressRing";
@@ -31,7 +31,8 @@ import type { Locale } from "@/i18n";
    Search Console · Meta Pixel · โฆษณา · เชื่อมต่อ API. "ข้อมูลจริง" is the
    site's own first-party numbers — page views, content, leads, Core Web
    Vitals — which used to be four tabs of their own. */
-type Tab = "now" | "real" | "ga" | "search" | "meta" | "api";
+type Tab = "now" | "real" | "sources" | "ga" | "search" | "meta" | "api";
+const TAB_KEYS: readonly Tab[] = ["now", "real", "sources", "ga", "search", "meta", "api"];
 
 export type TopArticle = { id: string; title: string; views30: number; leads: number };
 export type ContentConversionRow = {
@@ -67,6 +68,11 @@ type Props = {
   /** Rendered on the server — no data fetching in this file. */
   metaPanel: ReactNode;
   apiPanel: ReactNode;
+  /** Traffic sources & contact clicks (TrafficSourcesPanel), rendered on
+   *  the server like the two above. */
+  sourcesPanel: ReactNode;
+  /** `?tab=` — lets a link open a tab other than "now". */
+  initialTab?: string;
 
   /** Google Search Console's Performance report, at the top of Traffic. */
   search: { labels: SearchPanelLabels };
@@ -122,6 +128,7 @@ type Props = {
 const TAB_ICONS: Record<Tab, ReactNode> = {
   now: <span className="size-2 rounded-full bg-adm-success" aria-hidden />,
   real: <Activity size={15} aria-hidden />,
+  sources: <Waypoints size={15} aria-hidden />,
   ga: <LineChart size={15} aria-hidden />,
   search: <Search size={15} aria-hidden />,
   meta: <Megaphone size={15} aria-hidden />,
@@ -136,6 +143,8 @@ export default function AnalyticsTabs({
   ga,
   metaPanel,
   apiPanel,
+  sourcesPanel,
+  initialTab,
   search,
   traffic,
   content,
@@ -146,8 +155,10 @@ export default function AnalyticsTabs({
 }: Props) {
   /* "ตอนนี้" first: the only tab about right now, and the one somebody
      opens this screen to glance at. */
-  const [tab, setTab] = useState<Tab>("now");
-  const TABS: Tab[] = ["now", "real", "ga", "search", "meta", "api"];
+  const [tab, setTab] = useState<Tab>(() =>
+    TAB_KEYS.includes(initialTab as Tab) ? (initialTab as Tab) : "now",
+  );
+  const TABS = TAB_KEYS;
 
   return (
     <div className="space-y-6">
@@ -176,6 +187,8 @@ export default function AnalyticsTabs({
       {tab === "meta" && metaPanel}
 
       {tab === "api" && apiPanel}
+
+      {tab === "sources" && sourcesPanel}
 
       {tab === "now" && (
         <RealtimePanel labels={realtime.labels} fetchSnapshot={realtime.fetchSnapshot} />

@@ -30,8 +30,8 @@ import { signIn } from "./sign-in";
 
 /** Tab buttons in display order, per locale. */
 const TABS = {
-  en: ["Now", "First-party", "Google Analytics", "Search Console", "Meta Pixel · Ads", "API connections"],
-  th: ["ตอนนี้", "ข้อมูลจริง", "Google Analytics", "Search Console", "Meta Pixel · โฆษณา", "เชื่อมต่อ API"],
+  en: ["Now", "First-party", "Sources & clicks", "Google Analytics", "Search Console", "Meta Pixel · Ads", "API connections"],
+  th: ["ตอนนี้", "ข้อมูลจริง", "แหล่งที่มา & คลิก", "Google Analytics", "Search Console", "Meta Pixel · โฆษณา", "เชื่อมต่อ API"],
 } as const;
 
 /*

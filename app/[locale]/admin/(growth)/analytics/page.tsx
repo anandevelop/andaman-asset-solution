@@ -82,11 +82,12 @@ import { getGoogleConfig } from "@/lib/google-config";
 import { getSiteSettings } from "@/lib/settings";
 import { getMetaLeads } from "@/lib/analytics/meta-leads";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import TrafficSourcesPanel from "@/components/admin/TrafficSourcesPanel";
 import { zoneEyebrow } from "@/lib/admin/nav";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ range?: string; compare?: string }>;
+  searchParams: Promise<{ range?: string; compare?: string; tab?: string }>;
 };
 
 type AdminT = Awaited<ReturnType<typeof getTranslations<"admin">>>;
@@ -248,7 +249,6 @@ export default async function AdminAnalyticsPage(props: Props) {
               },
               compare: t("analytics.hub.compare"),
               export: t("analytics.hub.export"),
-              sources: t("trafficSources.title"),
             }}
           />
         }
@@ -306,6 +306,8 @@ export default async function AdminAnalyticsPage(props: Props) {
 
       <AnalyticsTabs
         locale={locale}
+        initialTab={searchParams.tab}
+        sourcesPanel={<TrafficSourcesPanel locale={locale} days={Number(range)} />}
         canViewLeads={canViewLeads}
         range={range}
         compare={compare}
@@ -518,6 +520,7 @@ export default async function AdminAnalyticsPage(props: Props) {
           tab_search: t("analytics.tabs.search"),
           tab_meta: t("analytics.tabs.meta"),
           tab_api: t("analytics.tabs.api"),
+          tab_sources: t("analytics.tabs.sources"),
           totalViewsHint: t("analytics.totalViewsHint"),
           trendTitle: t("analytics.trendTitle"),
           trendSubtitle: t("analytics.trendSubtitle"),

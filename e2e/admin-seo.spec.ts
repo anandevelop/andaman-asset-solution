@@ -40,8 +40,10 @@ const PAGES = [
   "/admin/seo/defaults",
   "/admin/settings/integrations",
   "/admin/reports",
+  "/admin/analytics?tab=sources",
+  "/admin/analytics?tab=sources&range=90",
+  // The old address of that tab, kept as a redirect.
   "/admin/analytics/sources",
-  "/admin/analytics/sources?days=90",
 ];
 
 /*
