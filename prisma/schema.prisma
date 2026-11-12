@@ -3644,10 +3644,10 @@ model SuspectLead {
   createdAt DateTime @default(now())
 
   /// For the review list. The full submission is in `input`.
-  name    String
-  email   String
-  phone   String
-  message String?
+  name      String
+  email     String
+  phone     String
+  message   String?
   projectId String?
 
   /// Codes from lib/leads/spam-signals.ts, e.g. "name_test", "phone_sequence".
@@ -3655,7 +3655,7 @@ model SuspectLead {
 
   /// The LeadInquiry the submission would have created, ready to create
   /// as-is if an admin lets it through (dates as ISO strings).
-  input Json
+  input  Json
   /// What the new-lead notifications need: project slug, source.
   notice Json
 
@@ -3667,12 +3667,12 @@ model SuspectLead {
 /// carrying either is answered as if it succeeded and stored nowhere —
 /// the same quiet treatment as the honeypot, so a sender learns nothing.
 model LeadBlock {
-  id        String   @id @default(cuid())
+  id          String   @id @default(cuid())
   /// "email" or "phone".
-  kind      String
+  kind        String
   /// Lowercased email, or the phone in E.164 as the form sends it.
-  value     String
-  createdAt DateTime @default(now())
+  value       String
+  createdAt   DateTime @default(now())
   createdById String?
 
   @@unique([kind, value])
