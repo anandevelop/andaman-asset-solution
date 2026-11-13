@@ -4473,7 +4473,8 @@
         "clearTests": "Clear test records",
         "testsCleared": "Marked {count} test records read",
         "failed": "That didn't go through"
-      }
+      },
+      "viewSite": "View site"
     },
     "commandK": {
       "placeholder": "Search projects, units, leads, news or events…",

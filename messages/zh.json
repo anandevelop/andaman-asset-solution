@@ -4473,7 +4473,8 @@
         "clearTests": "清除测试记录",
         "testsCleared": "已将 {count} 条测试记录标为已读",
         "failed": "操作未成功"
-      }
+      },
+      "viewSite": "查看网站"
     },
     "commandK": {
       "placeholder": "搜索项目、户型、线索、新闻或活动…",

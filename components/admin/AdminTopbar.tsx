@@ -29,6 +29,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Bell,
+  ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
@@ -189,6 +190,18 @@ export default function AdminTopbar({
           {t("topbar.liveVisitors", { count: liveCount })}
         </Link>
       )}
+
+      {/* The public site in this language, in a new tab — the back office
+          had no way out to the thing it edits except typing the address. */}
+      <a
+        href={`/${locale}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-[34px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-adm-line bg-adm-panel px-3.5 text-[13px] font-medium text-adm-text transition-colors hover:border-adm-line-strong"
+      >
+        <ExternalLink size={14} aria-hidden />
+        {t("topbar.viewSite")}
+      </a>
 
       <span className="hidden whitespace-nowrap text-[11px] text-adm-muted 2xl:inline">{asOfLabel}</span>
 
