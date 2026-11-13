@@ -45,7 +45,18 @@ const PAGE = 25;
 const waHref = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`;
 const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 
-export default function AgentTable({ rows, editHref }: { locale: string; rows: AgentRowData[]; editHref: string }) {
+export default function AgentTable({
+  rows,
+  editHref,
+  tagMissingNotice,
+}: {
+  locale: string;
+  rows: AgentRowData[];
+  editHref: string;
+  /** False when most agents have no PDPA record: then it is the normal
+   *  state, and a tag on every row would only be noise (see the page). */
+  tagMissingNotice: boolean;
+}) {
   const t = useTranslations("coAgents.agents");
   const [flash, show] = useFlash();
   const [busy, startTransition] = useTransition();
@@ -71,11 +82,17 @@ export default function AgentTable({ rows, editHref }: { locale: string; rows: A
     channel ? (
       <span className="inline-block rounded-full bg-adm-fill/22 px-2.5 py-0.5 text-xs text-adm-accent-ink">{channel}</span>
     ) : (
-      <span className="text-[12.5px] text-adm-muted">{t("channelNone")}</span>
+      <span className="text-adm-muted" title={t("channelNone")}>
+        —
+      </span>
     );
 
+  const missingNotice = (row: AgentRowData) => tagMissingNotice && !row.hasNotice;
+  const needsAttention = (row: AgentRowData) => row.pending || row.duplicates.length > 0 || missingNotice(row);
+
   const statusTags = (row: AgentRowData) => {
-    const clean = !row.pending && row.duplicates.length === 0 && row.hasNotice;
+    // "Complete" only when the PDPA record really is there.
+    const clean = !needsAttention(row) && row.hasNotice;
     return (
       <span className="flex flex-wrap gap-1.5">
         {row.pending && <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11.5px] font-medium text-adm-warning">{t("statusPENDING")}</span>}
@@ -87,7 +104,7 @@ export default function AgentTable({ rows, editHref }: { locale: string; rows: A
             <AlertTriangle size={11} aria-hidden /> {t("duplicate")}
           </span>
         )}
-        {!row.hasNotice && (
+        {missingNotice(row) && (
           <span className="rounded-full bg-adm-neutral-bg px-2 py-0.5 text-[11.5px] font-medium text-adm-neutral">{t("chipNoConsent")}</span>
         )}
         {clean && (
@@ -217,9 +234,9 @@ export default function AgentTable({ rows, editHref }: { locale: string; rows: A
                   </Link>
                   <p className="truncate text-[13px] text-adm-muted">{row.company || t("noCompany")}</p>
                 </div>
-                {channelPill(row.channel)}
+                {row.channel && channelPill(row.channel)}
               </div>
-              {(row.pending || row.duplicates.length > 0 || !row.hasNotice) && statusTags(row)}
+              {needsAttention(row) && statusTags(row)}
               <div className="flex items-center justify-between gap-2.5">
                 <span className="text-[13.5px] text-adm-muted">{t("sentLeads", { count: row.leads })}</span>
                 <span className="flex gap-2">

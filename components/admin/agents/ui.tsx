@@ -103,6 +103,7 @@ export function fmtDateTime(value: Date | string, locale: string): string {
  */
 export function initialsOf(name: string): string {
   const letter = (word: string) => Array.from(word.replace(/^[เแโใไ]+/, "") || word)[0] ?? "";
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  // Only words that are a name: "Владимир | Недвижимость" is ВН, not "В|".
+  const words = name.trim().split(/\s+/).filter((word) => /^\p{L}/u.test(word));
   return words.slice(0, 2).map(letter).join("").toUpperCase() || "?";
 }

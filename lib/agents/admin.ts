@@ -25,7 +25,13 @@ export function registrationUrl(locale: string, refSlug: string | null): string 
 
 /** "Ray B." → "Ray": what the mockup calls the sales person's nickname. */
 export function salesNick(person: { nameEn: string; nameTh: string }): string {
-  return (person.nameEn || person.nameTh).trim().split(/\s+/)[0] || person.nameTh;
+  // Past a title: "Mr. Ray B." is Ray, not "Mr." — which is what every
+  // agent registered through him was filed under.
+  const words = (person.nameEn || person.nameTh)
+    .trim()
+    .replace(/^(?:(?:khun|mr|mrs|ms|miss|k|คุณ|นาย|นางสาว|นาง)\.?\s+)+/i, "")
+    .split(/\s+/);
+  return words[0] || person.nameTh;
 }
 
 function slugBase(person: { id: string; nameEn: string }): string {

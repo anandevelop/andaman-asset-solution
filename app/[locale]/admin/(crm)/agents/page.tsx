@@ -143,12 +143,24 @@ export default async function AgentsPage(props: Props) {
     hasNotice: Boolean(agent.noticeVersion),
   }));
 
-  const flagFilters: { key: Flag; label: string; count: number }[] = [
-    { key: "all", label: t("chipAll"), count: agents.length },
-    { key: "pending", label: t("chipPending"), count: pending.length },
-    { key: "nocons", label: t("chipNoConsent"), count: agents.filter((agent) => hasFlag(agent, "nocons")).length },
-    { key: "dup", label: t("duplicate"), count: agents.filter((agent) => hasFlag(agent, "dup")).length },
-  ];
+  const noNotice = agents.filter((agent) => hasFlag(agent, "nocons")).length;
+  /* A tag on a row is for the exception. With the list imported from a
+     spreadsheet, nobody has a PDPA record yet — 745 of 745 — and the same
+     grey tag on every row says nothing. So the missing record is tagged
+     only while it is the minority; the filter and its count stay either
+     way, which is where "all of them" is worth saying once. */
+  const tagMissingNotice = noNotice * 2 < agents.length;
+
+  // A filter with nothing behind it is not offered, unless it is the one
+  // in use (so it can be seen and left).
+  const flagFilters = (
+    [
+      { key: "all", label: t("chipAll"), count: agents.length },
+      { key: "pending", label: t("chipPending"), count: pending.length },
+      { key: "nocons", label: t("chipNoConsent"), count: noNotice },
+      { key: "dup", label: t("duplicate"), count: agents.filter((agent) => hasFlag(agent, "dup")).length },
+    ] satisfies { key: Flag; label: string; count: number }[]
+  ).filter((filter) => filter.key === "all" || filter.count > 0 || filter.key === flag);
 
   const channelOptions = [
     { value: "all", label: t("channelAll"), href: href({ ch: undefined }) },
@@ -331,7 +343,7 @@ export default async function AgentsPage(props: Props) {
         <ChannelSelect label={t("channelFilter")} value={ch} options={channelOptions} />
       </div>
 
-      <AgentTable locale={locale} rows={rows} editHref={editBase} />
+      <AgentTable locale={locale} rows={rows} editHref={editBase} tagMissingNotice={tagMissingNotice || flag === "nocons"} />
 
       {formValues && (
         <AdminDrawer
