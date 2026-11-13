@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { imageUrlsIn, pathsIn } from "../scripts/warm-images.mjs";
+import { imageUrlsIn, pathsIn, shareImagePathsIn } from "../scripts/warm-images.mjs";
 
 describe("imageUrlsIn", () => {
   it("collects src and every srcset width, unescaping &amp;", () => {
@@ -30,5 +30,18 @@ describe("pathsIn", () => {
   it("turns sitemap locations into paths on whatever host", () => {
     const xml = "<urlset><url><loc>https://example.com/th</loc></url><url><loc> https://example.com/en/projects/x </loc></url></urlset>";
     expect(pathsIn(xml)).toEqual(["/th", "/en/projects/x"]);
+  });
+});
+
+describe("shareImagePathsIn", () => {
+  it("finds the generated share card, as a path, once", () => {
+    const html =
+      '<meta property="og:image" content="https://andamanassetsolution.com/en/opengraph-image-1t30ir?a758f73d"/>' +
+      '<meta name="twitter:image" content="https://andamanassetsolution.com/en/opengraph-image-1t30ir?a758f73d"/>';
+    expect(shareImagePathsIn(html)).toEqual(["/en/opengraph-image-1t30ir?a758f73d"]);
+  });
+
+  it("leaves an uploaded share image on a CDN alone", () => {
+    expect(shareImagePathsIn('<meta property="og:image" content="https://cdn.example/og.jpg"/>')).toEqual([]);
   });
 });

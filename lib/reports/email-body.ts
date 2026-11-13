@@ -69,10 +69,10 @@ export async function renderReportEmail(options: {
       return (
         `<tr>` +
         `<td style="padding:6px 8px;border-top:1px solid #eee">${escapeHtml(name)}</td>` +
-        // Clicks and the rate that needs them arrive with phase 4.
-        `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right;color:#888">—</td>` +
+        // A dash only where Search Console has nothing for the period.
+        `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right;color:#666">${typeof row.googleClicks === "number" ? row.googleClicks : "—"}</td>` +
         `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right"><b>${row.googleLeads}</b></td>` +
-        `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right;color:#888">—</td>` +
+        `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right;color:#666">${row.rate === null ? "—" : `${row.rate}%`}</td>` +
         `<td style="padding:6px 8px;border-top:1px solid #eee;text-align:right;color:#666">${row.allLeads}</td>` +
         `</tr>`
       );
@@ -104,7 +104,7 @@ export async function renderReportEmail(options: {
 
     `<h2 style="font-size:15px;margin:16px 0 6px">${escapeHtml(t("reports.view.headlineTitle"))}</h2>`,
     `<ul style="margin:0;padding-left:18px;font-size:14px">`,
-    `<li>${escapeHtml(t("reports.view.googleClicks"))}: ${escapeHtml(t(data.search.reason === "noData" ? "reports.view.noGoogleData" : "reports.view.notConnected"))}</li>`,
+    `<li>${escapeHtml(t("reports.view.googleClicks"))}: ${data.search.available ? `<b>${data.search.clicks}</b>` : escapeHtml(t(data.search.reason === "noData" ? "reports.view.noGoogleData" : "reports.view.notConnected"))}</li>`,
     `<li>${escapeHtml(t("reports.view.googleLeads"))}: <b>${data.leads.current.google}</b></li>`,
     `<li>${escapeHtml(t("reports.view.allLeads"))}: ${data.leads.current.all}</li>`,
     `<li>${escapeHtml(t("reports.view.auditScore"))}: ${data.audit.score ?? "—"}</li>`,

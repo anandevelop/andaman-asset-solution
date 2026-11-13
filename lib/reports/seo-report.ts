@@ -40,6 +40,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { pickLocale } from "@/lib/locale";
+import { stripLocale } from "@/lib/public-paths";
 import { isGoogleOrigin, landingBucket } from "@/lib/reports/google-origin";
 import {
   lastCoveredDay,
@@ -82,12 +83,24 @@ export type ReportRow = {
   /** A project id, or the literal "news" for the articles row. */
   key: string;
   name: string;
-  /** Phase 4. */
-  googleClicks: Unavailable;
+  /** Clicks from Google search results onto this development's pages
+   *  (Search Console), or why there are none to show. */
+  googleClicks: number | Unavailable;
   googleLeads: number;
   allLeads: number;
-  /** Phase 4: googleLeads / googleClicks, and null until clicks exist. */
-  rate: null;
+  /** googleLeads / googleClicks as a percentage; null without clicks. */
+  rate: number | null;
+};
+
+/** Search Console's figures for the period (lib/seo/search-sync.ts). */
+export type SearchSummary = {
+  available: true;
+  clicks: number;
+  impressions: number;
+  previousClicks: number;
+  /** Impression-weighted average position, or null with no impressions. */
+  position: number | null;
+  topQueries: { query: string; clicks: number; impressions: number }[];
 };
 
 export type ReportVital = {
@@ -120,8 +133,8 @@ export type ReportData = {
   topIssues: { rule: string; urlCount: number }[];
   vitals: ReportVital[];
   rows: ReportRow[];
-  /** Phase 4. */
-  search: Unavailable;
+  /** Search Console for the period, or why it is absent. */
+  search: SearchSummary | Unavailable;
   /** Phase 5. */
   indexing: Unavailable;
   note: ReportNoteView;
@@ -166,8 +179,12 @@ export async function getReportData(options: {
     countedSince,
     audit,
     previousAudit,
+    latestAudit,
     vitals,
     note,
+    searchPages,
+    searchQueries,
+    previousSearchClicks,
   ] = await Promise.all([
     leadsBetween(period.start, period.end),
     leadsBetween(previous.start, previous.end),
@@ -183,13 +200,46 @@ export async function getReportData(options: {
     getCountedSince(),
     auditScoreAt(period.end),
     auditScoreAt(previous.end),
+    auditScoreAt(null),
     vitalsFor(period.start, period.end),
     readNote(period, audience, locale),
+    searchByPage(period.start, period.end),
+    searchTopQueries(period.start, period.end),
+    searchClicks(previous.start, previous.end),
   ]);
 
-  const slugToProjectId = new Map(
-    projects.map((project) => [project.slug, project.id]),
-  );
+  /*
+    Search Console is read from the same table the Keywords screen reads
+    (seo_query_stats, filled nightly). The report used to print "not
+    connected" whatever was in it, because this half was written before the
+    sync existed.
+  */
+  const slugToProjectId = new Map(projects.map((project) => [project.slug, project.id]));
+  const hasSearchData = searchPages.length > 0;
+  const clicksByKey = new Map<string, number>();
+  let clicks = 0;
+  let impressions = 0;
+  let weighted = 0;
+  for (const row of searchPages) {
+    clicks += row.clicks;
+    impressions += row.impressions;
+    weighted += row.position * row.impressions;
+    const bucket = landingBucket(pathOfPage(row.page), slugToProjectId);
+    const key = bucket?.kind === "project" ? bucket.projectId : bucket?.kind === "news" ? "news" : null;
+    if (key) clicksByKey.set(key, (clicksByKey.get(key) ?? 0) + row.clicks);
+  }
+  const unavailable = gscConfigured ? NO_DATA : NOT_CONFIGURED;
+  const search: SearchSummary | Unavailable = hasSearchData
+    ? {
+        available: true,
+        clicks,
+        impressions,
+        previousClicks: previousSearchClicks,
+        position: impressions > 0 ? weighted / impressions : null,
+        topQueries: searchQueries,
+      }
+    : unavailable;
+
 
   return {
     period,
@@ -204,19 +254,87 @@ export async function getReportData(options: {
       previous: previousAudit?.avgScore ?? null,
       runAt: audit?.runAt ?? null,
     },
-    topIssues: topIssuesOf(audit?.failCountByRule),
-    vitals,
-    rows: buildRows(leads, projects, slugToProjectId, locale, gscConfigured),
     /*
-      Phase 6 hardcoded both of these as unavailable, because phase 4 did
-      not exist yet. It does now, so the report says which of the two
-      reasons applies instead of claiming Google is unconnected on a
-      deployment where the credentials work.
+      "What to fix" comes from the newest audit there is — the same run the
+      Health check screen shows — not from the last run inside the period.
+      The October report listed 48 pages without og:image for weeks after
+      they were fixed (and after the rule that miscounted them was), because
+      it was reading a run from the end of October. The two scores above
+      stay tied to the period: they are history, this list is a to-do.
     */
-    search: gscConfigured ? NO_DATA : NOT_CONFIGURED,
-    indexing: gscConfigured ? NO_DATA : NOT_CONFIGURED,
+    topIssues: topIssuesOf((latestAudit ?? audit)?.failCountByRule),
+    vitals,
+    rows: buildRows(leads, projects, slugToProjectId, locale, hasSearchData ? clicksByKey : unavailable),
+    search,
+    indexing: unavailable,
     note: note ?? draftNoteView(),
   };
+}
+
+/** "https://site/th/projects/victory?x" → "/projects/victory". */
+function pathOfPage(page: string): string {
+  let path = page;
+  try {
+    path = new URL(page).pathname;
+  } catch {
+    // Already a path, or nothing parseable: bucket it as it is.
+  }
+  return stripLocale(path);
+}
+
+type SearchPageRow = { page: string; clicks: number; impressions: number; position: number };
+
+/** Search Console per page for the period: clicks, impressions, and the
+ *  impression-weighted position. */
+async function searchByPage(start: Date, end: Date): Promise<SearchPageRow[]> {
+  const rows = await safeQuery(
+    "report:searchByPage",
+    () =>
+      prisma.seoQueryStat.findMany({
+        where: { date: { gte: start, lt: end } },
+        select: { page: true, clicks: true, impressions: true, position: true },
+      }),
+    [] as SearchPageRow[],
+  );
+  const byPage = new Map<string, { clicks: number; impressions: number; weighted: number }>();
+  for (const row of rows) {
+    const entry = byPage.get(row.page) ?? { clicks: 0, impressions: 0, weighted: 0 };
+    entry.clicks += row.clicks;
+    entry.impressions += row.impressions;
+    entry.weighted += row.position * row.impressions;
+    byPage.set(row.page, entry);
+  }
+  return [...byPage].map(([page, e]) => ({
+    page,
+    clicks: e.clicks,
+    impressions: e.impressions,
+    position: e.impressions > 0 ? e.weighted / e.impressions : 0,
+  }));
+}
+
+async function searchTopQueries(start: Date, end: Date): Promise<SearchSummary["topQueries"]> {
+  const rows = await safeQuery(
+    "report:searchQueries",
+    () =>
+      prisma.seoQueryStat.groupBy({
+        by: ["query"],
+        where: { date: { gte: start, lt: end } },
+        _sum: { clicks: true, impressions: true },
+        orderBy: [{ _sum: { clicks: "desc" } }, { _sum: { impressions: "desc" } }],
+        take: 5,
+      }),
+    [] as { query: string; _sum: { clicks: number | null; impressions: number | null } }[],
+  );
+  return rows.map((row) => ({ query: row.query, clicks: row._sum.clicks ?? 0, impressions: row._sum.impressions ?? 0 }));
+}
+
+async function searchClicks(start: Date, end: Date): Promise<number> {
+  const result = await safeQuery(
+    "report:searchClicksPrevious",
+    () => prisma.seoQueryStat.aggregate({ where: { date: { gte: start, lt: end } }, _sum: { clicks: true } }),
+    { _sum: { clicks: null as number | null } },
+  );
+  return result._sum.clicks ?? 0;
 }
 
 function leadsBetween(start: Date, end: Date): Promise<LeadRow[]> {
@@ -281,14 +399,15 @@ function getCountedSince(): Promise<Date | null> {
  * August report published in October must show August's score, or every
  * report ever reprinted silently shows today's.
  */
+/** The newest audit run before `before`, or the newest of all for null. */
 function auditScoreAt(
-  before: Date,
+  before: Date | null,
 ): Promise<{ avgScore: number; runAt: Date; failCountByRule: unknown } | null> {
   return safeQuery(
     "report:auditScore",
     () =>
       prisma.seoAuditRun.findFirst({
-        where: { runAt: { lt: before } },
+        ...(before && { where: { runAt: { lt: before } } }),
         orderBy: { runAt: "desc" },
         select: { avgScore: true, runAt: true, failCountByRule: true },
       }),
@@ -389,8 +508,14 @@ function buildRows(
   projects: readonly { id: string; nameEn: string; nameTh: string }[],
   slugToProjectId: ReadonlyMap<string, string>,
   locale: string,
-  gscConfigured: boolean,
+  /** Search clicks per row key, or why there are none. */
+  clicks: ReadonlyMap<string, number> | Unavailable,
 ): ReportRow[] {
+  const clicksOf = (key: string): number | Unavailable => (clicks instanceof Map ? (clicks.get(key) ?? 0) : (clicks as Unavailable));
+  const rateOf = (key: string, googleLeads: number): number | null => {
+    const n = clicksOf(key);
+    return typeof n === "number" && n > 0 ? Math.round((googleLeads / n) * 1000) / 10 : null;
+  };
   const counts = new Map<string, { google: number; all: number }>();
 
   for (const lead of leads) {
@@ -420,37 +545,40 @@ function buildRows(
     counts.set(key, entry);
   }
 
+  // A development that drew clicks and no enquiry is the row most worth
+  // seeing, so clicks earn a row as leads do.
+  const hasClicks = (key: string) => clicks instanceof Map && (clicks.get(key) ?? 0) > 0;
   const rows: ReportRow[] = projects
-    .filter((project) => counts.has(project.id))
+    .filter((project) => counts.has(project.id) || hasClicks(project.id))
     .map((project) => {
-      const entry = counts.get(project.id)!;
+      const entry = counts.get(project.id) ?? { google: 0, all: 0 };
       return {
         key: project.id,
         name: pickLocale(locale, project.nameTh, project.nameEn),
-        googleClicks: gscConfigured ? NO_DATA : NOT_CONFIGURED,
+        googleClicks: clicksOf(project.id),
         googleLeads: entry.google,
         allLeads: entry.all,
-        rate: null,
+        rate: rateOf(project.id, entry.google),
       };
     });
 
   const news = counts.get("news");
-  if (news) {
+  if (news || hasClicks("news")) {
     rows.push({
       key: "news",
       name: "news",
-      googleClicks: gscConfigured ? NO_DATA : NOT_CONFIGURED,
-      googleLeads: news.google,
-      allLeads: news.all,
-      rate: null,
+      googleClicks: clicksOf("news"),
+      googleLeads: news?.google ?? 0,
+      allLeads: news?.all ?? 0,
+      rate: rateOf("news", news?.google ?? 0),
     });
   }
 
   // Most Google leads first: the table's job is to say where the work paid
-  // off, and while clicks are unavailable that is the only ordering the
-  // data supports. Ties fall back to total volume.
+  // off. Ties fall back to search clicks, then to total volume.
+  const clicksNumber = (row: ReportRow) => (typeof row.googleClicks === "number" ? row.googleClicks : 0);
   return rows.sort(
-    (a, b) => b.googleLeads - a.googleLeads || b.allLeads - a.allLeads,
+    (a, b) => b.googleLeads - a.googleLeads || clicksNumber(b) - clicksNumber(a) || b.allLeads - a.allLeads,
   );
 }
 

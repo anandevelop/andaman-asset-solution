@@ -41,6 +41,28 @@ export function imageUrlsIn(html) {
   return [...found];
 }
 
+/**
+ * The page's generated share card (og:image → …/opengraph-image-…), as a
+ * path. These are drawn on request and take one to two seconds cold —
+ * measured 1.8 s for the home page's — and link-preview fetchers and SEO
+ * crawlers ask for every one of them. An uploaded og:image on a CDN is not
+ * ours to warm and is left out.
+ */
+export function shareImagePathsIn(html) {
+  const found = new Set();
+  for (const match of html.matchAll(/<meta[^>]+(?:property|name)="(?:og:image|twitter:image)"[^>]*content="([^"]+)"/g)) {
+    const value = match[1].replace(/&amp;/g, "&");
+    if (!value.includes("/opengraph-image")) continue;
+    try {
+      const url = new URL(value, "http://x");
+      found.add(`${url.pathname}${url.search}`);
+    } catch {
+      /* not a URL — skip it */
+    }
+  }
+  return [...found];
+}
+
 /** Paths from a sitemap, whatever host it names. */
 export function pathsIn(sitemapXml) {
   const paths = new Set();
@@ -89,7 +111,9 @@ export async function warmImages(base, log = console.log) {
       const response = await fetch(`${base}${path}`, { headers, signal: AbortSignal.timeout(60_000) });
       if (!response.ok) return;
       stats.pages += 1;
-      for (const url of imageUrlsIn(await response.text())) images.add(url);
+      const html = await response.text();
+      for (const url of imageUrlsIn(html)) images.add(url);
+      for (const url of shareImagePathsIn(html)) images.add(url);
     } catch {
       /* one page failing does not stop the rest */
     }

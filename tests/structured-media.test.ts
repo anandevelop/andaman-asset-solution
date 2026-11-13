@@ -50,10 +50,16 @@ describe("brochureDocument", () => {
       publisherName: "Andaman Asset Solution",
       publisherUrl: "https://andamanassetsolution.com",
     });
+    expect(doc).not.toHaveProperty("contentUrl");
     expect(doc).toMatchObject({
       "@type": "DigitalDocument",
       encodingFormat: "application/pdf",
-      contentUrl: "https://andamanassetsolution.com/brochures/victory.pdf",
+      // On a MediaObject: contentUrl is not a DigitalDocument property.
+      encoding: {
+        "@type": "MediaObject",
+        contentUrl: "https://andamanassetsolution.com/brochures/victory.pdf",
+        encodingFormat: "application/pdf",
+      },
       thumbnailUrl: "https://andamanassetsolution.com/brochures/victory.webp",
     });
     expect(doc).not.toHaveProperty("description");

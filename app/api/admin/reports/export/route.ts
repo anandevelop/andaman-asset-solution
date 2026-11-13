@@ -91,18 +91,20 @@ export async function GET(request: Request) {
   ];
 
   /*
-    Clicks and the rate they are the denominator of arrive with phase 4.
-    Written as the same "not connected" wording the screen shows rather
+    Clicks and the rate come from Search Console. Where it has nothing,
+    the cell carries the same wording the screen shows rather
     than as an empty cell: a blank in a spreadsheet is read as zero by the
     next person to sum the column.
   */
   const notConnected = t("reports.view.notConnected");
 
+  const missing = (row: (typeof data.rows)[number]) =>
+    typeof row.googleClicks !== "number" && row.googleClicks.reason === "noData" ? t("reports.view.noGoogleData") : notConnected;
   const rows = data.rows.map((row) => [
     row.key === "news" ? t("reports.view.newsRow") : row.name,
-    notConnected,
+    typeof row.googleClicks === "number" ? row.googleClicks : missing(row),
     row.googleLeads,
-    notConnected,
+    row.rate === null ? (typeof row.googleClicks === "number" ? "—" : missing(row)) : `${row.rate}%`,
     row.allLeads,
   ]);
 

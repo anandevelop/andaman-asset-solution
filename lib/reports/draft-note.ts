@@ -94,7 +94,10 @@ export function draftNote(data: ReportData): DraftItem[] {
       items.push({ key: "noGoogleLeads", project: withLeads.name });
   }
 
-  if (!data.search.available && items.length < MAX_ITEMS)
+  // Only when it really is not set up. Connected with nothing for the
+  // period yet (a new property, a month before the first sync) is not
+  // something for the reader to go and fix.
+  if (!data.search.available && data.search.reason === "notConfigured" && items.length < MAX_ITEMS)
     items.push({ key: "notConnected" });
 
   return items.slice(0, MAX_ITEMS);

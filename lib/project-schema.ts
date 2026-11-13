@@ -37,13 +37,27 @@ type PostalParts = {
 };
 
 /** The company, as every page that names it should. */
-export function organizationNode(input: { telephone?: string; email?: string; logoUrl?: string | null }) {
+export function organizationNode(input: {
+  telephone?: string;
+  email?: string;
+  logoUrl?: string | null;
+  /** The company's own profiles elsewhere (settings → social). */
+  sameAs?: readonly (string | null | undefined)[];
+}) {
+  // Always a logo: the committed one when no upload is set. Without it
+  // (and without sameAs) audits read the node as an incomplete Organization.
+  const logo = input.logoUrl || `${siteConfig.url}${siteConfig.branding.logo}`;
+  const sameAs = [...new Set((input.sameAs ?? []).map((url) => url?.trim()).filter((url): url is string => Boolean(url && /^https?:\/\//i.test(url))))];
   return {
     "@type": "RealEstateAgent",
     "@id": ORGANIZATION_ID,
     name: siteConfig.legalName,
     url: siteConfig.url,
-    ...(input.logoUrl && { logo: input.logoUrl }),
+    logo,
+    // LocalBusiness types want a picture of the business; the share image
+    // is the one the site already stands behind.
+    image: `${siteConfig.url}${siteConfig.seo.ogImage}`,
+    ...(sameAs.length > 0 && { sameAs }),
     ...(input.telephone && { telephone: input.telephone.replace(/[^\d+]/g, "") }),
     ...(input.email && { email: input.email }),
     foundingDate: siteConfig.organization.foundingDate,
@@ -58,6 +72,8 @@ export function projectAddress(slug: string, location: string): PostalParts {
   if (known) return { addressRegion: "Phuket", addressCountry: "TH", ...known };
   return { streetAddress: location, addressRegion: "Phuket", addressCountry: "TH" };
 }
+
+export type OrganizationInput = Parameters<typeof organizationNode>[0];
 
 export type ProjectSchemaInput = {
   locale: string;
@@ -74,7 +90,7 @@ export type ProjectSchemaInput = {
   landAreaSqm: number | null;
   amenities: string[];
   houseTypes: { name: string; bedrooms: number | null; livingAreaSqm: number | null }[];
-  organization: { telephone?: string; email?: string; logoUrl?: string | null };
+  organization: OrganizationInput;
 };
 
 export function projectSchemaGraph(input: ProjectSchemaInput) {

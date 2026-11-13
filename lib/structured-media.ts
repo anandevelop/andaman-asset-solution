@@ -84,7 +84,17 @@ export function brochureDocument(input: BrochureInput) {
     ...(input.description && { description: input.description }),
     url: input.pageUrl,
     encodingFormat: "application/pdf",
-    contentUrl: absoluteAssetUrl(input.fileUrl) || undefined,
+    /* The file itself goes on a MediaObject under `encoding`. `contentUrl`
+       belongs to MediaObject and is not a property of DigitalDocument —
+       directly on the document it is what validator.schema.org (and the
+       Ahrefs audit, on every locale of every brochure page) rejected. */
+    ...(absoluteAssetUrl(input.fileUrl) && {
+      encoding: {
+        "@type": "MediaObject",
+        contentUrl: absoluteAssetUrl(input.fileUrl),
+        encodingFormat: "application/pdf",
+      },
+    }),
     ...(cover && { image: cover, thumbnailUrl: cover }),
     dateModified: input.updatedAt.toISOString(),
     inLanguage: intlLocale(input.locale),

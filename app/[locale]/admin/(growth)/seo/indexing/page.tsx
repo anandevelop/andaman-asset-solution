@@ -88,9 +88,18 @@ export default async function AdminSeoIndexingPage(props: Props) {
             <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Step label={t("seo.indexing.stepKnown")} value={String(crawl.funnel.known)} />
               <Step label={t("seo.indexing.stepCrawled")} value={String(crawl.funnel.crawled)} />
-              {/* Phase 4. Drawn, not omitted — see the header. */}
-              <Step label={t("seo.indexing.stepIndexed")} value={t("seo.indexing.notConnected")} muted />
-              <Step label={t("seo.indexing.stepEarning")} value={t("seo.indexing.notConnected")} muted />
+              {/* A number once Google has answered for at least one page;
+                  until then drawn, not omitted — see the header. */}
+              {typeof crawl.funnel.indexed === "number" ? (
+                <Step label={t("seo.indexing.stepIndexed")} value={String(crawl.funnel.indexed)} />
+              ) : (
+                <Step label={t("seo.indexing.stepIndexed")} value={t("seo.indexing.notConnected")} muted />
+              )}
+              {typeof crawl.funnel.earning === "number" ? (
+                <Step label={t("seo.indexing.stepEarning")} value={String(crawl.funnel.earning)} />
+              ) : (
+                <Step label={t("seo.indexing.stepEarning")} value={t("seo.indexing.notConnected")} muted />
+              )}
             </dl>
           </section>
 

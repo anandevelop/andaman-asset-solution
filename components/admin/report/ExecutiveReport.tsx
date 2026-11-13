@@ -295,6 +295,39 @@ export default async function ExecutiveReport({ data, exec, locale, noteBody, pr
             </div>
           </Section>
 
+          {/* ── Google search (Search Console), when there is any ───── */}
+          {data.search.available && (
+            <Section title={x("search")}>
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <SubTitle>{x("searchSummary")}</SubTitle>
+                  <Table
+                    head={[x("colMetric"), x("colValue")]}
+                    align={["left", "right"]}
+                    rows={[
+                      [x("searchClicks"), n(data.search.clicks)],
+                      [x("searchClicksPrevious"), n(data.search.previousClicks)],
+                      [x("searchImpressions"), n(data.search.impressions)],
+                      [x("searchPosition"), data.search.position === null ? "—" : data.search.position.toFixed(1)],
+                    ]}
+                  />
+                </div>
+                <div>
+                  <SubTitle>{x("searchQueries")}</SubTitle>
+                  {data.search.topQueries.length > 0 ? (
+                    <Table
+                      head={[x("colQuery"), x("colClicks")]}
+                      align={["left", "right"]}
+                      rows={data.search.topQueries.map((query) => [query.query, n(query.clicks)])}
+                    />
+                  ) : (
+                    <Empty text={x("noData")} />
+                  )}
+                </div>
+              </div>
+            </Section>
+          )}
+
           {/* ── 7. Website health ───────────────────────────────────── */}
           <Section title={x("health")}>
             <div className="grid grid-cols-2 gap-8">

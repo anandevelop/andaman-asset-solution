@@ -18,6 +18,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     crawlHit: { findMany: vi.fn(), groupBy: vi.fn(), count: vi.fn() },
     seoUrlState: { findMany: vi.fn() },
+    seoQueryStat: { groupBy: vi.fn() },
   },
 }));
 
@@ -31,6 +32,7 @@ import { getCrawlOverview } from "@/lib/seo/crawl-report";
 const groupBy = prisma.crawlHit.groupBy as unknown as ReturnType<typeof vi.fn>;
 const count = prisma.crawlHit.count as unknown as ReturnType<typeof vi.fn>;
 const urlStates = prisma.seoUrlState.findMany as unknown as ReturnType<typeof vi.fn>;
+const shownPages = prisma.seoQueryStat.groupBy as unknown as ReturnType<typeof vi.fn>;
 
 const hour = new Date("2026-09-26T12:00:00Z");
 
@@ -54,6 +56,7 @@ function setup(
   groupBy.mockResolvedValue([...groups.values()]);
   count.mockResolvedValue(rows.length);
   urlStates.mockResolvedValue(urls.map((url) => ({ url })));
+  shownPages.mockResolvedValue([]);
 }
 
 beforeEach(() => {
@@ -153,13 +156,36 @@ describe("the funnel", () => {
     expect((await getCrawlOverview()).funnel.crawled).toBe(0);
   });
 
-  it("reports the Google-dependent steps as unavailable, never as zero", async () => {
+  it("reports the Google-dependent steps as unavailable, never as zero, before Google has answered", async () => {
     // Two zero bars would read as "Google has indexed nothing of ours".
     setup([{ bot: "googlebot", path: "/projects", hits: 1, notFound: false }]);
 
     const { funnel } = await getCrawlOverview();
     expect(funnel.indexed).toEqual({ available: false, reason: "google" });
     expect(funnel.earning).toEqual({ available: false, reason: "google" });
+  });
+
+  it("counts indexed and earning pages once URL Inspection and Search Console have data", async () => {
+    setup([{ bot: "googlebot", path: "/projects", hits: 1, notFound: false }]);
+    const at = new Date("2026-11-10T05:00:00Z");
+    urlStates.mockResolvedValue([
+      { url: "/en/projects", coverageState: "Submitted and indexed", inspectedAt: at },
+      { url: "/th/projects", coverageState: "Crawled - currently not indexed", inspectedAt: at },
+      { url: "/en/about", coverageState: "Discovered - currently not indexed", inspectedAt: at },
+      { url: "/en/contact", coverageState: "Indexed, not submitted in sitemap", inspectedAt: at },
+      { url: "/en/news", coverageState: null, inspectedAt: null },
+    ]);
+    shownPages.mockResolvedValue([
+      { page: "https://example.com/th/projects" },
+      { page: "https://example.com/en/projects" },
+      { page: "https://example.com/en/old-page-not-published" },
+    ]);
+
+    const { funnel } = await getCrawlOverview();
+    // /projects (one language is enough) and /contact; not /about.
+    expect(funnel.indexed).toBe(2);
+    // Both locales of /projects are one page; the unpublished URL is not ours.
+    expect(funnel.earning).toBe(1);
   });
 });
 

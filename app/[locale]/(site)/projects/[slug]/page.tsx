@@ -441,6 +441,7 @@ export default async function ProjectPage(props: Props) {
             telephone: settings.contact.phone,
             email: settings.contact.salesEmail,
             logoUrl: absoluteAssetUrl(settings.branding.logoUrl) || null,
+            sameAs: Object.values(settings.social),
           },
         })}
       />

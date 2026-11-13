@@ -474,6 +474,16 @@ const nextConfig = {
         source: "/api/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
+      // The 3D site plans are frames inside a project page, not pages of
+      // their own — Search Console had /embed/residence-prime-3d.html and
+      // /embed/victory-3d.html in the index as if they were. noindex takes
+      // them out; "follow" is left alone, there is nothing to follow.
+      // (Not disallowed in robots.txt: a crawler that may not fetch the
+      // file never sees this header, and the URL stays indexed.)
+      {
+        source: "/embed/:file(.*\\.html)",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
       // three.js for the 3D site plans (public/embed/vendor/three-r128).
       // The folder is the version: a newer three.js goes in a new folder,
       // these files never change in place — so a visitor downloads them

@@ -2893,7 +2893,16 @@
         "colValue": "Value",
         "noData": "No data for this period yet",
         "footnote": "Every figure is counted from the website's own records for the report period, except the sales pipeline, which is as of the report date. \"Won\" counts enquiries whose status is won and which were last updated in this period.",
-        "noProject": "Enquiries in this period did not name a development"
+        "noProject": "Enquiries in this period did not name a development",
+        "search": "Google search",
+        "searchSummary": "From Search Console",
+        "searchClicks": "Clicks",
+        "searchClicksPrevious": "Clicks, previous period",
+        "searchImpressions": "Times shown in results",
+        "searchPosition": "Average position",
+        "searchQueries": "Top search terms",
+        "colQuery": "Search term",
+        "colClicks": "Clicks"
       }
     },
     "settings": {

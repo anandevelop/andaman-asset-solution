@@ -104,12 +104,20 @@ export default function ReportView({
             <h3 className="admin-label">{labels.headlineTitle}</h3>
 
             <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Phase 4. Drawn, not omitted — see the header. */}
-              <Figure
-                label={labels.googleClicks}
-                value={data.search.reason === "noData" ? labels.noGoogleData : labels.notConnected}
-                muted
-              />
+              {data.search.available ? (
+                <Figure
+                  label={labels.googleClicks}
+                  value={String(data.search.clicks)}
+                  delta={delta(data.search.clicks, data.search.previousClicks)}
+                />
+              ) : (
+                /* Drawn, not omitted, and saying which of the two it is. */
+                <Figure
+                  label={labels.googleClicks}
+                  value={data.search.reason === "noData" ? labels.noGoogleData : labels.notConnected}
+                  muted
+                />
+              )}
 
               <Figure
                 label={labels.googleLeads}
@@ -163,13 +171,15 @@ export default function ReportView({
                       <td className="py-2 text-adm-text">
                         {row.key === "news" ? labels.newsRow : row.name}
                       </td>
-                      {/* Both dashes are phase 4: clicks, and the rate that
-                          needs them as its denominator. */}
-                      <td className="py-2 text-right text-adm-muted">—</td>
+                      {/* A dash only where Search Console has nothing: the
+                          clicks, and the rate that needs them. */}
+                      <td className="py-2 text-right tabular-nums text-adm-muted">
+                        {typeof row.googleClicks === "number" ? row.googleClicks : "—"}
+                      </td>
                       <td className="py-2 text-right font-medium tabular-nums text-adm-text">
                         {row.googleLeads}
                       </td>
-                      <td className="py-2 text-right text-adm-muted">—</td>
+                      <td className="py-2 text-right tabular-nums text-adm-muted">{row.rate === null ? "—" : `${row.rate}%`}</td>
                       <td className="py-2 text-right tabular-nums text-adm-muted">
                         {row.allLeads}
                       </td>

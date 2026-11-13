@@ -34,7 +34,7 @@ function row(overrides: Partial<ReportRow>): ReportRow {
   return {
     key: "p1",
     name: "Trinity Village",
-    googleClicks: { available: false, reason: "google" },
+    googleClicks: { available: false, reason: "notConfigured" },
     googleLeads: 0,
     allLeads: 0,
     rate: null,
@@ -54,8 +54,8 @@ function data(overrides: Partial<ReportData> = {}): ReportData {
     topIssues: [],
     vitals: [],
     rows: [],
-    search: { available: false, reason: "google" },
-    indexing: { available: false, reason: "google" },
+    search: { available: false, reason: "notConfigured" },
+    indexing: { available: false, reason: "notConfigured" },
     note: { body: "", isDraft: true, editedBy: null, updatedAt: null },
     ...overrides,
   } as ReportData;
@@ -165,10 +165,21 @@ describe("draftNote", () => {
     expect(items.some((item) => item.key === "noGoogleLeads")).toBe(false);
   });
 
-  it("always admits that Search Console is missing", () => {
+  it("admits that Search Console is missing when it is not set up", () => {
     // Otherwise a short list reads as "nothing to do" when half the
     // picture simply is not connected.
     expect(draftNote(data())).toContainEqual({ key: "notConnected" });
+  });
+
+  it("does not say \"not connected\" once Search Console is connected", () => {
+    // Connected with nothing for the period, and connected with data: the
+    // October report said "not connected" beside a working Keywords screen.
+    expect(draftNote(data({ search: { available: false, reason: "noData" } }))).not.toContainEqual({ key: "notConnected" });
+    expect(
+      draftNote(
+        data({ search: { available: true, clicks: 12, impressions: 300, previousClicks: 9, position: 14.2, topQueries: [] } }),
+      ),
+    ).not.toContainEqual({ key: "notConnected" });
   });
 
   it("drops the missing-Google note rather than exceed three items", () => {

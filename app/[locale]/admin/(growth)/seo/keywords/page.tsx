@@ -70,6 +70,12 @@ export default async function KeywordLibraryPage(props: Props) {
   });
 
   const isTracked = (query: string) => tracked.has(query.trim().toLowerCase());
+  /* Everything the team is targeting, counted once: the library's own
+     phrases plus the target keywords set on project pages and the focus
+     keywords on articles — the same set the "Tracked" tab below sorts
+     Search Console queries by. Counting the library table alone printed 0
+     for a site with target keywords on every project. */
+  const trackedCount = Math.max(tracked.size, library.kpis.tracked);
 
   const opportunities = findOpportunities(report.stats).map((row) => ({
     ...toRow(row),
@@ -133,7 +139,7 @@ export default async function KeywordLibraryPage(props: Props) {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="admin-card">
           <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">{t("seo.keywords.kpiTracked")}</p>
-          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{library.kpis.tracked}</p>
+          <p className="mt-4 text-3xl font-semibold tabular-nums text-adm-text">{trackedCount}</p>
         </div>
         <div className="admin-card">
           <p className="text-xs font-medium uppercase tracking-wide text-adm-muted">{t("seo.keywords.kpiTop10")}</p>

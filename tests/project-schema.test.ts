@@ -78,3 +78,22 @@ describe("projectAddress", () => {
     expect(organizationNode({})).toMatchObject({ "@type": "RealEstateAgent", foundingDate: "2021" });
   });
 });
+
+describe("organizationNode completeness", () => {
+  it("always carries a logo and an image, and the company's own profiles", async () => {
+    const { organizationNode } = await import("@/lib/project-schema");
+    const node = organizationNode({
+      telephone: "+66 76 123 456",
+      sameAs: ["https://facebook.com/andamanassetsolution", "", " https://instagram.com/andamanassetsolution ", "not-a-url", "https://facebook.com/andamanassetsolution"],
+    });
+    expect(node.logo).toMatch(/^https?:\/\/.+\/logo\.png$/);
+    expect(node.image).toMatch(/^https?:\/\/.+\/og-image\.jpg$/);
+    expect(node.sameAs).toEqual(["https://facebook.com/andamanassetsolution", "https://instagram.com/andamanassetsolution"]);
+    expect(node).toMatchObject({ name: expect.any(String), url: expect.any(String), telephone: "+6676123456", address: { "@type": "PostalAddress" } });
+  });
+
+  it("omits sameAs rather than emit an empty list", async () => {
+    const { organizationNode } = await import("@/lib/project-schema");
+    expect(organizationNode({})).not.toHaveProperty("sameAs");
+  });
+});

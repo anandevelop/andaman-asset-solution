@@ -30,9 +30,26 @@ import { safeQuery } from "@/lib/db";
 import { isProbePath } from "@/lib/probe-paths";
 import { SEARCH_BOTS, type BotName } from "@/lib/seo/bots";
 
+/**
+ * Why a Google figure is not a number yet.
+ *
+ *   google   nothing has come back from Google at all for this step
+ *   pending  some pages have been inspected, none of the published ones yet
+ */
 export type Unavailable = { available: false; reason: "google" };
 
 const UNAVAILABLE: Unavailable = { available: false, reason: "google" };
+
+/**
+ * Google's coverage sentence → is the page in the index. "Submitted and
+ * indexed", "Indexed, not submitted in sitemap" are; "Crawled - currently
+ * not indexed", "Discovered - currently not indexed", "URL is unknown to
+ * Google", "Page with redirect", "Excluded by 'noindex' tag" are not.
+ */
+export function isIndexedState(coverageState: string | null | undefined): boolean {
+  const state = (coverageState ?? "").toLowerCase();
+  return state.includes("indexed") && !state.includes("not indexed");
+}
 
 export type BotActivity = {
   bot: string;
@@ -48,10 +65,12 @@ export type CrawlFunnel = {
   known: number;
   /** Of those, fetched by a search crawler in the window. */
   crawled: number;
-  /** Phase 4 — URL Inspection. */
-  indexed: Unavailable;
-  /** Phase 4 — Search Console. */
-  earning: Unavailable;
+  /** Of the known pages, in Google's index in at least one language (URL
+   *  Inspection, stored on SeoUrlState by the nightly seo-inspect job). */
+  indexed: number | Unavailable;
+  /** Of the known pages, shown in a search result in the window in at
+   *  least one language (Search Console, seo_query_stats). */
+  earning: number | Unavailable;
 };
 
 export type BotNotFound = {
@@ -82,7 +101,7 @@ export async function getCrawlOverview(windowDays = 30): Promise<CrawlOverview> 
   return safeQuery(
     "seo:crawl",
     async () => {
-      const [rows, everAny, knownUrls] = await Promise.all([
+      const [rows, everAny, knownUrls, shownPages] = await Promise.all([
         // Grouped in the database: every report below sums by bot and
         // path and keeps the latest hour, so one row per (bot, path,
         // notFound) carries the same answer as 30 days of hourly rows.
@@ -103,13 +122,19 @@ export async function getCrawlOverview(windowDays = 30): Promise<CrawlOverview> 
             })),
           ),
         prisma.crawlHit.count(),
-        prisma.seoUrlState.findMany({ select: { url: true } }),
+        prisma.seoUrlState.findMany({ select: { url: true, coverageState: true, inspectedAt: true } }),
+        // Pages Google showed in a result in the window. Its own failure
+        // is "no search data", never a broken screen.
+        prisma.seoQueryStat
+          .groupBy({ by: ["page"], where: { date: { gte: since }, impressions: { gt: 0 } } })
+          .then((groups) => groups.map((g) => g.page))
+          .catch(() => null),
       ]);
 
       return {
         windowDays,
         activity: activityOf(rows),
-        funnel: funnelOf(rows, knownUrls),
+        funnel: funnelOf(rows, knownUrls, shownPages),
         notFound: notFoundOf(rows),
         uncrawled: uncrawledOf(rows, knownUrls),
         empty: everAny === 0,
@@ -213,9 +238,31 @@ function crawledPaths(rows: readonly Row[]): Set<string> {
   return paths;
 }
 
-function funnelOf(rows: readonly Row[], knownUrls: readonly { url: string }[]): CrawlFunnel {
+type KnownUrl = { url: string; coverageState?: string | null; inspectedAt?: Date | null };
+
+function funnelOf(rows: readonly Row[], knownUrls: readonly KnownUrl[], shownPages: readonly string[] | null): CrawlFunnel {
   const known = knownPaths(knownUrls);
   const crawled = crawledPaths(rows);
+
+  /*
+    Counted per page, as the two steps before it are: /th/about and
+    /en/about are one page here, indexed if Google has either. A number
+    only once at least one page has actually been inspected — before the
+    first seo-inspect run, zero would read as "Google has indexed nothing
+    of ours".
+  */
+  const inspected = knownUrls.filter((row) => row.inspectedAt);
+  const indexedPaths = new Set<string>();
+  for (const row of inspected) {
+    const path = pathOf(row.url);
+    if (path && isIndexedState(row.coverageState)) indexedPaths.add(path);
+  }
+
+  const shown = new Set<string>();
+  for (const page of shownPages ?? []) {
+    const path = pathOf(page);
+    if (path && known.has(path)) shown.add(path);
+  }
 
   return {
     known: known.size,
@@ -224,8 +271,8 @@ function funnelOf(rows: readonly Row[], knownUrls: readonly { url: string }[]): 
     // letting it inflate this step would make the funnel look healthier
     // the more it is probed.
     crawled: [...crawled].filter((path) => known.has(path)).length,
-    indexed: UNAVAILABLE,
-    earning: UNAVAILABLE,
+    indexed: inspected.length > 0 ? indexedPaths.size : UNAVAILABLE,
+    earning: shownPages && shownPages.length > 0 ? shown.size : UNAVAILABLE,
   };
 }
 
