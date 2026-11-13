@@ -127,7 +127,7 @@ const STATUS_TONE: Record<UnitStatus, { dot: string; soft: string; text: string 
   // reserved/sold.
   AVAILABLE: { dot: "#DADADA", soft: "#F3F3F3", text: "#0A0A0A" },
   RESERVED: { dot: "#efcaa9", soft: "#FCF2EA", text: "#0A0A0A" },
-  SOLD: { dot: "#F0A8A8", soft: "#FCEBEB", text: "#0A0A0A" },
+  SOLD: { dot: "#1A1A1A", soft: "#E5E5E5", text: "#0A0A0A" },
 };
 const STATUS_ORDER: UnitStatus[] = ["AVAILABLE", "RESERVED", "SOLD"];
 /** The selection ring — sand, so it contrasts against every marker colour
