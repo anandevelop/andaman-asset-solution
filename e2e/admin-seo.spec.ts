@@ -45,6 +45,10 @@ const PAGES = [
   // The old address of that tab, kept as a redirect.
   "/admin/analytics/sources",
   "/admin/leads/suspect",
+  // The co-agent list: plain, filtered, and with the "new agent" drawer.
+  "/admin/agents",
+  "/admin/agents?f=dup&ch=website",
+  "/admin/agents?edit=new",
 ];
 
 /*

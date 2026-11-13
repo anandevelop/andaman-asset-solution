@@ -3,27 +3,34 @@
 /**
  * components/admin/agents/AgentTable.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The co-agent table: masked phone/WhatsApp with an on-demand reveal,
- * a duplicate flag (same email or phone as another agent), channel,
- * leads count, and approve / reject for self-registrations.
+ * The co-agent list. Five columns where there were nine, so it fits
+ * without scrolling sideways: who (name over company), how to reach them
+ * (masked phone with an on-demand reveal, then WhatsApp and email), the
+ * registration channel, how many customers they sent, and what — if
+ * anything — still needs doing (pending, duplicate, no PDPA record).
+ *
+ * Below `sm` the same rows are cards with 44px contact buttons; a table
+ * that narrow is a row of ellipses.
+ *
+ * Approve / reject live on the pending card above the list
+ * (PendingAgents.tsx) and in the drawer, not in a row.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Check, Eye, Pencil, X } from "lucide-react";
-import StatusPill from "@/components/admin/ui/StatusPill";
-import { approveAgent, rejectAgent, revealAgentPhone } from "@/app/[locale]/admin/(crm)/agents/actions";
+import { AlertTriangle, Check, ChevronRight, Eye, Mail, MessageCircle, Phone } from "lucide-react";
+import { revealAgentPhone } from "@/app/[locale]/admin/(crm)/agents/actions";
 import { useFlash } from "@/components/admin/agents/Flash";
+import { initialsOf } from "@/components/admin/agents/ui";
 
 export type AgentRowData = {
   id: string;
   name: string;
   company: string | null;
   phoneMasked: string;
-  whatsappMasked: string | null;
+  hasWhatsapp: boolean;
   email: string | null;
   channel: string | null;
   pending: boolean;
@@ -32,14 +39,18 @@ export type AgentRowData = {
   hasNotice: boolean;
 };
 
-const waHref = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`;
+/** Rows drawn at first, and added by each "show more". */
+const PAGE = 25;
 
-export default function AgentTable({ locale, rows, editHref }: { locale: string; rows: AgentRowData[]; editHref: string }) {
+const waHref = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`;
+const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+
+export default function AgentTable({ rows, editHref }: { locale: string; rows: AgentRowData[]; editHref: string }) {
   const t = useTranslations("coAgents.agents");
-  const router = useRouter();
   const [flash, show] = useFlash();
   const [busy, startTransition] = useTransition();
   const [revealed, setRevealed] = useState<Record<string, { phone: string; whatsapp: string | null }>>({});
+  const [limit, setLimit] = useState(PAGE);
 
   const reveal = (id: string) =>
     startTransition(async () => {
@@ -48,147 +59,142 @@ export default function AgentTable({ locale, rows, editHref }: { locale: string;
       else show(t("errGeneric"), "error");
     });
 
-  const act = (task: () => Promise<{ ok: boolean }>, done: string) =>
-    startTransition(async () => {
-      const result = await task();
-      if (!result.ok) {
-        show(t("errGeneric"), "error");
-        return;
-      }
-      show(done);
-      router.refresh();
-    });
+  const visible = rows.slice(0, limit);
+
+  const avatar = (name: string, size: string) => (
+    <span aria-hidden className={`grid shrink-0 place-items-center rounded-full bg-adm-neutral-bg font-semibold text-adm-neutral ${size}`}>
+      {initialsOf(name)}
+    </span>
+  );
+
+  const channelPill = (channel: string | null) =>
+    channel ? (
+      <span className="inline-block rounded-full bg-adm-fill/22 px-2.5 py-0.5 text-xs text-adm-accent-ink">{channel}</span>
+    ) : (
+      <span className="text-[12.5px] text-adm-muted">{t("channelNone")}</span>
+    );
+
+  const statusTags = (row: AgentRowData) => {
+    const clean = !row.pending && row.duplicates.length === 0 && row.hasNotice;
+    return (
+      <span className="flex flex-wrap gap-1.5">
+        {row.pending && <span className="rounded-full bg-adm-warning-bg px-2 py-0.5 text-[11.5px] font-medium text-adm-warning">{t("statusPENDING")}</span>}
+        {row.duplicates.length > 0 && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-adm-danger-bg px-2 py-0.5 text-[11.5px] font-medium text-adm-danger"
+            title={t("duplicateTitle", { names: row.duplicates.join(", ") })}
+          >
+            <AlertTriangle size={11} aria-hidden /> {t("duplicate")}
+          </span>
+        )}
+        {!row.hasNotice && (
+          <span className="rounded-full bg-adm-neutral-bg px-2 py-0.5 text-[11.5px] font-medium text-adm-neutral">{t("chipNoConsent")}</span>
+        )}
+        {clean && (
+          <span className="inline-flex items-center gap-1 text-xs text-adm-success">
+            <Check size={13} aria-hidden /> {t("statusComplete")}
+          </span>
+        )}
+      </span>
+    );
+  };
 
   return (
     <>
       {flash}
-      <div className="admin-card overflow-x-auto p-0!">
-        <table className="w-full min-w-[1040px] border-collapse">
+
+      {/* ── sm and up: the table ─────────────────────────────────────── */}
+      <div className="admin-card hidden overflow-x-auto p-0! sm:block">
+        <table className="w-full min-w-[760px] border-collapse">
           <thead>
             <tr>
-              <th className="admin-th w-10">#</th>
-              <th className="admin-th">{t("colName")}</th>
-              <th className="admin-th">{t("colCompany")}</th>
-              <th className="admin-th">{t("colPhone")}</th>
-              <th className="admin-th">{t("colWhatsapp")}</th>
-              <th className="admin-th">{t("colEmail")}</th>
-              <th className="admin-th">{t("colChannel")}</th>
+              <th className="admin-th pl-[22px]!">{t("colAgent")}</th>
+              <th className="admin-th">{t("colContact")}</th>
+              <th className="admin-th">{t("colChannelShort")}</th>
               <th className="admin-th text-right!">{t("colLeads")}</th>
-              <th className="admin-th" />
+              <th className="admin-th">{t("colStatus")}</th>
+              <th className="admin-th w-12" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => {
+            {visible.map((row) => {
               const full = revealed[row.id];
               return (
-                <tr key={row.id} className={row.pending ? "bg-adm-warning-bg/40" : "hover:bg-adm-text/[0.025]"}>
-                  <td className="admin-td text-adm-muted tabular-nums">{index + 1}</td>
+                <tr key={row.id} className="hover:bg-adm-text/[0.025]">
+                  <td className="admin-td max-w-[320px] pl-[22px]!">
+                    <span className="flex items-center gap-3">
+                      {avatar(row.name, "size-[38px] text-[13px]")}
+                      <span className="min-w-0">
+                        <Link href={`${editHref}${row.id}`} scroll={false} className="block truncate font-semibold hover:underline">
+                          {row.name}
+                        </Link>
+                        <span className="block truncate text-[12.5px] text-adm-muted">{row.company || t("noCompany")}</span>
+                      </span>
+                    </span>
+                  </td>
                   <td className="admin-td">
-                    <span className="flex items-center gap-2">
-                      <Link href={`${editHref}${row.id}`} scroll={false} className="font-medium hover:underline">
-                        {row.name}
-                      </Link>
-                      {row.pending && <StatusPill tone="warning" label={t("statusPENDING")} />}
-                      {row.duplicates.length > 0 && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-adm-danger/13 px-2 py-0.5 text-[10.5px] text-adm-danger"
-                          title={t("duplicateTitle", { names: row.duplicates.join(", ") })}
-                        >
-                          <AlertTriangle size={11} aria-hidden /> {t("duplicate")}
-                        </span>
+                    <span className="flex items-center gap-1.5 tabular-nums">
+                      {full ? (
+                        full.phone ? (
+                          <a href={telHref(full.phone)} className="hover:underline">
+                            {full.phone}
+                          </a>
+                        ) : (
+                          <span className="text-adm-muted">—</span>
+                        )
+                      ) : row.phoneMasked ? (
+                        <>
+                          {row.phoneMasked}
+                          <button
+                            type="button"
+                            className="admin-btn-quiet admin-btn-sm px-1.5!"
+                            onClick={() => reveal(row.id)}
+                            disabled={busy}
+                            aria-label={`${t("reveal")}: ${row.name}`}
+                            title={t("reveal")}
+                          >
+                            <Eye size={14} aria-hidden />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-adm-muted">—</span>
+                      )}
+                    </span>
+                    <span className="flex max-w-[240px] items-center gap-1.5 text-xs text-adm-muted">
+                      {full?.whatsapp ? (
+                        <a href={waHref(full.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-adm-success hover:underline">
+                          WhatsApp
+                        </a>
+                      ) : (
+                        row.hasWhatsapp && <span>WhatsApp</span>
+                      )}
+                      {(full?.whatsapp || row.hasWhatsapp) && row.email && <span aria-hidden>·</span>}
+                      {row.email && (
+                        <a href={`mailto:${row.email}`} className="truncate text-adm-muted hover:text-adm-text hover:underline">
+                          {row.email}
+                        </a>
                       )}
                     </span>
                   </td>
-                  <td className="admin-td text-adm-muted">{row.company || "—"}</td>
-                  <td className="admin-td tabular-nums">
-                    {full ? (
-                      full.phone ? (
-                        <a href={`tel:${full.phone.replace(/[^\d+]/g, "")}`} className="hover:underline">
-                          {full.phone}
-                        </a>
-                      ) : (
-                        "—"
-                      )
-                    ) : row.phoneMasked ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        {row.phoneMasked}
-                        <button
-                          type="button"
-                          className="admin-btn-quiet admin-btn-sm px-1.5!"
-                          onClick={() => reveal(row.id)}
-                          disabled={busy}
-                          aria-label={`${t("reveal")}: ${row.name}`}
-                          title={t("reveal")}
-                        >
-                          <Eye size={13} aria-hidden />
-                        </button>
-                      </span>
-                    ) : (
-                      <span className="text-adm-muted">—</span>
-                    )}
-                  </td>
-                  <td className="admin-td tabular-nums">
-                    {full?.whatsapp ? (
-                      <a href={waHref(full.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-adm-success hover:underline">
-                        {full.whatsapp}
-                      </a>
-                    ) : (
-                      (row.whatsappMasked ?? <span className="text-adm-muted">—</span>)
-                    )}
-                  </td>
-                  <td className="admin-td">
-                    {row.email ? (
-                      <a href={`mailto:${row.email}`} className="hover:underline">
-                        {row.email}
-                      </a>
-                    ) : (
-                      <span className="text-adm-muted">—</span>
-                    )}
-                  </td>
-                  <td className="admin-td">
-                    {row.channel ? (
-                      <span className="rounded-full bg-adm-fill/20 px-2 py-0.5 text-[11.5px] text-adm-accent-ink">{row.channel}</span>
-                    ) : (
-                      <span className="text-adm-muted">—</span>
-                    )}
-                  </td>
-                  <td className="admin-td text-right tabular-nums">{row.leads}</td>
+                  <td className="admin-td">{channelPill(row.channel)}</td>
+                  <td className="admin-td text-right font-medium tabular-nums">{row.leads}</td>
+                  <td className="admin-td whitespace-normal!">{statusTags(row)}</td>
                   <td className="admin-td text-right">
-                    {row.pending ? (
-                      <span className="inline-flex gap-1.5">
-                        <button
-                          type="button"
-                          className="admin-btn admin-btn-sm"
-                          disabled={busy}
-                          onClick={() => act(() => approveAgent(locale, row.id), t("approvedToast", { name: row.name }))}
-                        >
-                          <Check size={14} aria-hidden /> {t("approve")}
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-danger admin-btn-sm"
-                          disabled={busy}
-                          title={t("reject")}
-                          aria-label={`${t("reject")}: ${row.name}`}
-                          onClick={() => {
-                            if (window.confirm(t("rejectConfirm", { name: row.name }))) act(() => rejectAgent(locale, row.id), t("rejectedToast"));
-                          }}
-                        >
-                          <X size={14} aria-hidden />
-                        </button>
-                      </span>
-                    ) : (
-                      <Link href={`${editHref}${row.id}`} scroll={false} className="admin-btn-ghost admin-btn-sm">
-                        <Pencil size={13} aria-hidden /> {t("edit")}
-                      </Link>
-                    )}
+                    <Link
+                      href={`${editHref}${row.id}`}
+                      scroll={false}
+                      aria-label={t("openDetails", { name: row.name })}
+                      className="admin-btn-quiet admin-btn-sm px-1.5!"
+                    >
+                      <ChevronRight size={16} aria-hidden />
+                    </Link>
                   </td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="admin-td py-10 text-center text-adm-muted">
+                <td colSpan={6} className="admin-td py-10 text-center text-adm-muted">
                   {t("empty")}
                 </td>
               </tr>
@@ -196,6 +202,80 @@ export default function AgentTable({ locale, rows, editHref }: { locale: string;
           </tbody>
         </table>
       </div>
+
+      {/* ── Below sm: one card per agent ─────────────────────────────── */}
+      <ul className="space-y-2.5 sm:hidden">
+        {visible.map((row) => {
+          const full = revealed[row.id];
+          return (
+            <li key={row.id} className="admin-card space-y-3 p-3.5!">
+              <div className="flex items-center gap-3">
+                {avatar(row.name, "size-[42px] text-sm")}
+                <div className="min-w-0 flex-1">
+                  <Link href={`${editHref}${row.id}`} scroll={false} className="block truncate font-semibold text-adm-text">
+                    {row.name}
+                  </Link>
+                  <p className="truncate text-[13px] text-adm-muted">{row.company || t("noCompany")}</p>
+                </div>
+                {channelPill(row.channel)}
+              </div>
+              {(row.pending || row.duplicates.length > 0 || !row.hasNotice) && statusTags(row)}
+              <div className="flex items-center justify-between gap-2.5">
+                <span className="text-[13.5px] text-adm-muted">{t("sentLeads", { count: row.leads })}</span>
+                <span className="flex gap-2">
+                  {full ? (
+                    <>
+                      {full.phone && (
+                        <a href={telHref(full.phone)} aria-label={`${t("call")}: ${row.name}`} className="grid size-11 place-items-center rounded-xl bg-adm-strong text-adm-on-strong">
+                          <Phone size={18} aria-hidden />
+                        </a>
+                      )}
+                      {full.whatsapp && (
+                        <a
+                          href={waHref(full.whatsapp)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`WhatsApp: ${row.name}`}
+                          className="grid size-11 place-items-center rounded-xl border border-adm-line-strong bg-adm-panel text-adm-text"
+                        >
+                          <MessageCircle size={18} aria-hidden />
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    row.phoneMasked && (
+                      <button type="button" className="admin-btn-ghost min-h-11! px-3.5!" onClick={() => reveal(row.id)} disabled={busy}>
+                        <Eye size={16} aria-hidden /> {t("reveal")}
+                      </button>
+                    )
+                  )}
+                  {row.email && (
+                    <a
+                      href={`mailto:${row.email}`}
+                      aria-label={`${t("email")}: ${row.name}`}
+                      className="grid size-11 place-items-center rounded-xl border border-adm-line-strong bg-adm-panel text-adm-text"
+                    >
+                      <Mail size={18} aria-hidden />
+                    </a>
+                  )}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+        {rows.length === 0 && <li className="admin-card py-10 text-center text-sm text-adm-muted">{t("empty")}</li>}
+      </ul>
+
+      {rows.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 px-1 text-[12.5px] text-adm-muted">
+          <span>{t("shown", { shown: visible.length, total: rows.length })}</span>
+          {rows.length > limit && (
+            <button type="button" className="admin-btn-ghost admin-btn-sm max-sm:min-h-11!" onClick={() => setLimit((n) => n + PAGE)}>
+              {t("showMore")}
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

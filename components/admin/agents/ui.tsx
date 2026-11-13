@@ -94,3 +94,15 @@ export function fmtDateTime(value: Date | string, locale: string): string {
     timeZone: "Asia/Bangkok",
   }).format(date);
 }
+
+/**
+ * Two letters for an avatar: the first of the first two words ("Li Wei" →
+ * "LW", "กมลชนก ศรีสุข" → "กศ"). A Thai word that opens with a leading
+ * vowel (เ แ โ ใ ไ) gives its consonant, which is the letter it is filed
+ * under.
+ */
+export function initialsOf(name: string): string {
+  const letter = (word: string) => Array.from(word.replace(/^[เแโใไ]+/, "") || word)[0] ?? "";
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map(letter).join("").toUpperCase() || "?";
+}

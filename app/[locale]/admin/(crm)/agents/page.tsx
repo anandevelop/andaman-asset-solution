@@ -1,16 +1,21 @@
 /**
  * app/[locale]/admin/(crm)/agents/page.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * เอเจนซี่ / Co-agent (the mockup's VIEWS.agency). Filters are URL
- * parameters (?q= search, ?ch= channel chip), the agent drawer is ?edit=
- * <id>|new and the registration-links drawer is ?links=1 — the same
- * URL-driven drawers as the rest of the admin.
+ * เอเจนซี่ / Co-agent. Laid out to be read at a glance (2026-11 redesign,
+ * project doc claude/coagent-admin-mockup.md): one summary strip, the
+ * registrations waiting for approval as a card of their own, one row of
+ * filters, and a five-column list that does not scroll sideways.
+ *
+ * Filters are URL parameters — ?q= search, ?f= what needs attention
+ * (pending | nocons | dup), ?ch= registration channel — the agent drawer
+ * is ?edit=<id>|new and the registration-links drawer is ?links=1, the
+ * same URL-driven drawers as the rest of the admin.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { AlertTriangle, Briefcase, Clock, Link2, Plus, ShieldAlert, UserRound, Users } from "lucide-react";
+import { Link2, Plus, Search, UserRound } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hasRole } from "@/lib/role-rank";
@@ -28,15 +33,17 @@ import {
 } from "@/lib/agents/admin";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import AdminDrawer from "@/components/admin/ui/AdminDrawer";
-import KpiCard from "@/components/admin/KpiCard";
 import AgentTable, { type AgentRowData } from "@/components/admin/agents/AgentTable";
 import AgentForm, { type AgentFormValues } from "@/components/admin/agents/AgentForm";
 import AgentExportButton from "@/components/admin/agents/AgentExportButton";
 import RegLinks, { type RegLink } from "@/components/admin/agents/RegLinks";
+import PendingAgents from "@/components/admin/agents/PendingAgents";
+import ChannelSelect from "@/components/admin/agents/ChannelSelect";
+import { fmtDateTime } from "@/components/admin/agents/ui";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string; ch?: string; edit?: string; links?: string }>;
+  searchParams: Promise<{ q?: string; f?: string; ch?: string; edit?: string; links?: string }>;
 };
 
 export default async function AgentsPage(props: Props) {
@@ -60,8 +67,22 @@ export default async function AgentsPage(props: Props) {
   const channelKey = (agent: AdminAgent) => agent.salesPersonId ?? (agent.selfRegistered ? "website" : "none");
 
   // ── Filters ─────────────────────────────────────────────────────────
+  const dups = duplicateMap(agents);
+  const FLAGS = ["pending", "nocons", "dup"] as const;
+  type Flag = (typeof FLAGS)[number] | "all";
+  // ?ch=pending and ?ch=nocons were this page's own links before the
+  // channel and the "needs attention" filters were split; still honoured.
+  const legacyFlag = (FLAGS as readonly string[]).includes(searchParams.ch ?? "") ? (searchParams.ch as Flag) : null;
+  const flag: Flag = (FLAGS as readonly string[]).includes(searchParams.f ?? "") ? (searchParams.f as Flag) : (legacyFlag ?? "all");
+  const ch = legacyFlag ? "all" : (searchParams.ch ?? "all");
+
+  const hasFlag = (agent: AdminAgent, key: Flag) =>
+    key === "all" ||
+    (key === "pending" && agent.status === "PENDING") ||
+    (key === "nocons" && !agent.noticeVersion) ||
+    (key === "dup" && (dups.get(agent.id)?.length ?? 0) > 0);
+
   const q = (searchParams.q ?? "").trim().toLowerCase();
-  const ch = searchParams.ch ?? "all";
   const qDigits = phoneKey(q);
   const filtered = agents.filter((agent) => {
     if (q) {
@@ -69,16 +90,19 @@ export default async function AgentsPage(props: Props) {
       const phoneHit = qDigits && [agent.phone, agent.whatsapp].some((p) => phoneKey(p).includes(qDigits));
       if (!hay.includes(q) && !phoneHit) return false;
     }
-    if (ch === "all") return true;
-    if (ch === "pending") return agent.status === "PENDING";
-    if (ch === "nocons") return !agent.noticeVersion;
-    return channelKey(agent) === ch;
+    if (!hasFlag(agent, flag)) return false;
+    return ch === "all" || channelKey(agent) === ch;
   });
 
   const base = `/${locale}/admin/agents`;
   const href = (extra: Record<string, string | undefined>) => {
     const params = new URLSearchParams();
-    const merged = { q: searchParams.q || undefined, ch: ch === "all" ? undefined : ch, ...extra };
+    const merged = {
+      q: searchParams.q || undefined,
+      f: flag === "all" ? undefined : flag,
+      ch: ch === "all" ? undefined : ch,
+      ...extra,
+    };
     for (const [key, value] of Object.entries(merged)) if (value) params.set(key, value);
     const text = params.toString();
     return text ? `${base}?${text}` : base;
@@ -86,22 +110,31 @@ export default async function AgentsPage(props: Props) {
   const closeHref = href({});
   const editBase = `${closeHref}${closeHref.includes("?") ? "&" : "?"}edit=`;
 
-  // ── KPIs ────────────────────────────────────────────────────────────
+  // ── Summary ─────────────────────────────────────────────────────────
   const approved = agents.filter((agent) => agent.status === "APPROVED");
   const pending = agents.filter((agent) => agent.status === "PENDING");
   const companies = new Set(approved.map((agent) => (agent.company ?? "").trim().toLowerCase()).filter(Boolean)).size;
-  const viaSales = salesPeople
-    .map((person) => ({ person, count: approved.filter((agent) => agent.salesPersonId === person.id).length }))
-    .filter((row) => row.count > 0);
-  const noNotice = agents.filter((agent) => !agent.noticeVersion).length;
 
-  const dups = duplicateMap(agents);
+  /* Where the approved agents registered: one segment per sales person
+     who has any, then the website, then "not stated". The sales people
+     take the navy-to-blue steps, so the two that are not a person read as
+     different in kind and not only in shade. */
+  const SALES_TONES = ["var(--adm-strong)", "var(--adm-ocean)", "var(--adm-ocean-hi)", "var(--adm-content)"];
+  const channelBar = [
+    ...salesPeople
+      .map((person) => ({ key: person.id, label: person.nick, count: approved.filter((agent) => agent.salesPersonId === person.id).length }))
+      .filter((row) => row.count > 0)
+      .map((row, index) => ({ ...row, color: SALES_TONES[index % SALES_TONES.length] })),
+    { key: "website", label: t("chipWebsite"), count: approved.filter((agent) => channelKey(agent) === "website").length, color: "var(--adm-fill)" },
+    { key: "none", label: t("chipNone"), count: approved.filter((agent) => channelKey(agent) === "none").length, color: "var(--adm-line-strong)" },
+  ].filter((row) => row.count > 0);
+
   const rows: AgentRowData[] = filtered.map((agent) => ({
     id: agent.id,
     name: agent.name,
     company: agent.company,
     phoneMasked: agent.phone ? maskPhone(agent.phone) : "",
-    whatsappMasked: agent.whatsapp ? maskPhone(agent.whatsapp) : null,
+    hasWhatsapp: Boolean(agent.whatsapp),
     email: agent.email,
     channel: channelOf(agent),
     pending: agent.status === "PENDING",
@@ -110,15 +143,20 @@ export default async function AgentsPage(props: Props) {
     hasNotice: Boolean(agent.noticeVersion),
   }));
 
-  const chips: { key: string; label: string; count: number }[] = [
+  const flagFilters: { key: Flag; label: string; count: number }[] = [
     { key: "all", label: t("chipAll"), count: agents.length },
+    { key: "pending", label: t("chipPending"), count: pending.length },
+    { key: "nocons", label: t("chipNoConsent"), count: agents.filter((agent) => hasFlag(agent, "nocons")).length },
+    { key: "dup", label: t("duplicate"), count: agents.filter((agent) => hasFlag(agent, "dup")).length },
+  ];
+
+  const channelOptions = [
+    { value: "all", label: t("channelAll"), href: href({ ch: undefined }) },
     ...salesPeople
       .filter((person) => agents.some((agent) => agent.salesPersonId === person.id))
-      .map((person) => ({ key: person.id, label: person.nick, count: agents.filter((agent) => agent.salesPersonId === person.id).length })),
-    { key: "website", label: t("chipWebsite"), count: agents.filter((agent) => channelKey(agent) === "website").length },
-    { key: "none", label: t("chipNone"), count: agents.filter((agent) => channelKey(agent) === "none").length },
-    { key: "nocons", label: t("chipNoConsent"), count: noNotice },
-    ...(pending.length ? [{ key: "pending", label: t("chipPending"), count: pending.length }] : []),
+      .map((person) => ({ value: person.id, label: person.nick, href: href({ ch: person.id }) })),
+    { value: "website", label: t("chipWebsite"), href: href({ ch: "website" }) },
+    { value: "none", label: t("chipNone"), href: href({ ch: "none" }) },
   ];
 
   // ── Agent drawer ────────────────────────────────────────────────────
@@ -165,7 +203,7 @@ export default async function AgentsPage(props: Props) {
         leads: leads.map((lead) => ({
           id: lead.id,
           name: lead.name,
-          status: lead.status,
+          status: tAdmin(`leadStatus.${lead.status}` as never),
           project: lead.project ? (locale === "th" ? lead.project.nameTh : lead.project.nameEn) || lead.project.nameEn : null,
         })),
       };
@@ -201,7 +239,7 @@ export default async function AgentsPage(props: Props) {
       <AdminPageHeader
         eyebrow={zoneEyebrow((key) => tAdmin(key as never), "coAgents")}
         title={t("title")}
-        description={t("subtitle")}
+        description={t("subtitleShort")}
         actions={
           <>
             {canAdmin && <AgentExportButton locale={locale} />}
@@ -215,61 +253,82 @@ export default async function AgentsPage(props: Props) {
         }
       />
 
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard href={null} icon={Users} tone="info" label={t("kpiTotal")} value={String(approved.length)} hint={t("kpiTotalHint", { count: companies })} />
-        {viaSales.slice(0, 2).map(({ person, count }) => (
-          <KpiCard
-            key={person.id}
-            href={href({ ch: person.id })}
-            icon={Briefcase}
-            tone="ocean"
-            label={t("kpiVia", { name: person.nick })}
-            value={String(count)}
-            hint={t("kpiViaHint")}
-          />
-        ))}
-        <KpiCard href={href({ ch: "pending" })} icon={Clock} tone="content" label={t("kpiPending")} value={String(pending.length)} hint={t("kpiPendingHint")} />
-        <KpiCard href={href({ ch: "nocons" })} icon={ShieldAlert} tone="success" label={t("kpiNoConsent")} value={String(noNotice)} hint={t("kpiNoConsentHint")} />
-      </div>
+      {/* One strip instead of four cards: how many, and where they came
+          from. Each legend entry filters the list to that channel. */}
+      <section aria-label={t("summaryLabel")} className="admin-card mb-5 flex flex-wrap items-center gap-x-10 gap-y-5">
+        <p className="flex items-baseline gap-2.5">
+          <span className="text-[34px] font-semibold leading-none tracking-[-0.02em] text-adm-text tabular-nums">{approved.length}</span>
+          <span className="text-sm text-adm-muted">{t("summaryAgents", { count: companies })}</span>
+        </p>
+        {channelBar.length > 0 && (
+          <div className="min-w-0 flex-[1_1_22rem] space-y-2">
+            <p className="text-xs text-adm-muted">{t("summaryChannels")}</p>
+            <div className="flex h-2.5 gap-[3px]" role="img" aria-label={channelBar.map((row) => `${row.label} ${row.count}`).join(", ")}>
+              {channelBar.map((row) => (
+                <span key={row.key} className="rounded-full" style={{ flex: `${row.count} 1 0`, background: row.color }} />
+              ))}
+            </div>
+            <ul className="flex flex-wrap gap-x-[18px] gap-y-1.5 text-[12.5px] text-adm-muted">
+              {channelBar.map((row) => (
+                <li key={row.key}>
+                  <Link href={href({ ch: row.key, f: undefined })} scroll={false} className="inline-flex items-center gap-1.5 hover:text-adm-text">
+                    <i aria-hidden className="size-2 rounded-[3px]" style={{ background: row.color }} />
+                    {row.label} <b className="font-semibold text-adm-text tabular-nums">{row.count}</b>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       {pending.length > 0 && (
-        <div className="mb-3 flex items-center gap-2.5 rounded-[10px] bg-adm-warning-bg px-3 py-2.5 text-[13px] text-adm-warning">
-          <AlertTriangle size={15} aria-hidden />
-          <span>
-            {t("pendingNote", { count: pending.length })}{" "}
-            <Link href={href({ ch: "pending" })} className="font-medium underline">
-              {t("viewPending")}
-            </Link>
-          </span>
-        </div>
+        <PendingAgents
+          locale={locale}
+          agents={pending.map((agent) => ({
+            id: agent.id,
+            name: agent.name,
+            meta: [agent.company || t("noCompany"), t("via", { channel: channelOf(agent) ?? t("channelWebsite") }), fmtDateTime(agent.createdAt, locale)].join(" · "),
+            editHref: `${editBase}${agent.id}`,
+          }))}
+        />
       )}
 
       <div className="mb-3 flex flex-wrap items-center gap-2.5">
-        <form action={base} className="flex items-center gap-1.5">
+        <form action={base} role="search" className="flex-[1_1_16rem] sm:max-w-[340px]">
+          {flag !== "all" && <input type="hidden" name="f" value={flag} />}
           {ch !== "all" && <input type="hidden" name="ch" value={ch} />}
-          <input name="q" defaultValue={searchParams.q ?? ""} placeholder={t("search")} aria-label={t("search")} className="admin-input w-72" />
-          <button type="submit" className="admin-btn-ghost admin-btn-sm">
-            {t("searchButton")}
-          </button>
+          <label className="flex min-h-[38px] items-center gap-2 rounded-[10px] border border-adm-line-strong bg-adm-panel px-3 text-adm-muted focus-within:border-adm-info">
+            <Search size={15} aria-hidden className="shrink-0" />
+            <input
+              name="q"
+              type="search"
+              defaultValue={searchParams.q ?? ""}
+              placeholder={t("search")}
+              aria-label={t("search")}
+              className="min-w-0 flex-1 bg-transparent text-[13.5px] text-adm-text outline-none placeholder:text-adm-muted"
+            />
+          </label>
         </form>
-        <nav aria-label={t("chipsLabel")} className="flex flex-wrap gap-1.5">
-          {chips.map((chip) => (
+
+        <nav aria-label={t("filtersLabel")} className="flex flex-wrap gap-1 rounded-xl bg-adm-text/6 p-1">
+          {flagFilters.map((filter) => (
             <Link
-              key={chip.key}
-              href={href({ ch: chip.key === "all" ? undefined : chip.key })}
+              key={filter.key}
+              href={href({ f: filter.key === "all" ? undefined : filter.key })}
               scroll={false}
-              aria-current={ch === chip.key ? "page" : undefined}
+              aria-current={flag === filter.key ? "page" : undefined}
               className={[
-                "inline-flex h-[30px] items-center gap-1.5 rounded-[9px] border px-[11px] text-[12.5px] transition-colors",
-                ch === chip.key
-                  ? "border-adm-fill/50 bg-adm-fill/14 text-adm-text"
-                  : "border-adm-line-strong text-adm-muted hover:text-adm-text",
+                "inline-flex min-h-[30px] items-center gap-1.5 rounded-[9px] px-3 text-[13px] transition-colors",
+                flag === filter.key ? "bg-adm-solid font-semibold text-adm-text shadow-xs" : "text-adm-muted hover:text-adm-text",
               ].join(" ")}
             >
-              {chip.label} <b className="font-semibold tabular-nums">{chip.count}</b>
+              {filter.label} <span className="tabular-nums">{filter.count}</span>
             </Link>
           ))}
         </nav>
+
+        <ChannelSelect label={t("channelFilter")} value={ch} options={channelOptions} />
       </div>
 
       <AgentTable locale={locale} rows={rows} editHref={editBase} />
@@ -282,7 +341,12 @@ export default async function AgentsPage(props: Props) {
           closeLabel={t("close")}
           width={560}
         >
-          {editingAgent && <p className="-mt-2 mb-4 text-sm text-adm-muted">{editingAgent.company || t("noCompany")}</p>}
+          {editingAgent && (
+            <p className="-mt-2 mb-4 text-sm text-adm-muted">
+              {editingAgent.company || t("noCompany")}
+              {channelOf(editingAgent) ? ` · ${t("via", { channel: channelOf(editingAgent) as string })}` : ""}
+            </p>
+          )}
           {!formValues.id && <p className="-mt-2 mb-4 text-sm text-adm-muted">{t("drawerNewSub")}</p>}
           <AgentForm
             key={formValues.id ?? "new"}
