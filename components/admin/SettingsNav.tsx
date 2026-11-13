@@ -3,20 +3,21 @@
 /**
  * components/admin/SettingsNav.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The left rail of the settings workspace. Every entry is a real route, so
- * the highlighted one is read from the path rather than held in state —
- * there is nothing here that can disagree with what is on screen.
+ * The tab strip of the settings workspace — the same rounded bar the
+ * analytics and SEO hubs use, under the page title. It was a left rail,
+ * which spent a 220px column on four links. Every entry is a real route,
+ * so the highlighted one is read from the path rather than held in state.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Database, Link2, ShieldCheck } from "lucide-react";
+import AdminTabs from "@/components/admin/ui/AdminTabs";
 
 type Key = "notifications" | "integrations" | "privacy" | "system";
 
 /*
-  Three rows left this rail and none of them were settings.
+  Three entries left this strip and none of them were settings.
 
   "company" edited the About page's copy and "contact" edited the contact
   page's — both are tabs of /admin/pages now, beside the other sections of
@@ -37,39 +38,24 @@ const ENTRIES: { key: Key; segment: string; icon: typeof Bell }[] = [
 
 export default function SettingsNav({
   locale,
+  label,
   labels,
 }: {
   locale: string;
+  /** What the strip is, for a screen reader ("ตั้งค่า"). */
+  label: string;
   labels: Record<Key, string>;
 }) {
   const pathname = usePathname();
 
   return (
-    <nav className="admin-card p-2!" aria-label={labels.notifications}>
-      <ul className="space-y-1">
-        {ENTRIES.map(({ key, segment, icon: Icon }) => {
-          const href = `/${locale}/admin/settings/${segment}`;
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-
-          return (
-            <li key={key}>
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={[
-                  "flex items-center gap-2.5 rounded-xs px-3.5 py-2.5 text-sm transition-colors",
-                  active
-                    ? "bg-adm-strong font-semibold text-adm-on-strong"
-                    : "text-adm-muted hover:bg-adm-text/4 hover:text-adm-text",
-                ].join(" ")}
-              >
-                <Icon size={15} aria-hidden />
-                {labels[key]}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <AdminTabs
+      variant="pill"
+      label={label}
+      tabs={ENTRIES.map(({ key, segment, icon }) => {
+        const href = `/${locale}/admin/settings/${segment}`;
+        return { key, href, label: labels[key], icon, active: pathname === href || pathname.startsWith(`${href}/`) };
+      })}
+    />
   );
 }

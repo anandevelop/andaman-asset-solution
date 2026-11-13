@@ -4,7 +4,7 @@
  * /admin/settings has no content of its own — every group is a real route
  * under it (see the layout beside this file), so this sends the bare path
  * to the first one rather than rendering another screen whose only job
- * would be a list of links the left rail already shows.
+ * would be a list of links the tab strip already shows.
  *
  * Notifications, because the two groups that used to come first were not
  * settings: "company" edited the About page's copy and "contact" edited

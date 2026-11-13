@@ -1,8 +1,8 @@
 /**
  * app/[locale]/admin/settings/layout.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * The settings workspace (Settings.dc.html): a left rail of groups, the
- * section being edited in the middle, and two read-only cards on the right
+ * The settings workspace: a tab strip of groups under the title, the
+ * section being edited below it, and two read-only cards on the right
  * that are true wherever you are — what is connected, and where PDPA
  * stands.
  *
@@ -10,7 +10,7 @@
  * genuinely different things: three of them already existed as their own
  * routes with their own forms and their own guards, and folding those into
  * one component would have meant merging four independent Server
- * Components' data loading for the sake of a tab bar. Every group is a real
+ * Components' data loading for the sake of one file. Every group is a real
  * URL, so a link to one is a link to what the sender was looking at.
  *
  * The right-hand cards live here rather than on a single section because
@@ -58,17 +58,18 @@ export default async function AdminSettingsLayout({ children, params }: Props) {
         description={t("settings.subtitle")}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
-        <SettingsNav
-          locale={locale}
-          labels={{
-            notifications: t("settings.groups.notifications"),
-            integrations: t("settings.groups.integrations"),
-            privacy: t("settings.groups.privacy"),
-            system: t("settings.groups.system"),
-          }}
-        />
+      <SettingsNav
+        locale={locale}
+        label={t("settings.title")}
+        labels={{
+          notifications: t("settings.groups.notifications"),
+          integrations: t("settings.groups.integrations"),
+          privacy: t("settings.groups.privacy"),
+          system: t("settings.groups.system"),
+        }}
+      />
 
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">{children}</div>
 
         <aside className="space-y-5">
