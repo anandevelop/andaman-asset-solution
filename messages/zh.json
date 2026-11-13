@@ -3059,7 +3059,7 @@
       "section": "系统",
       "contactSubtitle": "这些信息会出现在页脚、联系页、WhatsApp 按钮以及 Google 读取的数据中——填错就会同时错在所有地方。",
       "integrationsSubtitle": "可在后台修改的外部服务 ID。",
-      "integrationsEnvNote": "SMTP、Spaces、reCAPTCHA、Sentry 和 Redis 由服务器启动时的环境变量设定，无法在此页修改——右侧卡片会标明各自的变量名。",
+      "integrationsEnvNote": "SMTP、Spaces 和 reCAPTCHA 由服务器启动时的环境变量设定，无法在此页修改——右侧卡片会标明各自的变量名。",
       "notifications": {
         "title": "团队通知",
         "subtitle": "选择哪些内容通过邮件、LINE 和铃铛通知发送。",
@@ -3077,7 +3077,8 @@
           "reservationExpiring": "单位预订将在 48 小时内到期",
           "weeklySummary": "管理层每周摘要（周一 08:00）",
           "failedLogins": "异常登录失败",
-          "backupProblem": "数据库备份缺失、失败或已停止（每天早上）"
+          "backupProblem": "数据库备份缺失、失败或已停止（每天早上）",
+          "systemError": "系统发生错误（首次出现时通知，之后最多每 6 小时一次）"
         },
         "line": "LINE",
         "lineNotConfigured": "LINE 尚未连接或未开启任何聊天 — LINE 开关可以保存，但在设置完成前不会发送。",
@@ -3096,8 +3097,7 @@
           "analytics": "Google Analytics",
           "searchConsole": "Search Console",
           "recaptcha": "reCAPTCHA",
-          "sentry": "错误追踪 (Sentry)",
-          "queue": "后台队列 (Redis)"
+          "errors": "系统错误提醒 (LINE)"
         },
         "emailOn": "通过 {host} 发送",
         "emailOff": "尚未配置——通知邮件与确认邮件不会发出",
@@ -3109,14 +3109,14 @@
         "searchConsoleOff": "未填写验证码",
         "recaptchaOn": "{days} 天内拦截表单 {count} 次",
         "recaptchaOff": "尚未配置——公开表单接受所有提交",
-        "sentryOn": "已开启 · 错误数量请在 Sentry 查看",
-        "sentryOff": "尚未配置——错误只会写入服务器日志",
-        "queueOff": "尚未配置——通知只发一次且不重试，限流按进程各自计算",
         "testResult": {
           "sent": "测试邮件已发送至",
           "failed": "发送失败：",
           "notConfigured": "尚未配置 SMTP"
-        }
+        },
+        "errorsOk": "已开启 · 过去 24 小时没有错误",
+        "errorsSome": "过去 24 小时有 {count} 项错误——请查看 设置 › 系统",
+        "errorsNoLine": "尚未连接 LINE——错误已记录，但不会通知任何人"
       },
       "privacyCard": {
         "title": "隐私与 PDPA",
@@ -3164,7 +3164,15 @@
         "backupWhere": "副本位置",
         "backupOffsite": "服务器上及私有备份存储桶中",
         "backupLocalOnly": "仅在服务器上 — 请设置 BACKUP_BUCKET，以免服务器丢失时备份一并丢失",
-        "backupDetail": "详情"
+        "backupDetail": "详情",
+        "errorsTitle": "最近的错误",
+        "errorsNote": "网站或后台每次出错都会记录在这里，并在首次出现时通过 LINE 通知。同一错误最多每 6 小时重复通知一次。",
+        "errorsEmpty": "暂无错误记录",
+        "errorsCount": "{count} 次",
+        "errorsLast": "最近 {when}",
+        "errorsKindServer": "服务器",
+        "errorsKindClient": "浏览器",
+        "errorsClear": "清空列表"
       },
       "line": {
         "title": "LINE 潜在客户提醒",
@@ -3248,7 +3256,8 @@
         "kindReservation": "预订",
         "kindWeekly": "每周摘要",
         "kindBackup": "备份",
-        "kindPagespeed": "PageSpeed"
+        "kindPagespeed": "PageSpeed",
+        "kindError": "系统错误"
       },
       "ai": {
         "title": "AI (Google Gemini)",

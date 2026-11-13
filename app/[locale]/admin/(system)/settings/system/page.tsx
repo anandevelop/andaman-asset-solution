@@ -36,7 +36,8 @@ import { collectEnvProblems } from "@/lib/env";
 import { formatGigabytes, getSystemHealth } from "@/lib/admin/system-health";
 import ClearCacheButton from "@/components/admin/ClearCacheButton";
 import { getBackupStatus } from "@/lib/backup-status";
-import { clearSiteCache } from "./actions";
+import { recentSystemErrors } from "@/lib/system-errors";
+import { clearErrorLog, clearSiteCache } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -45,7 +46,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
 
   await requireAdmin(locale, Role.ADMIN);
 
-  const [t, health, counts, backup] = await Promise.all([
+  const [t, health, counts, backup, errors] = await Promise.all([
     getTranslations({ locale, namespace: "admin" }),
     getSystemHealth(),
     safeQuery(
@@ -63,6 +64,7 @@ export default async function AdminSystemSettingsPage(props: Props) {
       { leads: 0, media: 0, projects: 0, articles: 0, audit: 0 },
     ),
     getBackupStatus(),
+    safeQuery("settings:system:errors", () => recentSystemErrors(20), []),
   ]);
 
   const env = collectEnvProblems();
@@ -244,6 +246,59 @@ export default async function AdminSystemSettingsPage(props: Props) {
           <Info size={13} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
           {t("settings.system.backupNote")}
         </p>
+      </section>
+
+      {/* The site's own error log — lib/system-errors.ts. New failures are
+          also sent to LINE; this is where the rest of the detail is. */}
+      <section className="admin-card space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+            <AlertTriangle size={15} aria-hidden />
+            {t("settings.system.errorsTitle")}
+          </h3>
+          {errors.length > 0 && (
+            <form action={clearErrorLog.bind(null, locale)}>
+              <button type="submit" className="admin-btn-quiet admin-btn-sm">
+                {t("settings.system.errorsClear")}
+              </button>
+            </form>
+          )}
+        </div>
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-adm-muted">
+          <Info size={13} className="mt-0.5 shrink-0 text-adm-accent-ink" aria-hidden />
+          {t("settings.system.errorsNote")}
+        </p>
+
+        {errors.length === 0 ? (
+          <p className="flex items-center gap-2 text-sm text-adm-success">
+            <CheckCircle2 size={15} aria-hidden />
+            {t("settings.system.errorsEmpty")}
+          </p>
+        ) : (
+          <ul className="divide-y divide-adm-line">
+            {errors.map((row) => (
+              <li key={row.id} className="space-y-1 py-2.5 text-sm">
+                <p className="break-words font-medium text-adm-text">
+                  {row.name}: {row.message}
+                </p>
+                <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-adm-muted">
+                  <span>{row.kind === "client" ? t("settings.system.errorsKindClient") : t("settings.system.errorsKindServer")}</span>
+                  <code className="break-all font-mono">{row.place}</code>
+                  <span className="tabular-nums">{t("settings.system.errorsCount", { count: row.count })}</span>
+                  <span className="tabular-nums">
+                    {t("settings.system.errorsLast", {
+                      when: new Date(row.lastSeenAt).toLocaleString(locale === "th" ? "th-TH" : locale, {
+                        timeZone: "Asia/Bangkok",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }),
+                    })}
+                  </span>
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="admin-card space-y-3">

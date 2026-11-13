@@ -72,6 +72,7 @@ describe("the notification catalogue", () => {
       "reservationExpiring",
       "weeklySummary",
       "backupProblem",
+      "systemError",
       "failedLogins",
     ]);
   });
@@ -97,6 +98,7 @@ describe("the notification catalogue", () => {
       "reservationExpiring",
       "weeklySummary",
       "backupProblem",
+      "systemError",
     ]);
   });
 });

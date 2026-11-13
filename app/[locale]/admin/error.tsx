@@ -16,6 +16,7 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, RotateCw } from "lucide-react";
+import { reportClientError } from "@/lib/report-client-error";
 
 type Props = {
   error: Error & { digest?: string };
@@ -34,6 +35,7 @@ export default function AdminError({ error, reset }: Props) {
 
   useEffect(() => {
     console.error("[admin]", error);
+    reportClientError(error);
   }, [error]);
 
   /*

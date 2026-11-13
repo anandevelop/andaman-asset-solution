@@ -56,12 +56,26 @@ export async function register() {
 }
 
 /**
- * Server-side React rendering errors.
+ * Server-side errors.
  *
  * Next calls this for anything thrown while rendering a server component,
  * a route handler or a server action. Those never pass through a client
- * error boundary, so from @sentry/nextjs v9 onward this export is the only
- * way they reach Sentry at all — without it the Node SDK is initialised
- * and still reports almost nothing from the App Router.
+ * error boundary, so this export is the only place they can be caught.
+ *
+ * Two things hear about it: the site's own error log, which tells the team
+ * on LINE (lib/system-errors.ts), and Sentry — a no-op unless a DSN is set.
+ * The log is Node-only (it writes to Postgres); the import is dynamic so
+ * the Edge bundle never pulls Prisma in.
  */
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError: typeof Sentry.captureRequestError = async (error, request, context) => {
+  Sentry.captureRequestError(error, request, context);
+
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    try {
+      const { recordSystemError } = await import("@/lib/system-errors");
+      await recordSystemError(error, { kind: "server", path: context.routePath || request.path });
+    } catch (failure) {
+      console.error("[instrumentation] could not record the error", failure);
+    }
+  }
+};

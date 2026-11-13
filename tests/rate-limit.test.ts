@@ -146,6 +146,8 @@ describe("RATE_LIMITS policies", () => {
         "pageView",
         // app/api/click/route.ts — contact clicks by traffic source.
         "click",
+        // app/api/client-error/route.ts — error boundaries shown to visitors.
+        "clientError",
         "presign",
         "rsvp",
         "twoFactor",

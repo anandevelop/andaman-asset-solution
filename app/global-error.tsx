@@ -23,6 +23,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { reportClientError } from "@/lib/report-client-error";
 import { GLOBAL_ERROR_COPY, localeFromPathname } from "@/lib/error-copy";
 
 type Props = {
@@ -35,6 +36,7 @@ export default function GlobalError({ error, reset }: Props) {
     // captureException, not captureMessage: the stack trace is the whole
     // point of an error this severe.
     Sentry.captureException(error);
+    reportClientError(error);
     console.error("[global error]", error);
   }, [error]);
 

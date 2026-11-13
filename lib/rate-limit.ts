@@ -238,6 +238,10 @@ export const RATE_LIMITS = {
    *  times a minute; this only stops a script turning it into a write loop. */
   click: { limit: 30, windowMs: 60_000 },
 
+  /** Error-boundary reports from browsers (app/api/client-error). A broken
+   *  page reports once per paint; this stops a script flooding the log. */
+  clientError: { limit: 10, windowMs: 60_000 },
+
   /** Inline email check. Generous — one visitor may correct the field a few times. */
   emailCheck: { limit: 30, windowMs: 10 * 60_000 },
 } as const;

@@ -122,6 +122,15 @@ export const NOTIFICATION_EVENTS: readonly NotificationEvent[] = [
     defaults: { email: true, inApp: true, line: false },
   },
   {
+    key: "systemError",
+    capability: "manageUsers",
+    // A page, route or action threw (lib/system-errors.ts). The first time
+    // a failure is seen, then at most every six hours while it lasts.
+    needsScheduler: false,
+    channels: ["inApp", "line"],
+    defaults: { email: false, inApp: true, line: true },
+  },
+  {
     key: "failedLogins",
     capability: "manageUsers",
     needsScheduler: false,

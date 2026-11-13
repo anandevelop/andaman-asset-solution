@@ -3678,3 +3678,37 @@ model LeadBlock {
   @@unique([kind, value])
   @@map("lead_blocks")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// System errors, reported to LINE (2026-11)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One row per distinct failure, with a count — the site's own error log,
+/// in place of an external tracker. Written by lib/system-errors.ts when a
+/// page, route or server action throws (instrumentation.ts) or when an
+/// error boundary is shown to a visitor (app/api/client-error). The team
+/// is told on LINE the first time a failure is seen and again only after
+/// it has been quiet, so one broken page does not become a hundred alerts.
+///
+/// No request body, no query string, no visitor: a message, where it
+/// happened and how often.
+model SystemError {
+  id          String    @id @default(cuid())
+  /// Hash of the error's name, message (numbers and ids blanked) and place.
+  fingerprint String    @unique
+  /// "server" — thrown while rendering or in a route / action;
+  /// "client" — an error boundary was shown in somebody's browser.
+  kind        String
+  name        String
+  message     String    @db.Text
+  /// Route pattern or path, without a query string.
+  place       String
+  count       Int       @default(1)
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  /// When the team was last told about this one.
+  lastAlertAt DateTime?
+
+  @@index([lastSeenAt])
+  @@map("system_errors")
+}

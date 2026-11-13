@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, RotateCw, Database } from "lucide-react";
+import { reportClientError } from "@/lib/report-client-error";
 import { ROUTE_ERROR_COPY, localeFromPathname } from "@/lib/error-copy";
 
 /**
@@ -27,6 +28,7 @@ export default function LocaleError({ error, reset }: Props) {
 
   useEffect(() => {
     console.error("[route error]", error);
+    reportClientError(error);
   }, [error]);
 
   /*

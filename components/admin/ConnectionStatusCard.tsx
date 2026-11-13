@@ -3,7 +3,7 @@
 /**
  * components/admin/ConnectionStatusCard.tsx
  * ─────────────────────────────────────────────────────────────────────────
- * "สถานะการเชื่อมต่อ" — the seven services, their state, and the one action
+ * "สถานะการเชื่อมต่อ" — the six services, their state, and the one action
  * each row can actually offer.
  *
  * A client component for exactly one reason: the email row's "ทดสอบ" button
@@ -13,7 +13,7 @@
  *
  * A row that is not configured shows the environment variable that would
  * switch it on rather than a button. There is nothing this screen can do
- * about a missing REDIS_URL — that is a deploy, not a form — and a
+ * about a missing SMTP_HOST — that is a deploy, not a form — and a
  * "ตั้งค่า" button that opens nothing would be the one dishonest thing on a
  * panel whose whole job is to be trusted.
  * ─────────────────────────────────────────────────────────────────────────

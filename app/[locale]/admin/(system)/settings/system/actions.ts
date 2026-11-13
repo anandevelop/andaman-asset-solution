@@ -15,7 +15,9 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { revalidatePath } from "next/cache";
 import { revalidatePublicSite } from "@/lib/revalidate-site";
+import { clearSystemErrors } from "@/lib/system-errors";
 import { Role } from "@prisma/client";
 import { requireAdminAction } from "@/lib/admin/guard";
 
@@ -33,4 +35,12 @@ export async function clearSiteCache(): Promise<ClearCacheResult> {
   }
 
   return { ok: true };
+}
+
+/** Empty the error log on this page (lib/system-errors.ts). A failure
+ *  that is still happening comes straight back, and is announced again. */
+export async function clearErrorLog(locale: string): Promise<void> {
+  await requireAdminAction(Role.ADMIN);
+  await clearSystemErrors();
+  revalidatePath(`/${locale}/admin/settings/system`);
 }

@@ -3059,7 +3059,7 @@
       "section": "System",
       "contactSubtitle": "These appear in the footer of every page, on the contact page, in the WhatsApp button and in what Google reads — wrong here is wrong everywhere at once.",
       "integrationsSubtitle": "External service IDs that can be changed from the back office.",
-      "integrationsEnvNote": "SMTP, Spaces, reCAPTCHA, Sentry and Redis are set as environment variables when the server starts, not from this page — the card on the right names the variable for each.",
+      "integrationsEnvNote": "SMTP, Spaces and reCAPTCHA are set as environment variables when the server starts, not from this page — the card on the right names the variable for each.",
       "notifications": {
         "title": "Team notifications",
         "subtitle": "Choose what goes out by email, to LINE and on the bell.",
@@ -3077,7 +3077,8 @@
           "reservationExpiring": "A unit reservation expires within 48 hours",
           "weeklySummary": "Weekly summary for management (Monday 08:00)",
           "failedLogins": "Unusual failed sign-ins",
-          "backupProblem": "The database backup is missing, failed or stopped (each morning)"
+          "backupProblem": "The database backup is missing, failed or stopped (each morning)",
+          "systemError": "Something on the site failed (first time seen, then at most every 6 hours)"
         },
         "line": "LINE",
         "lineNotConfigured": "LINE is not connected yet, or no chat is switched on — the LINE switches save, but nothing is sent until it is.",
@@ -3096,8 +3097,7 @@
           "analytics": "Google Analytics",
           "searchConsole": "Search Console",
           "recaptcha": "reCAPTCHA",
-          "sentry": "Error tracking (Sentry)",
-          "queue": "Background queue (Redis)"
+          "errors": "System error alerts (LINE)"
         },
         "emailOn": "Sending through {host}",
         "emailOff": "Not configured — notification and confirmation emails will not be sent",
@@ -3109,14 +3109,14 @@
         "searchConsoleOff": "No verification code set",
         "recaptchaOn": "{count} form submissions blocked in {days} days",
         "recaptchaOff": "Not configured — public forms accept every submission",
-        "sentryOn": "On · error counts live in Sentry",
-        "sentryOff": "Not configured — errors only reach the server log",
-        "queueOff": "Not configured — notifications are sent once with no retry, and rate limits are counted per process",
         "testResult": {
           "sent": "Test message sent to",
           "failed": "Could not send:",
           "notConfigured": "SMTP is not configured"
-        }
+        },
+        "errorsOk": "On · no errors in the last 24 hours",
+        "errorsSome": "{count} errors in the last 24 hours — see Settings › System",
+        "errorsNoLine": "LINE is not connected — errors are recorded, but nobody is told"
       },
       "privacyCard": {
         "title": "Privacy and PDPA",
@@ -3164,7 +3164,15 @@
         "backupWhere": "Copy kept",
         "backupOffsite": "On the server and in the private backup bucket",
         "backupLocalOnly": "On the server only — set BACKUP_BUCKET so a lost server does not take its backups with it",
-        "backupDetail": "Detail"
+        "backupDetail": "Detail",
+        "errorsTitle": "Recent errors",
+        "errorsNote": "Every failure on the site or in the back office is recorded here and sent to LINE the first time it is seen. The same failure is repeated at most every 6 hours.",
+        "errorsEmpty": "No errors recorded",
+        "errorsCount": "{count} times",
+        "errorsLast": "Last seen {when}",
+        "errorsKindServer": "Server",
+        "errorsKindClient": "Browser",
+        "errorsClear": "Clear the list"
       },
       "line": {
         "title": "LINE lead alerts",
@@ -3248,7 +3256,8 @@
         "kindReservation": "Reservation",
         "kindWeekly": "Weekly summary",
         "kindBackup": "Backup",
-        "kindPagespeed": "PageSpeed"
+        "kindPagespeed": "PageSpeed",
+        "kindError": "System error"
       },
       "ai": {
         "title": "AI (Google Gemini)",
