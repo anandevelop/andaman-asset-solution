@@ -64,7 +64,7 @@
 
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { clientIp } from "@/lib/rate-limit";
+import { requestOrigin } from "@/lib/audit/origin";
 import { reportError } from "@/lib/sentry";
 
 /**
@@ -117,28 +117,6 @@ type AuthActor = {
 };
 
 /**
- * Best-effort client address for the request in progress.
- *
- * Imported lazily rather than at the top of the file. lib/auth.ts imports
- * this module and is itself imported by route handlers, server actions and
- * both admin guards; `next/headers` belongs to none of those graphs by
- * right, and this project has already lost days to a module that was fine
- * everywhere except the one place a build worker evaluated it.
- *
- * Returns null rather than throwing outside a request — a background job
- * or a script has no address to record, and that is not an error.
- */
-async function requestAddress(): Promise<string | null> {
-  try {
-    const { headers } = await import("next/headers");
-    const address = clientIp(await headers());
-    return address === "unknown" ? null : address;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Record an arrival, a departure, or a refusal.
  *
  * Never throws. Sign-in is the one flow where an exception is most
@@ -172,7 +150,7 @@ export async function recordAuthEvent(
         recordId: null,
         recordLabel: null,
         changedFields: [],
-        ipAddress: await requestAddress(),
+        ...(await requestOrigin()),
       },
     });
   } catch (error) {
@@ -221,6 +199,7 @@ export async function recordSeoOverride(params: {
         actorId: params.actor.id,
         actorEmail: params.actor.email.slice(0, 200),
         actorRole: params.actor.role,
+        ...(await requestOrigin()),
         action: SEO_PUBLISH_OVERRIDE,
         model: "NewsArticle",
         recordId: params.articleId,
@@ -271,6 +250,7 @@ export async function recordContactReveal(params: {
       actorId: params.actor.id,
       actorEmail: params.actor.email.slice(0, 200),
       actorRole: params.actor.role,
+      ...(await requestOrigin()),
       action: CONTACT_REVEAL,
       model: "LeadInquiry",
       recordId: params.leadId,
@@ -306,6 +286,7 @@ export async function recordLeadErasure(params: {
       actorId: params.actor.id,
       actorEmail: params.actor.email.slice(0, 200),
       actorRole: params.actor.role,
+      ...(await requestOrigin()),
       action: LEAD_ERASE,
       model: "LeadInquiry",
       recordId: params.leadId,

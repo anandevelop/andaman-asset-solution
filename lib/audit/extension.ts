@@ -54,6 +54,7 @@
 */
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { getAuditActor, withoutAudit } from "@/lib/audit/context";
+import { requestOrigin } from "@/lib/audit/origin";
 import { redirectOnRename } from "@/lib/redirect-on-rename";
 import { reportError } from "@/lib/sentry";
 
@@ -352,9 +353,12 @@ export function auditExtension(base: PrismaClient) {
                 ? (result as { count: number }).count
                 : undefined;
 
+            const origin = await requestOrigin();
+
             await withoutAudit(() =>
               base.auditLog.create({
                 data: {
+                  ...origin,
                   actorId: actor.id,
                   actorEmail: actor.email,
                   actorRole: actor.role,

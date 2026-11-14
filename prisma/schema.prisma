@@ -3070,6 +3070,12 @@ model AuditLog {
   /// gets old enough to matter.
   ipAddress String?
 
+  /// The browser's User-Agent header, cut to 300 characters; the activity
+  /// page shows it as "Chrome · Mac" (lib/audit/device.ts). Null outside a
+  /// request and for every row that predates the column. Staff data, like
+  /// the address above.
+  userAgent String?
+
   createdAt DateTime @default(now())
 
   /// The reading order of the activity page, and the filter behind the

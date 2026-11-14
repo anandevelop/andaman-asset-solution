@@ -81,6 +81,31 @@ test.describe("The activity log", () => {
     // Field names, not values — the answer text must not be here.
     await expect(entry).toContainText("questionEn");
     await expect(entry).not.toContainText("Seeded by the audit trail");
+
+    // Where it came from: an edit now carries the browser, not only a sign-in.
+    await expect(entry).toContainText("Chrome");
+
+    // The tabs are by job. An FAQ is website content, so it is under that
+    // tab and not under Security; the count on a tab is what it shows.
+    await page.getByRole("link", { name: /^Security/ }).click();
+    await expect(page).toHaveURL(/tab=security/);
+    await expect(page.getByRole("row").filter({ hasText: question })).toHaveCount(0);
+    await page.getByRole("link", { name: /^Website content/ }).click();
+    await expect(page.getByRole("row").filter({ hasText: question })).toHaveCount(1);
+
+    // One entry opens in a drawer, addressed by the URL.
+    await page.getByRole("row").filter({ hasText: question }).getByRole("link", { name: "Open details" }).click();
+    await expect(page).toHaveURL(/entry=/);
+    await expect(page.getByRole("dialog")).toContainText(question);
+
+    // The export is the same filtered set, as a CSV.
+    const csv = await page.request.get("/api/admin/activity/export?locale=en&tab=content&range=30");
+    expect(csv.status()).toBe(200);
+    expect(csv.headers()["content-type"]).toContain("text/csv");
+    const text = await csv.text();
+    expect(text).toContain("Time,Email,Role,Action");
+    expect(text).toContain(question);
+    expect(text).not.toContain("signed in");
   });
 
   test("records signing in and signing out, with the times they happened", async ({

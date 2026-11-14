@@ -80,8 +80,12 @@ export async function recordSystemError(error: unknown, context: { kind: SystemE
     let count = 1;
     let alert: boolean;
     try {
-      const row = await withoutAudit(() =>
-        prisma.systemError.upsert({
+      /* `async` + `await` inside, so the query starts within withoutAudit:
+         a Prisma promise is lazy, and one merely returned from the callback
+         runs when it is awaited — outside, where an administrator's request
+         would log "created System error" for a failure the system saw. */
+      const row = await withoutAudit(async () =>
+        await prisma.systemError.upsert({
           where: { fingerprint },
           create: { fingerprint, kind: context.kind, name: facts.name.slice(0, 120), message: facts.message, place },
           update: { count: { increment: 1 }, lastSeenAt: now, message: facts.message },
@@ -91,7 +95,7 @@ export async function recordSystemError(error: unknown, context: { kind: SystemE
       count = row.count;
       const alertsThisHour = await prisma.systemError.count({ where: { lastAlertAt: { gte: new Date(now.getTime() - HOUR_MS) } } });
       alert = shouldAlert({ lastAlertAt: row.lastAlertAt, alertsThisHour, now });
-      if (alert) await withoutAudit(() => prisma.systemError.update({ where: { fingerprint }, data: { lastAlertAt: now } }));
+      if (alert) await withoutAudit(async () => await prisma.systemError.update({ where: { fingerprint }, data: { lastAlertAt: now } }));
     } catch {
       // The database is unreachable — possibly the very failure reported.
       alert = memoryAllows(fingerprint, now.getTime());
@@ -138,6 +142,7 @@ export function recentSystemErrors(limit = 20): Promise<SystemErrorRow[]> {
   });
 }
 
+/** Audited on purpose: who emptied the error log is worth knowing. */
 export async function clearSystemErrors(): Promise<number> {
-  return (await withoutAudit(() => prisma.systemError.deleteMany({}))).count;
+  return (await prisma.systemError.deleteMany({})).count;
 }
