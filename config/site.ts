@@ -44,17 +44,24 @@ export const siteConfig = {
   defaultLocale: (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as "en" | "th" | "zh" | "ru") ?? "en",
   locales: ["en", "th", "zh", "ru"] as const,
 
+  /*
+    Fallbacks only: the live values are edited in the back office and read
+    from the database. These are what a render shows when the database
+    cannot answer, so they are kept equal to the live site — last synced
+    from andamanassetsolution.com on 14 Nov 2026. The previous set (an old
+    phone number and address) reached visitors that way.
+  */
   contact: {
-    phone: "+66-91-038-9178",
-    phoneDisplay: "+66-91-038-9178",
-    whatsapp: "+66910389178",
+    phone: "+66953089559",
+    phoneDisplay: "+66 95 308 9559",
+    whatsapp: "+66953089559",
     email: "info@andamanassetsolution.com",
     salesEmail: "sales@andamanassetsolution.com",
     address: {
-      en: "141/4 Bandon-Cherngtalay Rd Choeng Thale, Thalang District Phuket 83110",
-      th: "141/4 ถนน บ้านดอน-เชิงทะเล Bang Tao Beach, ตำบลเชิงทะเล อำเภอถลาง ภูเก็ต 83110",
-      zh: "泰国普吉府他朗县冲塔莱区 Bandon-Cherngtalay 路 141/4 号，邮编 83110",
-      ru: "141/4 Bandon-Cherngtalay Rd, Чернгтале, район Таланг, Пхукет 83110, Таиланд",
+      en: "141/4 Soi Pa Sak 1, Ban Don-Cherngtalay Road, Choeng Thale, Thalang, Phuket 83110, Thailand",
+      th: "141/4 ซอยป่าสัก 1 ถนนบ้านดอน-เชิงทะเล ตำบลเชิงทะเล อำเภอถลาง ภูเก็ต 83110",
+      zh: "泰国普吉府他朗县冲塔莱镇班敦—冲塔莱路巴萨1巷141/4号，邮编 83110",
+      ru: "141/4 Сой Пасак 1, дорога Бан Дон — Чернгталай, Чернгталай, район Таланг, Пхукет 83110, Таиланд",
     },
     /**
      * The opening hours a visitor reads, in four languages.
@@ -68,14 +75,14 @@ export const siteConfig = {
      * would be a worse trade than the duplication.
      */
     officeHours: {
-      en: "Daily 09:00–18:00 (GMT+7)",
-      th: "ทุกวัน 09:00–18:00 น.",
-      zh: "每日 09:00–18:00（GMT+7）",
-      ru: "Ежедневно 09:00–18:00 (GMT+7)",
+      en: "Daily 08:00–18:00 (GMT+7)",
+      th: "ทุกวัน 08:00–18:00 น.",
+      zh: "每日 08:00–18:00（GMT+7）",
+      ru: "Ежедневно 08:00–18:00 (GMT+7)",
     },
     /** Fallback only: /contact reads the window out of the hours typed in
      *  Settings › Contact (lib/map-places.ts openingWindowFrom). */
-    openingWindow: { open: "09:00", close: "18:00", timeZone: "Asia/Bangkok" },
+    openingWindow: { open: "08:00", close: "18:00", timeZone: "Asia/Bangkok" },
 
     /**
      * The sales office pin, from the share link below.
@@ -91,7 +98,7 @@ export const siteConfig = {
     longitude: 98.3101671,
     /* The place itself. Was ?q=Cherngtalay+Phuket, which pointed at the
        sub-district rather than at us. */
-    mapUrl: "https://maps.app.goo.gl/QovJtwCdaqWeSTk49",
+    mapUrl: "https://maps.app.goo.gl/p6A4ukHZ6hN86kcE7",
   },
 
   /**
