@@ -445,7 +445,7 @@ export default function MapCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     tabIndex={route ? undefined : -1}
-                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-gold px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink transition-colors hover:bg-accent-700 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
+                    className="order-4 inline-flex min-h-[44px] flex-[1_1_100%] items-center justify-center gap-1.5 rounded-xs bg-gold-100 px-3.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink ring-[0.75px] ring-gold/45 transition-colors hover:bg-gold-300 sm:order-none sm:min-h-[34px] sm:flex-none sm:rounded-full sm:text-[10px]"
                   >
                     {t("openRoute")}
                     <span aria-hidden>↗</span>
@@ -521,7 +521,7 @@ export default function MapCard({
               onClick={locate}
               className="flex w-full cursor-pointer items-center gap-2.5 border border-ink/16 px-3 py-2.5 text-left transition-colors hover:border-gold hover:bg-ink/5 sm:gap-3 sm:px-4 sm:py-3.5"
             >
-              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-gold text-ink sm:h-[38px] sm:w-[38px]">
+              <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-gold-100 text-ink ring-[0.75px] ring-gold/45 sm:h-[38px] sm:w-[38px]">
                 <Navigation size={14} aria-hidden />
               </span>
               <span className="min-w-0">
