@@ -386,7 +386,8 @@ export type NavGroup = {
 
 export const ADMIN_NAV: readonly NavGroup[] = [
   {
-    /* How things stand: today's work and how the site is doing. */
+    /* How things stand: today's work, and how the site is doing — its
+       traffic, its search performance and the monthly report. */
     key: "overview",
     labelKey: "overview",
     items: [
@@ -405,6 +406,17 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         roles: ROLE_SETS.ADMIN_UP,
       },
       {
+        /* Beside the traffic numbers and not under website content: it is
+           read by whoever watches how the site performs — rankings, speed,
+           indexing — not by whoever writes the news. */
+        key: "seo",
+        href: "/seo",
+        icon: Search,
+        roles: ROLE_SETS.ADMIN_UP,
+        alias: ["/settings/seo"],
+        tabs: NAV_TAB_GROUPS.seo,
+      },
+      {
         /* The monthly report. Here and not in `system`, although the
            blueprint filed it under Administration: it answers "how is the
            site doing", beside the traffic numbers it summarises, while
@@ -418,8 +430,10 @@ export const ADMIN_NAV: readonly NavGroup[] = [
   },
 
   {
-    /* Customers and what they are buying: the pipeline, the co-agents who
-       bring leads in, the team, and the projects and units being sold. */
+    /* Customers and what they are buying, in the order they are used: the
+       pipeline and the projects and units being sold are daily work and
+       come first; the co-agents and the team are people records, set up
+       once and opened now and then. */
     key: "sales",
     labelKey: "sales",
     items: [
@@ -439,14 +453,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.leads,
         tabsBase: "",
       },
-      /* Co-agents: the agent list and the per-sales registration links.
-         CRM roles, like the leads they bring in. */
-      {
-        key: "coAgents",
-        href: "/agents",
-        icon: Handshake,
-        roles: ROLE_SETS.CRM,
-      },
       {
         // Was minRole: SALES, which EDITOR cleared on the ladder and then
         // failed at the page's requireCapability("viewAllLeads") — P2.
@@ -456,14 +462,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         roles: ROLE_SETS.CRM,
         capability: "viewAllLeads",
         mobileOnly: true,
-      },
-      {
-        // A rep must be able to see the roster of the team they are on;
-        // editing it stays with content people. Fixed in Phase 1 (P5).
-        key: "salesTeam",
-        href: "/sales-team",
-        icon: Contact,
-        roles: ROLE_SETS.CONTENT_AND_CRM,
       },
       {
         /* One row for everything about a property. "Progress" and
@@ -481,12 +479,28 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         tabs: NAV_TAB_GROUPS.projects,
         tabsBase: "",
       },
+      /* Co-agents: the agent list and the per-sales registration links.
+         CRM roles, like the leads they bring in. */
+      {
+        key: "coAgents",
+        href: "/agents",
+        icon: Handshake,
+        roles: ROLE_SETS.CRM,
+      },
+      {
+        // A rep must be able to see the roster of the team they are on;
+        // editing it stays with content people. Fixed in Phase 1 (P5).
+        key: "salesTeam",
+        href: "/sales-team",
+        icon: Contact,
+        roles: ROLE_SETS.CONTENT_AND_CRM,
+      },
     ],
   },
 
   {
     /* The public website: the review queue before anything goes live,
-       its pages, news, events and media, and SEO. */
+       its pages, news, events and media. */
     key: "content",
     labelKey: "content",
     items: [
@@ -549,14 +563,6 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         href: "/media",
         icon: LibraryBig,
         roles: ROLE_SETS.CONTENT,
-      },
-      {
-        key: "seo",
-        href: "/seo",
-        icon: Search,
-        roles: ROLE_SETS.ADMIN_UP,
-        alias: ["/settings/seo"],
-        tabs: NAV_TAB_GROUPS.seo,
       },
     ],
   },
