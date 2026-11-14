@@ -21,7 +21,7 @@ import { redirectIfMoved } from "@/lib/redirects";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FileDown } from "lucide-react";
 import EBrochureViewer from "@/components/EBrochureViewer";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import { brochureDocument } from "@/lib/structured-media";
@@ -58,16 +58,18 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: brochure.title,
     description: brochure.description ?? undefined,
     alternates: localizedAlternates(locale, `/e-brochure/${brochure.slug}`),
-    openGraph: {
+    // openGraphFor adds og:url, og:site_name and og:locale — a page that
+    // sets openGraph replaces the layout's whole object, so they are not
+    // inherited.
+    openGraph: openGraphFor(locale, `/e-brochure/${brochure.slug}`, {
       title: brochure.title,
       description: brochure.description ?? undefined,
       type: "article",
-      url: `${siteConfig.url}/${locale}/e-brochure/${brochure.slug}`,
       // No `images` here: opengraph-image.tsx in this same folder
       // generates the card (title, cover photo) and, per Next's
       // file-convention precedence, replaces whatever this field would
       // have set anyway.
-    },
+    }),
   };
 }
 

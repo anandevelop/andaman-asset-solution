@@ -37,7 +37,7 @@ import { truncate } from "@/lib/markdown-text";
 import { buildArticleJsonLd } from "@/lib/article-schema";
 import { intlLocale } from "@/lib/format";
 import { getSiteSettings } from "@/lib/settings";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import ArticleBody from "@/components/ArticleBody";
 import { robotsMetadata } from "@/lib/indexing";
@@ -82,11 +82,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // Per-locale admin toggle (NewsForm's SEO section) — see the
     // schema.prisma comment on NewsArticleTranslation.noIndex.
     robots: robotsMetadata({ index: !article.noIndex }),
-    openGraph: {
+    // openGraphFor adds og:url, og:site_name and og:locale — a page that
+    // sets openGraph replaces the layout's whole object, so they are not
+    // inherited.
+    openGraph: openGraphFor(locale, `/news/${article.slug}`, {
       title: article.metaTitle,
       description,
       type: "article",
-      url: `${siteConfig.url}/${locale}/news/${article.slug}`,
       publishedTime: article.publishedAt?.toISOString(),
       modifiedTime: article.updatedAt.toISOString(),
       authors: article.authorName ? [article.authorName] : undefined,
@@ -95,7 +97,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       // generates the card (category, headline, cover photo) and, per
       // Next's file-convention precedence, replaces whatever this field
       // would have set anyway.
-    },
+    }),
   };
 }
 

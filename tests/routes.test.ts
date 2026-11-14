@@ -512,15 +512,17 @@ describe("public pages prerender nothing at build", () => {
         every page beneath it: a list prerenders all of them, and [] does to
         the searchParams pages what is described above.
 
-    privacy-policy and terms read no data, so prerendering them is the
-    point, and they are exempt.
+    No page is exempt. privacy-policy and terms were — "they read no
+    data" — and the header and footer around them do: prerendered at build
+    they carried config/site.ts's old phone number and address, and every
+    deploy served that to the first visitor (found 14 Nov 2026).
 
     The checks read source, as the neighbouring blocks do: nothing else sees
     this, because every one of these states builds and renders green
     against a database that is reachable.
   */
   const LOCALE_DIR = join(process.cwd(), "app", "[locale]");
-  const STATIC_PAGES = ["privacy-policy", "terms"];
+  const STATIC_PAGES: string[] = [];
 
   /** Source with comments removed, so prose that mentions
    *  generateStaticParams or searchParams is not read as code.
@@ -595,7 +597,7 @@ describe("public pages prerender nothing at build", () => {
     // (home, about, achievements, contact, progress, and the events and
     // e-brochure lists plus the four [slug] pages), and /projects and
     // /news are the two that read searchParams.
-    expect(cacheablePages.length).toBeGreaterThanOrEqual(10);
+    expect(cacheablePages.length).toBeGreaterThanOrEqual(12);
     expect(requestDataPages.length).toBeGreaterThanOrEqual(2);
 
     // A typo in the exemption list would exempt nothing and quietly start
@@ -631,6 +633,19 @@ describe("public pages prerender nothing at build", () => {
       expect(definesStaticParams(read(join(process.cwd(), path)))).toBe(false);
     },
   );
+
+  it.each(cacheablePages.map((path) => [relative(path)]))("%s sets a revalidate window", (path) => {
+    // Without one the first render is kept until somebody saves something
+    // in the back office.
+    expect(code(read(join(process.cwd(), path)))).toMatch(/export const revalidate = \d+;/);
+  });
+
+  it.each(
+    pages.filter((path) => path.includes("[slug]")).map((path) => [relative(path)]),
+  )("%s builds openGraph with openGraphFor, so og:site_name and og:locale are present", (path) => {
+    const source = code(read(join(process.cwd(), path)));
+    expect(source).toMatch(/openGraph: openGraphFor\(locale,/);
+  });
 
   it("keeps generateStaticParams out of the root layout", () => {
     expect(definesStaticParams(read(join(LOCALE_DIR, "layout.tsx")))).toBe(false);

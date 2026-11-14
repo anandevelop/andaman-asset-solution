@@ -21,7 +21,7 @@ import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
 import EventRsvpForm from "@/components/EventRsvpForm";
-import { localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
 import { getEventBySlug } from "@/lib/events";
@@ -64,16 +64,18 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // Per-locale admin toggle (EventForm's SEO section) — see the
     // schema.prisma comment on EventTranslation.noIndex.
     robots: robotsMetadata({ index: !event.noIndex }),
-    openGraph: {
+    // openGraphFor adds og:url, og:site_name and og:locale — a page that
+    // sets openGraph replaces the layout's whole object, so they are not
+    // inherited.
+    openGraph: openGraphFor(locale, `/events/${event.slug}`, {
       title: event.metaTitle,
       description,
       type: "website",
-      url: `${siteConfig.url}/${locale}/events/${event.slug}`,
       // No `images` here: opengraph-image.tsx in this same folder
       // generates the card (date, event name, cover photo) and, per
       // Next's file-convention precedence, replaces whatever this field
       // would have set anyway.
-    },
+    }),
   };
 }
 

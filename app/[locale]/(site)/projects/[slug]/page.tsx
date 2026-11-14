@@ -25,7 +25,7 @@ import type { ElevatorType } from "@/components/unit-types/types";
 import { getFaqs } from "@/lib/faqs";
 import { getAwards } from "@/lib/awards";
 import { getSiteSettings } from "@/lib/settings";
-import { absoluteAssetUrl, localizedAlternates, breadcrumbList, trailFor } from "@/lib/seo";
+import { absoluteAssetUrl, localizedAlternates, breadcrumbList, trailFor, openGraphFor } from "@/lib/seo";
 import Breadcrumb from "@/components/Breadcrumb";
 import { siteConfig } from "@/config/site";
 import {
@@ -104,16 +104,18 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     // Per-locale admin toggle (ProjectForm's SEO section) — see the
     // schema.prisma comment on ProjectTranslation.noIndex.
     robots: robotsMetadata({ index: !project.noIndex }),
-    openGraph: {
+    // openGraphFor adds og:url, og:site_name and og:locale — a page that
+    // sets openGraph replaces the layout's whole object, so they are not
+    // inherited.
+    openGraph: openGraphFor(locale, `/projects/${project.slug}`, {
       title,
       description,
       type: "article",
-      url: `${siteConfig.url}/${locale}/projects/${project.slug}`,
       // No `images` here: opengraph-image.tsx in this same folder
       // generates the card (name, location, hero photo, or ogImageUrl
       // passed through untouched) and, per Next's file-convention
       // precedence, replaces whatever this field would have set anyway.
-    },
+    }),
   };
 }
 

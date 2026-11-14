@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { locales } from "@/i18n";
 import { breadcrumbList, localizedAlternates, trailFor } from "@/lib/seo";
 import { pageOpenGraph } from "@/lib/page-open-graph";
 import JsonLd from "@/components/JsonLd";
@@ -17,8 +16,21 @@ import { getSiteSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ locale: string }> };
 
+/*
+  Cached for an hour and rendered on the first request, never at build.
+
+  The policy text is in the repository, but the header and footer around it
+  are not: phone, address and tagline come from the database. The Docker
+  build has none, so a prerendered copy carried config/site.ts's defaults —
+  an old phone number and address — and every deploy shipped it again, to
+  be served to the first visitor before the background refresh replaced it.
+  `[]` registers the route for ISR without prerendering any path; see the
+  note in app/[locale]/layout.tsx.
+*/
+export const revalidate = 3600;
+
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return [];
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
