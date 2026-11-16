@@ -96,6 +96,16 @@ export const VIEWER = {
   totpSecret: ADMIN.totpSecret,
 } as const;
 
+/**
+ * A bot account: the BOT role, excused from the second factor — the pair a
+ * daily unattended sign-in uses (lib/permissions.ts, lib/two-factor-policy.ts).
+ */
+export const BOT = {
+  email: "e2e-bot@andaman.test",
+  password: "e2e-only-passphrase-3456",
+  name: "E2E Bot",
+} as const;
+
 /*
   Four projects, chosen so the filter bar has something to do.
 

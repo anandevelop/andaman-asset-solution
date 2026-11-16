@@ -116,6 +116,13 @@ describe("the menu each role sees", () => {
       drawerExtra: [],
       tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects"],
     },
+    // An administrator's rail without customers (leads), co-agents or
+    // accounts — and so without the lead tabs and the mobile sales view.
+    BOT: {
+      rail: ["analytics", "dashboard", "events", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
+      drawerExtra: [],
+      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
+    },
   };
 
   const keysOf = (role: Role, surface: "rail" | "drawer" | "all") =>
@@ -399,6 +406,22 @@ describe("the sidebar each role gets", () => {
       "news",
       "events",
       "media",
+    ],
+    // ADMIN's rows minus leads and coAgents (users and activity were
+    // never ADMIN's).
+    BOT: [
+      "dashboard",
+      "analytics",
+      "seo",
+      "reports",
+      "projects",
+      "salesTeam",
+      "publishing",
+      "pages",
+      "news",
+      "events",
+      "media",
+      "settings",
     ],
   };
 

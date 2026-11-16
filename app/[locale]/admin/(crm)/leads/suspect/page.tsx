@@ -20,6 +20,8 @@ import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import PageTabs from "@/components/admin/PageTabs";
 import SuspectLeadActions from "@/components/admin/SuspectLeadActions";
 import { zoneEyebrow } from "@/lib/admin/nav";
+import { can } from "@/lib/permissions";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,8 @@ type Props = { params: Promise<{ locale: string }> };
 export default async function SuspectLeadsPage(props: Props) {
   const { locale } = await props.params;
   const session = await requireAdmin(locale, Role.ADMIN);
+  // Rank alone would admit a BOT account (ranked with ADMIN).
+  if (!can(session.role, "viewAllLeads")) redirect(`/${locale}/admin?denied=1`);
 
   const [t, tAdmin, rows] = await Promise.all([
     getTranslations({ locale, namespace: "admin.suspectLeads" }),

@@ -27,7 +27,7 @@ const prismaMock = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-const { LEAD_CANDIDATE_WHERE, LEAD_ROLE_MINIMUM, decideAssignee, roleCanHoldLeads } =
+const { LEAD_CANDIDATE_WHERE, LEAD_ROLE_MINIMUM, LEAD_ROLES, decideAssignee, roleCanHoldLeads } =
   await import("@/lib/lead-routing");
 
 beforeEach(() => {
@@ -41,8 +41,14 @@ beforeEach(() => {
 describe("rolesAtLeast", () => {
   it("returns every role at or above the minimum", () => {
     expect([...rolesAtLeast(Role.SALES)].sort()).toEqual(
-      [Role.SALES, Role.EDITOR, Role.ADMIN, Role.SUPER_ADMIN].sort(),
+      [Role.SALES, Role.EDITOR, Role.ADMIN, Role.BOT, Role.SUPER_ADMIN].sort(),
     );
+  });
+
+  it("never hands a lead to a bot account, although it is ranked with ADMIN", () => {
+    expect(LEAD_ROLES).not.toContain(Role.BOT);
+    expect(roleCanHoldLeads(Role.BOT)).toBe(false);
+    expect([...LEAD_ROLES].sort()).toEqual([Role.SALES, Role.EDITOR, Role.ADMIN, Role.SUPER_ADMIN].sort());
   });
 
   it("excludes VIEWER from the roles that may hold a lead", () => {
@@ -53,7 +59,7 @@ describe("rolesAtLeast", () => {
     // SUPER_ADMIN is above everything, so asking for the top of the ladder
     // returns exactly one role. A hardcoded array would not narrow.
     expect(rolesAtLeast(Role.SUPER_ADMIN)).toEqual([Role.SUPER_ADMIN]);
-    expect(rolesAtLeast(Role.VIEWER)).toHaveLength(5);
+    expect(rolesAtLeast(Role.VIEWER)).toHaveLength(6);
   });
 });
 

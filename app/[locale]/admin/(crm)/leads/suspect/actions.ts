@@ -12,6 +12,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { deleteSuspect, markSuspectSpam, releaseSuspect } from "@/lib/leads/suspect";
+import { can } from "@/lib/permissions";
 
 export type SuspectActionResult = { ok: true; leadId?: string } | { ok: false; error: "FORBIDDEN" | "NOT_FOUND" | "FAILED" };
 
@@ -26,6 +27,9 @@ async function act(
   let actor;
   try {
     actor = await requireAdminAction(Role.ADMIN);
+    // Rank alone would admit a BOT account (ranked with ADMIN): leads
+    // are refused by capability, as on every other lead path.
+    if (!can(actor.role, "viewAllLeads")) throw new Error("UNAUTHORISED");
   } catch {
     return { ok: false, error: "FORBIDDEN" };
   }

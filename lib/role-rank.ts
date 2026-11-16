@@ -44,6 +44,13 @@ const ROLE_RANK: Record<Role, number> = {
   SALES: 1,
   EDITOR: 2,
   ADMIN: 3,
+  /*
+    Beside ADMIN, not below it: a bot account passes the gates an
+    administrator passes. What it must NOT reach — customers, co-agents,
+    user accounts — is refused by capability (lib/permissions.ts), never
+    by this number, because rank cannot say "everything except".
+  */
+  BOT: 3,
   SUPER_ADMIN: 4,
 };
 

@@ -56,9 +56,17 @@ export const LEAD_ROLE_MINIMUM = Role.SALES;
  * User.salesPersonId from the admin at all, so no VIEWER ever held one, and
  * the gap stayed theoretical until the users page grew the control.
  */
+/**
+ * The roles that may be handed a lead: the ladder from LEAD_ROLE_MINIMUM
+ * up, without BOT. A bot account is ranked with ADMIN so that it passes an
+ * administrator's gates, but it cannot open a lead (lib/permissions.ts) —
+ * routing one to it would park a customer where nobody will ever look.
+ */
+export const LEAD_ROLES: readonly Role[] = rolesAtLeast(LEAD_ROLE_MINIMUM).filter((role) => role !== Role.BOT);
+
 export const LEAD_CANDIDATE_WHERE = {
   isActive: true,
-  role: { in: rolesAtLeast(LEAD_ROLE_MINIMUM) },
+  role: { in: [...LEAD_ROLES] },
   salesPersonId: { not: null },
   salesPerson: { isActive: true },
 } satisfies Prisma.UserWhereInput;
@@ -72,7 +80,7 @@ export const LEAD_CANDIDATE_WHERE = {
  * this module is server-only. Both read ROLE_RANK, so they agree.
  */
 export function roleCanHoldLeads(role: Role): boolean {
-  return rolesAtLeast(LEAD_ROLE_MINIMUM).includes(role);
+  return LEAD_ROLES.includes(role);
 }
 
 export type LeadRoutingRules = {

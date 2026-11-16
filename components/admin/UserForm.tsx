@@ -105,7 +105,8 @@ export default function UserForm({
     rather than leaving it claimed by an account that can no longer act on
     it — an absent field parses to null, which is the unlink.
   */
-  const canHoldLeads = hasRole(role as Role, "SALES");
+  // …and BOT the other: ranked with ADMIN, but it never sees a lead.
+  const canHoldLeads = hasRole(role as Role, "SALES") && role !== "BOT";
 
   const err = (name: string) => {
     const code = state.fields?.[name];

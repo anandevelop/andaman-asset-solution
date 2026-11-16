@@ -518,7 +518,7 @@ export const FAQ_CATEGORIES = [
 
 // ── Users ───────────────────────────────────────────────────────────────
 
-export const ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "SALES", "VIEWER"] as const;
+export const ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "SALES", "VIEWER", "BOT"] as const;
 
 /**
  * Minimum 12 characters, no composition rules. Length beats forced symbols:

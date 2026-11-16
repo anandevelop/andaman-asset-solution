@@ -38,6 +38,11 @@ enum Role {
   /// Read-only across every admin page it can reach at all. Never passes
   /// requireAdminAction for any minimum — see hasRole/ROLE_RANK.
   VIEWER
+  /// An account a bot signs in with. Reaches what ADMIN reaches — content,
+  /// projects, SEO, analytics, reports, settings — except customers (leads,
+  /// appointments, event attendees), co-agents and user accounts; see the
+  /// BOT column of lib/permissions.ts. Ranked with ADMIN in lib/role-rank.ts.
+  BOT
 }
 
 enum PropertyType {

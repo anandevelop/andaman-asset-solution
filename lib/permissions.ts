@@ -78,6 +78,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     */
     SALES: false,
     VIEWER: true,
+    BOT: true,
   },
   editContent: {
     SUPER_ADMIN: true,
@@ -85,6 +86,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: true,
     SALES: false,
     VIEWER: false,
+    BOT: true,
   },
   publishLive: {
     SUPER_ADMIN: true,
@@ -94,6 +96,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: "submitOnly",
     SALES: false,
     VIEWER: false,
+    BOT: true,
   },
   manageProjects: {
     SUPER_ADMIN: true,
@@ -103,6 +106,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     // (units/actions.ts's updateUnitStatusMobile), and nothing else.
     SALES: "unitStatusOnly",
     VIEWER: false,
+    BOT: true,
   },
   viewAllLeads: {
     SUPER_ADMIN: true,
@@ -112,6 +116,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: "ownScope",
     VIEWER: false,
+    BOT: false,
   },
   viewCustomerContact: {
     SUPER_ADMIN: true,
@@ -119,6 +124,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: "ownLeads",
     VIEWER: false,
+    BOT: false,
   },
   exportCustomerData: {
     SUPER_ADMIN: true,
@@ -128,6 +134,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: false,
     VIEWER: false,
+    BOT: false,
   },
   viewAuditLog: {
     SUPER_ADMIN: true,
@@ -139,6 +146,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: false,
     VIEWER: false,
+    BOT: false,
   },
   manageUsers: {
     SUPER_ADMIN: true,
@@ -146,6 +154,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: false,
     VIEWER: false,
+    BOT: false,
   },
 };
 
@@ -156,6 +165,7 @@ export const ROLE_ORDER: Role[] = [
   Role.EDITOR,
   Role.SALES,
   Role.VIEWER,
+  Role.BOT,
 ];
 
 /**

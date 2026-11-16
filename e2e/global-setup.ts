@@ -32,6 +32,7 @@ import {
   MEDIA,
   PROJECTS,
   VIEWER,
+  BOT,
 } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
@@ -398,6 +399,18 @@ async function seed(prisma: PrismaClient) {
       isActive: true,
       totpSecret: encryptSecret(VIEWER.totpSecret),
       totpEnabledAt: new Date(),
+    },
+  });
+
+  // The bot account: no authenticator at all, excused by the switch.
+  await prisma.user.create({
+    data: {
+      name: BOT.name,
+      email: BOT.email,
+      passwordHash: await bcrypt.hash(BOT.password, BCRYPT_ROUNDS),
+      role: "BOT",
+      isActive: true,
+      twoFactorExempt: true,
     },
   });
 }

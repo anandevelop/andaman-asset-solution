@@ -23,6 +23,7 @@ import { requireAdminAction } from "@/lib/admin/guard";
 import { rateLimit } from "@/lib/rate-limit";
 import { toCsv, csvFilename } from "@/lib/csv";
 import { countryByIso2 } from "@/lib/countries";
+import { can } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +69,9 @@ export async function GET(request: Request) {
   let actor;
   try {
     actor = await requireAdminAction(Role.ADMIN);
+    // Rank alone would admit a BOT account (ranked with ADMIN): leads
+    // are refused by capability, as on every other lead path.
+    if (!can(actor.role, "exportCustomerData")) throw new Error("UNAUTHORISED");
   } catch {
     return NextResponse.json({ ok: false, error: "UNAUTHORISED" }, { status: 403 });
   }

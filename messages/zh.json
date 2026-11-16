@@ -655,7 +655,8 @@
       "ADMIN": "管理员",
       "EDITOR": "编辑",
       "SALES": "销售",
-      "VIEWER": "只读"
+      "VIEWER": "只读",
+      "BOT": "机器人"
     },
     "nav": {
       "dashboard": "今日工作",
@@ -5147,7 +5148,8 @@
       "ADMIN": "管理员",
       "EDITOR": "编辑",
       "SALES": "销售",
-      "VIEWER": "只读"
+      "VIEWER": "只读",
+      "BOT": "机器人"
     },
     "cases": {
       "legend": "按情况填写的文字",

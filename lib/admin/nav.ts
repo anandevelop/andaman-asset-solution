@@ -86,6 +86,7 @@ export const ROLE_SETS = {
     Role.EDITOR,
     Role.SALES,
     Role.VIEWER,
+    Role.BOT,
   ],
 
   /**
@@ -99,7 +100,7 @@ export const ROLE_SETS = {
    * VIEWER's own page guard still only ever reads; see the `canWrite`
    * fieldset on every page in both zones.
    */
-  CONTENT: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.VIEWER],
+  CONTENT: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.VIEWER, Role.BOT],
 
   /** CRM work. EDITOR is absent on purpose — the enquiry list is not
    *  theirs to read (see viewAllLeads in lib/permissions.ts). */
@@ -114,9 +115,11 @@ export const ROLE_SETS = {
    *  VIEWER row — kept here rather than silently dropped, since the next
    *  reader would otherwise re-derive the same "should VIEWER be here"
    *  question from scratch. */
-  CONTENT_AND_CRM: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.SALES],
+  CONTENT_AND_CRM: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.SALES, Role.BOT],
 
-  ADMIN_UP: [Role.SUPER_ADMIN, Role.ADMIN],
+  /* BOT is an administrator without customers, co-agents or accounts:
+     in every set ADMIN is in except CRM and OWNER_ONLY. */
+  ADMIN_UP: [Role.SUPER_ADMIN, Role.ADMIN, Role.BOT],
   OWNER_ONLY: [Role.SUPER_ADMIN],
 
   /** Not CONTENT: the translation-status tab calls requireAdmin(locale,
@@ -128,7 +131,7 @@ export const ROLE_SETS = {
    *  ADMIN floor it had to be exempted from. The screen moved into the
    *  publishing hub, where EDITOR is unremarkable, and the exception went
    *  with it — see (growth)/layout.tsx. */
-  EDITOR_UP: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR],
+  EDITOR_UP: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.BOT],
 } as const satisfies Record<string, readonly Role[]>;
 
 /* ── Shapes ─────────────────────────────────────────────────────────── */
@@ -311,7 +314,8 @@ export const NAV_TAB_GROUPS = {
          about the whole pipeline, not one rep's. */
       key: "suspect",
       segment: "/leads/suspect",
-      roles: ROLE_SETS.ADMIN_UP,
+      // Not ADMIN_UP: that set includes BOT, which never sees a lead.
+      roles: [Role.SUPER_ADMIN, Role.ADMIN],
       capability: "viewAllLeads",
     },
   ],

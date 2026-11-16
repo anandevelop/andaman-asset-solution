@@ -41,6 +41,7 @@ import {
   leadNoteSchema,
 } from "@/lib/validations";
 import { revalidatePublicSite } from "@/lib/revalidate-site";
+import { can } from "@/lib/permissions";
 
 /**
  * Writes the system-generated timeline entry a status/assignment/follow-up/
@@ -726,6 +727,9 @@ export async function deleteLeads(locale: string, input: unknown): Promise<Delet
   let actor;
   try {
     actor = await requireAdminAction(Role.ADMIN);
+    // Rank alone would admit a BOT account (ranked with ADMIN): leads
+    // are refused by capability, as on every other lead path.
+    if (!can(actor.role, "viewAllLeads")) throw new Error("UNAUTHORISED");
   } catch {
     return { ok: false, error: "FORBIDDEN" };
   }
