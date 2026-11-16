@@ -20,7 +20,7 @@ import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, resetRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { requiresTwoFactor } from "@/lib/totp";
+import { isExemptFromTwoFactor, owesTwoFactorSetup } from "@/lib/two-factor-policy";
 import { consumeSecondFactor } from "@/lib/two-factor";
 import {
   AUTH_LOGIN,
@@ -153,6 +153,7 @@ export const authOptions: NextAuthOptions = {
             isActive: true,
             passwordHash: true,
             totpEnabledAt: true,
+            twoFactorExempt: true,
           },
         });
 
@@ -211,7 +212,13 @@ export const authOptions: NextAuthOptions = {
           an account that has no secret yet still has to be able to sign in
           once to create one.
         */
-        if (user.totpEnabledAt) {
+        /*
+          An account a super admin has excused (User.twoFactorExempt — a bot
+          that signs in unattended) is not asked for a code, even if one is
+          enrolled: the secret stays stored, so switching the exemption off
+          brings the prompt straight back.
+        */
+        if (user.totpEnabledAt && !isExemptFromTwoFactor(user)) {
           const code = credentials?.totp?.trim();
 
           if (!code) throw new Error(TOTP_REQUIRED);
@@ -257,6 +264,7 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           role: user.role,
           twoFactorEnabled: Boolean(user.totpEnabledAt),
+          twoFactorExempt: isExemptFromTwoFactor(user),
         };
       },
     }),
@@ -266,10 +274,11 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       // Sign-in: seed the token from the authorize() result.
       if (user) {
-        const seeded = user as { role: Role; twoFactorEnabled?: boolean };
+        const seeded = user as { role: Role; twoFactorEnabled?: boolean; twoFactorExempt?: boolean };
         token.id = user.id;
         token.role = seeded.role;
         token.twoFactorEnabled = Boolean(seeded.twoFactorEnabled);
+        token.twoFactorExempt = Boolean(seeded.twoFactorExempt);
         token.checkedAt = Date.now();
         // Stamped once, never refreshed: this is when *this* session began,
         // and it is what a later credential change is measured against.
@@ -286,8 +295,7 @@ export const authOptions: NextAuthOptions = {
         user back to a setup page they have already completed. The extra
         query only affects accounts in that short-lived state.
       */
-      const awaitingEnrolment =
-        requiresTwoFactor(token.role as Role) && !token.twoFactorEnabled;
+      const awaitingEnrolment = owesTwoFactorSetup(token);
 
       const stale =
         trigger === "update" ||
@@ -304,6 +312,7 @@ export const authOptions: NextAuthOptions = {
               role: true,
               isActive: true,
               totpEnabledAt: true,
+              twoFactorExempt: true,
               credentialsChangedAt: true,
             },
           })
@@ -356,6 +365,9 @@ export const authOptions: NextAuthOptions = {
           // one tab unlocks the admin in every other one within the refresh
           // window instead of requiring a sign-out.
           token.twoFactorEnabled = Boolean(fresh.totpEnabledAt);
+          // Likewise: taking the exemption away gates the account again
+          // within the refresh window, with no sign-out needed.
+          token.twoFactorExempt = isExemptFromTwoFactor(fresh);
         }
         token.checkedAt = Date.now();
       }
@@ -371,8 +383,7 @@ export const authOptions: NextAuthOptions = {
         // "Signed in, but not allowed to do anything until 2FA is set up."
         // Computed in one place so middleware, guards and the account page
         // cannot drift apart on what counts as pending.
-        session.user.twoFactorPending =
-          requiresTwoFactor(token.role as Role) && !token.twoFactorEnabled;
+        session.user.twoFactorPending = owesTwoFactorSetup(token);
       }
       return session;
     },

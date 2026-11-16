@@ -45,6 +45,7 @@ export default async function EditUserPage(props: Props) {
       isActive: true,
       salesPersonId: true,
       totpEnabledAt: true,
+      twoFactorExempt: true,
       _count: { select: { articles: true, projectProgresses: true } },
     },
   });
@@ -116,6 +117,7 @@ export default async function EditUserPage(props: Props) {
             email: user.email,
             role: user.role,
             isActive: user.isActive,
+            twoFactorExempt: user.twoFactorExempt,
             salesPersonId: user.salesPersonId,
           }}
           salesPeople={salesPeople.map((person) => ({

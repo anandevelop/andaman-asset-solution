@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { hasRole } from "@/lib/role-rank";
+import { roleMayBeExempt } from "@/lib/two-factor-policy";
 import { ROLES } from "@/lib/validations";
 import SaveToast from "@/components/admin/SaveToast";
 import type { UserFormState } from "@/app/[locale]/admin/(system)/users/actions";
@@ -33,6 +34,8 @@ type Props = {
     email: string;
     role: string;
     isActive: boolean;
+    /** Excused from the second factor (edit only). */
+    twoFactorExempt?: boolean;
     /** The SalesPerson profile this account is, or null. */
     salesPersonId?: string | null;
   };
@@ -119,6 +122,8 @@ export default function UserForm({
         return { tone: "bad" as const, text: t("users.cannotDemoteSelf") };
       case "LAST_SUPER_ADMIN":
         return { tone: "bad" as const, text: t("users.lastSuperAdmin") };
+      case "CANNOT_EXEMPT":
+        return { tone: "bad" as const, text: t("users.cannotExempt") };
       case "SAVE_FAILED":
       case "NOT_FOUND":
         return { tone: "bad" as const, text: t("common.error") };
@@ -269,6 +274,24 @@ export default function UserForm({
 
       {locked && values.isActive && (
         <input type="hidden" name="isActive" value="on" />
+      )}
+
+      {/* ── No second factor, for an account a bot signs in with ───────
+          Edit only, never for a super admin and never for yourself; the
+          server refuses those too (updateUser). */}
+      {mode === "edit" && !isSelf && roleMayBeExempt(role) && (
+        <label className="flex items-start gap-3 rounded-xs border border-adm-warning/30 bg-adm-warning-bg px-3.5 py-3 text-sm text-adm-text">
+          <input
+            type="checkbox"
+            name="twoFactorExempt"
+            defaultChecked={values.twoFactorExempt ?? false}
+            className="mt-0.5 h-4 w-4 rounded-xs border-adm-line-strong text-adm-text focus:ring-adm-info/30"
+          />
+          <span>
+            {t("users.twoFactorExempt")}
+            <span className="mt-0.5 block text-xs text-adm-warning">{t("users.twoFactorExemptHint")}</span>
+          </span>
+        </label>
       )}
 
       <SubmitButton label={submitLabel} />

@@ -6,6 +6,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { isExemptFromTwoFactor } from "@/lib/two-factor-policy";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { AlertCircle, Pencil, Plus, ShieldCheck, UserPlus } from "lucide-react";
@@ -52,6 +53,7 @@ export default async function AdminUsersPage(props: Props) {
           isActive: true,
           createdAt: true,
           totpEnabledAt: true,
+          twoFactorExempt: true,
           scopedProjects: { select: { id: true, nameEn: true, nameTh: true } },
           salesPerson: { select: { id: true, nameEn: true, nameTh: true } },
         },
@@ -197,7 +199,12 @@ export default async function AdminUsersPage(props: Props) {
                   </td>
 
                   <td className="admin-td whitespace-nowrap text-xs">
-                    {user.totpEnabledAt ? (
+                    {isExemptFromTwoFactor(user) ? (
+                      <span className="flex items-center gap-1.5 text-adm-warning">
+                        <AlertCircle size={13} aria-hidden />
+                        {t("users.twoFactorExemptBadge")}
+                      </span>
+                    ) : user.totpEnabledAt ? (
                       <span className="flex items-center gap-1.5 text-adm-success">
                         <ShieldCheck size={13} aria-hidden />
                         {t("users.twoFactorOn")}

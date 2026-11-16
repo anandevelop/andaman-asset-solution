@@ -24,6 +24,7 @@ declare module "next-auth" {
   interface User {
     role: Role;
     twoFactorEnabled?: boolean;
+    twoFactorExempt?: boolean;
   }
 }
 
@@ -32,6 +33,8 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: Role;
     twoFactorEnabled?: boolean;
+    /** Excused from the second factor by a super admin (User.twoFactorExempt). */
+    twoFactorExempt?: boolean;
     /** Epoch ms of the last database re-validation of role/isActive. */
     checkedAt?: number;
     /**

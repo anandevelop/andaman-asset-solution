@@ -186,3 +186,26 @@ describe("recovery codes", () => {
     expect(await compareRecoveryCode(other, hash)).toBe(false);
   });
 });
+
+describe("the per-account exemption", () => {
+  it("excuses an account only when the switch is on and the role allows it", async () => {
+    const { isExemptFromTwoFactor, owesTwoFactorSetup, roleMayBeExempt } = await import("@/lib/two-factor-policy");
+
+    expect(isExemptFromTwoFactor({ role: "VIEWER", twoFactorExempt: true })).toBe(true);
+    expect(isExemptFromTwoFactor({ role: "ADMIN", twoFactorExempt: true })).toBe(true);
+    expect(isExemptFromTwoFactor({ role: "VIEWER", twoFactorExempt: false })).toBe(false);
+    expect(isExemptFromTwoFactor({ role: "VIEWER" })).toBe(false);
+
+    // A super admin is never excused, whatever the column says — so a
+    // promotion ends the exemption by itself.
+    expect(roleMayBeExempt("SUPER_ADMIN")).toBe(false);
+    expect(isExemptFromTwoFactor({ role: "SUPER_ADMIN", twoFactorExempt: true })).toBe(false);
+    // A missing role fails closed.
+    expect(isExemptFromTwoFactor({ role: undefined, twoFactorExempt: true })).toBe(false);
+
+    expect(owesTwoFactorSetup({ role: "VIEWER", twoFactorEnabled: false, twoFactorExempt: true })).toBe(false);
+    expect(owesTwoFactorSetup({ role: "VIEWER", twoFactorEnabled: false, twoFactorExempt: false })).toBe(true);
+    expect(owesTwoFactorSetup({ role: "VIEWER", twoFactorEnabled: true })).toBe(false);
+    expect(owesTwoFactorSetup({ role: "SUPER_ADMIN", twoFactorEnabled: false, twoFactorExempt: true })).toBe(true);
+  });
+});

@@ -1,7 +1,8 @@
 /**
  * lib/two-factor-policy.ts
  * ─────────────────────────────────────────────────────────────────────────
- * Who must use 2FA — and nothing else.
+ * Who must use 2FA — by role, and the one per-account exception a super
+ * admin can grant (twoFactorExempt, for a bot that signs in unattended).
  *
  * Its own module because middleware.ts runs on the edge runtime and answers
  * this question on every admin navigation. Importing it from lib/totp.ts
@@ -38,4 +39,43 @@ const EXEMPT_ROLES: readonly string[] = [];
  */
 export function roleRequiresTwoFactor(role: string | null | undefined): boolean {
   return !EXEMPT_ROLES.includes(role ?? "");
+}
+
+/**
+ * Roles that can never be excused, whatever the switch on the account says.
+ *
+ * A super admin creates accounts and hands out roles — and flips this very
+ * switch — so an exempt super admin would be a password-only way to exempt
+ * everybody else.
+ */
+const NEVER_EXEMPT_ROLES: readonly string[] = ["SUPER_ADMIN"];
+
+/** May this role be excused from the second factor at all? */
+export function roleMayBeExempt(role: string | null | undefined): boolean {
+  return Boolean(role) && !NEVER_EXEMPT_ROLES.includes(role as string);
+}
+
+/**
+ * Is this one account excused? The stored switch, checked against the role
+ * every time it is read — so promoting an exempt account to super admin
+ * ends the exemption even if the column was left set.
+ */
+export function isExemptFromTwoFactor(account: {
+  role?: string | null;
+  twoFactorExempt?: boolean | null;
+}): boolean {
+  return account.twoFactorExempt === true && roleMayBeExempt(account.role);
+}
+
+/**
+ * "Signed in, but owes 2FA setup": the role requires it, none is enrolled,
+ * and the account has not been excused. The one definition the session
+ * callback, the edge gate and the account page share.
+ */
+export function owesTwoFactorSetup(account: {
+  role?: string | null;
+  twoFactorEnabled?: boolean | null;
+  twoFactorExempt?: boolean | null;
+}): boolean {
+  return roleRequiresTwoFactor(account.role) && !account.twoFactorEnabled && !isExemptFromTwoFactor(account);
 }

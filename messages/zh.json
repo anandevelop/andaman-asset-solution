@@ -2191,7 +2191,11 @@
           "ownLeads": "仅本人负责的线索",
           "logged": "每次导出都会留痕"
         }
-      }
+      },
+      "twoFactorExempt": "此账号无需两步验证",
+      "twoFactorExemptHint": "用于机器人自动登录的账号。该账号仅凭密码即可登录：请只授予必要权限，并使用未在别处使用过的长密码。",
+      "twoFactorExemptBadge": "免两步验证",
+      "cannotExempt": "超级管理员或您自己的账号不能免除两步验证。"
     },
     "account": {
       "title": "您的账户",

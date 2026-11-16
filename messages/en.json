@@ -2191,7 +2191,11 @@
           "ownLeads": "Leads assigned to them",
           "logged": "Every export is logged"
         }
-      }
+      },
+      "twoFactorExempt": "No 2FA for this account",
+      "twoFactorExemptHint": "For an account a bot signs in with. It can then be entered with the password alone: give it only the access it needs, and a long password used nowhere else.",
+      "twoFactorExemptBadge": "2FA exempt",
+      "cannotExempt": "A super admin, or your own account, cannot be exempted from 2FA."
     },
     "account": {
       "title": "Your account",

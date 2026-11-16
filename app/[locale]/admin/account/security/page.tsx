@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { requiresTwoFactor } from "@/lib/totp";
+import { isExemptFromTwoFactor } from "@/lib/two-factor-policy";
 import { countUnusedRecoveryCodes, startEnrolment } from "@/lib/two-factor";
 import {
   AUTH_LOGIN,
@@ -66,11 +67,14 @@ export default async function SecurityPage(props: Props) {
 
   const user = await prisma.user.findUnique({
     where: { id: actor.id },
-    select: { totpEnabledAt: true },
+    select: { totpEnabledAt: true, twoFactorExempt: true },
   });
 
   const enabled = Boolean(user?.totpEnabledAt);
-  const mandatory = requiresTwoFactor(actor.role);
+  // Not mandatory for an account a super admin has excused.
+  const mandatory =
+    requiresTwoFactor(actor.role) &&
+    !isExemptFromTwoFactor({ role: actor.role, twoFactorExempt: user?.twoFactorExempt });
 
   const enrolment = enabled ? null : await startEnrolment(actor.id, actor.email);
   const qr = enrolment

@@ -30,6 +30,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { roleMayBeExempt } from "@/lib/two-factor-policy";
 import { redirect } from "next/navigation";
 import { Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -184,10 +185,20 @@ export async function updateUser(
     email: text(formData, "email"),
     role: text(formData, "role"),
     isActive: formData.get("isActive") === "on",
+    twoFactorExempt: formData.get("twoFactorExempt") === "on",
     salesPersonId: text(formData, "salesPersonId"),
   });
 
   if (!parsed.success) return { ok: false, fields: fieldErrors(parsed.error) };
+
+  /*
+    A super admin is never excused from the second factor, and nobody
+    excuses themselves: the switch is refused for both rather than quietly
+    dropped, so the screen cannot show a tick the server did not keep.
+  */
+  if (parsed.data.twoFactorExempt && (!roleMayBeExempt(parsed.data.role) || actor.id === id)) {
+    return { ok: false, message: "CANNOT_EXEMPT" };
+  }
 
   const target = await prisma.user.findUnique({
     where: { id },

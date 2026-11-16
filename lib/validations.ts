@@ -570,6 +570,8 @@ export const userUpdateSchema = z.object({
   email,
   role: z.enum(ROLES),
   isActive: z.coerce.boolean(),
+  /** "No second factor for this account" — see lib/two-factor-policy.ts. */
+  twoFactorExempt: z.coerce.boolean().default(false),
   salesPersonId,
 });
 

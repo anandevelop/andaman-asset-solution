@@ -25,7 +25,7 @@ import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server
 import createMiddleware from "next-intl/middleware";
 import { getToken } from "next-auth/jwt";
 import { locales, defaultLocale, adminLocales } from "./i18n";
-import { roleRequiresTwoFactor } from "./lib/two-factor-policy";
+import { owesTwoFactorSetup } from "./lib/two-factor-policy";
 import { identifyBot } from "./lib/seo/bots";
 import { recordCrawlHit } from "./lib/seo/crawl-log";
 import { stripLocale } from "./lib/public-paths";
@@ -170,8 +170,11 @@ async function route(request: NextRequest, event: NextFetchEvent): Promise<NextR
     if (
       adminMatch &&
       token &&
-      roleRequiresTwoFactor(token.role as string | undefined) &&
-      !token.twoFactorEnabled &&
+      owesTwoFactorSetup({
+        role: token.role as string | undefined,
+        twoFactorEnabled: token.twoFactorEnabled as boolean | undefined,
+        twoFactorExempt: token.twoFactorExempt as boolean | undefined,
+      }) &&
       !SECURITY_PATH.test(pathname)
     ) {
       return NextResponse.redirect(

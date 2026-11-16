@@ -136,14 +136,21 @@ model User {
   /// TOTP shared secret, AES-256-GCM encrypted at rest (see lib/totp.ts).
   /// Present but with totpEnabledAt null = enrolment started, never
   /// confirmed; such a secret is inert and gets overwritten on retry.
-  totpSecret    String?
+  totpSecret      String?
   /// Set the moment the first correct code is entered. This — not
   /// totpSecret — is what "2FA is on" means everywhere in the codebase.
-  totpEnabledAt DateTime?
+  totpEnabledAt   DateTime?
+  /// Excused from the second factor by a super admin — for an account a bot
+  /// signs in with unattended. Such an account is not asked for a code even
+  /// if it has one enrolled, and is not sent to set one up. Never true for
+  /// a SUPER_ADMIN (lib/two-factor-policy.ts); a password is then all that
+  /// stands in front of it, which is why it is one switch per account and
+  /// every change to it is in the audit trail.
+  twoFactorExempt Boolean   @default(false)
   /// Last accepted TOTP time step. A code is good for 30 seconds, which is
   /// long enough for a shoulder-surfer or a proxy to replay it; refusing a
   /// step that has already been spent closes that window.
-  totpLastStep  Int?
+  totpLastStep    Int?
 
   /// When this account's credentials last changed — a password reset, or a
   /// SUPER_ADMIN clearing someone's second factor. Sessions issued before
