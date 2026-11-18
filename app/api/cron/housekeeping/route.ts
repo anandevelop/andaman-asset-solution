@@ -4,8 +4,8 @@
  * POST /api/cron/housekeeping — nightly, from scripts/cron.mjs.
  *
  * Removes audit entries that have aged out (lib/audit/retention.ts):
- * sign-ins after 90 days, edits after a year, customer-data events after
- * three. Deleting by age is the whole job, so running it twice does
+ * sign-ins after 90 days, edits after 30, customer-data events after three
+ * years. Deleting by age is the whole job, so running it twice does
  * nothing the second time.
  * ─────────────────────────────────────────────────────────────────────────
  */

@@ -23,12 +23,12 @@ beforeEach(() => {
 });
 
 describe("audit retention", () => {
-  it("keeps sign-ins 90 days, edits a year, customer-data events three", () => {
-    expect(AUDIT_RETENTION_DAYS).toEqual({ signIns: 90, edits: 365, customerData: 1095 });
+  it("keeps sign-ins 90 days, edits 30 days, customer-data events three years", () => {
+    expect(AUDIT_RETENTION_DAYS).toEqual({ signIns: 90, edits: 30, customerData: 1095 });
 
     const f = auditPruneFilters(now);
     expect((f.signIns.createdAt as { lt: Date }).lt).toEqual(daysAgo(90));
-    expect((f.edits.createdAt as { lt: Date }).lt).toEqual(daysAgo(365));
+    expect((f.edits.createdAt as { lt: Date }).lt).toEqual(daysAgo(30));
     expect((f.customerData.createdAt as { lt: Date }).lt).toEqual(daysAgo(1095));
   });
 
@@ -42,7 +42,7 @@ describe("audit retention", () => {
   });
 
   it("never lets the edits rule reach a sign-in or a customer-data event", () => {
-    // Otherwise the one-year rule would delete three-year evidence at one year.
+    // Otherwise the 30-day rule would delete three-year evidence after a month.
     const { edits } = auditPruneFilters(now);
     expect(edits.model).toEqual({ not: "Session" });
     expect(edits.action).toEqual({ notIn: ["reveal_contact", "erase_lead"] });

@@ -3509,7 +3509,7 @@
       "moreFields": "+{count} fields",
       "openEntry": "Open details",
       "emptyFiltered": "No entries match these filters.",
-      "footnote": "Every entry is written by the server (time, user, IP, device). Removed automatically by age: sign-ins after 90 days, edits after 1 year, customer-data views and erasures after 3 years. IP and device for edits are recorded from 14 Nov 2026.",
+      "footnote": "Every entry is written by the server (time, user, IP, device). Removed automatically by age: sign-ins after 90 days, edits after 30 days, customer-data views and erasures after 3 years. IP and device for edits are recorded from 14 Nov 2026.",
       "csv": {
         "time": "Time",
         "email": "Email",

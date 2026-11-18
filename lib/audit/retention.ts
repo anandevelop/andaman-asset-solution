@@ -8,7 +8,9 @@
  *  · Sign-ins, sign-outs and failed attempts — 90 days. By far the most
  *    numerous rows (every idle timeout is one), and a question about an
  *    odd sign-in is asked within weeks or not at all.
- *  · Edits — one year. "Who changed this price" can come up long after.
+ *  · Edits — 30 days. The owner's call: an edit is rarely looked up, and
+ *    almost never reverted, after the month it was made in. The price is
+ *    that "who changed this price" has no answer once a month has passed.
  *  · Customer-data events (a contact revealed, a lead erased) — three
  *    years, the same as the customer data itself (lib/pdpa.ts): they are
  *    the evidence of how personal data was handled. There are few of them.
@@ -26,7 +28,7 @@ import { AUTH_MODEL, CONTACT_REVEAL, LEAD_ERASE } from "@/lib/audit/events";
 
 export const AUDIT_RETENTION_DAYS = {
   signIns: 90,
-  edits: 365,
+  edits: 30,
   customerData: 3 * 365,
 } as const;
 
