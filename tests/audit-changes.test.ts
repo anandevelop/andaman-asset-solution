@@ -75,3 +75,34 @@ describe("changesBetween", () => {
     expect(changesBetween(["followUpAt"], { followUpAt: a }, { followUpAt: b })).toBeNull();
   });
 });
+
+describe("credentials never enter the trail", () => {
+  it("records no value for a password hash or an authenticator secret", async () => {
+    const { changesBetween, SECRET_FIELDS } = await import("@/lib/audit/extension");
+
+    const before = { name: "Anan", passwordHash: "$2b$12$old", totpSecret: "v1:aaa:bbb:ccc", totpEnabledAt: null };
+    const after = { name: "Anan K.", passwordHash: "$2b$12$new", totpSecret: null, totpEnabledAt: null };
+    const changes = changesBetween(["name", "passwordHash", "totpSecret"], before, after);
+
+    // The name is recorded; the two credentials are not, in either direction.
+    expect(changes).toEqual({ name: { before: "Anan", after: "Anan K." } });
+    expect(JSON.stringify(changes)).not.toMatch(/\$2b|v1:/);
+    for (const field of ["passwordHash", "totpSecret", "codeHash", "refresh_token"]) expect(SECRET_FIELDS.has(field)).toBe(true);
+  });
+
+  it("records nothing at all when only a credential changed", async () => {
+    const { changesBetween } = await import("@/lib/audit/extension");
+    expect(changesBetween(["passwordHash"], { passwordHash: "a" }, { passwordHash: "b" })).toBeNull();
+  });
+
+  it("hides the value of a secret setting, and only of a secret setting", async () => {
+    const { changesBetween } = await import("@/lib/audit/extension");
+
+    expect(
+      changesBetween(["value"], { key: "secret:line.accessToken", value: "v1:old" }, { key: "secret:line.accessToken", value: "v1:new" }),
+    ).toBeNull();
+    expect(
+      changesBetween(["value"], { key: "contact.phone", value: "+66 91" }, { key: "contact.phone", value: "+66 95" }),
+    ).toEqual({ value: { before: "+66 91", after: "+66 95" } });
+  });
+});

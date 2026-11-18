@@ -96,6 +96,9 @@ const LABEL_FIELDS = [
   "email",
   "question",
   "questionEn",
+  // SiteSetting has nothing else to be called by; without this a settings
+  // entry said "edited a setting" and not which.
+  "key",
 ];
 
 export function labelFrom(row: unknown): string | undefined {
@@ -186,6 +189,36 @@ function sameValue(a: unknown, b: unknown): boolean {
  * already had is left out — see AuditLog.changes in schema.prisma for why
  * that matters.
  */
+/**
+ * Fields whose values never enter the trail, whichever model they are on.
+ *
+ * A password hash, an authenticator secret, a recovery-code hash, an OAuth
+ * token. The trail is read on a screen and exported as a CSV, and it is
+ * kept for years: a copy of a credential in it outlives the credential's
+ * own rotation, and "encrypted at rest" does not make a second copy
+ * harmless. changedFields still names the field, so "the password was
+ * changed" is recorded — only what it was changed from and to is not.
+ * Left out rather than masked, because a revert writes `before` back and a
+ * mask would be written into the column.
+ */
+export const SECRET_FIELDS: ReadonlySet<string> = new Set([
+  "passwordHash",
+  "totpSecret",
+  "totpLastStep",
+  "codeHash",
+  "access_token",
+  "refresh_token",
+  "id_token",
+  "sessionToken",
+  "token",
+]);
+
+/** SiteSetting rows that hold a credential are keyed `secret:…`
+ *  (lib/line-config.ts, lib/google-config.ts, lib/ai-config.ts). */
+function holdsSecretValue(row: Record<string, unknown> | null | undefined): boolean {
+  return typeof row?.key === "string" && row.key.startsWith("secret:");
+}
+
 export function changesBetween(
   fields: string[],
   before: Record<string, unknown> | null,
@@ -200,6 +233,8 @@ export function changesBetween(
     // Relation writes ({ translations: { upsert: ... } }) have no
     // comparable scalar on either side; changedFields still names them.
     if (!(field in next)) continue;
+    if (SECRET_FIELDS.has(field)) continue;
+    if (field === "value" && (holdsSecretValue(before) || holdsSecretValue(next))) continue;
     if (sameValue(before[field], next[field])) continue;
     changes[field] = { before: shrink(before[field]), after: shrink(next[field]) };
   }
