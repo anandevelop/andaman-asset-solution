@@ -36,6 +36,18 @@ const IGNORED = [
   "Load failed",
   "ChunkLoadError",
   "Loading chunk",
+  /*
+    A POST to a page that is not one of ours. Next treats any POST to a page
+    as a possible server action and throws when the body is not what an
+    action sends — which is what a scanner's probe, or a tab left open
+    across a deploy, looks like. Nothing on the site failed and nobody saw
+    an error screen; the first one arrived at 02:48 from a bot posting to
+    the home page.
+  */
+  "Failed to parse body as FormData",
+  "Unexpected end of form",
+  "Failed to find Server Action",
+  "Invalid Server Actions request",
   // Invariants the back office throws on purpose and explains on screen
   // (app/[locale]/admin/error.tsx).
   "CANNOT_DELETE_SELF",

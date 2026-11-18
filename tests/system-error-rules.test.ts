@@ -26,6 +26,15 @@ describe("what is not worth reporting", () => {
     expect(isIgnorable(factsOf(error))).toBe(true);
   });
 
+  it.each([
+    "Failed to parse body as FormData.",
+    "Unexpected end of form",
+    'Failed to find Server Action "40b1c2". This request might be from an older or newer deployment.',
+    "Invalid Server Actions request.",
+  ])("ignores a stray POST to a page: %s", (message) => {
+    expect(isIgnorable(factsOf(new TypeError(message)))).toBe(true);
+  });
+
   it("keeps a real failure", () => {
     expect(isIgnorable(factsOf(new TypeError("Cannot read properties of undefined (reading 'id')")))).toBe(false);
     expect(isIgnorable(factsOf(new Error("Can't reach database server")))).toBe(false);
