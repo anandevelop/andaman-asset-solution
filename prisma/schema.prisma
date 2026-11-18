@@ -3077,9 +3077,8 @@ model AuditLog {
   /// already trusts. Null for entries written outside a request, and for
   /// every row that predates the column.
   ///
-  /// This is personal data about staff, and audit_logs still has no
-  /// retention policy of its own — see docs/TESTING.md before this table
-  /// gets old enough to matter.
+  /// This is personal data about staff; entries are removed by age — see
+  /// lib/audit/retention.ts.
   ipAddress String?
 
   /// The browser's User-Agent header, cut to 300 characters; the activity

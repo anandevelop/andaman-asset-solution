@@ -63,6 +63,11 @@ const SECRET = process.env.CRON_SECRET;
  * of the first's.
  */
 const JOBS = [
+  /*
+    Audit entries past their retention (lib/audit/retention.ts). First,
+    before the jobs that read and write a lot: it only deletes.
+  */
+  { name: "housekeeping", path: "/api/cron/housekeeping", at: [2, 30] },
   { name: "seo-audit", path: "/api/cron/seo-audit", at: [3, 15] },
   { name: "vitals-rollup", path: "/api/cron/vitals-rollup", at: [3, 45] },
   /*
