@@ -13,7 +13,7 @@
  *
  * Google Gemini by default — a key from aistudio.google.com (free tier),
  * saved at /admin/settings/integrations or as GEMINI_API_KEY; see
- * lib/ai-config.ts. Default model gemini-2.5-flash-lite: the free tier's
+ * lib/ai-config.ts. Default model gemini-3.5-flash-lite: the free tier's
  * highest daily allowance, and plenty for one sentence.
  * ANTHROPIC_API_KEY is used instead only when no Gemini key is set.
  * Note: on Gemini's free tier Google may use the prompts and images to

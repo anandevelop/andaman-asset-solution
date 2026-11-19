@@ -22,7 +22,7 @@ const KEY = {
   model: "ai.geminiModel",
 } as const;
 
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 export type AiConfig = {
   geminiKey: string | null;
