@@ -36,9 +36,9 @@
  */
 
 import Script from "next/script";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { GA_ID, META_PIXEL_ID, isStaffPath, trackPageview } from "@/lib/analytics";
+import { GA_ID, META_PIXEL_ID, isStaffPath, pauseMeasurement, trackPageview } from "@/lib/analytics";
 import { useCookieConsent } from "@/lib/cookie-consent";
 
 /**
@@ -83,6 +83,14 @@ export default function Analytics({ gaId = GA_ID, metaPixelId = META_PIXEL_ID }:
   const staff = isStaffPath(usePathname() ?? "");
   const analyticsAllowed = Boolean(consent?.analytics);
   const marketingAllowed = Boolean(consent?.marketing);
+
+  // A script loaded on a public page stays loaded after a client-side move
+  // into the admin and would go on counting by itself; switch it off there
+  // and back on when the visitor returns. Layout effect: before the script's
+  // own history listener gets to send anything.
+  useLayoutEffect(() => {
+    pauseMeasurement(staff, gaId);
+  }, [staff, gaId]);
 
   if (staff) return null;
   if ((!gaId || !analyticsAllowed) && (!metaPixelId || !marketingAllowed)) return null;

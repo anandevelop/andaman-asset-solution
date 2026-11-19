@@ -80,6 +80,36 @@ export function isStaffPath(pathname: string): boolean {
   return /^(?:\/[a-z]{2})?\/(?:admin|login)(?:\/|$)/.test(pathname);
 }
 
+/**
+ * Stops (or resumes) both scripts at the source.
+ *
+ * Not sending our own events from a staff page is not enough: once loaded,
+ * gtag.js and the Pixel each watch the browser history themselves and send
+ * a page view on every client-side move, including the move from a public
+ * page into /admin. That is how /th/admin/leads reached the GA report.
+ * `ga-disable-<id>` is Google's documented switch, read on every hit; the
+ * Pixel has `consent revoke / grant`. Called from components/Analytics.tsx
+ * whenever the path crosses the staff boundary.
+ */
+export function pauseMeasurement(
+  paused: boolean,
+  gaId: string | undefined = GA_ID,
+  target: Record<string, unknown> | undefined = typeof window === "undefined"
+    ? undefined
+    : (window as unknown as Record<string, unknown>),
+): void {
+  if (!target) return;
+  if (gaId) target[`ga-disable-${gaId}`] = paused;
+  const fbq = target.fbq;
+  if (typeof fbq === "function") {
+    try {
+      (fbq as (command: string, action: string) => void)("consent", paused ? "revoke" : "grant");
+    } catch (error) {
+      console.warn("[analytics] could not pause the Pixel", error);
+    }
+  }
+}
+
 function canTrack(): boolean {
   return (
     typeof window !== "undefined" &&
