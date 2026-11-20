@@ -167,6 +167,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   recoveryCodes RecoveryCode[]
+  apiTokens     ApiToken[]
 
   articles          NewsArticle[]
   projectProgresses ProjectProgress[]
@@ -3728,4 +3729,90 @@ model SystemError {
 
   @@index([lastSeenAt])
   @@map("system_errors")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MCP — the AI connection at /api/mcp (lib/mcp/*).
+// ─────────────────────────────────────────────────────────────────────────
+
+/// A key an AI client presents instead of a password and a second factor.
+/// Always belongs to a BOT account, whose row in lib/permissions.ts decides
+/// what it may do; `scope` can only narrow that further.
+///
+/// The key itself is shown once, when it is made. Only its SHA-256 is kept:
+/// the key is 32 random bytes, so a fast hash is enough, and a leaked
+/// database does not hand anybody a working key.
+model ApiToken {
+  id          String    @id @default(cuid())
+  name        String
+  /// First characters of the key, so a person can tell two keys apart.
+  prefix      String
+  tokenHash   String    @unique
+  /// "read" — tools that change nothing; "write" — everything the bot may do.
+  scope       String    @default("read")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  createdById String?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  lastUsedIp  String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@map("api_tokens")
+}
+
+/// A deletion an AI client asked for. Nothing is ever deleted by the call
+/// that asks: the request waits here until it is confirmed.
+///
+/// `tier` "chat" — the client must come back with the one-time code after
+/// asking its user; "human" — a person approves it in the back office, and
+/// the deletion runs as that person.
+model McpDeletion {
+  id            String    @id @default(cuid())
+  /// Which registered executor runs it (lib/mcp/deletions.ts).
+  kind          String
+  tier          String
+  targetIds     Json
+  /// What will be gone, in words, as shown to whoever confirms.
+  summary       String    @db.Text
+  /// PENDING · EXECUTED · REJECTED · EXPIRED · FAILED
+  status        String    @default("PENDING")
+  /// SHA-256 of the one-time code. Null for the human tier.
+  codeHash      String?
+  tokenId       String
+  requestedById String
+  decidedById   String?
+  decidedAt     DateTime?
+  error         String?   @db.Text
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@map("mcp_deletions")
+}
+
+/// Work accepted now and done afterwards (image uploads from an AI client).
+/// A table rather than a queue service: the site has Postgres and a cron
+/// process already, and a job that is a row survives a deploy.
+model BackgroundJob {
+  id          String    @id @default(cuid())
+  kind        String
+  payload     Json
+  /// QUEUED · RUNNING · DONE · FAILED
+  status      String    @default("QUEUED")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  runAfter    DateTime  @default(now())
+  lockedAt    DateTime?
+  result      Json?
+  error       String?   @db.Text
+  createdById String?
+  tokenId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, runAfter])
+  @@map("background_jobs")
 }

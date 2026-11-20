@@ -95,6 +95,10 @@ const JOBS = [
     is said within a quarter of an hour of being true.
   */
   { name: "alerts", path: "/api/cron/alerts", every: 15 },
+  // Queued background work (image uploads from the AI connection). The
+  // route that queued a job starts it at once; this is the retry and the
+  // recovery after a deploy. Does nothing, quietly, when the queue is empty.
+  { name: "jobs", path: "/api/cron/jobs", every: 1, quiet: true },
 ];
 
 function log(message) {
@@ -170,7 +174,8 @@ async function run(job) {
       return;
     }
 
-    log(`${job.name} ok: ${body.slice(0, 300)}`);
+    // A job that runs every minute would otherwise write 2,880 lines a day.
+    if (!job.quiet) log(`${job.name} ok: ${body.slice(0, 300)}`);
   } catch (error) {
     log(`${job.name} FAILED: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -187,7 +192,7 @@ function schedule(job) {
   const at = nextRun(job);
   const delay = at.getTime() - Date.now();
 
-  log(`${job.name} next at ${at.toLocaleString("en-GB")} (in ${Math.round(delay / 60_000)} min)`);
+  if (!job.quiet) log(`${job.name} next at ${at.toLocaleString("en-GB")} (in ${Math.round(delay / 60_000)} min)`);
 
   setTimeoutAt(at, async () => {
     await run(job);

@@ -55,6 +55,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { getAuditActor, withoutAudit } from "@/lib/audit/context";
 import { requestOrigin } from "@/lib/audit/origin";
+import { assertMcpMayDelete } from "@/lib/mcp/context";
 import { redirectOnRename } from "@/lib/redirect-on-rename";
 import { reportError } from "@/lib/sentry";
 
@@ -279,6 +280,10 @@ export function auditExtension(base: PrismaClient) {
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
+          // The AI connection never deletes without a confirmation; see
+          // lib/mcp/context.ts. First, so no path below can skip it.
+          assertMcpMayDelete(model, operation);
+
           const actor = getAuditActor();
 
           if (!shouldAudit(model, operation, actor)) {

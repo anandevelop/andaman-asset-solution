@@ -17,6 +17,7 @@ import { Role } from "@prisma/client";
 import { authOptions, hasRole } from "@/lib/auth";
 import { can, type Capability } from "@/lib/permissions";
 import { beginAuditScope, setAuditActor } from "@/lib/audit/context";
+import { getMcpActor } from "@/lib/mcp/context";
 
 export type AdminSession = {
   id: string;
@@ -156,6 +157,21 @@ export async function requireAdminAction(
   // First statement, above every await, for the reason spelled out in
   // requireAdmin above: below it, the scope reaches nobody.
   beginAuditScope();
+
+  /*
+    An AI client's tool call (lib/mcp/context.ts). There is no browser
+    session in it; the bot's identity was established from its key by
+    /api/mcp, and from here it is held to the same role check as a person.
+    A read-only key never reaches an action: actions change things.
+  */
+  const bot = getMcpActor();
+  if (bot) {
+    if (bot.scope !== "write" || !hasRole(bot.role, minimum)) {
+      throw new Error("UNAUTHORISED");
+    }
+    markActor({ id: bot.userId, email: bot.email, role: bot.role });
+    return { id: bot.userId, name: bot.name, email: bot.email, role: bot.role, twoFactorPending: false };
+  }
 
   const session = await getServerSession(authOptions);
 

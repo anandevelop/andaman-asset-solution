@@ -301,7 +301,7 @@ export async function recordLineChat(
  */
 export type LineDelivery = {
   at: string;
-  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error";
+  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval";
   outcome: "sent" | "failed" | "skipped";
   /** Why it was skipped, or what LINE answered when it failed. */
   detail: string;

@@ -449,7 +449,7 @@ export async function sendLineTest(onlyTo?: string): Promise<LineSendResult | { 
  * throws; the outcome lands in the delivery log like every other alert.
  */
 export async function pushLineAlert(alert: {
-  kind: "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error";
+  kind: "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval";
   title: string;
   rows: [string, string][];
   url: string;

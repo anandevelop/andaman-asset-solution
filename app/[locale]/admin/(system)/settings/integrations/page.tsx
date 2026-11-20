@@ -36,6 +36,16 @@ import { GOOGLE_DAILY_QUOTA, getPsiConfig } from "@/lib/pagespeed/config";
 import { callsToday } from "@/lib/pagespeed/run";
 import { savePsiSettingsAction, testPsiAction } from "./psi-actions";
 import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
+import McpSettingsCard from "@/components/admin/McpSettingsCard";
+import { listApiTokens } from "@/lib/mcp/tokens";
+import { pendingApprovals } from "@/lib/mcp/deletions";
+import { prisma } from "@/lib/prisma";
+import {
+  approveMcpDeletionAction,
+  createMcpTokenAction,
+  rejectMcpDeletionAction,
+  revokeMcpTokenAction,
+} from "./mcp-actions";
 import { fetchLineBotInfo } from "@/lib/line";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -81,6 +91,21 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
   // Asks LINE which OA the token belongs to: proof the token works, and
   // the name the card shows. Five-second timeout inside, never throws.
   const bot = line.accessToken ? await fetchLineBotInfo(line.accessToken) : null;
+
+  // The AI connection: keys, the Bot accounts a key can belong to, and the
+  // deletions an AI client asked for that only a person may approve.
+  const [mcpTokens, mcpApprovals, mcpBots] = await Promise.all([
+    listApiTokens(),
+    pendingApprovals(),
+    prisma.user.findMany({ where: { role: Role.BOT, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  const mcpRaw = t.raw("settings.mcp") as Record<string, string> & { err: Record<string, string> };
+  const mcpLabels: Record<string, string> = {
+    ...Object.fromEntries(Object.entries(mcpRaw).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
+    ...Object.fromEntries(Object.entries(mcpRaw.err).map(([k, v]) => [`err.${k}`, v])),
+  };
+  const mcpDate = new Intl.DateTimeFormat(locale === "th" ? "th-TH-u-ca-buddhist" : locale, { dateStyle: "medium", timeStyle: "short" });
+  const mcpNow = new Date();
 
   const lineRaw = t.raw("settings.line") as Record<string, string> & {
     err: Record<string, string>;
@@ -189,6 +214,32 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         undecryptable={ai.undecryptable}
         labels={aiLabels}
         save={saveAiSettingsAction.bind(null, locale)}
+      />
+
+      <McpSettingsCard
+        endpoint={`${siteUrl}/api/mcp`}
+        bots={mcpBots}
+        tokens={mcpTokens.map((token) => ({
+          id: token.id,
+          name: token.name,
+          prefix: token.prefix,
+          scope: token.scope,
+          userName: token.userName,
+          state: token.revokedAt ? "revoked" : token.expiresAt && token.expiresAt <= mcpNow ? "expired" : "active",
+          lastUsed: token.lastUsedAt ? mcpDate.format(token.lastUsedAt) : null,
+          expires: token.expiresAt ? mcpDate.format(token.expiresAt) : null,
+        }))}
+        approvals={mcpApprovals.map((row) => ({
+          id: row.id,
+          summary: row.summary,
+          count: row.count,
+          requested: mcpDate.format(row.createdAt),
+        }))}
+        labels={mcpLabels}
+        create={createMcpTokenAction.bind(null, locale)}
+        revoke={revokeMcpTokenAction.bind(null, locale)}
+        approve={approveMcpDeletionAction.bind(null, locale)}
+        reject={rejectMcpDeletionAction.bind(null, locale)}
       />
 
       <LineSettingsCard
