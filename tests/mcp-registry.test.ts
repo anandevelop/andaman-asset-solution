@@ -12,9 +12,16 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 vi.mock("@/lib/admin/system-health", () => ({ getSystemHealth: vi.fn() }));
 vi.mock("@/lib/system-errors", () => ({ recentSystemErrors: vi.fn() }));
+// The tools' collaborators are not under test here — only what each tool declares.
+vi.mock("@/app/[locale]/admin/(content)/media/actions", () => ({ updateMediaMeta: vi.fn() }));
+vi.mock("@/lib/mcp/media-import", () => ({ MEDIA_IMPORT_JOB: "media.import" }));
+vi.mock("@/lib/media", () => ({ getMediaLibrary: vi.fn() }));
+vi.mock("@/lib/media-usage", () => ({ findMediaUsage: vi.fn(), findMediaUsageForUrls: vi.fn(), isMediaUrlInUse: vi.fn() }));
+vi.mock("@/lib/s3", () => ({ deleteS3Object: vi.fn(), objectKeyFromUrl: vi.fn() }));
 
 import "@/lib/mcp/tools";
 import { allTools, describeTools } from "@/lib/mcp/registry";
+import { deletionKinds } from "@/lib/mcp/deletions";
 
 /** Areas the AI connection may read and never change. */
 const READ_ONLY_AREAS = /^(system|settings|user|users)_/;
@@ -42,6 +49,15 @@ describe("every MCP tool", () => {
 
   it.each(tools.map((tool) => [tool.name, tool] as const))("%s: the system area is read-only", (name, tool) => {
     if (READ_ONLY_AREAS.test(name)) expect(tool.access).toBe("read");
+  });
+
+  it.each(tools.map((tool) => [tool.name, tool] as const))("%s: names the capability it needs unless it is about the connection itself", (name, tool) => {
+    const aboutTheConnection = ["whoami", "confirm_deletion", "deletion_status", "job_status"].includes(name) || READ_ONLY_AREAS.test(name);
+    if (!aboutTheConnection) expect(tool.capability, `${name} needs a capability`).toBeTruthy();
+  });
+
+  it("has an executor behind every area that can ask for a deletion", () => {
+    expect(deletionKinds()).toContain("media");
   });
 
   it("never offers users, keys or settings for editing", () => {

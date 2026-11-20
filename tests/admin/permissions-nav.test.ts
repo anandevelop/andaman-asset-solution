@@ -155,13 +155,15 @@ function rolesAdmittedByRoute(href: string): Role[] | null {
  * "viewContent") rather than a bare rank, so the string is genuinely
  * consulted and the row it describes is genuinely enforced.
  *
- * · editContent    — enforced by the EDITOR rank default on every content
- *                    page rather than by a capability check. The row
- *                    already matches what happens, so it misleads nobody.
+ * editContent left this list when the AI connection arrived: the tools
+ * that change content (lib/mcp/tools/media.ts) name it, and
+ * lib/mcp/registry.ts checks it with can() before a handler runs. The back
+ * office's own pages still enforce it by the EDITOR rank default.
+ *
  * · manageProjects — SALES's "unitStatusOnly" narrowing is enforced in
  *                    units/actions.ts by rank, not through can().
  */
-const KNOWN_UNENFORCED: Capability[] = ["editContent", "manageProjects"];
+const KNOWN_UNENFORCED: Capability[] = ["manageProjects"];
 
 function sourceFiles(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {

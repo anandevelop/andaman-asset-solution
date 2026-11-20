@@ -4,3 +4,4 @@
  */
 import "@/lib/mcp/tools/core";
 import "@/lib/mcp/tools/system";
+import "@/lib/mcp/tools/media";
