@@ -1879,20 +1879,24 @@
     }
   }
 
+  /* The one dark band on the public site: #333333 with #cccccc type
+   (10:1). The colour tokens are re-pointed for this section only, so the
+   component keeps its ordinary text-ink / border-ink / bg-gold-100 classes
+   and nothing outside the band changes. */
   .spotlight-section {
-    background: linear-gradient(
-      180deg,
-      #ffffff 0%,
-      var(--color-surface-muted) 60%,
-      #ffffff 100%
-    );
+    --color-ink: #cccccc;
+    --color-ink-muted: #cccccc;
+    --color-gold: #cccccc;
+    --color-gold-100: #4d4d4d;
+    background: #333333;
+    color: #cccccc;
   }
 
   .spotlight-cone {
     background: linear-gradient(
       180deg,
-      rgba(10, 10, 10, 0.14),
-      rgba(10, 10, 10, 0.04) 70%,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.05) 70%,
       transparent
     );
     clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
@@ -1941,7 +1945,7 @@
 
   .spotlight-spark {
     background: var(--color-gold);
-    box-shadow: 0 0 8px rgba(10, 10, 10, 0.35);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
     animation: rise linear infinite;
   }
 
