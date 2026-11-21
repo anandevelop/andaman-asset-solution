@@ -37,7 +37,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminAction } from "@/lib/admin/guard";
+import { requireCapabilityAction } from "@/lib/admin/guard";
 import { TRUNCATION_MARKER } from "@/lib/audit/extension";
 import { locales } from "@/i18n";
 import { revalidatePublicSite } from "@/lib/revalidate-site";
@@ -79,7 +79,7 @@ export async function revertAuditEntry(
   locale: string,
   entryId: string,
 ): Promise<RevertResult> {
-  await requireAdminAction(Role.SUPER_ADMIN);
+  await requireCapabilityAction("viewAuditLog");
 
   const entry = await prisma.auditLog.findUnique({
     where: { id: entryId },

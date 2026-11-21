@@ -26,6 +26,7 @@ import { prisma } from "@/lib/prisma";
 import { isLeadVisibleTo } from "@/lib/leads-board";
 import { safeQuery, isDatabaseOffline, DatabaseUnavailableError } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { initialsFrom, intlLocale } from "@/lib/format";
 import { nationalityLabel } from "@/lib/countries";
 import type { Locale } from "@/i18n";
@@ -368,7 +369,7 @@ export default async function LeadDetailView({
   const Heading = isDrawer ? "h2" : "h1";
   const canContact = can(session.role, "viewCustomerContact");
   // Deleting is ADMIN and above — deleteLeads checks the same on the server.
-  const canDelete = session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN;
+  const canDelete = hasRole(session.role, Role.ADMIN);
   const revealLabels = { show: t("leadDetail.reveal"), failed: t("leadDetail.revealFailed") };
 
   // ── Blocks, arranged per variant below ─────────────────────────────────

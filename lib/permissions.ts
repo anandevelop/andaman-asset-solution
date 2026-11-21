@@ -116,7 +116,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: "ownScope",
     VIEWER: false,
-    BOT: false,
+    BOT: true,
   },
   viewCustomerContact: {
     SUPER_ADMIN: true,
@@ -124,7 +124,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: "ownLeads",
     VIEWER: false,
-    BOT: false,
+    BOT: true,
   },
   exportCustomerData: {
     SUPER_ADMIN: true,
@@ -134,7 +134,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: false,
     VIEWER: false,
-    BOT: false,
+    BOT: true,
   },
   viewAuditLog: {
     SUPER_ADMIN: true,
@@ -146,7 +146,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     EDITOR: false,
     SALES: false,
     VIEWER: false,
-    BOT: false,
+    BOT: true,
   },
   manageUsers: {
     SUPER_ADMIN: true,

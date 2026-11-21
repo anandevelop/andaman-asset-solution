@@ -45,10 +45,12 @@ const ROLE_RANK: Record<Role, number> = {
   EDITOR: 2,
   ADMIN: 3,
   /*
-    Beside ADMIN, not below it: a bot account passes the gates an
-    administrator passes. What it must NOT reach — customers, co-agents,
-    user accounts — is refused by capability (lib/permissions.ts), never
-    by this number, because rank cannot say "everything except".
+    Beside ADMIN by rank, though a bot account works in the owner's place:
+    it reaches everything SUPER_ADMIN does except the user accounts. That
+    "except" is why it is not ranked 4 — every screen that manages accounts
+    asks for the SUPER_ADMIN rank, and rank cannot say "everything but".
+    What it has beyond ADMIN (the activity log, exports) comes from
+    lib/permissions.ts, by capability.
   */
   BOT: 3,
   SUPER_ADMIN: 4,

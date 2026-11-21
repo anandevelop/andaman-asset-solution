@@ -17,7 +17,7 @@
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
-import { requireAdminAction } from "@/lib/admin/guard";
+import { requireCapabilityAction } from "@/lib/admin/guard";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { toCsv, csvFilename } from "@/lib/csv";
@@ -38,7 +38,7 @@ const printable = (value: unknown): string =>
 export async function GET(request: Request) {
   let session;
   try {
-    session = await requireAdminAction(Role.SUPER_ADMIN);
+    session = await requireCapabilityAction("viewAuditLog");
   } catch {
     return NextResponse.json({ error: "UNAUTHORISED" }, { status: 403 });
   }

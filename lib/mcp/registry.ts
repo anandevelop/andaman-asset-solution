@@ -65,9 +65,26 @@ export type ToolOutcome =
   | { kind: "unknown_tool" }
   | { kind: "invalid_arguments"; message: string };
 
+/**
+ * What the AI connection does not reach, whatever the account's role says.
+ *
+ * In the back office a Bot account now has the owner's reach apart from
+ * user accounts (lib/permissions.ts). The connection is a different matter:
+ * what goes through it leaves the server for an AI provider, and the
+ * decision made for it — customers are counted, never shown; accounts are
+ * not offered — stands until somebody decides otherwise. So it is written
+ * down here, as a rule, rather than left to the accident that no tool for
+ * it happens to exist yet.
+ */
+export const WITHHELD_FROM_MCP: readonly Capability[] = ["viewCustomerContact", "exportCustomerData", "manageUsers"];
+
+export function mayUse(role: McpActor["role"], capability: Capability): boolean {
+  return !WITHHELD_FROM_MCP.includes(capability) && can(role, capability);
+}
+
 export function mayCall(tool: Pick<ToolDefinition, "access" | "capability">, actor: Pick<McpActor, "scope" | "role">): boolean {
   if (tool.access === "write" && actor.scope !== "write") return false;
-  if (tool.capability && !can(actor.role, tool.capability)) return false;
+  if (tool.capability && !mayUse(actor.role, tool.capability)) return false;
   return true;
 }
 

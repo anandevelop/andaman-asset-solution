@@ -1,8 +1,10 @@
 /**
- * The BOT role: an administrator's reach without customers, co-agents or
- * user accounts. Ranked with ADMIN, so everything it must not reach has to
- * be refused by capability or by an explicit role list — these tests pin
- * each of those refusals, because a rank check alone would let it through.
+ * The BOT role: an account that works in the team's place. It reaches what
+ * the owner reaches — customers, co-agents, the activity log, exports —
+ * with one exception: the user accounts. It is ranked with ADMIN, not with
+ * the owner, precisely so that every screen that manages accounts (which
+ * all ask for the SUPER_ADMIN rank) stays shut; what it has beyond ADMIN
+ * comes by capability. These tests pin both halves.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -16,30 +18,24 @@ import { roleMayBeExempt } from "@/lib/two-factor-policy";
 const read = (...path: string[]) => readFileSync(join(process.cwd(), ...path), "utf8");
 
 describe("the BOT role", () => {
-  it("passes the gates an administrator passes, and not the owner's", () => {
+  it("is ranked with the administrator, below the owner", () => {
     expect(hasRole(Role.BOT, Role.ADMIN)).toBe(true);
+    // The rank the account screens ask for. This line is the lock on them.
     expect(hasRole(Role.BOT, Role.SUPER_ADMIN)).toBe(false);
   });
 
-  it("is refused everything about customers, the audit log and accounts", () => {
-    for (const capability of ["viewAllLeads", "viewCustomerContact", "exportCustomerData", "viewAuditLog", "manageUsers"] as const) {
-      expect(can(Role.BOT, capability), capability).toBe(false);
+  it("has every capability the owner has, except managing users", () => {
+    for (const capability of CAPABILITIES) {
+      expect(PERMISSION_MATRIX[capability]).toHaveProperty("BOT");
+      if (capability === "manageUsers") expect(can(Role.BOT, capability)).toBe(false);
+      else expect(can(Role.BOT, capability), capability).toBe(can(Role.SUPER_ADMIN, capability));
     }
   });
 
-  it("otherwise has what ADMIN has", () => {
-    for (const capability of ["viewContent", "editContent", "publishLive", "manageProjects"] as const) {
-      expect(can(Role.BOT, capability), capability).toBe(can(Role.ADMIN, capability));
-    }
-    // Every capability has an answer for it: a missing cell reads as allowed.
-    for (const capability of CAPABILITIES) expect(PERMISSION_MATRIX[capability]).toHaveProperty("BOT");
-  });
-
-  it("does not see leads, co-agents, users or the activity log in the menu", () => {
-    for (const item of ["leads", "coAgents", "users", "activity", "mobileView"]) {
-      expect(canSeeItem(Role.BOT, item), item).toBe(false);
-    }
-    for (const item of ["dashboard", "analytics", "seo", "reports", "projects", "pages", "news", "settings"]) {
+  it("sees the owner's menu without Users", () => {
+    expect(canSeeItem(Role.BOT, "users")).toBe(false);
+    for (const item of ["dashboard", "analytics", "seo", "reports", "leads", "coAgents", "mobileView", "projects", "pages", "news", "activity", "settings"]) {
+      expect(canSeeItem(Role.BOT, item), item).toBe(canSeeItem(Role.SUPER_ADMIN, item));
       expect(canSeeItem(Role.BOT, item), item).toBe(true);
     }
   });
@@ -48,29 +44,46 @@ describe("the BOT role", () => {
     expect(roleMayBeExempt(Role.BOT)).toBe(true);
   });
 
-  describe("the lead doors that ask for a rank also ask for the capability", () => {
-    // deleteLeads, the suspect queue and the CSV export all open at
-    // Role.ADMIN, which BOT meets. Each must check the capability as well.
+  describe("the user accounts stay shut", () => {
+    // Every page and action that reads or changes an account asks for the
+    // SUPER_ADMIN rank, which a bot does not have.
     it.each([
-      [["app", "[locale]", "admin", "(crm)", "leads", "actions.ts"], 'can(actor.role, "viewAllLeads")'],
-      [["app", "[locale]", "admin", "(crm)", "leads", "suspect", "actions.ts"], 'can(actor.role, "viewAllLeads")'],
-      [["app", "[locale]", "admin", "(crm)", "leads", "suspect", "page.tsx"], 'can(session.role, "viewAllLeads")'],
-      [["app", "api", "admin", "leads", "export", "route.ts"], 'can(actor.role, "exportCustomerData")'],
+      ["page.tsx", "requireAdmin(locale, Role.SUPER_ADMIN)"],
+      [join("[id]", "edit", "page.tsx"), "requireAdmin(locale, Role.SUPER_ADMIN)"],
+    ])("users/%s", (file, guard) => {
+      expect(read("app", "[locale]", "admin", "(system)", "users", file)).toContain(guard);
+    });
+
+    it("every users action asks for the owner's rank", () => {
+      const source = read("app", "[locale]", "admin", "(system)", "users", "actions.ts");
+      const actions = [...source.matchAll(/export async function (\w+)\(/g)].map((match) => match[1]);
+      // changeOwnPassword is each account's own; the rest manage other people.
+      for (const name of actions.filter((action) => action !== "changeOwnPassword")) {
+        const body = source.slice(source.indexOf(`export async function ${name}(`));
+        expect(body.slice(0, body.indexOf("\n}\n")), name).toContain("requireAdminAction(Role.SUPER_ADMIN)");
+      }
+    });
+  });
+
+  describe("what it has beyond an administrator comes by capability", () => {
+    it.each([
+      [["app", "[locale]", "admin", "(system)", "activity", "page.tsx"], 'requireCapability(locale, "viewAuditLog")'],
+      [["app", "[locale]", "admin", "(system)", "activity", "actions.ts"], 'requireCapabilityAction("viewAuditLog")'],
+      [["app", "api", "admin", "activity", "export", "route.ts"], 'requireCapabilityAction("viewAuditLog")'],
     ])("%s", (path, check) => {
       expect(read(...path)).toContain(check);
     });
 
-    it("keeps the co-agent screens on an explicit list without BOT", () => {
-      const guard = read("lib", "agents", "guard.ts");
-      expect(guard).toContain("new Set([Role.SUPER_ADMIN, Role.ADMIN, Role.SALES])");
+    it("is on the co-agent screens' list", () => {
+      expect(read("lib", "agents", "guard.ts")).toContain("Role.BOT");
     });
+  });
 
-    it("keeps every other lead path on the capability, not on a rank", () => {
-      const crm = ["leads/page.tsx", "leads/[id]/page.tsx", "appointments/page.tsx", "appointments/actions.ts", "m/page.tsx", "m/leads/page.tsx", "m/leads/[id]/page.tsx"];
-      for (const file of crm) {
-        const source = read("app", "[locale]", "admin", "(crm)", ...file.split("/"));
-        expect(source, file).toMatch(/requireCapability(Action)?\(/);
-      }
+  describe("it is not a person", () => {
+    it("is never handed a lead and never sent a notification", () => {
+      expect(read("lib", "lead-routing.ts")).toContain("role !== Role.BOT");
+      expect(read("lib", "notifications.ts")).toContain('user.role !== "BOT"');
+      expect(read("lib", "scheduled-alerts.ts")).toContain('u.role !== "BOT"');
     });
   });
 });

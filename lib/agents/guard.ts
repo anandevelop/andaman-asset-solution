@@ -12,7 +12,7 @@ import { requireAdmin, requireAdminAction, type AdminSession } from "@/lib/admin
 
 /** The CRM roles (lib/admin/nav.ts ROLE_SETS.CRM). Rank alone would admit
  *  EDITOR, which outranks SALES but has no business in resident data. */
-const AGENTS_ROLES: ReadonlySet<Role> = new Set([Role.SUPER_ADMIN, Role.ADMIN, Role.SALES]);
+const AGENTS_ROLES: ReadonlySet<Role> = new Set([Role.SUPER_ADMIN, Role.ADMIN, Role.SALES, Role.BOT]);
 
 export function isAgentsRole(role: Role): boolean {
   return AGENTS_ROLES.has(role);

@@ -104,7 +104,7 @@ export const ROLE_SETS = {
 
   /** CRM work. EDITOR is absent on purpose — the enquiry list is not
    *  theirs to read (see viewAllLeads in lib/permissions.ts). */
-  CRM: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES],
+  CRM: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES, Role.BOT],
 
   /** Both: the sales roster is published on the website, so content people
    *  edit it and reps read it. VIEWER joined in Phase 4, as with CONTENT —
@@ -117,10 +117,13 @@ export const ROLE_SETS = {
    *  question from scratch. */
   CONTENT_AND_CRM: [Role.SUPER_ADMIN, Role.ADMIN, Role.EDITOR, Role.SALES, Role.BOT],
 
-  /* BOT is an administrator without customers, co-agents or accounts:
-     in every set ADMIN is in except CRM and OWNER_ONLY. */
+  /* BOT works in the team's place: everything the owner reaches except the
+     user accounts. So it is in every set but OWNER_ONLY, and has a set of
+     its own beside the owner for the activity log. */
   ADMIN_UP: [Role.SUPER_ADMIN, Role.ADMIN, Role.BOT],
   OWNER_ONLY: [Role.SUPER_ADMIN],
+  /** The activity log: the owner, and the bot working for them. */
+  OWNER_AND_BOT: [Role.SUPER_ADMIN, Role.BOT],
 
   /** Not CONTENT: the translation-status tab calls requireAdmin(locale,
    *  Role.EDITOR) with no read floor beneath it, so VIEWER — who the
@@ -314,8 +317,7 @@ export const NAV_TAB_GROUPS = {
          about the whole pipeline, not one rep's. */
       key: "suspect",
       segment: "/leads/suspect",
-      // Not ADMIN_UP: that set includes BOT, which never sees a lead.
-      roles: [Role.SUPER_ADMIN, Role.ADMIN],
+      roles: ROLE_SETS.ADMIN_UP,
       capability: "viewAllLeads",
     },
   ],
@@ -588,7 +590,7 @@ export const ADMIN_NAV: readonly NavGroup[] = [
         key: "activity",
         href: "/activity",
         icon: History,
-        roles: ROLE_SETS.OWNER_ONLY,
+        roles: ROLE_SETS.OWNER_AND_BOT,
         capability: "viewAuditLog",
       },
       {

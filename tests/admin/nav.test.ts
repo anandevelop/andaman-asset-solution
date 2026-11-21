@@ -116,12 +116,12 @@ describe("the menu each role sees", () => {
       drawerExtra: [],
       tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects"],
     },
-    // An administrator's rail without customers (leads), co-agents or
-    // accounts — and so without the lead tabs and the mobile sales view.
+    // The owner's rail without Users: a bot account works in the team's
+    // place and reaches everything else the owner does.
     BOT: {
-      rail: ["analytics", "dashboard", "events", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
-      drawerExtra: [],
-      tabs: ["/e-brochures", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
+      rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
+      drawerExtra: ["mobileView"],
+      tabs: ["/appointments", "/e-brochures", "/leads", "/leads/suspect", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
     },
   };
 
@@ -407,20 +407,22 @@ describe("the sidebar each role gets", () => {
       "events",
       "media",
     ],
-    // ADMIN's rows minus leads and coAgents (users and activity were
-    // never ADMIN's).
+    // The owner's rows minus users.
     BOT: [
       "dashboard",
       "analytics",
       "seo",
       "reports",
+      "leads",
       "projects",
+      "coAgents",
       "salesTeam",
       "publishing",
       "pages",
       "news",
       "events",
       "media",
+      "activity",
       "settings",
     ],
   };

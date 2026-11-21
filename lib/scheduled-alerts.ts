@@ -85,7 +85,7 @@ async function emailRecipients(capability: Capability, extra: (string | undefine
     select: { email: true, role: true },
   });
   const list = [
-    ...users.filter((u) => can(u.role as Role, capability)).map((u) => u.email),
+    ...users.filter((u) => u.role !== "BOT" && can(u.role as Role, capability)).map((u) => u.email),
     ...extra.flatMap((e) => (e ?? "").split(",")),
   ]
     .map((e) => e?.trim().toLowerCase())

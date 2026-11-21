@@ -138,12 +138,17 @@ describe("calling a tool", () => {
     expect(ran).toHaveBeenCalledOnce();
   });
 
-  it("stops the bot role before customer contact data, whatever the key", async () => {
+  it("stops before customer contact data, whatever the key and whatever the role", async () => {
     ran.mockClear();
     const { body } = await call("t_leads", {}, writer);
     expect((body as Body).result).toMatchObject({ isError: true, structuredContent: { error: "FORBIDDEN" } });
     expect(ran).not.toHaveBeenCalled();
-    expect(mayCall({ access: "read", capability: "viewCustomerContact" }, { scope: "write", role: Role.ADMIN })).toBe(true);
+    // The role may see customers in the back office; the connection does not carry them.
+    for (const role of [Role.BOT, Role.ADMIN, Role.SUPER_ADMIN]) {
+      expect(mayCall({ access: "read", capability: "viewCustomerContact" }, { scope: "write", role })).toBe(false);
+      expect(mayCall({ access: "read", capability: "manageUsers" }, { scope: "write", role })).toBe(false);
+    }
+    expect(mayCall({ access: "read", capability: "viewContent" }, { scope: "read", role: Role.BOT })).toBe(true);
   });
 
   it("passes on an error a tool raised on purpose and hides one it did not", async () => {

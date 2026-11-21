@@ -246,7 +246,9 @@ export async function notifyAdmins(args: {
       select: { id: true, role: true },
     });
 
-    const targets = recipients.filter((user) => can(user.role as Role, event.capability));
+    // A bot account may see what the event is about, but there is nobody
+    // behind it to read a bell or an inbox.
+    const targets = recipients.filter((user) => user.role !== "BOT" && can(user.role as Role, event.capability));
     if (targets.length === 0) return 0;
 
     /*

@@ -22,6 +22,7 @@ import { getMyAppointmentsToday } from "@/lib/appointments";
 import { LeadSource, LeadStatus, Prisma, Role } from "@prisma/client";
 import { isDatabaseOffline, safeQuery } from "@/lib/db";
 import { requireCapability } from "@/lib/admin/guard";
+import { hasRole } from "@/lib/role-rank";
 import { can } from "@/lib/permissions";
 import { intlLocale } from "@/lib/format";
 import { maskPhone } from "@/lib/contact-mask";
@@ -158,7 +159,7 @@ export default async function AdminLeadsPage(props: Props) {
   // Held enquiries waiting for an admin (lib/leads/suspect.ts); the tab
   // itself is admins-only, so nobody else is shown a count.
   const suspectCount =
-    session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN
+    hasRole(session.role, Role.ADMIN)
       ? await safeQuery("leads:suspectCount", () => countSuspects(), 0)
       : 0;
 
@@ -526,7 +527,7 @@ export default async function AdminLeadsPage(props: Props) {
           assignees={assignableTo}
           statusLabels={statusLabels}
           canExport={can(session.role, "exportCustomerData")}
-          canDelete={session.role === Role.ADMIN || session.role === Role.SUPER_ADMIN}
+          canDelete={hasRole(session.role, Role.ADMIN)}
           labels={{
             selectAll: t("leads.table.selectAll"),
             customer: t("leads.table.customer"),

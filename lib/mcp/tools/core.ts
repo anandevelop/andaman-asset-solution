@@ -8,7 +8,7 @@
 
 import "server-only";
 import { z } from "zod";
-import { defineTool } from "@/lib/mcp/registry";
+import { defineTool, mayUse } from "@/lib/mcp/registry";
 import { PERMISSION_MATRIX, type Capability } from "@/lib/permissions";
 import { confirmDeletion, deletionStatus } from "@/lib/mcp/deletions";
 import { jobStatus } from "@/lib/mcp/jobs";
@@ -26,7 +26,9 @@ defineTool({
     key: actor.tokenName,
     scope: actor.scope,
     capabilities: Object.fromEntries(
-      (Object.keys(PERMISSION_MATRIX) as Capability[]).map((capability) => [capability, Boolean(PERMISSION_MATRIX[capability][actor.role])]),
+      // What this connection may use — narrower than the role where the
+      // connection withholds something (lib/mcp/registry.ts).
+      (Object.keys(PERMISSION_MATRIX) as Capability[]).map((capability) => [capability, mayUse(actor.role, capability)]),
     ),
   }),
 });

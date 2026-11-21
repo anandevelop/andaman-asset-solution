@@ -54,7 +54,7 @@ import AdminDrawer from "@/components/admin/ui/AdminDrawer";
 import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 import { prisma } from "@/lib/prisma";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin/guard";
+import { requireCapability } from "@/lib/admin/guard";
 import {
   AUTH_LOGIN,
   AUTH_LOGIN_FAILED,
@@ -134,7 +134,9 @@ export default async function AdminActivityPage(props: Props) {
   const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
   const { locale } = params;
 
-  await requireAdmin(locale, Role.SUPER_ADMIN);
+  // By capability, not rank: the owner and the bot account read the log
+  // (lib/permissions.ts viewAuditLog); rank cannot say "owner or bot".
+  await requireCapability(locale, "viewAuditLog");
 
   const t = await getTranslations({ locale, namespace: "admin" });
 
