@@ -160,10 +160,15 @@ function rolesAdmittedByRoute(href: string): Role[] | null {
  * lib/mcp/registry.ts checks it with can() before a handler runs. The back
  * office's own pages still enforce it by the EDITOR rank default.
  *
- * · manageProjects — SALES's "unitStatusOnly" narrowing is enforced in
- *                    units/actions.ts by rank, not through can().
+ * manageProjects followed with units_list (lib/mcp/tools/catalog.ts): a
+ * unit's price and sales status are what that row is about, so the tool
+ * that returns them names it. SALES's "unitStatusOnly" narrowing is still
+ * enforced in units/actions.ts by rank.
+ *
+ * The list is empty. A capability nothing consults fails the first test
+ * below; an exemption belongs here only with the reason next to it.
  */
-const KNOWN_UNENFORCED: Capability[] = ["manageProjects"];
+const KNOWN_UNENFORCED: Capability[] = [];
 
 function sourceFiles(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
