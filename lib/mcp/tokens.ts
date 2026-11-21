@@ -131,6 +131,7 @@ export async function verifyApiToken(token: string | null, ip: string | null, no
       expiresAt: true,
       revokedAt: true,
       lastUsedAt: true,
+      oauthGrantId: true,
       user: { select: { id: true, name: true, email: true, role: true, isActive: true } },
     },
   });
@@ -144,6 +145,13 @@ export async function verifyApiToken(token: string | null, ip: string | null, no
     await withoutAudit(async () =>
       await prisma.apiToken.update({ where: { id: row.id }, data: { lastUsedAt: now, lastUsedIp: ip } }),
     ).catch(() => {});
+    // An OAuth connection is listed by its grant, so that is where "last
+    // used" has to show.
+    if (row.oauthGrantId) {
+      await withoutAudit(async () =>
+        await prisma.oAuthGrant.updateMany({ where: { id: row.oauthGrantId!, revokedAt: null }, data: { lastUsedAt: now } }),
+      ).catch(() => {});
+    }
   }
 
   return {

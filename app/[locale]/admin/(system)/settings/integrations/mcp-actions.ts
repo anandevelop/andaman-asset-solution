@@ -12,7 +12,7 @@ import { z } from "zod";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { createApiToken, revokeApiToken } from "@/lib/mcp/tokens";
 import { approveDeletion, rejectDeletion } from "@/lib/mcp/deletions";
-import { approveRequest, denyRequest, OAuthError, revokeGrant } from "@/lib/mcp/oauth";
+import { approveRequest, denyRequest, OAuthError, revokeGrant, setGrantScope } from "@/lib/mcp/oauth";
 import "@/lib/mcp/tools";
 
 export type McpActionResult =
@@ -126,6 +126,14 @@ export async function revokeOAuthGrantAction(locale: string, id: string): Promis
   if (!(await admin())) return { ok: false, error: "FORBIDDEN" };
   if (typeof id !== "string" || !id) return { ok: false, error: "INVALID_INPUT" };
   await revokeGrant(id);
+  refresh(locale);
+  return { ok: true };
+}
+
+export async function setOAuthGrantScopeAction(locale: string, id: string, scope: string): Promise<McpActionResult> {
+  if (!(await admin())) return { ok: false, error: "FORBIDDEN" };
+  if (typeof id !== "string" || !id || (scope !== "read" && scope !== "write")) return { ok: false, error: "INVALID_INPUT" };
+  if (!(await setGrantScope(id, scope))) return { ok: false, error: "NOT_FOUND" };
   refresh(locale);
   return { ok: true };
 }

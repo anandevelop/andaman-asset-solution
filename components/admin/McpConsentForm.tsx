@@ -23,8 +23,9 @@ type Props = {
 export default function McpConsentForm({ requestId, askedScope, bots, labels: l, approve, deny }: Props) {
   const [pending, startTransition] = useTransition();
   const [botUserId, setBotUserId] = useState(bots[0]?.id ?? "");
-  // Read-only unless the administrator chooses otherwise, whatever was asked.
-  const [scope, setScope] = useState<"read" | "write">("read");
+  // What the application asked for, as the starting point; the
+  // administrator's choice is what is granted.
+  const [scope, setScope] = useState<"read" | "write">(askedScope);
   const [error, setError] = useState<string | null>(null);
 
   function answer(task: () => Promise<ConsentResult>) {
@@ -60,9 +61,9 @@ export default function McpConsentForm({ requestId, askedScope, bots, labels: l,
         <span className="admin-label">{l.keyScope}</span>
         <select value={scope} onChange={(event) => setScope(event.target.value as "read" | "write")} className="admin-input mt-1">
           <option value="read">{l.scopeRead}</option>
-          {askedScope === "write" && <option value="write">{l.scopeWrite}</option>}
+          <option value="write">{l.scopeWrite}</option>
         </select>
-        <span className="admin-hint mt-1 block">{askedScope === "write" ? l.keyScopeHint : l.consentReadOnlyAsked}</span>
+        <span className="admin-hint mt-1 block">{l.consentScopeHint}</span>
       </label>
 
       <div className="flex flex-wrap items-center gap-2 pt-1">

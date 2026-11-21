@@ -3428,7 +3428,6 @@
         "consentReturn": "Returns to",
         "consentWarning": "Only approve if you started this from the application yourself, just now. The application will act as the Bot account you choose and can never delete without a confirmation.",
         "consentAccountHint": "The connection gets this account’s permissions, not yours.",
-        "consentReadOnlyAsked": "The application asked for read-only access.",
         "consentAllow": "Allow",
         "consentDeny": "Deny",
         "consentExpiredTitle": "This connection request has expired",
@@ -3439,6 +3438,7 @@
         "connectedOn": "connected",
         "endConnection": "Disconnect",
         "connectorHint": "To add this as a connector: enter the server address in the application and sign in when asked — or, in applications that support request headers, use a key instead.",
+        "consentScopeHint": "Read only lets it look; read and write lets it do the work. You can change this later in Settings → Integrations.",
         "err": {
           "FORBIDDEN": "You are not allowed to do this.",
           "INVALID_INPUT": "Check the form and try again.",

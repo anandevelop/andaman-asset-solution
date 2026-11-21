@@ -3428,7 +3428,6 @@
         "consentReturn": "将返回到",
         "consentWarning": "仅当您本人刚刚从该应用发起连接时才批准。应用将以您选择的机器人账号身份操作，未经确认无法删除数据。",
         "consentAccountHint": "连接获得的是该账号的权限，而不是您的权限。",
-        "consentReadOnlyAsked": "该应用请求的是只读权限。",
         "consentAllow": "允许",
         "consentDeny": "拒绝",
         "consentExpiredTitle": "此连接请求已过期",
@@ -3439,6 +3438,7 @@
         "connectedOn": "连接于",
         "endConnection": "断开连接",
         "connectorHint": "添加为连接器：在应用中输入服务器地址，并在提示时登录；支持请求头的应用也可以改用密钥。",
+        "consentScopeHint": "只读仅可查看；读写可代为操作。之后可在“设置 → 集成”中更改。",
         "err": {
           "FORBIDDEN": "您无权执行此操作。",
           "INVALID_INPUT": "请检查表单后重试。",

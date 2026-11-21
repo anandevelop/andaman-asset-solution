@@ -50,7 +50,6 @@ test("an application connects by signing in, and is cut off when the connection 
       code_challenge: challengeValue,
       code_challenge_method: "S256",
       state: "state-123",
-      scope: "read write",
       resource: `${origin}/api/mcp`,
       ...extra,
     })}`;
@@ -116,6 +115,17 @@ test("an application connects by signing in, and is cut off when the connection 
   const connections = page.getByTestId("mcp-connections");
   await expect(connections).toContainText("E2E Connector");
   await expect(connections).toContainText(BOT.name);
+
+  // Its access can be changed there, and the token it already holds changes with it.
+  const access = connections.getByLabel("Access: E2E Connector");
+  await expect(access).toHaveValue("write");
+  await access.selectOption("read");
+  await expect.poll(async () => (await (await call(tokens.access_token, "whoami")).json()).result.structuredContent.scope).toBe("read");
+  await page.getByTestId("mcp-connections").getByLabel("Access: E2E Connector").selectOption("write");
+  await expect.poll(async () => (await (await call(tokens.access_token, "whoami")).json()).result.structuredContent.scope).toBe("write");
+  // "Last used" follows use, not only sign-in.
+  await page.reload();
+  await expect(page.getByTestId("mcp-connections")).toContainText("last used");
 
   // Refresh: a new pair, and the old refresh token is spent.
   const refreshed = await token({ grant_type: "refresh_token", refresh_token: tokens.refresh_token, client_id: clientId });

@@ -86,7 +86,7 @@ export function authorizationServerMetadata() {
 
 /** The 401 challenge /api/mcp sends, pointing a client at the metadata. */
 export function bearerChallenge(error?: "invalid_token"): string {
-  const parts = ['realm="mcp"', `resource_metadata="${siteOrigin()}/.well-known/oauth-protected-resource"`, 'scope="read"'];
+  const parts = ['realm="mcp"', `resource_metadata="${siteOrigin()}/.well-known/oauth-protected-resource"`, 'scope="read write"'];
   if (error) parts.push(`error="${error}"`);
   return `Bearer ${parts.join(", ")}`;
 }
@@ -288,8 +288,13 @@ export async function approveRequest(input: { requestId: string; botUserId: stri
   const bot = await prisma.user.findUnique({ where: { id: input.botUserId }, select: { role: true, isActive: true } });
   if (!bot || !bot.isActive || bot.role !== Role.BOT) throw new OAuthError("invalid_request", "NOT_A_BOT");
 
-  // The administrator may narrow what was asked for, never widen it.
-  const scope: OAuthScope = row.scope === "write" && input.scope === "write" ? "write" : "read";
+  /* The administrator decides, not the application. Most applications ask
+     for no scope at all, or only for what the 401 mentioned, and would
+     otherwise be stuck read-only for good; and the person approving is the
+     one with the authority to grant either. The token response states the
+     scope actually granted, as OAuth requires when it differs from the
+     one requested. */
+  const scope: OAuthScope = input.scope === "write" ? "write" : "read";
   const code = crypto.randomBytes(32).toString("base64url");
 
   const grant = await prisma.oAuthGrant.create({
@@ -405,6 +410,18 @@ export async function revokeGrant(grantId: string): Promise<boolean> {
     await prisma.oAuthRefreshToken.updateMany({ where: { grantId, usedAt: null }, data: { usedAt: now } });
   });
   return result.count > 0;
+}
+
+/**
+ * Changes what a connection may do, from Settings → Integrations. Applies
+ * at once: the tokens it already holds are changed with it, so nobody has
+ * to connect again.
+ */
+export async function setGrantScope(grantId: string, scope: OAuthScope): Promise<boolean> {
+  const result = await prisma.oAuthGrant.updateMany({ where: { id: grantId, revokedAt: null }, data: { scope } });
+  if (result.count === 0) return false;
+  await withoutAudit(async () => await prisma.apiToken.updateMany({ where: { oauthGrantId: grantId, revokedAt: null }, data: { scope } }));
+  return true;
 }
 
 /** RFC 7009: a client handing a token back. Always "succeeds". */

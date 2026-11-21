@@ -46,9 +46,10 @@ type Props = {
   approve: (id: string) => Promise<McpActionResult>;
   reject: (id: string) => Promise<McpActionResult>;
   disconnect: (id: string) => Promise<McpActionResult>;
+  setScope: (id: string, scope: "read" | "write") => Promise<McpActionResult>;
 };
 
-export default function McpSettingsCard({ endpoint, bots, tokens, approvals, grants, labels: l, create, revoke, approve, reject, disconnect }: Props) {
+export default function McpSettingsCard({ endpoint, bots, tokens, approvals, grants, labels: l, create, revoke, approve, reject, disconnect, setScope: changeScope }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
@@ -118,7 +119,16 @@ export default function McpSettingsCard({ endpoint, bots, tokens, approvals, gra
                 <span className="text-xs text-adm-muted">
                   {l.connectedAs} {grant.botName}
                 </span>
-                <span className="text-xs text-adm-muted">{grant.scope === "write" ? l.scopeWrite : l.scopeRead}</span>
+                <select
+                  aria-label={`${l.keyScope}: ${grant.clientName}`}
+                  disabled={pending}
+                  value={grant.scope === "write" ? "write" : "read"}
+                  onChange={(event) => run(() => changeScope(grant.id, event.target.value as "read" | "write"))}
+                  className="admin-input w-auto py-1 text-xs"
+                >
+                  <option value="read">{l.scopeRead}</option>
+                  <option value="write">{l.scopeWrite}</option>
+                </select>
                 <span className="text-xs text-adm-muted">
                   {l.connectedOn} {grant.connected}
                   {grant.lastUsed ? ` · ${l.lastUsed} ${grant.lastUsed}` : ""}

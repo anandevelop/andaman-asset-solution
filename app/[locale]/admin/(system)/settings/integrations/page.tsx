@@ -47,6 +47,7 @@ import {
   rejectMcpDeletionAction,
   revokeMcpTokenAction,
   revokeOAuthGrantAction,
+  setOAuthGrantScopeAction,
 } from "./mcp-actions";
 import { fetchLineBotInfo } from "@/lib/line";
 
@@ -252,6 +253,7 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         approve={approveMcpDeletionAction.bind(null, locale)}
         reject={rejectMcpDeletionAction.bind(null, locale)}
         disconnect={revokeOAuthGrantAction.bind(null, locale)}
+        setScope={setOAuthGrantScopeAction.bind(null, locale)}
       />
 
       <LineSettingsCard
