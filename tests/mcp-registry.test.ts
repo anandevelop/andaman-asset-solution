@@ -22,10 +22,17 @@ vi.mock("@/lib/media-usage", () => ({ findMediaUsage: vi.fn(), findMediaUsageFor
 vi.mock("@/lib/s3", () => ({ deleteS3Object: vi.fn(), objectKeyFromUrl: vi.fn() }));
 vi.mock("@/app/[locale]/admin/(content)/news/actions", () => ({ createArticle: vi.fn(), updateArticle: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(catalog)/projects/[id]/content/actions", () => ({ saveProjectContent: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(catalog)/projects/[id]/seo/actions", () => ({ saveLocaleSeo: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(catalog)/projects/[id]/units/actions", () => ({ saveUnit: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(content)/events/actions", () => ({ createEvent: vi.fn(), updateEvent: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(content)/pages/faq/actions", () => ({ createFaq: vi.fn(), deleteFaq: vi.fn(), updateFaq: vi.fn() }));
+vi.mock("@/app/[locale]/admin/(content)/pages/copy/actions", () => ({ updateSiteCopy: vi.fn() }));
+vi.mock("@/lib/site-copy-content", () => ({ allCopyDefaults: vi.fn() }));
 
 import "@/lib/mcp/tools";
 import { allTools, describeTools } from "@/lib/mcp/registry";
-import { deletionKinds } from "@/lib/mcp/deletions";
+import { deletionKinds, deletionTier } from "@/lib/mcp/deletions";
 
 /** Areas the AI connection may read and never change. */
 const READ_ONLY_AREAS = /^(system|settings|user|users)_/;
@@ -36,7 +43,7 @@ describe("every MCP tool", () => {
   const tools = allTools();
 
   it("exists", () => {
-    expect(tools.length).toBeGreaterThanOrEqual(25);
+    expect(tools.length).toBeGreaterThanOrEqual(36);
   });
 
   it.each(tools.map((tool) => [tool.name, tool] as const))("%s: is described and has a usable schema", (_name, tool) => {
@@ -61,7 +68,17 @@ describe("every MCP tool", () => {
   });
 
   it("has an executor behind every area that can ask for a deletion", () => {
-    expect(deletionKinds()).toEqual(expect.arrayContaining(["media", "news.trash"]));
+    expect(deletionKinds()).toEqual(expect.arrayContaining(["media", "news.trash", "faq"]));
+  });
+
+  it("confirms every deletion in the conversation, as the team decided", () => {
+    for (const kind of deletionKinds()) expect(deletionTier(kind), kind).toBe("chat");
+  });
+
+  it("offers no way to publish, and none to reach customers, users or settings", () => {
+    for (const tool of tools) {
+      expect(tool.name, tool.name).not.toMatch(/publish|lead_|leads_(?!summary)|appointment|agent|user_|users_|setting/);
+    }
   });
 
   it("never offers users, keys or settings for editing", () => {

@@ -65,8 +65,13 @@ export async function withDeletionGrant<T>(fn: () => T | Promise<T>): Promise<T>
  * Models whose rows are rewritten as part of saving their parent: an update
  * replaces a project's translations by deleting and re-creating them. That
  * is an edit, not a deletion anybody would be asked to confirm.
+ *
+ * SiteCopy is here for the same reason from the other direction: a row is
+ * the team's wording for one line of the site, and saving the built-in
+ * wording again removes the row. The line is still on the page; it reads
+ * as it did before anyone changed it.
  */
-const REWRITTEN_ON_SAVE = /Translation$/;
+const REWRITTEN_ON_SAVE = /Translation$|^SiteCopy$/;
 
 export const MCP_DELETE_BLOCKED = "MCP_DELETE_NOT_CONFIRMED";
 

@@ -27,7 +27,8 @@ import { prisma } from "@/lib/prisma";
 import { locales } from "@/i18n";
 import { defineTool } from "@/lib/mcp/registry";
 import { registerDeletion, requestDeletion } from "@/lib/mcp/deletions";
-import { createArticle, updateArticle, type NewsFormState } from "@/app/[locale]/admin/(content)/news/actions";
+import { describeFailure, redirectTarget, toForm } from "@/lib/mcp/tools/form";
+import { createArticle, updateArticle } from "@/app/[locale]/admin/(content)/news/actions";
 
 const localeInput = z.enum(locales).describe("Which language version: en, th, zh or ru");
 const slugInput = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).min(2).max(140).describe("URL slug: lowercase letters, numbers and single hyphens");
@@ -43,30 +44,6 @@ const fields = {
   category: z.string().trim().max(80),
   tags: z.array(z.string().trim().min(1).max(40)).max(20),
 };
-
-function describeFailure(state: NewsFormState): string {
-  if (state.fields && Object.keys(state.fields).length) {
-    return `VALIDATION_FAILED:${Object.entries(state.fields).map(([field, message]) => `${field} — ${message}`).join("; ")}`;
-  }
-  return state.message ?? "SAVE_FAILED";
-}
-
-/** Next signals a redirect by throwing; the digest carries the destination. */
-function redirectTarget(error: unknown): string | null {
-  const digest = (error as { digest?: unknown } | null)?.digest;
-  if (typeof digest !== "string" || !digest.startsWith("NEXT_REDIRECT")) return null;
-  return digest.split(";")[2] ?? null;
-}
-
-type FormValues = Record<string, string | boolean | undefined>;
-function toForm(values: FormValues): FormData {
-  const form = new FormData();
-  for (const [key, value] of Object.entries(values)) {
-    if (value === true) form.set(key, "on");
-    else if (typeof value === "string") form.set(key, value);
-  }
-  return form;
-}
 
 defineTool({
   name: "news_list",

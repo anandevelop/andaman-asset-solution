@@ -17,6 +17,12 @@
  *            at /admin/settings/integrations and the deletion runs then,
  *            as that person.
  *
+ * WHICH IS IN USE. The team's decision (21 Nov 2026) is confirmation in the
+ * conversation for everything, so every executor registered by the tools
+ * is "chat" and tests/mcp-registry.test.ts holds them to it. "human" stays
+ * built and tested: making one kind wait for a person again is a one-word
+ * change where that kind is registered.
+ *
  * Why two: with "chat" the server only knows that the client came back, not
  * that a person said yes — a confused or manipulated model can answer its
  * own question. That is acceptable for a tag and not for a project.
@@ -54,6 +60,10 @@ export function registerDeletion(kind: string, executor: DeletionExecutor): void
 
 export function deletionKinds(): string[] {
   return [...executors.keys()];
+}
+
+export function deletionTier(kind: string): DeletionTier | undefined {
+  return executors.get(kind)?.tier;
 }
 
 function hashCode(code: string): string {

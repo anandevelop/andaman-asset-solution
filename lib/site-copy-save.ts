@@ -19,7 +19,8 @@
  */
 
 import "server-only";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
+import { getMcpActor } from "@/lib/mcp/context";
 import { prisma } from "@/lib/prisma";
 import { locales, type Locale } from "@/i18n";
 import { isContentNamespace, isEditableKey, validateCopy, type CopyProblem } from "@/lib/site-copy-core";
@@ -107,7 +108,11 @@ export async function saveCopyEntries(actorId: string, entries: CopyEntry[]): Pr
   /* updateTag, not revalidateTag — only updateTag expires the cache
      immediately, and the editor reads the page again next. Then every
      route, since messages reach every page through the root layout. */
-  updateTag(SITE_COPY_TAG);
+  /* Except when the save comes through the AI connection: that is a route
+     handler (/api/mcp), where updateTag throws. revalidateTag is the call
+     that is legal there; nobody is waiting to read the editor back. */
+  if (getMcpActor()) revalidateTag(SITE_COPY_TAG, "max");
+  else updateTag(SITE_COPY_TAG);
   revalidatePath("/", "layout");
 
   return { ok: true, errors, saved: toWrite.length + toClear.length };
