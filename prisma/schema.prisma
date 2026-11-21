@@ -3743,24 +3743,103 @@ model SystemError {
 /// the key is 32 random bytes, so a fast hash is enough, and a leaked
 /// database does not hand anybody a working key.
 model ApiToken {
-  id          String    @id @default(cuid())
-  name        String
+  id           String    @id @default(cuid())
+  name         String
   /// First characters of the key, so a person can tell two keys apart.
-  prefix      String
-  tokenHash   String    @unique
+  prefix       String
+  tokenHash    String    @unique
   /// "read" — tools that change nothing; "write" — everything the bot may do.
-  scope       String    @default("read")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  createdById String?
-  expiresAt   DateTime?
-  revokedAt   DateTime?
-  lastUsedAt  DateTime?
-  lastUsedIp  String?
-  createdAt   DateTime  @default(now())
+  scope        String    @default("read")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  createdById  String?
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  lastUsedIp   String?
+  /// Set when the key is a short-lived access token issued over OAuth
+  /// (lib/mcp/oauth.ts) rather than one a person made by hand. Revoking the
+  /// connection revokes every key that carries its id.
+  oauthGrantId String?
+  createdAt    DateTime  @default(now())
 
   @@index([userId])
+  @@index([oauthGrantId])
   @@map("api_tokens")
+}
+
+/// An application that asked to connect over OAuth — Claude, ChatGPT.
+/// Either it registered itself (RFC 7591) and `clientId` is one we issued,
+/// or its `clientId` is the https URL of its own metadata document and this
+/// row is our cached copy of that document. Public clients only: there is
+/// no secret, PKCE is what proves the token request comes from whoever
+/// started the sign-in.
+model OAuthClient {
+  id           String   @id @default(cuid())
+  clientId     String   @unique @db.Text
+  name         String
+  redirectUris Json
+  /// "registered" (RFC 7591) or "metadata" (client id metadata document).
+  kind         String
+  fetchedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@map("oauth_clients")
+}
+
+/// One approved connection: this application may act as this Bot account.
+/// Made when an administrator approves the consent screen; ended from
+/// Settings → Integrations, which also ends every token issued under it.
+model OAuthGrant {
+  id           String    @id @default(cuid())
+  clientId     String    @db.Text
+  clientName   String
+  botUserId    String
+  scope        String
+  approvedById String
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([revokedAt, createdAt])
+  @@map("oauth_grants")
+}
+
+/// A sign-in in progress, from the authorization request to the one-time
+/// code. `codeHash` is null until an administrator approves; the code is
+/// then good for one exchange within a minute.
+model OAuthRequest {
+  id            String    @id @default(cuid())
+  clientId      String    @db.Text
+  clientName    String
+  redirectUri   String    @db.Text
+  state         String?   @db.Text
+  codeChallenge String
+  scope         String
+  resource      String?   @db.Text
+  codeHash      String?   @unique
+  grantId       String?
+  usedAt        DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("oauth_requests")
+}
+
+/// Refresh tokens, hashed. Each is used once: exchanging it issues the
+/// next and marks this one, and a second use of a spent token means it
+/// was copied — the whole connection is revoked.
+model OAuthRefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  grantId   String
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([grantId])
+  @@map("oauth_refresh_tokens")
 }
 
 /// A deletion an AI client asked for. Nothing is ever deleted by the call

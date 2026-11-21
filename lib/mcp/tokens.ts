@@ -88,6 +88,9 @@ export type TokenRow = {
 
 export async function listApiTokens(): Promise<TokenRow[]> {
   const rows = await prisma.apiToken.findMany({
+    // Keys made by hand. The hourly tokens of an OAuth connection are
+    // listed as that connection instead (lib/mcp/oauth.ts listGrants).
+    where: { oauthGrantId: null },
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {

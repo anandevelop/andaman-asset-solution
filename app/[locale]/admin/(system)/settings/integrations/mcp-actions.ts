@@ -12,6 +12,7 @@ import { z } from "zod";
 import { requireAdminAction } from "@/lib/admin/guard";
 import { createApiToken, revokeApiToken } from "@/lib/mcp/tokens";
 import { approveDeletion, rejectDeletion } from "@/lib/mcp/deletions";
+import { approveRequest, denyRequest, OAuthError, revokeGrant } from "@/lib/mcp/oauth";
 import "@/lib/mcp/tools";
 
 export type McpActionResult =
@@ -86,6 +87,45 @@ export async function rejectMcpDeletionAction(locale: string, id: string): Promi
   if (!actorId) return { ok: false, error: "FORBIDDEN" };
   if (typeof id !== "string" || !id) return { ok: false, error: "INVALID_INPUT" };
   await rejectDeletion(id, actorId);
+  refresh(locale);
+  return { ok: true };
+}
+
+/* ── OAuth: the consent screen and ending a connection ─────────────────── */
+
+const consentSchema = z.object({
+  requestId: z.string().min(1).max(64),
+  botUserId: z.string().min(1).max(64),
+  scope: z.enum(["read", "write"]),
+});
+
+export type ConsentResult = { ok: true; redirectTo: string } | { ok: false; error: string };
+
+export async function approveOAuthRequestAction(input: unknown): Promise<ConsentResult> {
+  const actorId = await admin();
+  if (!actorId) return { ok: false, error: "FORBIDDEN" };
+  const parsed = consentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "INVALID_INPUT" };
+  try {
+    return { ok: true, redirectTo: await approveRequest({ ...parsed.data, approvedById: actorId }) };
+  } catch (error) {
+    if (error instanceof OAuthError) return { ok: false, error: error.message === "NOT_A_BOT" ? "NOT_A_BOT" : "EXPIRED" };
+    console.error("[mcp-actions] approve oauth", error);
+    return { ok: false, error: "SAVE_FAILED" };
+  }
+}
+
+export async function denyOAuthRequestAction(requestId: string): Promise<ConsentResult> {
+  if (!(await admin())) return { ok: false, error: "FORBIDDEN" };
+  if (typeof requestId !== "string" || !requestId) return { ok: false, error: "INVALID_INPUT" };
+  const redirectTo = await denyRequest(requestId);
+  return redirectTo ? { ok: true, redirectTo } : { ok: false, error: "EXPIRED" };
+}
+
+export async function revokeOAuthGrantAction(locale: string, id: string): Promise<McpActionResult> {
+  if (!(await admin())) return { ok: false, error: "FORBIDDEN" };
+  if (typeof id !== "string" || !id) return { ok: false, error: "INVALID_INPUT" };
+  await revokeGrant(id);
   refresh(locale);
   return { ok: true };
 }

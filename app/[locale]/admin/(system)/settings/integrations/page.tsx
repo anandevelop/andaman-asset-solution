@@ -39,12 +39,14 @@ import { getLineConfig, getLineDeliveries } from "@/lib/line-config";
 import McpSettingsCard from "@/components/admin/McpSettingsCard";
 import { listApiTokens } from "@/lib/mcp/tokens";
 import { pendingApprovals } from "@/lib/mcp/deletions";
+import { listGrants } from "@/lib/mcp/oauth";
 import { prisma } from "@/lib/prisma";
 import {
   approveMcpDeletionAction,
   createMcpTokenAction,
   rejectMcpDeletionAction,
   revokeMcpTokenAction,
+  revokeOAuthGrantAction,
 } from "./mcp-actions";
 import { fetchLineBotInfo } from "@/lib/line";
 
@@ -94,9 +96,10 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
 
   // The AI connection: keys, the Bot accounts a key can belong to, and the
   // deletions an AI client asked for that only a person may approve.
-  const [mcpTokens, mcpApprovals, mcpBots] = await Promise.all([
+  const [mcpTokens, mcpApprovals, mcpGrants, mcpBots] = await Promise.all([
     listApiTokens(),
     pendingApprovals(),
+    listGrants(),
     prisma.user.findMany({ where: { role: Role.BOT, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const mcpRaw = t.raw("settings.mcp") as Record<string, string> & { err: Record<string, string> };
@@ -235,11 +238,20 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
           count: row.count,
           requested: mcpDate.format(row.createdAt),
         }))}
+        grants={mcpGrants.map((grant) => ({
+          id: grant.id,
+          clientName: grant.clientName,
+          botName: grant.botName,
+          scope: grant.scope,
+          connected: mcpDate.format(grant.createdAt),
+          lastUsed: grant.lastUsedAt ? mcpDate.format(grant.lastUsedAt) : null,
+        }))}
         labels={mcpLabels}
         create={createMcpTokenAction.bind(null, locale)}
         revoke={revokeMcpTokenAction.bind(null, locale)}
         approve={approveMcpDeletionAction.bind(null, locale)}
         reject={rejectMcpDeletionAction.bind(null, locale)}
+        disconnect={revokeOAuthGrantAction.bind(null, locale)}
       />
 
       <LineSettingsCard

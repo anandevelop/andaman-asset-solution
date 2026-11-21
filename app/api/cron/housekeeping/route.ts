@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { guardCron } from "@/lib/seo/cron-auth";
 import { pruneAuditLog } from "@/lib/audit/retention";
+import { pruneOAuth } from "@/lib/mcp/oauth";
 import { recordCronFailure } from "@/lib/seo/alerts";
 
 export const maxDuration = 120;
@@ -25,7 +26,9 @@ export async function POST(request: Request) {
   try {
     const audit = await pruneAuditLog();
     console.log(`[cron/housekeeping] audit log: removed ${audit.signIns} sign-ins, ${audit.edits} edits, ${audit.customerData} customer-data events`);
-    return NextResponse.json({ ok: true, audit });
+    // Expired sign-in requests and the hourly tokens of OAuth connections.
+    const oauth = await pruneOAuth();
+    return NextResponse.json({ ok: true, audit, oauth });
   } catch (error) {
     console.error("[cron/housekeeping] failed", error);
     await recordCronFailure("housekeeping", error).catch(() => {});

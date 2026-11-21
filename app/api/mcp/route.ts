@@ -30,6 +30,7 @@ import { bearerFrom, verifyApiToken } from "@/lib/mcp/tokens";
 import { runAsMcp } from "@/lib/mcp/context";
 import { handleMcp } from "@/lib/mcp/protocol";
 import { runDueJobs } from "@/lib/mcp/jobs";
+import { bearerChallenge } from "@/lib/mcp/oauth";
 import "@/lib/mcp/tools";
 
 export const runtime = "nodejs";
@@ -63,7 +64,10 @@ export async function POST(request: Request) {
   const actor = await verifyApiToken(bearerFrom(request.headers.get("authorization")), ip);
   if (!actor) {
     rateLimit(`mcp:bad-key:${ip}`, BAD_KEY_LIMIT);
-    return rpcError(401, -32001, "A valid key is required.", { "WWW-Authenticate": 'Bearer realm="mcp"' });
+    // Names the metadata document, which is how a connector learns it can
+    // sign in instead (lib/mcp/oauth.ts).
+    const presented = Boolean(bearerFrom(request.headers.get("authorization")));
+    return rpcError(401, -32001, "A valid key is required.", { "WWW-Authenticate": bearerChallenge(presented ? "invalid_token" : undefined) });
   }
 
   const budget = rateLimit(`mcp:key:${actor.tokenId}`, CALL_LIMIT);

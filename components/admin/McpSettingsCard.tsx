@@ -32,19 +32,23 @@ type TokenRow = {
 
 type ApprovalRow = { id: string; summary: string; count: number; requested: string };
 
+type GrantRow = { id: string; clientName: string; botName: string; scope: string; connected: string; lastUsed: string | null };
+
 type Props = {
   endpoint: string;
   bots: { id: string; name: string }[];
   tokens: TokenRow[];
   approvals: ApprovalRow[];
+  grants: GrantRow[];
   labels: McpCardLabels;
   create: (input: { name: string; userId: string; scope: "read" | "write"; expiresDays: number }) => Promise<McpActionResult>;
   revoke: (id: string) => Promise<McpActionResult>;
   approve: (id: string) => Promise<McpActionResult>;
   reject: (id: string) => Promise<McpActionResult>;
+  disconnect: (id: string) => Promise<McpActionResult>;
 };
 
-export default function McpSettingsCard({ endpoint, bots, tokens, approvals, labels: l, create, revoke, approve, reject }: Props) {
+export default function McpSettingsCard({ endpoint, bots, tokens, approvals, grants, labels: l, create, revoke, approve, reject, disconnect }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
@@ -99,7 +103,33 @@ export default function McpSettingsCard({ endpoint, bots, tokens, approvals, lab
             <Copy size={14} aria-hidden />
           </button>
         </div>
-        <p className="admin-hint mt-1">{l.endpointHint}</p>
+        <p className="admin-hint mt-1">{l.connectorHint}</p>
+      </div>
+
+      <div data-testid="mcp-connections">
+        <h4 className="admin-label">{l.connectionsTitle}</h4>
+        {grants.length === 0 ? (
+          <p className="admin-hint mt-1">{l.connectionsEmpty}</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-adm-line rounded-xs border border-adm-line">
+            {grants.map((grant) => (
+              <li key={grant.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-sm">
+                <span className="font-medium text-adm-text">{grant.clientName}</span>
+                <span className="text-xs text-adm-muted">
+                  {l.connectedAs} {grant.botName}
+                </span>
+                <span className="text-xs text-adm-muted">{grant.scope === "write" ? l.scopeWrite : l.scopeRead}</span>
+                <span className="text-xs text-adm-muted">
+                  {l.connectedOn} {grant.connected}
+                  {grant.lastUsed ? ` · ${l.lastUsed} ${grant.lastUsed}` : ""}
+                </span>
+                <button type="button" disabled={pending} className="admin-btn-ghost ml-auto text-adm-danger!" onClick={() => run(() => disconnect(grant.id))}>
+                  {l.endConnection}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {approvals.length > 0 && (

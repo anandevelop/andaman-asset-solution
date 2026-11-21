@@ -126,6 +126,7 @@ export function getPinned(
   maxBytes: number,
   timeoutMs: number,
   tls: { rejectUnauthorized?: boolean } = {},
+  accept = "image/*",
 ): Promise<{ status: number; location: string | null; contentType: string; body: Buffer }> {
   return new Promise((resolve, reject) => {
     const request = https.get(
@@ -143,7 +144,7 @@ export function getPinned(
             done(null, target.address, target.family);
           }
         },
-        headers: { "User-Agent": "AndamanAssetSolution-MediaImport/1.0", Accept: "image/*" },
+        headers: { "User-Agent": "AndamanAssetSolution/1.0", Accept: accept },
         timeout: timeoutMs,
       },
       (response) => {
@@ -173,11 +174,14 @@ export function getPinned(
   });
 }
 
-export async function downloadPublicFile(raw: string, { maxBytes, timeoutMs = 20_000, maxRedirects = 3 }: { maxBytes: number; timeoutMs?: number; maxRedirects?: number }): Promise<Downloaded> {
+export async function downloadPublicFile(
+  raw: string,
+  { maxBytes, timeoutMs = 20_000, maxRedirects = 3, accept = "image/*" }: { maxBytes: number; timeoutMs?: number; maxRedirects?: number; accept?: string },
+): Promise<Downloaded> {
   let url = parsePublicHttpsUrl(raw);
   for (let hop = 0; hop <= maxRedirects; hop++) {
     const target = await resolvePublic(url.hostname);
-    const answer = await getPinned(url, target, maxBytes, timeoutMs);
+    const answer = await getPinned(url, target, maxBytes, timeoutMs, {}, accept);
     if (answer.status >= 300 && answer.status < 400) {
       if (!answer.location) throw new UnsafeUrlError("DOWNLOAD_FAILED:redirect without a location");
       url = parsePublicHttpsUrl(new URL(answer.location, url).toString());
