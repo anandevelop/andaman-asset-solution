@@ -9,8 +9,10 @@
  * this banner actually gates).
  *
  * Three states:
- *   1. First visit, no stored decision → banner opens itself.
- *   2. Returning visitor with a decision → renders nothing.
+ *   1. First visit, no stored decision → the banner is there from the
+ *      first paint: it is rendered on the server, in every page's HTML.
+ *   2. Returning visitor with a decision → still in the HTML, hidden
+ *      before paint by CONSENT_BOOT_SCRIPT (lib/cookie-consent-boot.ts).
  *   3. Footer's "Cookie Preferences" link dispatches CONSENT_OPEN_EVENT →
  *      reopens in the customise panel, pre-filled with the existing choice,
  *      so changing your mind later is one click away, not a support ticket.
@@ -21,12 +23,13 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Cookie } from "lucide-react";
 import {
   CONSENT_OPEN_EVENT,
+  readStoredConsent,
   useCookieConsent,
   writeConsent,
   type ConsentDecision,
@@ -47,16 +50,25 @@ const GHOST_BTN =
 export default function CookieConsentBanner() {
   const t = useTranslations("cookieConsent");
   const locale = useLocale();
-  const { consent, ready } = useCookieConsent();
+  const { consent } = useCookieConsent();
 
-  const [open, setOpen] = useState(false);
+  /*
+    "auto" is the banner showing itself, and it is what the server renders:
+    the server cannot know whether this browser has decided, so it always
+    sends the banner, and the stylesheet hides data-cookie-banner="auto"
+    for a browser that has (see the rule in app/styles/shared-late.css).
+    "asked" is the footer link reopening it, which shows regardless.
+  */
+  const [mode, setMode] = useState<"auto" | "asked" | "closed">("auto");
   const [customizing, setCustomizing] = useState(false);
   const [draft, setDraft] = useState<ConsentDecision>(ALL_REJECTED);
 
-  // First-time visitor: no decision on record yet.
-  useEffect(() => {
-    if (ready && consent === null) setOpen(true);
-  }, [ready, consent]);
+  // The boot script does this for a page that arrives as HTML. Arriving by
+  // client-side navigation (from /login, say) it never ran, so the mark is
+  // made here — in a layout effect, before the banner can paint.
+  useLayoutEffect(() => {
+    if (readStoredConsent() !== null) document.documentElement.setAttribute("data-cookie-decided", "");
+  }, []);
 
   // "Cookie Preferences" in the footer — reopen even if already decided,
   // straight into the customise view with the current choice pre-filled.
@@ -64,18 +76,21 @@ export default function CookieConsentBanner() {
     const onOpen = () => {
       setDraft(consent ?? ALL_REJECTED);
       setCustomizing(true);
-      setOpen(true);
+      setMode("asked");
     };
 
     window.addEventListener(CONSENT_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(CONSENT_OPEN_EVENT, onOpen);
   }, [consent]);
 
-  if (!open) return null;
+  if (mode === "closed") return null;
 
   const decide = (decision: ConsentDecision) => {
     writeConsent(decision);
-    setOpen(false);
+    // For the next public page reached without a full load: its banner
+    // mounts as "auto" again and must stay hidden.
+    document.documentElement.setAttribute("data-cookie-decided", "");
+    setMode("closed");
     setCustomizing(false);
   };
 
@@ -84,11 +99,16 @@ export default function CookieConsentBanner() {
       role="dialog"
       aria-live="polite"
       aria-label={t("necessaryTitle")}
+      data-cookie-banner={mode}
       // Solid, not translucent: bg-white/97 + backdrop-blur-sm read as a hazy
       // strip with the page bleeding through behind it, which is what made
       // this hard to read. A fully opaque background plus a visible border
       // and stronger shadow reads as a distinct panel instead.
-      className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-primary/20 bg-white p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.18)] sm:p-6"
+      // z-[55], not z-50: this used to be the last element in the document,
+      // which put it above every other z-50 layer by order alone. It is
+      // near the top now (see the public layout), so it says so — above
+      // the z-50 layers, still under the z-60 dialogs.
+      className="fixed inset-x-0 bottom-0 z-[55] border-t-2 border-primary/20 bg-white p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.18)] sm:p-6"
     >
       <div className="container-luxe">
         {!customizing ? (

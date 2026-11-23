@@ -12,6 +12,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import { CONSENT_BOOT_SCRIPT } from "@/lib/cookie-consent-boot";
 import SalesTeamSection from "@/components/SalesTeamSection";
 import SiteCta from "@/components/SiteCta";
 import RouteGate from "@/components/RouteGate";
@@ -107,6 +108,29 @@ export default async function SiteLayout({ children, params }: Props) {
         {t("skipToContent")}
       </a>
 
+      {/*
+        Mounted only inside the public site group, not the root layout —
+        /admin and /login structurally never load this banner, and since
+        Analytics.tsx (root layout) can't gain consent without it, GA/Pixel
+        never mount there either. No extra guard needed for that.
+
+        Up here, straight after the skip link, rather than after the footer
+        where it used to sit: it is position:fixed, so where it is in the
+        document does not move it on screen, but the HTML is streamed, and
+        at the bottom it arrived — and painted — after the first paint. On
+        a text page it is the largest element on a phone, so that gap was
+        the page's Largest Contentful Paint. First in the tab order is
+        also where a consent prompt belongs.
+      */}
+      {/* Before the banner, so it has run by the time the banner's markup
+          is parsed: marks <html> when this browser has already decided, and
+          the stylesheet hides the banner under that mark. Static string
+          from lib/cookie-consent-boot.ts — no user input. */}
+      <script dangerouslySetInnerHTML={{ __html: CONSENT_BOOT_SCRIPT }} />
+      <div className="print:hidden">
+        <CookieConsentBanner />
+      </div>
+
       {/* print:hidden on this and every other piece of chrome below —
           privacy-policy/terms are currently the only pages that call
           window.print() (see components/PrintButtons.tsx), and before that
@@ -176,15 +200,6 @@ export default async function SiteLayout({ children, params }: Props) {
         </div>
       </EditModeProvider>
 
-      {/*
-        Mounted only inside the public site group, not the root layout —
-        /admin and /login structurally never load this banner, and since
-        Analytics.tsx (root layout) can't gain consent without it, GA/Pixel
-        never mount there either. No extra guard needed for that.
-      */}
-      <div className="print:hidden">
-        <CookieConsentBanner />
-      </div>
     </>
   );
 }

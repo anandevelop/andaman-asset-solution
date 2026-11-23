@@ -30,6 +30,7 @@
 
 import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
+import { CONSENT_STORAGE_KEY as STORAGE_KEY } from "@/lib/cookie-consent-boot";
 
 export type ConsentDecision = {
   analytics: boolean;
@@ -41,7 +42,6 @@ type StoredConsent = ConsentDecision & {
   decidedAt: string;
 };
 
-const STORAGE_KEY = "andaman-cookie-consent";
 
 /** Fired on window whenever the decision changes, `detail` is the new
  *  ConsentDecision — lets every mounted Analytics instance react without a

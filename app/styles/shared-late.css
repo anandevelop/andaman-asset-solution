@@ -1088,3 +1088,16 @@
 .u3d-lbl.is-off {
   display: none;
 }
+
+
+/*
+  The cookie banner is in every public page's HTML, so that a first visit
+  paints it with the rest of the page instead of after the JavaScript. A
+  browser that has already decided gets data-cookie-decided on <html> from
+  CONSENT_BOOT_SCRIPT (lib/cookie-consent-boot.ts) before the banner is parsed,
+  and never sees it. Only the banner showing itself ("auto"): reopened
+  from the footer it is "asked", and shows.
+*/
+:root[data-cookie-decided] [data-cookie-banner="auto"] {
+  display: none;
+}
