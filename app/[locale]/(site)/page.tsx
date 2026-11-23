@@ -145,6 +145,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
+const HERO_THAI_FONT_PRELOADS = ["Medium", "Bold"].map((weight) => `/fonts/fc-vision-v1/FCVision-${weight}.woff2`);
+
 export default async function HomePage(props: Props) {
   const params = await props.params;
 
@@ -484,6 +486,18 @@ export default async function HomePage(props: Props) {
 
   return (
     <>
+      {/* Thai only, and only here: the hero's eyebrow and its link are set
+          in Medium and Bold. Without these two the hero is laid out in the
+          system's Thai font, then again when FC Vision arrives, and its
+          bottom-anchored block of copy jumps — 0.13 of layout shift in a
+          throttled run, against a 0.1 limit. The layout preloads Light and
+          Regular for every Thai page; see the note there for why not all
+          four everywhere. React hoists these into <head>. */}
+      {locale === "th" &&
+        HERO_THAI_FONT_PRELOADS.map((href) => (
+          <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossOrigin="anonymous" />
+        ))}
+
       {/* The company, under the same @id the project pages' provider
           points at (lib/project-schema.ts). */}
       <JsonLd

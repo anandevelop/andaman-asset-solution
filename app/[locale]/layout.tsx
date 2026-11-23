@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Roboto } from "next/font/google";
-import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -27,39 +26,28 @@ const roboto = Roboto({
   display: "swap",
 });
 
-/**
- * FC Vision (Fontcraft, commercial license purchased — see
- * fonts/fc-vision/LICENSE if a certificate is added). Thai-locale pages
- * only; every other locale keeps Roboto. Weights mirror the Roboto set
- * above so the two are interchangeable via the `font-thai` Tailwind class
- * (tailwind.config.ts) without a layout shift in type scale.
- */
-const fcVision = localFont({
-  src: [
-    { path: "../../fonts/fc-vision/FCVision-Light.woff2", weight: "300", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Medium.woff2", weight: "500", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Bold.woff2", weight: "700", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Black.woff2", weight: "900", style: "normal" },
-  ],
-  variable: "--font-fc-vision",
-  display: "swap",
-  /*
-    Not preloaded. next/font puts a <link rel="preload"> for every file in
-    the <head> of every page, and this layout is shared by all four
-    locales, so /en, /zh and /ru each fetched about 250 KB of Thai font at
-    high priority and never used it. Lighthouse's throttled mobile run
-    counted it against the hero photo (22 KB). On a Thai page the browser
-    still fetches the font as soon as Thai text needs it, and `swap` shows
-    the text in the fallback until it lands.
+/*
+  FC Vision, the Thai typeface, is not declared here. It is a plain
+  @font-face in app/styles/shared.css over the files in
+  public/fonts/fc-vision-v1, and this layout preloads two weights of it on
+  Thai pages only (see THAI_FONT_PRELOADS below).
 
-    WOFF2, not the foundry's TTF: next/font serves a local file as it is,
-    and each TTF was 120 KB (50 KB gzipped) against 32 KB as WOFF2 — the
-    same glyphs, repacked with fontTools. The .ttf files stay because
-    lib/og-render.tsx reads them: the share-image renderer cannot use WOFF2.
-  */
-  preload: false,
-});
+  It used to be a next/font/local font. next/font can preload a font for
+  every route that shares the file it is declared in or for none, and this
+  layout is shared by all four locales: preloaded, /en, /zh and /ru each
+  fetched Thai font they never drew; not preloaded, a Thai page painted in
+  the system's Thai font and re-flowed when FC Vision arrived. Lighthouse
+  measured that re-flow at up to 0.13 of layout shift on the Thai home
+  page, where 0.1 is already "needs improvement".
+
+  Light and Regular, because they are what most text above the fold is
+  set in, and each preloaded weight is 32 KB ahead of the first paint:
+  with all four the Thai pages painted about 230 ms later in a throttled
+  run. Medium, Bold and Black arrive when something needs them — except on
+  the home page, whose hero does need Medium and Bold at once and preloads
+  them itself (HERO_THAI_FONT_PRELOADS in (site)/page.tsx).
+*/
+const THAI_FONT_PRELOADS = ["Light", "Regular"].map((weight) => `/fonts/fc-vision-v1/FCVision-${weight}.woff2`);
 
 type Props = {
   children: React.ReactNode;
@@ -302,7 +290,7 @@ export default async function LocaleLayout(props: Props) {
   return (
     <html
       lang={locale}
-      className={`${roboto.variable} ${fcVision.variable}`}
+      className={roboto.variable}
       suppressHydrationWarning
     >
       <head>
@@ -315,6 +303,13 @@ export default async function LocaleLayout(props: Props) {
             the script always runs. Harmless on the public site: every rule
             that reads these attributes is scoped by :has([data-admin-root]).
             Static string from lib/admin/display-prefs.ts — no user input. */}
+        {isThai &&
+          THAI_FONT_PRELOADS.map((href) => (
+            // crossOrigin even though it is our own origin: a font is
+            // always fetched in CORS mode, and a preload without it is
+            // fetched a second time.
+            <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossOrigin="anonymous" />
+          ))}
         <script dangerouslySetInnerHTML={{ __html: DISPLAY_PREFS_BOOT_SCRIPT }} />
       </head>
       <body

@@ -1,5 +1,28 @@
 @custom-variant dark (&:is(.dark *));
 
+/*
+  FC Vision (Fontcraft, commercial licence), the Thai typeface. Weights
+  mirror Roboto's so the two are interchangeable through `font-thai`.
+
+  Plain @font-face over files in public/, not next/font, so that
+  app/[locale]/layout.tsx can preload it on Thai pages alone — the reason
+  is written there. The folder name is the version: these files are
+  served as immutable (next.config.js), so a changed font goes in a new
+  folder, with the paths here and in the layout changed to match.
+
+  The fallback face is what next/font used to generate: Arial resized to
+  FC Vision's Latin metrics, so Latin text keeps its line breaks while
+  the font loads. Thai text falls back to the system's Thai font, which
+  no override can match across phones — the preload is what covers that.
+*/
+@font-face { font-family: "FC Vision"; src: url("/fonts/fc-vision-v1/FCVision-Light.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "FC Vision"; src: url("/fonts/fc-vision-v1/FCVision-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "FC Vision"; src: url("/fonts/fc-vision-v1/FCVision-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "FC Vision"; src: url("/fonts/fc-vision-v1/FCVision-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "FC Vision"; src: url("/fonts/fc-vision-v1/FCVision-Black.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "FC Vision Fallback"; src: local("Arial"); ascent-override: 106.63%; descent-override: 17.14%; line-gap-override: 0%; size-adjust: 105.04%; }
+
+
 /* The back office's collapsed sidebar — data-admin-rail on <html>, set
    before paint by the display-prefs boot script, so the rail never paints
    wide and then snaps narrow. See lib/admin/display-prefs.ts. */
@@ -47,7 +70,7 @@
   --color-ink-muted: #516573;
 
   --font-sans: var(--font-roboto), system-ui, sans-serif;
-  --font-thai: var(--font-fc-vision), var(--font-roboto), system-ui, sans-serif;
+  --font-thai: "FC Vision", "FC Vision Fallback", var(--font-roboto), system-ui, sans-serif;
 
   --tracking-widest2: 0.28em;
 

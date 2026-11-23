@@ -484,6 +484,12 @@ const nextConfig = {
         source: "/embed/:file(.*\\.html)",
         headers: [{ key: "X-Robots-Tag", value: "noindex" }],
       },
+      // The Thai typeface (app/styles/shared.css). The folder is the
+      // version, so the files never change in place.
+      {
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       // three.js for the 3D site plans (public/embed/vendor/three-r128).
       // The folder is the version: a newer three.js goes in a new folder,
       // these files never change in place — so a visitor downloads them
