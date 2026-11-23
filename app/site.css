@@ -1,0 +1,28 @@
+/*
+  The public site's stylesheet. Imported by (site)/layout.tsx and by the
+  three files that render outside it: not-found.tsx, error.tsx and
+  [...rest]/page.tsx.
+
+  It is globals.css without the back office. A stylesheet blocks the first
+  paint, and the single shared file made every visitor download the
+  classes of some 170 admin components before seeing a contact page:
+  262 KB (38.7 KB gzipped) against 188 KB (29.6 KB) without them.
+
+  Two things are left out:
+   · styles/back-office.css — rules that only match under [data-admin-root];
+   · the class names Tailwind would find in the directories below.
+
+  The second is safe only while no public page renders a component from
+  those directories. tests/site-css-boundary.test.ts follows the imports
+  from every public route and fails if one does, because the symptom
+  otherwise is a component that renders unstyled, on the public site only,
+  with no error anywhere.
+*/
+@import "tailwindcss";
+@import "./styles/shared.css";
+@import "./styles/shared-late.css";
+
+@source not "../components/admin";
+@source not "./[locale]/admin";
+@source not "./[locale]/login";
+@source not "../lib/admin";

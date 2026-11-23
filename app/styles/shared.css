@@ -1,0 +1,1097 @@
+@custom-variant dark (&:is(.dark *));
+
+/* The back office's collapsed sidebar — data-admin-rail on <html>, set
+   before paint by the display-prefs boot script, so the rail never paints
+   wide and then snaps narrow. See lib/admin/display-prefs.ts. */
+@custom-variant rail-collapsed (:root[data-admin-rail="collapsed"] &);
+
+/* The Copilot panel open — data-admin-copilot on <html>, same mechanism. */
+@custom-variant copilot-open (:root[data-admin-copilot="open"] &);
+
+@theme {
+  --color-primary-50: #e7edf1;
+  --color-primary-100: #c3d3dd;
+  --color-primary-200: #9bb6c6;
+  --color-primary-300: #7099af;
+  --color-primary-400: #4d8099;
+  --color-primary-500: #296682;
+  --color-primary-600: #1c4e69;
+  --color-primary-700: #123a50;
+  --color-primary-800: #083551;
+  --color-primary-900: #041d2c;
+  --color-primary: #083551;
+
+  --color-accent-50: #fdf7f0;
+  --color-accent-100: #f9e9d7;
+  --color-accent-200: #f3d5b3;
+  --color-accent-300: #edc199;
+  --color-accent-400: #e8b384;
+  --color-accent-500: #dd9758;
+  --color-accent-600: #c47b3a;
+  --color-accent-700: #9c602c;
+  --color-accent-800: #7a4a20;
+  --color-accent: #e8b384;
+
+  /* The one colour in the black-and-white theme: used for fills, rules
+     and markers, never for text (it is ~2.7:1 on white). */
+  --color-gold-100: #f2f2f2;
+  --color-gold-300: #cfcfcf;
+  --color-gold: #0a0a0a;
+  --color-gold-700: #3a3a3a;
+
+  --color-surface: #f9f9fa;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f0f1f3;
+
+  --color-ink: #0d2635;
+  --color-ink-muted: #516573;
+
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
+  --font-thai: var(--font-fc-vision), var(--font-roboto), system-ui, sans-serif;
+
+  --tracking-widest2: 0.28em;
+
+  --container-container: 1440px;
+
+  --shadow-card: 0 10px 40px -12px rgba(0, 0, 0, 0.14);
+  --shadow-cardHover: 0 20px 60px -16px rgba(0, 0, 0, 0.22);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+/* Black-and-white theme, public site only. The back office and its login
+   mark themselves (data-admin-root / data-admin-login) and keep the navy and
+   gold tokens declared in @theme above. */
+:root:not(:has([data-admin-root], [data-admin-login])) {
+  --color-primary-50: #f2f2f2;
+  --color-primary-100: #e0e0e0;
+  --color-primary-200: #c2c2c2;
+  --color-primary-300: #9e9e9e;
+  --color-primary-400: #757575;
+  --color-primary-500: #545454;
+  --color-primary-600: #3b3b3b;
+  --color-primary-700: #262626;
+  --color-primary-800: #141414;
+  --color-primary-900: #050505;
+  --color-primary: #141414;
+  --color-accent-50: #f7f7f7;
+  --color-accent-100: #ebebeb;
+  --color-accent-200: #d6d6d6;
+  --color-accent-300: #bdbdbd;
+  --color-accent-400: #a8a8a8;
+  --color-accent-500: #8a8a8a;
+  --color-accent-600: #666666;
+  --color-accent-700: #4d4d4d;
+  --color-accent-800: #333333;
+  --color-accent: #a8a8a8;
+  --color-ink: #0a0a0a;
+  --color-ink-muted: #555555;
+}
+
+/*
+  The back office's semantic tokens, exposed to Tailwind as bg-adm-panel,
+  text-adm-accent-ink, rounded-card and so on. `inline` so each utility
+  reads the --adm-* variable itself, which only exists under
+  :root:has([data-admin-root]) (see "Back-office tokens" below) and is
+  re-pointed there by the dark theme — the public site never defines
+  them and never uses these names.
+*/
+@theme inline {
+  --color-adm-bg: var(--adm-bg);
+  --color-adm-panel: var(--adm-panel);
+  --color-adm-solid: var(--adm-solid);
+  --color-adm-line: var(--adm-line);
+  --color-adm-line-strong: var(--adm-line-strong);
+  --color-adm-text: var(--adm-text);
+  --color-adm-muted: var(--adm-muted);
+  --color-adm-accent-ink: var(--adm-accent-ink);
+  --color-adm-fill: var(--adm-fill);
+  --color-adm-fill-2: var(--adm-fill-2);
+  --color-adm-strong: var(--adm-strong);
+  --color-adm-on-strong: var(--adm-on-strong);
+  --color-adm-on-fill: var(--adm-on-fill);
+  --color-adm-band: var(--adm-band);
+  --color-adm-band-2: var(--adm-band-2);
+  --color-adm-rail-text: var(--adm-rail-text);
+  --color-adm-rail-dim: var(--adm-rail-dim);
+  --color-adm-rail-hi: var(--adm-rail-hi);
+  --color-adm-rail-line: var(--adm-rail-line);
+  --color-adm-rail-edge: var(--adm-rail-edge);
+  --color-adm-rail-hover: var(--adm-rail-hover);
+  --color-adm-rail-active: var(--adm-rail-active);
+  --color-adm-live: var(--adm-live);
+  --color-adm-rail-warn: var(--adm-rail-warn);
+  --color-adm-content: var(--adm-content);
+  --color-adm-brief-text: var(--adm-brief-text);
+  --color-adm-brief-dim: var(--adm-brief-dim);
+  --color-adm-sand-hi: var(--adm-sand-hi);
+  --color-adm-sand-deep: var(--adm-sand-deep);
+  --color-adm-ocean-hi: var(--adm-ocean-hi);
+  --color-adm-ocean: var(--adm-ocean);
+  --color-adm-aurora-1: var(--adm-aurora-1);
+  --color-adm-aurora-3: var(--adm-aurora-3);
+  --color-adm-info: var(--adm-info);
+
+  --color-adm-success: var(--adm-success);
+  --color-adm-success-bg: var(--adm-success-bg);
+  --color-adm-warning: var(--adm-warning);
+  --color-adm-warning-bg: var(--adm-warning-bg);
+  --color-adm-danger: var(--adm-danger);
+  --color-adm-danger-bg: var(--adm-danger-bg);
+  --color-adm-status-info: var(--adm-status-info);
+  --color-adm-status-info-bg: var(--adm-status-info-bg);
+  --color-adm-neutral: var(--adm-neutral);
+  --color-adm-neutral-bg: var(--adm-neutral-bg);
+
+  --radius-card: var(--adm-radius-card);
+  --radius-control: var(--adm-radius-control);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility container-luxe {
+  @apply mx-auto w-full max-w-container px-5 sm:px-8 lg:px-12;
+}
+
+@utility eyebrow {
+  @apply text-xs sm:text-sm font-medium uppercase tracking-widest2 text-accent-700;
+}
+
+@utility brochure-shell {
+  /* The e-brochure viewer's outer box — the element handed to
+     requestFullscreen(), and the box its own JS measures to decide how big
+     the book may be.
+
+     Stated in viewport units rather than left to the UA's `height: 100%`.
+     A percentage resolves against the containing block, and the viewer sits
+     inside react-zoom-pan-pinch's transformed wrapper: a transform makes an
+     ancestor the containing block for its descendants, so a browser that
+     resolves the percentage before promoting the element to the top layer
+     can hand it the height of the *in-page* column for a frame. Everything
+     downstream is measured from this box, so one wrong frame is a book
+     sized for the wrong screen. 100vw/100vh inside a fullscreen element is
+     the screen, and it is the screen on the first frame too. */
+  &:fullscreen {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+@utility btn-primary {
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
+}
+
+@utility btn-outline {
+
+  @apply btn-glass px-7 py-3.5 text-sm font-medium uppercase tracking-wide;
+}
+
+@utility btn-glass {
+  /* Liquid glass: a translucent, blurred and saturated pane with a bright
+     top edge, a faint lower edge and a soft drop, so it reads as a lens
+     over a photograph and still has an edge on a white section. Ink text,
+     never white. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 55%, rgba(255, 255, 255, 0.4) 100%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    inset 0 0 18px rgba(255, 255, 255, 0.35),
+    0 10px 30px -12px rgba(0, 0, 0, 0.35);
+  color: var(--color-ink);
+  transition:
+    background 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s;
+
+  &:hover {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.5) 55%, rgba(255, 255, 255, 0.62) 100%);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+      inset 0 0 18px rgba(255, 255, 255, 0.5),
+      0 14px 34px -12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@utility glass-bar {
+  /* The sticky navbar: frosted white so the page shows through as it
+     scrolls underneath, a hairline and a bright lip along the bottom. */
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 30px -18px rgba(0, 0, 0, 0.3);
+
+  @media (prefers-reduced-transparency: reduce) {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@utility btn-whatsapp {
+  /* WhatsApp's own green, with ink text (10:1) rather than white (2:1). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: #25d366;
+  color: var(--color-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 10px 24px -12px rgba(18, 140, 70, 0.7);
+  transition: background 0.3s;
+
+  &:hover,
+  &:active {
+    background: #1ebe5d;
+  }
+}
+
+@utility btn-hero {
+  /* Hero CTA over a photograph — same rounded-sm/px-7/py-3.5 footprint as
+     .btn-primary, but a solid accent fill read as too loud sitting on top
+     of a hero photo (a flat saturated block competing with the villa
+     itself). This is a glass button instead of a flat one: a thin white
+     border, a light blurred wash, small letter-spaced caps — the frame's
+     own brightness and blur do the work instead of a slab of color, so it
+     reads as restrained against any photo. Resolves to the same solid,
+     obvious accent fill on hover/focus that .btn-primary gives, so the
+     affordance doesn't get lost along with the boldness. */
+
+  @apply btn-glass px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em];
+}
+
+@utility hero-scrim {
+  /* Hero scrim.
+
+     The job is to make white type legible on a sunlit photograph without
+     veiling the building — which is the product, and the reason anyone is
+     looking at the page. An earlier version stacked a full-height ramp, a
+     flat 20% wash and a vignette; it measured well and looked like fog.
+
+     So the darkening is shaped, not directional. From `sm` up the copy
+     sits in one corner of the frame, and the scrim is an ellipse anchored
+     to that corner: strong under the copy, gone by ~84% of the way out.
+     A phone keeps the ramp below, where the copy is centred and full
+     width and there is no corner to aim at.
+
+     It used to be two half-frame ramps — one bottom-up to 62% of the
+     height, one left-to-right to 62% of the width. Between them they
+     darkened three quarters of the photograph to protect copy occupying
+     about a fifth of it, and the villa (the product, and the reason
+     anyone is on the page) came out grey. Swapping the pair for the
+     corner ellipse is strictly better on both counts, measured over the
+     real text boxes against the brightest slide in the set and against a
+     pure white plate as the worst case any uploaded photo could be:
+
+       mean frame luminance   0.322 -> 0.388   (+21%)
+       right of frame         0.448 -> 0.561   (+25%)
+       gold eyebrow, photo     2.39 -> 2.99
+       headline, photo         2.65 -> 2.68
+       tagline, photo          4.48 -> 5.06
+       ...and on white         1.94 -> 2.37, 1.84 -> 1.90, 3.71 -> 4.22
+
+     Those ratios are the worst single pixel anywhere in each text's box,
+     not the average behind the glyphs, so they read lower than what the
+     eye gets. What matters is that every one of them improved while the
+     photograph got brighter — shaping the scrim to the copy is what buys
+     both at once, where simply lightening the old ramps traded one for
+     the other. Re-measure with the same method before retuning. */
+  /* Phones get the stronger ramp: the copy is centered and full-width
+       there, so there is no clear side to push the darkening toward.
+       Lightened from the originally measured 0.88/0.72/0.4/0.08 stops —
+       those left the building looking dim; re-measure contrast before
+       retuning further if copy legibility ever regresses. */
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.83) 0%,
+    rgba(255, 255, 255, 0.63) 20%,
+    rgba(255, 255, 255, 0.36) 40%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0.0) 72%
+  );
+
+  @media (min-width: 640px) {
+    /* Barely more than a footing for the progress dashes and the arrow
+       pair along the bottom edge — .hero-scrim-side carries the copy from
+       here up. */
+    /* Lightened from 0.66/0.22 — see the mobile .hero-scrim comment above. */
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.18) 11%,
+      rgba(255, 255, 255, 0.0) 22%
+    );
+  }
+}
+
+@utility hero-scrim-side {
+  /* Named "side" from when it was a left-to-right ramp; it is the corner
+     ellipse described above. Anchored at the bottom-left because that is
+     where the copy is — move the copy and this has to move with it. */
+  /* Lightened from 0.97/0.88/0.64/0.3/0.05 — those stops were darkening
+       the villa itself (the subject of the shot) enough that it read as
+       "the hero photo is too dark." Same shape, softer ramp. */
+  background: radial-gradient(
+    100% 155% at 0% 100%,
+    rgba(255, 255, 255, 0.93) 0%,
+    rgba(255, 255, 255, 0.75) 26%,
+    rgba(255, 255, 255, 0.48) 42%,
+    rgba(255, 255, 255, 0.21) 58%,
+    rgba(255, 255, 255, 0.03) 72%,
+    rgba(255, 255, 255, 0.0) 84%
+  );
+}
+
+@utility projects-hero-scrim {
+  /* The /projects hero — components/ProjectsHero.tsx. Its own utility
+     rather than a reuse of .hero-scrim / .hero-scrim-side above: those are
+     tuned for the home page carousel's photo set and its much shorter copy
+     block, and this hero carries a breadcrumb, an eyebrow, an h1, a lede,
+     three stat figures and a shortcut bar over a brighter photograph. The
+     stops below are the ones measured against that, and lifting the home
+     page's would leave this copy short of AA.
+
+     Not `bg-linear-to-t from-primary-900/90` the way /projects/[slug]'s
+     hero does it either: a straight full-width ramp that heavy dulls the
+     villa on the right of frame, which is the one thing a visitor came to
+     this page to look at.
+
+     Measured on the real photo, worst single pixel under each text box:
+     breadcrumb 4.8 · eyebrow 5.5 · h1 6.8 · lede 8.3 · stat labels 5.3
+     (h1 is large text, so its floor is 3:1; everything else clears 4.5:1).
+     Re-measure before retuning, and re-measure if the hero photo changes —
+     these are shaped for a bright one. */
+
+  /* Phone: the copy runs the full width along the bottom, so there is no
+     corner to aim at — a ramp from below, plus a thin one from above for
+     the breadcrumb, which floats over open sky. */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.21) 6%,
+      rgba(255, 255, 255, 0.0) 15%
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.95) 14%,
+      rgba(255, 255, 255, 0.95) 28%,
+      rgba(255, 255, 255, 0.95) 42%,
+      rgba(255, 255, 255, 0.95) 52%,
+      rgba(255, 255, 255, 0.72) 64%,
+      rgba(255, 255, 255, 0.24) 76%,
+      rgba(255, 255, 255, 0.0) 88%
+    );
+
+  @media (min-width: 640px) {
+    /* From here up the copy moves into the bottom-left corner, so the
+       darkening becomes an ellipse anchored there and the right of frame
+       — the villa — stays bright.
+
+       The ellipse is 162% of the height because this copy column is tall
+       (the stat row is part of it); anything shorter and the h1 climbs out
+       of the darkened area. The bottom ramp is kept underneath it at full
+       width because the ellipse never reaches the bottom-right corner,
+       which is where the third shortcut card sits. */
+    background:
+      radial-gradient(
+        ellipse 130% 162% at 0% 100%,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 255, 255, 0.95) 24%,
+        rgba(255, 255, 255, 0.95) 44%,
+        rgba(255, 255, 255, 0.54) 64%,
+        rgba(255, 255, 255, 0.0) 84%
+      ),
+      linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.21) 7%,
+        rgba(255, 255, 255, 0.0) 17%
+      ),
+      linear-gradient(
+        to top,
+        rgba(255, 255, 255, 0.84) 0%,
+        rgba(255, 255, 255, 0.54) 11%,
+        rgba(255, 255, 255, 0.21) 24%,
+        rgba(255, 255, 255, 0.0) 40%
+      );
+  }
+}
+
+@utility company-intro-scrim {
+  /* The "Who we are" photo mosaic — components/CompanyIntroGallery.tsx.
+     Multi-stop rather than a two-stop Tailwind gradient: the label sits
+     ~20px off the bottom edge over bright white architecture, so the base
+     has to be solid while the top ~40% of the photograph stays clean.
+     One from/via/to ramp cannot do both, and the version that could was
+     dimming the photographs badly enough to be the first thing anyone
+     noticed about the section. Stops picked by measuring the worst pixel
+     behind every label against all five photos: 4.5:1 or better. */
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.93) 12%,
+    rgba(255, 255, 255, 0.33) 30%,
+    rgba(255, 255, 255, 0.03) 58%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+}
+
+@utility prose-article {
+  /* Article body. Written by hand rather than pulled in via
+     @tailwindcss/typography: the allowlist in lib/markdown.ts is short
+     enough that styling it directly is less code than a plugin plus the
+     overrides needed to match the CI palette. */
+  @apply text-[15px] leading-[1.85] text-ink/75 sm:text-base;
+
+  & > * + * {
+    @apply mt-6;
+  }
+
+  /* h1 only ever appears in rich-text body content when an editor typed
+     one deliberately — see lib/heading-policy.ts — so it needs its own
+     style rather than inheriting h2's, even though the page's *own*
+     `<h1>{article.title}</h1>` is what visitors normally see instead. */
+  & h1 {
+    @apply mt-12 text-3xl font-light text-primary sm:text-4xl;
+  }
+
+  & h2 {
+    @apply mt-12 text-2xl font-light text-primary sm:text-3xl;
+  }
+
+  & h3 {
+    @apply mt-10 text-xl font-light text-primary sm:text-2xl;
+  }
+
+  & h4 {
+    @apply mt-8 text-lg font-medium text-primary;
+  }
+
+  & h5 {
+    @apply mt-6 text-base font-medium text-primary;
+  }
+
+  & h6 {
+    @apply mt-6 text-sm font-semibold uppercase tracking-wide text-ink/70;
+  }
+
+  & a {
+    @apply text-accent-700 underline decoration-accent/40 underline-offset-4
+      transition-colors hover:decoration-accent;
+  }
+
+  & strong {
+    @apply font-medium text-primary;
+  }
+
+  /* Both tags, because both reach a reader: the rich-text editor's strike
+     button emits <s>, while `marked` renders `~~x~~` as <del> — so every
+     article written before that editor existed carries the other one. */
+  & s,
+  & del {
+    @apply text-ink/60 line-through decoration-ink/40;
+  }
+
+  & ul {
+    @apply list-disc space-y-2 pl-5 marker:text-accent;
+  }
+
+  & ol {
+    @apply list-decimal space-y-2 pl-5 marker:text-ink/65;
+  }
+
+  & blockquote {
+    @apply border-l-2 border-accent pl-6 text-lg font-light italic text-ink/65;
+  }
+
+  /* The callout box — a blockquote carrying data-block, because the
+     allowlist has no div/class/style to build one out of (see
+     lib/markdown.ts's ALLOWED_ATTR).
+
+     Written after the plain blockquote rule and undoing each of its
+     decisions explicitly: an aside is not a quotation, so the italic, the
+     size and the bare left rule all have to go rather than being inherited
+     into something that reads like a pull-quote with a background. A
+     blockquote without data-block matches none of this and renders exactly
+     as it always has. */
+  & blockquote[data-block="callout"] {
+    @apply my-8 rounded-xs border-l-4 px-5 py-4 text-base not-italic;
+  }
+
+  & blockquote[data-block="callout"] > :first-child {
+    @apply mt-0;
+  }
+
+  & blockquote[data-block="callout"] > :last-child {
+    @apply mb-0;
+  }
+
+  /* Tone carries meaning, so it is not colour alone: each one also states
+     itself in the label the editor shows. Defaults to note when the
+     attribute is missing, which is what an older callout would be. */
+  & blockquote[data-block="callout"],
+  & blockquote[data-block="callout"][data-tone="note"] {
+    @apply border-primary/40 bg-primary/5 text-ink/80;
+  }
+
+  & blockquote[data-block="callout"][data-tone="warning"] {
+    @apply border-accent-600 bg-accent-50 text-ink/80;
+  }
+
+  & blockquote[data-block="callout"][data-tone="success"] {
+    @apply border-emerald-600 bg-emerald-50 text-ink/80;
+  }
+
+  /* The pull quote — a line lifted out of the article and set large.
+     Also written after the plain blockquote rule and also undoing it: the
+     left rule goes, because a pull quote is not indented off the margin,
+     it interrupts the column. Wider than the measure it sits in on a wide
+     screen (-mx-* at lg) so it reads as a break in the text rather than as
+     an ordinary paragraph that happens to be bigger. */
+  & blockquote[data-block="pull-quote"] {
+    @apply my-10 border-l-0 border-t border-b border-accent/30 px-0 py-6 text-center
+           text-2xl font-light not-italic leading-snug text-ink/85 lg:text-3xl;
+  }
+
+  & blockquote[data-block="pull-quote"] > :first-child {
+    @apply mt-0;
+  }
+
+  /* :not(), because `blockquote[…] p` outranks the attribution rule below
+     on specificity and was setting the attribution at quote size — the
+     attribution is a <p> inside the quote like any other. */
+  &
+    blockquote[data-block="pull-quote"]
+    > p:not([data-block="quote-attribution"]) {
+    @apply text-2xl font-light lg:text-3xl;
+  }
+
+  /* The attribution: the em-dash is the convention and it is CSS rather
+     than typed text, so an author cannot half-type it and no locale has to
+     translate a punctuation mark. */
+  & p[data-block="quote-attribution"] {
+    @apply mt-4 mb-0 text-sm font-normal tracking-widest text-ink/55 uppercase;
+  }
+
+  & p[data-block="quote-attribution"]::before {
+    content: "— ";
+  }
+
+  /* Empty, it is hidden on the page for the same reason an empty
+     figcaption is — the node is always present in the document, whether or
+     not the author named anybody. The editor puts it back below. */
+  & p[data-block="quote-attribution"]:empty {
+    @apply hidden;
+  }
+
+  /* The call-to-action panel. <figure> because it is the only generic
+     grouping element in lib/markdown.ts's allowlist and, for once, also
+     the semantically right one — this is self-contained content beside
+     the article, which is what a figure is. None of the figure rules
+     further down apply to it: every one of them is scoped to data-align
+     or data-width, which an image figure has and this does not. */
+  & figure[data-block="cta"] {
+    @apply my-10 rounded-xs border border-primary/15 bg-primary/5 px-6 py-8 text-center;
+  }
+
+  & figure[data-block="cta"] > p:first-child {
+    @apply my-0 text-lg font-light text-ink/85;
+  }
+
+  & p[data-block="cta-action"] {
+    @apply mt-5 mb-0;
+  }
+
+  /* The button is an ordinary link, so it is set through the link modal
+     the editor already has rather than through an href attribute of this
+     block's own — and it reuses .btn-primary rather than restating it, so
+     a CTA in an article and a CTA on a landing page cannot drift apart.
+     no-underline because the prose link rule above underlines every <a>. */
+  & p[data-block="cta-action"] a {
+    @apply btn-primary no-underline;
+  }
+
+  /* No button yet — hidden rather than left as a blank line, same as an
+     empty figcaption or an empty quote attribution. The editor draws it
+     as a dashed outline instead; see the .ProseMirror rules. */
+  & p[data-block="cta-action"]:empty {
+    @apply hidden;
+  }
+
+  /* A project card that reached the page still wearing its marker is one
+     components/ArticleBody.tsx could not resolve — the slug no longer
+     names a published project. It renders as the link it already is, so
+     all this does is stop the <figure> contributing margins of its own on
+     top of the paragraph's. See lib/article-embeds.ts. */
+  & figure[data-block="project-card"] {
+    @apply my-0;
+  }
+
+  & figure[data-block="project-card"] > p {
+    @apply my-0;
+  }
+
+  & img {
+    @apply w-full rounded-xs shadow-card;
+  }
+
+  & figcaption {
+    @apply mt-3 text-center text-xs text-ink/65;
+  }
+
+  /* An image inserted without a caption still serializes an empty
+     <figcaption></figcaption>, because the caption is the figure node's
+     content hole rather than a conditional child — see RichTextEditor's
+     Figure. Empty, it would otherwise print as a blank line of caption
+     leading under the photo. The editor puts this back for its own
+     contenteditable region, where the empty line is the thing being typed
+     into. */
+  & figcaption:empty {
+    @apply hidden;
+  }
+
+  /* ── Figure placement ────────────────────────────────────────────────
+     Two independent decisions, carried as two attributes: data-align is
+     where the image sits, data-width is how wide it is. They used to be
+     one — the align rules each hard-coded a width — which made "a small
+     image on the right" and "a full-bleed image" expressible but "a
+     centred image that spans the page" not.
+
+     Both ride on data-* rather than classes because that is what
+     lib/markdown.ts's sanitizer allows through; see ALLOWED_ATTR.
+
+     Order matters here and is load-bearing. These rules have equal
+     specificity, so the cascade settles them by source order: alignment
+     first, width second (so an explicit width beats a centred figure's
+     default), and the float rule last (so a floated image stays small
+     whatever width was asked for — a floated full-bleed image is a
+     contradiction).
+
+     An article written before data-width existed has no such attribute,
+     and none of the width rules match it. That is deliberate and is this
+     change's acceptance criterion: every one of those articles renders
+     exactly as it did. "normal" is likewise defined as "whatever this
+     alignment has always meant", so it adds no rules of its own. */
+
+  & figure[data-align="center"] {
+    @apply mx-auto max-w-2xl;
+  }
+
+  /* wide: out past the article column by 3rem a side, but only once the
+     viewport can spare it. The column is max-w-2xl (see news/[slug]), so
+     this is stated relative to the column rather than as a chosen pixel
+     width. */
+  & figure[data-width="wide"] {
+    @apply lg:-mx-12 lg:w-[calc(100%+6rem)] lg:max-w-none;
+  }
+
+  /* full: out to the article page's container — container-luxe, i.e.
+     max-w-container inside a 1.25/2/3rem gutter. Centred on the column,
+     which is itself centred in that container, so the two centres agree
+     and the figure lands on the container's inner edges.
+
+     The gutters are the ones container-luxe actually uses; the viewport
+     term is what keeps it honest below the container's max width. */
+  & figure[data-width="full"] {
+    margin-left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 2.5rem);
+    max-width: calc(var(--container-container) - 2.5rem);
+  }
+
+  @media (min-width: 640px) {
+    & figure[data-width="full"] {
+      width: calc(100vw - 4rem);
+      max-width: calc(var(--container-container) - 4rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    & figure[data-width="full"] {
+      width: calc(100vw - 6rem);
+      max-width: calc(var(--container-container) - 6rem);
+    }
+  }
+
+  /* Last, so it wins: a floated image keeps its old size no matter what
+     width was chosen, and gives back anything the width rules moved. */
+  & figure[data-align="left"],
+  & figure[data-align="right"] {
+    @apply w-1/2 max-w-none sm:w-2/5;
+    margin-left: 0;
+    transform: none;
+  }
+
+  & figure[data-align="left"] {
+    @apply float-left mr-6;
+  }
+
+  & figure[data-align="right"] {
+    @apply float-right ml-6;
+  }
+
+  /* Tables had no styling at all until the editor could make one — the
+     allowlist accepted the tags, but nothing produced them, so a pasted
+     table rendered as unspaced text in both the editor and the article.
+     Scrollable rather than squeezed: a four-column table has no honest way
+     to fit a phone, and shrinking the type until it does is worse than
+     letting the reader swipe it. */
+  & table {
+    @apply my-8 block w-full overflow-x-auto border-collapse text-sm;
+  }
+
+  & thead {
+    @apply border-b border-primary/20;
+  }
+
+  & th {
+    @apply px-3 py-2.5 text-left align-top font-medium text-primary;
+  }
+
+  & td {
+    @apply border-t border-primary/10 px-3 py-2.5 align-top text-ink/80;
+  }
+
+  & code {
+    @apply rounded-xs bg-primary/5 px-1.5 py-0.5 font-mono text-[0.85em] text-primary;
+  }
+
+  & pre {
+    @apply overflow-x-auto rounded-xs bg-primary-900/6 p-5 text-xs leading-relaxed;
+  }
+
+  & pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* A neutral hairline, not the old gold "horizon" gradient — an <hr> in
+     an article is a real section break the author typed, so it still has
+     to be visible, but it is no longer the decorative accent line that
+     used to run under every heading on the site. */
+  & hr {
+    @apply my-12 h-px border-0 bg-ink/10;
+  }
+
+  & table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  & th {
+    @apply border-b border-primary/15 px-3 py-2 text-left font-medium text-primary;
+  }
+
+  & td {
+    @apply border-b border-primary/5 px-3 py-2 align-top;
+  }
+}
+
+/*
+  ── Back-office tokens ──────────────────────────────────────────────────
+  The CI (docs/FRONTEND_BLUEPRINT.md §3.1) as named roles, so a component
+  says "panel" or "accent ink" and the dark theme re-points one variable
+  instead of chasing utilities. These are the only raw colour values the
+  back office's components are meant to reach for.
+
+  Sand has two tokens on purpose. #E8B384 on white is 1.9:1 — fine as a
+  fill behind navy text, unreadable as text. --adm-fill is for fills
+  (primary CTA, count badges, the active marker); small sand-coloured
+  *text* uses --adm-accent-ink, which is the CI's accent-700 in light and
+  the sand itself only on navy.
+
+  Status pairs are foreground/background, each ≥5.7:1.
+*/
+:root:has([data-admin-root]) {
+  --adm-bg: #f9f9fa;
+  --adm-panel: #ffffff;
+  --adm-solid: #ffffff;
+  --adm-line: rgba(8, 53, 81, 0.1);
+  --adm-line-strong: rgba(8, 53, 81, 0.16);
+  --adm-text: #0d2635;
+  --adm-muted: #516573;
+  --adm-accent-ink: #9c602c;
+  --adm-fill: #e8b384;
+  /* The light end of the primary button's sand gradient. */
+  --adm-fill-2: #f3d5b3;
+  --adm-on-fill: #0d2635;
+  /* A strong secondary inside light cards (admin-btn-navy): navy here,
+     sand in the dark theme, where a navy button would vanish. */
+  --adm-strong: #083551;
+  --adm-on-strong: #ffffff;
+  --adm-band: #083551;
+  /* The far end of the band's gradient (the daily brief). */
+  --adm-band-2: #123a50;
+  --adm-info: #296682;
+
+  --adm-success: #17663f;
+  --adm-success-bg: #e6f4ec;
+  --adm-warning: #8a5100;
+  --adm-warning-bg: #fdf0d9;
+  --adm-danger: #b3261e;
+  --adm-danger-bg: #fdeceb;
+  --adm-status-info: #1f5aa6;
+  --adm-status-info-bg: #e8f0fb;
+  --adm-neutral: #465866;
+  --adm-neutral-bg: #eef1f4;
+
+  /* Lines, not shadows ("เส้นแทนเงา"): only floating layers — drawer,
+     palette, menus — cast one, and they use --adm-shadow-float. */
+  --adm-shadow-float: 0 0 0 1px var(--adm-line), 0 10px 40px -18px rgba(8, 53, 81, 0.18);
+  /* Cards: a 1px ring plus a faint lift (the mockup's --glow), which reads
+     softer than the hairline border phase A used. */
+  --adm-card-shadow: 0 0 0 1px var(--adm-line), 0 10px 40px -18px rgba(8, 53, 81, 0.18);
+  --adm-card-shadow-hover: 0 0 0 1px var(--adm-line-strong), 0 26px 50px -24px rgba(8, 53, 81, 0.28);
+  /* The sand light that follows the pointer over a data-spot card. */
+  --adm-spot: rgba(232, 179, 132, 0.1);
+
+  --adm-radius-card: 16px;
+  --adm-radius-control: 10px;
+
+  /* The rail (AdminSidebar) is navy in both themes, so its text and lines
+     are fixed values rather than following --adm-text. */
+  --adm-rail-text: #9db0bd;
+  --adm-rail-dim: #6b8596;
+  --adm-rail-hi: #e4ebf0;
+  --adm-rail-line: rgba(207, 224, 234, 0.1);
+  --adm-rail-edge: rgba(207, 224, 234, 0.08);
+  --adm-rail-hover: rgba(228, 235, 240, 0.06);
+  --adm-rail-active: rgba(232, 179, 132, 0.18);
+  --adm-rail-glow: rgba(232, 179, 132, 0.7);
+  --adm-live: #5fc79a;
+  /* Staging on the rail. --adm-warning is a text colour for light pages
+     (#8a5100) and turns to mud on the navy; the rail is navy in both
+     themes, so it gets its own amber. 9.6:1 on --adm-band. */
+  --adm-rail-warn: #f0c078;
+  /* The daily brief band (DailyBrief.tsx) — navy into ocean, with its
+     own text greys and the sand/ocean highlights the tiles use. */
+  --adm-brief-1: #083551;
+  --adm-brief-2: #123a50;
+  --adm-brief-3: #1c4e69;
+  --adm-brief-text: #b5c6d1;
+  --adm-brief-dim: #7f98a8;
+  --adm-sand-hi: #edc199;
+  --adm-sand-deep: #dd9758;
+  --adm-ocean-hi: #8fb5cc;
+  /* Ocean as a foreground on the page (the page-views KPI). */
+  --adm-ocean: #296682;
+  /* Content work (inbox rows, the consent KPI): the mockup's deep ocean. */
+  --adm-content: #1c4e69;
+
+  /* The haze behind the page column (.admin-aurora): ocean top-left, sand
+     top-right, deep navy low right. Faint in light, stronger in dark. */
+  --adm-aurora-1: #296682;
+  --adm-aurora-2: #c47b3a;
+  --adm-aurora-3: #123a50;
+  --adm-aurora-o1: 0.16;
+  --adm-aurora-o2: 0.16;
+  --adm-aurora-o3: 0.16;
+  --adm-omni-a: #e8b384;
+  --adm-omni-b: #296682;
+
+  /* Avatar gradients — the mockup's five, one per hash bucket (Avatar.tsx). */
+  --adm-av-sand-1: #f3d5b3;
+  --adm-av-sand-2: #e8b384;
+  --adm-av-ocean-1: #c3d3dd;
+  --adm-av-ocean-2: #7099af;
+  --adm-av-deep-1: #9bb6c6;
+  --adm-av-deep-2: #296682;
+  --adm-av-peach-1: #f9e9d7;
+  --adm-av-peach-2: #dd9758;
+  --adm-av-mist-1: #e7edf1;
+  --adm-av-mist-2: #9bb6c6;
+}
+
+/* The site's fonts, not a separate admin face: FC Vision for Thai, Roboto
+   for Latin, chosen per locale on <body> in app/[locale]/layout.tsx.
+   Figures are tabular so counts, prices and dates line up in columns and
+   do not jitter as a live number ticks. On body, not the layout div, so
+   portalled modals and menus get it too. */
+:root:has([data-admin-root]) body {
+  font-size: 14px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Headings take their colour from where they sit. The base layer paints
+   every h1–h4 text-primary, which is right for the public site and wrong
+   on the admin's navy surfaces: the daily brief's greeting was #083551 on
+   the #083551 band — in the DOM, invisible on screen. Unlayered, so it
+   wins over @layer base; a heading that wants a colour says so. */
+:root:has([data-admin-root]) :is(h1, h2, h3, h4) {
+  color: inherit;
+}
+
+/* A native checkbox or radio with rounded-xs would come out a circle at
+   the admin's 10px control radius. */
+:root:has([data-admin-root]) input:is([type="checkbox"], [type="radio"]).rounded-xs {
+  border-radius: 4px;
+}
+
+/*
+  ── Back-office density ─────────────────────────────────────────────────
+  The admin shares the site's palette but not its scale. The public site
+  is read at a distance on a phone; the back office is worked in for hours
+  on a laptop, and at the site's 14–16px body, 44px inputs and 28px card
+  padding a single project form ran to five screens.
+
+  Tailwind 4 resolves every text-*, spacing and rounded-* utility through a
+  CSS variable, so the whole admin is re-scaled here rather than in ~80
+  component files. Scoped with :has([data-admin-root]) on the root — not on
+  the layout div — so AdminModal's portal (rendered into <body>, outside
+  the layout) gets the same scale. The public site never renders
+  data-admin-root and is untouched.
+
+  THE DEFAULT IS THE V4 MOCKUP'S SCALE
+
+  14px body, 25px page title (text-2xl), 30px brief greeting (text-3xl),
+  Tailwind's own 4px spacing unit. Phase 1 made a tighter scale the default
+  (13px body, a 10% smaller spacing unit, 19px titles), and round two of
+  the v4 review traced most of "it looks smaller and denser than the
+  mockup" to exactly that. It is still there, as the opt-in
+  data-admin-density="compact" on <html> (the density toggle), for anyone
+  who wants more on screen.
+*/
+:root:has([data-admin-root]) {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.5625rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --spacing: 0.25rem;
+  /* rounded-xs is what ~450 admin controls, rows and popovers already
+     carry, so it takes the control radius rather than every one of them
+     being renamed. Cards use rounded-card. */
+  --radius-xs: var(--adm-radius-control);
+  --color-surface: var(--adm-bg);
+  --color-surface-muted: #eef1f4;
+  --tracking-widest2: 0.14em;
+}
+
+:root[data-admin-density="compact"]:has([data-admin-root]) {
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1.0625rem;
+  --text-2xl: 1.1875rem;
+  --text-3xl: 1.375rem;
+  --text-4xl: 1.625rem;
+  --spacing: 0.225rem;
+}
+
+/* Tracked capitals are a Latin device. Thai has no case, and the same
+   0.12–0.28em letter-spacing pulls its stacked vowels and tone marks away
+   from their consonants — "ระบบ" reads as four loose glyphs. */
+:root:lang(th) [data-admin-root] .uppercase,
+:root:lang(th) [data-admin-root] .admin-section-title {
+  letter-spacing: 0.02em;
+}
+
+/* Thai headings on the public site get Thai line spacing. Their size
+   utilities (text-4xl and the rest) and the explicit leading-[1.05] on the
+   heroes are set for Latin, which has nothing above the cap height. Thai
+   stacks tone marks above and vowels below, so at 1.1 the marks of one line
+   touched the line under them ("ภูเก็ต" sitting on "สบาย" on /th/about).
+   Unlayered on purpose: it has to win over those utilities, and only for
+   Thai. The admin keeps its own, denser rhythm. */
+:root:lang(th) :is(h1, h2, h3, h4):not([data-admin-root] *) {
+  line-height: 1.4;
+}
+
+/* LeadDrawer's entrance. Named keyframes rather than a transition because
+   the panel mounts already open — there is no "before" state to transition
+   from. Reduced motion gets the end state with no movement. */
+@keyframes lead-drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes lead-drawer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* UndoToast: rises in, and its bottom line empties over the undo window. */
+@keyframes toast-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-timer {
+  to {
+    transform: scaleX(0);
+  }
+}

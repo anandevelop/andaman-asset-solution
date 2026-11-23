@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AlertTriangle, RotateCw, Database } from "lucide-react";
 import { reportClientError } from "@/lib/report-client-error";
 import { ROUTE_ERROR_COPY, localeFromPathname } from "@/lib/error-copy";
+import "../site.css";
 
 /**
  * Route-level error boundary for everything under /[locale].

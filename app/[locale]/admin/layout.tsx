@@ -47,6 +47,7 @@ import CopilotPanel from "@/components/admin/CopilotPanel";
 import KeyboardShortcuts from "@/components/admin/KeyboardShortcuts";
 import SpotlightTracker from "@/components/admin/ui/SpotlightTracker";
 import { isCopilotEnabled } from "@/lib/admin/copilot";
+import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "Back office",

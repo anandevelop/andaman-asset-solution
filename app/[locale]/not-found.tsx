@@ -21,6 +21,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Building2, Compass, Home, Newspaper } from "lucide-react";
 import { NOT_FOUND_COPY, localeFromPathname } from "@/lib/error-copy";
+import "../site.css";
 
 export default function LocaleNotFound() {
   /*

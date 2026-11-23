@@ -18,6 +18,7 @@ import RouteGate from "@/components/RouteGate";
 import { getSiteSettings } from "@/lib/settings";
 import { getCtaMounts } from "@/lib/site-cta";
 import PageViewBeacon from "@/components/PageViewBeacon";
+import "../../site.css";
 import WebVitalsBeacon from "@/components/WebVitalsBeacon";
 import EditModeProvider from "@/components/edit/EditModeProvider";
 import EditableSection from "@/components/edit/EditableSection";

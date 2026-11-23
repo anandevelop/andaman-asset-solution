@@ -32,6 +32,7 @@ import { locales } from "@/i18n";
 import { identifyBot } from "@/lib/seo/bots";
 import { flushCrawlHits, recordCrawlHit } from "@/lib/seo/crawl-log";
 import { isProbePath } from "@/lib/probe-paths";
+import "../../site.css";
 
 // Every request is a lookup against a table an admin edits, so there is
 // nothing here worth caching — and caching it would mean a redirect

@@ -1,0 +1,231 @@
+/*
+  ── Back-office motion (v4) ─────────────────────────────────────────────
+  A page's blocks rise 10px into place, 40ms apart, so a screen arrives
+  top to bottom instead of all at once; a card that is a link lifts 2px
+  under the pointer. Applied here, to the page container's grandchildren
+  (each page's own top-level blocks), rather than in ~60 page files.
+  Capped at eight steps: the ninth block would otherwise wait a third of
+  a second for nothing. All of it goes under prefers-reduced-motion.
+*/
+/* No page-level horizontal scroll, at any width (v4's mobile rule). Wide
+   content — tables, the month grid, the unit tiles — scrolls inside its own
+   card; anything that still overflows is clipped at the page edge rather
+   than dragging the whole screen sideways on a phone. `clip`, not
+   `hidden`: hidden would make this a scroll container and every sticky bar
+   inside it (topbar-relative tabs, bulk bars) would stop sticking. */
+:root:has([data-admin-root]) [data-admin-page] {
+  overflow-x: clip;
+}
+
+/* Spotlight (the mockup's .spot): a soft sand light under the pointer on
+   cards marked data-spot. SpotlightTracker sets --mx/--my; without it,
+   or under reduced motion, nothing shows. */
+:root:has([data-admin-root]) .admin-card[data-spot] {
+  overflow: hidden;
+}
+:root:has([data-admin-root]) .admin-card[data-spot]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), var(--adm-spot), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+:root:has([data-admin-root]) .admin-card[data-spot]:hover::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:has([data-admin-root]) .admin-card[data-spot]::after {
+    display: none;
+  }
+}
+
+/* Table rows tint under the pointer. */
+:root:has([data-admin-root]) tbody tr:has(> .admin-td):hover {
+  background-color: color-mix(in srgb, var(--adm-text) 4%, transparent);
+}
+
+/* Aurora and grid (the mockup's .aurora / .grid-bg): two fixed layers
+   behind the page column, never in front of anything — admin/layout.tsx
+   puts them in an isolated root at z -1. Static under reduced motion. */
+.admin-aurora > span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  animation: adm-drift 26s ease-in-out infinite alternate;
+}
+.admin-aurora > span:nth-child(1) {
+  width: 620px;
+  height: 620px;
+  left: -160px;
+  top: -220px;
+  background: var(--adm-aurora-1);
+  opacity: var(--adm-aurora-o1);
+}
+.admin-aurora > span:nth-child(2) {
+  width: 520px;
+  height: 520px;
+  right: -120px;
+  top: -180px;
+  background: var(--adm-aurora-2);
+  opacity: var(--adm-aurora-o2);
+  animation-delay: -9s;
+}
+.admin-aurora > span:nth-child(3) {
+  width: 560px;
+  height: 560px;
+  right: 18%;
+  bottom: -320px;
+  background: var(--adm-aurora-3);
+  opacity: var(--adm-aurora-o3);
+  animation-delay: -17s;
+}
+@keyframes adm-drift {
+  to {
+    transform: translate(40px, 30px) scale(1.08);
+  }
+}
+.admin-grid {
+  background-image:
+    linear-gradient(var(--adm-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--adm-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0, #000, transparent 70%);
+  opacity: 0.35;
+}
+
+/* The search field's moving hairline: a gradient ring drawn in the
+   border box and masked out of the padding box, so the field itself keeps
+   its own background. */
+.admin-omni {
+  position: relative;
+}
+.admin-omni::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--adm-omni-a), var(--adm-omni-b), transparent, var(--adm-omni-a)) 0 0 / 200% 100%;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.55;
+  animation: adm-omni 5s linear infinite;
+}
+@keyframes adm-omni {
+  to {
+    background-position: 200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-aurora > span,
+  .admin-omni::before {
+    animation: none;
+  }
+}
+
+/* The daily brief: navy-to-ocean band with a light running round its
+   edge — a conic ring masked to 1px, turned by animating --adm-a (an
+   @property, so the angle interpolates instead of jumping). */
+@property --adm-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.admin-brief {
+  position: relative;
+  isolation: isolate;
+  border-radius: 22px;
+  background: linear-gradient(120deg, var(--adm-brief-1), var(--adm-brief-2) 55%, var(--adm-brief-3));
+}
+.admin-brief::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--adm-a),
+    transparent 0 70%,
+    var(--adm-fill) 82%,
+    var(--adm-ocean-hi) 92%,
+    transparent
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: adm-spin 7s linear infinite;
+}
+@keyframes adm-spin {
+  to {
+    --adm-a: 360deg;
+  }
+}
+.admin-grad-text {
+  background: linear-gradient(90deg, var(--adm-sand-hi), var(--adm-sand-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-brief::before {
+    animation: none;
+  }
+}
+
+@keyframes adm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* `backwards`, not `both`: an animation still filling a transform makes
+   its element the containing block for any position:fixed descendant —
+   the lead drawer would open inside a card instead of over the page.
+   Backwards leaves nothing behind once the 450ms are over. Fixed, sticky
+   and dialog blocks are not animated at all, for the same reason. */
+:root:has([data-admin-root]) [data-admin-page] > * > :not(.fixed, .sticky, [role="dialog"]) {
+  animation: adm-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(2) { animation-delay: 40ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(3) { animation-delay: 80ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(4) { animation-delay: 120ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(5) { animation-delay: 160ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(6) { animation-delay: 200ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(7) { animation-delay: 240ms; }
+:root:has([data-admin-root]) [data-admin-page] > * > :nth-child(n + 8) { animation-delay: 280ms; }
+
+:root:has([data-admin-root]) a.admin-card {
+  transition:
+    transform 0.25s ease,
+    border-color 0.2s ease;
+}
+:root:has([data-admin-root]) a.admin-card:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:has([data-admin-root]) [data-admin-page] > * > * {
+    animation: none;
+  }
+  :root:has([data-admin-root]) a.admin-card,
+  :root:has([data-admin-root]) a.admin-card:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+@media print {
+  :root:has([data-admin-root]) [data-admin-page] > * > * {
+    animation: none;
+  }
+}

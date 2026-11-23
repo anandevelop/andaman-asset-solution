@@ -12,7 +12,13 @@ import { absoluteAssetUrl, buildIconsMetadata, localizedAlternates, OG_LOCALE } 
 import { isSiteIndexable } from "@/lib/indexing";
 import Analytics, { AnalyticsPageview } from "@/components/Analytics";
 import { DISPLAY_PREFS_BOOT_SCRIPT } from "@/lib/admin/display-prefs";
-import "../globals.css";
+/*
+  No stylesheet here. This layout wraps the public site and the back office
+  alike, and a stylesheet imported at this level reaches every visitor:
+  (site)/layout.tsx imports site.css, admin/layout.tsx and login/page.tsx
+  import globals.css, and the files that render outside both — not-found,
+  error, [...rest] — import site.css themselves. See app/site.css.
+*/
 
 const roboto = Roboto({
   subsets: ["latin", "latin-ext"],

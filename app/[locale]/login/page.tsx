@@ -22,6 +22,7 @@ import AuthProvider from "@/components/admin/AuthProvider";
 import LoginForm from "@/components/admin/LoginForm";
 import LoginBackdrop from "@/components/admin/login/LoginBackdrop";
 import { safeCallbackUrl } from "@/lib/safe-callback";
+import "../../globals.css";
 
 type Props = {
   params: Promise<{ locale: string }>;
