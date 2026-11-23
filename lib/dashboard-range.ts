@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  * The dashboard's date-range values, shared by the server page (which
  * parses `?range=` and scopes its queries) and the client control that
- * changes it (components/admin/DashboardControls.tsx).
+ * changes it (components/admin/ReportControls.tsx).
  *
  * These live here, in a plain module, rather than beside the control:
  * every named export of a "use client" file becomes a client reference
