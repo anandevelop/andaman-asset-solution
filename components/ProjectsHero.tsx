@@ -127,9 +127,17 @@ export default function ProjectsHero({
       into each other.
     */
     <motion.section
-      initial="hidden"
-      // Not whileInView: this is the first thing on the page, so there is
-      // no scroll for it to wait on.
+      /*
+        initial={false}: the server sends the hero as it ends up, not as it
+        starts. With initial="hidden" the breadcrumb, heading, intro and
+        figures left the server at opacity 0 and stayed that way until the
+        JavaScript ran — on a slow phone, a photograph with nothing on it
+        for several seconds. The cost is the entrance stagger on a first
+        load; it still plays when the page is reached by a link from
+        another page of the site, where the component mounts in the
+        browser.
+      */
+      initial={false}
       animate="visible"
       variants={container}
       className="relative isolate flex aspect-[3/4] min-h-[610px] w-full flex-col overflow-hidden bg-surface-raised sm:aspect-[16/10] sm:min-h-[570px] lg:aspect-[2/1] lg:max-h-[740px] lg:min-h-[640px]"
