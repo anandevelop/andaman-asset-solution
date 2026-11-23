@@ -30,11 +30,11 @@ const roboto = Roboto({
  */
 const fcVision = localFont({
   src: [
-    { path: "../../fonts/fc-vision/FCVision-Light.ttf", weight: "300", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Bold.ttf", weight: "700", style: "normal" },
-    { path: "../../fonts/fc-vision/FCVision-Black.ttf", weight: "900", style: "normal" },
+    { path: "../../fonts/fc-vision/FCVision-Light.woff2", weight: "300", style: "normal" },
+    { path: "../../fonts/fc-vision/FCVision-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../fonts/fc-vision/FCVision-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../fonts/fc-vision/FCVision-Bold.woff2", weight: "700", style: "normal" },
+    { path: "../../fonts/fc-vision/FCVision-Black.woff2", weight: "900", style: "normal" },
   ],
   variable: "--font-fc-vision",
   display: "swap",
@@ -46,6 +46,11 @@ const fcVision = localFont({
     counted it against the hero photo (22 KB). On a Thai page the browser
     still fetches the font as soon as Thai text needs it, and `swap` shows
     the text in the fallback until it lands.
+
+    WOFF2, not the foundry's TTF: next/font serves a local file as it is,
+    and each TTF was 120 KB (50 KB gzipped) against 32 KB as WOFF2 — the
+    same glyphs, repacked with fontTools. The .ttf files stay because
+    lib/og-render.tsx reads them: the share-image renderer cannot use WOFF2.
   */
   preload: false,
 });
