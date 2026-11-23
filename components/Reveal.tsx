@@ -28,6 +28,8 @@ type RevealProps = {
 
 /**
  * Fades + slides content into view once as it scrolls into the viewport.
+ * Content that is already in the viewport when the page loads does not
+ * animate: it is simply there. See the note in the effect below.
  *
  * An IntersectionObserver and a CSS transition (`.reveal` in globals.css),
  * not framer-motion. This wrapper is on every public page, and with the
@@ -73,6 +75,30 @@ export default function Reveal({
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
+
+    /*
+      Only what starts off-screen is hidden to be revealed. The stylesheet
+      hides `.reveal[data-armed]`, and the attribute is set here, in the
+      browser, never in the HTML — so a section the visitor can already
+      see is painted with the page, and stays put.
+
+      It used to be the other way round: every wrapper left the server at
+      opacity 0 and waited for this effect. On a phone that is the whole
+      of a text page — heading, intro, the contact form — invisible until
+      the JavaScript had downloaded and run, several seconds after the
+      header had painted, and blank for good with JavaScript off.
+
+      Set on the element rather than through state: React does not own
+      this attribute, so there is nothing to mismatch on hydration and no
+      second render for each of the hundred-odd wrappers on a page. The
+      horizontal test is for sideways scrollers (SalesTeamSection's row),
+      whose cards start off to the right.
+    */
+    const box = element.getBoundingClientRect();
+    if (box.top >= window.innerHeight || box.left >= window.innerWidth) {
+      element.setAttribute("data-armed", "");
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;

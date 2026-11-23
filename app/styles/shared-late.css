@@ -921,13 +921,18 @@
   components/Reveal.tsx: hidden until its observer marks it shown, then a
   0.7s rise and fade on the curve framer-motion used to drive. Under
   reduced motion it simply appears.
+
+  [data-armed] is set by the component, in the browser, and only on a
+  wrapper that starts below the fold. Without it nothing is hidden: what
+  the visitor can see when the page arrives is painted with the page, not
+  after the JavaScript, and a page with JavaScript off is readable.
 */
 .reveal {
   transition:
     opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.reveal:not([data-shown]) {
+.reveal[data-armed]:not([data-shown]) {
   opacity: 0;
   transform: translateY(28px);
 }
@@ -935,7 +940,7 @@
   .reveal {
     transition: none;
   }
-  .reveal:not([data-shown]) {
+  .reveal[data-armed]:not([data-shown]) {
     transform: none;
   }
 }
