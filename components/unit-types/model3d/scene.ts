@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { BuildHelpers, FloorDef, ProjectDef, RoomDef, Seg, TypeDef, ViewName } from './types';
 
 const FH = 3.6; // floor-to-floor (m)
@@ -34,7 +35,7 @@ export interface RoomInfo {
 }
 
 interface RoomRT { def: RoomDef; meshes: THREE.Mesh[]; label: HTMLElement; anchor: CSS2DObject; size: number }
-interface WallRT { m: THREE.Mesh; kind: 'w' | 'g' | 'rail' }
+interface WallRT { m: THREE.Mesh; kind: 'w' | 'g' | 'rail' | 'p'; nx?: number; nz?: number; inside?: number; base?: number }
 interface FloorRT { def: FloorDef; id: number; group: THREE.Group; rooms: RoomRT[]; walls: WallRT[] }
 interface TypeRT { def: TypeDef; root: THREE.Group; len: number; lot: [number, number]; floors: FloorRT[] }
 
@@ -232,10 +233,10 @@ export class UnitScene {
     return m;
   }
 
-  private wall(seg: Seg, kind: 'w' | 'g' | 'rail', list: WallRT[]) {
+  private wall(seg: Seg, kind: 'w' | 'g' | 'rail' | 'p', list: WallRT[]) {
     const [x1, y1, x2, y2] = seg;
     const dx = (x2 - x1) * this.S, dz = (y2 - y1) * this.S, len = Math.hypot(dx, dz);
-    const isG = kind !== 'w', h = kind === 'rail' ? 1.1 : isG ? WH - 0.1 : WH, t = isG ? 0.05 : 0.2;
+    const isG = kind === 'g' || kind === 'rail', h = kind === 'rail' ? 1.1 : isG ? WH - 0.1 : WH, t = isG ? 0.05 : 0.2;
     const g = new THREE.BoxGeometry(len + (isG ? 0 : t), h, t);
     g.translate(0, h / 2, 0);
     const m = new THREE.Mesh(g, isG ? this.glassMat : this.wallMat);
@@ -245,7 +246,33 @@ export class UnitScene {
     m.receiveShadow = !isG;
     this.edges(m, isG ? C.glass : C.edge, isG ? 0.6 : 0.9);
     this.cur.add(m);
+    if (kind === 'p') {
+      // Which side of this wall the house is on: the side of the lot's centre.
+      const nx = -dz / len, nz = dx / len;
+      list.push({ m, kind, nx, nz, inside: Math.sign(nx * -m.position.x + nz * -m.position.z) || 1, base: 1 });
+      return;
+    }
     list.push({ m, kind });
+  }
+
+  /** A screen of vertical slats along `seg`: one mesh, so it costs one draw
+   *  call and follows the wall modes like any wall. */
+  private louver(seg: Seg, list: WallRT[]) {
+    const [x1, y1, x2, y2] = seg;
+    const dx = (x2 - x1) * this.S, dz = (y2 - y1) * this.S, len = Math.hypot(dx, dz);
+    const pitch = 0.16, n = Math.max(2, Math.round(len / pitch));
+    const slats: THREE.BufferGeometry[] = [];
+    for (let i = 0; i <= n; i++) {
+      const g = new THREE.BoxGeometry(0.07, WH, 0.14);
+      g.translate(-len / 2 + (i * len) / n, WH / 2, 0);
+      slats.push(g);
+    }
+    const m = new THREE.Mesh(mergeGeometries(slats), this.wallMat);
+    m.position.set(this.X((x1 + x2) / 2), 0.1, this.Z((y1 + y2) / 2));
+    m.rotation.y = -Math.atan2(dz, dx);
+    m.castShadow = true;
+    this.cur.add(m);
+    list.push({ m, kind: 'w' });
   }
 
   private dashed(points: [number, number][], y: number, dash: number, gap: number) {
@@ -292,19 +319,21 @@ export class UnitScene {
         g.position.set(this.X(px), 0.16, this.Z(py));
         this.cur.add(g);
       },
-      ustair: () => {
-        for (let i = 0; i < 9; i++) { const y = 690 - (i + 1) * 14; F(806, y, 862, y + 14, 0, ((i + 1) * FH) / 20); }
-        F(806, 495, 1076, 560, 0, (FH * 10) / 20);
-        for (let i = 0; i < 9; i++) { const y = 560 + i * 14; F(1020, y, 1076, y + 14, 0, (FH * (11 + i)) / 20); }
+      ustair: ([x1, y1, x2, y2], [lx1, ly1, lx2]) => {
+        const n = 9, run = (y2 - ly1) / n;
+        for (let i = 0; i < n; i++) { const y = y2 - (i + 1) * run; F(x1, y, lx1, y + run, 0, ((i + 1) * FH) / 20); }
+        F(x1, y1, x2, ly1, 0, (FH * 10) / 20);
+        for (let i = 0; i < n; i++) { const y = ly1 + i * run; F(lx2, y, x2, y + run, 0, (FH * (11 + i)) / 20); }
       },
-      lift: (cab) => {
-        const segs: Seg[] = [[868, 575, 1018, 575], [868, 575, 868, 695], [1018, 575, 1018, 695]];
+      lift: ([lx1, ly1, lx2, ly2], cab) => {
+        const t = 7; // half the shaft wall, px
+        const segs: Seg[] = [[lx1, ly1 + t, lx2, ly1 + t], [lx1 + t, ly1, lx1 + t, ly2], [lx2 - t, ly1, lx2 - t, ly2]];
         for (const [a, b, c, d] of segs) {
           const hz = b === d;
-          const m = this.box(hz ? a : a - 6, hz ? b - 6 : b, hz ? c : a + 6, hz ? b + 6 : d, 0, WH, solid(0x4a4a4a));
+          const m = this.box(hz ? a : a - t, hz ? b - t : b, hz ? c : a + t, hz ? b + t : d, 0, WH, solid(0x4a4a4a));
           this.edges(m, C.edge, 0.9);
         }
-        if (cab) F(885, 590, 1000, 680, 0.1, 2.4);
+        if (cab) F(lx1 + 28, ly1 + 28, lx2 - 28, ly2 - 14, 0.1, 2.4);
       },
     };
   }
@@ -373,6 +402,8 @@ export class UnitScene {
         this.dashed([[x1, y1], [x2, y2], [x2, y1], [x1, y2], [x1, y1], [x2, y1], [x2, y1], [x2, y2], [x2, y2], [x1, y2], [x1, y2], [x1, y1]], 0.12, 0.3, 0.22));
       const walls: WallRT[] = [];
       (f.walls ?? []).forEach((s) => this.wall(s, 'w', walls));
+      (f.party ?? []).forEach((s) => this.wall(s, 'p', walls));
+      (f.louvers ?? []).forEach((s) => this.louver(s, walls));
       (f.glass ?? []).forEach((s) => this.wall(s, 'g', walls));
       (f.rails ?? []).forEach((s) => this.wall(s, 'rail', walls));
       f.build?.(this.helpers());
@@ -387,8 +418,10 @@ export class UnitScene {
     for (const f of this.T.floors) {
       const top = f.id === this.floor;
       const s = WALL_SCALE[top ? this.wallMode : 0];
-      for (const { m, kind } of f.walls) {
+      for (const w of f.walls) {
+        const { m, kind } = w;
         if (kind === 'rail') { m.visible = true; continue; }
+        if (kind === 'p') w.base = s;
         if (kind === 'g') { m.visible = !top || this.wallMode === 0; continue; }
         m.visible = s > 0;
         m.scale.y = s || 1;
@@ -492,8 +525,23 @@ export class UnitScene {
       if (k >= 1) this.tween = null;
     }
     this.controls.update();
+    this.partyWalls();
     this.renderer.render(this.scene, this.camera);
     this.labels.render(this.scene, this.camera);
+  }
+
+  /** A shared wall stands full height while the camera is over the house
+   *  or on its inner side, and at cutaway height once the camera has gone
+   *  round to its outer side. */
+  private partyWalls() {
+    if (!this.T) return;
+    const cam = this.camera.position, low = WALL_SCALE[1];
+    for (const f of this.T.floors) for (const w of f.walls) {
+      if (w.kind !== 'p') continue;
+      const side = w.nx! * (cam.x - w.m.position.x) + w.nz! * (cam.z - w.m.position.z);
+      const outside = side * w.inside! < -0.6;
+      w.m.scale.y = outside ? Math.min(w.base || 1, low) : w.base || 1;
+    }
   }
 
   /* ---------------- picking ---------------- */

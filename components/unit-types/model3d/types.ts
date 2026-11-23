@@ -31,10 +31,12 @@ export interface BuildHelpers {
   stair(xa: number, xb: number, y1: number, y2: number, steps?: number): void;
   /** plan-symbol tree, radius in metres */
   tree(x: number, y: number, r: number): void;
-  /** Type R: U-stair around the lift core */
-  ustair(): void;
-  /** Type R: lift shaft (cab = draw the car) */
-  lift(cab: boolean): void;
+  /** U-stair around a lift core: up the west flight, across the landing
+   *  on the north side, up the east flight. `core` is the whole stair
+   *  well, `shaft` the lift inside it (open to the south). px. */
+  ustair(core: Rect, shaft: Rect): void;
+  /** lift shaft walls (cab = draw the car). px. */
+  lift(shaft: Rect, cab: boolean): void;
 }
 
 export interface FloorDef {
@@ -44,6 +46,12 @@ export interface FloorDef {
   rooms: RoomDef[];
   walls?: Seg[];
   glass?: Seg[];
+  /** Walls shared with the house next door. Solid and full height like
+   *  any wall, except while the camera is on their outer side, when they
+   *  drop to cutaway height so they do not hide the house behind them. */
+  party?: Seg[];
+  /** Screens of vertical slats (a façade's louvres): full height, see-through. */
+  louvers?: Seg[];
   /** low balustrades / pool edges */
   rails?: Seg[];
   /** unnumbered floor plates (decks, roofs, stair cores) */
