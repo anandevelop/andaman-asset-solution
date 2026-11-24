@@ -65,23 +65,31 @@ export default async function Breadcrumb({
 
   return (
     <nav aria-label={t("breadcrumb")} className={`text-xs ${base} ${className}`}>
-      <ol className="flex flex-wrap items-center gap-1.5">
+      {/* One row, always. It used to wrap, and on a phone a long last crumb
+          dropped to a line of its own that began with the "/" divider. Now
+          the earlier crumbs keep their width and the last one takes what
+          is left of the row and ends in an ellipsis. */}
+      <ol className="flex items-center gap-1.5">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
           return (
-            <li key={`${item.href}-${index}`} className="flex items-center gap-1.5">
+            <li
+              key={`${item.href}-${index}`}
+              className={`flex items-center gap-1.5 ${isLast ? "min-w-0" : "shrink-0 whitespace-nowrap"}`}
+            >
               {index > 0 && (
-                <span aria-hidden className={dividerTone}>
+                <span aria-hidden className={`shrink-0 ${dividerTone}`}>
                   /
                 </span>
               )}
 
               {isLast ? (
                 // `truncate` with a cap: the last crumb is an article
-                // headline or a project name, and a long one would push
-                // the whole trail onto three lines of a phone.
-                <span aria-current="page" className={`max-w-[16rem] truncate ${currentTone}`}>
+                // headline or a project name. The cap is for wide screens;
+                // on a phone the row runs out first, and min-w-0 is what
+                // lets the text shrink to it instead of overflowing.
+                <span aria-current="page" className={`min-w-0 max-w-[16rem] truncate ${currentTone}`}>
                   {item.name}
                 </span>
               ) : (
