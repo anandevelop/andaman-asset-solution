@@ -197,7 +197,11 @@ export default async function ArticlePage(props: Props) {
               <p className="eyebrow mt-6">{article.category}</p>
             )}
 
-            <h1 className="mt-3 max-w-3xl text-3xl font-light leading-[1.15] text-primary sm:text-5xl">
+            {/* max-w-5xl with text-balance, not max-w-3xl: at 48rem a long
+                headline broke into three short lines and left its last
+                word on a line of its own, beside half a screen of nothing.
+                Wider, it runs to two lines, and balance evens them out. */}
+            <h1 className="mt-3 max-w-5xl text-balance text-3xl font-light leading-[1.15] text-primary sm:text-5xl">
               {article.title}
             </h1>
 
