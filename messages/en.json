@@ -1695,6 +1695,7 @@
       "tags": "Tags",
       "tagsHint": "Comma separated.",
       "coverImage": "Cover image URL",
+      "coverImageHint": "Shown at 16:9 above the article, up to 1344 × 756 px. Upload 2400 × 1350 px or larger so it stays sharp on high-resolution screens; other shapes are cropped to 16:9, so keep text and faces away from the edges.",
       "ogImage": "Share image",
       "ogImageHint": "Shown when someone shares a link on Facebook, LINE or X. 1200×630 works best. Leave empty to use the cover image.",
       "excerpt": "Excerpt",

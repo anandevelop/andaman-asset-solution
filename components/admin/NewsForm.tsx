@@ -887,6 +887,10 @@ export default function NewsForm({
                 defaultValue={values.coverImageUrl}
                 onChange={setCoverImageUrl}
                 label={t("news.coverImage")}
+                // The size the public page draws it at — app/[locale]/(site)/
+                // news/[slug]/page.tsx: a 16:9 box as wide as the container.
+                // If that box changes, this sentence is wrong.
+                hint={t("news.coverImageHint")}
               />
             </section>
 
