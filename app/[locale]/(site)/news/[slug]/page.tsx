@@ -185,11 +185,11 @@ export default async function ArticlePage(props: Props) {
 
       {/* ── Header ───────────────────────────────────────────────────── */}
       <article>
-        {/* pt-12/16, not the pt-28/36 the other text pages open with: the
+        {/* pt-6/8, not the pt-28/36 the other text pages open with: the
             navbar is sticky and already takes its own height, so that much
             padding left a band of empty page above the breadcrumb — on an
             article, between the reader and the headline. */}
-        <header className="container-luxe pb-4 pt-12 sm:pt-16">
+        <header className="container-luxe pb-4 pt-6 sm:pt-8">
           <Reveal>
             <Breadcrumb items={trail} />
 
