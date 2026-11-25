@@ -264,12 +264,13 @@ export default async function AdminIntegrationsSettingsPage(props: Props) {
         undecryptable={line.undecryptable}
         bot={bot}
         webhookUrl={`${siteUrl}/api/line/webhook`}
-        destinations={line.destinations.map(({ id, type, name, enabled, source }) => ({
+        destinations={line.destinations.map(({ id, type, name, enabled, source, audience }) => ({
           id,
           type,
           name,
           enabled,
           source,
+          audience: audience === "hr" ? ("hr" as const) : ("sales" as const),
         }))}
         deliveries={deliveries}
         locale_tag={locale === "th" ? "th-TH-u-ca-buddhist" : locale}

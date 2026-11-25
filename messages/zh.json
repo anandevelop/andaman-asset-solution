@@ -594,7 +594,102 @@
     "company": "公司",
     "getInTouch": "联系我们",
     "allProjects": "全部项目",
-    "sales": "销售"
+    "sales": "销售",
+    "careers": "加入我们"
+  },
+  "careers": {
+    "eyebrow": "JOIN OUR TEAM",
+    "title": "与我们一起，建造人们向往的家",
+    "intro": "我们正在寻找注重细节、愿意与普吉岛泳池别墅项目共同成长的伙伴。",
+    "apply": "申请",
+    "applyFor": "申请 {title}",
+    "openPositions": "招聘职位",
+    "positionsCount": "{count} 个职位",
+    "noPositions": "目前暂无招聘职位，请稍后再来查看。",
+    "types": {
+      "full_time": "全职",
+      "part_time": "兼职",
+      "contract": "合同制",
+      "internship": "实习"
+    },
+    "form": {
+      "title": "加入我们",
+      "close": "关闭",
+      "stepNotice": "个人信息",
+      "stepForm": "填写申请",
+      "noticeLead": "开始填写前，请先了解我们将如何使用您的信息。",
+      "notice": {
+        "collectTitle": "我们收集的信息",
+        "collect": "姓名、电子邮箱、电话号码、学历、期望薪资以及您上传的文件。",
+        "purposeTitle": "用途",
+        "purpose": "仅用于评估您的申请并就申请事宜与您联系，不用于营销。",
+        "whoTitle": "谁可以看到",
+        "who": "人事部门及参与招聘的管理人员。申请及附件的副本也会发送至人事部门的邮箱。",
+        "retentionTitle": "保存多久",
+        "retention": "自申请之日起 {months} 个月，之后系统将删除申请及其文件。",
+        "rightsTitle": "您的权利",
+        "rights": "您可随时联系 {email}，要求查阅、更正或删除您的数据，或撤回同意。"
+      },
+      "agree": "我已阅读以上内容，并同意 Andaman Asset Solution 按上述说明收集和使用我的个人信息，用于评估我的求职申请。",
+      "decline": "不同意，关闭",
+      "continue": "同意并继续",
+      "back": "返回",
+      "submit": "提交申请",
+      "submitting": "提交中…",
+      "position": "申请职位",
+      "choosePosition": "请选择职位",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "电子邮箱",
+      "phone": "电话号码",
+      "education": "最高学历",
+      "chooseEducation": "请选择学历",
+      "salary": "期望薪资",
+      "salaryUnit": "泰铢/月",
+      "files": "附件",
+      "filesHint": "如简历、作品集、证书（选填）",
+      "chooseFile": "选择文件",
+      "dropHint": "或拖放到此处",
+      "fileLimits": "PDF、DOC、DOCX、JPG、PNG · 每个文件不超过 {mb} MB · 最多 {max} 个",
+      "remove": "移除 {name}",
+      "uploading": "上传中…",
+      "educationLevels": {
+        "doctorate": "博士",
+        "master": "硕士",
+        "bachelor": "本科",
+        "high_vocational": "高等职业文凭",
+        "vocational": "职业文凭",
+        "secondary": "中学",
+        "other": "其他"
+      },
+      "errors": {
+        "REQUIRED": "请填写此项",
+        "EMAIL_INVALID": "邮箱不完整，例如 name@example.com",
+        "PHONE_INVALID": "电话号码格式不正确",
+        "SALARY_INVALID": "请输入数字",
+        "CONSENT_REQUIRED": "需先同意方可提交申请",
+        "TOO_MANY_FILES": "最多可上传 {max} 个文件",
+        "TYPE_NOT_ALLOWED": "不支持此类文件",
+        "TOO_LARGE": "文件超过 {mb} MB",
+        "EMPTY": "此文件为空",
+        "UPLOAD_FAILED": "文件上传失败，请重试。",
+        "UPLOADS_UNAVAILABLE": "暂时无法上传附件。您仍可提交申请，之后通过邮件发送文件。",
+        "RATE_LIMITED": "操作过于频繁，请稍后再试。",
+        "POSITION_CLOSED": "该职位已停止招聘。",
+        "RECAPTCHA_FAILED": "安全验证未通过，请重试。",
+        "GENERIC": "申请提交失败，请重试。"
+      },
+      "success": {
+        "title": "已收到您的申请",
+        "body": "如您的条件符合职位要求，人事部门将通过邮件或电话与您联系。",
+        "droppedFiles": "有 {count} 个文件未能上传，请发送至 {email}。",
+        "position": "职位",
+        "name": "姓名",
+        "attachments": "附件",
+        "fileCount": "{count} 个文件",
+        "none": "无"
+      }
+    }
   },
   "cookieConsent": {
     "message": "本网站使用运行网站所必需的 Cookie，并在您同意后使用 Cookie 来统计访问量并投放 Meta 个性化广告。详情请参阅",
@@ -656,9 +751,11 @@
       "EDITOR": "编辑",
       "SALES": "销售",
       "VIEWER": "只读",
-      "BOT": "机器人"
+      "BOT": "机器人",
+      "HR": "人事"
     },
     "nav": {
+      "careers": "招聘",
       "dashboard": "今日工作",
       "projects": "项目与单元",
       "news": "新闻",
@@ -802,6 +899,11 @@
       }
     },
     "tabs": {
+      "careers": {
+        "label": "招聘",
+        "applications": "求职申请",
+        "positions": "招聘职位"
+      },
       "pages": {
         "label": "页面",
         "home": "首页",
@@ -2184,7 +2286,8 @@
           "viewCustomerContact": "查看客户电话和邮箱",
           "exportCustomerData": "导出客户数据文件（PDPA）",
           "viewAuditLog": "查看全系统修改历史",
-          "manageUsers": "管理用户、权限与系统设置"
+          "manageUsers": "管理用户、权限与系统设置",
+          "manageCareers": "求职申请与招聘职位"
         },
         "limit": {
           "submitOnly": "仅可提交审核",
@@ -3210,6 +3313,9 @@
         "typeGroup": "群组",
         "typeRoom": "聊天室",
         "typeUser": "个人",
+        "audience": "接收",
+        "audienceSales": "销售提醒",
+        "audienceHr": "人事：求职申请",
         "fromEnv": "来自服务器 .env",
         "newChat": "新 — 开启以接收",
         "unnamed": "未命名聊天",
@@ -3264,7 +3370,8 @@
         "kindBackup": "备份",
         "kindPagespeed": "PageSpeed",
         "kindError": "系统错误",
-        "kindApproval": "AI 删除审批"
+        "kindApproval": "AI 删除审批",
+        "kindHr": "求职申请"
       },
       "ai": {
         "title": "AI (Google Gemini)",
@@ -3591,12 +3698,15 @@
         "changes": "变更",
         "ip": "IP",
         "device": "设备"
-      }
+      },
+      "actionOpenApplicantFile": "打开了申请人的文件",
+      "actionEraseApplication": "删除了求职申请"
     },
     "navGroups": {
       "overview": "概览与营销",
       "sales": "销售",
       "content": "网站内容",
+      "company": "公司",
       "system": "系统"
     },
     "collapseSidebar": "收起侧边栏",
@@ -4979,7 +5089,10 @@
       "ReportNote": "报告备注",
       "AdminNotification": "通知",
       "translationSuffix": "（翻译）",
-      "Session": "登录会话"
+      "Session": "登录会话",
+      "JobPosition": "招聘职位",
+      "JobPositionTranslation": "职位名称",
+      "JobApplication": "求职申请"
     },
     "aboutHub": {
       "figures": "公司数据",
@@ -5124,6 +5237,134 @@
         "email_typo": "邮箱域名疑似拼错"
       },
       "howItWorks": "说明：访客仍会看到正常的提交成功。“是真实客户”会立即创建为线索，分配给销售并发送 LINE 和邮件通知。“垃圾”会删除并在今后静默忽略该邮箱和电话。“删除”仅删除，不屏蔽（适用于团队自己的测试）。"
+    },
+    "careers": {
+      "title": "求职申请",
+      "subtitle": "来自“加入我们”的申请，仅超级管理员和人事可见",
+      "status": {
+        "NEW": "新申请",
+        "REVIEWING": "审核中",
+        "INTERVIEW": "安排面试",
+        "HIRED": "已录用",
+        "REJECTED": "未通过"
+      },
+      "filters": {
+        "all": "全部",
+        "search": "搜索姓名、邮箱或电话",
+        "allPositions": "所有职位",
+        "apply": "搜索",
+        "label": "状态"
+      },
+      "table": {
+        "applicant": "申请人",
+        "position": "职位",
+        "education": "学历",
+        "salary": "期望薪资",
+        "files": "附件",
+        "received": "申请日期",
+        "status": "状态",
+        "empty": "暂无申请",
+        "emptyFiltered": "没有符合条件的申请",
+        "unread": "尚未查看",
+        "open": "打开 {name} 的申请"
+      },
+      "detail": {
+        "title": "申请",
+        "contact": "申请人信息",
+        "email": "邮箱",
+        "phone": "电话",
+        "education": "学历",
+        "salary": "期望薪资",
+        "salaryValue": "{amount} 泰铢/月",
+        "position": "申请职位",
+        "received": "申请日期",
+        "language": "填写语言",
+        "files": "附件",
+        "noFiles": "申请人未上传文件",
+        "fileNote": "每次打开文件都会记录在操作日志中",
+        "status": "状态",
+        "saveStatus": "保存状态",
+        "notes": "内部备注",
+        "notesHint": "仅后台可见，申请人看不到",
+        "notePlaceholder": "例如：已电话约定周五 10:00 面试",
+        "addNote": "添加备注",
+        "noNotes": "暂无备注",
+        "privacy": "同意与保存期限",
+        "consentText": "申请人于 {date} 表示同意（告知版本 {version}）",
+        "retention": "系统将于 {date} 自动删除此申请及其附件",
+        "emailSent": "已于 {date} 将副本发送至人事邮箱",
+        "emailFailed": "发送给人事的邮件失败（{error}），本页信息仍然完整",
+        "emailPending": "尚未发送邮件给人事",
+        "erase": "永久删除此申请",
+        "eraseConfirm": "永久删除 {name} 的申请及全部附件？此操作无法恢复。",
+        "eraseHint": "用于申请人要求删除其数据时。人事邮箱中的副本需手动删除。",
+        "print": "打印 / 保存为 PDF",
+        "notFound": "未找到此申请，可能已被删除。",
+        "close": "关闭"
+      },
+      "print": {
+        "heading": "求职申请",
+        "printedBy": "打印人 {name} · {date}",
+        "confidential": "本文件包含个人信息，仅用于招聘审核。",
+        "back": "返回申请",
+        "printButton": "打印 / 保存为 PDF",
+        "hint": "在打印窗口中，将目标选择为“另存为 PDF”",
+        "attachments": "附件（不包含在本文件中）",
+        "notes": "内部备注"
+      },
+      "positions": {
+        "title": "招聘职位",
+        "subtitle": "“关于我们”页面显示的职位及邀请文字",
+        "add": "添加职位",
+        "new": "新职位",
+        "edit": "编辑职位",
+        "open": "招聘中",
+        "closed": "已关闭",
+        "openAction": "开放申请",
+        "closeAction": "关闭申请",
+        "applications": "{count, plural, =0 {暂无申请} other {# 份申请}}",
+        "moveUp": "上移 {title}",
+        "moveDown": "下移 {title}",
+        "delete": "删除职位",
+        "deleteConfirm": "删除“{title}”？已收到的申请会保留。",
+        "empty": "暂无职位。点击“添加职位”开始。在此之前网站会显示暂无空缺。",
+        "type": "工作类型",
+        "fieldTitle": "职位名称",
+        "location": "工作地点",
+        "summary": "简短说明",
+        "summaryHint": "一到三行：主要职责和任职要求",
+        "isOpen": "开放申请",
+        "isOpenHint": "准备好之前可保持关闭。关闭的职位不会显示在网站上。",
+        "titleRequired": "至少需要一种语言的职位名称",
+        "languageNote": "留空的语言将显示英文或泰文名称",
+        "noTitle": "（未命名）",
+        "save": "保存职位",
+        "saved": "已保存"
+      },
+      "settings": {
+        "title": "邀请文字与设置",
+        "copyHint": "留空则使用网站的标准文字",
+        "inviteTitle": "标题",
+        "inviteIntro": "邀请文字",
+        "retention": "申请保存期限",
+        "retentionHint": "到期后系统会自动删除申请及其附件。申请人在同意前会看到此期限，保存后对新收到的申请生效。",
+        "retentionOption": "{months} 个月",
+        "notifyEmail": "接收申请副本的邮箱",
+        "notifyEmailHint": "每份申请及其附件都会发送到此邮箱",
+        "emailInvalid": "邮箱地址无效",
+        "lineHint": "LINE 通知：由超级管理员在 设置 → 集成 中将人事聊天标记为“人事”",
+        "save": "保存设置",
+        "saved": "已保存"
+      },
+      "home": {
+        "title": "您好，{name}",
+        "subtitle": "人事工作",
+        "unread": "尚未查看的申请",
+        "inProgress": "审核中或已安排面试",
+        "openPositions": "正在招聘的职位",
+        "viewApplications": "查看全部申请",
+        "managePositions": "管理职位"
+      }
     }
   },
   "legalPage": {
@@ -5218,7 +5459,8 @@
       "EDITOR": "编辑",
       "SALES": "销售",
       "VIEWER": "只读",
-      "BOT": "机器人"
+      "BOT": "机器人",
+      "HR": "人事"
     },
     "cases": {
       "legend": "按情况填写的文字",

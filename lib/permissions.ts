@@ -37,6 +37,7 @@ export const CAPABILITIES = [
   "exportCustomerData",
   "viewAuditLog",
   "manageUsers",
+  "manageCareers",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -79,6 +80,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: true,
     BOT: true,
+    HR: false,
   },
   editContent: {
     SUPER_ADMIN: true,
@@ -87,6 +89,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   publishLive: {
     SUPER_ADMIN: true,
@@ -97,6 +100,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   manageProjects: {
     SUPER_ADMIN: true,
@@ -107,6 +111,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: "unitStatusOnly",
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   viewAllLeads: {
     SUPER_ADMIN: true,
@@ -117,6 +122,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: "ownScope",
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   viewCustomerContact: {
     SUPER_ADMIN: true,
@@ -125,6 +131,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: "ownLeads",
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   exportCustomerData: {
     SUPER_ADMIN: true,
@@ -135,6 +142,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   viewAuditLog: {
     SUPER_ADMIN: true,
@@ -147,6 +155,7 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: false,
     BOT: true,
+    HR: false,
   },
   manageUsers: {
     SUPER_ADMIN: true,
@@ -155,6 +164,23 @@ export const PERMISSION_MATRIX: Record<Capability, Record<Role, Grant>> = {
     SALES: false,
     VIEWER: false,
     BOT: false,
+    HR: false,
+  },
+  /*
+    Job applications and the open positions (lib/careers/). An application
+    is a stranger's CV, phone number and expected salary, so this is the
+    narrowest row in the table: the owner and HR. Not ADMIN — running the
+    site does not need anybody's salary expectation — and not BOT, so no AI
+    client reads an applicant (it is also in WITHHELD_FROM_MCP).
+  */
+  manageCareers: {
+    SUPER_ADMIN: true,
+    ADMIN: false,
+    EDITOR: false,
+    SALES: false,
+    VIEWER: false,
+    BOT: false,
+    HR: true,
   },
 };
 
@@ -166,6 +192,7 @@ export const ROLE_ORDER: Role[] = [
   Role.SALES,
   Role.VIEWER,
   Role.BOT,
+  Role.HR,
 ];
 
 /**

@@ -45,6 +45,7 @@ export type LineCardDestination = {
   name: string;
   enabled: boolean;
   source: "join" | "manual" | "env";
+  audience: "sales" | "hr";
 };
 
 type Source = "admin" | "env" | null;
@@ -79,6 +80,9 @@ export type LineCardLabels = Record<
   | "typeGroup"
   | "typeRoom"
   | "typeUser"
+  | "audience"
+  | "audienceSales"
+  | "audienceHr"
   | "fromEnv"
   | "newChat"
   | "unnamed"
@@ -122,6 +126,7 @@ export type LineCardLabels = Record<
   | "kindPagespeed"
   | "kindError"
   | "kindApproval"
+  | "kindHr"
   | "reason.EVENT_OFF"
   | "outcomeSent"
   | "outcomeFailed"
@@ -135,7 +140,7 @@ export type LineCardLabels = Record<
 
 export type LineCardDelivery = {
   at: string;
-  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval";
+  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval" | "hr";
   outcome: "sent" | "failed" | "skipped";
   detail: string;
 };
@@ -411,6 +416,22 @@ export default function LineSettingsCard(props: Props) {
                   </p>
                   <p className="admin-mono truncate text-xs text-adm-muted">{d.id}</p>
                 </div>
+                {/* Which alerts this chat gets: customers' enquiries, or job
+                    applications. Never both — see LineDestination.audience. */}
+                <select
+                  className="admin-input h-8 w-auto py-0 text-xs"
+                  aria-label={`${l.audience}: ${d.name || d.id}`}
+                  value={d.audience}
+                  disabled={pending || d.source === "env"}
+                  onChange={(event) =>
+                    run(() =>
+                      updateLineDestinationAction(locale, d.id, { audience: event.target.value === "hr" ? "hr" : "sales" }),
+                    )
+                  }
+                >
+                  <option value="sales">{l.audienceSales}</option>
+                  <option value="hr">{l.audienceHr}</option>
+                </select>
                 <button
                   type="button"
                   className="admin-btn admin-btn-sm admin-btn-ghost"
@@ -541,6 +562,7 @@ export default function LineSettingsCard(props: Props) {
                         pagespeed: l.kindPagespeed,
                         error: l.kindError,
                         approval: l.kindApproval,
+                        hr: l.kindHr,
                       }[d.kind]
                     }
                   </span>

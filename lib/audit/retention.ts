@@ -24,7 +24,7 @@
 
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { AUTH_MODEL, CONTACT_REVEAL, LEAD_ERASE } from "@/lib/audit/events";
+import { APPLICANT_FILE_ACCESS, APPLICATION_ERASE, AUTH_MODEL, CONTACT_REVEAL, LEAD_ERASE } from "@/lib/audit/events";
 
 export const AUDIT_RETENTION_DAYS = {
   signIns: 90,
@@ -33,7 +33,8 @@ export const AUDIT_RETENTION_DAYS = {
 } as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const CUSTOMER_DATA_ACTIONS = [CONTACT_REVEAL, LEAD_ERASE];
+// Personal-data events: customers' and, since the careers module, job applicants'.
+const CUSTOMER_DATA_ACTIONS = [CONTACT_REVEAL, LEAD_ERASE, APPLICANT_FILE_ACCESS, APPLICATION_ERASE];
 
 const before = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
 

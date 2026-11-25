@@ -99,7 +99,7 @@ export async function addLineDestinationAction(locale: string, rawId: string, na
 export async function updateLineDestinationAction(
   locale: string,
   id: string,
-  patch: { enabled?: boolean; name?: string },
+  patch: { enabled?: boolean; name?: string; audience?: "sales" | "hr" },
 ) {
   return guarded(locale, async (actorId) => {
     const current = (await getLineConfig()).destinations.find((d) => d.id === id);
@@ -109,6 +109,8 @@ export async function updateLineDestinationAction(
         ...current,
         enabled: patch.enabled ?? current.enabled,
         name: patch.name !== undefined ? String(patch.name).trim().slice(0, 80) : current.name,
+        // Anything but the literal "hr" is sales, the default every chat had.
+        audience: patch.audience !== undefined ? (patch.audience === "hr" ? "hr" : "sales") : current.audience,
       },
       actorId,
     );

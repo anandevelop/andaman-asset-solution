@@ -19,6 +19,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   getActiveRecipients,
+  getHrRecipients,
   getLineConfig,
   lineSkipReason,
   recordLineDelivery,
@@ -449,7 +450,7 @@ export async function sendLineTest(onlyTo?: string): Promise<LineSendResult | { 
  * throws; the outcome lands in the delivery log like every other alert.
  */
 export async function pushLineAlert(alert: {
-  kind: "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval";
+  kind: "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval" | "hr";
   title: string;
   rows: [string, string][];
   url: string;
@@ -457,6 +458,21 @@ export async function pushLineAlert(alert: {
 }): Promise<void> {
   try {
     const https = /^https:\/\//.test(alert.url);
+    /*
+      An HR notice goes to the HR chats and to no other. With none switched
+      on it is recorded as skipped here, and not handed to send() with no
+      target: send() would then fall back to the sales chats, which is the
+      one place a job applicant's name must not go.
+    */
+    let target: { token: string; to: string[] } | undefined;
+    if (alert.kind === "hr") {
+      const hr = await getHrRecipients();
+      if (!hr) {
+        await recordLineDelivery({ kind: "hr", outcome: "skipped", detail: "NO_HR_CHAT" });
+        return;
+      }
+      target = hr;
+    }
     await send(
       [
         {
@@ -495,7 +511,7 @@ export async function pushLineAlert(alert: {
           },
         },
       ],
-      undefined,
+      target,
       alert.kind,
     );
   } catch (error) {

@@ -55,7 +55,17 @@ export type LineDestination = {
   addedAt: string;
   /** "join": the OA was added to the chat. "env": from LINE_NOTIFY_TO. */
   source: "join" | "manual" | "env";
+  /**
+   * Which alerts this chat receives. Absent means "sales": every chat
+   * saved before this field existed keeps getting what it got. "hr" chats
+   * get job-application notices and nothing else, and sales chats never
+   * get those — an applicant is not the sales team's business, and a
+   * customer's phone number is not HR's.
+   */
+  audience?: LineAudience;
 };
+
+export type LineAudience = "sales" | "hr";
 
 export type CredentialSource = "admin" | "env" | null;
 
@@ -188,7 +198,15 @@ export async function getLineConfig(): Promise<LineConfig> {
 /** Everything needed to actually post an alert. */
 export async function getActiveRecipients(): Promise<{ token: string; to: string[] } | null> {
   const config = await getLineConfig();
-  const to = config.destinations.filter((d) => d.enabled).map((d) => d.id);
+  const to = config.destinations.filter((d) => d.enabled && d.audience !== "hr").map((d) => d.id);
+  if (!config.enabled || !config.accessToken || to.length === 0) return null;
+  return { token: config.accessToken, to };
+}
+
+/** The chats switched on for HR: where a new job application is announced. */
+export async function getHrRecipients(): Promise<{ token: string; to: string[] } | null> {
+  const config = await getLineConfig();
+  const to = config.destinations.filter((d) => d.enabled && d.audience === "hr").map((d) => d.id);
   if (!config.enabled || !config.accessToken || to.length === 0) return null;
   return { token: config.accessToken, to };
 }
@@ -301,7 +319,7 @@ export async function recordLineChat(
  */
 export type LineDelivery = {
   at: string;
-  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval";
+  kind: "lead" | "registration" | "test" | "unclaimed" | "reservation" | "weekly" | "backup" | "pagespeed" | "error" | "approval" | "hr";
   outcome: "sent" | "failed" | "skipped";
   /** Why it was skipped, or what LINE answered when it failed. */
   detail: string;

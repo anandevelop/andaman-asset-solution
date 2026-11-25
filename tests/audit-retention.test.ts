@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const deleteMany = vi.fn();
 vi.mock("@/lib/prisma", () => ({ prisma: { auditLog: { deleteMany: (a: unknown) => deleteMany(a) } } }));
-vi.mock("@/lib/audit/events", () => ({ AUTH_MODEL: "Session", CONTACT_REVEAL: "reveal_contact", LEAD_ERASE: "erase_lead" }));
+vi.mock("@/lib/audit/events", () => ({ AUTH_MODEL: "Session", CONTACT_REVEAL: "reveal_contact", LEAD_ERASE: "erase_lead", APPLICANT_FILE_ACCESS: "open_applicant_file", APPLICATION_ERASE: "erase_application" }));
 
 import { AUDIT_RETENTION_DAYS, auditPruneFilters, pruneAuditLog } from "@/lib/audit/retention";
 
@@ -45,7 +45,7 @@ describe("audit retention", () => {
     // Otherwise the 30-day rule would delete three-year evidence after a month.
     const { edits } = auditPruneFilters(now);
     expect(edits.model).toEqual({ not: "Session" });
-    expect(edits.action).toEqual({ notIn: ["reveal_contact", "erase_lead"] });
+    expect(edits.action).toEqual({ notIn: ["reveal_contact", "erase_lead", "open_applicant_file", "erase_application"] });
   });
 
   it("deletes by those three rules and reports the counts", async () => {

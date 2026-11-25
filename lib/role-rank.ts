@@ -41,6 +41,14 @@ import type { Role } from "@prisma/client";
  */
 const ROLE_RANK: Record<Role, number> = {
   VIEWER: 0,
+  /*
+    On the bottom rung with VIEWER, and deliberately: HR reaches the job
+    applications and the open positions through the manageCareers
+    capability and nothing through rank. Every zone that admits VIEWER by
+    rank also checks an allow-list of roles (lib/admin/nav.ts ROLE_SETS)
+    that HR is not on.
+  */
+  HR: 0,
   SALES: 1,
   EDITOR: 2,
   ADMIN: 3,

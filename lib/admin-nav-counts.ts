@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 import { getMyAppointmentsToday } from "@/lib/appointments";
 import { leadScopeWhere } from "@/lib/leads-board";
+import { can } from "@/lib/permissions";
 
 export type AdminNavCounts = {
   /** Unassigned leads that are not yet won or lost — needs an owner. */
@@ -32,6 +33,9 @@ export type AdminNavCounts = {
   appointmentsToday: number;
   /** Content sitting in the draft/review workflow's review queue. */
   reviewQueue: number;
+  /** Job applications nobody has opened yet. Zero for a role that cannot
+   *  read them, so the number never reaches a session it is not for. */
+  newApplications: number;
 };
 
 /** A lead in either of these statuses is closed — done being worked. */
@@ -74,7 +78,7 @@ export async function getAdminNavCounts(user: { id: string; role: Role }): Promi
   // Same scope as /admin/leads, so the badge never counts leads this
   // account cannot open.
   const scope = await leadScopeWhere(user);
-  const [newLeads, appointmentsToday, reviewQueue] = await Promise.all([
+  const [newLeads, appointmentsToday, reviewQueue, newApplications] = await Promise.all([
     safeQuery(
       "adminNav:newLeads",
       () =>
@@ -89,7 +93,10 @@ export async function getAdminNavCounts(user: { id: string; role: Role }): Promi
       (rows) => rows.length,
     ),
     getReviewQueueBreakdown().then((breakdown) => breakdown.total),
+    can(user.role, "manageCareers")
+      ? safeQuery("adminNav:newApplications", () => prisma.jobApplication.count({ where: { viewedAt: null } }), 0)
+      : 0,
   ]);
 
-  return { newLeads, appointmentsToday, reviewQueue };
+  return { newLeads, appointmentsToday, reviewQueue, newApplications };
 }

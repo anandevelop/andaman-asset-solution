@@ -135,6 +135,9 @@ describe("RATE_LIMITS policies", () => {
   it("defines every policy the routes reference", () => {
     expect(Object.keys(RATE_LIMITS).sort()).toEqual(
       [
+        // app/api/careers/* — the job application form and its uploads.
+        "careersApply",
+        "careersUpload",
         "cookieConsent",
         // app/api/validate-email/route.ts — the lead form's inline check.
         "emailCheck",

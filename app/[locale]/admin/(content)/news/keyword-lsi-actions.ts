@@ -18,7 +18,7 @@
  */
 
 import { Role } from "@prisma/client";
-import { requireAdminAction } from "@/lib/admin/guard";
+import { requireAdminAction, requireCapabilityAction } from "@/lib/admin/guard";
 import { prisma } from "@/lib/prisma";
 
 export type TrackedKeyword = {
@@ -37,7 +37,9 @@ export async function getKeywordForPhrase(
   phrase: string,
   locale: string,
 ): Promise<TrackedKeyword | null> {
-  await requireAdminAction(Role.VIEWER);
+  // The content zone's own capability, not a rank: the lowest rank now
+  // includes human resources, who have no business in the news editor.
+  await requireCapabilityAction("viewContent");
 
   const trimmed = phrase.trim();
   if (!trimmed) return null;

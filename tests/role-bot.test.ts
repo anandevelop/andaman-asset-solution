@@ -24,10 +24,11 @@ describe("the BOT role", () => {
     expect(hasRole(Role.BOT, Role.SUPER_ADMIN)).toBe(false);
   });
 
-  it("has every capability the owner has, except managing users", () => {
+  it("has every capability the owner has, except managing users and reading job applications", () => {
     for (const capability of CAPABILITIES) {
       expect(PERMISSION_MATRIX[capability]).toHaveProperty("BOT");
-      if (capability === "manageUsers") expect(can(Role.BOT, capability)).toBe(false);
+      // manageCareers: CVs and salaries are for people, not for a connector.
+      if (capability === "manageUsers" || capability === "manageCareers") expect(can(Role.BOT, capability)).toBe(false);
       else expect(can(Role.BOT, capability), capability).toBe(can(Role.SUPER_ADMIN, capability));
     }
   });

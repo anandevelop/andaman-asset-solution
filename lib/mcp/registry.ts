@@ -76,7 +76,14 @@ export type ToolOutcome =
  * down here, as a rule, rather than left to the accident that no tool for
  * it happens to exist yet.
  */
-export const WITHHELD_FROM_MCP: readonly Capability[] = ["viewCustomerContact", "exportCustomerData", "manageUsers"];
+export const WITHHELD_FROM_MCP: readonly Capability[] = [
+  "viewCustomerContact",
+  "exportCustomerData",
+  "manageUsers",
+  // Job applications: CVs, salaries, phone numbers. No tool reads them,
+  // and this keeps one from being added by granting BOT the capability.
+  "manageCareers",
+];
 
 export function mayUse(role: McpActor["role"], capability: Capability): boolean {
   return !WITHHELD_FROM_MCP.includes(capability) && can(role, capability);

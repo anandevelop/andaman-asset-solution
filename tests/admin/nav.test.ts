@@ -92,9 +92,9 @@ describe("the menu each role sees", () => {
   */
   const EXPECTED: Record<Role, { rail: string[]; drawerExtra: string[]; tabs: string[] }> = {
     SUPER_ADMIN: {
-      rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
+      rail: ["activity", "analytics", "careers", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings", "users"],
       drawerExtra: ["mobileView"],
-      tabs: ["/appointments", "/e-brochures", "/leads", "/leads/suspect", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
+      tabs: ["/appointments", "/careers/positions", "/e-brochures", "/leads", "/leads/suspect", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
     },
     ADMIN: {
       rail: ["analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
@@ -122,6 +122,12 @@ describe("the menu each role sees", () => {
       rail: ["activity", "analytics", "coAgents", "dashboard", "events", "leads", "media", "news", "pages", "projects", "publishing", "reports", "salesTeam", "seo", "settings"],
       drawerExtra: ["mobileView"],
       tabs: ["/appointments", "/e-brochures", "/leads", "/leads/suspect", "/pages/about", "/pages/contact", "/pages/copy", "/pages/faq", "/pages/home", "/pages/projects", "/progress", "/projects", "/publishing/translations", "/seo/ai-search", "/seo/audit", "/seo/defaults", "/seo/indexing", "/seo/keywords", "/seo/links", "/seo/meta", "/seo/schema", "/seo/speed", "/seo/urls"],
+    },
+    // Job applications and nothing else: HR is not content or sales staff.
+    HR: {
+      rail: ["careers", "dashboard"],
+      drawerExtra: [],
+      tabs: ["/careers/positions"],
     },
   };
 
@@ -359,6 +365,7 @@ describe("the sidebar each role gets", () => {
       "news",
       "events",
       "media",
+      "careers",
       "users",
       "activity",
       "settings",
@@ -425,6 +432,9 @@ describe("the sidebar each role gets", () => {
       "activity",
       "settings",
     ],
+    // The dashboard and job applications. Neither ADMIN nor BOT has the
+    // second: manageCareers is held by the owner and HR only.
+    HR: ["dashboard", "careers"],
   };
 
   for (const [role, expected] of Object.entries(EXPECTED) as [
@@ -440,13 +450,14 @@ describe("the sidebar each role gets", () => {
     });
   }
 
-  it("is sixteen rows for the owner", () => {
+  it("is seventeen rows for the owner", () => {
     // The number the restructure was aiming at, stated once so a diff that
     // changes it has to change this line too. Fourteen until the monthly
     // report joined `growth` — which is the kind of change this assertion
     // exists to make somebody look at. Sixteen since the co-agent list
-    // joined the daily group.
-    expect(EXPECTED.SUPER_ADMIN).toHaveLength(16);
+    // joined the daily group. Seventeen since job applications got a
+    // group of their own.
+    expect(EXPECTED.SUPER_ADMIN).toHaveLength(17);
   });
 
   it("groups them by job", () => {
@@ -457,7 +468,7 @@ describe("the sidebar each role gets", () => {
       (group) => group.key,
     );
 
-    expect(groups).toEqual(["overview", "sales", "content", "system"]);
+    expect(groups).toEqual(["overview", "sales", "content", "company", "system"]);
   });
 
   it("labels every group it draws", () => {

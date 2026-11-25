@@ -62,6 +62,8 @@ import {
   AUTH_MODEL,
   AUTH_TOTP_FAILED,
   CONTACT_REVEAL,
+  APPLICANT_FILE_ACCESS,
+  APPLICATION_ERASE,
   LEAD_ERASE,
   isAuthEvent,
   isFailedAuth,
@@ -119,6 +121,8 @@ const ACTION_STYLE: Record<string, { icon: LucideIcon; tone: Tone }> = {
   [AUTH_TOTP_FAILED]: { icon: Ban, tone: "danger" },
   [CONTACT_REVEAL]: { icon: Eye, tone: "warning" },
   [LEAD_ERASE]: { icon: Trash2, tone: "danger" },
+  [APPLICANT_FILE_ACCESS]: { icon: Eye, tone: "warning" },
+  [APPLICATION_ERASE]: { icon: Trash2, tone: "danger" },
 };
 
 const printable = (value: unknown): string => {
@@ -250,6 +254,8 @@ export default async function AdminActivityPage(props: Props) {
     [AUTH_TOTP_FAILED]: t("activity.actionTotpFailed"),
     [CONTACT_REVEAL]: t("activity.actionRevealContact"),
     [LEAD_ERASE]: t("activity.actionEraseLead"),
+    [APPLICANT_FILE_ACCESS]: t("activity.actionOpenApplicantFile"),
+    [APPLICATION_ERASE]: t("activity.actionEraseApplication"),
   };
   const actionLabel = (action: string) => actionLabels[action] ?? action;
 

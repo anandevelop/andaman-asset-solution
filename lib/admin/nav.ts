@@ -46,6 +46,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  BriefcaseBusiness,
   Building2,
   CalendarClock,
   CalendarDays,
@@ -87,6 +88,7 @@ export const ROLE_SETS = {
     Role.SALES,
     Role.VIEWER,
     Role.BOT,
+    Role.HR,
   ],
 
   /**
@@ -124,6 +126,9 @@ export const ROLE_SETS = {
   OWNER_ONLY: [Role.SUPER_ADMIN],
   /** The activity log: the owner, and the bot working for them. */
   OWNER_AND_BOT: [Role.SUPER_ADMIN, Role.BOT],
+  /* Job applications and positions. Not ADMIN and not BOT: see the
+     manageCareers row of lib/permissions.ts. */
+  CAREERS: [Role.SUPER_ADMIN, Role.HR],
 
   /** Not CONTENT: the translation-status tab calls requireAdmin(locale,
    *  Role.EDITOR) with no read floor beneath it, so VIEWER — who the
@@ -298,6 +303,14 @@ export const NAV_TAB_GROUPS = {
    * address, so both pages render PageTabs with baseHref="". They also
    * pass carryParams so `project` and `assignedTo` survive the switch.
    */
+  /*
+   * Careers: the applications that came in, and the positions on offer.
+   * Both behind manageCareers — see that row of lib/permissions.ts.
+   */
+  careers: [
+    { key: "applications", segment: "", roles: ROLE_SETS.CAREERS, capability: "manageCareers" },
+    { key: "positions", segment: "/positions", roles: ROLE_SETS.CAREERS, capability: "manageCareers" },
+  ],
   leads: [
     {
       key: "pipeline",
@@ -379,7 +392,7 @@ export type NavItem = Gated & {
  * capability, tabs and aliases, and tests/admin/nav.test.ts pins each
  * role's link set to what it was before the move.
  */
-export type NavGroupKey = "overview" | "sales" | "content" | "system";
+export type NavGroupKey = "overview" | "sales" | "content" | "company" | "system";
 
 export type NavGroup = {
   key: NavGroupKey;
@@ -573,6 +586,24 @@ export const ADMIN_NAV: readonly NavGroup[] = [
     ],
   },
 
+  {
+    /* The company as an employer rather than a seller: job applications.
+       Its own group because its audience is its own — HR sees this and
+       the dashboard, and nothing between. */
+    key: "company",
+    labelKey: "company",
+    items: [
+      {
+        key: "careers",
+        href: "/careers",
+        icon: BriefcaseBusiness,
+        roles: ROLE_SETS.CAREERS,
+        capability: "manageCareers",
+        countKey: "newApplications",
+        tabs: NAV_TAB_GROUPS.careers,
+      },
+    ],
+  },
   {
     /* How the system behaves and who did what — accounts first, because
        "give the new rep access" is the most common reason to come here. */

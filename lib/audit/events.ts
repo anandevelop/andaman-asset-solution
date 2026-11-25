@@ -260,6 +260,66 @@ export async function recordContactReveal(params: {
   });
 }
 
+/** The action values the two job-application writers below use. */
+export const APPLICANT_FILE_ACCESS = "open_applicant_file";
+export const APPLICATION_ERASE = "erase_application";
+export const CAREERS_MODEL = "JobApplication";
+
+/**
+ * Record that somebody opened an applicant's attachment
+ * (app/api/admin/careers/files/[id]/route.ts).
+ *
+ * The same case as recordContactReveal: a CV is read, nothing is written,
+ * so the extension sees nothing. The row carries the application's id and
+ * no name, no file name — the trail must still make sense, and still be
+ * harmless, after the application itself has been erased.
+ *
+ * Throws on failure, and the route refuses the download when it does.
+ */
+export async function recordApplicantFileAccess(params: {
+  actor: { id: string; email: string; role: Role };
+  applicationId: string;
+}): Promise<void> {
+  await prisma.auditLog.create({
+    data: {
+      actorId: params.actor.id,
+      actorEmail: params.actor.email.slice(0, 200),
+      actorRole: params.actor.role,
+      ...(await requestOrigin()),
+      action: APPLICANT_FILE_ACCESS,
+      model: CAREERS_MODEL,
+      recordId: params.applicationId,
+      changedFields: ["file"],
+    },
+  });
+}
+
+/**
+ * Record that an application was erased by hand. The retention sweep is
+ * not recorded per row: it is the system keeping the promise the notice
+ * made, and its totals go to the housekeeping log.
+ */
+export async function recordApplicationErasure(params: {
+  actor: { id: string; email: string; role: Role };
+  applicationId: string;
+}): Promise<void> {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actorId: params.actor.id,
+        actorEmail: params.actor.email.slice(0, 200),
+        actorRole: params.actor.role,
+        ...(await requestOrigin()),
+        action: APPLICATION_ERASE,
+        model: CAREERS_MODEL,
+        recordId: params.applicationId,
+      },
+    });
+  } catch (error) {
+    console.error("[audit] could not record application erasure", error);
+  }
+}
+
 /** The action value recordLeadErasure() writes. */
 export const LEAD_ERASE = "erase_lead";
 

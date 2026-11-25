@@ -32,6 +32,7 @@ import {
   decryptLineSecret,
   encryptLineSecret,
   getActiveRecipients,
+  getHrRecipients,
   getLineConfig,
   invalidateLineConfig,
   parseLineId,
@@ -118,6 +119,32 @@ describe("where the settings come from", () => {
     expect(await getActiveRecipients()).not.toBeNull();
     await setLineEnabled(false);
     expect(await getActiveRecipients()).toBeNull();
+  });
+});
+
+describe("the HR chat", () => {
+  const HR_GROUP = "C" + "c".repeat(32);
+
+  it("gets job applications and nothing meant for sales", async () => {
+    await saveLineCredentials({ accessToken: "admin-token" });
+    await upsertLineDestination({ id: GROUP, type: "group", name: "Sales", enabled: true, source: "manual" });
+    await upsertLineDestination({ id: HR_GROUP, type: "group", name: "HR", enabled: true, source: "manual", audience: "hr" });
+
+    // A customer's enquiry must not reach HR, nor an applicant's name sales.
+    expect(await getActiveRecipients()).toEqual({ token: "admin-token", to: [GROUP] });
+    expect(await getHrRecipients()).toEqual({ token: "admin-token", to: [HR_GROUP] });
+  });
+
+  it("is nobody until a chat is marked for HR", async () => {
+    await saveLineCredentials({ accessToken: "admin-token" });
+    await upsertLineDestination({ id: GROUP, type: "group", name: "Sales", enabled: true, source: "manual" });
+    expect(await getHrRecipients()).toBeNull();
+  });
+
+  it("stays quiet while switched off", async () => {
+    await saveLineCredentials({ accessToken: "admin-token" });
+    await upsertLineDestination({ id: HR_GROUP, type: "group", name: "HR", enabled: false, source: "join", audience: "hr" });
+    expect(await getHrRecipients()).toBeNull();
   });
 });
 

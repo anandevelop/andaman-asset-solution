@@ -594,7 +594,102 @@
     "company": "Company",
     "getInTouch": "Get in touch",
     "allProjects": "All projects",
-    "sales": "Sales"
+    "sales": "Sales",
+    "careers": "Careers"
+  },
+  "careers": {
+    "eyebrow": "JOIN OUR TEAM",
+    "title": "Build homes people want to live in, with us",
+    "intro": "We are looking for people who care about the details and want to grow with our pool-villa projects in Phuket.",
+    "apply": "Apply",
+    "applyFor": "Apply for {title}",
+    "openPositions": "Open positions",
+    "positionsCount": "{count, plural, one {# position} other {# positions}}",
+    "noPositions": "There are no open positions right now. Please check back later.",
+    "types": {
+      "full_time": "Full-time",
+      "part_time": "Part-time",
+      "contract": "Contract",
+      "internship": "Internship"
+    },
+    "form": {
+      "title": "Apply to join us",
+      "close": "Close",
+      "stepNotice": "Your personal data",
+      "stepForm": "Application",
+      "noticeLead": "Before you start, please read how we will use your information.",
+      "notice": {
+        "collectTitle": "What we collect",
+        "collect": "Your name, email, phone number, education, expected salary and the documents you attach.",
+        "purposeTitle": "What it is used for",
+        "purpose": "Only to consider your application and to contact you about it. Not for marketing.",
+        "whoTitle": "Who sees it",
+        "who": "Our HR team and the managers involved in hiring. A copy of your application and attachments is also sent to the HR team's mailbox.",
+        "retentionTitle": "How long we keep it",
+        "retention": "{months} months from the day you apply. After that the application and its documents are deleted from our system.",
+        "rightsTitle": "Your rights",
+        "rights": "You may ask to see, correct or delete your data, and withdraw your consent, at any time by writing to {email}."
+      },
+      "agree": "I have read the above and consent to Andaman Asset Solution collecting and using my personal data to consider my job application as described.",
+      "decline": "I do not consent — close",
+      "continue": "Consent and continue",
+      "back": "Back",
+      "submit": "Send application",
+      "submitting": "Sending…",
+      "position": "Position",
+      "choosePosition": "Choose a position",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone number",
+      "education": "Highest education",
+      "chooseEducation": "Choose a level",
+      "salary": "Expected salary",
+      "salaryUnit": "THB per month",
+      "files": "Supporting documents",
+      "filesHint": "Résumé, portfolio, certificates (optional)",
+      "chooseFile": "Choose a file",
+      "dropHint": "or drop it here",
+      "fileLimits": "PDF, DOC, DOCX, JPG, PNG · up to {mb} MB each · {max} files at most",
+      "remove": "Remove {name}",
+      "uploading": "Uploading…",
+      "educationLevels": {
+        "doctorate": "Doctorate",
+        "master": "Master's degree",
+        "bachelor": "Bachelor's degree",
+        "high_vocational": "Higher vocational certificate",
+        "vocational": "Vocational certificate",
+        "secondary": "Secondary school",
+        "other": "Other"
+      },
+      "errors": {
+        "REQUIRED": "Please fill this in",
+        "EMAIL_INVALID": "That email looks incomplete, e.g. name@example.com",
+        "PHONE_INVALID": "That phone number does not look right",
+        "SALARY_INVALID": "Please enter a number",
+        "CONSENT_REQUIRED": "Your consent is needed before the application can be sent",
+        "TOO_MANY_FILES": "You can attach up to {max} files",
+        "TYPE_NOT_ALLOWED": "This kind of file cannot be attached",
+        "TOO_LARGE": "This file is larger than {mb} MB",
+        "EMPTY": "This file is empty",
+        "UPLOAD_FAILED": "The file could not be uploaded. Please try again.",
+        "UPLOADS_UNAVAILABLE": "Attachments are unavailable at the moment. You can still send your application and email your documents afterwards.",
+        "RATE_LIMITED": "Too many attempts. Please wait a little and try again.",
+        "POSITION_CLOSED": "This position is no longer open.",
+        "RECAPTCHA_FAILED": "The security check did not pass. Please try again.",
+        "GENERIC": "The application could not be sent. Please try again."
+      },
+      "success": {
+        "title": "We have your application",
+        "body": "Our HR team will contact you by email or phone if your profile fits the position.",
+        "droppedFiles": "{count, plural, one {# document} other {# documents}} could not be attached. Please send them to {email}.",
+        "position": "Position",
+        "name": "Name",
+        "attachments": "Attachments",
+        "fileCount": "{count, plural, one {# file} other {# files}}",
+        "none": "None"
+      }
+    }
   },
   "cookieConsent": {
     "message": "We use cookies that are necessary for the site to work, and — with your consent — to measure traffic and personalise Meta ads. See our",
@@ -656,9 +751,11 @@
       "EDITOR": "Editor",
       "SALES": "Sales",
       "VIEWER": "Viewer",
-      "BOT": "Bot"
+      "BOT": "Bot",
+      "HR": "HR"
     },
     "nav": {
+      "careers": "Careers",
       "dashboard": "Today's work",
       "projects": "Projects & units",
       "news": "News",
@@ -802,6 +899,11 @@
       }
     },
     "tabs": {
+      "careers": {
+        "label": "Careers",
+        "applications": "Applications",
+        "positions": "Open positions"
+      },
       "pages": {
         "label": "Page",
         "home": "Home",
@@ -2184,7 +2286,8 @@
           "viewCustomerContact": "See customer phone and email",
           "exportCustomerData": "Export customer data to a file (PDPA)",
           "viewAuditLog": "View the full edit history",
-          "manageUsers": "Manage users, permissions and settings"
+          "manageUsers": "Manage users, permissions and settings",
+          "manageCareers": "Job applications and open positions"
         },
         "limit": {
           "submitOnly": "Submit for review only",
@@ -3210,6 +3313,9 @@
         "typeGroup": "Group",
         "typeRoom": "Chat room",
         "typeUser": "Person",
+        "audience": "Receives",
+        "audienceSales": "Sales alerts",
+        "audienceHr": "HR: job applications",
         "fromEnv": "from the server's .env",
         "newChat": "New — switch on to receive",
         "unnamed": "Unnamed chat",
@@ -3264,7 +3370,8 @@
         "kindBackup": "Backup",
         "kindPagespeed": "PageSpeed",
         "kindError": "System error",
-        "kindApproval": "AI deletion approval"
+        "kindApproval": "AI deletion approval",
+        "kindHr": "Job application"
       },
       "ai": {
         "title": "AI (Google Gemini)",
@@ -3591,12 +3698,15 @@
         "changes": "Changes",
         "ip": "IP",
         "device": "Device"
-      }
+      },
+      "actionOpenApplicantFile": "Opened an applicant's file",
+      "actionEraseApplication": "Erased a job application"
     },
     "navGroups": {
       "overview": "Overview & marketing",
       "sales": "Sales",
       "content": "Website content",
+      "company": "Company",
       "system": "System"
     },
     "collapseSidebar": "Collapse sidebar",
@@ -4979,7 +5089,10 @@
       "ReportNote": "Report note",
       "AdminNotification": "Notification",
       "translationSuffix": "(translation)",
-      "Session": "Sign-in session"
+      "Session": "Sign-in session",
+      "JobPosition": "Job position",
+      "JobPositionTranslation": "Job position title",
+      "JobApplication": "Job application"
     },
     "aboutHub": {
       "figures": "Company figures",
@@ -5124,6 +5237,134 @@
         "email_typo": "Email domain looks mistyped"
       },
       "howItWorks": "How it works: the enquiry form still shows the visitor a normal success. \"It's real\" makes it a lead now — routed to a rep and announced on LINE and email as if it had just arrived. \"Spam\" deletes it and quietly ignores that email and phone from now on. \"Delete\" removes it without blocking anyone (for the team's own tests)."
+    },
+    "careers": {
+      "title": "Job applications",
+      "subtitle": "Applications from “Join our team”. Visible to Super Admin and HR only.",
+      "status": {
+        "NEW": "New",
+        "REVIEWING": "In review",
+        "INTERVIEW": "Interview",
+        "HIRED": "Hired",
+        "REJECTED": "Not selected"
+      },
+      "filters": {
+        "all": "All",
+        "search": "Search name, email or phone",
+        "allPositions": "All positions",
+        "apply": "Search",
+        "label": "Status"
+      },
+      "table": {
+        "applicant": "Applicant",
+        "position": "Position",
+        "education": "Education",
+        "salary": "Expected salary",
+        "files": "Files",
+        "received": "Received",
+        "status": "Status",
+        "empty": "No applications yet",
+        "emptyFiltered": "No applications match this filter",
+        "unread": "Not opened yet",
+        "open": "Open the application from {name}"
+      },
+      "detail": {
+        "title": "Application",
+        "contact": "Applicant",
+        "email": "Email",
+        "phone": "Phone",
+        "education": "Education",
+        "salary": "Expected salary",
+        "salaryValue": "THB {amount} / month",
+        "position": "Position applied for",
+        "received": "Received",
+        "language": "Form language",
+        "files": "Attachments",
+        "noFiles": "The applicant attached no documents",
+        "fileNote": "Every time a file is opened it is recorded in the activity log",
+        "status": "Status",
+        "saveStatus": "Save status",
+        "notes": "Internal notes",
+        "notesHint": "Back office only. The applicant never sees these.",
+        "notePlaceholder": "e.g. Called to arrange an interview on Friday at 10:00",
+        "addNote": "Add note",
+        "noNotes": "No notes yet",
+        "privacy": "Consent and retention",
+        "consentText": "The applicant consented on {date} (notice {version})",
+        "retention": "This application and its files will be deleted automatically on {date}",
+        "emailSent": "A copy was emailed to HR on {date}",
+        "emailFailed": "The email to HR could not be sent ({error}). Everything is still on this page.",
+        "emailPending": "The email to HR has not been sent yet",
+        "erase": "Erase this application",
+        "eraseConfirm": "Permanently erase the application from {name}, with all attachments? This cannot be undone.",
+        "eraseHint": "For when an applicant asks for their data to be deleted. The copy in the HR mailbox has to be deleted by hand.",
+        "print": "Print / save as PDF",
+        "notFound": "This application was not found. It may have been erased.",
+        "close": "Close"
+      },
+      "print": {
+        "heading": "Job application",
+        "printedBy": "Printed by {name} · {date}",
+        "confidential": "This document contains personal data and is for recruitment purposes only.",
+        "back": "Back to the application",
+        "printButton": "Print / save as PDF",
+        "hint": "In the print dialog, choose “Save as PDF” as the destination",
+        "attachments": "Attachments (not included in this file)",
+        "notes": "Internal notes"
+      },
+      "positions": {
+        "title": "Open positions",
+        "subtitle": "The positions shown on the About page, and the invitation above them",
+        "add": "Add position",
+        "new": "New position",
+        "edit": "Edit position",
+        "open": "Open",
+        "closed": "Closed",
+        "openAction": "Open for applications",
+        "closeAction": "Close applications",
+        "applications": "{count, plural, =0 {No applications yet} one {# application} other {# applications}}",
+        "moveUp": "Move {title} up",
+        "moveDown": "Move {title} down",
+        "delete": "Delete position",
+        "deleteConfirm": "Delete “{title}”? Applications already received are kept.",
+        "empty": "No positions yet. Press “Add position” to start. Until then the site says there are no openings.",
+        "type": "Employment type",
+        "fieldTitle": "Position title",
+        "location": "Location",
+        "summary": "Short description",
+        "summaryHint": "One to three lines: the main duties and what you are looking for",
+        "isOpen": "Open for applications",
+        "isOpenHint": "Leave off until you are ready to advertise. A closed position is not shown on the site.",
+        "titleRequired": "A title is needed in at least one language",
+        "languageNote": "A language left blank shows the English or Thai title instead",
+        "noTitle": "(untitled)",
+        "save": "Save position",
+        "saved": "Saved"
+      },
+      "settings": {
+        "title": "Invitation wording and settings",
+        "copyHint": "Leave blank to use the site’s standard wording",
+        "inviteTitle": "Heading",
+        "inviteIntro": "Invitation",
+        "retention": "How long applications are kept",
+        "retentionHint": "After this period the system deletes the application and its files. Applicants are shown this period before they consent, and it applies to applications received after you save.",
+        "retentionOption": "{months} months",
+        "notifyEmail": "Mailbox that receives each application",
+        "notifyEmailHint": "Every application is sent here with its attachments",
+        "emailInvalid": "That email address is not valid",
+        "lineHint": "LINE alerts: a Super Admin marks the HR chat as “HR” under Settings → Integrations",
+        "save": "Save settings",
+        "saved": "Saved"
+      },
+      "home": {
+        "title": "Hello, {name}",
+        "subtitle": "Human resources",
+        "unread": "Applications not opened yet",
+        "inProgress": "In review or at interview",
+        "openPositions": "Positions open now",
+        "viewApplications": "See all applications",
+        "managePositions": "Manage positions"
+      }
     }
   },
   "legalPage": {
@@ -5218,7 +5459,8 @@
       "EDITOR": "Editor",
       "SALES": "Sales",
       "VIEWER": "Viewer",
-      "BOT": "Bot"
+      "BOT": "Bot",
+      "HR": "HR"
     },
     "cases": {
       "legend": "Text for each case",

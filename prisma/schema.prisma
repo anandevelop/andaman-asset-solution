@@ -43,6 +43,11 @@ enum Role {
   /// appointments, event attendees), co-agents and user accounts; see the
   /// BOT column of lib/permissions.ts. Ranked with ADMIN in lib/role-rank.ts.
   BOT
+  /// Human resources: the job applications and the open positions, and
+  /// nothing else. Ranked with VIEWER (lib/role-rank.ts) so that no
+  /// rank-based guard admits it to customers, content or settings; what it
+  /// can do comes from the manageCareers capability (lib/permissions.ts).
+  HR
 }
 
 enum PropertyType {
@@ -3894,4 +3899,144 @@ model BackgroundJob {
 
   @@index([status, runAfter])
   @@map("background_jobs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Careers — "Join our team" on the public site, and its back office.
+//
+// An application is a stranger's CV, phone number and expected salary. It
+// is readable only through the manageCareers capability (SUPER_ADMIN and
+// HR), its files are stored private and served through a logged route,
+// nothing here is exposed to the MCP server, and every row carries the day
+// it is to be deleted. See lib/careers/.
+// ─────────────────────────────────────────────────────────────────────────
+
+enum JobApplicationStatus {
+  NEW
+  REVIEWING
+  INTERVIEW
+  HIRED
+  REJECTED
+}
+
+model JobPosition {
+  id String @id @default(cuid())
+
+  /// "full_time" | "part_time" | "contract" | "internship".
+  employmentType String  @default("full_time")
+  /// Shown on the site and offered in the application form while true.
+  /// Closing a position keeps the applications it already received.
+  isOpen         Boolean @default(true)
+  sortOrder      Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations JobPositionTranslation[]
+  applications JobApplication[]
+
+  @@index([isOpen, sortOrder])
+  @@map("job_positions")
+}
+
+model JobPositionTranslation {
+  id         String      @id @default(cuid())
+  positionId String
+  position   JobPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  locale     String
+
+  title    String
+  location String?
+  summary  String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([positionId, locale])
+  @@map("job_position_translations")
+}
+
+model JobApplication {
+  id String @id @default(cuid())
+
+  /// Null once the position has been deleted; positionTitle is what the
+  /// applicant saw, kept so the application still says what it was for.
+  positionId    String?
+  position      JobPosition? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  positionTitle String
+
+  firstName      String
+  lastName       String
+  email          String
+  phone          String
+  /// One of lib/careers/fields.ts EDUCATION_LEVELS.
+  education      String
+  /// Baht a month.
+  expectedSalary Int
+
+  status JobApplicationStatus @default(NEW)
+  /// The language the applicant applied in.
+  locale String
+
+  /// What they agreed to and when — the notice's version, not the site's
+  /// customer privacy policy: an applicant is told something different.
+  consentVersion String
+  consentAt      DateTime
+
+  ip        String?
+  userAgent String?
+
+  /// The copy sent to the HR mailbox. Null with an emailError: it did not
+  /// go, and the application is still here.
+  emailSentAt DateTime?
+  emailError  String?
+
+  /// First opened in the back office; null is what the menu's badge counts.
+  viewedAt DateTime?
+
+  /// The day the housekeeping job deletes this row and its files.
+  purgeAfter DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files JobApplicationFile[]
+  notes JobApplicationNote[]
+
+  @@index([status, createdAt])
+  @@index([purgeAfter])
+  @@map("job_applications")
+}
+
+model JobApplicationFile {
+  id            String         @id @default(cuid())
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  /// Object key in the Space, stored with a private ACL. Never a URL:
+  /// there is no public address for these.
+  key         String @unique
+  name        String
+  contentType String
+  size        Int
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+  @@map("job_application_files")
+}
+
+model JobApplicationNote {
+  id            String         @id @default(cuid())
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  authorId   String?
+  authorName String
+  body       String  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId, createdAt])
+  @@map("job_application_notes")
 }

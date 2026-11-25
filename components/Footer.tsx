@@ -195,6 +195,12 @@ export default async function Footer() {
                 </Link>
               </li>
             ))}
+            {/* Careers has no page of its own: it is a section of About. */}
+            <li>
+              <Link href={`/${locale}/about#careers`} className={columnLink}>
+                {t("careers")}
+              </Link>
+            </li>
           </ul>
         </div>
 

@@ -11,11 +11,12 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { Role } from "@prisma/client";
-import { requireAdminAction } from "@/lib/admin/guard";
+import { requireCapabilityAction } from "@/lib/admin/guard";
 import { searchContentLinks, type ContentLinkHit } from "@/lib/admin/content-link-index";
 
 export async function searchInternalLinks(locale: string, query: string): Promise<ContentLinkHit[]> {
-  await requireAdminAction(Role.VIEWER);
+  // The content zone's own capability, not a rank: the lowest rank now
+  // includes human resources, who have no business in the news editor.
+  await requireCapabilityAction("viewContent");
   return searchContentLinks(locale, query);
 }

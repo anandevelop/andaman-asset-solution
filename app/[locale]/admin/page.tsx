@@ -70,6 +70,8 @@ import { getPageViewTrend } from "@/lib/admin/analytics";
 import { getTranslationStatusReport } from "@/lib/locale-completeness";
 import { EMPTY_SNAPSHOT, getLiveSnapshot } from "@/lib/analytics/live-visit";
 import { AUTH_LOGIN, AUTH_LOGOUT, CONTACT_REVEAL } from "@/lib/audit/events";
+import { can as hasCapability } from "@/lib/permissions";
+import HrHome from "@/components/admin/HrHome";
 import { safeQuery, isDatabaseOffline } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/guard";
 import { canSeeItem } from "@/lib/admin/nav";
@@ -125,6 +127,18 @@ export default async function AdminDashboardPage(props: Props) {
   // because it always has somewhere else to bounce a denied request to;
   // this one is the bounce target, so it has to accept everyone.
   const session = await requireAdmin(locale, Role.VIEWER);
+
+  /*
+    Human resources get their own front page.
+
+    Everything below is the sales and website day — open leads, unit stock,
+    traffic — which is neither HR's work nor theirs to read. An account that
+    holds manageCareers and cannot see the catalogue is HR; the owner, who
+    holds both, keeps the full dashboard and reaches careers from the menu.
+  */
+  if (hasCapability(session.role, "manageCareers") && !canSeeItem(session.role, "projects")) {
+    return <HrHome locale={locale} name={session.name} denied={Boolean(searchParams.denied)} />;
+  }
 
   const can = {
     leads: canSeeItem(session.role, "leads"),

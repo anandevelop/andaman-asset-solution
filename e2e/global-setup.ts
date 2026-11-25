@@ -33,6 +33,8 @@ import {
   PROJECTS,
   VIEWER,
   BOT,
+  HR,
+  JOB_POSITIONS,
 } from "./fixtures";
 import { encryptSecret } from "../lib/totp";
 
@@ -411,6 +413,39 @@ async function seed(prisma: PrismaClient) {
       role: "BOT",
       isActive: true,
       twoFactorExempt: true,
+    },
+  });
+
+  // Human resources, and the two vacancies careers.spec.ts expects.
+  await prisma.user.create({
+    data: {
+      name: HR.name,
+      email: HR.email,
+      passwordHash: await bcrypt.hash(HR.password, BCRYPT_ROUNDS),
+      role: "HR",
+      isActive: true,
+      twoFactorExempt: true,
+    },
+  });
+  await prisma.jobPosition.create({
+    data: {
+      employmentType: "full_time",
+      isOpen: true,
+      sortOrder: 1,
+      translations: {
+        create: [
+          { locale: "en", title: JOB_POSITIONS.open.en, location: JOB_POSITIONS.open.location },
+          { locale: "th", title: JOB_POSITIONS.open.th },
+        ],
+      },
+    },
+  });
+  await prisma.jobPosition.create({
+    data: {
+      employmentType: "contract",
+      isOpen: false,
+      sortOrder: 2,
+      translations: { create: [{ locale: "en", title: JOB_POSITIONS.closed.en }] },
     },
   });
 }

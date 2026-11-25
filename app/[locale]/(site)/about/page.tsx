@@ -58,6 +58,7 @@ import { COMPANY_FOUNDED_YEAR } from "@/content/company-timeline";
 import type { SectionIcon } from "@prisma/client";
 import EditableSection from "@/components/edit/EditableSection";
 import { ABOUT_SECTION_LINKS } from "@/lib/edit-mode";
+import CareersSection from "@/components/careers/CareersSection";
 
 export const revalidate = 3600;
 
@@ -467,6 +468,10 @@ export default async function AboutPage(props: Props) {
         </section>
         </EditableSection>
       )}
+
+      {/* Join our team — after the company's own story, for the reader
+          who got this far because they are thinking of working here. */}
+      <CareersSection locale={locale} />
 
       {/* No closing CTA here. This page ends with the site-wide one
           mounted in (site)/layout.tsx, which on /about is worded for this

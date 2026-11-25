@@ -27,7 +27,15 @@
 
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { S3Client, PutObjectCommand, HeadBucketCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  HeadBucketCommand,
+  HeadObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /** Five minutes: long enough for a slow phone upload, short enough that a
@@ -464,4 +472,76 @@ export async function getPresignedUploadUrl(options: {
       ...(contentDisposition ? { "Content-Disposition": contentDisposition } : {}),
     },
   };
+}
+
+// ── Private objects ─────────────────────────────────────────────────────
+//
+// Everything above stores files the public site serves, at a public URL.
+// A job applicant's CV is the opposite case: it must have no address at
+// all. These objects are written with a private ACL whatever
+// SPACES_OBJECT_ACL says, are never turned into a URL, and are read back
+// only by the server (lib/careers/files.ts), which checks who is asking.
+
+/**
+ * A presigned PUT for one private object. `size` is signed in, so the
+ * Space refuses a body of any other length: the size that was checked
+ * against the limit is the size that lands.
+ */
+export async function presignPrivateUpload(options: {
+  key: string;
+  contentType: string;
+  size: number;
+}): Promise<{ uploadUrl: string; headers: Record<string, string>; expiresIn: number }> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+
+  const command = new PutObjectCommand({
+    Bucket: config.bucket,
+    Key: options.key,
+    ContentType: options.contentType,
+    ACL: "private",
+    ContentLength: options.size,
+  });
+
+  const uploadUrl = await getSignedUrl(getClient(config), command, {
+    expiresIn: EXPIRES_IN_SECONDS,
+    signableHeaders: new Set(["content-type", "x-amz-acl", "content-length"]),
+  });
+
+  return {
+    uploadUrl,
+    expiresIn: EXPIRES_IN_SECONDS,
+    headers: { "Content-Type": options.contentType, "x-amz-acl": "private" },
+  };
+}
+
+/** Size and type of an object, or null when it is not there. */
+export async function headPrivateObject(key: string): Promise<{ size: number; contentType: string } | null> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+  try {
+    const head = await getClient(config).send(new HeadObjectCommand({ Bucket: config.bucket, Key: key }));
+    return { size: head.ContentLength ?? 0, contentType: head.ContentType ?? "application/octet-stream" };
+  } catch {
+    return null;
+  }
+}
+
+/** The whole object, in memory. Only for files this app capped the size of. */
+export async function readPrivateObject(key: string): Promise<Buffer> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+  const object = await getClient(config).send(new GetObjectCommand({ Bucket: config.bucket, Key: key }));
+  if (!object.Body) throw new Error("S3_EMPTY_BODY");
+  return Buffer.from(await object.Body.transformToByteArray());
+}
+
+/** Keys under a prefix with when each was last written. One page (1,000). */
+export async function listObjects(prefix: string): Promise<{ key: string; lastModified: Date | null }[]> {
+  const config = readS3Config();
+  if (!config) throw new Error("S3_NOT_CONFIGURED");
+  const page = await getClient(config).send(new ListObjectsV2Command({ Bucket: config.bucket, Prefix: prefix }));
+  return (page.Contents ?? []).flatMap((entry) =>
+    entry.Key ? [{ key: entry.Key, lastModified: entry.LastModified ?? null }] : [],
+  );
 }

@@ -567,3 +567,99 @@ export async function sendStaffAlertEmail(args: {
   const text = [args.heading, ...args.rows.map(([l, v]) => `${l}: ${v}`), "", `${args.urlLabel}: ${args.url}`].join("\n");
   await sendMail({ to: args.to.join(", "), subject: singleLine(args.subject), html, text });
 }
+
+// ── Job applications ────────────────────────────────────────────────────
+
+/**
+ * The copy of a job application that goes to the HR mailbox, with the
+ * applicant's files attached.
+ *
+ * Unlike the lead and RSVP notices this one reports back. The caller
+ * stores the outcome on the application (emailSentAt / emailError), so
+ * that HR can see in the back office that a copy did not arrive — the
+ * application itself is already saved either way.
+ *
+ * Attachments make this the one message here with a size: see MAX_FILES
+ * and MAX_FILE_BYTES in lib/careers/fields.ts for the ceiling they are
+ * sized against.
+ */
+export async function sendJobApplicationEmail(args: {
+  to: string;
+  application: {
+    positionTitle: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    education: string;
+    expectedSalary: number;
+    submittedAt: Date;
+  };
+  attachments: { filename: string; content: Buffer; contentType: string }[];
+  /** Attachments that could not be read back; said in the message. */
+  missingFiles: number;
+  adminUrl: string | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!isEmailConfigured()) return { ok: false, error: "NOT_CONFIGURED" };
+
+  const a = args.application;
+  const name = `${a.firstName} ${a.lastName}`;
+  const salary = `${a.expectedSalary.toLocaleString("en-US")} บาท/เดือน`;
+  const when = a.submittedAt.toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "long", timeStyle: "short" });
+  const filesLine =
+    args.attachments.length === 0 && args.missingFiles === 0
+      ? "ไม่มี"
+      : `${args.attachments.length} ไฟล์ (แนบมากับอีเมลนี้)${args.missingFiles ? ` · อีก ${args.missingFiles} ไฟล์แนบไม่สำเร็จ ดูได้ในหลังบ้าน` : ""}`;
+
+  const html = wrap(`
+    <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:${PRIMARY};">ใบสมัครงานใหม่</h1>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      ${row("ตำแหน่ง", a.positionTitle)}
+      ${row("ชื่อ–นามสกุล", name)}
+      ${rowHtml("โทร", link(`tel:${a.phone.replace(/[^+\d]/g, "")}`, a.phone))}
+      ${rowHtml("อีเมล", link(`mailto:${a.email}`, a.email))}
+      ${row("วุฒิการศึกษา", a.education)}
+      ${row("เงินเดือนที่คาดหวัง", salary)}
+      ${row("เอกสารแนบ", filesLine)}
+      ${row("ส่งเมื่อ", when)}
+    </table>
+    ${args.adminUrl ? `<p style="margin:20px 0 0;">${link(args.adminUrl, "เปิดใบสมัครในหลังบ้าน")}</p>` : ""}
+    <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #EEEEEE;color:#666666;font-size:12px;">
+      อีเมลนี้มีข้อมูลส่วนบุคคลของผู้สมัครงาน ใช้เพื่อการพิจารณารับสมัครเท่านั้น
+      ระบบจะลบใบสมัครในหลังบ้านเมื่อครบกำหนด แต่ไม่สามารถลบอีเมลฉบับนี้และไฟล์แนบให้ได้ กรุณาลบเองเมื่อไม่ใช้แล้ว
+    </p>
+  `);
+
+  const text = [
+    "ใบสมัครงานใหม่",
+    `ตำแหน่ง: ${a.positionTitle}`,
+    `ชื่อ–นามสกุล: ${name}`,
+    `โทร: ${a.phone}`,
+    `อีเมล: ${a.email}`,
+    `วุฒิการศึกษา: ${a.education}`,
+    `เงินเดือนที่คาดหวัง: ${salary}`,
+    `เอกสารแนบ: ${filesLine}`,
+    `ส่งเมื่อ: ${when}`,
+    args.adminUrl ? `\nเปิดในหลังบ้าน: ${args.adminUrl}` : "",
+    "\nอีเมลนี้มีข้อมูลส่วนบุคคลของผู้สมัครงาน กรุณาลบเมื่อไม่ใช้แล้ว",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    await getTransporter().sendMail({
+      from: fromAddress(),
+      to: args.to,
+      // Replying to the notice reaches the applicant, not no-reply@.
+      replyTo: a.email,
+      subject: singleLine(`ใบสมัครงาน: ${a.positionTitle} — ${name}`),
+      html,
+      text,
+      attachments: args.attachments,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] job application send failed", error);
+    return { ok: false, error: explainSmtpError(error).slice(0, 300) };
+  }
+}

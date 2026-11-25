@@ -59,7 +59,7 @@ describe("rolesAtLeast", () => {
     // SUPER_ADMIN is above everything, so asking for the top of the ladder
     // returns exactly one role. A hardcoded array would not narrow.
     expect(rolesAtLeast(Role.SUPER_ADMIN)).toEqual([Role.SUPER_ADMIN]);
-    expect(rolesAtLeast(Role.VIEWER)).toHaveLength(6);
+    expect(rolesAtLeast(Role.VIEWER)).toHaveLength(7);
   });
 });
 

@@ -31,7 +31,7 @@ vi.mock("@/app/[locale]/admin/(content)/pages/copy/actions", () => ({ updateSite
 vi.mock("@/lib/site-copy-content", () => ({ allCopyDefaults: vi.fn() }));
 
 import "@/lib/mcp/tools";
-import { allTools, describeTools } from "@/lib/mcp/registry";
+import { allTools, describeTools, mayUse, WITHHELD_FROM_MCP } from "@/lib/mcp/registry";
 import { deletionKinds, deletionTier } from "@/lib/mcp/deletions";
 
 /** Areas the AI connection may read and never change. */
@@ -94,6 +94,15 @@ describe("every MCP tool", () => {
   tools themselves, because a query that selects a customer's phone number
   is a leak whether or not any test happens to call it.
 */
+describe("job applications", () => {
+  it("are withheld from the connector whatever role it runs as", () => {
+    expect(WITHHELD_FROM_MCP).toContain("manageCareers");
+    for (const role of ["SUPER_ADMIN", "BOT", "HR"] as const) expect(mayUse(role as never, "manageCareers"), role).toBe(false);
+    expect(allTools().filter((tool) => tool.capability === "manageCareers")).toEqual([]);
+    expect(allTools().filter((tool) => /career|applicant|job_application|vacanc/.test(tool.name)).map((tool) => tool.name)).toEqual([]);
+  });
+});
+
 describe("what the tools may read", () => {
   const dir = path.join(process.cwd(), "lib", "mcp", "tools");
   const sources = readdirSync(dir)
@@ -101,7 +110,7 @@ describe("what the tools may read", () => {
     .map((file) => [file, readFileSync(path.join(dir, file), "utf8")] as const);
 
   const PERSONAL = /\b(email|phone|phoneCountry|whatsapp|whatsappNumber|phoneNumber|message|nationality|ipAddress|userAgent|agencyName|passwordHash|totpSecret|adminNotes|reservedBy\w*|notes)\s*:\s*true\b/;
-  const PEOPLE_TABLES = /prisma\.(user|agent|leadNote|recoveryCode|account|session|suspectLead|leadBlock|salesPerson|auditLog|apiToken|siteSetting)\./;
+  const PEOPLE_TABLES = /prisma\.(user|agent|leadNote|recoveryCode|account|session|suspectLead|leadBlock|salesPerson|auditLog|apiToken|siteSetting|jobApplication|jobApplicationFile|jobApplicationNote|jobPosition)\./;
 
   it.each(sources)("%s selects no customer contact data or secrets", (_file, source) => {
     expect(source).not.toMatch(PERSONAL);
@@ -109,6 +118,12 @@ describe("what the tools may read", () => {
 
   it.each(sources)("%s does not query the tables that are about people or keys", (_file, source) => {
     expect(source).not.toMatch(PEOPLE_TABLES);
+  });
+
+  it.each(sources)("%s has nothing to do with job applications", (_file, source) => {
+    // CVs, salaries and phone numbers of people who are not customers:
+    // no tool reads them, and manageCareers is withheld from the connector.
+    expect(source).not.toMatch(/@\/lib\/careers\//);
   });
 
   it.each(sources)("%s never returns whole rows of enquiries or registrations", (_file, source) => {

@@ -41,6 +41,11 @@ export async function commandSearch(locale: string, rawQuery: string): Promise<S
   const query = rawQuery.trim();
   if (query.length < MIN_QUERY_LENGTH) return { groups: [] };
 
+  /* An account with neither the website's content nor the customer list —
+     human resources — has nothing here to find: every group below is one
+     or the other. Job applications are deliberately not searchable. */
+  if (!can(session.role, "viewContent") && !can(session.role, "viewAllLeads")) return { groups: [] };
+
   const contains = { contains: query, mode: "insensitive" as const };
 
   const [projects, units, news, events, media, leads] = await Promise.all([

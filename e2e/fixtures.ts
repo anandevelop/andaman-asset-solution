@@ -106,6 +106,23 @@ export const BOT = {
   name: "E2E Bot",
 } as const;
 
+/**
+ * A human-resources account: the HR role, which reaches job applications
+ * and nothing else. Excused from the second factor like the bot above —
+ * the sign-in is not what careers.spec.ts is testing.
+ */
+export const HR = {
+  email: "e2e-hr@andaman.test",
+  password: "e2e-only-passphrase-4567",
+  name: "E2E Human Resources",
+} as const;
+
+/** One vacancy that is advertised and one that is not. */
+export const JOB_POSITIONS = {
+  open: { en: "Sales Executive", th: "พนักงานขาย", location: "Phuket" },
+  closed: { en: "Site Engineer" },
+} as const;
+
 /*
   Four projects, chosen so the filter bar has something to do.
 

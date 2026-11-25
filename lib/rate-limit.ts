@@ -176,6 +176,16 @@ export const RATE_LIMITS = {
   /** Event RSVP. Rarer action than an enquiry, so tighter. */
   rsvp: { limit: 4, windowMs: 10 * 60_000 },
 
+  /** Job applications. One person applies once, perhaps to two positions. */
+  careersApply: { limit: 4, windowMs: 30 * 60_000 },
+
+  /**
+   * Upload tickets for an applicant's attachments. Three files an
+   * application, with room to remove one and pick another — and low,
+   * because each ticket lets a stranger write up to 5 MB to the Space.
+   */
+  careersUpload: { limit: 12, windowMs: 30 * 60_000 },
+
   /** Presigned uploads, keyed per admin user: a gallery is many files. */
   presign: { limit: 60, windowMs: 10 * 60_000 },
 

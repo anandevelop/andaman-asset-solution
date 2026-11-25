@@ -76,7 +76,16 @@ const WRITE_OPERATIONS = new Set([
  * Their entries get no label. See the header: the point of the audit table
  * is who changed what, and it can say that with an id.
  */
-const UNLABELLED_MODELS = new Set(["LeadInquiry", "EventRegistration", "LeadNote"]);
+const UNLABELLED_MODELS = new Set([
+  "LeadInquiry",
+  "EventRegistration",
+  "LeadNote",
+  // An applicant's name, email and file names are theirs, not ours to copy
+  // into a second table.
+  "JobApplication",
+  "JobApplicationFile",
+  "JobApplicationNote",
+]);
 
 /**
  * Fields tried, in order, for a human-readable name of the affected row.
