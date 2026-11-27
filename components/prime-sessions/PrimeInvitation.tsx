@@ -414,10 +414,6 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
                 onSubmit={submit}
                 onFocusCapture={() => void loadRecaptcha()}
               >
-                <p className="grp">
-                  <em>01</em>
-                  <span>{t("grpA")}</span>
-                </p>
                 <div className={`f${bad.has("agency") ? " bad" : ""}`}>
                   <label className="lb" htmlFor="ps-agency">
                     {t("agency")} *
@@ -495,11 +491,6 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
                   </div>
                   <p className="err">{t("phoneErr")}</p>
                 </div>
-
-                <p className="grp">
-                  <em>02</em>
-                  <span>{t("grpB")}</span>
-                </p>
                 <fieldset className={`f${bad.has("status") ? " bad" : ""}`} style={{ border: 0 }}>
                   <legend className="lb">{t("status")} *</legend>
                   <div className="seg">

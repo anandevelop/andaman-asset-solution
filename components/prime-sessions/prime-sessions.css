@@ -491,6 +491,12 @@ html:has(.ps){background:#000}
 .ps .closed-title{font:400 15px ps-fc,ps-in,sans-serif;color:var(--hi);letter-spacing:.02em}
 .ps:lang(en) .closed-title,.ps:lang(ru) .closed-title{font:italic 500 19px ps-cg,serif}
 
+/* No group headings: a little more air before the first field and before
+   the attendance part does their job. */
+.ps #rsvp{padding-top:18px}
+.ps #rsvp>fieldset.f{margin-top:26px}
+@media (max-width:600px){.ps #rsvp{padding-top:12px}.ps #rsvp>fieldset.f{margin-top:20px}}
+
 /* Phones: the reply fits on about one screen. The spacing is tightened
    rather than the type made smaller; every field keeps a row of its own. */
 @media (max-width:600px){
