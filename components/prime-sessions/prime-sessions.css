@@ -491,11 +491,8 @@ html:has(.ps){background:#000}
 .ps .closed-title{font:400 15px ps-fc,ps-in,sans-serif;color:var(--hi);letter-spacing:.02em}
 .ps:lang(en) .closed-title,.ps:lang(ru) .closed-title{font:italic 500 19px ps-cg,serif}
 
-/* Phones: the reply fits on about one screen. Agency and contact share a
-   row, and the spacing is tightened rather than the type made smaller. */
-.ps #rsvp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px}
-.ps #rsvp>*{grid-column:1/-1}
-.ps #rsvp>.half{grid-column:auto}
+/* Phones: the reply fits on about one screen. The spacing is tightened
+   rather than the type made smaller; every field keeps a row of its own. */
 @media (max-width:600px){
   .ps[data-view="form"] .top,.ps[data-view="done"] .top{padding:8px 16px}
   .ps .lang .lang-btn{padding-top:9px;padding-bottom:11px}
