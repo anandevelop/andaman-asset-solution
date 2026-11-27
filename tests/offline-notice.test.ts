@@ -75,6 +75,8 @@ describe("public pages", () => {
   const EXEMPT: Record<string, string> = {
     contact:
       "settings-only — getSiteSettings() falls back to config/site.ts, so the page renders complete during an outage and has no empty state to explain",
+    "agent/register":
+      "settings-only, for the logo — getSiteSettings() falls back to config/site.ts; the form itself reads nothing until it is submitted",
     "privacy-policy": "static copy from content/, reads no table",
     terms: "static copy from content/, reads no table",
   };

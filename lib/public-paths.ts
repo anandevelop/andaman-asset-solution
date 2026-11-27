@@ -81,6 +81,14 @@ export function stripLocale(pathOrUrl: string): string {
 }
 
 /**
+ * Pages shown without the site's navbar, sales strip, closing CTA and
+ * footer: a form somebody was sent a link to, where everything around it
+ * is a way to leave before finishing. The page draws its own logo.
+ * (site)/layout.tsx gates its chrome on this list through RouteGate.
+ */
+export const BARE_ROUTES = ["/agent/register"] as const;
+
+/**
  * Does `pathname` fall under `target`?
  *
  * The rule the closing CTA's page assignments are written in: a section

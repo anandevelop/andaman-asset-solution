@@ -18,6 +18,7 @@
  */
 
 import { readdirSync, readFileSync } from "node:fs";
+import { BARE_ROUTES } from "@/lib/public-paths";
 import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -40,8 +41,13 @@ const routeOf = (file: string) =>
 
 const all = pages(SITE_DIR);
 
-/** The home page is where the trail starts, so it has nothing to show. */
-const shouldHaveTrail = all.filter((file) => routeOf(file) !== "");
+/**
+ * The home page is where the trail starts, so it has nothing to show. A
+ * bare page (BARE_ROUTES) has no site chrome at all — no navbar, no footer
+ * — and a trail back into the site is part of what it leaves out.
+ */
+const BARE = BARE_ROUTES.map((route) => route.replace(/^\//, ""));
+const shouldHaveTrail = all.filter((file) => routeOf(file) !== "" && !BARE.includes(routeOf(file)));
 
 describe("public pages", () => {
   it("finds the pages it is supposed to be checking", () => {
@@ -88,6 +94,14 @@ describe("public pages", () => {
       .map(routeOf);
 
     expect(missing).toEqual([]);
+  });
+
+  it("leaves a bare page without one", () => {
+    for (const route of BARE) {
+      const file = all.find((candidate) => routeOf(candidate) === route);
+      expect(file, route).toBeDefined();
+      expect(read(file!), route).not.toContain("<Breadcrumb");
+    }
   });
 
   it("leaves the home page alone", () => {

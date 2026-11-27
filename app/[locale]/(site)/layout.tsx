@@ -18,6 +18,7 @@ import SiteCta from "@/components/SiteCta";
 import RouteGate from "@/components/RouteGate";
 import { getSiteSettings } from "@/lib/settings";
 import { getCtaMounts } from "@/lib/site-cta";
+import { BARE_ROUTES } from "@/lib/public-paths";
 import PageViewBeacon from "@/components/PageViewBeacon";
 import "../../site.css";
 import WebVitalsBeacon from "@/components/WebVitalsBeacon";
@@ -150,12 +151,16 @@ export default async function SiteLayout({ children, params }: Props) {
         receives is identical — see lib/edit-mode.ts.
       */}
       <EditModeProvider locale={locale}>
-        <Navbar
-          phone={settings.contact.phone}
-          phoneDisplay={settings.contact.phoneDisplay}
-          whatsapp={settings.contact.whatsapp}
-          logoUrl={settings.branding.logoUrl}
-        />
+        {/* Not on a bare page (lib/public-paths.ts): the agent registration
+            form stands alone. Same gate on the strip and the footer below. */}
+        <RouteGate except={BARE_ROUTES}>
+          <Navbar
+            phone={settings.contact.phone}
+            phoneDisplay={settings.contact.phoneDisplay}
+            whatsapp={settings.contact.whatsapp}
+            logoUrl={settings.branding.logoUrl}
+          />
+        </RouteGate>
 
         {/* tabIndex={-1} so the skip link can actually move focus here.
             Without it the browser scrolls but focus stays in the header, and
@@ -170,7 +175,9 @@ export default async function SiteLayout({ children, params }: Props) {
                 those page files). It fetches and renders nothing itself when
                 there's no active sales team, so it's safe to mount
                 unconditionally site-wide. */}
-            <SalesTeamSection />
+            <RouteGate except={BARE_ROUTES}>
+              <SalesTeamSection />
+            </RouteGate>
 
             {/* The closing invitation, below "Our Sales" and immediately above
                 the footer. Mounted here rather than on the home page because
@@ -186,7 +193,7 @@ export default async function SiteLayout({ children, params }: Props) {
                 rendering too, so the HTML still contains exactly one band.
                 See lib/site-cta.ts. */}
             {mounts.map(({ key, only, except, block, variant }) => (
-              <RouteGate key={key} only={only} except={except}>
+              <RouteGate key={key} only={only} except={[...(except ?? []), ...BARE_ROUTES]}>
                 <EditableSection links={SITE_CTA_LINKS}>
                   <SiteCta block={block} variant={variant} />
                 </EditableSection>
@@ -195,9 +202,11 @@ export default async function SiteLayout({ children, params }: Props) {
           </div>
         </main>
 
-        <div className="print:hidden">
-          <Footer />
-        </div>
+        <RouteGate except={BARE_ROUTES}>
+          <div className="print:hidden">
+            <Footer />
+          </div>
+        </RouteGate>
       </EditModeProvider>
 
     </>
