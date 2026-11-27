@@ -491,6 +491,19 @@ html:has(.ps){background:#000}
 .ps .closed-title{font:400 15px ps-fc,ps-in,sans-serif;color:var(--hi);letter-spacing:.02em}
 .ps:lang(en) .closed-title,.ps:lang(ru) .closed-title{font:italic 500 19px ps-cg,serif}
 
+/* Top row on the form and the pass: back on the left, languages on the
+   right, both on the panel's edges. On the card only the languages show. */
+.ps .top .back{display:none}
+.ps[data-view="form"] .top,.ps[data-view="done"] .top{max-width:496px;padding:16px 18px 12px;justify-content:space-between}
+.ps[data-view="form"] .top{align-items:baseline}
+.ps[data-view="done"] .top{justify-content:flex-end}
+.ps[data-view="form"] .top .back{display:inline-flex;align-items:center;gap:8px;padding:12px 0;margin:0;font:400 12px ps-in,ps-fc,sans-serif;letter-spacing:.04em;color:#a3a09d;background:none;border:0;cursor:pointer}
+.ps:lang(th)[data-view="form"] .top .back,.ps:lang(zh)[data-view="form"] .top .back{font:400 13px ps-fc,ps-in,sans-serif;letter-spacing:0}
+.ps[data-view="form"] .top .back:hover{color:var(--hi)}
+.ps[data-view="form"] .top .lang,.ps[data-view="done"] .top .lang{margin-right:-8px}
+.ps[data-view="form"] .form-wrap{padding-top:2px}
+@media (max-width:600px){.ps[data-view="form"] .top,.ps[data-view="done"] .top{padding:8px 14px 6px}}
+
 /* No group headings: a little more air before the first field and before
    the attendance part does their job. */
 .ps #rsvp{padding-top:18px}

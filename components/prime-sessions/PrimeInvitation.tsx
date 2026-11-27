@@ -310,8 +310,15 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
       <NoteSymbols />
 
       <header className="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="logo" src={LOGO} alt={LOGO_ALT} width={1100} height={118} />
+        {/* The way back to the card sits in the same row as the languages,
+            both lined up with the panel's edges; the panel itself carries
+            the event's name, so no logo is repeated up here. */}
+        <button type="button" className="back" onClick={() => go("card")}>
+          <span className="arr" aria-hidden="true">
+            ←
+          </span>{" "}
+          <span>{t("backCard")}</span>
+        </button>
         <nav className="lang" aria-label="Language">
           {LOCALE_DISPLAY_ORDER.map((code) => (
             <Link
@@ -390,9 +397,6 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
         {/* 2. The reply */}
         <section id="form" className="view" aria-labelledby="t-form">
           <div className="form-wrap">
-            <button type="button" className="back" onClick={() => go("card")}>
-              <span className="arr">←</span> <span>{t("backCard")}</span>
-            </button>
             <div className="sheet">
               <div className="sh-head">
                 <p className="sh-kick">R · S · V · P</p>
