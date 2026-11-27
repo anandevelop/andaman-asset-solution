@@ -19,10 +19,11 @@
  */
 
 import "./prime-sessions.css";
-import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { LOCALE_DISPLAY_ORDER } from "@/i18n";
+import { LOCALE_DISPLAY_ORDER, type Locale } from "@/i18n";
+import { countriesSortedFor, countryByIso2, flagSrc } from "@/lib/countries";
 import { siteConfig } from "@/config/site";
 import { loadRecaptcha, useRecaptchaToken } from "@/components/RecaptchaProvider";
 import {
@@ -37,15 +38,8 @@ type Field = "agency" | "contact" | "phone" | "status" | "consent";
 
 const LOGO = "/images/prime-sessions/logo-ivory.png";
 const LOGO_ALT = "The Residence Prime by Andaman Asset Solution";
-const COUNTRY_CODES = [
-  ["🇹🇭", "+66"],
-  ["🇨🇳", "+86"],
-  ["🇷🇺", "+7"],
-  ["🇸🇬", "+65"],
-  ["🇦🇺", "+61"],
-  ["🇬🇧", "+44"],
-  ["🇺🇸", "+1"],
-] as const;
+/** Offered first in the country list: where most invited agencies call from. */
+const COMMON_COUNTRIES = ["TH", "CN", "RU", "SG", "HK", "AU", "GB", "US"];
 
 const STATUS_OPTIONS: { value: PrimeAttendance; key: "s1" | "s2" | "s3" }[] = [
   { value: "ATTENDING", key: "s1" },
@@ -124,7 +118,10 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
 
   const [agency, setAgency] = useState("");
   const [contact, setContact] = useState("");
-  const [countryCode, setCountryCode] = useState("+66");
+  const [countryIso, setCountryIso] = useState("TH");
+  const countryCode = countryByIso2(countryIso)?.dial ?? "+66";
+  // Every country with a dialling code, named in the page's language.
+  const countries = useMemo(() => countriesSortedFor(locale as Locale), [locale]);
   const [phone, setPhone] = useState("");
   const [attendance, setAttendance] = useState<PrimeAttendance | null>(null);
   const [guests, setGuests] = useState(1);
@@ -463,18 +460,36 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
                     {t("phone")} *
                   </label>
                   <div className="phone">
-                    <select
-                      className="in"
-                      aria-label="Country code"
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                    >
-                      {COUNTRY_CODES.map(([flag, code]) => (
-                        <option key={code} value={code}>
-                          {flag} {code}
-                        </option>
-                      ))}
-                    </select>
+                    {/* The phone's own picker lists every country by name;
+                        closed, the field shows just the flag and the code. */}
+                    <label className="cc in">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={flagSrc(countryIso)} alt="" width={20} height={14} />
+                      <span>{countryCode}</span>
+                      <select
+                        aria-label="Country code"
+                        value={countryIso}
+                        onChange={(e) => setCountryIso(e.target.value)}
+                      >
+                        <optgroup label="—">
+                          {COMMON_COUNTRIES.map((iso) => {
+                            const country = countryByIso2(iso);
+                            return country ? (
+                              <option key={`c-${iso}`} value={iso}>
+                                {country.name[locale as Locale]} ({country.dial})
+                              </option>
+                            ) : null;
+                          })}
+                        </optgroup>
+                        <optgroup label="A–Z">
+                          {countries.map((country) => (
+                            <option key={country.iso2} value={country.iso2}>
+                              {country.name[locale as Locale]} ({country.dial})
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </label>
                     <input
                       ref={phoneRef}
                       className="in"
