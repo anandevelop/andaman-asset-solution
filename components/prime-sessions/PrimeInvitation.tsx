@@ -418,7 +418,7 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
                   <em>01</em>
                   <span>{t("grpA")}</span>
                 </p>
-                <div className={`f${bad.has("agency") ? " bad" : ""}`}>
+                <div className={`f half${bad.has("agency") ? " bad" : ""}`}>
                   <label className="lb" htmlFor="ps-agency">
                     {t("agency")} *
                   </label>
@@ -438,7 +438,7 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
                   />
                   <p className="err">{t("required")}</p>
                 </div>
-                <div className={`f${bad.has("contact") ? " bad" : ""}`}>
+                <div className={`f half${bad.has("contact") ? " bad" : ""}`}>
                   <label className="lb" htmlFor="ps-contact">
                     {t("contact")} *
                   </label>

@@ -490,3 +490,34 @@ html:has(.ps){background:#000}
 .ps .closed{margin:34px auto 0;padding-top:24px;border-top:1px solid #2a2a2c;max-width:300px}
 .ps .closed-title{font:400 15px ps-fc,ps-in,sans-serif;color:var(--hi);letter-spacing:.02em}
 .ps:lang(en) .closed-title,.ps:lang(ru) .closed-title{font:italic 500 19px ps-cg,serif}
+
+/* Phones: the reply fits on about one screen. Agency and contact share a
+   row, and the spacing is tightened rather than the type made smaller. */
+.ps #rsvp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px}
+.ps #rsvp>*{grid-column:1/-1}
+.ps #rsvp>.half{grid-column:auto}
+@media (max-width:600px){
+  .ps[data-view="form"] .top,.ps[data-view="done"] .top{padding:8px 16px}
+  .ps .lang .lang-btn{padding-top:9px;padding-bottom:11px}
+  .ps .ps-main{padding:0 14px 28px}
+  .ps .back{padding:2px 0 10px}
+  .ps .sheet{padding:22px 18px 20px}
+  .ps .sh-title{margin-top:8px;font-size:16px}
+  .ps .sh-meta{margin-top:5px;font-size:11px}
+  .ps:lang(th) .sh-meta{font-size:12px}
+  .ps .notes-sm{height:22px;margin:8px auto 4px}
+  .ps .grp{margin:18px 0 6px}
+  .ps .f{margin-bottom:12px}
+  .ps .lb{margin-bottom:0}
+  .ps .in{min-height:34px}
+  .ps textarea.in{min-height:34px;padding:7px 1px}
+  .ps select.in{background-position:calc(100% - 10px) 14px,calc(100% - 5px) 14px}
+  .ps .seg{margin-top:6px}
+  .ps .seg label{min-height:36px}
+  .ps .inline{padding-top:0;margin-bottom:12px}
+  .ps .inline .lb small{font-size:11.5px}
+  .ps .step button{width:32px;height:32px}
+  .ps .step output{width:34px}
+  .ps .chk{font-size:11.5px;line-height:1.55}
+  .ps .submit{margin-top:16px;min-height:46px}
+}
