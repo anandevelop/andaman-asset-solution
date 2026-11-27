@@ -198,7 +198,8 @@ function row(label: string, value: string): LineMessage {
 function leadCard(lead: {
   title: string;
   name: string;
-  email: string;
+  /** Left out (row and button) when the person gave none. */
+  email: string | null;
   phone: string;
   extraLabel: string;
   extra: string;
@@ -229,7 +230,7 @@ function leadCard(lead: {
         contents: [
           row("ชื่อ", lead.name),
           row("โทร", lead.phone),
-          row("อีเมล", lead.email),
+          ...(lead.email ? [row("อีเมล", lead.email)] : []),
           row(lead.extraLabel, lead.extra),
           ...(lead.message
             ? [
@@ -274,12 +275,16 @@ function leadCard(lead: {
             height: "sm",
             action: { type: "uri", label: "โทรกลับ", uri: `tel:${lead.phone}` },
           },
-          {
-            type: "button",
-            style: "secondary",
-            height: "sm",
-            action: { type: "uri", label: "อีเมล", uri: `mailto:${lead.email}` },
-          },
+          ...(lead.email
+            ? [
+                {
+                  type: "button",
+                  style: "secondary",
+                  height: "sm",
+                  action: { type: "uri", label: "อีเมล", uri: `mailto:${lead.email}` },
+                },
+              ]
+            : []),
             ],
           },
         ],
@@ -349,6 +354,51 @@ export async function notifyNewRegistration(registration: {
     ], undefined, "registration");
   } catch (error) {
     console.error("[line] notifyNewRegistration failed", error);
+  }
+}
+
+/**
+ * A reply to THE PRIME SESSIONS invitation (lib/prime-sessions.ts). Same
+ * switch as any other event registration on /admin/settings/notifications.
+ */
+export async function notifyPrimeRsvp(reply: {
+  eventId: string;
+  agencyName: string;
+  name: string;
+  phone: string;
+  /** Thai label of the answer: คาดว่าจะมา / ยังไม่แน่ใจ / ไม่สะดวกมา. */
+  answer: string;
+  guests: number;
+  dietary: string | null;
+  /** True when this number had already replied and the answer was replaced. */
+  updated: boolean;
+}): Promise<void> {
+  try {
+    if (!(await isEnabled("eventRegistration", "line"))) {
+      await recordLineDelivery({ kind: "registration", outcome: "skipped", detail: "EVENT_OFF" });
+      return;
+    }
+    const base = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXTAUTH_URL ?? "").replace(/\/+$/, "");
+    const lines = [
+      `คำตอบ: ${reply.answer}${reply.guests > 0 ? ` · ${reply.guests} คน` : ""}`,
+      ...(reply.dietary ? [`อาหาร: ${reply.dietary}`] : []),
+    ];
+    await send([
+      leadCard({
+        title: reply.updated ? "THE PRIME SESSIONS · แก้คำตอบ" : "THE PRIME SESSIONS · ตอบรับใหม่",
+        name: reply.name,
+        email: null,
+        phone: reply.phone,
+        extraLabel: "เอเจนซี่",
+        extra: reply.agencyName,
+        message: lines.join("\n"),
+        adminUrl: /^https:\/\//.test(base)
+          ? `${base}/th/admin/events/${encodeURIComponent(reply.eventId)}/registrations`
+          : null,
+      }),
+    ], undefined, "registration");
+  } catch (error) {
+    console.error("[line] notifyPrimeRsvp failed", error);
   }
 }
 

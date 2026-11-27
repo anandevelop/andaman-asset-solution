@@ -326,8 +326,11 @@ export async function createLeadFromRegistration(
     // pool + project scope); linking to a hidden one would hand a rep its id
     // and write a note on a lead they can't open.
     const scope = await leadScopeWhere(session);
+    // Matched on the email when there is one; an invitation reply that
+    // gave only a phone number (THE PRIME SESSIONS) is matched on that.
+    const email = registration.email?.toLowerCase() ?? null;
     const existing = await prisma.leadInquiry.findFirst({
-      where: { AND: [{ email: registration.email.toLowerCase() }, ...(scope ? [scope] : [])] },
+      where: { AND: [email ? { email } : { phone: registration.phone }, ...(scope ? [scope] : [])] },
       select: { id: true },
       orderBy: { createdAt: "desc" },
     });
@@ -344,7 +347,8 @@ export async function createLeadFromRegistration(
           await tx.leadInquiry.create({
             data: {
             name: registration.name,
-            email: registration.email.toLowerCase(),
+            // LeadInquiry.email is required; a phone-only reply has none to give.
+            email: email ?? "",
             phone: registration.phone,
             source: "EVENT_PAGE",
             // No project: Event has no relation to one, so the lead is

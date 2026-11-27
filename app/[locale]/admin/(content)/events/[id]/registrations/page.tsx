@@ -112,6 +112,8 @@ export default async function AdminEventRegistrationsPage(props: Props) {
     email: row.email,
     phone: row.phone,
     partySize: row.partySize,
+    attendance: row.attendance,
+    dietary: row.dietary,
     locale: row.locale,
     status: row.status,
     checkedIn: row.checkedInAt !== null,
@@ -299,6 +301,12 @@ export default async function AdminEventRegistrationsPage(props: Props) {
           empty: t("events.noRegistrations"),
           error: t("common.error"),
           checkInHint: t("events.checkIn.hint"),
+          attendance: {
+            ATTENDING: t("events.attendance.ATTENDING"),
+            MAYBE: t("events.attendance.MAYBE"),
+            DECLINED: t("events.attendance.DECLINED"),
+          },
+          dietary: t("events.attendance.dietary"),
         }}
       />
 

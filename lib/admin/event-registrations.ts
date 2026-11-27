@@ -20,7 +20,7 @@ import "server-only";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { EventStatus, Prisma } from "@prisma/client";
+import { EventStatus, Prisma, type RsvpAttendance } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/db";
 // The one definition of "this registration occupies a seat", shared with
@@ -35,9 +35,12 @@ export type RegistrationRow = {
   id: string;
   name: string;
   agencyName: string | null;
-  email: string;
+  /** Null on a phone-only invitation reply (lib/prime-sessions.ts). */
+  email: string | null;
   phone: string;
   partySize: number;
+  attendance: RsvpAttendance | null;
+  dietary: string | null;
   locale: string | null;
   status: EventStatus;
   checkedInAt: Date | null;
@@ -132,6 +135,8 @@ export async function getEventRegistrations(
             email: true,
             phone: true,
             partySize: true,
+            attendance: true,
+            dietary: true,
             locale: true,
             status: true,
             checkedInAt: true,

@@ -2904,7 +2904,11 @@ model EventRegistration {
   /// rows written before this column existed have nothing to backfill it
   /// with — see the migration's comment.
   agencyName String?
-  email      String
+  /// Required by the ordinary RSVP form. Null on replies to THE PRIME
+  /// SESSIONS invitation (lib/prime-sessions.ts), which asks agencies for a
+  /// phone or WhatsApp number only. Postgres treats NULLs as distinct, so
+  /// the (eventId, email) key below never collides on those rows.
+  email      String?
   phone      String
   /// Optional — not every agent gives a separate WhatsApp number.
   whatsapp   String?
@@ -2919,6 +2923,15 @@ model EventRegistration {
   notes      String? @db.Text
 
   status EventStatus @default(PENDING) @map("status")
+
+  /// The answer given on an invitation that asks for one (THE PRIME
+  /// SESSIONS): coming, not sure yet, or not coming. Null on ordinary RSVPs,
+  /// where registering is itself the answer. A DECLINED reply is stored
+  /// with status CANCELLED and partySize 0 so it holds no seat and adds no
+  /// heads to the totals.
+  attendance RsvpAttendance?
+  /// Food allergies or dietary needs, as the guest wrote them. Optional.
+  dietary    String?         @db.Text
 
   /// Which language version of the site they registered on — the same
   /// real signal LeadInquiry.commsLanguage records, captured from the RSVP
@@ -2951,7 +2964,16 @@ model EventRegistration {
 
   @@unique([eventId, email])
   @@index([eventId, status])
+  /// One reply per agency on THE PRIME SESSIONS is found by phone number.
+  @@index([eventId, phone])
   @@map("event_registrations")
+}
+
+/// See EventRegistration.attendance.
+enum RsvpAttendance {
+  ATTENDING
+  MAYBE
+  DECLINED
 }
 
 // Alias enum name to avoid clashing with RegistrationStatus naming above

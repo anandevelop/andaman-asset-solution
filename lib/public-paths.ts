@@ -36,6 +36,7 @@ export const STATIC_PATHS = [
   "/e-brochure",
   "/events",
   "/news",
+  "/prime-sessions",
   "/privacy-policy",
   "/progress",
   "/projects",
@@ -86,7 +87,7 @@ export function stripLocale(pathOrUrl: string): string {
  * is a way to leave before finishing. The page draws its own logo.
  * (site)/layout.tsx gates its chrome on this list through RouteGate.
  */
-export const BARE_ROUTES = ["/agent/register"] as const;
+export const BARE_ROUTES = ["/agent/register", "/prime-sessions"] as const;
 
 /**
  * Does `pathname` fall under `target`?

@@ -126,8 +126,9 @@ describe("every static page reaches the sitemap", () => {
     name to make the suite green.
   */
   // /agent/register: an invite form reached from a sales person's link,
-  // never indexed.
-  const UNINDEXED = ["/privacy-policy", "/terms", "/agent/register"];
+  // never indexed. /prime-sessions: the same for an event invitation sent
+  // to partner agencies (lib/prime-sessions.ts).
+  const UNINDEXED = ["/privacy-policy", "/terms", "/agent/register", "/prime-sessions"];
 
   it("finds the pages it is supposed to be checking", () => {
     // A walker that returns nothing would make the assertion below pass

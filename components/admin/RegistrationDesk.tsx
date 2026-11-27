@@ -31,9 +31,12 @@ export type RegistrationView = {
   id: string;
   name: string;
   agencyName: string | null;
-  email: string;
+  email: string | null;
   phone: string;
   partySize: number;
+  /** The answer on an invitation that asks for one; null on ordinary RSVPs. */
+  attendance: "ATTENDING" | "MAYBE" | "DECLINED" | null;
+  dietary: string | null;
   locale: string | null;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "ATTENDED" | "NO_SHOW";
   checkedIn: boolean;
@@ -66,6 +69,8 @@ type Props = {
     empty: string;
     error: string;
     checkInHint: string;
+    attendance: Record<"ATTENDING" | "MAYBE" | "DECLINED", string>;
+    dietary: string;
   };
 };
 
@@ -170,6 +175,7 @@ export default function RegistrationDesk({
                 <span className="block truncate text-xs text-adm-muted">
                   {row.partySize > 1 && `${labels.columnParty} ${row.partySize} · `}
                   {row.phone}
+                  {row.dietary && ` · ${labels.dietary}: ${row.dietary}`}
                 </span>
               </span>
 
@@ -212,19 +218,33 @@ export default function RegistrationDesk({
                     {row.agencyName && (
                       <span className="mt-0.5 block text-xs text-adm-muted">{row.agencyName}</span>
                     )}
+                    {row.dietary && (
+                      <span className="mt-0.5 block text-xs text-adm-warning">
+                        {labels.dietary}: {row.dietary}
+                      </span>
+                    )}
                   </td>
 
                   <td className="admin-td text-sm">
-                    <a href={`mailto:${row.email}`} className="text-adm-accent-ink hover:underline">
-                      {row.email}
-                    </a>
-                    <span className="text-adm-muted"> · </span>
+                    {row.email && (
+                      <>
+                        <a href={`mailto:${row.email}`} className="text-adm-accent-ink hover:underline">
+                          {row.email}
+                        </a>
+                        <span className="text-adm-muted"> · </span>
+                      </>
+                    )}
                     <a href={`tel:${row.phone}`} className="text-adm-muted hover:text-adm-text">
                       {row.phone}
                     </a>
                   </td>
 
-                  <td className="admin-td tabular-nums text-adm-muted">{row.partySize}</td>
+                  <td className="admin-td tabular-nums text-adm-muted">
+                    {row.partySize}
+                    {row.attendance && (
+                      <span className="mt-0.5 block text-xs">{labels.attendance[row.attendance]}</span>
+                    )}
+                  </td>
 
                   <td className="admin-td">
                     {row.locale && (
