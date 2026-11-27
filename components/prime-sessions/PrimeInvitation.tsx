@@ -301,6 +301,28 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
       ]
     : [];
 
+  // Drawn in the top row on the form and the pass, and inside the card's
+  // frame on the card, so it travels with the card when the card is
+  // centred on a large screen. Only one is ever shown.
+  const languages = (
+    <nav className="lang" aria-label="Language">
+      {LOCALE_DISPLAY_ORDER.map((code) => (
+        <Link
+          key={code}
+          href={`/${code}/prime-sessions`}
+          hrefLang={code}
+          lang={code}
+          replace
+          scroll={false}
+          aria-current={code === locale ? "page" : undefined}
+          className="lang-btn"
+        >
+          {code.toUpperCase()}
+        </Link>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="ps" data-view={view} lang={locale}>
       <div className="backdrop" aria-hidden="true" />
@@ -316,28 +338,14 @@ export default function PrimeInvitation({ locale }: { locale: string }) {
           </span>{" "}
           <span>{t("backCard")}</span>
         </button>
-        <nav className="lang" aria-label="Language">
-          {LOCALE_DISPLAY_ORDER.map((code) => (
-            <Link
-              key={code}
-              href={`/${code}/prime-sessions`}
-              hrefLang={code}
-              lang={code}
-              replace
-              scroll={false}
-              aria-current={code === locale ? "page" : undefined}
-              className="lang-btn"
-            >
-              {code.toUpperCase()}
-            </Link>
-          ))}
-        </nav>
+        {languages}
       </header>
 
       <div className="ps-main">
         {/* 1. The invitation card */}
         <section id="card" className="view" aria-labelledby="t-title">
           <div className="card card-wow">
+            {languages}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="logo" src={LOGO} alt={LOGO_ALT} width={1100} height={118} />
             <p className="kicker">{t("kicker")}</p>
